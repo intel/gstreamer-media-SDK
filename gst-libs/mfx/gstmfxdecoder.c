@@ -887,6 +887,10 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
+  if(!GST_CLOCK_TIME_IS_VALID(frame->pts)) {
+   frame->pts = frame->dts;
+  }
+
   if (!GST_CLOCK_TIME_IS_VALID(decoder->pts_offset)
       && GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)
       && GST_CLOCK_TIME_IS_VALID (frame->pts))
