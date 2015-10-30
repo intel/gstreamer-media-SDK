@@ -1,0 +1,991 @@
+# depslib dependency file v1.0
+1436231780 source:/home/ishmael/Desktop/gst_msdk/gstmfx.c
+	<gst/gst.h>
+	"gstmfxdec.h"
+
+1424892232 /usr/include/gstreamer-1.0/gst/gst.h
+	<glib.h>
+	<gst/glib-compat.h>
+	<gst/gstenumtypes.h>
+	<gst/gstversion.h>
+	<gst/gstatomicqueue.h>
+	<gst/gstbin.h>
+	<gst/gstbuffer.h>
+	<gst/gstbufferlist.h>
+	<gst/gstbufferpool.h>
+	<gst/gstcaps.h>
+	<gst/gstcapsfeatures.h>
+	<gst/gstchildproxy.h>
+	<gst/gstclock.h>
+	<gst/gstcontrolsource.h>
+	<gst/gstdatetime.h>
+	<gst/gstdebugutils.h>
+	<gst/gstdevice.h>
+	<gst/gstdeviceprovider.h>
+	<gst/gstelement.h>
+	<gst/gstelementmetadata.h>
+	<gst/gsterror.h>
+	<gst/gstevent.h>
+	<gst/gstghostpad.h>
+	<gst/gstdevicemonitor.h>
+	<gst/gstinfo.h>
+	<gst/gstiterator.h>
+	<gst/gstmessage.h>
+	<gst/gstmemory.h>
+	<gst/gstmeta.h>
+	<gst/gstminiobject.h>
+	<gst/gstobject.h>
+	<gst/gstpad.h>
+	<gst/gstparamspecs.h>
+	<gst/gstpipeline.h>
+	<gst/gstplugin.h>
+	<gst/gstpoll.h>
+	<gst/gstpreset.h>
+	<gst/gstquery.h>
+	<gst/gstregistry.h>
+	<gst/gstsample.h>
+	<gst/gstsegment.h>
+	<gst/gststructure.h>
+	<gst/gstsystemclock.h>
+	<gst/gsttaglist.h>
+	<gst/gsttagsetter.h>
+	<gst/gsttask.h>
+	<gst/gsttaskpool.h>
+	<gst/gsttoc.h>
+	<gst/gsttocsetter.h>
+	<gst/gsttypefind.h>
+	<gst/gsttypefindfactory.h>
+	<gst/gsturi.h>
+	<gst/gstutils.h>
+	<gst/gstvalue.h>
+	<gst/gstparse.h>
+	<gst/gstcompat.h>
+
+1411667772 /usr/include/glib-2.0/glib.h
+	<glib/galloca.h>
+	<glib/garray.h>
+	<glib/gasyncqueue.h>
+	<glib/gatomic.h>
+	<glib/gbacktrace.h>
+	<glib/gbase64.h>
+	<glib/gbitlock.h>
+	<glib/gbookmarkfile.h>
+	<glib/gbytes.h>
+	<glib/gcharset.h>
+	<glib/gchecksum.h>
+	<glib/gconvert.h>
+	<glib/gdataset.h>
+	<glib/gdate.h>
+	<glib/gdatetime.h>
+	<glib/gdir.h>
+	<glib/genviron.h>
+	<glib/gerror.h>
+	<glib/gfileutils.h>
+	<glib/ggettext.h>
+	<glib/ghash.h>
+	<glib/ghmac.h>
+	<glib/ghook.h>
+	<glib/ghostutils.h>
+	<glib/giochannel.h>
+	<glib/gkeyfile.h>
+	<glib/glist.h>
+	<glib/gmacros.h>
+	<glib/gmain.h>
+	<glib/gmappedfile.h>
+	<glib/gmarkup.h>
+	<glib/gmem.h>
+	<glib/gmessages.h>
+	<glib/gnode.h>
+	<glib/goption.h>
+	<glib/gpattern.h>
+	<glib/gpoll.h>
+	<glib/gprimes.h>
+	<glib/gqsort.h>
+	<glib/gquark.h>
+	<glib/gqueue.h>
+	<glib/grand.h>
+	<glib/gregex.h>
+	<glib/gscanner.h>
+	<glib/gsequence.h>
+	<glib/gshell.h>
+	<glib/gslice.h>
+	<glib/gslist.h>
+	<glib/gspawn.h>
+	<glib/gstrfuncs.h>
+	<glib/gstring.h>
+	<glib/gstringchunk.h>
+	<glib/gtestutils.h>
+	<glib/gthread.h>
+	<glib/gthreadpool.h>
+	<glib/gtimer.h>
+	<glib/gtimezone.h>
+	<glib/gtrashstack.h>
+	<glib/gtree.h>
+	<glib/gtypes.h>
+	<glib/gunicode.h>
+	<glib/gurifuncs.h>
+	<glib/gutils.h>
+	<glib/gvarianttype.h>
+	<glib/gvariant.h>
+	<glib/gversion.h>
+	<glib/gversionmacros.h>
+	<glib/gwin32.h>
+	<glib/deprecated/gallocator.h>
+	<glib/deprecated/gcache.h>
+	<glib/deprecated/gcompletion.h>
+	<glib/deprecated/gmain.h>
+	<glib/deprecated/grel.h>
+	<glib/deprecated/gthread.h>
+
+1411667772 /usr/include/glib-2.0/glib/galloca.h
+	<glib/gtypes.h>
+	<alloca.h>
+	<alloca.h>
+	<malloc.h>
+
+1411667773 /usr/include/glib-2.0/glib/gtypes.h
+	<glibconfig.h>
+	<glib/gmacros.h>
+	<glib/gversionmacros.h>
+	<time.h>
+
+1411667772 /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h
+	<glib/gmacros.h>
+	<limits.h>
+	<float.h>
+
+1411667773 /usr/include/glib-2.0/glib/gmacros.h
+	<stddef.h>
+
+1411667773 /usr/include/glib-2.0/glib/gversionmacros.h
+
+1411667772 /usr/include/glib-2.0/glib/garray.h
+	<glib/gtypes.h>
+
+1411667772 /usr/include/glib-2.0/glib/gasyncqueue.h
+	<glib/gthread.h>
+
+1411667773 /usr/include/glib-2.0/glib/gthread.h
+	<glib/gatomic.h>
+	<glib/gerror.h>
+
+1411667773 /usr/include/glib-2.0/glib/gatomic.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gerror.h
+	<stdarg.h>
+	<glib/gquark.h>
+
+1411667773 /usr/include/glib-2.0/glib/gquark.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gbacktrace.h
+	<glib/gtypes.h>
+	<signal.h>
+
+1411667773 /usr/include/glib-2.0/glib/gbase64.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gbitlock.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gbookmarkfile.h
+	<glib/gerror.h>
+	<time.h>
+
+1411667773 /usr/include/glib-2.0/glib/gbytes.h
+	<glib/gtypes.h>
+	<glib/garray.h>
+
+1411667773 /usr/include/glib-2.0/glib/gcharset.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gchecksum.h
+	<glib/gtypes.h>
+	<glib/gbytes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gconvert.h
+	<glib/gerror.h>
+
+1411667773 /usr/include/glib-2.0/glib/gdataset.h
+	<glib/gquark.h>
+
+1411667773 /usr/include/glib-2.0/glib/gdate.h
+	<time.h>
+	<glib/gtypes.h>
+	<glib/gquark.h>
+
+1411667773 /usr/include/glib-2.0/glib/gdatetime.h
+	<glib/gtimezone.h>
+
+1411667773 /usr/include/glib-2.0/glib/gtimezone.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gdir.h
+	<glib/gerror.h>
+	<dirent.h>
+
+1411667773 /usr/include/glib-2.0/glib/genviron.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gfileutils.h
+	<glib/gerror.h>
+
+1411667773 /usr/include/glib-2.0/glib/ggettext.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/ghash.h
+	<glib/gtypes.h>
+	<glib/glist.h>
+
+1411667773 /usr/include/glib-2.0/glib/glist.h
+	<glib/gmem.h>
+	<glib/gnode.h>
+
+1411667773 /usr/include/glib-2.0/glib/gmem.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gnode.h
+	<glib/gmem.h>
+
+1411667773 /usr/include/glib-2.0/glib/ghmac.h
+	<glib/gtypes.h>
+	"gchecksum.h"
+
+1411667773 /usr/include/glib-2.0/glib/ghook.h
+	<glib/gmem.h>
+
+1411667773 /usr/include/glib-2.0/glib/ghostutils.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/giochannel.h
+	<glib/gconvert.h>
+	<glib/gmain.h>
+	<glib/gstring.h>
+
+1411667773 /usr/include/glib-2.0/glib/gmain.h
+	<glib/gpoll.h>
+	<glib/gslist.h>
+	<glib/gthread.h>
+
+1411667773 /usr/include/glib-2.0/glib/gpoll.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gslist.h
+	<glib/gmem.h>
+	<glib/gnode.h>
+
+1411667773 /usr/include/glib-2.0/glib/gstring.h
+	<glib/gtypes.h>
+	<glib/gunicode.h>
+	<glib/gbytes.h>
+	<glib/gutils.h>
+
+1411667773 /usr/include/glib-2.0/glib/gunicode.h
+	<glib/gerror.h>
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gutils.h
+	<glib/gtypes.h>
+	<stdarg.h>
+
+1411667773 /usr/include/glib-2.0/glib/gkeyfile.h
+	<glib/gerror.h>
+
+1411667773 /usr/include/glib-2.0/glib/gmappedfile.h
+	<glib/gbytes.h>
+	<glib/gerror.h>
+
+1411667773 /usr/include/glib-2.0/glib/gmarkup.h
+	<stdarg.h>
+	<glib/gerror.h>
+	<glib/gslist.h>
+
+1411667773 /usr/include/glib-2.0/glib/gmessages.h
+	<stdarg.h>
+	<glib/gtypes.h>
+	<glib/gmacros.h>
+
+1411667773 /usr/include/glib-2.0/glib/goption.h
+	<glib/gerror.h>
+	<glib/gquark.h>
+
+1411667773 /usr/include/glib-2.0/glib/gpattern.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gprimes.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gqsort.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gqueue.h
+	<glib/glist.h>
+
+1411667773 /usr/include/glib-2.0/glib/grand.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gregex.h
+	<glib/gerror.h>
+	<glib/gstring.h>
+
+1411667773 /usr/include/glib-2.0/glib/gscanner.h
+	<glib/gdataset.h>
+	<glib/ghash.h>
+
+1411667773 /usr/include/glib-2.0/glib/gsequence.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gshell.h
+	<glib/gerror.h>
+
+1411667773 /usr/include/glib-2.0/glib/gslice.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gspawn.h
+	<glib/gerror.h>
+
+1411667773 /usr/include/glib-2.0/glib/gstrfuncs.h
+	<stdarg.h>
+	<glib/gmacros.h>
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gstringchunk.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gtestutils.h
+	<glib/gmessages.h>
+	<glib/gstring.h>
+	<glib/gerror.h>
+	<glib/gslist.h>
+
+1411667773 /usr/include/glib-2.0/glib/gthreadpool.h
+	<glib/gthread.h>
+
+1411667773 /usr/include/glib-2.0/glib/gtimer.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gtrashstack.h
+	<glib/gutils.h>
+
+1411667773 /usr/include/glib-2.0/glib/gtree.h
+	<glib/gnode.h>
+
+1411667773 /usr/include/glib-2.0/glib/gurifuncs.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gvarianttype.h
+	<glib/gmessages.h>
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gvariant.h
+	<glib/gvarianttype.h>
+	<glib/gstring.h>
+	<glib/gbytes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gversion.h
+	<glib/gtypes.h>
+
+1411667773 /usr/include/glib-2.0/glib/gwin32.h
+	<glib/gtypes.h>
+
+1411667772 /usr/include/glib-2.0/glib/deprecated/gallocator.h
+	<glib/gtypes.h>
+
+1411667772 /usr/include/glib-2.0/glib/deprecated/gcache.h
+	<glib/glist.h>
+
+1411667772 /usr/include/glib-2.0/glib/deprecated/gcompletion.h
+	<glib/glist.h>
+
+1411667772 /usr/include/glib-2.0/glib/deprecated/gmain.h
+	<glib/gmain.h>
+
+1411667772 /usr/include/glib-2.0/glib/deprecated/grel.h
+	<glib/gtypes.h>
+
+1411667772 /usr/include/glib-2.0/glib/deprecated/gthread.h
+	<glib/gthread.h>
+	<sys/types.h>
+	<pthread.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/glib-compat.h
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstenumtypes.h
+	<glib-object.h>
+
+1411667772 /usr/include/glib-2.0/glib-object.h
+	<gobject/gbinding.h>
+	<gobject/gboxed.h>
+	<gobject/genums.h>
+	<gobject/gobject.h>
+	<gobject/gparam.h>
+	<gobject/gparamspecs.h>
+	<gobject/gsignal.h>
+	<gobject/gsourceclosure.h>
+	<gobject/gtype.h>
+	<gobject/gtypemodule.h>
+	<gobject/gtypeplugin.h>
+	<gobject/gvalue.h>
+	<gobject/gvaluearray.h>
+	<gobject/gvaluetypes.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gbinding.h
+	<glib.h>
+	<gobject/gobject.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gobject.h
+	<gobject/gtype.h>
+	<gobject/gvalue.h>
+	<gobject/gparam.h>
+	<gobject/gclosure.h>
+	<gobject/gsignal.h>
+	<gobject/gboxed.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gtype.h
+	<glib.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gvalue.h
+	<gobject/gtype.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gparam.h
+	<gobject/gvalue.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gclosure.h
+	<gobject/gtype.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gsignal.h
+	<gobject/gclosure.h>
+	<gobject/gvalue.h>
+	<gobject/gparam.h>
+	<gobject/gmarshal.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gmarshal.h
+
+1411667775 /usr/include/glib-2.0/gobject/gboxed.h
+	<gobject/gtype.h>
+	<gobject/glib-types.h>
+
+1411667775 /usr/include/glib-2.0/gobject/glib-types.h
+	<glib.h>
+
+1411667775 /usr/include/glib-2.0/gobject/genums.h
+	<gobject/gtype.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gparamspecs.h
+	<gobject/gvalue.h>
+	<gobject/genums.h>
+	<gobject/gboxed.h>
+	<gobject/gobject.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gsourceclosure.h
+	<gobject/gclosure.h>
+	<gobject/glib-types.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gtypemodule.h
+	<gobject/gobject.h>
+	<gobject/genums.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gtypeplugin.h
+	<gobject/gtype.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gvaluearray.h
+	<gobject/gvalue.h>
+
+1411667775 /usr/include/glib-2.0/gobject/gvaluetypes.h
+	<gobject/gvalue.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstversion.h
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstatomicqueue.h
+	<glib.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstbin.h
+	<gst/gstelement.h>
+	<gst/gstiterator.h>
+	<gst/gstbus.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstelement.h
+	<gst/gstconfig.h>
+	<gst/gstobject.h>
+	<gst/gstpad.h>
+	<gst/gstbus.h>
+	<gst/gstclock.h>
+	<gst/gstelementfactory.h>
+	<gst/gstplugin.h>
+	<gst/gstpluginfeature.h>
+	<gst/gstiterator.h>
+	<gst/gstmessage.h>
+	<gst/gstquery.h>
+	<gst/gsttaglist.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstconfig.h
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstobject.h
+	<gst/gstconfig.h>
+	<glib-object.h>
+	<gst/gstcontrolbinding.h>
+	<gst/gstcontrolsource.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstcontrolbinding.h
+	<gst/gstconfig.h>
+	<glib-object.h>
+	<gst/gstcontrolsource.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstcontrolsource.h
+	<gst/gstconfig.h>
+	<glib-object.h>
+	<gst/gstclock.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstclock.h
+	<gst/gstobject.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstpad.h
+	<gst/gstconfig.h>
+	<gst/gstobject.h>
+	<gst/gstbuffer.h>
+	<gst/gstbufferlist.h>
+	<gst/gstcaps.h>
+	<gst/gstpadtemplate.h>
+	<gst/gstevent.h>
+	<gst/gstquery.h>
+	<gst/gsttask.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstbuffer.h
+	<gst/gstminiobject.h>
+	<gst/gstclock.h>
+	<gst/gstallocator.h>
+	<gst/gstmeta.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstminiobject.h
+	<gst/gstconfig.h>
+	<glib-object.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstallocator.h
+	<gst/gstmemory.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstmemory.h
+	<gst/gstconfig.h>
+	<glib-object.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstmeta.h
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstbufferlist.h
+	<gst/gstbuffer.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstcaps.h
+	<gst/gstconfig.h>
+	<gst/gstminiobject.h>
+	<gst/gststructure.h>
+	<gst/gstcapsfeatures.h>
+	<gst/glib-compat.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gststructure.h
+	<gst/gstconfig.h>
+	<glib-object.h>
+	<gst/gstclock.h>
+	<gst/gstdatetime.h>
+	<gst/glib-compat.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstdatetime.h
+	<gst/gstconfig.h>
+	<time.h>
+	<glib.h>
+	<glib-object.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstcapsfeatures.h
+	<gst/gstconfig.h>
+	<gst/glib-compat.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstpadtemplate.h
+	<gst/gstconfig.h>
+	<gst/gstobject.h>
+	<gst/gstbuffer.h>
+	<gst/gstcaps.h>
+	<gst/gstevent.h>
+	<gst/gstquery.h>
+	<gst/gsttask.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstevent.h
+	<gst/gstminiobject.h>
+	<gst/gstformat.h>
+	<gst/gstobject.h>
+	<gst/gstclock.h>
+	<gst/gststructure.h>
+	<gst/gsttaglist.h>
+	<gst/gstsegment.h>
+	<gst/gstsegment.h>
+	<gst/gstmessage.h>
+	<gst/gstcontext.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstformat.h
+	<glib.h>
+	<gst/gstiterator.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstiterator.h
+	<glib-object.h>
+	<gst/gstconfig.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsttaglist.h
+	<gst/gstdatetime.h>
+	<gst/gstsample.h>
+	<gst/gstbuffer.h>
+	<gst/glib-compat.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstsample.h
+	<gst/gstbuffer.h>
+	<gst/gstcaps.h>
+	<gst/gstsegment.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstsegment.h
+	<gst/gstformat.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstmessage.h
+	<gst/gstminiobject.h>
+	<gst/gstobject.h>
+	<gst/gstelement.h>
+	<gst/gsttaglist.h>
+	<gst/gststructure.h>
+	<gst/gstquery.h>
+	<gst/gsttoc.h>
+	<gst/gstdevice.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstquery.h
+	<glib.h>
+	<gst/gstiterator.h>
+	<gst/gstminiobject.h>
+	<gst/gststructure.h>
+	<gst/gstformat.h>
+	<gst/gstpad.h>
+	<gst/gstallocator.h>
+	<gst/gsttoc.h>
+	<gst/gstcontext.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsttoc.h
+	<gst/gstconfig.h>
+	<gst/gstminiobject.h>
+	<gst/gststructure.h>
+	<gst/gsttaglist.h>
+	<gst/gstformat.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstcontext.h
+	<gst/gstminiobject.h>
+	<gst/gststructure.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstdevice.h
+	<gst/gstelement.h>
+	<gst/gstcaps.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsttask.h
+	<gst/gstobject.h>
+	<gst/gsttaskpool.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsttaskpool.h
+	<gst/gstobject.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstbus.h
+	<gst/gstmessage.h>
+	<gst/gstclock.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstelementfactory.h
+	<gst/gstconfig.h>
+	<gst/gstelement.h>
+	<gst/gstpad.h>
+	<gst/gstplugin.h>
+	<gst/gstpluginfeature.h>
+	<gst/gsturi.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstplugin.h
+	<gst/gstconfig.h>
+	<gst/gstobject.h>
+	<gst/gstmacros.h>
+	<gst/gststructure.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstmacros.h
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstpluginfeature.h
+	<glib-object.h>
+	<gst/gstobject.h>
+	<gst/gstplugin.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsturi.h
+	<glib.h>
+	<gst/gstelement.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstbufferpool.h
+	<gst/gstminiobject.h>
+	<gst/gstpad.h>
+	<gst/gstbuffer.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstchildproxy.h
+	<glib-object.h>
+	<gst/gst.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstdebugutils.h
+	<glib.h>
+	<glib-object.h>
+	<gst/gstconfig.h>
+	<gst/gstbin.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstdeviceprovider.h
+	<gst/gstdeviceproviderfactory.h>
+	<gst/gstelement.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstdeviceproviderfactory.h
+	<gst/gstconfig.h>
+	<gst/gstplugin.h>
+	<gst/gstpluginfeature.h>
+	<gst/gstdeviceprovider.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstelementmetadata.h
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsterror.h
+	<glib.h>
+	<glib-object.h>
+	<errno.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstghostpad.h
+	<gst/gstpad.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstdevicemonitor.h
+	<gst/gstobject.h>
+	<gst/gstdevice.h>
+	<gst/gstdeviceprovider.h>
+	<gst/gstdeviceproviderfactory.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstinfo.h
+	<glib.h>
+	<glib-object.h>
+	<gst/gstconfig.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstparamspecs.h
+	<gst/gstvalue.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstvalue.h
+	<gst/gstconfig.h>
+	<gst/gstcaps.h>
+	<gst/gststructure.h>
+	<gst/gstcapsfeatures.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstpipeline.h
+	<gst/gstbin.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstpoll.h
+	<glib.h>
+	<glib-object.h>
+	<gst/gstclock.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstpreset.h
+	<glib-object.h>
+	<gst/gstconfig.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstregistry.h
+	<gst/gstconfig.h>
+	<gst/gstplugin.h>
+	<gst/gstpluginfeature.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstsystemclock.h
+	<gst/gstclock.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsttagsetter.h
+	<gst/gst.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsttocsetter.h
+	<gst/gst.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsttypefind.h
+	<gst/gstcaps.h>
+	<gst/gstplugin.h>
+	<gst/gstpluginfeature.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gsttypefindfactory.h
+	<gst/gstcaps.h>
+	<gst/gstplugin.h>
+	<gst/gstpluginfeature.h>
+	<gst/gsttypefind.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstutils.h
+	<glib.h>
+	<gst/gstconfig.h>
+	<gst/gstbin.h>
+	<gst/gstparse.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstparse.h
+	<gst/gstelement.h>
+
+1424892232 /usr/include/gstreamer-1.0/gst/gstcompat.h
+
+1437377935 /home/ishmael/Desktop/gst_msdk/gstmfxdec.h
+	<gst/gst.h>
+	<gst/video/gstvideodecoder.h>
+	<mfxvideo.h>
+	<X11/Xlib.h>
+	<stdio.h>
+	"gstvaapialloc.h"
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideodecoder.h
+	<gst/base/gstadapter.h>
+	<gst/video/gstvideoutils.h>
+
+1424892233 /usr/include/gstreamer-1.0/gst/base/gstadapter.h
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideoutils.h
+	<gst/video/video.h>
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video.h
+	<gst/gst.h>
+	<gst/video/video-format.h>
+	<gst/video/video-color.h>
+	<gst/video/video-info.h>
+	<gst/video/video-frame.h>
+	<gst/video/video-enumtypes.h>
+	<gst/video/colorbalancechannel.h>
+	<gst/video/colorbalance.h>
+	<gst/video/gstvideodecoder.h>
+	<gst/video/gstvideoencoder.h>
+	<gst/video/gstvideofilter.h>
+	<gst/video/gstvideometa.h>
+	<gst/video/gstvideopool.h>
+	<gst/video/gstvideosink.h>
+	<gst/video/gstvideoutils.h>
+	<gst/video/navigation.h>
+	<gst/video/video-blend.h>
+	<gst/video/video-event.h>
+	<gst/video/videoorientation.h>
+	<gst/video/video-overlay-composition.h>
+	<gst/video/videooverlay.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-format.h
+	<gst/gst.h>
+	<gst/video/video-enumtypes.h>
+	<gst/video/video-tile.h>
+	<gst/video/video-chroma.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-enumtypes.h
+	<glib-object.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-tile.h
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-chroma.h
+	<gst/gst.h>
+	<gst/video/video-format.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-color.h
+	<gst/gst.h>
+	<gst/video/video-format.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-info.h
+	<gst/gst.h>
+	<gst/video/video-format.h>
+	<gst/video/video-color.h>
+	<gst/video/video-enumtypes.h>
+	<gst/video/video.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-frame.h
+	<gst/video/video-enumtypes.h>
+	<gst/video/video-format.h>
+	<gst/video/video-info.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/colorbalancechannel.h
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/colorbalance.h
+	<gst/gst.h>
+	<gst/video/colorbalancechannel.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideoencoder.h
+	<gst/video/gstvideoutils.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideofilter.h
+	<gst/base/gstbasetransform.h>
+	<gst/video/video.h>
+
+1424892233 /usr/include/gstreamer-1.0/gst/base/gstbasetransform.h
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideometa.h
+	<gst/gst.h>
+	<gst/video/video.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideopool.h
+	<gst/gst.h>
+	<gst/video/video.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideosink.h
+	<gst/gst.h>
+	<gst/base/gstbasesink.h>
+
+1424892233 /usr/include/gstreamer-1.0/gst/base/gstbasesink.h
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/navigation.h
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-blend.h
+	<gst/gst.h>
+	<gst/video/video.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-event.h
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/videoorientation.h
+	<gst/gst.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/video-overlay-composition.h
+	<gst/gst.h>
+	<gst/video/video.h>
+
+1424892445 /usr/include/gstreamer-1.0/gst/video/videooverlay.h
+	<gst/gst.h>
+
+1434012227 /opt/intel/mediasdk/include/mfxvideo.h
+	"mfxsession.h"
+	"mfxvstructures.h"
+
+1434012227 /opt/intel/mediasdk/include/mfxsession.h
+	"mfxcommon.h"
+
+1434012227 /opt/intel/mediasdk/include/mfxcommon.h
+	"mfxdefs.h"
+
+1434012227 /opt/intel/mediasdk/include/mfxdefs.h
+	"mfxdispatcherprefixedfunctions.h"
+
+1434012227 /opt/intel/mediasdk/include/mfxdispatcherprefixedfunctions.h
+
+1434012227 /opt/intel/mediasdk/include/mfxvstructures.h
+	"mfxstructures.h"
+
+1434012227 /opt/intel/mediasdk/include/mfxstructures.h
+	"mfxcommon.h"
+
+1437308236 source:/home/ishmael/Desktop/gst_msdk/gstmfxdec.c
+	"gstmfxdec.h"
+	"vaapialloc.h"
+	<string.h>
+	<gst/video/gstvideometa.h>
+	<gst/video/gstvideopool.h>
+
+1436505647 /home/ishmael/Desktop/gst_msdk/vaapialloc.h
+	<stdio.h>
+	<glib.h>
+	<mfxvideo.h>
+	<va/va.h>
+	<va/va_x11.h>
+
+1437280857 source:/home/ishmael/Desktop/gst_msdk/vaapialloc.c
+	"vaapialloc.h"
+
+1437378049 /home/ishmael/Desktop/gst_msdk/gstvaapialloc.h
+	<stdio.h>
+	<glib.h>
+	<mfxvideo.h>
+	<va/va.h>
+	<va/va_x11.h>
+
+1437378082 source:/home/ishmael/Desktop/gst_msdk/gstvaapialloc.c
+	"gstvaapialloc.h"
+
