@@ -9,22 +9,14 @@
 #include <va/va.h>
 #include <va/va_x11.h>
 
-typedef struct QSVFrame {
-    mfxFrameSurface1 *surface;
-    int *surface_index;
-
-    struct QSVFrame *next;
-} QSVFrame;
-
-typedef struct DecodeContext {
-    mfxSession mfx_session;
+typedef struct VaapiAllocatorContext {
     VADisplay va_dpy;
     VASurfaceID *surfaces;
     mfxMemId    *surface_ids;
-    int         *surface_used;
-    int       nb_surfaces;
+    GAsyncQueue *surface_queue;
+    int nb_surfaces;
     mfxFrameInfo frame_info;
-} DecodeContext;
+} VaapiAllocatorContext;
 
 mfxStatus frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     mfxFrameAllocResponse *resp);

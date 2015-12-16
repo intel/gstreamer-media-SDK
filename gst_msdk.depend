@@ -1,9 +1,9 @@
 # depslib dependency file v1.0
-1436231780 source:/home/ishmael/Desktop/gst_msdk/gstmfx.c
+1435647544 source:/home/ishmael/Desktop/gst_msdk/gstmfx.c
 	<gst/gst.h>
 	"gstmfxdec.h"
 
-1424892232 /usr/include/gstreamer-1.0/gst/gst.h
+1449898625 /usr/include/gstreamer-1.0/gst/gst.h
 	<glib.h>
 	<gst/glib-compat.h>
 	<gst/gstenumtypes.h>
@@ -21,13 +21,13 @@
 	<gst/gstdatetime.h>
 	<gst/gstdebugutils.h>
 	<gst/gstdevice.h>
+	<gst/gstdevicemonitor.h>
 	<gst/gstdeviceprovider.h>
 	<gst/gstelement.h>
 	<gst/gstelementmetadata.h>
 	<gst/gsterror.h>
 	<gst/gstevent.h>
 	<gst/gstghostpad.h>
-	<gst/gstdevicemonitor.h>
 	<gst/gstinfo.h>
 	<gst/gstiterator.h>
 	<gst/gstmessage.h>
@@ -41,6 +41,7 @@
 	<gst/gstplugin.h>
 	<gst/gstpoll.h>
 	<gst/gstpreset.h>
+	<gst/gstprotection.h>
 	<gst/gstquery.h>
 	<gst/gstregistry.h>
 	<gst/gstsample.h>
@@ -409,9 +410,10 @@
 	<sys/types.h>
 	<pthread.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/glib-compat.h
+1449898625 /usr/include/gstreamer-1.0/gst/glib-compat.h
+	<glib.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstenumtypes.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstenumtypes.h
 	<glib-object.h>
 
 1411667772 /usr/include/glib-2.0/glib-object.h
@@ -495,17 +497,19 @@
 1411667775 /usr/include/glib-2.0/gobject/gvaluetypes.h
 	<gobject/gvalue.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstversion.h
-
-1424892232 /usr/include/gstreamer-1.0/gst/gstatomicqueue.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstversion.h
 	<glib.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstbin.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstatomicqueue.h
+	<glib.h>
+	<glib-object.h>
+
+1449898625 /usr/include/gstreamer-1.0/gst/gstbin.h
 	<gst/gstelement.h>
 	<gst/gstiterator.h>
 	<gst/gstbus.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstelement.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstelement.h
 	<gst/gstconfig.h>
 	<gst/gstobject.h>
 	<gst/gstpad.h>
@@ -519,29 +523,32 @@
 	<gst/gstquery.h>
 	<gst/gsttaglist.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstconfig.h
+1400007128 /usr/include/gstreamer-1.0/gst/gstconfig.h
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstobject.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstobject.h
 	<gst/gstconfig.h>
 	<glib-object.h>
 	<gst/gstcontrolbinding.h>
 	<gst/gstcontrolsource.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstcontrolbinding.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstcontrolbinding.h
 	<gst/gstconfig.h>
 	<glib-object.h>
 	<gst/gstcontrolsource.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstcontrolsource.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstcontrolsource.h
 	<gst/gstconfig.h>
 	<glib-object.h>
 	<gst/gstclock.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstclock.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstclock.h
+	<gst/gstconfig.h>
+	<glib.h>
 	<gst/gstobject.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstpad.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstpad.h
 	<gst/gstconfig.h>
+	<glib.h>
 	<gst/gstobject.h>
 	<gst/gstbuffer.h>
 	<gst/gstbufferlist.h>
@@ -551,53 +558,59 @@
 	<gst/gstquery.h>
 	<gst/gsttask.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstbuffer.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstbuffer.h
 	<gst/gstminiobject.h>
 	<gst/gstclock.h>
 	<gst/gstallocator.h>
 	<gst/gstmeta.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstminiobject.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstminiobject.h
 	<gst/gstconfig.h>
 	<glib-object.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstallocator.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstallocator.h
 	<gst/gstmemory.h>
+	<gst/gstobject.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstmemory.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstmemory.h
 	<gst/gstconfig.h>
 	<glib-object.h>
+	<gst/gstminiobject.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstmeta.h
-
-1424892232 /usr/include/gstreamer-1.0/gst/gstbufferlist.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstmeta.h
+	<glib.h>
 	<gst/gstbuffer.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstcaps.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstbufferlist.h
+	<gst/gstbuffer.h>
+
+1449898625 /usr/include/gstreamer-1.0/gst/gstcaps.h
 	<gst/gstconfig.h>
 	<gst/gstminiobject.h>
 	<gst/gststructure.h>
 	<gst/gstcapsfeatures.h>
 	<gst/glib-compat.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gststructure.h
+1449898625 /usr/include/gstreamer-1.0/gst/gststructure.h
 	<gst/gstconfig.h>
 	<glib-object.h>
 	<gst/gstclock.h>
 	<gst/gstdatetime.h>
 	<gst/glib-compat.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstdatetime.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstdatetime.h
 	<gst/gstconfig.h>
 	<time.h>
 	<glib.h>
 	<glib-object.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstcapsfeatures.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstcapsfeatures.h
 	<gst/gstconfig.h>
 	<gst/glib-compat.h>
+	<glib-object.h>
+	<glib.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstpadtemplate.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstpadtemplate.h
 	<gst/gstconfig.h>
 	<gst/gstobject.h>
 	<gst/gstbuffer.h>
@@ -606,7 +619,7 @@
 	<gst/gstquery.h>
 	<gst/gsttask.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstevent.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstevent.h
 	<gst/gstminiobject.h>
 	<gst/gstformat.h>
 	<gst/gstobject.h>
@@ -614,33 +627,33 @@
 	<gst/gststructure.h>
 	<gst/gsttaglist.h>
 	<gst/gstsegment.h>
-	<gst/gstsegment.h>
 	<gst/gstmessage.h>
 	<gst/gstcontext.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstformat.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstformat.h
 	<glib.h>
 	<gst/gstiterator.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstiterator.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstiterator.h
 	<glib-object.h>
 	<gst/gstconfig.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsttaglist.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsttaglist.h
 	<gst/gstdatetime.h>
 	<gst/gstsample.h>
 	<gst/gstbuffer.h>
 	<gst/glib-compat.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstsample.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstsample.h
 	<gst/gstbuffer.h>
+	<gst/gstbufferlist.h>
 	<gst/gstcaps.h>
 	<gst/gstsegment.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstsegment.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstsegment.h
 	<gst/gstformat.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstmessage.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstmessage.h
 	<gst/gstminiobject.h>
 	<gst/gstobject.h>
 	<gst/gstelement.h>
@@ -650,7 +663,7 @@
 	<gst/gsttoc.h>
 	<gst/gstdevice.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstquery.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstquery.h
 	<glib.h>
 	<gst/gstiterator.h>
 	<gst/gstminiobject.h>
@@ -661,33 +674,34 @@
 	<gst/gsttoc.h>
 	<gst/gstcontext.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsttoc.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsttoc.h
 	<gst/gstconfig.h>
 	<gst/gstminiobject.h>
 	<gst/gststructure.h>
 	<gst/gsttaglist.h>
 	<gst/gstformat.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstcontext.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstcontext.h
+	<glib.h>
 	<gst/gstminiobject.h>
 	<gst/gststructure.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstdevice.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstdevice.h
 	<gst/gstelement.h>
 	<gst/gstcaps.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsttask.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsttask.h
 	<gst/gstobject.h>
 	<gst/gsttaskpool.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsttaskpool.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsttaskpool.h
 	<gst/gstobject.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstbus.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstbus.h
 	<gst/gstmessage.h>
 	<gst/gstclock.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstelementfactory.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstelementfactory.h
 	<gst/gstconfig.h>
 	<gst/gstelement.h>
 	<gst/gstpad.h>
@@ -695,152 +709,164 @@
 	<gst/gstpluginfeature.h>
 	<gst/gsturi.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstplugin.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstplugin.h
 	<gst/gstconfig.h>
 	<gst/gstobject.h>
 	<gst/gstmacros.h>
 	<gst/gststructure.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstmacros.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstmacros.h
+	<glib.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstpluginfeature.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstpluginfeature.h
 	<glib-object.h>
 	<gst/gstobject.h>
 	<gst/gstplugin.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsturi.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsturi.h
 	<glib.h>
+	<glib-object.h>
 	<gst/gstelement.h>
+	<gst/gstconfig.h>
+	"gstminiobject.h"
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstbufferpool.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstbufferpool.h
 	<gst/gstminiobject.h>
 	<gst/gstpad.h>
 	<gst/gstbuffer.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstchildproxy.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstchildproxy.h
 	<glib-object.h>
 	<gst/gst.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstdebugutils.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstdebugutils.h
 	<glib.h>
 	<glib-object.h>
 	<gst/gstconfig.h>
 	<gst/gstbin.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstdeviceprovider.h
-	<gst/gstdeviceproviderfactory.h>
+1449898625 /usr/include/gstreamer-1.0/gst/gstdeviceprovider.h
 	<gst/gstelement.h>
+	<gst/gstdeviceproviderfactory.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstdeviceproviderfactory.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstdeviceproviderfactory.h
 	<gst/gstconfig.h>
 	<gst/gstplugin.h>
 	<gst/gstpluginfeature.h>
 	<gst/gstdeviceprovider.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstelementmetadata.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstelementmetadata.h
+	<glib.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsterror.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsterror.h
 	<glib.h>
 	<glib-object.h>
 	<errno.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstghostpad.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstghostpad.h
 	<gst/gstpad.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstdevicemonitor.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstdevicemonitor.h
 	<gst/gstobject.h>
 	<gst/gstdevice.h>
 	<gst/gstdeviceprovider.h>
 	<gst/gstdeviceproviderfactory.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstinfo.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstinfo.h
 	<glib.h>
 	<glib-object.h>
 	<gst/gstconfig.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstparamspecs.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstparamspecs.h
 	<gst/gstvalue.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstvalue.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstvalue.h
 	<gst/gstconfig.h>
 	<gst/gstcaps.h>
 	<gst/gststructure.h>
 	<gst/gstcapsfeatures.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstpipeline.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstpipeline.h
 	<gst/gstbin.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstpoll.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstpoll.h
 	<glib.h>
 	<glib-object.h>
 	<gst/gstclock.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstpreset.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstpreset.h
 	<glib-object.h>
 	<gst/gstconfig.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstregistry.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstregistry.h
 	<gst/gstconfig.h>
 	<gst/gstplugin.h>
 	<gst/gstpluginfeature.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstsystemclock.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstsystemclock.h
 	<gst/gstclock.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsttagsetter.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsttagsetter.h
 	<gst/gst.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsttocsetter.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsttocsetter.h
 	<gst/gst.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsttypefind.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsttypefind.h
 	<gst/gstcaps.h>
 	<gst/gstplugin.h>
 	<gst/gstpluginfeature.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gsttypefindfactory.h
+1449898625 /usr/include/gstreamer-1.0/gst/gsttypefindfactory.h
 	<gst/gstcaps.h>
 	<gst/gstplugin.h>
 	<gst/gstpluginfeature.h>
 	<gst/gsttypefind.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstutils.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstutils.h
 	<glib.h>
 	<gst/gstconfig.h>
 	<gst/gstbin.h>
 	<gst/gstparse.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstparse.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstparse.h
 	<gst/gstelement.h>
 
-1424892232 /usr/include/gstreamer-1.0/gst/gstcompat.h
+1449898625 /usr/include/gstreamer-1.0/gst/gstcompat.h
+	<glib.h>
+	<gst/gstpad.h>
 
-1437377935 /home/ishmael/Desktop/gst_msdk/gstmfxdec.h
+1450261787 /home/ishmael/Desktop/gst_msdk/gstmfxdec.h
 	<gst/gst.h>
 	<gst/video/gstvideodecoder.h>
 	<mfxvideo.h>
 	<X11/Xlib.h>
 	<stdio.h>
+	"gstmfxdecoder.h"
 	"gstvaapialloc.h"
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideodecoder.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/gstvideodecoder.h
 	<gst/base/gstadapter.h>
 	<gst/video/gstvideoutils.h>
 
-1424892233 /usr/include/gstreamer-1.0/gst/base/gstadapter.h
+1449898626 /usr/include/gstreamer-1.0/gst/base/gstadapter.h
 	<gst/gst.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideoutils.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/gstvideoutils.h
 	<gst/video/video.h>
 	<gst/gst.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/video.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video.h
 	<gst/gst.h>
 	<gst/video/video-format.h>
 	<gst/video/video-color.h>
+	<gst/video/video-dither.h>
 	<gst/video/video-info.h>
 	<gst/video/video-frame.h>
 	<gst/video/video-enumtypes.h>
+	<gst/video/video-converter.h>
+	<gst/video/video-scaler.h>
+	<gst/video/video-multiview.h>
 	<gst/video/colorbalancechannel.h>
 	<gst/video/colorbalance.h>
 	<gst/video/gstvideodecoder.h>
@@ -857,88 +883,88 @@
 	<gst/video/video-overlay-composition.h>
 	<gst/video/videooverlay.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-format.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-format.h
 	<gst/gst.h>
 	<gst/video/video-enumtypes.h>
 	<gst/video/video-tile.h>
 	<gst/video/video-chroma.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-enumtypes.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-enumtypes.h
 	<glib-object.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-tile.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-tile.h
 	<gst/gst.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-chroma.h
-	<gst/gst.h>
-	<gst/video/video-format.h>
-
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-color.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-chroma.h
 	<gst/gst.h>
 	<gst/video/video-format.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-info.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-color.h
+	<gst/gst.h>
+	<gst/video/video-format.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-info.h
 	<gst/gst.h>
 	<gst/video/video-format.h>
 	<gst/video/video-color.h>
 	<gst/video/video-enumtypes.h>
 	<gst/video/video.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-frame.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-frame.h
 	<gst/video/video-enumtypes.h>
 	<gst/video/video-format.h>
 	<gst/video/video-info.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/colorbalancechannel.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/colorbalancechannel.h
 	<gst/gst.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/colorbalance.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/colorbalance.h
 	<gst/gst.h>
 	<gst/video/colorbalancechannel.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideoencoder.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/gstvideoencoder.h
 	<gst/video/gstvideoutils.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideofilter.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/gstvideofilter.h
 	<gst/base/gstbasetransform.h>
 	<gst/video/video.h>
 
-1424892233 /usr/include/gstreamer-1.0/gst/base/gstbasetransform.h
+1449898626 /usr/include/gstreamer-1.0/gst/base/gstbasetransform.h
 	<gst/gst.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideometa.h
-	<gst/gst.h>
-	<gst/video/video.h>
-
-1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideopool.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/gstvideometa.h
 	<gst/gst.h>
 	<gst/video/video.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/gstvideosink.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/gstvideopool.h
+	<gst/gst.h>
+	<gst/video/video.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/gstvideosink.h
 	<gst/gst.h>
 	<gst/base/gstbasesink.h>
 
-1424892233 /usr/include/gstreamer-1.0/gst/base/gstbasesink.h
+1449898626 /usr/include/gstreamer-1.0/gst/base/gstbasesink.h
 	<gst/gst.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/navigation.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/navigation.h
 	<gst/gst.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-blend.h
-	<gst/gst.h>
-	<gst/video/video.h>
-
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-event.h
-	<gst/gst.h>
-
-1424892445 /usr/include/gstreamer-1.0/gst/video/videoorientation.h
-	<gst/gst.h>
-
-1424892445 /usr/include/gstreamer-1.0/gst/video/video-overlay-composition.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-blend.h
 	<gst/gst.h>
 	<gst/video/video.h>
 
-1424892445 /usr/include/gstreamer-1.0/gst/video/videooverlay.h
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-event.h
+	<gst/gst.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/videoorientation.h
+	<gst/gst.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-overlay-composition.h
+	<gst/gst.h>
+	<gst/video/video.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/videooverlay.h
 	<gst/gst.h>
 
 1434012227 /opt/intel/mediasdk/include/mfxvideo.h
@@ -962,12 +988,15 @@
 1434012227 /opt/intel/mediasdk/include/mfxstructures.h
 	"mfxcommon.h"
 
-1437308236 source:/home/ishmael/Desktop/gst_msdk/gstmfxdec.c
+1450261874 source:/home/ishmael/Desktop/gst_msdk/gstmfxdec.c
 	"gstmfxdec.h"
-	"vaapialloc.h"
 	<string.h>
-	<gst/video/gstvideometa.h>
-	<gst/video/gstvideopool.h>
+	"gstvaapiimage.h"
+	"gstmfxsurfaceproxy.h"
+	"gstmfxsurfaceproxy_priv.h"
+	"gstmfxcodecmap.h"
+	"gstmfxvideometa.h"
+	"gstmfxpluginutil.h"
 
 1436505647 /home/ishmael/Desktop/gst_msdk/vaapialloc.h
 	<stdio.h>
@@ -979,13 +1008,243 @@
 1437280857 source:/home/ishmael/Desktop/gst_msdk/vaapialloc.c
 	"vaapialloc.h"
 
-1437378049 /home/ishmael/Desktop/gst_msdk/gstvaapialloc.h
+1450256769 /home/ishmael/Desktop/gst_msdk/gstvaapialloc.h
 	<stdio.h>
 	<glib.h>
 	<mfxvideo.h>
 	<va/va.h>
 	<va/va_x11.h>
 
-1437378082 source:/home/ishmael/Desktop/gst_msdk/gstvaapialloc.c
+1450256590 source:/home/ishmael/Desktop/gst_msdk/gstvaapialloc.c
 	"gstvaapialloc.h"
+
+1436231780 source:/home/ishmael/gst_msdk/gstmfx.c
+	<gst/gst.h>
+	"gstmfxdec.h"
+
+1437377935 /home/ishmael/gst_msdk/gstmfxdec.h
+	<gst/gst.h>
+	<gst/video/gstvideodecoder.h>
+	<mfxvideo.h>
+	<X11/Xlib.h>
+	<stdio.h>
+	"gstvaapialloc.h"
+
+1437378049 /home/ishmael/gst_msdk/gstvaapialloc.h
+	<stdio.h>
+	<glib.h>
+	<mfxvideo.h>
+	<va/va.h>
+	<va/va_x11.h>
+
+1437379791 source:/home/ishmael/gst_msdk/gstmfxdec.c
+	"gstmfxdec.h"
+	"gstvaapialloc.h"
+	<string.h>
+	<gst/video/gstvideometa.h>
+	<gst/video/gstvideopool.h>
+
+1437378082 source:/home/ishmael/gst_msdk/gstvaapialloc.c
+	"gstvaapialloc.h"
+
+1449898625 /usr/include/gstreamer-1.0/gst/gstprotection.h
+	<gst/gst.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-dither.h
+	<gst/gst.h>
+	<gst/video/video-format.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-converter.h
+	<gst/video/video.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-scaler.h
+	<gst/gst.h>
+	<gst/video/video-format.h>
+	<gst/video/video-color.h>
+	<gst/video/video-resampler.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-resampler.h
+	<gst/gst.h>
+
+1449898507 /usr/include/gstreamer-1.0/gst/video/video-multiview.h
+	<gst/gst.h>
+
+1450261799 /home/ishmael/Desktop/gst_msdk/gstmfxdecoder.h
+	<gst/gstbuffer.h>
+	<gst/video/gstvideoutils.h>
+	"gstmfxsurfaceproxy.h"
+	"gstmfxsurface_priv.h"
+	"gstmfxobjectpool.h"
+	"gstmfxcontext.h"
+	"gstvaapialloc.h"
+
+1449792497 /home/ishmael/Desktop/gst_msdk/gstmfxsurfaceproxy.h
+	"gstmfxsurface.h"
+	"gstmfxsurfacepool.h"
+
+1450262171 /home/ishmael/Desktop/gst_msdk/gstmfxsurface.h
+	<mfxvideo.h>
+	<gst/gst.h>
+	<gst/video/video.h>
+	"gstvaapiimage.h"
+	"gstmfxtypes.h"
+	"video-utils.h"
+	"gstmfxcontext.h"
+
+1450262253 /home/ishmael/Desktop/gst_msdk/gstmfxtypes.h
+	<glib.h>
+
+1450085394 /home/ishmael/Desktop/gst_msdk/video-format.h
+	<gst/video/video.h>
+	<mfxvideo.h>
+	<va/va.h>
+
+1450262178 /home/ishmael/Desktop/gst_msdk/gstmfxsurfacepool.h
+	"gstmfxsurface.h"
+	"gstmfxobjectpool.h"
+	"video-utils.h"
+
+1450169219 /home/ishmael/Desktop/gst_msdk/gstmfxsurfacepool_priv.h
+	"gstmfxminiobject.h"
+
+1450146543 /home/ishmael/Desktop/gst_msdk/gstmfxminiobject.h
+	<glib.h>
+
+1449927091 /home/ishmael/Desktop/gst_msdk/gstmfxcontext.h
+	"gstmfxminiobject.h"
+	"gstvaapialloc.h"
+	<mfxvideo.h>
+
+1449478336 source:/home/ishmael/Desktop/gst_msdk/gstmfxcodecmap.c
+	"gstmfxcodecmap.h"
+
+1449476463 /home/ishmael/Desktop/gst_msdk/gstmfxcodecmap.h
+	<gst/gst.h>
+	<mfxvideo.h>
+
+1450010233 source:/home/ishmael/Desktop/gst_msdk/gstmfxcontext.c
+	"gstmfxcontext.h"
+
+1449469588 /home/ishmael/Desktop/gst_msdk/gstmfxsurfaceproxy_priv.h
+	"gstmfxminiobject.h"
+	"gstmfxsurfaceproxy.h"
+	"gstmfxsurface_priv.h"
+
+1450256510 /home/ishmael/Desktop/gst_msdk/gstmfxsurface_priv.h
+	"gstmfxsurface.h"
+	"gstmfxminiobject.h"
+
+1450233645 /home/ishmael/Desktop/gst_msdk/gstmfxvideometa.h
+	<gst/video/video.h>
+	"gstmfxsurface.h"
+	"gstmfxsurfacepool.h"
+	"gstvaapiimage.h"
+
+1449649601 /home/ishmael/Desktop/gst_msdk/gstmfxpluginutil.h
+	"gstmfxsurface.h"
+	"gstmfxvideomemory.h"
+
+1450251012 /home/ishmael/Desktop/gst_msdk/gstmfxvideomemory.h
+	<gst/gstallocator.h>
+	<gst/video/video-info.h>
+	"gstmfxsurfaceproxy.h"
+	"gstvaapiimage.h"
+	"gstmfxvideometa.h"
+	"gstmfxobjectpool.h"
+	<gst/allocators/allocators.h>
+
+1448527308 /home/ishmael/Desktop/gst_msdk/gstmfxdisplay.h
+	<va/va.h>
+	<gst/gst.h>
+	"gstmfxtypes.h"
+
+1448243521 /home/ishmael/Desktop/gst_msdk/gstmfxvideobufferpool.h
+	<gst/video/gstvideopool.h>
+
+1449898510 /usr/include/gstreamer-1.0/gst/allocators/allocators.h
+	<gst/allocators/gstdmabuf.h>
+	<gst/allocators/gstfdmemory.h>
+
+1449898510 /usr/include/gstreamer-1.0/gst/allocators/gstdmabuf.h
+	<gst/gst.h>
+
+1449898510 /usr/include/gstreamer-1.0/gst/allocators/gstfdmemory.h
+	<gst/gst.h>
+
+1450262014 source:/home/ishmael/Desktop/gst_msdk/gstmfxdecoder.c
+	"gstmfxdecoder.h"
+	"gstmfxobjectpool_priv.h"
+	"gstmfxvideometa.h"
+
+1449822325 source:/home/ishmael/Desktop/gst_msdk/gstmfxminiobject.c
+	<string.h>
+	"gstmfxminiobject.h"
+
+1449927631 source:/home/ishmael/Desktop/gst_msdk/gstmfxpluginutil.c
+	"gstmfxpluginutil.h"
+
+1450256672 source:/home/ishmael/Desktop/gst_msdk/gstmfxsurface.c
+	"gstmfxsurface.h"
+	"gstmfxsurface_priv.h"
+
+1450255304 source:/home/ishmael/Desktop/gst_msdk/gstmfxsurfacepool.c
+	"gstmfxsurfacepool.h"
+	"gstmfxobjectpool_priv.h"
+
+1450248393 source:/home/ishmael/Desktop/gst_msdk/gstmfxsurfaceproxy.c
+	"gstmfxsurfaceproxy.h"
+	"gstmfxsurfaceproxy_priv.h"
+	"gstmfxsurfacepool.h"
+
+1450233975 source:/home/ishmael/Desktop/gst_msdk/gstmfxvideometa.c
+	"gstmfxvideometa.h"
+	"gstmfxsurfaceproxy.h"
+	"gstvaapiimage.h"
+	"gstmfxvideomemory.h"
+
+1450085479 source:/home/ishmael/Desktop/gst_msdk/video-format.c
+	"video-format.h"
+
+1450257795 source:/home/ishmael/Desktop/gst_msdk/gstmfxvideomemory.c
+	"gstmfxvideomemory.h"
+
+1450262162 /home/ishmael/Desktop/gst_msdk/gstvaapiimage.h
+	"video-utils.h"
+
+1450162412 source:/home/ishmael/Desktop/gst_msdk/gstvaapiimage.c
+	"gstvaapiimage.h"
+	"gstvaapiimage_priv.h"
+
+1450162236 /home/ishmael/Desktop/gst_msdk/gstvaapiimage_priv.h
+	"gstmfxminiobject.h"
+	"gstvaapiimage.h"
+	<va/va.h>
+
+1450245419 /home/ishmael/Desktop/gst_msdk/gstmfxobjectpool.h
+	<glib.h>
+
+1450253251 /home/ishmael/Desktop/gst_msdk/gstmfxobjectpool_priv.h
+	"gstmfxminiobject.h"
+
+1450248232 source:/home/ishmael/Desktop/gst_msdk/gstmfxobjectpool.c
+	"gstmfxobjectpool.h"
+	"gstmfxobjectpool_priv.h"
+	"gstmfxminiobject.h"
+
+1450255710 source:/home/ishmael/Desktop/gst_msdk/gstvaapiimagepool.c
+	"gstvaapiimagepool.h"
+	"gstmfxobjectpool_priv.h"
+
+1450262189 /home/ishmael/Desktop/gst_msdk/gstvaapiimagepool.h
+	"gstvaapiimage.h"
+	"gstmfxobjectpool.h"
+	"video-utils.h"
+
+1450085394 /home/ishmael/Desktop/gst_msdk/video-utils.h
+	<gst/video/video.h>
+	<mfxvideo.h>
+	<va/va.h>
+
+1450262101 source:/home/ishmael/Desktop/gst_msdk/video-utils.c
+	"video-utils.h"
 

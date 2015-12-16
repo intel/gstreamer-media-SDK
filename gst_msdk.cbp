@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Debug/libgst_msdk.so filesrc location=/home/ishmael/Videos/left_edit.h264 ! h264parse ! mfxdecode ! glimagesink" />
+				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/ishmael/Videos/left_edit.h264 ! h264parse ! mfxdecode ! glimagesink" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -62,14 +62,76 @@
 		<Unit filename="gstmfx.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="gstmfxcodecmap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxcodecmap.h" />
+		<Unit filename="gstmfxcontext.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxcontext.h" />
 		<Unit filename="gstmfxdec.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstmfxdec.h" />
+		<Unit filename="gstmfxdecoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxdecoder.h" />
+		<Unit filename="gstmfxdecoder_priv.h" />
+		<Unit filename="gstmfxminiobject.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxminiobject.h" />
+		<Unit filename="gstmfxobjectpool.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxobjectpool.h" />
+		<Unit filename="gstmfxobjectpool_priv.h" />
+		<Unit filename="gstmfxpluginutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxpluginutil.h" />
+		<Unit filename="gstmfxsurface.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxsurface.h" />
+		<Unit filename="gstmfxsurface_priv.h" />
+		<Unit filename="gstmfxsurfacepool.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxsurfacepool.h" />
+		<Unit filename="gstmfxsurfaceproxy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxsurfaceproxy.h" />
+		<Unit filename="gstmfxsurfaceproxy_priv.h" />
+		<Unit filename="gstmfxtypes.h" />
+		<Unit filename="gstmfxvideomemory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxvideomemory.h" />
+		<Unit filename="gstmfxvideometa.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxvideometa.h" />
 		<Unit filename="gstvaapialloc.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstvaapialloc.h" />
+		<Unit filename="gstvaapiimage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstvaapiimage.h" />
+		<Unit filename="gstvaapiimage_priv.h" />
+		<Unit filename="gstvaapiimagepool.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstvaapiimagepool.h" />
+		<Unit filename="video-utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="video-utils.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

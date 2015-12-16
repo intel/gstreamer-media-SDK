@@ -1,9 +1,9 @@
 /*
  ============================================================================
- Name        : gstmfxdec.h
- Author      : Ishmael Sameen <ishmael.visayana.sameen@intel.com>
+ Name        : gst-mfx-dec.h
+ Author      : Heiher <admin@heiher.info>
  Version     : 0.0.1
- Copyright   : Copyright (C) 2015 Intel Corporation
+ Copyright   : Copyright (C) 2013 everyone.
  Description :
  ============================================================================
  */
@@ -18,6 +18,7 @@
 #include <X11/Xlib.h>
 #include <stdio.h>
 
+#include "gstmfxdecoder.h"
 #include "gstvaapialloc.h"
 
 G_BEGIN_DECLS
@@ -39,17 +40,9 @@ struct _GstMfxDec
 	GstVideoCodecState *input_state;
 	GstVideoCodecState *output_state;
 
-	mfxSession session;
-	mfxVideoParam param;
-	mfxFrameAllocRequest req;
-	mfxBitstream bs;
+	//mfxVideoParam param;
 
-	/* working surfaces */
-	mfxFrameSurface1** surface_pool;
-	mfxU8* surface_buffers;
-
-	/* state */
-	gboolean decoder_inited;
+	GstMfxDecoder *decoder;
 
 	/* properties */
 	int async_depth;
@@ -58,8 +51,7 @@ struct _GstMfxDec
 
 	/* VA specific */
 	Display *dpy;
-	DecodeContext decode;
-	QSVFrame *work_frames;
+	VaapiAllocatorContext alloc_ctx;
 };
 
 struct _GstMfxDecClass

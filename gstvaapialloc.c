@@ -3,7 +3,7 @@
 mfxStatus frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     mfxFrameAllocResponse *resp)
 {
-    DecodeContext *decode = pthis;
+    VaapiAllocatorContext *decode = pthis;
     mfxU16 surfaces_num = req->NumFrameSuggested;
     int err, i;
 
@@ -24,9 +24,9 @@ mfxStatus frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
     decode->surfaces     = g_malloc_n(surfaces_num, sizeof(*decode->surfaces));
     decode->surface_ids  = g_malloc_n(surfaces_num, sizeof(*decode->surface_ids));
-    decode->surface_used = g_malloc0_n(surfaces_num, sizeof(*decode->surface_used));
+    decode->surface_queue = g_async_queue_new();
 
-    if (!decode->surfaces || !decode->surface_ids || !decode->surface_used)
+    if (!decode->surfaces || !decode->surface_ids)
         goto fail;
 
     err = vaCreateSurfaces(decode->va_dpy, VA_RT_FORMAT_YUV420,
@@ -40,8 +40,10 @@ mfxStatus frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     }
 
     decode->nb_surfaces = surfaces_num;
-    for (i = 0; i < decode->nb_surfaces; i++)
+    for (i = 0; i < decode->nb_surfaces; i++) {
         decode->surface_ids[i] = &decode->surfaces[i];
+        g_async_queue_push(decode->surface_queue, decode->surface_ids[i]);
+    }
 
     resp->mids           = decode->surface_ids;
     resp->NumFrameActual = decode->nb_surfaces;
@@ -52,21 +54,20 @@ mfxStatus frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 fail:
     g_free(decode->surfaces);
     g_free(decode->surface_ids);
-    g_free(decode->surface_used);
 
     return MFX_ERR_MEMORY_ALLOC;
 }
 
 mfxStatus frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
 {
-    DecodeContext *decode = pthis;
+    VaapiAllocatorContext *decode = pthis;
 
     if (decode->surfaces)
         vaDestroySurfaces(decode->va_dpy, decode->surfaces, decode->nb_surfaces);
 
     g_free(decode->surfaces);
     g_free(decode->surface_ids);
-    g_free(decode->surface_used);
+    g_async_queue_unref(decode->surface_queue);
 
     decode->nb_surfaces = 0;
 
