@@ -13,7 +13,7 @@ G_BEGIN_DECLS
 typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 
 GstMfxObjectPool *
-gst_mfx_surface_pool_new(VaapiAllocatorContext * ctx);
+gst_mfx_surface_pool_new(GstMfxContextAllocatorVaapi * ctx);
 
 G_END_DECLS
 

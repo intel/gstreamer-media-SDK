@@ -85,7 +85,7 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 
 
 static void
-gst_mfx_decoder_init(GstMfxDecoder *decoder, mfxU32 codec_id, VaapiAllocatorContext * ctx)
+gst_mfx_decoder_init(GstMfxDecoder *decoder, mfxU32 codec_id, GstMfxContextAllocatorVaapi * ctx)
 {
 	memset(&(decoder->session), 0, sizeof (mfxSession));
 	memset(&(decoder->bs), 0, sizeof (mfxBitstream));
@@ -111,7 +111,7 @@ gst_mfx_decoder_class(void)
 }
 
 GstMfxDecoder *
-gst_mfx_decoder_new(VaapiAllocatorContext *allocator, mfxU32 codec_id)
+gst_mfx_decoder_new(GstMfxContextAllocatorVaapi *allocator, mfxU32 codec_id)
 {
 	GstMfxDecoder *decoder;
 
@@ -155,8 +155,6 @@ put_unused_frames(gpointer surface, gpointer pool)
 	mfxFrameSurface1 *surf = gst_mfx_surface_get_frame_surface(_surface);
 	if (surf && !surf->Data.Locked) {
 		gst_mfx_object_pool_put_object(_pool, _surface);
-		//g_async_queue_push(_decoder->allocator->surface_queue, surf->Data.MemId);
-		//surf->Data.MemId = 0;
     }
 }
 

@@ -115,10 +115,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstmfxvideometa.h" />
-		<Unit filename="gstvaapialloc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gstvaapialloc.h" />
 		<Unit filename="gstvaapiimage.c">
 			<Option compilerVar="CC" />
 		</Unit>

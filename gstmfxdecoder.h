@@ -32,7 +32,7 @@
 #include "gstmfxsurface_priv.h"
 #include "gstmfxobjectpool.h"
 #include "gstmfxcontext.h"
-#include "gstvaapialloc.h"
+#include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
 
@@ -56,7 +56,7 @@ struct _GstMfxDecoder
 	mfxVideoParam param;
 	mfxBitstream bs;
 
-	VaapiAllocatorContext *alloc_ctx;
+	GstMfxContextAllocatorVaapi *alloc_ctx;
 
 	gboolean decoder_inited;
 };
@@ -116,7 +116,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 
 
 GstMfxDecoder *
-gst_mfx_decoder_new(VaapiAllocatorContext * allocator, mfxU32 codec_id);
+gst_mfx_decoder_new(GstMfxContextAllocatorVaapi * allocator, mfxU32 codec_id);
 
 G_END_DECLS
 

@@ -836,14 +836,14 @@
 	<glib.h>
 	<gst/gstpad.h>
 
-1450261787 /home/ishmael/Desktop/gst_msdk/gstmfxdec.h
+1450404898 /home/ishmael/Desktop/gst_msdk/gstmfxdec.h
 	<gst/gst.h>
 	<gst/video/gstvideodecoder.h>
 	<mfxvideo.h>
 	<X11/Xlib.h>
 	<stdio.h>
 	"gstmfxdecoder.h"
-	"gstvaapialloc.h"
+	"gstmfxcontext.h"
 
 1449898507 /usr/include/gstreamer-1.0/gst/video/gstvideodecoder.h
 	<gst/base/gstadapter.h>
@@ -988,13 +988,14 @@
 1434012227 /opt/intel/mediasdk/include/mfxstructures.h
 	"mfxcommon.h"
 
-1450261874 source:/home/ishmael/Desktop/gst_msdk/gstmfxdec.c
+1450406668 source:/home/ishmael/Desktop/gst_msdk/gstmfxdec.c
 	"gstmfxdec.h"
 	<string.h>
 	"gstvaapiimage.h"
 	"gstmfxsurfaceproxy.h"
 	"gstmfxsurfaceproxy_priv.h"
 	"gstmfxcodecmap.h"
+	"gstmfxvideomemory.h"
 	"gstmfxvideometa.h"
 	"gstmfxpluginutil.h"
 
@@ -1008,7 +1009,7 @@
 1437280857 source:/home/ishmael/Desktop/gst_msdk/vaapialloc.c
 	"vaapialloc.h"
 
-1450256769 /home/ishmael/Desktop/gst_msdk/gstvaapialloc.h
+1450404633 /home/ishmael/Desktop/gst_msdk/gstvaapialloc.h
 	<stdio.h>
 	<glib.h>
 	<mfxvideo.h>
@@ -1069,20 +1070,20 @@
 1449898507 /usr/include/gstreamer-1.0/gst/video/video-multiview.h
 	<gst/gst.h>
 
-1450261799 /home/ishmael/Desktop/gst_msdk/gstmfxdecoder.h
+1450404898 /home/ishmael/Desktop/gst_msdk/gstmfxdecoder.h
 	<gst/gstbuffer.h>
 	<gst/video/gstvideoutils.h>
 	"gstmfxsurfaceproxy.h"
 	"gstmfxsurface_priv.h"
 	"gstmfxobjectpool.h"
 	"gstmfxcontext.h"
-	"gstvaapialloc.h"
+	"gstmfxcontext.h"
 
 1449792497 /home/ishmael/Desktop/gst_msdk/gstmfxsurfaceproxy.h
 	"gstmfxsurface.h"
 	"gstmfxsurfacepool.h"
 
-1450262171 /home/ishmael/Desktop/gst_msdk/gstmfxsurface.h
+1450405234 /home/ishmael/Desktop/gst_msdk/gstmfxsurface.h
 	<mfxvideo.h>
 	<gst/gst.h>
 	<gst/video/video.h>
@@ -1099,7 +1100,7 @@
 	<mfxvideo.h>
 	<va/va.h>
 
-1450262178 /home/ishmael/Desktop/gst_msdk/gstmfxsurfacepool.h
+1450404633 /home/ishmael/Desktop/gst_msdk/gstmfxsurfacepool.h
 	"gstmfxsurface.h"
 	"gstmfxobjectpool.h"
 	"video-utils.h"
@@ -1110,10 +1111,12 @@
 1450146543 /home/ishmael/Desktop/gst_msdk/gstmfxminiobject.h
 	<glib.h>
 
-1449927091 /home/ishmael/Desktop/gst_msdk/gstmfxcontext.h
+1450404898 /home/ishmael/Desktop/gst_msdk/gstmfxcontext.h
 	"gstmfxminiobject.h"
-	"gstvaapialloc.h"
+	"gstmfxcontext.h"
 	<mfxvideo.h>
+	<va/va.h>
+	<va/va_x11.h>
 
 1449478336 source:/home/ishmael/Desktop/gst_msdk/gstmfxcodecmap.c
 	"gstmfxcodecmap.h"
@@ -1122,7 +1125,7 @@
 	<gst/gst.h>
 	<mfxvideo.h>
 
-1450010233 source:/home/ishmael/Desktop/gst_msdk/gstmfxcontext.c
+1450407050 source:/home/ishmael/Desktop/gst_msdk/gstmfxcontext.c
 	"gstmfxcontext.h"
 
 1449469588 /home/ishmael/Desktop/gst_msdk/gstmfxsurfaceproxy_priv.h
@@ -1130,7 +1133,8 @@
 	"gstmfxsurfaceproxy.h"
 	"gstmfxsurface_priv.h"
 
-1450256510 /home/ishmael/Desktop/gst_msdk/gstmfxsurface_priv.h
+1450405198 /home/ishmael/Desktop/gst_msdk/gstmfxsurface_priv.h
+	"gstmfxcontext.h"
 	"gstmfxsurface.h"
 	"gstmfxminiobject.h"
 
@@ -1144,13 +1148,14 @@
 	"gstmfxsurface.h"
 	"gstmfxvideomemory.h"
 
-1450251012 /home/ishmael/Desktop/gst_msdk/gstmfxvideomemory.h
+1450404633 /home/ishmael/Desktop/gst_msdk/gstmfxvideomemory.h
 	<gst/gstallocator.h>
 	<gst/video/video-info.h>
 	"gstmfxsurfaceproxy.h"
 	"gstvaapiimage.h"
 	"gstmfxvideometa.h"
 	"gstmfxobjectpool.h"
+	"gstvaapiimagepool.h"
 	<gst/allocators/allocators.h>
 
 1448527308 /home/ishmael/Desktop/gst_msdk/gstmfxdisplay.h
@@ -1171,7 +1176,7 @@
 1449898510 /usr/include/gstreamer-1.0/gst/allocators/gstfdmemory.h
 	<gst/gst.h>
 
-1450262014 source:/home/ishmael/Desktop/gst_msdk/gstmfxdecoder.c
+1450404633 source:/home/ishmael/Desktop/gst_msdk/gstmfxdecoder.c
 	"gstmfxdecoder.h"
 	"gstmfxobjectpool_priv.h"
 	"gstmfxvideometa.h"
@@ -1183,11 +1188,11 @@
 1449927631 source:/home/ishmael/Desktop/gst_msdk/gstmfxpluginutil.c
 	"gstmfxpluginutil.h"
 
-1450256672 source:/home/ishmael/Desktop/gst_msdk/gstmfxsurface.c
+1450404633 source:/home/ishmael/Desktop/gst_msdk/gstmfxsurface.c
 	"gstmfxsurface.h"
 	"gstmfxsurface_priv.h"
 
-1450255304 source:/home/ishmael/Desktop/gst_msdk/gstmfxsurfacepool.c
+1450404633 source:/home/ishmael/Desktop/gst_msdk/gstmfxsurfacepool.c
 	"gstmfxsurfacepool.h"
 	"gstmfxobjectpool_priv.h"
 
@@ -1205,13 +1210,13 @@
 1450085479 source:/home/ishmael/Desktop/gst_msdk/video-format.c
 	"video-format.h"
 
-1450257795 source:/home/ishmael/Desktop/gst_msdk/gstmfxvideomemory.c
+1450404633 source:/home/ishmael/Desktop/gst_msdk/gstmfxvideomemory.c
 	"gstmfxvideomemory.h"
 
 1450262162 /home/ishmael/Desktop/gst_msdk/gstvaapiimage.h
 	"video-utils.h"
 
-1450162412 source:/home/ishmael/Desktop/gst_msdk/gstvaapiimage.c
+1450324387 source:/home/ishmael/Desktop/gst_msdk/gstvaapiimage.c
 	"gstvaapiimage.h"
 	"gstvaapiimage_priv.h"
 
@@ -1231,11 +1236,11 @@
 	"gstmfxobjectpool_priv.h"
 	"gstmfxminiobject.h"
 
-1450255710 source:/home/ishmael/Desktop/gst_msdk/gstvaapiimagepool.c
+1450396546 source:/home/ishmael/Desktop/gst_msdk/gstvaapiimagepool.c
 	"gstvaapiimagepool.h"
 	"gstmfxobjectpool_priv.h"
 
-1450262189 /home/ishmael/Desktop/gst_msdk/gstvaapiimagepool.h
+1450396773 /home/ishmael/Desktop/gst_msdk/gstvaapiimagepool.h
 	"gstvaapiimage.h"
 	"gstmfxobjectpool.h"
 	"video-utils.h"

@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 #include "gstmfxdecoder.h"
-#include "gstvaapialloc.h"
+#include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
 
@@ -51,7 +51,11 @@ struct _GstMfxDec
 
 	/* VA specific */
 	Display *dpy;
-	VaapiAllocatorContext alloc_ctx;
+	GstMfxContextAllocatorVaapi alloc_ctx;
+
+	/* Test */
+	GstAllocator *mfx_allocator;
+	GstVideoInfo vi;
 };
 
 struct _GstMfxDecClass

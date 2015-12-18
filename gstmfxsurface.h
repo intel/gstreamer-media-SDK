@@ -40,7 +40,7 @@ typedef struct _GstMfxSurface GstMfxSurface;
 typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
 
 GstMfxSurface *
-gst_mfx_surface_new(VaapiAllocatorContext *ctx);
+gst_mfx_surface_new(GstMfxContextAllocatorVaapi *ctx);
 
 mfxFrameSurface1 *
 gst_mfx_surface_get_frame_surface(GstMfxSurface * surface);

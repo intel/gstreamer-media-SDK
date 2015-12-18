@@ -324,7 +324,6 @@ gboolean
 _gst_vaapi_image_map(GstVaapiImage *image)
 {
     VAStatus status;
-    guint i;
 
     if (_gst_vaapi_image_is_mapped(image))
         goto map_success;

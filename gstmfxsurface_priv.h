@@ -1,7 +1,7 @@
 #ifndef GST_MFX_SURFACE_PRIV_H
 #define GST_MFX_SURFACE_PRIV_H
 
-//#include "gstmfxcontext.h"
+#include "gstmfxcontext.h"
 #include "gstmfxsurface.h"
 #include "gstmfxminiobject.h"
 
@@ -24,8 +24,7 @@ struct _GstMfxSurface
 	guint height;
 
 	mfxFrameSurface1 *surface;
-	//mfxFrameInfo frame_info;
-	VaapiAllocatorContext *alloc_ctx;
+	GstMfxContextAllocatorVaapi *alloc_ctx;
 };
 
 /**

@@ -16,9 +16,9 @@
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxsurfaceproxy_priv.h"
 #include "gstmfxcodecmap.h"
+#include "gstmfxvideomemory.h"
 #include "gstmfxvideometa.h"
 #include "gstmfxpluginutil.h"
-
 
 GST_DEBUG_CATEGORY_STATIC(mfxdec_debug);
 #define GST_CAT_DEFAULT (mfxdec_debug)
@@ -181,7 +181,7 @@ gst_mfxdec_open(GstVideoDecoder * decoder)
 
 	GST_DEBUG_OBJECT(mfxdec, "open");
 
-	memset(&(mfxdec->alloc_ctx), 0, sizeof (VaapiAllocatorContext));
+	memset(&(mfxdec->alloc_ctx), 0, sizeof (GstMfxContextAllocatorVaapi));
 
     /* initialize VA-API */
     mfxdec->dpy = XOpenDisplay(NULL);
@@ -437,33 +437,43 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 	GstMfxVideoMeta *meta;
 	const GstMfxRectangle *crop_rect;
 
-	//GstVideoInfo *const vip = &(decode->decoder->pool->priv.video_info);
-	//GstVideoMeta *vmeta;
-	//GstMfxVideoMemory *mem;
+	GstMemory *mem;
+    GstVideoInfo *const vip = &decode->vi;
+    GstVideoMeta *vmeta;
+
 
 	sts = gst_mfx_decoder_get_surface_proxy(decode->decoder, &proxy);
 
 	ret = gst_video_decoder_allocate_output_frame(GST_VIDEO_DECODER(decode), frame);
-	if (ret == GST_FLOW_OK) {
+	/*if (ret == GST_FLOW_OK) {
 		gst_mfxdec_vasurface_to_buffer(decode, proxy, frame->output_buffer);
 		ret = gst_video_decoder_finish_frame(GST_VIDEO_DECODER(decode), frame);
-	}
+	}*/
 
-	/*if (ret != GST_FLOW_OK)
+	if (ret != GST_FLOW_OK)
 		goto error_create_buffer;
 
-    //gst_buffer_append_memory (frame->output_buffer, mem);
-
 	//meta = gst_buffer_get_mfx_video_meta(frame->output_buffer);
-	vmeta = gst_buffer_get_video_meta(frame->output_buffer);
-	//meta = gst_mfx_video_meta_new();
-	if (!vmeta)
+	//meta = gst_buffer_get_video_meta(frame->output_buffer);
+	meta = gst_mfx_video_meta_new();
+	if (!meta)
 		goto error_get_meta;
 
-    vmeta->map = gst_video_meta_map_mfx_surface;
-    vmeta->unmap = gst_video_meta_unmap_mfx_surface;
+    mem = gst_mfx_video_memory_new(decode->mfx_allocator, meta);
+	gst_buffer_append_memory (frame->output_buffer, mem);
 
-	//gst_mfx_video_meta_set_surface_proxy(meta, proxy);
+    if (1) {
+        vmeta = gst_buffer_add_video_meta_full (frame->output_buffer, 0,
+            GST_VIDEO_INFO_FORMAT (vip), GST_VIDEO_INFO_WIDTH (vip),
+            GST_VIDEO_INFO_HEIGHT (vip), GST_VIDEO_INFO_N_PLANES (vip),
+            &GST_VIDEO_INFO_PLANE_OFFSET (vip, 0),
+            &GST_VIDEO_INFO_PLANE_STRIDE (vip, 0));
+
+        vmeta->map = gst_video_meta_map_mfx_surface;
+        vmeta->unmap = gst_video_meta_unmap_mfx_surface;
+    }
+
+	gst_mfx_video_meta_set_surface_proxy(meta, proxy);
 	crop_rect = gst_mfx_surface_proxy_get_crop_rect(proxy);
 	if (crop_rect) {
 		GstVideoCropMeta *const crop_meta =
@@ -479,13 +489,13 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 	//if (decode->has_texture_upload_meta)
 		//gst_buffer_ensure_texture_upload_meta(frame->output_buffer);
 
-	//gst_buffer_set_mfx_video_meta(frame->output_buffer, meta);
+	gst_buffer_set_mfx_video_meta(frame->output_buffer, meta);
 
 	ret = gst_video_decoder_finish_frame(GST_VIDEO_DECODER(decode), frame);
 	if (ret != GST_FLOW_OK)
 		goto error_commit_buffer;
 
-	//gst_mfx_video_meta_unref(meta);*/
+	gst_mfx_video_meta_unref(meta);
 
 	return ret;
 
@@ -631,6 +641,9 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 	if (GST_VIDEO_INFO_FORMAT(&vi) == GST_VIDEO_FORMAT_ENCODED)
 		gst_video_info_set_format(&vi, GST_VIDEO_FORMAT_NV12,
 		GST_VIDEO_INFO_WIDTH(&vi), GST_VIDEO_INFO_HEIGHT(&vi));
+
+    decode->mfx_allocator = gst_mfx_video_allocator_new(&decode->alloc_ctx, &vi);
+    decode->vi = vi;
 
 	if (gst_query_get_n_allocation_pools(query) > 0) {
 		gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &min, &max);

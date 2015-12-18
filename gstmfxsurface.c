@@ -23,7 +23,7 @@ gst_mfx_surface_class(void)
 }
 
 static gboolean
-gst_mfx_surface_create(GstMfxSurface * surface, VaapiAllocatorContext *ctx)
+gst_mfx_surface_create(GstMfxSurface * surface, GstMfxContextAllocatorVaapi *ctx)
 {
     surface->alloc_ctx = ctx;
     surface->display = ctx->va_dpy;
@@ -41,7 +41,7 @@ gst_mfx_surface_create(GstMfxSurface * surface, VaapiAllocatorContext *ctx)
 }
 
 GstMfxSurface *
-gst_mfx_surface_new(VaapiAllocatorContext *ctx)
+gst_mfx_surface_new(GstMfxContextAllocatorVaapi *ctx)
 {
 	GstMfxSurface *surface;
 

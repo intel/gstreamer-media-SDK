@@ -7,6 +7,7 @@
 #include "gstvaapiimage.h"
 #include "gstmfxvideometa.h"
 #include "gstmfxobjectpool.h"
+#include "gstvaapiimagepool.h"
 #include <gst/allocators/allocators.h>
 
 G_BEGIN_DECLS
@@ -37,6 +38,24 @@ typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
 	GST_MEMORY_FLAG_UNSET (mem, flag)
 
 /**
+ * GstMfxVideoMemoryMapType:
+ * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE: map with gst_buffer_map()
+ *   and flags = 0x00 to return a #GstMfxSurfaceProxy
+ * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_PLANAR: map individual plane with
+ *   gst_video_frame_map()
+ * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR: map with gst_buffer_map()
+ *   and flags = GST_MAP_READ to return the raw pixels of the whole image
+ *
+ * The set of all #GstMfxVideoMemory map types.
+ */
+typedef enum
+{
+    GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE = 1,
+    GST_MFX_VIDEO_MEMORY_MAP_TYPE_PLANAR,
+    GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR
+} GstMfxVideoMemoryMapType;
+
+/**
 * GstMfxVideoMemory:
 *
 * A VA video memory object holder, including VA surfaces, images and
@@ -53,7 +72,7 @@ struct _GstMfxVideoMemory
 	const GstVideoInfo *image_info;
 	GstVaapiImage *image;
 	GstMfxVideoMeta *meta;
-	//guint map_type;
+	guint map_type;
 	gint map_count;
 	//gboolean use_direct_rendering;
 };
@@ -72,8 +91,6 @@ gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
 void
 gst_mfx_video_memory_reset_surface (GstMfxVideoMemory * mem);
 
-gboolean
-gst_mfx_video_memory_sync (GstMfxVideoMemory * mem);
 
 /* ------------------------------------------------------------------------ */
 /* --- GstMfxVideoAllocator                                           --- */
@@ -103,10 +120,10 @@ struct _GstMfxVideoAllocator
 
 	/*< private >*/
 	GstVideoInfo video_info;
-	GstVideoInfo surface_info;
+	//GstVideoInfo surface_info;
+	GstMfxObjectPool *image_pool;
 	GstMfxObjectPool *surface_pool;
 	GstVideoInfo image_info;
-	GstMfxObjectPool *image_pool;
 
 	//gboolean has_direct_rendering;
 };
@@ -129,7 +146,8 @@ gst_mfx_video_allocator_new(GstMfxDisplay * display,
 	const GstVideoInfo * vip, guint flags);*/
 
 GstAllocator *
-gst_mfx_video_allocator_new(VaapiAllocatorContext * alloc_context);
+gst_mfx_video_allocator_new(GstMfxContextAllocatorVaapi * ctx,
+    const GstVideoInfo * vip);
 
 const GstVideoInfo *
 gst_allocator_get_mfx_video_info(GstAllocator * allocator,

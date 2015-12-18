@@ -11,20 +11,20 @@ struct _GstMfxSurfacePool
 {
     GstMfxObjectPool parent_instance;
 
-	GstVideoInfo video_info;
-	VaapiAllocatorContext *ctx;
+	//GstVideoInfo video_info;
+	GstMfxContextAllocatorVaapi *ctx;
 };
 
 static gboolean
-surface_pool_init(GstMfxSurfacePool * pool, VaapiAllocatorContext * ctx)
+surface_pool_init(GstMfxSurfacePool * pool, GstMfxContextAllocatorVaapi * ctx)
 {
-	GstVideoFormat format = gst_mfx_video_format_from_mfx_fourcc(ctx->frame_info.FourCC);
+	/*GstVideoFormat format = gst_mfx_video_format_from_mfx_fourcc(ctx->frame_info.FourCC);
 
 	if (format == GST_VIDEO_FORMAT_UNKNOWN)
 		return FALSE;
 
 	gst_video_info_set_format(&(pool->video_info), format,
-        ctx->frame_info.Width, ctx->frame_info.Height);
+        ctx->frame_info.Width, ctx->frame_info.Height);*/
 
 	pool->ctx = ctx;
 
@@ -51,13 +51,13 @@ gst_mfx_surface_pool_class (void)
 }
 
 GstMfxObjectPool *
-gst_mfx_surface_pool_new(VaapiAllocatorContext * ctx)
+gst_mfx_surface_pool_new(GstMfxContextAllocatorVaapi * ctx)
 {
-	GstMfxSurfacePool *pool;
+	GstMfxObjectPool *pool;
 
 	g_return_val_if_fail(ctx != NULL, NULL);
 
-	pool = (GstMfxSurfacePool *)
+	pool = (GstMfxObjectPool *)
 		gst_mfx_mini_object_new(gst_mfx_surface_pool_class());
 	if (!pool)
 		return NULL;
