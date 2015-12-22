@@ -278,13 +278,10 @@ GstBufferPool *
 gst_mfx_video_buffer_pool_new(GstMfxContextAllocatorVaapi * context)
 {
     GstMfxVideoBufferPool *pool;
-    GstMfxVideoBufferPoolPrivate *const priv =
-        GST_MFX_VIDEO_BUFFER_POOL_GET_PRIVATE (pool);
 
     pool = g_object_new(GST_MFX_TYPE_VIDEO_BUFFER_POOL, NULL);
 
-    pool->priv = priv;
-    priv->alloc_ctx = gst_mfx_mini_object_ref(context);
+    pool->priv->alloc_ctx = gst_mfx_mini_object_ref(context);
 
 	return GST_BUFFER_POOL_CAST(pool);
 }

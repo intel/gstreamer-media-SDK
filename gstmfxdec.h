@@ -52,10 +52,6 @@ struct _GstMfxDec
 	/* VA specific */
 	Display *dpy;
 	GstMfxContextAllocatorVaapi alloc_ctx;
-
-	/* Test */
-	GstAllocator *mfx_allocator;
-	GstVideoInfo vi;
 };
 
 struct _GstMfxDecClass

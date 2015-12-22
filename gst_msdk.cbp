@@ -11,17 +11,18 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/ishmael/Videos/left_edit.h264 ! h264parse ! mfxdecode ! glimagesink" />
+				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! glimagesink" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-std=c99 -fPIC" />
 					<Add option="-DHAVE_MFX_DECODER" />
-					<Add directory="/usr/lib/x86_64-linux-gnu/glib-2.0/include" />
+					<Add directory="/usr/lib64/glib-2.0/include" />
 					<Add directory="/usr/include/gstreamer-1.0" />
 					<Add directory="/usr/include/glib-2.0" />
 					<Add directory="/opt/intel/mediasdk/include" />
+					<Add directory="/usr/lib64/gstreamer-1.0/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-lgstreamer-1.0 -lgobject-2.0 -lglib-2.0" />
@@ -35,17 +36,18 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Release/libgst_msdk.so filesrc location=/home/ishmael/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! glimagesink" />
+				<Option parameters="--gst-plugin-load=./bin/Release/libgst_msdk.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! glimagesink" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-std=c99 -fPIC" />
 					<Add option="-DHAVE_MFX_DECODER" />
-					<Add directory="/usr/lib/x86_64-linux-gnu/glib-2.0/include" />
 					<Add directory="/usr/include/gstreamer-1.0" />
 					<Add directory="/usr/include/glib-2.0" />
 					<Add directory="/opt/intel/mediasdk/include" />
+					<Add directory="/usr/lib64/glib-2.0/include" />
+					<Add directory="/usr/lib64/gstreamer-1.0/include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -107,6 +109,10 @@
 		<Unit filename="gstmfxsurfaceproxy.h" />
 		<Unit filename="gstmfxsurfaceproxy_priv.h" />
 		<Unit filename="gstmfxtypes.h" />
+		<Unit filename="gstmfxvideobufferpool.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxvideobufferpool.h" />
 		<Unit filename="gstmfxvideomemory.c">
 			<Option compilerVar="CC" />
 		</Unit>

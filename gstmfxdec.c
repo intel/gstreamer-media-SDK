@@ -18,6 +18,7 @@
 #include "gstmfxcodecmap.h"
 #include "gstmfxvideomemory.h"
 #include "gstmfxvideometa.h"
+#include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
 
 GST_DEBUG_CATEGORY_STATIC(mfxdec_debug);
@@ -303,75 +304,6 @@ gst_mfxdec_set_format(GstVideoDecoder * decoder, GstVideoCodecState * state)
 	return gst_mfxdec_create(mfxdec, state->caps);
 }
 
-static void
-gst_mfxdec_vasurface_to_buffer(GstMfxDec * dec, GstMfxSurfaceProxy * proxy,
-    GstBuffer * buffer)
-{
-	int deststride, srcstride, height, width, line, plane;
-	guint8 *dest, *src;
-	GstVideoFrame frame;
-	GstVideoInfo *info = &dec->output_state->info;
-
-	VADisplay display = dec->alloc_ctx.va_dpy;
-	VAStatus err;
-	//VAImage img =
-        //*gst_mfx_surface_get_image(GST_MFX_SURFACE_PROXY_SURFACE(proxy), display);
-	GstVaapiImage *image =
-        gst_mfx_surface_derive_image(GST_MFX_SURFACE_PROXY_SURFACE(proxy));
-
-    if (!gst_vaapi_image_map(image))
-        goto fail;
-
-    /*err = vaMapBuffer(display, img.buf, (void**)&src);
-    if (err != VA_STATUS_SUCCESS) {
-        g_printerr("Error mapping the image buffer: %s\n",
-                vaErrorStr(err));
-        goto fail;
-    }*/
-
-    if (!gst_video_frame_map(&frame, info, buffer, GST_MAP_WRITE)) {
-		GST_ERROR_OBJECT(dec, "Could not map video buffer");
-		return;
-	}
-
-	//for (plane = 0; plane < img.num_planes; plane++) {
-    for (plane = 0; plane < gst_vaapi_image_get_plane_count(image); plane++) {
-		dest = GST_VIDEO_FRAME_COMP_DATA(&frame, plane);
-
-		width = GST_VIDEO_FRAME_COMP_WIDTH(&frame, plane)
-			* GST_VIDEO_FRAME_COMP_PSTRIDE(&frame, plane);
-		height = GST_VIDEO_FRAME_COMP_HEIGHT(&frame, plane);
-		deststride = GST_VIDEO_FRAME_COMP_STRIDE(&frame, plane);
-		//srcstride = img.pitches[plane];
-		srcstride = gst_vaapi_image_get_pitch(image, plane);
-
-		if (srcstride == deststride) {
-			GST_TRACE_OBJECT(dec, "Stride matches. Comp %d: %d, copying full plane",
-				plane, srcstride);
-			//memcpy(dest, src + img.offsets[plane], srcstride * height);
-			memcpy(dest, gst_vaapi_image_get_plane(image, plane), srcstride * height);
-		}
-		else {
-			GST_TRACE_OBJECT(dec, "Stride mismatch. Comp %d: %d != %d, copying "
-				"line by line.", plane, srcstride, deststride);
-			for (line = 0; line < height; line++) {
-				//memcpy(dest, src + img.offsets[plane] + line * srcstride, width);
-				memcpy(dest, gst_vaapi_image_get_plane(image, plane) + line * srcstride, width);
-				dest += deststride;
-			}
-		}
-	}
-
-	gst_video_frame_unmap(&frame);
-
-fail:
-    gst_mfx_mini_object_unref(image);
-	/*if (img.buf != VA_INVALID_ID)
-        vaUnmapBuffer(display, img.buf);
-    if (img.image_id != VA_INVALID_ID)
-        vaDestroyImage(display, img.image_id);*/
-}
-
 static gboolean
 gst_mfxdec_update_src_caps(GstMfxDec * decode)
 {
@@ -437,42 +369,14 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 	GstMfxVideoMeta *meta;
 	const GstMfxRectangle *crop_rect;
 
-	GstMemory *mem;
-    GstVideoInfo *const vip = &decode->vi;
-    GstVideoMeta *vmeta;
-
-
 	sts = gst_mfx_decoder_get_surface_proxy(decode->decoder, &proxy);
 
 	ret = gst_video_decoder_allocate_output_frame(GST_VIDEO_DECODER(decode), frame);
-	/*if (ret == GST_FLOW_OK) {
-		gst_mfxdec_vasurface_to_buffer(decode, proxy, frame->output_buffer);
-		ret = gst_video_decoder_finish_frame(GST_VIDEO_DECODER(decode), frame);
-	}*/
 
 	if (ret != GST_FLOW_OK)
 		goto error_create_buffer;
 
-	//meta = gst_buffer_get_mfx_video_meta(frame->output_buffer);
-	//meta = gst_buffer_get_video_meta(frame->output_buffer);
-	meta = gst_mfx_video_meta_new();
-	if (!meta)
-		goto error_get_meta;
-
-    mem = gst_mfx_video_memory_new(decode->mfx_allocator, meta);
-	gst_buffer_append_memory (frame->output_buffer, mem);
-
-    if (1) {
-        vmeta = gst_buffer_add_video_meta_full (frame->output_buffer, 0,
-            GST_VIDEO_INFO_FORMAT (vip), GST_VIDEO_INFO_WIDTH (vip),
-            GST_VIDEO_INFO_HEIGHT (vip), GST_VIDEO_INFO_N_PLANES (vip),
-            &GST_VIDEO_INFO_PLANE_OFFSET (vip, 0),
-            &GST_VIDEO_INFO_PLANE_STRIDE (vip, 0));
-
-        vmeta->map = gst_video_meta_map_mfx_surface;
-        vmeta->unmap = gst_video_meta_unmap_mfx_surface;
-    }
-
+	meta = gst_buffer_get_mfx_video_meta(frame->output_buffer);
 	gst_mfx_video_meta_set_surface_proxy(meta, proxy);
 	crop_rect = gst_mfx_surface_proxy_get_crop_rect(proxy);
 	if (crop_rect) {
@@ -489,13 +393,9 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 	//if (decode->has_texture_upload_meta)
 		//gst_buffer_ensure_texture_upload_meta(frame->output_buffer);
 
-	gst_buffer_set_mfx_video_meta(frame->output_buffer, meta);
-
 	ret = gst_video_decoder_finish_frame(GST_VIDEO_DECODER(decode), frame);
 	if (ret != GST_FLOW_OK)
 		goto error_commit_buffer;
-
-	gst_mfx_video_meta_unref(meta);
 
 	return ret;
 
@@ -619,21 +519,18 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 	has_texture_upload_meta = gst_query_find_allocation_meta(query,
 		GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx);
 
-	if (!GST_VIDEO_DECODER_CLASS(parent_class)->decide_allocation(vdec, query))
-		return FALSE;
-
 	/*if (has_texture_upload_meta) {
-	const GstStructure *params;
-	GstObject *gl_context;
+        const GstStructure *params;
+        GstObject *gl_context;
 
-	gst_query_parse_nth_allocation_meta(query, idx, &params);
-	if (params) {
-	if (gst_structure_get(params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
-	&gl_context, NULL) && gl_context) {
-	gst_mfxdec_set_gl_context(decode, gl_context);
-	gst_object_unref(gl_context);
-	}
-	}
+        gst_query_parse_nth_allocation_meta(query, idx, &params);
+        if (params) {
+            if (gst_structure_get(params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
+                    &gl_context, NULL) && gl_context) {
+                gst_mfxdec_set_gl_context(decode, gl_context);
+                gst_object_unref(gl_context);
+            }
+        }
 	}*/
 
 	gst_video_info_init(&vi);
@@ -641,9 +538,6 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 	if (GST_VIDEO_INFO_FORMAT(&vi) == GST_VIDEO_FORMAT_ENCODED)
 		gst_video_info_set_format(&vi, GST_VIDEO_FORMAT_NV12,
 		GST_VIDEO_INFO_WIDTH(&vi), GST_VIDEO_INFO_HEIGHT(&vi));
-
-    decode->mfx_allocator = gst_mfx_video_allocator_new(&decode->alloc_ctx, &vi);
-    decode->vi = vi;
 
 	if (gst_query_get_n_allocation_pools(query) > 0) {
 		gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &min, &max);
@@ -661,6 +555,25 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 		size = vi.size;
 		min = max = 0;
 	}
+
+	/* GstVaapiVideoMeta is mandatory, and this implies VA surface memory */
+    if (!pool || !gst_buffer_pool_has_option (pool,
+            GST_BUFFER_POOL_OPTION_MFX_VIDEO_META)) {
+        GST_INFO_OBJECT (decode, "%s. Making a new pool", pool == NULL ? "No pool" :
+            "Pool hasn't GstMfxVideoMeta");
+        if (pool)
+            gst_object_unref (pool);
+        pool = gst_mfx_video_buffer_pool_new (&decode->alloc_ctx);
+        if (!pool)
+            goto error_create_pool;
+
+        config = gst_buffer_pool_get_config (pool);
+        gst_buffer_pool_config_set_params (config, caps, size, min, max);
+        gst_buffer_pool_config_add_option (config,
+            GST_BUFFER_POOL_OPTION_MFX_VIDEO_META);
+        if (!gst_buffer_pool_set_config (pool, config))
+            goto config_failed;
+    }
 
 	/* Check whether GstVideoMeta, or GstVideoAlignment, is needed (raw video) */
 	if (has_video_meta) {
@@ -686,21 +599,26 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 	else
 		gst_query_add_allocation_pool(query, pool, size, min, max);
 
-	//g_clear_object(&decode->srcpad_buffer_pool);
-	//decode->srcpad_buffer_pool = pool;
-	return TRUE;
+	//g_clear_object (&decode->srcpad_buffer_pool);
+    //decode->srcpad_buffer_pool = pool;
+    return TRUE;
 
 error_no_caps:
 	{
 		GST_ERROR_OBJECT(vdec, "no caps specified");
 		return FALSE;
 	}
+error_create_pool:
+    {
+        GST_ERROR_OBJECT (vdec, "failed to create buffer pool");
+        return FALSE;
+    }
 config_failed:
 	{
 		if (pool)
 			gst_object_unref(pool);
-		GST_ELEMENT_ERROR(vdec, RESOURCE, SETTINGS,
-			("Failed to configure the buffer pool"),
+        GST_ELEMENT_ERROR(vdec, RESOURCE, SETTINGS,
+            ("Failed to configure the buffer pool"),
 			("Configuration is most likely invalid, please report this issue."));
 		return FALSE;
 	}
