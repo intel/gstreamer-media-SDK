@@ -81,6 +81,20 @@
 		</Unit>
 		<Unit filename="gstmfxdecoder.h" />
 		<Unit filename="gstmfxdecoder_priv.h" />
+		<Unit filename="gstmfxdisplay.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxdisplay.h" />
+		<Unit filename="gstmfxdisplay_priv.h" />
+		<Unit filename="gstmfxdisplay_x11.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxdisplay_x11.h" />
+		<Unit filename="gstmfxdisplay_x11_priv.h" />
+		<Unit filename="gstmfxdisplaycache.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxdisplaycache.h" />
 		<Unit filename="gstmfxminiobject.c">
 			<Option compilerVar="CC" />
 		</Unit>

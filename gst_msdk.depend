@@ -1270,12 +1270,11 @@
 
 1444827850 /usr/include/glib-2.0/gobject/gobject-autocleanups.h
 
-1453389057 /home/nuc/work/gst_msdk/gstmfxdec.h
+1453486558 /home/nuc/work/gst_msdk/gstmfxdec.h
 	<gst/gst.h>
 	<gst/video/gstvideodecoder.h>
 	<mfxvideo.h>
-	<X11/Xlib.h>
-	<stdio.h>
+	"gstmfxdisplay.h"
 	"gstmfxdecoder.h"
 	"gstmfxcontext.h"
 
@@ -1435,7 +1434,7 @@
 	<limits.h>
 	<float.h>
 
-1453389140 source:/home/nuc/work/gst_msdk/gstmfxdec.c
+1453486445 source:/home/nuc/work/gst_msdk/gstmfxdec.c
 	"gstmfxdec.h"
 	<string.h>
 	"gstvaapiimage.h"
@@ -1459,4 +1458,44 @@
 	"gstmfxvideomemory.h"
 
 1453322737 /usr/lib64/gstreamer-1.0/include/gst/gstconfig.h
+
+1453462419 source:/home/nuc/work/gst_msdk/gstmfxdisplay.c
+	<string.h>
+	"gstmfxdisplay.h"
+	"gstmfxdisplay_priv.h"
+
+1450837802 /home/nuc/work/gst_msdk/gstmfxdisplay.h
+	<va/va.h>
+	<gst/gst.h>
+	"gstmfxtypes.h"
+
+1453462358 /home/nuc/work/gst_msdk/gstmfxdisplay_priv.h
+	"gstmfxdisplay.h"
+	"gstmfxdisplaycache.h"
+	"gstmfxminiobject.h"
+
+1450672467 /home/nuc/work/gst_msdk/gstmfxdisplaycache.h
+	"gstmfxdisplay.h"
+	"gstmfxminiobject.h"
+
+1453463322 source:/home/nuc/work/gst_msdk/gstmfxdisplay_x11.c
+	<string.h>
+	"gstmfxdisplay_priv.h"
+	"gstmfxdisplay_x11.h"
+	"gstmfxdisplay_x11_priv.h"
+	<X11/extensions/Xrandr.h>
+	<X11/extensions/Xrender.h>
+
+1448504767 /home/nuc/work/gst_msdk/gstmfxdisplay_x11.h
+	<va/va_x11.h>
+	"gstmfxdisplay.h"
+
+1453461316 /home/nuc/work/gst_msdk/gstmfxdisplay_x11_priv.h
+	"gstmfxdisplay_x11.h"
+	"gstmfxdisplay_priv.h"
+
+1450673610 source:/home/nuc/work/gst_msdk/gstmfxdisplaycache.c
+	<glib.h>
+	<string.h>
+	"gstmfxdisplaycache.h"
 

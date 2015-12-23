@@ -21,6 +21,7 @@
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
 
+
 GST_DEBUG_CATEGORY_STATIC(mfxdec_debug);
 #define GST_CAT_DEFAULT (mfxdec_debug)
 
@@ -73,8 +74,6 @@ static void gst_mfx_dec_get_property(GObject * object, guint prop_id,
 /* GstVideoDecoder base class method */
 static gboolean gst_mfxdec_open(GstVideoDecoder * decoder);
 static gboolean gst_mfxdec_close(GstVideoDecoder * decoder);
-static gboolean gst_mfxdec_start(GstVideoDecoder * decoder);
-static gboolean gst_mfxdec_stop(GstVideoDecoder * decoder);
 static gboolean gst_mfxdec_set_format(GstVideoDecoder * decoder,
 	GstVideoCodecState * state);
 static gboolean gst_mfxdec_flush(GstVideoDecoder * decoder);
@@ -112,8 +111,6 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
 
 	video_decoder_class->open = GST_DEBUG_FUNCPTR(gst_mfxdec_open);
 	video_decoder_class->close = GST_DEBUG_FUNCPTR(gst_mfxdec_close);
-	video_decoder_class->start = GST_DEBUG_FUNCPTR(gst_mfxdec_start);
-	video_decoder_class->stop = GST_DEBUG_FUNCPTR(gst_mfxdec_stop);
 	video_decoder_class->flush = GST_DEBUG_FUNCPTR(gst_mfxdec_flush);
 	video_decoder_class->set_format = GST_DEBUG_FUNCPTR(gst_mfxdec_set_format);
 	video_decoder_class->handle_frame =
@@ -184,26 +181,9 @@ gst_mfxdec_open(GstVideoDecoder * decoder)
 
 	memset(&(mfxdec->alloc_ctx), 0, sizeof (GstMfxContextAllocatorVaapi));
 
-    /* initialize VA-API */
-    mfxdec->dpy = XOpenDisplay(NULL);
-    if (!mfxdec->dpy) {
-        GST_ERROR ("Cannot open the X display\n");
-        return FALSE;
-    }
+	mfxdec->display = gst_mfx_display_x11_new(":0");
 
-    mfxdec->alloc_ctx.va_dpy = vaGetDisplay(mfxdec->dpy);
-    if (!mfxdec->alloc_ctx.va_dpy) {
-        GST_ERROR ("Cannot open the VA display\n");
-        return FALSE;
-    }
-
-    err = vaInitialize(mfxdec->alloc_ctx.va_dpy, &va_ver_major, &va_ver_minor);
-    if (err != VA_STATUS_SUCCESS) {
-        GST_ERROR ("Cannot initialize VA: %s\n", vaErrorStr(err));
-        return FALSE;
-    }
-
-    GST_INFO_OBJECT("Initialized VA v%d.%d\n", va_ver_major, va_ver_minor);
+	mfxdec->alloc_ctx.va_dpy = GST_MFX_DISPLAY_VADISPLAY(mfxdec->display);
 
 	return TRUE;
 }
@@ -211,42 +191,16 @@ gst_mfxdec_open(GstVideoDecoder * decoder)
 static gboolean
 gst_mfxdec_close(GstVideoDecoder * decoder)
 {
-	GstMfxDec *const decode = GST_MFXDEC(decoder);
+	GstMfxDec *const mfxdec = GST_MFXDEC(decoder);
 
-	GST_DEBUG_OBJECT(decode, "close");
-
-	return TRUE;
-}
-
-static gboolean
-gst_mfxdec_start(GstVideoDecoder * decoder)
-{
-	GstMfxDec *mfxdec = GST_MFXDEC(decoder);
-
-	GST_DEBUG_OBJECT(mfxdec, "start");
-
-	//if (!gst_mfx_decoder_ensure_context(decoder))
-		//return FALSE;
-
-	return TRUE;
-}
-
-static gboolean
-gst_mfxdec_stop(GstVideoDecoder * decoder)
-{
-	GstMfxDec *mfxdec = GST_MFXDEC(decoder);
-
-	GST_DEBUG_OBJECT(mfxdec, "stop");
-
-	if (mfxdec->output_state) {
-		gst_video_codec_state_unref(mfxdec->output_state);
-		mfxdec->output_state = NULL;
-	}
+	GST_DEBUG_OBJECT(mfxdec, "close");
 
 	if (mfxdec->input_state) {
 		gst_video_codec_state_unref(mfxdec->input_state);
 		mfxdec->input_state = NULL;
 	}
+
+	gst_mfx_display_unref(mfxdec->display);
 
 	return TRUE;
 }
@@ -257,11 +211,6 @@ gst_mfxdec_flush(GstVideoDecoder * decoder)
 	GstMfxDec *mfxdec = GST_MFXDEC(decoder);
 
 	GST_DEBUG_OBJECT(mfxdec, "stop");
-
-	if (mfxdec->output_state) {
-		gst_video_codec_state_unref(mfxdec->output_state);
-		mfxdec->output_state = NULL;
-	}
 
 	return TRUE;
 }
@@ -287,11 +236,6 @@ gst_mfxdec_set_format(GstVideoDecoder * decoder, GstVideoCodecState * state)
 	GstMfxDec *mfxdec = GST_MFXDEC(decoder);
 
 	GST_DEBUG_OBJECT(mfxdec, "set_format");
-
-	if (mfxdec->output_state) {
-		gst_video_codec_state_unref(mfxdec->output_state);
-		mfxdec->output_state = NULL;
-	}
 
 	/* Save input state to be used as reference for output state */
 	if (mfxdec->input_state) {
@@ -355,7 +299,7 @@ gst_mfxdec_update_src_caps(GstMfxDec * decode)
 		gst_caps_set_features(state->caps, 0, features);
 	GST_INFO_OBJECT(decode, "new src caps = %" GST_PTR_FORMAT, state->caps);
 
-	decode->output_state = state;
+	gst_video_codec_state_unref(state);
 
 	return TRUE;
 }
@@ -556,7 +500,6 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 		min = max = 0;
 	}
 
-	/* GstVaapiVideoMeta is mandatory, and this implies VA surface memory */
     if (!pool || !gst_buffer_pool_has_option (pool,
             GST_BUFFER_POOL_OPTION_MFX_VIDEO_META)) {
         GST_INFO_OBJECT (decode, "%s. Making a new pool", pool == NULL ? "No pool" :
@@ -599,8 +542,6 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 	else
 		gst_query_add_allocation_pool(query, pool, size, min, max);
 
-	//g_clear_object (&decode->srcpad_buffer_pool);
-    //decode->srcpad_buffer_pool = pool;
     return TRUE;
 
 error_no_caps:

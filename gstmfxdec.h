@@ -1,13 +1,3 @@
-/*
- ============================================================================
- Name        : gst-mfx-dec.h
- Author      : Heiher <admin@heiher.info>
- Version     : 0.0.1
- Copyright   : Copyright (C) 2013 everyone.
- Description :
- ============================================================================
- */
-
 #ifndef __GST_MFX_DEC_H__
 #define __GST_MFX_DEC_H__
 
@@ -15,9 +5,8 @@
 #include <gst/video/gstvideodecoder.h>
 
 #include <mfxvideo.h>
-#include <X11/Xlib.h>
-#include <stdio.h>
 
+#include "gstmfxdisplay.h"
 #include "gstmfxdecoder.h"
 #include "gstmfxcontext.h"
 
@@ -38,7 +27,6 @@ struct _GstMfxDec
 	GstVideoDecoder parent;
 
 	GstVideoCodecState *input_state;
-	GstVideoCodecState *output_state;
 
 	//mfxVideoParam param;
 
@@ -50,7 +38,7 @@ struct _GstMfxDec
 	int nb_ext_buffers;
 
 	/* VA specific */
-	Display *dpy;
+	GstMfxDisplay *display;
 	GstMfxContextAllocatorVaapi alloc_ctx;
 };
 
