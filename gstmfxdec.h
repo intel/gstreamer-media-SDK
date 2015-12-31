@@ -1,3 +1,13 @@
+/*
+ ============================================================================
+ Name        : gst-mfx-dec.h
+ Author      : Heiher <admin@heiher.info>
+ Version     : 0.0.1
+ Copyright   : Copyright (C) 2013 everyone.
+ Description :
+ ============================================================================
+ */
+
 #ifndef __GST_MFX_DEC_H__
 #define __GST_MFX_DEC_H__
 
@@ -5,10 +15,11 @@
 #include <gst/video/gstvideodecoder.h>
 
 #include <mfxvideo.h>
+#include <X11/Xlib.h>
+#include <stdio.h>
 
-#include "gstmfxdisplay.h"
 #include "gstmfxdecoder.h"
-#include "gstmfxcontext.h"
+#include "gstmfxpluginbase.h"
 
 G_BEGIN_DECLS
 
@@ -22,29 +33,28 @@ G_BEGIN_DECLS
 typedef struct _GstMfxDec GstMfxDec;
 typedef struct _GstMfxDecClass GstMfxDecClass;
 
-struct _GstMfxDec
-{
-	GstVideoDecoder parent;
+struct _GstMfxDec {
+	/*< private >*/
+	GstMfxPluginBase  parent_instance;
 
-	GstVideoCodecState *input_state;
+	GstCaps				*sinkpad_caps;
+	GstCaps				*srcpad_caps;
+	GstMfxDecoder		*decoder;
+	//GMutex			surface_ready_mutex;
+	//GCond				surface_ready;
+	GstCaps				*decoder_caps;
+	GstCaps				*allowed_caps;
+	guint				current_frame_size;
+	guint				has_texture_upload_meta : 1;
 
-	//mfxVideoParam param;
-
-	GstMfxDecoder *decoder;
-
-	/* properties */
-	int async_depth;
-	mfxExtBuffer **ext_buffers;
-	int nb_ext_buffers;
-
-	/* VA specific */
-	GstMfxDisplay *display;
-	GstMfxContextAllocatorVaapi alloc_ctx;
+	GstVideoCodecState	*input_state;
+	volatile gboolean	active;
+	volatile gboolean   do_renego;
 };
 
-struct _GstMfxDecClass
-{
-	GstVideoDecoderClass parent_class;
+struct _GstMfxDecClass {
+	/*< private >*/
+	GstMfxPluginBaseClass parent_class;
 };
 
 GType gst_mfxdec_get_type (void);

@@ -2,6 +2,7 @@
 #define __GST_MFX_VIDEO_BUFFER_POOL_H__
 
 #include <gst/video/gstvideopool.h>
+#include "gstmfxdisplay.h"
 #include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
@@ -44,10 +45,11 @@ struct _GstMfxVideoBufferPoolClass
 	GstBufferPoolClass parent_instance;
 };
 
-GType             gst_mfx_video_buffer_pool_get_type(void);
+GType gst_mfx_video_buffer_pool_get_type(void);
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new(GstMfxContextAllocatorVaapi * context);
+gst_mfx_video_buffer_pool_new(GstMfxDisplay * display,
+	GstMfxContextAllocatorVaapi * context);
 
 G_END_DECLS
 

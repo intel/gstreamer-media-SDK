@@ -20,7 +20,7 @@ get_image_data (GstVaapiImage * image)
 }
 
 static GstVaapiImage *
-new_image (VADisplay display, const GstVideoInfo * vip)
+new_image(GstMfxDisplay * display, const GstVideoInfo * vip)
 {
     if (!GST_VIDEO_INFO_WIDTH (vip) || !GST_VIDEO_INFO_HEIGHT (vip))
         return NULL;
@@ -498,7 +498,7 @@ gst_video_info_update_from_image (GstVideoInfo * vip, GstVaapiImage * image)
 }
 
 static inline void
-allocator_configure_image_info (VADisplay display,
+allocator_configure_image_info(GstMfxDisplay * display,
     GstMfxVideoAllocator * allocator)
 {
     GstVaapiImage *image = NULL;
@@ -524,8 +524,8 @@ bail:
 }
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxContextAllocatorVaapi * ctx,
-    const GstVideoInfo * vip)
+gst_mfx_video_allocator_new(GstMfxDisplay * display,
+	GstMfxContextAllocatorVaapi * ctx, const GstVideoInfo * vip)
 {
 	GstMfxVideoAllocator *allocator;
 
@@ -538,13 +538,13 @@ gst_mfx_video_allocator_new(GstMfxContextAllocatorVaapi * ctx,
 
 	allocator->video_info = *vip;
 
-	allocator->surface_pool = gst_mfx_surface_pool_new(ctx);
+	allocator->surface_pool = gst_mfx_surface_pool_new(display, ctx);
 
 	if (!allocator->surface_pool)
 		goto error_create_surface_pool;
 
-    allocator_configure_image_info (ctx->va_dpy, allocator);
-    allocator->image_pool = gst_vaapi_image_pool_new (ctx->va_dpy,
+    allocator_configure_image_info (display, allocator);
+    allocator->image_pool = gst_vaapi_image_pool_new (display,
         &allocator->image_info);
     if (!allocator->image_pool)
         goto error_create_image_pool;

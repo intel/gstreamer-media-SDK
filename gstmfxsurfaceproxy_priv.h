@@ -3,6 +3,7 @@
 
 #include "gstmfxminiobject.h"
 #include "gstmfxsurfaceproxy.h"
+#include "gstmfxobject_priv.h"
 #include "gstmfxsurface_priv.h"
 
 #define GST_MFX_SURFACE_PROXY(obj) \
@@ -16,7 +17,6 @@ struct _GstMfxSurfaceProxy
 
 	GstMfxSurfacePool *pool;
 	GstMfxSurface *surface;
-	guintptr view_id;
 	GstClockTime timestamp;
 	GstClockTime duration;
 	GDestroyNotify destroy_func;
@@ -40,6 +40,16 @@ struct _GstMfxSurfaceProxy
 #undef  GST_MFX_SURFACE_PROXY_SURFACE
 #define GST_MFX_SURFACE_PROXY_SURFACE(proxy) \
 	(GST_MFX_SURFACE_PROXY (proxy)->surface)
+
+/**
+* GST_MFX_SURFACE_PROXY_SURFACE_ID:
+* @proxy: a #GstMfxSurfaceProxy
+*
+* Macro that evaluates to the VA surface ID of the underlying @proxy
+* surface.
+*/
+#define GST_MFX_SURFACE_PROXY_SURFACE_ID(proxy) \
+	gst_mfx_surface_proxy_get_surface_id (proxy)
 
 /**
 * GST_MFX_SURFACE_PROXY_TIMESTAMP:

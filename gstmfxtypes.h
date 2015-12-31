@@ -6,6 +6,51 @@
 G_BEGIN_DECLS
 
 /**
+* GstMfxID:
+*
+* An integer large enough to hold a generic VA id or a pointer
+* wherever necessary.
+*/
+typedef gsize GstMfxID;
+
+/**
+* GST_MFX_ID:
+* @id: an arbitrary integer value
+*
+* Macro that creates a #GstMfxID from @id.
+*/
+#define GST_MFX_ID(id) ((GstMfxID)(id))
+
+/**
+* GST_MFX_ID_INVALID:
+*
+* Macro that evaluates to an invalid #GstMfxID value.
+*/
+#define GST_MFX_ID_INVALID GST_MFX_ID((gssize)(gint32)-1)
+
+/**
+* GST_MFX_ID_FORMAT:
+*
+* Can be used together with #GST_MFX_ID_ARGS to properly output an
+* integer value in a printf()-style text message.
+* <informalexample>
+* <programlisting>
+* printf("id: %" GST_MFX_ID_FORMAT "\n", GST_MFX_ID_ARGS(id));
+* </programlisting>
+* </informalexample>
+*/
+#define GST_MFX_ID_FORMAT "p"
+
+/**
+* GST_MFX_ID_ARGS:
+* @id: a #GstMfxID
+*
+* Can be used together with #GST_MFX_ID_FORMAT to properly output
+* an integer value in a printf()-style text message.
+*/
+#define GST_MFX_ID_ARGS(id) GSIZE_TO_POINTER(id)
+
+/**
 * GstMfxPoint:
 * @x: X coordinate
 * @y: Y coordinate
@@ -34,24 +79,6 @@ struct _GstMfxRectangle {
 	guint32 width;
 	guint32 height;
 };
-
-/**
-* GstMfxRenderMode:
-* @GST_MFX_RENDER_MODE_OVERLAY: in this mode, the VA display
-*   backend renders surfaces with an overlay engine. This means that
-*   the surface that is currently displayed shall not be re-used
-*   right away for decoding. i.e. it needs to be retained further,
-*   until the next surface is to be displayed.
-* @GST_MFX_RENDER_MODE_TEXTURE: in this modem the VA display
-*   backend renders surfaces with a textured blit (GPU/3D engine).
-*   This means that the surface is copied to some intermediate
-*   backing store, or back buffer of a frame buffer, and is free to
-*   be re-used right away for decoding.
-*/
-typedef enum {
-	GST_MFX_RENDER_MODE_OVERLAY = 1,
-	GST_MFX_RENDER_MODE_TEXTURE
-} GstMfxRenderMode;
 
 /**
 * GstMfxRotation:

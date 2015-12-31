@@ -14,19 +14,16 @@ struct _GstVaapiImagePool
     GstVideoFormat format;
     guint width;
     guint height;
-
-    VADisplay display;
 };
 
 static gboolean
-image_pool_init (GstMfxObjectPool * base_pool, const GstVideoInfo * vip, VADisplay va_dpy)
+image_pool_init (GstMfxObjectPool * base_pool, const GstVideoInfo * vip)
 {
     GstVaapiImagePool *const pool = GST_VAAPI_IMAGE_POOL (base_pool);
 
     pool->format = GST_VIDEO_INFO_FORMAT (vip);
     pool->width = GST_VIDEO_INFO_WIDTH (vip);
     pool->height = GST_VIDEO_INFO_HEIGHT (vip);
-    pool->display = va_dpy;
 
     return TRUE;
 }
@@ -36,7 +33,7 @@ gst_vaapi_image_pool_alloc_object (GstMfxObjectPool * base_pool)
 {
     GstVaapiImagePool *const pool = GST_VAAPI_IMAGE_POOL (base_pool);
 
-    return gst_vaapi_image_new (pool->display,
+	return gst_vaapi_image_new(base_pool->display,
         pool->width, pool->height);
 }
 
@@ -52,7 +49,7 @@ gst_vaapi_image_pool_class (void)
 }
 
 GstMfxObjectPool *
-gst_vaapi_image_pool_new (VADisplay display, const GstVideoInfo * vip)
+gst_vaapi_image_pool_new(GstMfxDisplay * display, const GstVideoInfo * vip)
 {
     GstMfxObjectPool *pool;
 
@@ -64,10 +61,10 @@ gst_vaapi_image_pool_new (VADisplay display, const GstVideoInfo * vip)
     if (!pool)
         return NULL;
 
-    gst_mfx_object_pool_init (pool, //display,
+    gst_mfx_object_pool_init (pool, display,
         GST_MFX_POOL_OBJECT_TYPE_IMAGE);
 
-    if (!image_pool_init (pool, vip, display))
+    if (!image_pool_init (pool, vip))
         goto error;
     return pool;
 

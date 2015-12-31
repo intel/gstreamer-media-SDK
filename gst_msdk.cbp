@@ -11,13 +11,13 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! glimagesink" />
+				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! mfxsink" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-std=c99 -fPIC" />
-					<Add option="-DHAVE_MFX_DECODER" />
+					<Add option="-DHAVE_CONFIG_H" />
 					<Add directory="/usr/lib64/glib-2.0/include" />
 					<Add directory="/usr/include/gstreamer-1.0" />
 					<Add directory="/usr/include/glib-2.0" />
@@ -42,7 +42,7 @@
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-std=c99 -fPIC" />
-					<Add option="-DHAVE_MFX_DECODER" />
+					<Add option="-DHAVE_CONFIG_H" />
 					<Add directory="/usr/include/gstreamer-1.0" />
 					<Add directory="/usr/include/glib-2.0" />
 					<Add directory="/opt/intel/mediasdk/include" />
@@ -60,7 +60,9 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-DHAVE_CONFIG_H" />
 		</Compiler>
+		<Unit filename="config.h" />
 		<Unit filename="gstmfx.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -80,7 +82,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstmfxdecoder.h" />
-		<Unit filename="gstmfxdecoder_priv.h" />
 		<Unit filename="gstmfxdisplay.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -99,15 +100,28 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstmfxminiobject.h" />
+		<Unit filename="gstmfxobject.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxobject.h" />
+		<Unit filename="gstmfxobject_priv.h" />
 		<Unit filename="gstmfxobjectpool.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstmfxobjectpool.h" />
 		<Unit filename="gstmfxobjectpool_priv.h" />
+		<Unit filename="gstmfxpluginbase.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxpluginbase.h" />
 		<Unit filename="gstmfxpluginutil.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstmfxpluginutil.h" />
+		<Unit filename="gstmfxsink.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxsink.h" />
 		<Unit filename="gstmfxsurface.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -123,10 +137,18 @@
 		<Unit filename="gstmfxsurfaceproxy.h" />
 		<Unit filename="gstmfxsurfaceproxy_priv.h" />
 		<Unit filename="gstmfxtypes.h" />
+		<Unit filename="gstmfxutils_x11.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxutils_x11.h" />
 		<Unit filename="gstmfxvideobufferpool.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstmfxvideobufferpool.h" />
+		<Unit filename="gstmfxvideocontext.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxvideocontext.h" />
 		<Unit filename="gstmfxvideomemory.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -135,6 +157,16 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstmfxvideometa.h" />
+		<Unit filename="gstmfxwindow.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxwindow.h" />
+		<Unit filename="gstmfxwindow_priv.h" />
+		<Unit filename="gstmfxwindow_x11.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gstmfxwindow_x11.h" />
+		<Unit filename="gstmfxwindow_x11_priv.h" />
 		<Unit filename="gstvaapiimage.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -144,6 +176,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gstvaapiimagepool.h" />
+		<Unit filename="sysdeps.h" />
 		<Unit filename="video-utils.c">
 			<Option compilerVar="CC" />
 		</Unit>

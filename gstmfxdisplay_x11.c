@@ -2,14 +2,10 @@
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxdisplay_x11.h"
 #include "gstmfxdisplay_x11_priv.h"
-//#include "gstmfxwindow_x11.h"
+#include "gstmfxwindow_x11.h"
 
 #ifdef HAVE_XRANDR
 # include <X11/extensions/Xrandr.h>
-#endif
-
-#ifdef HAVE_XRENDER
-# include <X11/extensions/Xrender.h>
 #endif
 
 
@@ -73,7 +69,8 @@ get_default_display_name(void)
 	static const gchar *g_display_name;
 
 	if (!g_display_name)
-		g_display_name = getenv("DISPLAY");
+        g_display_name = ":0.0";
+		//g_display_name = getenv("DISPLAY");
 	return g_display_name;
 }
 
@@ -132,10 +129,6 @@ check_extensions(GstMfxDisplayX11 * display)
 
 #ifdef HAVE_XRANDR
 	priv->use_xrandr = XRRQueryExtension(priv->x11_display,
-		&evt_base, &err_base);
-#endif
-#ifdef HAVE_XRENDER
-	priv->has_xrender = XRenderQueryExtension(priv->x11_display,
 		&evt_base, &err_base);
 #endif
 }
@@ -270,9 +263,10 @@ gst_mfx_display_x11_get_size(GstMfxDisplay * display,
 		*pheight = DisplayHeight(priv->x11_display, priv->x11_screen);
 }
 
+
 static void
 gst_mfx_display_x11_get_size_mm(GstMfxDisplay * display,
- guint * pwidth, guint * pheight)
+    guint * pwidth, guint * pheight)
 {
 	GstMfxDisplayX11Private *const priv =
 		GST_MFX_DISPLAY_X11_PRIVATE(display);
@@ -324,14 +318,12 @@ gst_mfx_display_x11_get_size_mm(GstMfxDisplay * display,
 		*pheight = height_mm;
 }
 
-/*static GstMfxWindow *
-gst_mfx_display_x11_create_window(GstMfxDisplay * display, GstMfxID id,
+static GstMfxWindow *
+gst_mfx_display_x11_create_window(GstMfxDisplay * display,
 	guint width, guint height)
 {
-	return id != GST_MFX_ID_INVALID ?
-		gst_mfx_window_x11_new_with_xid(display, id) :
-		gst_mfx_window_x11_new(display, width, height);
-}*/
+	return gst_mfx_window_x11_new(display, width, height);
+}
 
 void
 gst_mfx_display_x11_class_init(GstMfxDisplayX11Class * klass)
@@ -352,7 +344,7 @@ gst_mfx_display_x11_class_init(GstMfxDisplayX11Class * klass)
 	dpy_class->get_display = gst_mfx_display_x11_get_display_info;
 	dpy_class->get_size = gst_mfx_display_x11_get_size;
 	dpy_class->get_size_mm = gst_mfx_display_x11_get_size_mm;
-	//dpy_class->create_window = gst_mfx_display_x11_create_window;
+	dpy_class->create_window = gst_mfx_display_x11_create_window;
 }
 
 static inline const GstMfxDisplayClass *

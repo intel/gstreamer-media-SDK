@@ -1,4 +1,267 @@
+#include "sysdeps.h"
+#include "gstmfxvideocontext.h"
+#if USE_DRM
+# include "gstmfxdisplay_drm.h"
+#endif
+#if USE_X11
+# include "gstmfxdisplay_x11.h"
+#endif
+#if USE_GLX
+# include "gstmfxdisplay_glx.h"
+#endif
+#if USE_EGL
+# include "gstmfxdisplay_egl.h"
+#endif
+#if USE_WAYLAND
+# include "gstmfxdisplay_wayland.h"
+#endif
 #include "gstmfxpluginutil.h"
+#include "gstmfxpluginbase.h"
+
+typedef GstMfxDisplay *(*GstMfxDisplayCreateFunc) (const gchar *);
+typedef GstMfxDisplay *(*GstMfxDisplayCreateFromHandleFunc) (gpointer);
+
+typedef struct
+{
+	const gchar *type_str;
+	GstMfxDisplayType type;
+	GstMfxDisplayCreateFunc create_display;
+	GstMfxDisplayCreateFromHandleFunc create_display_from_handle;
+} DisplayMap;
+
+/* *INDENT-OFF* */
+static const DisplayMap g_display_map[] = {
+#if USE_WAYLAND
+	{ "wayland",
+	GST_MFX_DISPLAY_TYPE_WAYLAND,
+	gst_mfx_display_wayland_new,
+	(GstMfxDisplayCreateFromHandleFunc)
+	gst_mfx_display_wayland_new_with_display },
+#endif
+#if USE_GLX
+	{ "glx",
+	GST_MFX_DISPLAY_TYPE_GLX,
+	gst_mfx_display_glx_new,
+	(GstMfxDisplayCreateFromHandleFunc)
+	gst_mfx_display_glx_new_with_display },
+#endif
+#if USE_X11
+	{ "x11",
+	GST_MFX_DISPLAY_TYPE_X11,
+	gst_mfx_display_x11_new,
+	(GstMfxDisplayCreateFromHandleFunc)
+	gst_mfx_display_x11_new_with_display },
+#endif
+#if USE_DRM
+	{ "drm",
+	GST_MFX_DISPLAY_TYPE_DRM,
+	gst_mfx_display_drm_new },
+#endif
+	{ NULL, }
+};
+/* *INDENT-ON* */
+
+static GstMfxDisplay *
+gst_mfx_create_display(GstMfxDisplayType display_type,
+	const gchar * display_name)
+{
+	GstMfxDisplay *display = NULL;
+	const DisplayMap *m;
+
+	for (m = g_display_map; m->type_str != NULL; m++) {
+		if (display_type != GST_MFX_DISPLAY_TYPE_ANY && display_type != m->type)
+			continue;
+
+		display = m->create_display(display_name);
+		if (display || display_type != GST_MFX_DISPLAY_TYPE_ANY)
+			break;
+	}
+	return display;
+}
+
+static GstMfxDisplay *
+gst_mfx_create_display_from_handle(GstMfxDisplayType display_type,
+	gpointer handle)
+{
+	GstMfxDisplay *display;
+	const DisplayMap *m;
+
+	if (display_type == GST_MFX_DISPLAY_TYPE_ANY)
+		return NULL;
+
+	for (m = g_display_map; m->type_str != NULL; m++) {
+		if (m->type == display_type) {
+			display = m->create_display_from_handle ?
+				m->create_display_from_handle(handle) : NULL;
+			return display;
+		}
+	}
+	return NULL;
+}
+
+static GstMfxDisplay *
+gst_mfx_create_display_from_gl_context(GstObject * gl_context_object)
+{
+#if USE_GST_GL_HELPERS
+	GstGLContext *const gl_context = GST_GL_CONTEXT(gl_context_object);
+	GstGLDisplay *const gl_display = gst_gl_context_get_display(gl_context);
+	gpointer native_display =
+		GSIZE_TO_POINTER(gst_gl_display_get_handle(gl_display));
+	GstMfxDisplay *display, *out_display;
+	GstMfxDisplayType display_type;
+
+	switch (gst_gl_display_get_handle_type(gl_display)) {
+#if USE_X11
+	case GST_GL_DISPLAY_TYPE_X11:
+		display_type = GST_MFX_DISPLAY_TYPE_X11;
+		break;
+#endif
+#if USE_WAYLAND
+	case GST_GL_DISPLAY_TYPE_WAYLAND:
+		display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
+		break;
+#endif
+	case GST_GL_DISPLAY_TYPE_ANY:{
+		/* Derive from the active window */
+		GstGLWindow *const gl_window = gst_gl_context_get_window(gl_context);
+		const gchar *const gl_window_type = g_getenv("GST_GL_WINDOW");
+
+		display_type = GST_MFX_DISPLAY_TYPE_ANY;
+		if (!gl_window)
+			break;
+		native_display = GSIZE_TO_POINTER(gst_gl_window_get_display(gl_window));
+
+		if (gl_window_type) {
+#if USE_X11
+			if (!display_type && g_strcmp0(gl_window_type, "x11") == 0)
+				display_type = GST_MFX_DISPLAY_TYPE_X11;
+#endif
+#if USE_WAYLAND
+			if (!display_type && g_strcmp0(gl_window_type, "wayland") == 0)
+				display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
+#endif
+		}
+		else {
+#if USE_X11
+			if (!display_type && GST_GL_HAVE_WINDOW_X11)
+				display_type = GST_MFX_DISPLAY_TYPE_X11;
+#endif
+#if USE_WAYLAND
+			if (!display_type && GST_GL_HAVE_WINDOW_WAYLAND)
+				display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
+#endif
+		}
+		break;
+	}
+	default:
+		display_type = GST_MFX_DISPLAY_TYPE_ANY;
+		break;
+	}
+	if (!display_type)
+		return NULL;
+
+	display = gst_mfx_create_display_from_handle(display_type, native_display);
+	if (!display)
+		return NULL;
+
+	switch (gst_gl_context_get_gl_platform(gl_context)) {
+#if USE_EGL
+	case GST_GL_PLATFORM_EGL:{
+		guint gles_version;
+
+		switch (gst_gl_context_get_gl_api(gl_context)) {
+		case GST_GL_API_GLES1:
+			gles_version = 1;
+			goto create_egl_display;
+		case GST_GL_API_GLES2:
+			gles_version = 2;
+			goto create_egl_display;
+		case GST_GL_API_OPENGL:
+		case GST_GL_API_OPENGL3:
+			gles_version = 0;
+		create_egl_display:
+			out_display = gst_mfx_display_egl_new(display, gles_version);
+			break;
+		default:
+			out_display = NULL;
+			break;
+		}
+		if (!out_display)
+			return NULL;
+		gst_mfx_display_egl_set_gl_context(GST_MFX_DISPLAY_EGL(out_display),
+			GSIZE_TO_POINTER(gst_gl_context_get_gl_context(gl_context)));
+		break;
+	}
+#endif
+	default:
+		out_display = gst_mfx_display_ref(display);
+		break;
+	}
+	gst_mfx_display_unref(display);
+	return out_display;
+#endif
+	GST_ERROR("unsupported GStreamer version %s", GST_API_VERSION_S);
+	return NULL;
+}
+
+gboolean
+gst_mfx_ensure_display(GstElement * element, GstMfxDisplayType type)
+{
+	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(element);
+	GstMfxDisplay *display;
+
+	g_return_val_if_fail(GST_IS_ELEMENT(element), FALSE);
+
+	if (gst_mfx_video_context_prepare(element, &plugin->display)) {
+		/* Neighbour found and it updated the display */
+		if (gst_mfx_plugin_base_has_display_type(plugin, type))
+			return TRUE;
+	}
+
+	/* If no neighboor, or application not interested, use system default */
+	if (plugin->gl_context)
+		display = gst_mfx_create_display_from_gl_context(plugin->gl_context);
+	else
+		display = gst_mfx_create_display(type, plugin->display_name);
+	if (!display)
+		return FALSE;
+
+	gst_mfx_video_context_propagate(element, display);
+	gst_mfx_display_unref(display);
+	return TRUE;
+}
+
+gboolean
+gst_mfx_handle_context_query (GstQuery * query, GstMfxDisplay * display)
+{
+    const gchar *type = NULL;
+    GstContext *context, *old_context;
+
+    g_return_val_if_fail (query != NULL, FALSE);
+
+    if (!display)
+        return FALSE;
+
+    if (!gst_query_parse_context_type (query, &type))
+        return FALSE;
+
+    if (g_strcmp0 (type, GST_MFX_DISPLAY_CONTEXT_TYPE_NAME))
+        return FALSE;
+
+    gst_query_parse_context (query, &old_context);
+    if (old_context) {
+        context = gst_context_copy (old_context);
+        gst_mfx_video_context_set_display (context, display);
+    } else {
+        context = gst_mfx_video_context_new_with_display (display, FALSE);
+    }
+
+    gst_query_set_context (query, context);
+    gst_context_unref (context);
+
+    return TRUE;
+}
+
 
 gboolean
 gst_mfx_append_surface_caps(GstCaps * out_caps, GstCaps * in_caps)

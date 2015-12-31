@@ -3,7 +3,7 @@
 
 #include "gstmfxdisplay.h"
 #include "gstmfxdisplaycache.h"
-//#include "gstmfxwindow.h"
+#include "gstmfxwindow.h"
 //#include "gstmfxtexture.h"
 #include "gstmfxminiobject.h"
 
@@ -44,16 +44,16 @@ typedef void(*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
 	guint * pwidth, guint * pheight);
 typedef void(*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
 	guint * pwidth, guint * pheight);
-/*typedef GstMfxWindow *(*GstMfxDisplayCreateWindowFunc) (
-	GstMfxDisplay * display, GstMfxID id, guint width, guint height);
-typedef GstMfxTexture *(*GstMfxDisplayCreateTextureFunc) (
+typedef GstMfxWindow *(*GstMfxDisplayCreateWindowFunc) (
+	GstMfxDisplay * display, guint width, guint height);
+/*typedef GstMfxTexture *(*GstMfxDisplayCreateTextureFunc) (
 	GstMfxDisplay * display, GstMfxID id, guint target, guint format,
-	guint width, guint height);
+	guint width, guint height);*/
 
 typedef guintptr(*GstMfxDisplayGetVisualIdFunc) (GstMfxDisplay * display,
 	GstMfxWindow * window);
 typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
-	GstMfxWindow * window);*/
+	GstMfxWindow * window);
 
 /**
 * GST_MFX_DISPLAY_GET_CLASS_TYPE:
@@ -99,6 +99,13 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
 #define GST_MFX_DISPLAY_VADISPLAY_TYPE(display) \
 	(GST_MFX_DISPLAY_GET_PRIVATE (display)->display_type)
 
+/**
+* GST_MFX_DISPLAY_CACHE:
+* @display: a @GstMfxDisplay
+*
+* Returns the #GstMfxDisplayCache attached to the supplied @display object.
+* This is an internal macro that does not do any run-time type check.
+*/
 #undef  GST_MFX_DISPLAY_CACHE
 #define GST_MFX_DISPLAY_CACHE(display) \
 	(GST_MFX_DISPLAY_GET_PRIVATE (display)->cache)
@@ -173,10 +180,10 @@ struct _GstMfxDisplayClass
 	GstMfxDisplayGetInfoFunc get_display;
 	GstMfxDisplayGetSizeFunc get_size;
 	GstMfxDisplayGetSizeMFunc get_size_mm;
-	/*GstMfxDisplayGetVisualIdFunc get_visual_id;
+	GstMfxDisplayGetVisualIdFunc get_visual_id;
 	GstMfxDisplayGetColormapFunc get_colormap;
 	GstMfxDisplayCreateWindowFunc create_window;
-	GstMfxDisplayCreateTextureFunc create_texture;*/
+	//GstMfxDisplayCreateTextureFunc create_texture;
 };
 
 /* Initialization types */

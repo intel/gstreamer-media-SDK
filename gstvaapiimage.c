@@ -1,6 +1,7 @@
+#include "sysdeps.h"
 #include "gstvaapiimage.h"
 #include "gstvaapiimage_priv.h"
-
+#include "gstmfxobject_priv.h"
 
 static gboolean
 _gst_vaapi_image_map(GstVaapiImage *image);
@@ -12,43 +13,33 @@ static gboolean
 _gst_vaapi_image_set_image(GstVaapiImage *image, const VAImage *va_image);
 
 static void
-gst_vaapi_image_finalize(GstVaapiImage *image)
+gst_vaapi_image_destroy(GstVaapiImage *image)
 {
-    VAStatus status;
+	GstMfxDisplay * const display = GST_MFX_OBJECT_DISPLAY(image);
+	VAImageID image_id;
+	VAStatus status;
 
     _gst_vaapi_image_unmap(image);
 
-    if (image->image_id != VA_INVALID_ID) {
-        status = vaDestroyImage(image->display, image->image_id);
+	image_id = GST_MFX_OBJECT_ID(image);
+	GST_DEBUG("image %" GST_MFX_ID_FORMAT, GST_MFX_ID_ARGS(image_id));
+
+    if (image_id != VA_INVALID_ID) {
+		GST_MFX_DISPLAY_LOCK(display);
+		status = vaDestroyImage(GST_MFX_DISPLAY_VADISPLAY(display), image_id);
+		GST_MFX_DISPLAY_UNLOCK(display);
         if (!vaapi_check_status(status, "vaDestroyImage()"))
-            g_warning("failed to destroy image");
-        image->image_id = VA_INVALID_ID;
+			g_warning("failed to destroy image %" GST_MFX_ID_FORMAT,
+				GST_MFX_ID_ARGS(image_id));
+		GST_MFX_OBJECT_ID(image) = VA_INVALID_ID;
     }
-}
-
-static void
-gst_vaapi_image_init(GstVaapiImage *image, VADisplay display)
-{
-    image->display = display;
-    image->image_id = VA_INVALID_ID;
-    image->image.image_id = VA_INVALID_ID;
-    image->image.buf = VA_INVALID_ID;
-}
-
-static inline const GstMfxMiniObjectClass *
-gst_vaapi_image_class(void)
-{
-	static const GstMfxMiniObjectClass GstVaapiImageClass = {
-		sizeof(GstVaapiImage),
-		(GDestroyNotify)gst_vaapi_image_finalize
-	};
-	return &GstVaapiImageClass;
 }
 
 static gboolean
 gst_vaapi_image_create(GstVaapiImage *image,
     guint width, guint height)
 {
+	GstMfxDisplay * const display = GST_MFX_OBJECT_DISPLAY(image);
     VAStatus status;
     VAImageFormat va_format = {
         .fourcc         = VA_FOURCC_NV12,
@@ -57,13 +48,15 @@ gst_vaapi_image_create(GstVaapiImage *image,
         .depth          = 8,
     };
 
+	GST_MFX_DISPLAY_LOCK(display);
     status = vaCreateImage(
-        image->display,
+		GST_MFX_DISPLAY_VADISPLAY(display),
         &va_format,
         width,
         height,
         &image->image
     );
+	GST_MFX_DISPLAY_UNLOCK(display);
 
     if (status != VA_STATUS_SUCCESS)
         return FALSE;
@@ -71,10 +64,33 @@ gst_vaapi_image_create(GstVaapiImage *image,
     image->internal_format = GST_VIDEO_FORMAT_NV12;
     image->width = width;
     image->height = height;
-    image->image_id = image->image.image_id;
+
+	GST_MFX_OBJECT_ID(image) = image->image.image_id;
 
     return TRUE;
 }
+
+static void
+gst_vaapi_image_init(GstVaapiImage *image)
+{
+	image->image.image_id = VA_INVALID_ID;
+	image->image.buf = VA_INVALID_ID;
+}
+
+static void
+gst_vaapi_image_class_init(GstVaapiImageClass *klass)
+{
+	GstMfxObjectClass * const object_class =
+		GST_MFX_OBJECT_CLASS(klass);
+
+	object_class->init = (GstMfxObjectInitFunc)gst_vaapi_image_init;
+}
+
+#define gst_vaapi_image_finalize gst_vaapi_image_destroy
+GST_MFX_OBJECT_DEFINE_CLASS_WITH_CODE(
+	GstVaapiImage,
+	gst_vaapi_image,
+	gst_vaapi_image_class_init(&g_class))
 
 /**
  * gst_vaapi_image_new:
@@ -90,9 +106,9 @@ gst_vaapi_image_create(GstVaapiImage *image,
  */
 GstVaapiImage *
 gst_vaapi_image_new(
-    VADisplay           display,
-    guint               width,
-    guint               height
+	GstMfxDisplay	*display,
+    guint           width,
+    guint           height
 )
 {
     GstVaapiImage *image;
@@ -100,18 +116,16 @@ gst_vaapi_image_new(
     g_return_val_if_fail(width > 0, NULL);
     g_return_val_if_fail(height > 0, NULL);
 
-    image = gst_mfx_mini_object_new0(gst_vaapi_image_class());
+	image = gst_mfx_object_new(gst_vaapi_image_class(), display);
+	if (!image)
+		return NULL;
 
-    if (!image)
-        return NULL;
-
-    gst_vaapi_image_init(image, display);
     if (!gst_vaapi_image_create(image, width, height))
         goto error;
     return image;
 
 error:
-    gst_mfx_mini_object_unref(image);
+    gst_mfx_object_unref(image);
     return NULL;
 }
 
@@ -128,7 +142,7 @@ error:
  * Return value: the newly allocated #GstVaapiImage object
  */
 GstVaapiImage *
-gst_vaapi_image_new_with_image(VADisplay display, VAImage *va_image)
+gst_vaapi_image_new_with_image(GstMfxDisplay *display, VAImage *va_image)
 {
     GstVaapiImage *image;
 
@@ -136,17 +150,16 @@ gst_vaapi_image_new_with_image(VADisplay display, VAImage *va_image)
     g_return_val_if_fail(va_image->image_id != VA_INVALID_ID, NULL);
     g_return_val_if_fail(va_image->buf != VA_INVALID_ID, NULL);
 
-    image = gst_mfx_mini_object_new0(gst_vaapi_image_class());
-    if (!image)
-        return NULL;
+	image = gst_mfx_object_new(gst_vaapi_image_class(), display);
+	if (!image)
+		return NULL;
 
-    gst_vaapi_image_init(image, display);
     if (!_gst_vaapi_image_set_image(image, va_image))
         goto error;
     return image;
 
 error:
-    gst_mfx_mini_object_unref(image);
+    gst_mfx_object_unref(image);
     return NULL;
 }
 
@@ -163,7 +176,7 @@ gst_vaapi_image_get_id(GstVaapiImage *image)
 {
     g_return_val_if_fail(image != NULL, VA_INVALID_ID);
 
-    return image->image_id;
+	return GST_MFX_OBJECT_ID(image);
 }
 
 /**
@@ -208,7 +221,7 @@ _gst_vaapi_image_set_image(GstVaapiImage *image, const VAImage *va_image)
     image->width           = va_image->width;
     image->height          = va_image->height;
 
-    image->image_id = va_image->image_id;
+	GST_MFX_OBJECT_ID(image) = va_image->image_id;
 
     return TRUE;
 }
@@ -323,20 +336,23 @@ gst_vaapi_image_map(GstVaapiImage *image)
 gboolean
 _gst_vaapi_image_map(GstVaapiImage *image)
 {
-    VAStatus status;
+	GstMfxDisplay *display;
+	VAStatus status;
 
     if (_gst_vaapi_image_is_mapped(image))
         goto map_success;
 
-    if (!image->display)
-        return FALSE;
+	display = GST_MFX_OBJECT_DISPLAY(image);
+	if (!display)
+		return FALSE;
 
+	GST_MFX_DISPLAY_LOCK(display);
     status = vaMapBuffer(
-        image->display,
+		GST_MFX_DISPLAY_VADISPLAY(display),
         image->image.buf,
         (void **)&image->image_data
     );
-
+	GST_MFX_DISPLAY_UNLOCK(display);
     if (!vaapi_check_status(status, "vaMapBuffer()"))
         return FALSE;
 
@@ -364,19 +380,22 @@ gst_vaapi_image_unmap(GstVaapiImage *image)
 gboolean
 _gst_vaapi_image_unmap(GstVaapiImage *image)
 {
-    VAStatus status;
+	GstMfxDisplay *display;
+	VAStatus status;
 
     if (!_gst_vaapi_image_is_mapped(image))
         return TRUE;
 
-    if (!image->display)
-        return FALSE;
+	display = GST_MFX_OBJECT_DISPLAY(image);
+	if (!display)
+		return FALSE;
 
+	GST_MFX_DISPLAY_LOCK(display);
     status = vaUnmapBuffer(
-        image->display,
+		GST_MFX_DISPLAY_VADISPLAY(display),
         image->image.buf
     );
-
+	GST_MFX_DISPLAY_UNLOCK(display);
     if (!vaapi_check_status(status, "vaUnmapBuffer()"))
         return FALSE;
 

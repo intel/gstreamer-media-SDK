@@ -15,7 +15,6 @@ G_BEGIN_DECLS
 #define GST_MFX_SURFACE_PROXY_SURFACE(proxy) \
 	gst_mfx_surface_proxy_get_surface (proxy)
 
-
 /**
 * GST_MFX_SURFACE_PROXY_TIMESTAMP:
 * @proxy: a #GstMfxSurfaceProxy
@@ -57,6 +56,9 @@ gst_mfx_surface_proxy_replace(GstMfxSurfaceProxy ** old_proxy_ptr,
 
 GstMfxSurface *
 gst_mfx_surface_proxy_get_surface(GstMfxSurfaceProxy * proxy);
+
+GstMfxID
+gst_mfx_surface_proxy_get_surface_id(GstMfxSurfaceProxy * proxy);
 
 mfxFrameSurface1 *
 gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * surface);

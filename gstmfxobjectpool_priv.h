@@ -23,7 +23,7 @@ struct _GstMfxObjectPool
     GstMfxMiniObject parent_instance;
 
     guint object_type;
-    //GstMfxDisplay *display;
+    GstMfxDisplay *display;
     GQueue free_objects;
     GList *used_objects;
     guint used_count;
@@ -47,7 +47,7 @@ struct _GstMfxObjectPoolClass
 };
 
 void
-gst_mfx_object_pool_init (GstMfxObjectPool * pool, //GstMfxDisplay * display,
+gst_mfx_object_pool_init (GstMfxObjectPool * pool, GstMfxDisplay * display,
     GstMfxPoolObjectType object_type);
 
 void

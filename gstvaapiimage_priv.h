@@ -1,12 +1,14 @@
 #ifndef GST_VAAPI_IMAGE_PRIV_H
 #define GST_VAAPI_IMAGE_PRIV_H
 
-#include "gstmfxminiobject.h"
+#include "gstmfxobject_priv.h"
 #include "gstvaapiimage.h"
 
 #include <va/va.h>
 
 G_BEGIN_DECLS
+
+typedef struct _GstVaapiImageClass GstVaapiImageClass;
 
 /**
  * GstVaapiImage:
@@ -15,16 +17,23 @@ G_BEGIN_DECLS
  */
 struct _GstVaapiImage {
     /*< private >*/
-    GstMfxMiniObject    parent_instance;
+    GstMfxObject		parent_instance;
 
     GstVideoFormat      internal_format;
     guchar             *image_data;
     guint               width;
     guint               height;
-
     VAImage             image;
-    VAImageID           image_id;
-    VADisplay           display;
+};
+
+/**
+* GstVaapiImageClass:
+*
+* A VA image wrapper class
+*/
+struct _GstVaapiImageClass {
+	/*< private >*/
+	GstMfxObjectClass parent_class;
 };
 
 /**

@@ -45,6 +45,14 @@ GstMfxDecoder * new_decoder)
 	gst_mfx_mini_object_replace(old_decoder_ptr, new_decoder);
 }
 
+mfxU32
+gst_mfx_decoder_get_codec(GstMfxDecoder * decoder)
+{
+	g_return_val_if_fail(decoder != NULL, -1);
+
+	return decoder->codec;
+}
+
 GstMfxDecoderStatus
 gst_mfx_decoder_get_surface_proxy(GstMfxDecoder * decoder,
 	GstMfxSurfaceProxy ** out_proxy_ptr)
@@ -76,7 +84,7 @@ destroy_surfaces(GstMfxDecoder *decoder)
 static void
 gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
-	destroy_surfaces(decoder);
+	//destroy_surfaces(decoder);
 
 	g_slice_free1(decoder->bs.MaxLength, decoder->bs.Data);
 
@@ -85,7 +93,9 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 
 
 static void
-gst_mfx_decoder_init(GstMfxDecoder *decoder, mfxU32 codec_id, GstMfxContextAllocatorVaapi * ctx)
+gst_mfx_decoder_init(GstMfxDecoder * decoder,
+	GstMfxDisplay * display, mfxU32 codec_id,
+	GstMfxContextAllocatorVaapi * ctx)
 {
 	memset(&(decoder->session), 0, sizeof (mfxSession));
 	memset(&(decoder->bs), 0, sizeof (mfxBitstream));
@@ -94,6 +104,7 @@ gst_mfx_decoder_init(GstMfxDecoder *decoder, mfxU32 codec_id, GstMfxContextAlloc
 	decoder->param.mfx.CodecId = codec_id;
 	decoder->alloc_ctx = ctx;
 	decoder->param.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+	decoder->display = gst_mfx_display_ref(display);
 	decoder->context = NULL;
 	decoder->surfaces = g_async_queue_new();
 	decoder->pool = NULL;
@@ -111,7 +122,8 @@ gst_mfx_decoder_class(void)
 }
 
 GstMfxDecoder *
-gst_mfx_decoder_new(GstMfxContextAllocatorVaapi *allocator, mfxU32 codec_id)
+gst_mfx_decoder_new(GstMfxDisplay * display,
+	GstMfxContextAllocatorVaapi *allocator, mfxU32 codec_id)
 {
 	GstMfxDecoder *decoder;
 
@@ -119,7 +131,7 @@ gst_mfx_decoder_new(GstMfxContextAllocatorVaapi *allocator, mfxU32 codec_id)
 	if (!decoder)
 		goto error;
 
-	gst_mfx_decoder_init(decoder, codec_id, allocator);
+	gst_mfx_decoder_init(decoder, display, codec_id, allocator);
 
 	return decoder;
 
@@ -178,7 +190,7 @@ surface_pool_init(GstMfxDecoder *decoder)
 {
 	mfxStatus sts;
 
-	decoder->pool = gst_mfx_surface_pool_new(decoder->alloc_ctx);
+	decoder->pool = gst_mfx_surface_pool_new(decoder->display, decoder->alloc_ctx);
 	if (!decoder->pool)
 		return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 

@@ -32,7 +32,6 @@ gst_mfx_surface_proxy_class(void)
 static void
 gst_mfx_surface_proxy_init_properties(GstMfxSurfaceProxy * proxy)
 {
-	proxy->view_id = 0;
 	proxy->timestamp = GST_CLOCK_TIME_NONE;
 	proxy->duration = GST_CLOCK_TIME_NONE;
 	proxy->has_crop_rect = FALSE;
@@ -218,6 +217,23 @@ gst_mfx_surface_proxy_get_surface(GstMfxSurfaceProxy * proxy)
 	return GST_MFX_SURFACE_PROXY_SURFACE(proxy);
 }
 
+/**
+* gst_mfx_surface_proxy_get_surface_id:
+* @proxy: a #GstMfxSurfaceProxy
+*
+* Returns the VA surface ID stored in the @proxy.
+*
+* Return value: the #GstMfxID
+*/
+GstMfxID
+gst_mfx_surface_proxy_get_surface_id(GstMfxSurfaceProxy * proxy)
+{
+	g_return_val_if_fail(proxy != NULL, VA_INVALID_ID);
+	g_return_val_if_fail(proxy->surface != NULL, VA_INVALID_ID);
+
+	return GST_MFX_SURFACE_PROXY_SURFACE_ID(proxy);
+}
+
 mfxFrameSurface1 *
 gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy)
 {
@@ -225,7 +241,6 @@ gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy)
 
 	return GST_MFX_SURFACE_PROXY_SURFACE(proxy)->surface;
 }
-
 
 
 /**

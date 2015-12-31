@@ -32,7 +32,6 @@
 #include "gstmfxsurface_priv.h"
 #include "gstmfxobjectpool.h"
 #include "gstmfxcontext.h"
-#include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
 
@@ -46,7 +45,7 @@ struct _GstMfxDecoder
 	/*< private >*/
 	GstMfxMiniObject parent_instance;
 
-	//GstMfxDisplay *display;
+	GstMfxDisplay *display;
 	GstMfxContext *context;
 	GstMfxObjectPool *pool;
 	GAsyncQueue *surfaces;
@@ -55,6 +54,7 @@ struct _GstMfxDecoder
 	mfxFrameAllocRequest req;
 	mfxVideoParam param;
 	mfxBitstream bs;
+	mfxU32 codec;
 
 	GstMfxContextAllocatorVaapi *alloc_ctx;
 
@@ -106,6 +106,9 @@ void
 gst_mfx_decoder_replace(GstMfxDecoder ** old_decoder_ptr,
 	GstMfxDecoder * new_decoder);
 
+mfxU32
+gst_mfx_decoder_get_codec(GstMfxDecoder * decoder);
+
 GstMfxDecoderStatus
 gst_mfx_decoder_get_surface_proxy(GstMfxDecoder * decoder,
 	GstMfxSurfaceProxy ** out_proxy_ptr);
@@ -116,7 +119,8 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 
 
 GstMfxDecoder *
-gst_mfx_decoder_new(GstMfxContextAllocatorVaapi * allocator, mfxU32 codec_id);
+gst_mfx_decoder_new(GstMfxDisplay * display,
+	GstMfxContextAllocatorVaapi *allocator, mfxU32 codec_id);
 
 G_END_DECLS
 

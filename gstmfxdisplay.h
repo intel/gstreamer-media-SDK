@@ -76,7 +76,7 @@ gst_mfx_display_type_get_type(void);
 
 gboolean
 gst_mfx_display_type_is_compatible(GstMfxDisplayType type1,
-GstMfxDisplayType type2);
+	GstMfxDisplayType type2);
 
 /**
 * GstMfxDisplayInfo:

@@ -12,7 +12,6 @@
 
 #include <string.h>
 
-#include "gstvaapiimage.h"
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxsurfaceproxy_priv.h"
 #include "gstmfxcodecmap.h"
@@ -20,7 +19,6 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
-
 
 GST_DEBUG_CATEGORY_STATIC(mfxdec_debug);
 #define GST_CAT_DEFAULT (mfxdec_debug)
@@ -63,8 +61,19 @@ static GstStaticPadTemplate src_template_factory =
 	GST_STATIC_CAPS(gst_mfxdecode_src_caps_str)
 );
 
-#define gst_mfxdec_parent_class parent_class
-G_DEFINE_TYPE(GstMfxDec, gst_mfxdec, GST_TYPE_VIDEO_DECODER);
+G_DEFINE_TYPE_WITH_CODE(
+    GstMfxDec,
+    gst_mfxdec,
+    GST_TYPE_VIDEO_DECODER,
+    GST_MFX_PLUGIN_BASE_INIT_INTERFACES);
+
+static gboolean
+gst_mfxdec_update_sink_caps(GstMfxDec * decode, GstCaps * caps);
+static gboolean gst_mfxdec_update_src_caps(GstMfxDec * decode);
+
+static gboolean
+gst_mfxdec_input_state_replace(GstMfxDec * decode,
+	const GstVideoCodecState * new_state);
 
 static void gst_mfx_dec_set_property(GObject * object, guint prop_id,
 	const GValue * value, GParamSpec * pspec);
@@ -83,169 +92,72 @@ static gboolean gst_mfxdec_decide_allocation(GstVideoDecoder * decoder,
 	GstQuery * query);
 
 
+
 static void
-gst_mfxdec_class_init (GstMfxDecClass *klass)
+gst_mfx_decoder_state_changed(GstMfxDecoder * decoder,
+	const GstVideoCodecState * codec_state, gpointer user_data)
 {
-	GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
-	GstElementClass *element_class = GST_ELEMENT_CLASS(klass);
-	GstVideoDecoderClass *video_decoder_class = GST_VIDEO_DECODER_CLASS(klass);
+	GstMfxDec *const decode = GST_MFXDEC(user_data);
 
-	gobject_class->set_property = gst_mfx_dec_set_property;
-	gobject_class->get_property = gst_mfx_dec_get_property;
+	g_assert(decode->decoder == decoder);
 
-	g_object_class_install_property(gobject_class, PROP_ASYNC_DEPTH,
-		g_param_spec_uint("async-depth", "Asynchronous Depth",
-		"Number of async operations before explicit sync",
-		0, 16, DEFAULT_ASYNC_DEPTH,
-		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+	if (!gst_mfxdec_input_state_replace(decode, codec_state))
+		return;
+	if (!gst_mfxdec_update_sink_caps(decode, decode->input_state->caps))
+		return;
 
-	gst_element_class_add_pad_template(element_class,
-		gst_static_pad_template_get(&src_template_factory));
-	gst_element_class_add_pad_template(element_class,
-		gst_static_pad_template_get(&sink_template_factory));
-	gst_element_class_set_static_metadata(element_class,
-		"MFX Video Decoder",
-		"Codec/Decoder/Video",
-		"Uses libmfx for decoding video streams",
-		"Ishmael Sameen<ishmael.visayana.sameen@intel.com>");
-
-	video_decoder_class->open = GST_DEBUG_FUNCPTR(gst_mfxdec_open);
-	video_decoder_class->close = GST_DEBUG_FUNCPTR(gst_mfxdec_close);
-	video_decoder_class->flush = GST_DEBUG_FUNCPTR(gst_mfxdec_flush);
-	video_decoder_class->set_format = GST_DEBUG_FUNCPTR(gst_mfxdec_set_format);
-	video_decoder_class->handle_frame =
-		GST_DEBUG_FUNCPTR(gst_mfxdec_handle_frame);
-	video_decoder_class->decide_allocation =
-		GST_DEBUG_FUNCPTR(gst_mfxdec_decide_allocation);
-
-	GST_DEBUG_CATEGORY_INIT(mfxdec_debug, "mfxdec", 0, "MFX Video Decoder");
+	decode->do_renego = TRUE;
 }
 
-static void
-gst_mfxdec_init (GstMfxDec *mfxdec)
+static GstVideoCodecState *
+copy_video_codec_state(const GstVideoCodecState * in_state)
 {
-	mfxdec->async_depth = DEFAULT_ASYNC_DEPTH;
+	GstVideoCodecState *state;
 
-	gst_video_decoder_set_packetized(GST_VIDEO_DECODER(mfxdec), TRUE);
-	gst_video_decoder_set_needs_format(GST_VIDEO_DECODER(mfxdec), TRUE);
-}
+	g_return_val_if_fail(in_state != NULL, NULL);
 
-static void
-gst_mfx_dec_set_property(GObject * object, guint prop_id,
-const GValue * value, GParamSpec * pspec)
-{
-	GstMfxDec *dec;
+	state = g_slice_new0(GstVideoCodecState);
+	state->ref_count = 1;
+	state->info = in_state->info;
+	state->caps = gst_caps_copy(in_state->caps);
+	if (in_state->codec_data)
+		state->codec_data = gst_buffer_copy_deep(in_state->codec_data);
 
-	g_return_if_fail(GST_IS_MFXDEC(object));
-	dec = GST_MFXDEC(object);
-
-	GST_DEBUG_OBJECT(object, "gst_mfx_dec_set_property");
-	switch (prop_id) {
-	case PROP_ASYNC_DEPTH:
-		dec->async_depth = g_value_get_uint(value);
-		break;
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-		break;
-	}
-}
-
-static void
-gst_mfx_dec_get_property(GObject * object, guint prop_id, GValue * value,
-	GParamSpec * pspec)
-{
-	GstMfxDec *dec;
-
-	g_return_if_fail(GST_IS_MFXDEC(object));
-	dec = GST_MFXDEC(object);
-
-	switch (prop_id) {
-	case PROP_ASYNC_DEPTH:
-		g_value_set_uint(value, dec->async_depth);
-		break;
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-		break;
-	}
+	return state;
 }
 
 static gboolean
-gst_mfxdec_open(GstVideoDecoder * decoder)
+gst_mfxdec_input_state_replace(GstMfxDec * decode,
+	const GstVideoCodecState * new_state)
 {
-	GstMfxDec *mfxdec = GST_MFXDEC(decoder);
+	if (decode->input_state) {
+		if (new_state) {
+			const GstCaps *curcaps = decode->input_state->caps;
+			/* If existing caps are equal of the new state, keep the
+			* existing state without renegotiating. */
+			if (gst_caps_is_strictly_equal(curcaps, new_state->caps)) {
+				GST_DEBUG("Ignoring new caps %" GST_PTR_FORMAT
+					" since are equal to current ones", new_state->caps);
+				return FALSE;
+			}
+		}
+		gst_video_codec_state_unref(decode->input_state);
+	}
 
-    int va_ver_major, va_ver_minor;
-    int err;
-
-	GST_DEBUG_OBJECT(mfxdec, "open");
-
-	memset(&(mfxdec->alloc_ctx), 0, sizeof (GstMfxContextAllocatorVaapi));
-
-	mfxdec->display = gst_mfx_display_x11_new(":0");
-
-	mfxdec->alloc_ctx.va_dpy = GST_MFX_DISPLAY_VADISPLAY(mfxdec->display);
+	if (new_state)
+		decode->input_state = copy_video_codec_state(new_state);
+	else
+		decode->input_state = NULL;
 
 	return TRUE;
 }
 
-static gboolean
-gst_mfxdec_close(GstVideoDecoder * decoder)
+static inline gboolean
+gst_mfxdec_update_sink_caps(GstMfxDec * decode, GstCaps * caps)
 {
-	GstMfxDec *const mfxdec = GST_MFXDEC(decoder);
-
-	GST_DEBUG_OBJECT(mfxdec, "close");
-
-	if (mfxdec->input_state) {
-		gst_video_codec_state_unref(mfxdec->input_state);
-		mfxdec->input_state = NULL;
-	}
-
-	gst_mfx_display_unref(mfxdec->display);
-
+	GST_INFO_OBJECT(decode, "new sink caps = %" GST_PTR_FORMAT, caps);
+	gst_caps_replace(&decode->sinkpad_caps, caps);
 	return TRUE;
-}
-
-static gboolean
-gst_mfxdec_flush(GstVideoDecoder * decoder)
-{
-	GstMfxDec *mfxdec = GST_MFXDEC(decoder);
-
-	GST_DEBUG_OBJECT(mfxdec, "stop");
-
-	return TRUE;
-}
-
-static gboolean
-gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
-{
-	mfxU32 codec_id = gst_get_mfx_codec_from_caps(caps);
-
-	if (codec_id < 0)
-		return FALSE;
-
-	mfxdec->decoder = gst_mfx_decoder_new(&mfxdec->alloc_ctx, codec_id);
-	if (!mfxdec->decoder)
-		return FALSE;
-
-	return TRUE;
-}
-
-static gboolean
-gst_mfxdec_set_format(GstVideoDecoder * decoder, GstVideoCodecState * state)
-{
-	GstMfxDec *mfxdec = GST_MFXDEC(decoder);
-
-	GST_DEBUG_OBJECT(mfxdec, "set_format");
-
-	/* Save input state to be used as reference for output state */
-	if (mfxdec->input_state) {
-		gst_video_codec_state_unref(mfxdec->input_state);
-		mfxdec->input_state = NULL;
-	}
-
-	mfxdec->input_state = gst_video_codec_state_ref(state);
-
-	return gst_mfxdec_create(mfxdec, state->caps);
 }
 
 static gboolean
@@ -254,7 +166,7 @@ gst_mfxdec_update_src_caps(GstMfxDec * decode)
 	GstVideoDecoder *const vdec = GST_VIDEO_DECODER(decode);
 	GstVideoCodecState *state, *ref_state;
 	GstVideoInfo *vi;
-	GstVideoFormat format = GST_VIDEO_FORMAT_I420;
+	GstVideoFormat format = GST_VIDEO_FORMAT_NV12;
 
 	if (!decode->input_state)
 		return FALSE;
@@ -272,17 +184,19 @@ gst_mfxdec_update_src_caps(GstMfxDec * decode)
 		return FALSE;
 
 	switch (feature) {
+#if (USE_GLX || USE_EGL)
 	case GST_MFX_CAPS_FEATURE_GL_TEXTURE_UPLOAD_META:
 		features =
 			gst_caps_features_new
 			(GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META, NULL);
 		break;
-
+#endif
+#if GST_CHECK_VERSION(1,3,1)
 	case GST_MFX_CAPS_FEATURE_MFX_SURFACE:
 		features =
 			gst_caps_features_new(GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
 		break;
-
+#endif
 	default:
 		break;
 	}
@@ -298,11 +212,21 @@ gst_mfxdec_update_src_caps(GstMfxDec * decode)
 	if (features)
 		gst_caps_set_features(state->caps, 0, features);
 	GST_INFO_OBJECT(decode, "new src caps = %" GST_PTR_FORMAT, state->caps);
-
+	gst_caps_replace(&decode->srcpad_caps, state->caps);
 	gst_video_codec_state_unref(state);
 
 	return TRUE;
 }
+
+static void
+gst_mfxdec_release(GstMfxDec * decode)
+{
+	//g_mutex_lock(&decode->surface_ready_mutex);
+	//g_cond_signal(&decode->surface_ready);
+	//g_mutex_unlock(&decode->surface_ready_mutex);
+	gst_object_unref(decode);
+}
+
 
 static GstFlowReturn
 gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
@@ -321,6 +245,8 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 		goto error_create_buffer;
 
 	meta = gst_buffer_get_mfx_video_meta(frame->output_buffer);
+	if (!meta)
+		goto error_get_meta;
 	gst_mfx_video_meta_set_surface_proxy(meta, proxy);
 	crop_rect = gst_mfx_surface_proxy_get_crop_rect(proxy);
 	if (crop_rect) {
@@ -333,10 +259,10 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 			crop_meta->height = crop_rect->height;
 		}
 	}
-
-	//if (decode->has_texture_upload_meta)
-		//gst_buffer_ensure_texture_upload_meta(frame->output_buffer);
-
+#if (USE_GLX || USE_EGL)
+	if (decode->has_texture_upload_meta)
+		gst_buffer_ensure_texture_upload_meta(frame->output_buffer);
+#endif
 	ret = gst_video_decoder_finish_frame(GST_VIDEO_DECODER(decode), frame);
 	if (ret != GST_FLOW_OK)
 		goto error_commit_buffer;
@@ -363,6 +289,252 @@ error_commit_buffer:
 		gst_video_codec_frame_unref(frame);
 		return GST_FLOW_ERROR;
 	}
+}
+
+static gboolean
+gst_mfxdec_negotiate(GstMfxDec * decode)
+{
+	GstVideoDecoder *const vdec = GST_VIDEO_DECODER(decode);
+	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(vdec);
+
+	if (!decode->do_renego)
+		return TRUE;
+
+	GST_DEBUG_OBJECT(decode, "Input codec state changed, doing renegotiation");
+
+	if (!gst_mfx_plugin_base_set_caps(plugin, decode->sinkpad_caps, NULL))
+		return FALSE;
+	if (!gst_mfxdec_update_src_caps(decode))
+		return FALSE;
+	if (!gst_video_decoder_negotiate(vdec))
+		return FALSE;
+	if (!gst_mfx_plugin_base_set_caps(plugin, NULL, decode->srcpad_caps))
+		return FALSE;
+
+	decode->do_renego = FALSE;
+
+	return TRUE;
+}
+
+static void
+gst_mfx_dec_set_property(GObject * object, guint prop_id,
+const GValue * value, GParamSpec * pspec)
+{
+	GstMfxDec *dec;
+
+	g_return_if_fail(GST_IS_MFXDEC(object));
+	dec = GST_MFXDEC(object);
+
+	GST_DEBUG_OBJECT(object, "gst_mfx_dec_set_property");
+	switch (prop_id) {
+	case PROP_ASYNC_DEPTH:
+		//dec->async_depth = g_value_get_uint(value);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+		break;
+	}
+}
+
+static void
+gst_mfx_dec_get_property(GObject * object, guint prop_id, GValue * value,
+	GParamSpec * pspec)
+{
+	GstMfxDec *dec;
+
+	g_return_if_fail(GST_IS_MFXDEC(object));
+	dec = GST_MFXDEC(object);
+
+	switch (prop_id) {
+	case PROP_ASYNC_DEPTH:
+		//g_value_set_uint(value, dec->async_depth);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+		break;
+	}
+}
+
+static gboolean
+gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
+{
+	GstMfxDec *const decode = GST_MFXDEC(vdec);
+	GstCaps *caps = NULL;
+
+	gst_query_parse_allocation(query, &caps, NULL);
+	decode->has_texture_upload_meta = FALSE;
+#if (USE_GLX || USE_EGL)
+	decode->has_texture_upload_meta =
+		gst_query_find_allocation_meta(query,
+		GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, NULL) &&
+		gst_mfx_caps_feature_contains(caps,
+		GST_MFX_CAPS_FEATURE_GL_TEXTURE_UPLOAD_META);
+#endif
+
+	return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(vdec),
+		query);
+}
+
+static inline gboolean
+gst_mfxdec_ensure_display(GstMfxDec * decode)
+{
+	return gst_mfx_plugin_base_ensure_display(GST_MFX_PLUGIN_BASE(decode));
+}
+
+static gboolean
+gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
+{
+	mfxU32 codec_id = gst_get_mfx_codec_from_caps(caps);
+
+	if (codec_id < 0)
+		return FALSE;
+
+	mfxdec->decoder = gst_mfx_decoder_new(GST_MFX_PLUGIN_BASE(mfxdec)->display,
+        &GST_MFX_PLUGIN_BASE(mfxdec)->alloc_ctx, codec_id);
+	if (!mfxdec->decoder)
+		return FALSE;
+
+	return TRUE;
+}
+
+static void
+gst_mfxdec_purge(GstMfxDec * decode)
+{
+	GstMfxDecoderStatus status;
+
+	if (!decode->decoder)
+		return;
+
+	//status = gst_mfx_decoder_flush(decode->decoder);
+	//if (status != GST_MFX_DECODER_STATUS_SUCCESS)
+		//GST_INFO_OBJECT(decode, "failed to flush decoder (status %d)", status);
+
+	/* Purge all decoded frames as we don't need them (e.g. flush and close)
+	* Releasing the frames is important, otherwise the frames are not
+	* freed. */
+	/*do {
+		GstVideoCodecFrame *frame = NULL;
+
+		status =
+			gst_vaapi_decoder_get_frame_with_timeout(decode->decoder, &frame, 0);
+		if (frame) {
+			gst_video_decoder_release_frame(GST_VIDEO_DECODER(decode), frame);
+			gst_video_codec_frame_unref(frame);
+		}
+	} while (status == GST_MFX_DECODER_STATUS_SUCCESS);*/
+}
+
+static void
+gst_mfxdec_destroy(GstMfxDec * decode)
+{
+	gst_mfxdec_purge(decode);
+
+	gst_mfx_decoder_replace(&decode->decoder, NULL);
+	gst_caps_replace(&decode->decoder_caps, NULL);
+
+	decode->active = FALSE;
+
+	gst_mfxdec_release(gst_object_ref(decode));
+}
+
+static gboolean
+gst_mfxdec_reset_full(GstMfxDec * decode, GstCaps * caps,
+	gboolean hard)
+{
+	mfxU32 codec;
+
+	if (!hard && decode->decoder && decode->decoder_caps) {
+		if (gst_caps_is_always_compatible(caps, decode->decoder_caps))
+			return TRUE;
+		codec = gst_get_mfx_codec_from_caps(caps);
+		if (codec == gst_mfx_decoder_get_codec(decode->decoder))
+			return TRUE;
+	}
+
+	gst_mfxdec_destroy(decode);
+	return gst_mfxdec_create(decode, caps);
+}
+
+static void
+gst_mfxdec_finalize(GObject * object)
+{
+	GstMfxDec *const decode = GST_MFXDEC(object);
+
+	gst_caps_replace(&decode->sinkpad_caps, NULL);
+	gst_caps_replace(&decode->srcpad_caps, NULL);
+	//gst_caps_replace(&decode->allowed_caps, NULL);
+
+	//g_cond_clear(&decode->surface_ready);
+	//g_mutex_clear(&decode->surface_ready_mutex);
+
+	gst_mfx_plugin_base_finalize(GST_MFX_PLUGIN_BASE(object));
+	G_OBJECT_CLASS(gst_mfxdec_parent_class)->finalize(object);
+}
+
+static gboolean
+gst_mfxdec_open(GstVideoDecoder * vdec)
+{
+	GstMfxDec *const decode = GST_MFXDEC(vdec);
+	GstMfxDisplay *const old_display = GST_MFX_PLUGIN_BASE_DISPLAY(decode);
+	gboolean success;
+
+	/* Let GstVideoContext ask for a proper display to its neighbours */
+	/* Note: steal old display that may be allocated from get_caps()
+	so that to retain a reference to it, thus avoiding extra
+	initialization steps if we turn out to simply re-use the
+	existing (cached) VA display */
+	GST_MFX_PLUGIN_BASE_DISPLAY(decode) = NULL;
+	success = gst_mfxdec_ensure_display(decode);
+	if (success)
+        GST_MFX_PLUGIN_BASE(decode)->alloc_ctx.va_dpy =
+            GST_MFX_DISPLAY_VADISPLAY(GST_MFX_PLUGIN_BASE(decode)->display);
+	if (old_display)
+		gst_mfx_display_unref(old_display);
+	return success;
+}
+
+static gboolean
+gst_mfxdec_close(GstVideoDecoder * vdec)
+{
+	GstMfxDec *const decode = GST_MFXDEC(vdec);
+
+	gst_mfxdec_input_state_replace(decode, NULL);
+	gst_mfxdec_destroy(decode);
+	gst_mfx_plugin_base_close(GST_MFX_PLUGIN_BASE(decode));
+	return TRUE;
+}
+
+static gboolean
+gst_mfxdec_flush(GstVideoDecoder * vdec)
+{
+	GstMfxDec *const decode = GST_MFXDEC(vdec);
+
+	//if (decode->decoder && !gst_mfxdec_internal_flush(vdec))
+		//return FALSE;
+
+	/* There could be issues if we avoid the reset_full() while doing
+	* seeking: we have to reset the internal state */
+	return gst_mfxdec_reset_full(decode, decode->sinkpad_caps, TRUE);
+}
+
+static gboolean
+gst_mfxdec_set_format(GstVideoDecoder * vdec, GstVideoCodecState * state)
+{
+	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(vdec);
+	GstMfxDec *const decode = GST_MFXDEC(vdec);
+
+	GstMfxContextAllocatorVaapi *ctx = &GST_MFX_PLUGIN_BASE(decode)->alloc_ctx;
+
+	if (!gst_mfxdec_input_state_replace(decode, state))
+		return TRUE;
+	if (!gst_mfxdec_update_sink_caps(decode, state->caps))
+		return FALSE;
+	if (!gst_mfx_plugin_base_set_caps(plugin, decode->sinkpad_caps, NULL))
+		return FALSE;
+	if (!gst_mfxdec_reset_full(decode, decode->sinkpad_caps, FALSE))
+		return FALSE;
+
+	return TRUE;
 }
 
 static GstFlowReturn
@@ -416,151 +588,52 @@ not_negotiated:
 	}
 }
 
-/* XXXX: GStreamer 1.2 doesn't check, in gst_buffer_pool_set_config()
-if the config option is already set */
-static inline gboolean
-gst_mfxdec_set_pool_config(GstBufferPool * pool,
-	const gchar * option)
+static void
+gst_mfxdec_class_init(GstMfxDecClass *klass)
 {
-	GstStructure *config;
+	GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
+	GstElementClass *element_class = GST_ELEMENT_CLASS(klass);
+	GstVideoDecoderClass *video_decoder_class = GST_VIDEO_DECODER_CLASS(klass);
 
-	config = gst_buffer_pool_get_config(pool);
-	if (!gst_buffer_pool_config_has_option(config, option)) {
-		gst_buffer_pool_config_add_option(config, option);
-		return gst_buffer_pool_set_config(pool, config);
-	}
-	return TRUE;
+	GST_DEBUG_CATEGORY_INIT(mfxdec_debug, "mfxdec", 0, "MFX Video Decoder");
+
+	gst_mfx_plugin_base_class_init(GST_MFX_PLUGIN_BASE_CLASS(klass));
+
+	gobject_class->set_property = gst_mfx_dec_set_property;
+	gobject_class->get_property = gst_mfx_dec_get_property;
+
+	g_object_class_install_property(gobject_class, PROP_ASYNC_DEPTH,
+		g_param_spec_uint("async-depth", "Asynchronous Depth",
+		"Number of async operations before explicit sync",
+		0, 16, DEFAULT_ASYNC_DEPTH,
+		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+	gst_element_class_add_pad_template(element_class,
+		gst_static_pad_template_get(&src_template_factory));
+	gst_element_class_add_pad_template(element_class,
+		gst_static_pad_template_get(&sink_template_factory));
+	gst_element_class_set_static_metadata(element_class,
+		"MFX Video Decoder",
+		"Codec/Decoder/Video",
+		"Uses libmfx for decoding video streams",
+		"Ishmael Sameen<ishmael.visayana.sameen@intel.com>");
+
+	video_decoder_class->open = GST_DEBUG_FUNCPTR(gst_mfxdec_open);
+	video_decoder_class->close = GST_DEBUG_FUNCPTR(gst_mfxdec_close);
+	video_decoder_class->flush = GST_DEBUG_FUNCPTR(gst_mfxdec_flush);
+	video_decoder_class->set_format = GST_DEBUG_FUNCPTR(gst_mfxdec_set_format);
+	video_decoder_class->handle_frame =
+		GST_DEBUG_FUNCPTR(gst_mfxdec_handle_frame);
+	video_decoder_class->decide_allocation =
+		GST_DEBUG_FUNCPTR(gst_mfxdec_decide_allocation);
+
 }
 
-gboolean
-gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
+static void
+gst_mfxdec_init(GstMfxDec *mfxdec)
 {
-	GstMfxDec *const decode = GST_MFXDEC(vdec);
-	GstCaps *caps = NULL;
-	GstBufferPool *pool;
-	GstStructure *config;
-	GstVideoInfo vi;
-	guint size, min, max;
-	gboolean update_pool = FALSE;
-	gboolean has_video_meta = FALSE;
-	gboolean has_video_alignment = FALSE;
+	//mfxdec->async_depth = DEFAULT_ASYNC_DEPTH;
 
-	gboolean has_texture_upload_meta = FALSE;
-	guint idx;
-
-	gst_query_parse_allocation(query, &caps, NULL);
-
-	/* We don't need any GL context beyond this point if not requested
-	so explicitly through GstVideoGLTextureUploadMeta */
-	//gst_object_replace(&plugin->gl_context, NULL);
-
-	if (!caps)
-		goto error_no_caps;
-
-	has_video_meta = gst_query_find_allocation_meta(query,
-		GST_VIDEO_META_API_TYPE, NULL);
-
-	has_texture_upload_meta = gst_query_find_allocation_meta(query,
-		GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx);
-
-	/*if (has_texture_upload_meta) {
-        const GstStructure *params;
-        GstObject *gl_context;
-
-        gst_query_parse_nth_allocation_meta(query, idx, &params);
-        if (params) {
-            if (gst_structure_get(params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
-                    &gl_context, NULL) && gl_context) {
-                gst_mfxdec_set_gl_context(decode, gl_context);
-                gst_object_unref(gl_context);
-            }
-        }
-	}*/
-
-	gst_video_info_init(&vi);
-	gst_video_info_from_caps(&vi, caps);
-	if (GST_VIDEO_INFO_FORMAT(&vi) == GST_VIDEO_FORMAT_ENCODED)
-		gst_video_info_set_format(&vi, GST_VIDEO_FORMAT_NV12,
-		GST_VIDEO_INFO_WIDTH(&vi), GST_VIDEO_INFO_HEIGHT(&vi));
-
-	if (gst_query_get_n_allocation_pools(query) > 0) {
-		gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &min, &max);
-		update_pool = TRUE;
-		size = MAX(size, vi.size);
-		if (pool) {
-			/* Check whether downstream element proposed a bufferpool but did
-			not provide a correct propose_allocation() implementation */
-			has_video_alignment = gst_buffer_pool_has_option(pool,
-				GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT);
-		}
-	}
-	else {
-		pool = NULL;
-		size = vi.size;
-		min = max = 0;
-	}
-
-    if (!pool || !gst_buffer_pool_has_option (pool,
-            GST_BUFFER_POOL_OPTION_MFX_VIDEO_META)) {
-        GST_INFO_OBJECT (decode, "%s. Making a new pool", pool == NULL ? "No pool" :
-            "Pool hasn't GstMfxVideoMeta");
-        if (pool)
-            gst_object_unref (pool);
-        pool = gst_mfx_video_buffer_pool_new (&decode->alloc_ctx);
-        if (!pool)
-            goto error_create_pool;
-
-        config = gst_buffer_pool_get_config (pool);
-        gst_buffer_pool_config_set_params (config, caps, size, min, max);
-        gst_buffer_pool_config_add_option (config,
-            GST_BUFFER_POOL_OPTION_MFX_VIDEO_META);
-        if (!gst_buffer_pool_set_config (pool, config))
-            goto config_failed;
-    }
-
-	/* Check whether GstVideoMeta, or GstVideoAlignment, is needed (raw video) */
-	if (has_video_meta) {
-		if (!gst_mfxdec_set_pool_config(pool,
-			GST_BUFFER_POOL_OPTION_VIDEO_META))
-			goto config_failed;
-	}
-	else if (has_video_alignment) {
-		if (!gst_mfxdec_set_pool_config(pool,
-			GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT))
-			goto config_failed;
-	}
-
-	/* GstVideoGLTextureUploadMeta (OpenGL) */
-	if (has_texture_upload_meta) {
-		if (!gst_mfxdec_set_pool_config(pool,
-			GST_BUFFER_POOL_OPTION_VIDEO_GL_TEXTURE_UPLOAD_META))
-			goto config_failed;
-	}
-
-	if (update_pool)
-		gst_query_set_nth_allocation_pool(query, 0, pool, size, min, max);
-	else
-		gst_query_add_allocation_pool(query, pool, size, min, max);
-
-    return TRUE;
-
-error_no_caps:
-	{
-		GST_ERROR_OBJECT(vdec, "no caps specified");
-		return FALSE;
-	}
-error_create_pool:
-    {
-        GST_ERROR_OBJECT (vdec, "failed to create buffer pool");
-        return FALSE;
-    }
-config_failed:
-	{
-		if (pool)
-			gst_object_unref(pool);
-        GST_ELEMENT_ERROR(vdec, RESOURCE, SETTINGS,
-            ("Failed to configure the buffer pool"),
-			("Configuration is most likely invalid, please report this issue."));
-		return FALSE;
-	}
+	gst_video_decoder_set_packetized(GST_VIDEO_DECODER(mfxdec), TRUE);
+	gst_video_decoder_set_needs_format(GST_VIDEO_DECODER(mfxdec), TRUE);
 }

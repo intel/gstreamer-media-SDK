@@ -1,11 +1,12 @@
 #ifndef GST_MFX_SURFACE_PRIV_H
 #define GST_MFX_SURFACE_PRIV_H
 
-#include "gstmfxcontext.h"
 #include "gstmfxsurface.h"
-#include "gstmfxminiobject.h"
+#include "gstmfxobject_priv.h"
 
 G_BEGIN_DECLS
+
+typedef struct _GstMfxSurfaceClass GstMfxSurfaceClass;
 
 /**
 * GstMfxSurface:
@@ -15,16 +16,21 @@ G_BEGIN_DECLS
 struct _GstMfxSurface
 {
 	/*< private >*/
-	GstMfxMiniObject parent_instance;
+	GstMfxObject parent_instance;
 
 	//GstMfxContext *parent_context;
-	VADisplay display;
 	GstVideoFormat format;
 	guint width;
 	guint height;
 
 	mfxFrameSurface1 *surface;
 	GstMfxContextAllocatorVaapi *alloc_ctx;
+};
+
+struct _GstMfxSurfaceClass
+{
+	/*< private >*/
+	GstMfxObjectClass parent_class;
 };
 
 /**
@@ -67,12 +73,5 @@ struct _GstMfxSurface
 #undef  GST_MFX_SURFACE_FRAME_SURFACE
 #define GST_MFX_SURFACE_FRAME_SURFACE(surface) \
 	(GST_MFX_SURFACE (surface)->surface)
-
-/*void
-gst_mfx_surface_set_parent_context(GstMfxSurface * surface,
-GstMfxContext * context);
-
-GstMfxContext *
-gst_mfx_surface_get_parent_context(GstMfxSurface * surface);*/
 
 #endif

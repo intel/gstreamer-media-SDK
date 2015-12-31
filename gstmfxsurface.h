@@ -6,8 +6,9 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 
+#include "gstmfxobject.h"
+#include "gstmfxdisplay.h"
 #include "gstvaapiimage.h"
-#include "gstmfxtypes.h"
 #include "video-utils.h"
 #include "gstmfxcontext.h"
 
@@ -40,10 +41,13 @@ typedef struct _GstMfxSurface GstMfxSurface;
 typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
 
 GstMfxSurface *
-gst_mfx_surface_new(GstMfxContextAllocatorVaapi *ctx);
+gst_mfx_surface_new(GstMfxDisplay * display, GstMfxContextAllocatorVaapi *ctx);
 
 mfxFrameSurface1 *
 gst_mfx_surface_get_frame_surface(GstMfxSurface * surface);
+
+GstMfxID
+gst_mfx_surface_get_id(GstMfxSurface * surface);
 
 GstVideoFormat
 gst_mfx_surface_get_format(GstMfxSurface * surface);
@@ -60,9 +64,6 @@ gst_mfx_surface_get_size(GstMfxSurface * surface, guint * width_ptr,
 
 GstVaapiImage *
 gst_mfx_surface_derive_image (GstMfxSurface * surface);
-
-VAImage *
-gst_mfx_surface_get_image (GstMfxSurface * surface);
 
 G_END_DECLS
 

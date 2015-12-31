@@ -39,17 +39,6 @@ typedef struct _GstMfxDisplayX11Class         GstMfxDisplayX11Class;
 #define GST_MFX_DISPLAY_XSCREEN(display) \
 	GST_MFX_DISPLAY_X11_PRIVATE(display)->x11_screen
 
-/**
-* GST_MFX_DISPLAY_HAS_XRENDER:
-* @display: a #GstMfxDisplay
-*
-* Macro that evaluates to the existence of the XRender extension on
-* @display server.
-*/
-#undef  GST_MFX_DISPLAY_HAS_XRENDER
-#define GST_MFX_DISPLAY_HAS_XRENDER(display) \
-	(GST_MFX_DISPLAY_X11_PRIVATE(display)->has_xrender)
-
 struct _GstMfxDisplayX11Private
 {
 	gchar *display_name;
@@ -58,7 +47,6 @@ struct _GstMfxDisplayX11Private
 	GArray *pixel_formats;
 	guint use_foreign_display : 1;  // Foreign native_display?
 	guint use_xrandr : 1;
-	guint has_xrender : 1;          // Has XRender extension?
 	guint synchronous : 1;
 };
 
@@ -86,16 +74,6 @@ struct _GstMfxDisplayX11Class
 	GstMfxDisplayClass parent_class;
 };
 
-void
-gst_mfx_display_x11_class_init(GstMfxDisplayX11Class * klass);
-
-/*GstVideoFormat
-gst_mfx_display_x11_get_pixmap_format(GstMfxDisplayX11 * display,
-	guint depth);
-
-guint
-gst_mfx_display_x11_get_pixmap_depth(GstMfxDisplayX11 * display,
-	GstVideoFormat format);*/
 
 G_END_DECLS
 

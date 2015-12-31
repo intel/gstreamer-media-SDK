@@ -1,8 +1,15 @@
 #ifndef GST_MFX_PLUGIN_UTIL_H
 #define GST_MFX_PLUGIN_UTIL_H
 
+#include "gstmfxdisplay.h"
 #include "gstmfxsurface.h"
 #include "gstmfxvideomemory.h"
+
+gboolean
+gst_mfx_ensure_display(GstElement * element, GstMfxDisplayType type);
+
+gboolean
+gst_mfx_handle_context_query (GstQuery * query, GstMfxDisplay * display);
 
 gboolean
 gst_mfx_append_surface_caps(GstCaps * out_caps, GstCaps * in_caps);

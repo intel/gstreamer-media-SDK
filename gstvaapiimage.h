@@ -2,6 +2,8 @@
 #define GST_VAAPI_IMAGE_H
 
 //#include <gst/gstbuffer.h>
+#include "gstmfxobject.h"
+#include "gstmfxdisplay.h"
 #include "video-utils.h"
 
 G_BEGIN_DECLS
@@ -33,17 +35,17 @@ G_BEGIN_DECLS
  */
 #define GST_VAAPI_IMAGE_HEIGHT(image)   gst_vaapi_image_get_height(image)
 
-typedef struct _GstVaapiImage                   GstVaapiImage;
+typedef struct _GstVaapiImage GstVaapiImage;
 
 GstVaapiImage *
 gst_vaapi_image_new(
-    VADisplay           display,
-    guint               width,
-    guint               height
+	GstMfxDisplay   *display,
+    guint           width,
+    guint           height
 );
 
 GstVaapiImage *
-gst_vaapi_image_new_with_image(VADisplay display, VAImage *va_image);
+gst_vaapi_image_new_with_image(GstMfxDisplay *display, VAImage *va_image);
 
 VAImageID
 gst_vaapi_image_get_id(GstVaapiImage *image);

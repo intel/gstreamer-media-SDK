@@ -1,18 +1,7 @@
-/*
- ============================================================================
- Name        : gst-mfx.c
- Author      : Heiher <admin@heiher.info>
- Version     : 0.0.1
- Copyright   : Copyright (C) 2013 everyone.
- Description : 
- ============================================================================
- */
-
 #include <gst/gst.h>
 
 #include "gstmfxdec.h"
-//#include "gstmfxenc.h"
-//#include "gstmfxvpp.h"
+#include "gstmfxsink.h"
 
 #define PACKAGE "gstmfx"
 #define VERSION "0.0.1"
@@ -20,20 +9,10 @@
 static gboolean
 plugin_init(GstPlugin * plugin)
 {
-#ifdef HAVE_MFX_DECODER
 	gst_element_register(plugin, "mfxdecode", GST_RANK_NONE,
 		GST_TYPE_MFXDEC);
-#endif
-
-#ifdef HAVE_MFX_ENCODER
-	gst_element_register(plugin, "mfxencode", GST_RANK_NONE,
-		gst_mfxenc_get_type());
-#endif
-
-#ifdef HAVE_MFX_VPP
-	gst_element_register(plugin, "mfxvpp", GST_RANK_NONE,
-		gst_mfxvpp_get_type());
-#endif
+	gst_element_register(plugin, "mfxsink", GST_RANK_NONE,
+		GST_TYPE_MFXSINK);
 
 	return TRUE;
 }

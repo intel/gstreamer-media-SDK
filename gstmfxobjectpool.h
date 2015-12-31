@@ -1,8 +1,8 @@
-
 #ifndef GST_MFX_OBJECT_POOL_H
 #define GST_MFX_OBJECT_POOL_H
 
 #include <glib.h>
+#include "gstmfxdisplay.h"
 
 G_BEGIN_DECLS
 
@@ -13,7 +13,7 @@ typedef struct _GstMfxObjectPool GstMfxObjectPool;
 
 /**
  * GstMfxPoolObjectType:
- * @GST_MFX_POOL_OBJECT_TYPE_IMAGE: #GstMfxImage objects.
+ * @GST_MFX_POOL_OBJECT_TYPE_IMAGE: #GstVaapiImage objects.
  * @GST_MFX_POOL_OBJECT_TYPE_SURFACE: #GstMfxSurface objects.
  *
  * The set of all supported #GstMfxObjectPool object types.
@@ -34,8 +34,8 @@ void
 gst_mfx_object_pool_replace (GstMfxObjectPool ** old_pool_ptr,
     GstMfxObjectPool * new_pool);
 
-//GstMfxDisplay *
-//gst_mfx_object_pool_get_display (GstMfxObjectPool * pool);
+GstMfxDisplay *
+gst_mfx_object_pool_get_display (GstMfxObjectPool * pool);
 
 GstMfxPoolObjectType
 gst_mfx_object_pool_get_object_type (GstMfxObjectPool * pool);

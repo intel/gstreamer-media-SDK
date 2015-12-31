@@ -1,6 +1,6 @@
 #include "gstmfxvideometa.h"
-#include "gstmfxsurfaceproxy.h"
-#include "gstvaapiimage.h"
+#include "gstmfxsurfacepool.h"
+#include "gstvaapiimagepool.h"
 #include "gstmfxvideomemory.h"
 
 #define GST_MFX_VIDEO_META(obj) \
@@ -12,7 +12,7 @@ struct _GstMfxVideoMeta
 {
 	GstBuffer *buffer;
 	gint ref_count;
-	//GstMfxDisplay *display;
+	GstMfxDisplay *display;
 	GstVaapiImage *image;
 	GstMfxSurfaceProxy *proxy;
 	guint render_flags;
@@ -20,6 +20,11 @@ struct _GstMfxVideoMeta
 	guint has_render_rect : 1;
 };
 
+static inline void
+set_display (GstMfxVideoMeta * meta, GstMfxDisplay * display)
+{
+    gst_mfx_display_replace (&meta->display, display);
+}
 
 /*static gboolean
 ensure_surface_proxy(GstMfxVideoMeta * meta)
@@ -46,14 +51,14 @@ set_image (GstMfxVideoMeta * meta, GstVaapiImage * image)
 static gboolean
 set_surface_proxy(GstMfxVideoMeta * meta, GstMfxSurfaceProxy * proxy)
 {
-	GstMfxSurfaceProxy *surface;
+	GstMfxSurface *surface;
 
 	surface = GST_MFX_SURFACE_PROXY_SURFACE(proxy);
 	if (!surface)
 		return FALSE;
 
 	meta->proxy = gst_mfx_surface_proxy_ref(proxy);
-	//set_display(meta, gst_mfx_object_get_display(GST_MFX_MINI_OBJECT(surface)));
+	set_display(meta, gst_mfx_object_get_display(GST_MFX_OBJECT(surface)));
 	return TRUE;
 }
 
@@ -91,7 +96,7 @@ static void
 gst_mfx_video_meta_finalize(GstMfxVideoMeta * meta)
 {
 	gst_mfx_video_meta_destroy_proxy(meta);
-	//gst_mfx_display_replace(&meta->display, NULL);
+	gst_mfx_display_replace(&meta->display, NULL);
 }
 
 static void
@@ -155,7 +160,7 @@ gst_mfx_video_meta_copy(GstMfxVideoMeta * meta)
 
     copy->buffer = NULL;
     copy->ref_count = 1;
-    //copy->display = gst_vaapi_display_ref (meta->display);
+    copy->display = gst_mfx_display_ref (meta->display);
     copy->image = meta->image ? gst_mfx_mini_object_ref (meta->image) : NULL;
     copy->proxy = meta->proxy ? gst_mfx_surface_proxy_copy (meta->proxy) : NULL;
     //copy->converter = meta->converter;
@@ -193,7 +198,7 @@ gst_mfx_video_meta_new_from_pool(GstMfxSurfacePool * pool)
 	if (!set_surface_proxy_from_pool(meta, pool))
 		goto error;
 
-	//set_display(meta, gst_mfx_video_pool_get_display(pool));
+	set_display(meta, gst_mfx_object_pool_get_display(pool));
 	return meta;
 
 error:
@@ -286,6 +291,15 @@ gst_mfx_video_meta_replace (GstMfxVideoMeta ** old_meta_ptr,
         gst_mfx_video_meta_unref (old_meta);
 }
 
+GstMfxDisplay *
+gst_mfx_video_meta_get_display (GstMfxVideoMeta * meta)
+{
+    g_return_val_if_fail (GST_MFX_IS_VIDEO_META (meta), NULL);
+
+    return meta->display;
+}
+
+
 GstVaapiImage *
 gst_mfx_video_meta_get_image (GstMfxVideoMeta * meta)
 {
@@ -314,6 +328,15 @@ gst_mfx_video_meta_get_surface_proxy(GstMfxVideoMeta * meta)
 	return meta->proxy;
 }
 
+GstMfxSurface *
+gst_mfx_video_meta_get_surface(GstMfxVideoMeta * meta)
+{
+	g_return_val_if_fail(GST_MFX_IS_VIDEO_META(meta), NULL);
+
+	//return ensure_surface_proxy(meta) ? meta->proxy : NULL;
+	return GST_MFX_SURFACE_PROXY_SURFACE(meta->proxy);
+}
+
 void
 gst_mfx_video_meta_set_surface_proxy(GstMfxVideoMeta * meta,
 	GstMfxSurfaceProxy * proxy)
@@ -332,24 +355,6 @@ gst_mfx_video_meta_set_surface_proxy(GstMfxVideoMeta * meta,
 		if (crop_rect)
 			gst_mfx_video_meta_set_render_rect(meta, crop_rect);
 	}
-}
-
-guint
-gst_mfx_video_meta_get_render_flags(GstMfxVideoMeta * meta)
-{
-	g_return_val_if_fail(GST_MFX_IS_VIDEO_META(meta), 0);
-	g_return_val_if_fail(meta->proxy != NULL, 0);
-
-	return meta->render_flags;
-}
-
-void
-gst_mfx_video_meta_set_render_flags(GstMfxVideoMeta * meta, guint flags)
-{
-	g_return_if_fail(GST_MFX_IS_VIDEO_META(meta));
-	g_return_if_fail(meta->proxy != NULL);
-
-	meta->render_flags = flags;
 }
 
 const GstMfxRectangle *

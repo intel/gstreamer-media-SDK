@@ -23,11 +23,11 @@ gst_mfx_object_pool_alloc_object (GstMfxObjectPool * pool)
 }
 
 void
-gst_mfx_object_pool_init (GstMfxObjectPool * pool, //GstMfxDisplay * display,
+gst_mfx_object_pool_init (GstMfxObjectPool * pool, GstMfxDisplay * display,
     GstMfxPoolObjectType object_type)
 {
     pool->object_type = object_type;
-    //pool->display = gst_mfx_display_ref (display);
+    pool->display = gst_mfx_display_ref (display);
     pool->used_objects = NULL;
     pool->used_count = 0;
     pool->capacity = 0;
@@ -42,7 +42,7 @@ gst_mfx_object_pool_finalize (GstMfxObjectPool * pool)
     g_list_free_full (pool->used_objects, gst_mfx_mini_object_unref);
     g_queue_foreach (&pool->free_objects, (GFunc) gst_mfx_mini_object_unref, NULL);
     g_queue_clear (&pool->free_objects);
-    //gst_mfx_display_replace (&pool->display, NULL);
+    gst_mfx_display_replace (&pool->display, NULL);
     g_mutex_clear (&pool->mutex);
 }
 
@@ -98,13 +98,13 @@ gst_mfx_object_pool_replace (GstMfxObjectPool ** old_pool_ptr,
  *
  * Return value: the #GstMfxDisplay the @pool is bound to
  */
-/*GstMfxDisplay *
+GstMfxDisplay *
 gst_mfx_object_pool_get_display (GstMfxObjectPool * pool)
 {
     g_return_val_if_fail (pool != NULL, NULL);
 
     return pool->display;
-}*/
+}
 
 /**
  * gst_mfx_object_pool_get_object_type:

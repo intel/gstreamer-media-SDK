@@ -13,7 +13,7 @@ G_BEGIN_DECLS
 typedef struct _GstVaapiImagePool GstVaapiImagePool;
 
 GstMfxObjectPool *
-gst_vaapi_image_pool_new (VADisplay display, const GstVideoInfo * vip);
+gst_vaapi_image_pool_new (GstMfxDisplay * display, const GstVideoInfo * vip);
 
 G_END_DECLS
 

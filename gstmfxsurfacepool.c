@@ -1,3 +1,4 @@
+#include "sysdeps.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxobjectpool_priv.h"
 
@@ -36,7 +37,7 @@ gst_mfx_surface_pool_alloc_object(GstMfxObjectPool * base_pool)
 {
     GstMfxSurfacePool *const pool = GST_MFX_SURFACE_POOL (base_pool);
 
-	return gst_mfx_surface_new(pool->ctx);
+	return gst_mfx_surface_new(base_pool->display, pool->ctx);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -51,7 +52,8 @@ gst_mfx_surface_pool_class (void)
 }
 
 GstMfxObjectPool *
-gst_mfx_surface_pool_new(GstMfxContextAllocatorVaapi * ctx)
+gst_mfx_surface_pool_new(GstMfxDisplay * display,
+	GstMfxContextAllocatorVaapi * ctx)
 {
 	GstMfxObjectPool *pool;
 
@@ -62,7 +64,7 @@ gst_mfx_surface_pool_new(GstMfxContextAllocatorVaapi * ctx)
 	if (!pool)
 		return NULL;
 
-    gst_mfx_object_pool_init (pool, //display,
+    gst_mfx_object_pool_init (pool, display,
         GST_MFX_POOL_OBJECT_TYPE_SURFACE);
 	if (!surface_pool_init(GST_MFX_SURFACE_POOL(pool), ctx))
 		goto error;
