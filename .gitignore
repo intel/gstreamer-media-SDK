@@ -1,0 +1,5 @@
+build/
+bin/
+*.cbp
+*.layout
+*.depend

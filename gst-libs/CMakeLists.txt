@@ -1,0 +1,2 @@
+file(GLOB SOURCE  "*.c")
+set( GST_LIBS_SOURCE ${SOURCE} PARENT_SCOPE )
