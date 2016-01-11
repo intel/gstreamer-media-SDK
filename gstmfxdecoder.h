@@ -49,6 +49,7 @@ struct _GstMfxDecoder
 	GstMfxContext *context;
 	GstMfxObjectPool *pool;
 	GAsyncQueue *surfaces;
+	GList *work_surfaces;
 
 	mfxSession session;
 	mfxFrameAllocRequest req;

@@ -15,7 +15,6 @@ struct _GstMfxVideoMeta
 	GstMfxDisplay *display;
 	GstVaapiImage *image;
 	GstMfxSurfaceProxy *proxy;
-	guint render_flags;
 	GstMfxRectangle render_rect;
 	guint has_render_rect : 1;
 };
@@ -44,7 +43,8 @@ ensure_surface_proxy(GstMfxVideoMeta * meta)
 static inline void
 set_image (GstMfxVideoMeta * meta, GstVaapiImage * image)
 {
-    meta->image = gst_mfx_mini_object_ref (image);
+    meta->image = gst_mfx_object_ref (image);
+    set_display(meta, gst_mfx_object_get_display(GST_MFX_OBJECT(image)));
 }
 
 
@@ -81,7 +81,7 @@ static void
 gst_mfx_video_meta_destroy_image (GstMfxVideoMeta * meta)
 {
     if (meta->image) {
-        gst_mfx_mini_object_unref (meta->image);
+        gst_mfx_object_unref (meta->image);
         meta->image = NULL;
   }
 }
@@ -95,6 +95,7 @@ gst_mfx_video_meta_destroy_proxy(GstMfxVideoMeta * meta)
 static void
 gst_mfx_video_meta_finalize(GstMfxVideoMeta * meta)
 {
+    gst_mfx_video_meta_destroy_image(meta);
 	gst_mfx_video_meta_destroy_proxy(meta);
 	gst_mfx_display_replace(&meta->display, NULL);
 }
@@ -104,10 +105,10 @@ gst_mfx_video_meta_init(GstMfxVideoMeta * meta)
 {
     meta->buffer = NULL;
     meta->ref_count = 1;
+    meta->display = NULL;
     meta->image = NULL;
     meta->proxy = NULL;
     //meta->converter = NULL;
-    meta->render_flags = 0;
     meta->has_render_rect = FALSE;
 }
 
@@ -161,10 +162,9 @@ gst_mfx_video_meta_copy(GstMfxVideoMeta * meta)
     copy->buffer = NULL;
     copy->ref_count = 1;
     copy->display = gst_mfx_display_ref (meta->display);
-    copy->image = meta->image ? gst_mfx_mini_object_ref (meta->image) : NULL;
+    copy->image = meta->image ? gst_mfx_object_ref (meta->image) : NULL;
     copy->proxy = meta->proxy ? gst_mfx_surface_proxy_copy (meta->proxy) : NULL;
     //copy->converter = meta->converter;
-    copy->render_flags = meta->render_flags;
 
 	copy->has_render_rect = meta->has_render_rect;
 	if (copy->has_render_rect)
@@ -234,7 +234,7 @@ gst_mfx_video_meta_new_with_image (GstVaapiImage * image)
 }
 
 GstMfxVideoMeta *
-gst_mfx_video_meta_new_with_surface(GstMfxSurfaceProxy * proxy)
+gst_mfx_video_meta_new_with_surface_proxy(GstMfxSurfaceProxy * proxy)
 {
 	GstMfxVideoMeta *meta;
 

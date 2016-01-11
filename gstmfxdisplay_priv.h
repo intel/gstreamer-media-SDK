@@ -201,7 +201,6 @@ GstMfxDisplay *
 gst_mfx_display_new(const GstMfxDisplayClass * klass,
 	GstMfxDisplayInitType init_type, gpointer init_value);
 
-/* Inline reference counting for core libgstmfx library */
 #define gst_mfx_display_ref_internal(display) \
 	((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(display)))
 

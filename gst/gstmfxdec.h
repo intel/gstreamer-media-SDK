@@ -18,7 +18,6 @@
 #include <X11/Xlib.h>
 #include <stdio.h>
 
-#include "gstmfxcompat.h"
 #include "gstmfxdecoder.h"
 #include "gstmfxpluginbase.h"
 

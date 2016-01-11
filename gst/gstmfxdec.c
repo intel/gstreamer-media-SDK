@@ -123,7 +123,6 @@ copy_video_codec_state(const GstVideoCodecState * in_state)
 	if (in_state->codec_data)
 		state->codec_data = gst_buffer_copy_deep(in_state->codec_data);
 
-
 	return state;
 }
 
@@ -185,7 +184,7 @@ gst_mfxdec_update_src_caps(GstMfxDec * decode)
 		return FALSE;
 
 	switch (feature) {
-#if (USE_GLX || USE_EGL)
+#if (USE_EGL)
 	case GST_MFX_CAPS_FEATURE_GL_TEXTURE_UPLOAD_META:
 		features =
 			gst_caps_features_new
@@ -260,7 +259,7 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 			crop_meta->height = crop_rect->height;
 		}
 	}
-#if (USE_GLX || USE_EGL)
+#if (USE_EGL)
 	if (decode->has_texture_upload_meta)
 		gst_buffer_ensure_texture_upload_meta(frame->output_buffer);
 #endif
@@ -364,7 +363,7 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 
 	gst_query_parse_allocation(query, &caps, NULL);
 	decode->has_texture_upload_meta = FALSE;
-#if (USE_GLX || USE_EGL)
+#if (USE_EGL)
 	decode->has_texture_upload_meta =
 		gst_query_find_allocation_meta(query,
 		GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, NULL) &&
@@ -558,12 +557,11 @@ gst_mfxdec_handle_frame(GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 			goto not_negotiated;
 		/* Fall through */
 	case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
-	case GST_MFX_DECODER_STATUS_ERROR_NO_SURFACE:
 		GST_VIDEO_CODEC_FRAME_FLAG_SET(frame,
 			GST_VIDEO_CODEC_FRAME_FLAG_DECODE_ONLY);
 		ret = GST_FLOW_OK;
 		break;
-	case GST_MFX_DECODER_STATUS_SUCCESS:
+    case GST_MFX_DECODER_STATUS_SUCCESS:
 		ret = gst_mfxdec_push_decoded_frame(mfxdec, frame);
 		break;
 	case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:

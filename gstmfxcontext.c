@@ -204,5 +204,3 @@ gst_mfx_context_get_session(GstMfxContext * context)
 
 	return context->session;
 }
-
-

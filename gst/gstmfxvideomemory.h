@@ -1,7 +1,6 @@
 #ifndef GST_MFX_VIDEO_MEMORY_H
 #define GST_MFX_VIDEO_MEMORY_H
 
-#include "sysdeps.h"
 #include <gst/gstallocator.h>
 #include <gst/video/video-info.h>
 #include "gstmfxsurfaceproxy.h"

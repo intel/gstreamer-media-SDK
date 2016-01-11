@@ -8,7 +8,7 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 	if (proxy->surface) {
 		if (proxy->pool && !proxy->parent)
 			gst_mfx_object_pool_put_object(proxy->pool, proxy->surface);
-		gst_mfx_mini_object_unref(proxy->surface);
+		gst_mfx_object_unref(proxy->surface);
 		proxy->surface = NULL;
 	}
 	gst_mfx_object_pool_replace(&proxy->pool, NULL);
@@ -62,7 +62,7 @@ gst_mfx_surface_proxy_new(GstMfxSurface * surface)
 	proxy->parent = NULL;
 	proxy->destroy_func = NULL;
 	proxy->pool = NULL;
-	proxy->surface = gst_mfx_mini_object_ref(surface);
+	proxy->surface = gst_mfx_object_ref(surface);
 	if (!proxy->surface)
 		goto error;
 	gst_mfx_surface_proxy_init_properties(proxy);
@@ -102,7 +102,7 @@ gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool)
 	proxy->surface = gst_mfx_object_pool_get_object(proxy->pool);
 	if (!proxy->surface)
 		goto error;
-	gst_mfx_mini_object_ref(proxy->surface);
+	gst_mfx_object_ref(proxy->surface);
 	gst_mfx_surface_proxy_init_properties(proxy);
 	return proxy;
 
@@ -139,7 +139,7 @@ gst_mfx_surface_proxy_copy(GstMfxSurfaceProxy * proxy)
 	copy->parent = gst_mfx_surface_proxy_ref(proxy->parent ?
 		proxy->parent : proxy);
 	copy->pool = proxy->pool ? gst_mfx_object_pool_ref(proxy->pool) : NULL;
-	copy->surface = gst_mfx_mini_object_ref(proxy->surface);
+	copy->surface = gst_mfx_object_ref(proxy->surface);
 	copy->timestamp = proxy->timestamp;
 	copy->duration = proxy->duration;
 	copy->destroy_func = NULL;

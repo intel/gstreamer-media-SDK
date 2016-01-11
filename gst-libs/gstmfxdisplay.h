@@ -103,7 +103,7 @@ gst_mfx_display_unref(GstMfxDisplay * display);
 
 void
 gst_mfx_display_replace(GstMfxDisplay ** old_display_ptr,
-GstMfxDisplay * new_display);
+    GstMfxDisplay * new_display);
 
 void
 gst_mfx_display_lock(GstMfxDisplay * display);

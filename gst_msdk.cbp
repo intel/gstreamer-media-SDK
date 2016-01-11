@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! mfxsink" />
+				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! mfxsink sync=false" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -36,7 +36,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Release/libgst_msdk.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! glimagesink" />
+				<Option parameters="--gst-plugin-load=./bin/Release/libgst_msdk.so filesrc location=/home/nuc/Videos/bbb_sunflower_2160p_30fps_normal.mp4 ! qtdemux ! h264parse ! mfxdecode ! glimagesink sync=false" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -184,6 +184,7 @@
 		<Extensions>
 			<code_completion />
 			<debugger />
+			<envvars set="display" />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

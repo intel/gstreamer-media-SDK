@@ -1,6 +1,7 @@
+#include "sysdeps.h"
 #include "gstmfxobjectpool.h"
 #include "gstmfxobjectpool_priv.h"
-#include "gstmfxminiobject.h"
+#include "gstmfxobject.h"
 
 /* Ensure those symbols are actually defined in the resulting libraries */
 #undef gst_mfx_object_pool_ref
@@ -39,8 +40,8 @@ gst_mfx_object_pool_init (GstMfxObjectPool * pool, GstMfxDisplay * display,
 void
 gst_mfx_object_pool_finalize (GstMfxObjectPool * pool)
 {
-    g_list_free_full (pool->used_objects, gst_mfx_mini_object_unref);
-    g_queue_foreach (&pool->free_objects, (GFunc) gst_mfx_mini_object_unref, NULL);
+    g_list_free_full (pool->used_objects, gst_mfx_object_unref);
+    g_queue_foreach (&pool->free_objects, (GFunc) gst_mfx_object_unref, NULL);
     g_queue_clear (&pool->free_objects);
     gst_mfx_display_replace (&pool->display, NULL);
     g_mutex_clear (&pool->mutex);
@@ -143,6 +144,7 @@ gst_mfx_object_pool_get_object_unlocked (GstMfxObjectPool * pool)
         return NULL;
 
     object = g_queue_pop_head (&pool->free_objects);
+
     if (!object) {
         g_mutex_unlock (&pool->mutex);
         object = gst_mfx_object_pool_alloc_object (pool);
@@ -150,10 +152,11 @@ gst_mfx_object_pool_get_object_unlocked (GstMfxObjectPool * pool)
     if (!object)
         return NULL;
     }
+    //g_print("Acquiring %d\n", GST_MFX_OBJECT_ID(object));
 
     ++pool->used_count;
     pool->used_objects = g_list_prepend (pool->used_objects, object);
-    return gst_mfx_mini_object_ref (object);
+    return gst_mfx_object_ref (object);
 }
 
 gpointer
@@ -189,10 +192,11 @@ gst_mfx_object_pool_put_object_unlocked (GstMfxObjectPool * pool,
     if (!elem)
         return;
 
-    gst_mfx_mini_object_unref (object);
+    gst_mfx_object_unref (object);
     --pool->used_count;
     pool->used_objects = g_list_delete_link (pool->used_objects, elem);
     g_queue_push_tail (&pool->free_objects, object);
+    //g_print("Releasing %d\n", GST_MFX_OBJECT_ID(object));
 }
 
 void
@@ -221,7 +225,7 @@ static inline gboolean
 gst_mfx_object_pool_add_object_unlocked (GstMfxObjectPool * pool,
     gpointer object)
 {
-    g_queue_push_tail (&pool->free_objects, gst_mfx_mini_object_ref (object));
+    g_queue_push_tail (&pool->free_objects, gst_mfx_object_ref (object));
     return TRUE;
 }
 
