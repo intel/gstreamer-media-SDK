@@ -1,5 +1,8 @@
 build/
 bin/
 *.cbp
+gst_msdk.cbp
 *.layout
+gst_msdk.layout
 *.depend
+gst_msdk.depend

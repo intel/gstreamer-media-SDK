@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxdisplay_x11.h"
@@ -69,8 +70,8 @@ get_default_display_name(void)
 	static const gchar *g_display_name;
 
 	if (!g_display_name)
-        //g_display_name = ":1.0";
-		g_display_name = getenv("DISPLAY");
+        	g_display_name = getenv("DISPLAY");
+	//g_display_name = ":1.0";
 	return g_display_name;
 }
 

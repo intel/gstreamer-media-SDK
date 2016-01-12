@@ -13,14 +13,14 @@ option (HAVE_MFX_ENCODER "Build MSDK Encoder plugin." OFF)
 option (HAVE_MFX_VPP "Build MSDK VPP plugin." OFF)
 option (HAVE_MFX_SINK "Build MSDK SINK plugin for Decoder and VPP plugin." OFF)
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
-message( STATUS "[DEBUG-OUTPUT]: ${LIBRARY_OUTPUT_PATH}")
+
 #Add gst and gst-libs as subdirectory
 add_subdirectory (gst-libs)
 add_subdirectory (gst)
 
 include_directories(
-	gst
-	gst-libs
+    gst/mfx
+	gst-libs/mfx
 	${CMAKE_SOURCE_DIR}
 	)
 
@@ -35,10 +35,8 @@ if (DEBUG)
 	MESSAGE( STATUS "Build Type: Debug")
 endif()
 
-MESSAGE( STATUS "[DEBUG]: ${GST_SOURCE}" )
-MESSAGE( STATUS "[DEBUG]: ${GST_LIBS_SOURCE}" )
 LIST(APPEND SOURCE ${GST_SOURCE} ${GST_LIBS_SOURCE} )
-MESSAGE( STATUS "[GST-SOURCE-DEBUG]: ${SOURCE}" )
+
 pkg_check_modules (GLIB-2.0 REQUIRED glib-2.0)
 pkg_check_modules (GOBJECT-2.0 REQUIRED gobject-2.0)
 pkg_check_modules (GIO-2.0 REQUIRED gio-2.0)
@@ -50,10 +48,6 @@ pkg_check_modules (LIBVA_X11 REQUIRED libva-x11)
 pkg_check_modules (LIBVA_DRM REQUIRED libva-drm)
 pkg_check_modules (WAYLAND_CLIENT REQUIRED wayland-client)
 
-#set(COMPILE_CFLAGS ${GLIB-2.0_CFLAGS})
-#list(APPEND COMPILE_CFLAGS ${GOBJECT-2.0_CFLAGS} ${GSTREAMER_CFLAGS} ${GSTREAMER_VIDEO_CFLAGS} ${LIBVA_CFLAGS} 
-#	${X11_CFLAGS} ${LIBVA_X11_CFLAGS} ${LIBVA_DRM_CFLAGS})
-#MESSAGE( STATUS "${COMPILE_CFLAGS}")
 include_directories(
 	${GLIB-2.0_INCLUDE_DIRS}
 	${GOBJECT-2.0_INCLUDE_DIRS}
