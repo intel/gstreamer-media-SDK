@@ -18,6 +18,7 @@
 					<Add option="-g" />
 					<Add option="-std=c99 -fPIC" />
 					<Add option="-DHAVE_CONFIG_H" />
+					<Add option="-D_GNU_SOURCE" />
 					<Add directory="." />
 					<Add directory="gst/mfx" />
 					<Add directory="gst-libs/mfx" />
@@ -26,11 +27,13 @@
 					<Add directory="/usr/include/glib-2.0" />
 					<Add directory="/opt/intel/mediasdk/include" />
 					<Add directory="/usr/lib64/gstreamer-1.0/include" />
+					<Add directory="/usr/include/drm" />
 				</Compiler>
 				<Linker>
 					<Add option="-lgstreamer-1.0 -lgobject-2.0 -lglib-2.0" />
 					<Add option="-lgthread-2.0 -lgio-2.0 -lgstbase-1.0" />
 					<Add option="-lgstvideo-1.0 -lva -lva-x11 -lX11" />
+					<Add option="-ldrm -ldrm_intel -lva-drm -ludev" />
 					<Add library="/opt/intel/mediasdk/lib/lin_x64/libmfx.a" />
 				</Linker>
 			</Target>
@@ -46,6 +49,7 @@
 					<Add option="-O2" />
 					<Add option="-std=c99 -fPIC" />
 					<Add option="-DHAVE_CONFIG_H" />
+					<Add option="-D_GNU_SOURCE" />
 					<Add directory="." />
 					<Add directory="gst/mfx" />
 					<Add directory="gst-libs/mfx" />
@@ -54,12 +58,14 @@
 					<Add directory="/opt/intel/mediasdk/include" />
 					<Add directory="/usr/lib64/glib-2.0/include" />
 					<Add directory="/usr/lib64/gstreamer-1.0/include" />
+					<Add directory="/usr/include/drm" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add option="-lgstreamer-1.0 -lgobject-2.0 -lglib-2.0" />
 					<Add option="-lgthread-2.0 -lgio-2.0 -lgstbase-1.0" />
 					<Add option="-lgstvideo-1.0 -lva -lva-x11 -lX11" />
+					<Add option="-ldrm -ldrm_intel -lva-drm -ludev" />
 					<Add library="/opt/intel/mediasdk/lib/lin_x64/libmfx.a" />
 				</Linker>
 			</Target>
@@ -85,6 +91,11 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxdisplay.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_drm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_drm.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_drm_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11.c">
 			<Option compilerVar="CC" />
@@ -132,6 +143,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxwindow.h" />
+		<Unit filename="gst-libs/mfx/gstmfxwindow_drm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxwindow_drm.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_x11.c">
 			<Option compilerVar="CC" />
