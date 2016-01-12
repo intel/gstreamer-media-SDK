@@ -45,8 +45,12 @@ pkg_check_modules (GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0>=1.4)
 pkg_check_modules (X11 REQUIRED x11)
 pkg_check_modules (LIBVA REQUIRED libva)
 pkg_check_modules (LIBVA_X11 REQUIRED libva-x11)
+pkg_check_modules (LIBDRM REQUIRED libdrm)
+pkg_check_modules (LIBDRM_INTEL REQUIRED libdrm_intel)
 pkg_check_modules (LIBVA_DRM REQUIRED libva-drm)
 pkg_check_modules (WAYLAND_CLIENT REQUIRED wayland-client)
+pkg_check_modules (LIBUDEV REQUIRED libudev)
+
 
 include_directories(
 	${GLIB-2.0_INCLUDE_DIRS}
@@ -54,9 +58,12 @@ include_directories(
 	${GSTREAMER_INCLUDE_DIR}
 	${GSTREAMER_VIDEO_INCLUDE_DIRS}
 	${LIBVA_INCLUDE_DIRS}
-	${LIBVA_DRM_INCLUDE_DIRS}
+    ${LIBDRM_INCLUDE_DIRS}
+    ${LIBDRM_INTEL_INCLUDE_DIRS}   
+    ${LIBVA_DRM_INCLUDE_DIRS}
 	${LIBVA_X11_INLCUDE_DIRS}
-	)
+    ${LIBUDEV_INCLUDE_DIR}
+    )
 
 if (DEFINED ENV{MFX_HOME})
 	MESSAGE( STATUS "MFX_HOME=$ENV{MFX_HOME}")
@@ -68,7 +75,7 @@ else()
 	MESSAGE( FATAL_ERROR "No MediaSDK distribution is found.")
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=c99 -fPIC -lstdc++")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fPIC -lstdc++")
 set(MFX_INCLUDES "${MFX_HOME}/include")
 set(MFX_LIBRARY  "${MFX_HOME}/lib/lin_x64/libmfx.a")
 MESSAGE( STATUS "MFX_INCLUDES=${MFX_INCLUDES}")
@@ -88,7 +95,9 @@ target_link_libraries(gstmfx
 	${GSTREAMER_VIDEO_LIBRARIES}
 	${LIBVA_LIBRARIES}
 	${LIBVA_DRM_LIBRARIES}
+    ${LIBDRM_LIBRARIES}
+    ${LIBDRM_INTEL_LIBRARIES}
 	${LIBVA_X11_LIBRARIES}
-	libmfx
+    ${LIBUDEV_LIBRARIES}
+    libmfx
 	)
-#target_compile_options(libgstmfx PUBLIC ${COMPILE_CFLAGS})

@@ -161,7 +161,7 @@
 #define STDC_HEADERS 1
 
 /* Defined to 1 if DRM is enabled */
-#define USE_DRM 0
+#define USE_DRM 1
 
 /* Defined to 1 if EGL is enabled */
 #define USE_EGL 0
