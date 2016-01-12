@@ -1348,7 +1348,7 @@
 1455091218 source:/home/nuc/work/gst_msdk/gstmfxcontext.c
 	"gstmfxcontext.h"
 
-1455091488 source:/home/nuc/work/gst_msdk/gstmfxdecoder.c
+1452572802 source:/home/nuc/work/gst_msdk/gstmfxdecoder.c
 	"gstmfxdecoder.h"
 	"gstmfxobjectpool_priv.h"
 	"gstmfxvideometa.h"
@@ -1418,7 +1418,7 @@
 	"gstmfxsurfacepool.h"
 	"gstmfxobjectpool_priv.h"
 
-1452161840 source:/home/nuc/work/gst_msdk/gstmfxsurfaceproxy.c
+1455094419 source:/home/nuc/work/gst_msdk/gstmfxsurfaceproxy.c
 	"gstmfxsurfaceproxy.h"
 	"gstmfxsurfaceproxy_priv.h"
 	"gstmfxsurfacepool.h"
@@ -1505,7 +1505,7 @@
 	"gstmfxdisplay.h"
 	"gstmfxminiobject.h"
 
-1455091781 source:/home/nuc/work/gst_msdk/gstmfxdisplay_x11.c
+1455092140 source:/home/nuc/work/gst_msdk/gstmfxdisplay_x11.c
 	<string.h>
 	"gstmfxdisplay_priv.h"
 	"gstmfxdisplay_x11.h"
@@ -1834,4 +1834,289 @@
 	<gst/gst.h>
 
 1454577577 /home/nuc/work/gst_msdk/config.h
+
+1449478336 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcodecmap.c
+	"gstmfxcodecmap.h"
+
+1449476463 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcodecmap.h
+	<gst/gst.h>
+	<mfxvideo.h>
+
+1452572802 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdecoder.c
+	"gstmfxdecoder.h"
+	"gstmfxobjectpool_priv.h"
+	"gstmfxvideometa.h"
+
+1452089119 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdecoder.h
+	<gst/gstbuffer.h>
+	<gst/video/gstvideoutils.h>
+	"gstmfxsurfaceproxy.h"
+	"gstmfxsurface_priv.h"
+	"gstmfxobjectpool.h"
+	"gstmfxcontext.h"
+
+1451529569 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfaceproxy.h
+	"gstmfxsurface.h"
+	"gstmfxsurfacepool.h"
+
+1451527314 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurface.h
+	<mfxvideo.h>
+	<gst/gst.h>
+	<gst/video/video.h>
+	"gstmfxobject.h"
+	"gstmfxdisplay.h"
+	"gstvaapiimage.h"
+	"video-utils.h"
+	"gstmfxcontext.h"
+
+1451519935 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxobject.h
+	"gstmfxtypes.h"
+	"gstmfxdisplay.h"
+
+1451520305 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtypes.h
+	<glib.h>
+
+1452237984 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay.h
+	<va/va.h>
+	<gst/gst.h>
+	"gstmfxtypes.h"
+
+1454165954 /home/nuc/work/gst_msdk/gst-libs/mfx/gstvaapiimage.h
+	"gstmfxobject.h"
+	"gstmfxdisplay.h"
+	"video-utils.h"
+
+1450085394 /home/nuc/work/gst_msdk/gst-libs/mfx/video-utils.h
+	<gst/video/video.h>
+	<mfxvideo.h>
+	<va/va.h>
+
+1455091103 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.h
+	"gstmfxminiobject.h"
+	"gstmfxcontext.h"
+	<mfxvideo.h>
+	<va/va.h>
+	<va/va_x11.h>
+
+1450146543 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxminiobject.h
+	<glib.h>
+
+1451530274 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfacepool.h
+	"gstmfxsurface.h"
+	"gstmfxobjectpool.h"
+	"video-utils.h"
+
+1451519050 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxobjectpool.h
+	<glib.h>
+	"gstmfxdisplay.h"
+
+1451527411 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurface_priv.h
+	"gstmfxsurface.h"
+	"gstmfxobject_priv.h"
+
+1451519972 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxobject_priv.h
+	"gstmfxobject.h"
+	"gstmfxminiobject.h"
+	"gstmfxdisplay_priv.h"
+
+1452238630 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_priv.h
+	"gstmfxdisplay.h"
+	"gstmfxdisplaycache.h"
+	"gstmfxwindow.h"
+	"gstmfxminiobject.h"
+
+1450672467 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplaycache.h
+	"gstmfxdisplay.h"
+	"gstmfxminiobject.h"
+
+1451552606 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow.h
+	<gst/video/gstvideosink.h>
+	"gstmfxtypes.h"
+	"gstmfxdisplay.h"
+	"gstmfxsurface.h"
+
+1454155788 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxobjectpool_priv.h
+	"gstmfxminiobject.h"
+
+1451532546 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideometa.h
+	<gst/video/video.h>
+	"gstmfxdisplay.h"
+	"gstmfxsurfaceproxy.h"
+	"gstmfxsurface.h"
+	"gstmfxobjectpool.h"
+	"gstvaapiimage.h"
+
+1450673610 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplaycache.c
+	<glib.h>
+	<string.h>
+	"gstmfxdisplaycache.h"
+
+1449822325 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxminiobject.c
+	<string.h>
+	"gstmfxminiobject.h"
+
+1451520151 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxobject.c
+	"sysdeps.h"
+	"gstmfxobject.h"
+	"gstmfxobject_priv.h"
+	"gstmfxminiobject.h"
+	"gstmfxdisplay_priv.h"
+
+1451520612 /home/nuc/work/gst_msdk/gst-libs/mfx/sysdeps.h
+	"config.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<gst/gst.h>
+
+1452248705 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxobjectpool.c
+	"sysdeps.h"
+	"gstmfxobjectpool.h"
+	"gstmfxobjectpool_priv.h"
+	"gstmfxobject.h"
+
+1451530307 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfacepool.c
+	"sysdeps.h"
+	"gstmfxsurfacepool.h"
+	"gstmfxobjectpool_priv.h"
+
+1451359699 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxutils_x11.c
+	<glib.h>
+	<X11/Xutil.h>
+	"gstmfxutils_x11.h"
+
+1453998140 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxutils_x11.h
+	<X11/Xlib.h>
+	<glib.h>
+	<gst/gst.h>
+
+1451554441 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow.c
+	"sysdeps.h"
+	"gstmfxwindow.h"
+	"gstmfxwindow_priv.h"
+	"gstmfxdisplay_priv.h"
+	"gstmfxsurface_priv.h"
+
+1451554027 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_priv.h
+	"gstmfxobject_priv.h"
+
+1451555541 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_x11.c
+	"sysdeps.h"
+	<string.h>
+	<X11/Xatom.h>
+	"gstmfxwindow_x11.h"
+	"gstmfxwindow_x11_priv.h"
+	"gstmfxdisplay_x11.h"
+	"gstmfxdisplay_x11_priv.h"
+	"video-utils.h"
+	"gstmfxutils_x11.h"
+
+1451289782 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_x11.h
+	<X11/Xlib.h>
+	"gstmfxdisplay.h"
+	"gstmfxwindow.h"
+
+1451554570 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_x11_priv.h
+	"gstmfxwindow_priv.h"
+
+1448504767 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_x11.h
+	<va/va_x11.h>
+	"gstmfxdisplay.h"
+
+1451375662 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_x11_priv.h
+	"gstmfxdisplay_x11.h"
+	"gstmfxdisplay_priv.h"
+
+1451526568 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstvaapiimagepool.c
+	"gstvaapiimagepool.h"
+	"gstmfxobjectpool_priv.h"
+
+1451531221 /home/nuc/work/gst_msdk/gst-libs/mfx/gstvaapiimagepool.h
+	"gstvaapiimage.h"
+	"gstmfxobjectpool.h"
+	"video-utils.h"
+
+1450262101 source:/home/nuc/work/gst_msdk/gst-libs/mfx/video-utils.c
+	"video-utils.h"
+
+1451518617 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfx.c
+	<gst/gst.h>
+	"gstmfxdec.h"
+	"gstmfxsink.h"
+
+1454086916 /home/nuc/work/gst_msdk/gst/mfx/gstmfxdec.h
+	<gst/gst.h>
+	<gst/video/gstvideodecoder.h>
+	<mfxvideo.h>
+	<X11/Xlib.h>
+	<stdio.h>
+	"gstmfxdecoder.h"
+	"gstmfxpluginbase.h"
+
+1451461265 /home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.h
+	<gst/base/gstbasetransform.h>
+	<gst/video/gstvideodecoder.h>
+	<gst/video/gstvideoencoder.h>
+	<gst/video/gstvideosink.h>
+	"gstmfxdisplay.h"
+	"gstmfxcontext.h"
+	<gst/gl/gstglcontext.h>
+
+1451519531 /home/nuc/work/gst_msdk/gst/mfx/gstmfxsink.h
+	"gstmfxpluginbase.h"
+	"gstmfxwindow.h"
+	"gstmfxpluginutil.h"
+
+1451519573 /home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginutil.h
+	"gstmfxdisplay.h"
+	"gstmfxsurface.h"
+	"gstmfxvideomemory.h"
+
+1451531131 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideomemory.h
+	<gst/gstallocator.h>
+	<gst/video/video-info.h>
+	"gstmfxsurfaceproxy.h"
+	"gstvaapiimage.h"
+	"gstmfxvideometa.h"
+	"gstmfxobjectpool.h"
+	"gstvaapiimagepool.h"
+	"gstmfxdisplay.h"
+	<gst/allocators/allocators.h>
+
+1452242095 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxdec.c
+	"gstmfxdec.h"
+	<string.h>
+	"gstmfxsurfaceproxy.h"
+	"gstmfxsurfaceproxy_priv.h"
+	"gstmfxcodecmap.h"
+	"gstmfxvideomemory.h"
+	"gstmfxvideometa.h"
+	"gstmfxvideobufferpool.h"
+	"gstmfxpluginutil.h"
+
+1451529621 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfaceproxy_priv.h
+	"gstmfxminiobject.h"
+	"gstmfxsurfaceproxy.h"
+	"gstmfxobject_priv.h"
+	"gstmfxsurface_priv.h"
+
+1451532850 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideobufferpool.h
+	<gst/video/gstvideopool.h>
+	"gstmfxdisplay.h"
+	"gstmfxcontext.h"
+
+1450852019 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideocontext.c
+	"gstmfxvideocontext.h"
+
+1450852082 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideocontext.h
+	"gstmfxdisplay.h"
+
+1451531189 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideomemory.c
+	"gstmfxvideomemory.h"
+
+1452238787 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideometa.c
+	"gstmfxvideometa.h"
+	"gstmfxsurfacepool.h"
+	"gstvaapiimagepool.h"
+	"gstmfxvideomemory.h"
 

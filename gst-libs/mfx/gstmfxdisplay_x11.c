@@ -69,8 +69,8 @@ get_default_display_name(void)
 	static const gchar *g_display_name;
 
 	if (!g_display_name)
-        g_display_name = ":1.0";
-		//g_display_name = getenv("DISPLAY");
+        //g_display_name = ":1.0";
+		g_display_name = getenv("DISPLAY");
 	return g_display_name;
 }
 

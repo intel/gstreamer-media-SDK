@@ -18,6 +18,9 @@
 					<Add option="-g" />
 					<Add option="-std=c99 -fPIC" />
 					<Add option="-DHAVE_CONFIG_H" />
+					<Add directory="." />
+					<Add directory="gst/mfx" />
+					<Add directory="gst-libs/mfx" />
 					<Add directory="/usr/lib64/glib-2.0/include" />
 					<Add directory="/usr/include/gstreamer-1.0" />
 					<Add directory="/usr/include/glib-2.0" />
@@ -43,6 +46,9 @@
 					<Add option="-O2" />
 					<Add option="-std=c99 -fPIC" />
 					<Add option="-DHAVE_CONFIG_H" />
+					<Add directory="." />
+					<Add directory="gst/mfx" />
+					<Add directory="gst-libs/mfx" />
 					<Add directory="/usr/include/gstreamer-1.0" />
 					<Add directory="/usr/include/glib-2.0" />
 					<Add directory="/opt/intel/mediasdk/include" />
@@ -63,124 +69,124 @@
 			<Add option="-DHAVE_CONFIG_H" />
 		</Compiler>
 		<Unit filename="config.h" />
-		<Unit filename="gstmfx.c">
+		<Unit filename="gst-libs/mfx/gstmfxcodecmap.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxcodecmap.c">
+		<Unit filename="gst-libs/mfx/gstmfxcodecmap.h" />
+		<Unit filename="gst-libs/mfx/gstmfxcontext.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxcodecmap.h" />
-		<Unit filename="gstmfxcontext.c">
+		<Unit filename="gst-libs/mfx/gstmfxcontext.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdecoder.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxcontext.h" />
-		<Unit filename="gstmfxdec.c">
+		<Unit filename="gst-libs/mfx/gstmfxdecoder.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplay.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxdec.h" />
-		<Unit filename="gstmfxdecoder.c">
+		<Unit filename="gst-libs/mfx/gstmfxdisplay.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxdecoder.h" />
-		<Unit filename="gstmfxdisplay.c">
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplaycache.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxdisplay.h" />
-		<Unit filename="gstmfxdisplay_priv.h" />
-		<Unit filename="gstmfxdisplay_x11.c">
+		<Unit filename="gst-libs/mfx/gstmfxdisplaycache.h" />
+		<Unit filename="gst-libs/mfx/gstmfxminiobject.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxdisplay_x11.h" />
-		<Unit filename="gstmfxdisplay_x11_priv.h" />
-		<Unit filename="gstmfxdisplaycache.c">
+		<Unit filename="gst-libs/mfx/gstmfxminiobject.h" />
+		<Unit filename="gst-libs/mfx/gstmfxobject.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxdisplaycache.h" />
-		<Unit filename="gstmfxminiobject.c">
+		<Unit filename="gst-libs/mfx/gstmfxobject.h" />
+		<Unit filename="gst-libs/mfx/gstmfxobject_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxobjectpool.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxminiobject.h" />
-		<Unit filename="gstmfxobject.c">
+		<Unit filename="gst-libs/mfx/gstmfxobjectpool.h" />
+		<Unit filename="gst-libs/mfx/gstmfxobjectpool_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxsurface.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxobject.h" />
-		<Unit filename="gstmfxobject_priv.h" />
-		<Unit filename="gstmfxobjectpool.c">
+		<Unit filename="gst-libs/mfx/gstmfxsurface.h" />
+		<Unit filename="gst-libs/mfx/gstmfxsurface_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxsurfacepool.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxobjectpool.h" />
-		<Unit filename="gstmfxobjectpool_priv.h" />
-		<Unit filename="gstmfxpluginbase.c">
+		<Unit filename="gst-libs/mfx/gstmfxsurfacepool.h" />
+		<Unit filename="gst-libs/mfx/gstmfxsurfaceproxy.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxpluginbase.h" />
-		<Unit filename="gstmfxpluginutil.c">
+		<Unit filename="gst-libs/mfx/gstmfxsurfaceproxy.h" />
+		<Unit filename="gst-libs/mfx/gstmfxsurfaceproxy_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxtypes.h" />
+		<Unit filename="gst-libs/mfx/gstmfxutils_x11.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxpluginutil.h" />
-		<Unit filename="gstmfxsink.c">
+		<Unit filename="gst-libs/mfx/gstmfxutils_x11.h" />
+		<Unit filename="gst-libs/mfx/gstmfxwindow.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxsink.h" />
-		<Unit filename="gstmfxsurface.c">
+		<Unit filename="gst-libs/mfx/gstmfxwindow.h" />
+		<Unit filename="gst-libs/mfx/gstmfxwindow_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxwindow_x11.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxsurface.h" />
-		<Unit filename="gstmfxsurface_priv.h" />
-		<Unit filename="gstmfxsurfacepool.c">
+		<Unit filename="gst-libs/mfx/gstmfxwindow_x11.h" />
+		<Unit filename="gst-libs/mfx/gstmfxwindow_x11_priv.h" />
+		<Unit filename="gst-libs/mfx/gstvaapiimage.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxsurfacepool.h" />
-		<Unit filename="gstmfxsurfaceproxy.c">
+		<Unit filename="gst-libs/mfx/gstvaapiimage.h" />
+		<Unit filename="gst-libs/mfx/gstvaapiimage_priv.h" />
+		<Unit filename="gst-libs/mfx/gstvaapiimagepool.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxsurfaceproxy.h" />
-		<Unit filename="gstmfxsurfaceproxy_priv.h" />
-		<Unit filename="gstmfxtypes.h" />
-		<Unit filename="gstmfxutils_x11.c">
+		<Unit filename="gst-libs/mfx/gstvaapiimagepool.h" />
+		<Unit filename="gst-libs/mfx/sysdeps.h" />
+		<Unit filename="gst-libs/mfx/video-utils.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxutils_x11.h" />
-		<Unit filename="gstmfxvideobufferpool.c">
+		<Unit filename="gst-libs/mfx/video-utils.h" />
+		<Unit filename="gst/mfx/gstmfx.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxvideobufferpool.h" />
-		<Unit filename="gstmfxvideocontext.c">
+		<Unit filename="gst/mfx/gstmfxdec.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxvideocontext.h" />
-		<Unit filename="gstmfxvideomemory.c">
+		<Unit filename="gst/mfx/gstmfxdec.h" />
+		<Unit filename="gst/mfx/gstmfxpluginbase.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxvideomemory.h" />
-		<Unit filename="gstmfxvideometa.c">
+		<Unit filename="gst/mfx/gstmfxpluginbase.h" />
+		<Unit filename="gst/mfx/gstmfxpluginutil.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxvideometa.h" />
-		<Unit filename="gstmfxwindow.c">
+		<Unit filename="gst/mfx/gstmfxpluginutil.h" />
+		<Unit filename="gst/mfx/gstmfxsink.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxwindow.h" />
-		<Unit filename="gstmfxwindow_priv.h" />
-		<Unit filename="gstmfxwindow_x11.c">
+		<Unit filename="gst/mfx/gstmfxsink.h" />
+		<Unit filename="gst/mfx/gstmfxvideobufferpool.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstmfxwindow_x11.h" />
-		<Unit filename="gstmfxwindow_x11_priv.h" />
-		<Unit filename="gstvaapiimage.c">
+		<Unit filename="gst/mfx/gstmfxvideobufferpool.h" />
+		<Unit filename="gst/mfx/gstmfxvideocontext.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstvaapiimage.h" />
-		<Unit filename="gstvaapiimage_priv.h" />
-		<Unit filename="gstvaapiimagepool.c">
+		<Unit filename="gst/mfx/gstmfxvideocontext.h" />
+		<Unit filename="gst/mfx/gstmfxvideomemory.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gstvaapiimagepool.h" />
-		<Unit filename="sysdeps.h" />
-		<Unit filename="video-utils.c">
+		<Unit filename="gst/mfx/gstmfxvideomemory.h" />
+		<Unit filename="gst/mfx/gstmfxvideometa.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="video-utils.h" />
+		<Unit filename="gst/mfx/gstmfxvideometa.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

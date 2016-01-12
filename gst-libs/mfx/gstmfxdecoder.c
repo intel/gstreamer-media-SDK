@@ -170,13 +170,12 @@ put_unused_frames(gpointer surface, gpointer pool)
 }
 
 static gboolean
-get_surface(GstMfxDecoder *decoder, GstMfxSurfaceProxy **proxy)
+get_surface(GstMfxDecoder *decoder, GstMfxSurface **surface)
 {
 	g_list_foreach(decoder->pool->used_objects, put_unused_frames, decoder->pool);
 
-	*proxy = gst_mfx_surface_proxy_new_from_pool(decoder->pool);
-
-	if (!*proxy)
+	*surface = gst_mfx_object_pool_get_object(decoder->pool);
+    if (!*surface)
 		return FALSE;
 
 	return TRUE;
@@ -254,10 +253,10 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	}
 
 	do {
-		if (!get_surface(decoder, &proxy))
+		if (!get_surface(decoder, &surface))
 			return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 
-		insurf = gst_mfx_surface_proxy_get_frame_surface(proxy);
+		insurf = gst_mfx_surface_get_frame_surface(surface);
 		sts = MFXVideoDECODE_DecodeFrameAsync(decoder->session, &decoder->bs,
 			insurf, &outsurf, &sync);
 
@@ -271,8 +270,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 
 	if (sts != MFX_ERR_NONE &&
 		sts != MFX_ERR_MORE_DATA &&
-		sts != MFX_WRN_VIDEO_PARAM_CHANGED &&
-		sts != MFX_ERR_MORE_SURFACE) {
+		sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
 		GST_ERROR_OBJECT(decoder, "Error during MFX decoding.");
 		ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
 	}
@@ -284,13 +282,10 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
           decoder->bs.DataLength);
 		decoder->bs.DataOffset = 0;
 
-		surface = GST_MFX_SURFACE_PROXY_SURFACE(proxy);
-
 		if (GST_MFX_OBJECT_ID(surface) != *(int*)(outsurf->Data.MemId)) {
             GList *l = g_list_find_custom(decoder->pool->used_objects, outsurf,
-                                   sync_output_surface);
-            surface = GST_MFX_SURFACE(l->data);
-            proxy = gst_mfx_surface_proxy_new(surface);
+                                          sync_output_surface);
+            gst_mfx_object_replace(&surface, GST_MFX_SURFACE(l->data));
 		}
 
 		crop_rect.x = surface->surface->Info.CropX;
@@ -298,6 +293,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 		crop_rect.width = surface->surface->Info.CropW;
 		crop_rect.height = surface->surface->Info.CropH;
 
+        proxy = gst_mfx_surface_proxy_new(surface);
 		gst_mfx_surface_proxy_set_crop_rect(proxy, &crop_rect);
 
 		gst_mfx_decoder_push_surface(decoder, proxy);
