@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <va/va.h>
+#include <va/va_drmcommon.h>
+
 #include <gst/gst.h>
 
 #endif /* SYSDEPS_H */

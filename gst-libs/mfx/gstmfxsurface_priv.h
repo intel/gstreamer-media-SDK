@@ -25,6 +25,7 @@ struct _GstMfxSurface
 
 	mfxFrameSurface1 *surface;
 	GstMfxContextAllocatorVaapi *alloc_ctx;
+	GstVaapiBufferProxy *buf_proxy;
 };
 
 struct _GstMfxSurfaceClass

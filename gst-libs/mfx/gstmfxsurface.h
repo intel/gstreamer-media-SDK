@@ -11,6 +11,7 @@
 #include "gstvaapiimage.h"
 #include "video-utils.h"
 #include "gstmfxcontext.h"
+#include "gstvaapibufferproxy.h"
 
 G_BEGIN_DECLS
 
