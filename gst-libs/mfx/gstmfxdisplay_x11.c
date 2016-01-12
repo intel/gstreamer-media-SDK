@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "sysdeps.h"
 #include <string.h>
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxdisplay_x11.h"
@@ -158,15 +158,23 @@ const gchar * name)
 {
 	GstMfxDisplayX11 *const display = GST_MFX_DISPLAY_X11_CAST(base_display);
 	GstMfxDisplayX11Private *const priv = &display->priv;
-	const GstMfxDisplayInfo *info;
+	GstMfxDisplayCache *const cache = GST_MFX_DISPLAY_CACHE(display);
+    const GstMfxDisplayInfo *info;
 
 	if (!set_display_name(display, name))
 		return FALSE;
-
-	priv->x11_display = XOpenDisplay(get_display_name(display));
-	if (!priv->x11_display)
-		return FALSE;
-	priv->use_foreign_display = FALSE;
+    info = gst_mfx_display_cache_lookup_custom(cache, compare_display_name,
+            priv->display_name, g_display_types);
+    if (info)
+    {
+        priv->x11_display = info->native_display;
+        priv->use_foreign_display = TRUE;
+    } else {
+	    priv->x11_display = XOpenDisplay(get_display_name(display));
+	    if (!priv->x11_display)
+		    return FALSE;
+	    priv->use_foreign_display = FALSE;
+    }
 
 	priv->x11_screen = DefaultScreen(priv->x11_display);
 
