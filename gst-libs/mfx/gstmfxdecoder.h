@@ -107,7 +107,7 @@ void
 gst_mfx_decoder_replace(GstMfxDecoder ** old_decoder_ptr,
 	GstMfxDecoder * new_decoder);
 
-mfxU32
+mfxI16
 gst_mfx_decoder_get_codec(GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus

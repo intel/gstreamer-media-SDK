@@ -19,13 +19,13 @@ struct _GstMfxSurface
 	GstMfxObject parent_instance;
 
 	//GstMfxContext *parent_context;
+	GstVaapiBufferProxy *extbuf_proxy;
 	GstVideoFormat format;
 	guint width;
 	guint height;
 
 	mfxFrameSurface1 *surface;
 	GstMfxContextAllocatorVaapi *alloc_ctx;
-	GstVaapiBufferProxy *buf_proxy;
 };
 
 struct _GstMfxSurfaceClass

@@ -416,7 +416,7 @@ guint
 gst_vaapi_image_get_plane_count(GstVaapiImage *image)
 {
     g_return_val_if_fail(image != NULL, 0);
-    g_return_val_if_fail(_gst_vaapi_image_is_mapped(image), 0);
+    //g_return_val_if_fail(_gst_vaapi_image_is_mapped(image), 0);
 
     return image->image.num_planes;
 }
@@ -455,7 +455,7 @@ guint
 gst_vaapi_image_get_pitch(GstVaapiImage *image, guint plane)
 {
     g_return_val_if_fail(image != NULL, 0);
-    g_return_val_if_fail(_gst_vaapi_image_is_mapped(image), 0);
+    //g_return_val_if_fail(_gst_vaapi_image_is_mapped(image), 0);
     g_return_val_if_fail(plane < image->image.num_planes, 0);
 
     return image->image.pitches[plane];

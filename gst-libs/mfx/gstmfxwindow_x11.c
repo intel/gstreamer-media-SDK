@@ -7,6 +7,7 @@
 #include "gstmfxdisplay_x11_priv.h"
 #include "video-utils.h"
 #include "gstmfxutils_x11.h"
+#include "gstvaapibufferproxy_priv.h"
 
 #define _NET_WM_STATE_REMOVE    0       /* remove/unset property */
 #define _NET_WM_STATE_ADD       1       /* add/set property      */
@@ -323,6 +324,11 @@ gst_mfx_window_x11_render(GstMfxWindow * window,
 	VASurfaceID surface_id;
 	VAStatus status;
 
+	GstMfxSurface *shared_surface;
+	GstVaapiBufferProxy *proxy;
+
+	proxy = gst_vaapi_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
+
 	surface_id = GST_MFX_OBJECT_ID(surface);
 	if (surface_id == VA_INVALID_ID)
 		return FALSE;
@@ -343,6 +349,8 @@ gst_mfx_window_x11_render(GstMfxWindow * window,
 	GST_MFX_OBJECT_UNLOCK_DISPLAY(window);
 	if (!vaapi_check_status(status, "vaPutSurface()"))
 		return FALSE;
+
+    gst_vaapi_buffer_proxy_unref(proxy);
 
 	return TRUE;
 }

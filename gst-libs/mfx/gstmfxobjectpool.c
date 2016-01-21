@@ -152,7 +152,6 @@ gst_mfx_object_pool_get_object_unlocked (GstMfxObjectPool * pool)
     if (!object)
         return NULL;
     }
-    //g_print("Acquiring %d\n", GST_MFX_OBJECT_ID(object));
 
     ++pool->used_count;
     pool->used_objects = g_list_prepend (pool->used_objects, object);
@@ -196,7 +195,6 @@ gst_mfx_object_pool_put_object_unlocked (GstMfxObjectPool * pool,
     --pool->used_count;
     pool->used_objects = g_list_delete_link (pool->used_objects, elem);
     g_queue_push_tail (&pool->free_objects, object);
-    //g_print("Releasing %d\n", GST_MFX_OBJECT_ID(object));
 }
 
 void

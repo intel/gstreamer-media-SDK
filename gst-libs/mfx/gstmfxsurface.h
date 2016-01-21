@@ -6,6 +6,8 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 
+#include <va/va_drmcommon.h>
+
 #include "gstmfxobject.h"
 #include "gstmfxdisplay.h"
 #include "gstvaapiimage.h"

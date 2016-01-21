@@ -153,6 +153,11 @@
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxwindow_x11.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_x11_priv.h" />
+		<Unit filename="gst-libs/mfx/gstvaapibufferproxy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstvaapibufferproxy.h" />
+		<Unit filename="gst-libs/mfx/gstvaapibufferproxy_priv.h" />
 		<Unit filename="gst-libs/mfx/gstvaapiimage.c">
 			<Option compilerVar="CC" />
 		</Unit>
