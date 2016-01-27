@@ -4,7 +4,7 @@
 #include "gstmfxdisplay.h"
 #include "gstmfxdisplaycache.h"
 #include "gstmfxwindow.h"
-//#include "gstmfxtexture.h"
+#include "gstmfxtexture.h"
 #include "gstmfxminiobject.h"
 
 G_BEGIN_DECLS
@@ -46,9 +46,9 @@ typedef void(*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
 	guint * pwidth, guint * pheight);
 typedef GstMfxWindow *(*GstMfxDisplayCreateWindowFunc) (
 	GstMfxDisplay * display, guint width, guint height);
-/*typedef GstMfxTexture *(*GstMfxDisplayCreateTextureFunc) (
+typedef GstMfxTexture *(*GstMfxDisplayCreateTextureFunc) (
 	GstMfxDisplay * display, GstMfxID id, guint target, guint format,
-	guint width, guint height);*/
+	guint width, guint height);
 
 typedef guintptr(*GstMfxDisplayGetVisualIdFunc) (GstMfxDisplay * display,
 	GstMfxWindow * window);
@@ -183,7 +183,7 @@ struct _GstMfxDisplayClass
 	GstMfxDisplayGetVisualIdFunc get_visual_id;
 	GstMfxDisplayGetColormapFunc get_colormap;
 	GstMfxDisplayCreateWindowFunc create_window;
-	//GstMfxDisplayCreateTextureFunc create_texture;
+	GstMfxDisplayCreateTextureFunc create_texture;
 };
 
 /* Initialization types */

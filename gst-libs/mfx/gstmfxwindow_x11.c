@@ -327,7 +327,7 @@ gst_mfx_window_x11_render(GstMfxWindow * window,
 	GstMfxSurface *shared_surface;
 	GstVaapiBufferProxy *proxy;
 
-	proxy = gst_vaapi_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
+	//proxy = gst_vaapi_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
 
 	surface_id = GST_MFX_OBJECT_ID(surface);
 	if (surface_id == VA_INVALID_ID)
@@ -350,7 +350,7 @@ gst_mfx_window_x11_render(GstMfxWindow * window,
 	if (!vaapi_check_status(status, "vaPutSurface()"))
 		return FALSE;
 
-    gst_vaapi_buffer_proxy_unref(proxy);
+    //gst_vaapi_buffer_proxy_unref(proxy);
 
 	return TRUE;
 }

@@ -20,7 +20,6 @@
 
 #include "gstmfxdecoder.h"
 #include "gstmfxpluginbase.h"
-#include "gstmfxcompat.h"
 
 G_BEGIN_DECLS
 

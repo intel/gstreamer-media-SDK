@@ -233,7 +233,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	}
 
 	if (decoder->bs.Data == NULL) {
-		decoder->bs.MaxLength = 1024 * 1024;
+		decoder->bs.MaxLength = 4096 * 1024;
 		decoder->bs.Data = g_slice_alloc(decoder->bs.MaxLength);
 	}
 

@@ -271,7 +271,7 @@ gst_mfx_display_lock_default(GstMfxDisplay * display)
 
 	if (priv->parent)
 		priv = GST_MFX_DISPLAY_GET_PRIVATE(priv->parent);
-	g_rec_mutex_lock(&priv->mutex);
+	g_rec_mutex_trylock(&priv->mutex);
 }
 
 static void

@@ -386,7 +386,7 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 {
 	mfxU32 codec_id = gst_get_mfx_codec_from_caps(caps);
 
-	if (codec_id < 0)
+	if (!codec_id)
 		return FALSE;
 
 	mfxdec->decoder = gst_mfx_decoder_new(GST_MFX_PLUGIN_BASE(mfxdec)->display,
@@ -441,7 +441,7 @@ static gboolean
 gst_mfxdec_reset_full(GstMfxDec * decode, GstCaps * caps,
 	gboolean hard)
 {
-	mfxU32 codec;
+	mfxI16 codec;
 
 	if (!hard && decode->decoder && decode->decoder_caps) {
 		if (gst_caps_is_always_compatible(caps, decode->decoder_caps))

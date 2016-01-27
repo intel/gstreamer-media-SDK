@@ -170,7 +170,7 @@ gst_mfxsink_x11_create_window(GstMfxSink * sink, guint width, guint height)
 
 static gboolean
 gst_mfxsink_x11_create_window_from_handle(GstMfxSink * sink,
-guintptr window)
+	guintptr window)
 {
 	GstMfxDisplay *display;
 	Window rootwin;
@@ -386,6 +386,50 @@ gst_mfxsink_backend_wayland(void)
 #endif
 
 /* ------------------------------------------------------------------------ */
+/* --- EGL Backend                                                  --- */
+/* ------------------------------------------------------------------------ */
+
+#if USE_EGL
+#include "gstmfxdisplay_egl.h"
+#include "gstmfxdisplay_egl_priv.h"
+#include "gstmfxwindow_egl.h"
+
+static gboolean
+gst_mfxsink_egl_create_window(GstMfxSink * sink, guint width,
+	guint height)
+{
+	GstMfxDisplay *display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
+
+	if (!GST_MFX_IS_DISPLAY_EGL(display)) {
+        GstMfxDisplay *egl_display;
+
+        egl_display = gst_mfx_display_egl_new (display, 2);
+        if (!egl_display)
+            return FALSE;
+
+        gst_mfx_display_replace(&display, egl_display);
+        gst_mfx_display_unref(egl_display);
+	}
+
+	g_return_val_if_fail(sink->window == NULL, FALSE);
+	sink->window = gst_mfx_window_egl_new(display, width, height);
+	if (!sink->window)
+		return FALSE;
+	return TRUE;
+}
+
+static const inline GstMfxSinkBackend *
+gst_mfxsink_backend_egl(void)
+{
+	static const GstMfxSinkBackend GstMfxSinkBackendEGL = {
+		.create_window = gst_mfxsink_egl_create_window,
+		.render_surface = gst_mfxsink_render_surface,
+	};
+	return &GstMfxSinkBackendEGL;
+}
+#endif
+
+/* ------------------------------------------------------------------------ */
 /* --- GstNavigation interface                                          --- */
 /* ------------------------------------------------------------------------ */
 
@@ -516,10 +560,15 @@ static void
 gst_mfxsink_ensure_backend(GstMfxSink * sink)
 {
 	switch (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink)) {
-#if USE_X11
+#if USE_EGL
 	case GST_MFX_DISPLAY_TYPE_X11:
-		sink->backend = gst_mfxsink_backend_x11();
+		sink->backend = gst_mfxsink_backend_egl();
 		break;
+#endif
+#if USE_X11
+	//case GST_MFX_DISPLAY_TYPE_X11:
+		//sink->backend = gst_mfxsink_backend_x11();
+		//break;
 #endif
 #if USE_WAYLAND
 	case GST_MFX_DISPLAY_TYPE_WAYLAND:
