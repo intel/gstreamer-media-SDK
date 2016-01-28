@@ -81,11 +81,15 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
         }
         texture->textures[i] = egl_create_texture_with_egl_image(texture->egl_context,
             base_texture->gl_target, texture->egl_images[i]);
-        if (!texture->textures[i])
+        if (!texture->textures[i]) {
             return FALSE;
+        }
 
         texture->num_textures++;
     }
+
+    gst_vaapi_buffer_proxy_unref(buffer_proxy);
+    gst_mfx_object_unref(image);
 
 	return TRUE;
 }

@@ -56,7 +56,7 @@ gst_vaapi_buffer_proxy_acquire_handle(GstVaapiBufferProxy * proxy)
 	va_status = g_va_get_surface_handle(GST_MFX_OBJECT_VADISPLAY(proxy->parent),
 		&surf, &proxy->fd);
 	GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
-	if (!vaapi_check_status(va_status, "vpgExtGetSurfaceHandle()"))
+	if (!vaapi_check_status(va_status, "vaExtGetSurfaceHandle()"))
 		return FALSE;
 
 	return TRUE;
@@ -66,6 +66,7 @@ static void
 gst_vaapi_buffer_proxy_finalize(GstVaapiBufferProxy * proxy)
 {
 	gst_mfx_object_replace(&proxy->parent, NULL);
+	close(proxy->fd);
 }
 
 static inline const GstMfxMiniObjectClass *

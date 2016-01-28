@@ -187,10 +187,10 @@ ensure_texture(GstMfxWindowEGL * window, guint width, guint height)
 {
 	GstMfxTexture *texture;
 
-	if (window->texture &&
+	/*if (window->texture &&
 		GST_MFX_TEXTURE_WIDTH(window->texture) == width &&
 		GST_MFX_TEXTURE_HEIGHT(window->texture) == height)
-		return TRUE;
+		return TRUE;*/
 
 	texture = gst_mfx_texture_egl_new(GST_MFX_OBJECT_DISPLAY(window),
 		GL_TEXTURE_EXTERNAL_OES, GL_RGBA, width, height);
@@ -520,6 +520,7 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * rect)
 
 	eglSwapBuffers(window->egl_window->context->display->base.handle.p,
 		window->egl_window->base.handle.p);
+
 	return TRUE;
 }
 
@@ -534,6 +535,7 @@ do_upload_surface_unlocked(GstMfxWindowEGL * window,
 		return FALSE;
 	if (!do_render_texture(window, src_rect))
 		return FALSE;
+
 	return TRUE;
 }
 
@@ -545,13 +547,13 @@ do_upload_surface(UploadSurfaceArgs * args)
 
 	args->success = FALSE;
 
-	//GST_MFX_OBJECT_LOCK_DISPLAY(window);
+	GST_MFX_OBJECT_LOCK_DISPLAY(window);
 	if (egl_context_set_current(window->egl_window->context, TRUE, &old_cs)) {
 		args->success = do_upload_surface_unlocked(window, args->surface,
 			args->src_rect, args->dst_rect);
 		egl_context_set_current(window->egl_window->context, FALSE, &old_cs);
 	}
-	//GST_MFX_OBJECT_UNLOCK_DISPLAY(window);
+	GST_MFX_OBJECT_UNLOCK_DISPLAY(window);
 }
 
 static gboolean

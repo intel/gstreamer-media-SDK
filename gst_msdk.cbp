@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! mfxsink sync=false" />
+				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/nuc/Videos/MPEG2_MP@HL_1920x1080_18.6Mbps_30.00fps_16-9_Progressive_NoSound_Sunflower_test.mpg ! mpegvideoparse ! mfxdecode ! mfxsink sync=false" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -42,7 +42,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Release/libgst_msdk.so filesrc location=/home/nuc/Videos/bbb_sunflower_2160p_30fps_normal.mp4 ! qtdemux ! h264parse ! mfxdecode ! mfxsink sync=false" />
+				<Option parameters="--gst-plugin-load=./bin/Release/libgst_msdk.so filesrc location=/home/nuc/Videos/bbb_sunflower_2160p_30fps_normal.mp4 ! qtdemux ! h264parse ! mfxdecode ! mfxsink" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>

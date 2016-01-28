@@ -45,7 +45,7 @@ GstMfxDecoder * new_decoder)
 	gst_mfx_mini_object_replace(old_decoder_ptr, new_decoder);
 }
 
-mfxI16
+mfxU32
 gst_mfx_decoder_get_codec(GstMfxDecoder * decoder)
 {
 	g_return_val_if_fail(decoder != NULL, -1);

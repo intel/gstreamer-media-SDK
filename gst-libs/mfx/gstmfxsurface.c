@@ -176,8 +176,9 @@ gst_mfx_surface_derive_image (GstMfxSurface * surface)
 	status = vaDeriveImage(GST_MFX_DISPLAY_VADISPLAY(display),
 		GST_MFX_OBJECT_ID(surface), &va_image);
 	GST_MFX_DISPLAY_UNLOCK(display);
-	if (!vaapi_check_status(status, "vaDeriveImage()"))
+	if (!vaapi_check_status(status, "vaDeriveImage()")) {
 		return NULL;
+	}
     if (va_image.image_id == VA_INVALID_ID || va_image.buf == VA_INVALID_ID)
         return NULL;
 
