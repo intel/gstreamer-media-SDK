@@ -229,7 +229,7 @@ gst_mfx_display_wayland_get_size(GstMfxDisplay * display,
 
 static void
 gst_mfx_display_wayland_get_size_mm(GstMfxDisplay * display,
-guint * pwidth, guint * pheight)
+    guint * pwidth, guint * pheight)
 {
 	GstMfxDisplayWaylandPrivate *const priv =
 		GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display);

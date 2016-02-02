@@ -249,10 +249,7 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 			crop_meta->height = crop_rect->height;
 		}
 	}
-#if (USE_EGL)
-	if (decode->has_texture_upload_meta)
-		gst_buffer_ensure_texture_upload_meta(frame->output_buffer);
-#endif
+
 	ret = gst_video_decoder_finish_frame(GST_VIDEO_DECODER(decode), frame);
 	if (ret != GST_FLOW_OK)
 		goto error_commit_buffer;

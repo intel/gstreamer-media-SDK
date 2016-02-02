@@ -175,6 +175,7 @@ gst_mfx_window_wayland_create(GstMfxWindow * window,
 		GST_MFX_WINDOW_WAYLAND_GET_PRIVATE(window);
 	GstMfxDisplayWaylandPrivate *const priv_display =
 		GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(GST_MFX_OBJECT_DISPLAY(window));
+    struct wl_egl_window *egl_window;
 
 	GST_DEBUG("create window, size %ux%u", *width, *height);
 
@@ -213,9 +214,8 @@ gst_mfx_window_wayland_create(GstMfxWindow * window,
 	if (priv->fullscreen_on_show)
 		gst_mfx_window_wayland_set_fullscreen(window, TRUE);
 
-    priv->egl_window = wl_egl_window_create(priv->surface, *width, *height);
-
-    GST_MFX_OBJECT_ID(window) = &priv->egl_window;
+    egl_window = wl_egl_window_create(priv->surface, *width, *height);
+    GST_MFX_OBJECT_ID(window) = egl_window;
 
 	priv->is_shown = TRUE;
 

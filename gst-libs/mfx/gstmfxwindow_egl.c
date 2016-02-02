@@ -559,6 +559,8 @@ gst_mfx_window_egl_render(GstMfxWindowEGL * window,
 	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
+    const GstMfxWindowClass *const klass =
+		GST_MFX_WINDOW_GET_CLASS(window->window);
 	UploadSurfaceArgs args = { window, surface, src_rect, dst_rect };
 
 	return egl_context_run(window->egl_window->context,

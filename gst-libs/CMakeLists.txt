@@ -1,2 +1,0 @@
-file(GLOB SOURCE  "mfx/*.c")
-set( GST_LIBS_SOURCE ${SOURCE} PARENT_SCOPE )

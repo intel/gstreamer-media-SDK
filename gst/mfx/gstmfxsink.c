@@ -850,7 +850,7 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 	/* Retain VA surface until the next one is displayed */
 	/* Need to release the lock for the duration, otherwise a deadlock is possible */
 	//gst_mfx_display_unlock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
-	gst_buffer_replace(&sink->video_buffer, buffer);
+	//gst_buffer_replace(&sink->video_buffer, buffer);
 	//gst_mfx_display_lock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
 
 	ret = GST_FLOW_OK;
