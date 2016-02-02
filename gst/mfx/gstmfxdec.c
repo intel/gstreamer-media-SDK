@@ -37,8 +37,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
 	GST_MFX_MAKE_SURFACE_CAPS ";"
-	//GST_MFX_MAKE_GLTEXUPLOAD_CAPS ";"
-	GST_VIDEO_CAPS_MAKE("{ NV12, I420, YV12 }");
+	GST_VIDEO_CAPS_MAKE("{ NV12 }");
 
 enum
 {
@@ -184,19 +183,10 @@ gst_mfxdec_update_src_caps(GstMfxDec * decode)
 		return FALSE;
 
 	switch (feature) {
-#if (USE_EGL)
-	case GST_MFX_CAPS_FEATURE_GL_TEXTURE_UPLOAD_META:
-		features =
-			gst_caps_features_new
-			(GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META, NULL);
-		break;
-#endif
-#if GST_CHECK_VERSION(1,3,1)
 	case GST_MFX_CAPS_FEATURE_MFX_SURFACE:
 		features =
 			gst_caps_features_new(GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
 		break;
-#endif
 	default:
 		break;
 	}
@@ -358,19 +348,6 @@ gst_mfx_dec_get_property(GObject * object, guint prop_id, GValue * value,
 static gboolean
 gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 {
-	GstMfxDec *const decode = GST_MFXDEC(vdec);
-	GstCaps *caps = NULL;
-
-	gst_query_parse_allocation(query, &caps, NULL);
-	decode->has_texture_upload_meta = FALSE;
-#if (USE_EGL)
-	decode->has_texture_upload_meta =
-		gst_query_find_allocation_meta(query,
-		GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, NULL) &&
-		gst_mfx_caps_feature_contains(caps,
-		GST_MFX_CAPS_FEATURE_GL_TEXTURE_UPLOAD_META);
-#endif
-
 	return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(vdec),
 		query);
 }
@@ -441,7 +418,7 @@ static gboolean
 gst_mfxdec_reset_full(GstMfxDec * decode, GstCaps * caps,
 	gboolean hard)
 {
-	mfxI16 codec;
+	mfxU32 codec;
 
 	if (!hard && decode->decoder && decode->decoder_caps) {
 		if (gst_caps_is_always_compatible(caps, decode->decoder_caps))

@@ -12,58 +12,6 @@
 
 static const guint g_display_types = 1U << GST_MFX_DISPLAY_TYPE_X11;
 
-static gboolean
-parse_display_name(const gchar * name, guint * len_ptr, guint * id_ptr,
-	guint * screen_ptr)
-{
-	gulong len, id = 0, screen = 0;
-	gchar *end;
-
-	end = strchr(name, ':');
-	len = end ? end - name : strlen(name);
-
-	if (end) {
-		id = strtoul(&end[1], &end, 10);
-		if (*end == '.')
-			screen = strtoul(&end[1], &end, 10);
-		if (*end != '\0')
-			return FALSE;
-	}
-
-	if (len_ptr)
-		*len_ptr = len;
-	if (id_ptr)
-		*id_ptr = id;
-	if (screen_ptr)
-		*screen_ptr = screen;
-	return TRUE;
-}
-
-static gint
-compare_display_name(gconstpointer a, gconstpointer b)
-{
-	const GstMfxDisplayInfo *const info = a;
-	const gchar *const cached_name = info->display_name;
-	const gchar *const tested_name = b;
-	guint cached_name_length, cached_id;
-	guint tested_name_length, tested_id;
-
-	g_return_val_if_fail(cached_name, FALSE);
-	g_return_val_if_fail(tested_name, FALSE);
-
-	if (!parse_display_name(cached_name, &cached_name_length, &cached_id, NULL))
-		return FALSE;
-	if (!parse_display_name(tested_name, &tested_name_length, &tested_id, NULL))
-		return FALSE;
-	if (cached_name_length != tested_name_length)
-		return FALSE;
-	if (strncmp(cached_name, tested_name, cached_name_length) != 0)
-		return FALSE;
-	if (cached_id != tested_id)
-		return FALSE;
-	return TRUE;
-}
-
 static inline const gchar *
 get_default_display_name(void)
 {
@@ -153,27 +101,19 @@ gst_mfx_display_x11_bind_display(GstMfxDisplay * base_display,
 
 static gboolean
 gst_mfx_display_x11_open_display(GstMfxDisplay * base_display,
-const gchar * name)
+    const gchar * name)
 {
 	GstMfxDisplayX11 *const display = GST_MFX_DISPLAY_X11_CAST(base_display);
 	GstMfxDisplayX11Private *const priv = &display->priv;
-	GstMfxDisplayCache *const cache = GST_MFX_DISPLAY_CACHE(display);
-	const GstMfxDisplayInfo *info;
 
 	if (!set_display_name(display, name))
 		return FALSE;
 
-    info = gst_mfx_display_cache_lookup_custom (cache, compare_display_name,
-        priv->display_name, g_display_types);
-    if (info) {
-        priv->x11_display = info->native_display;
-        priv->use_foreign_display = TRUE;
-    } else {
-        priv->x11_display = XOpenDisplay (get_display_name (display));
-        if (!priv->x11_display)
-            return FALSE;
-        priv->use_foreign_display = FALSE;
-    }
+    priv->x11_display = XOpenDisplay (get_display_name (display));
+    if (!priv->x11_display)
+        return FALSE;
+    priv->use_foreign_display = FALSE;
+
     priv->x11_screen = DefaultScreen (priv->x11_display);
 
 	check_extensions(display);
@@ -230,26 +170,11 @@ gst_mfx_display_x11_get_display_info(GstMfxDisplay * display,
 {
 	GstMfxDisplayX11Private *const priv =
 		GST_MFX_DISPLAY_X11_PRIVATE(display);
-	GstMfxDisplayCache *const cache = GST_MFX_DISPLAY_CACHE(display);
-	const GstMfxDisplayInfo *cached_info;
-
-	/* Return any cached info even if child has its own VA display */
-	cached_info = gst_mfx_display_cache_lookup_by_native_display(cache,
-		priv->x11_display, g_display_types);
-	if (cached_info) {
-		*info = *cached_info;
-		return TRUE;
-	}
 
 	/* Otherwise, create VA display if there is none already */
 	info->native_display = priv->x11_display;
 	info->display_name = priv->display_name;
-	if (!info->va_display) {
-		info->va_display = vaGetDisplay(priv->x11_display);
-		if (!info->va_display)
-			return FALSE;
-		info->display_type = GST_MFX_DISPLAY_TYPE_X11;
-	}
+	info->display_type = GST_MFX_DISPLAY_TYPE_X11;
 	return TRUE;
 }
 
@@ -269,7 +194,6 @@ gst_mfx_display_x11_get_size(GstMfxDisplay * display,
 	if (pheight)
 		*pheight = DisplayHeight(priv->x11_display, priv->x11_screen);
 }
-
 
 static void
 gst_mfx_display_x11_get_size_mm(GstMfxDisplay * display,

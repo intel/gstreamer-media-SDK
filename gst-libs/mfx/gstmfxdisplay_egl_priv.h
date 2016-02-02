@@ -52,7 +52,6 @@ struct _GstMfxDisplayEGL
 	/*< private >*/
 	GstMfxDisplay parent_instance;
 
-	gpointer loader;
 	GstMfxDisplay *display;
 	EglDisplay *egl_display;
 	EglContext *egl_context;

@@ -62,7 +62,6 @@ typedef enum
 {
 	GST_MFX_DISPLAY_TYPE_ANY = 0,
 	GST_MFX_DISPLAY_TYPE_X11,
-	GST_MFX_DISPLAY_TYPE_GLX,
 	GST_MFX_DISPLAY_TYPE_WAYLAND,
 	GST_MFX_DISPLAY_TYPE_DRM,
 	GST_MFX_DISPLAY_TYPE_EGL,
@@ -92,8 +91,9 @@ struct _GstMfxDisplayInfo
 	gpointer native_display;
 };
 
-GstMfxDisplay *
-gst_mfx_display_new_with_display(VADisplay va_display);
+/* Get default device path. Actually, the first match in the DRM subsystem */
+const gchar *
+get_default_device_path (GstMfxDisplay * display);
 
 GstMfxDisplay *
 gst_mfx_display_ref(GstMfxDisplay * display);

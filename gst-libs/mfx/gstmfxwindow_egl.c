@@ -5,8 +5,6 @@
 #include "gstmfxtexture_priv.h"
 #include "gstmfxdisplay_egl_priv.h"
 
-#define U_GEN_CONCAT(a1, a2) a1 ## a2
-
 #define GST_MFX_WINDOW_EGL(obj) \
 	((GstMfxWindowEGL *)(obj))
 
@@ -158,7 +156,7 @@ static const gchar *frag_shader_text_rgba =
     "         1.16438356,  2.07870535,  0         );\n"
 
 #define YUV2RGB_COLOR(CONV)                             \
-    U_GEN_CONCAT(YUV2RGB_COLOR_,CONV)                   \
+    G_PASTE(YUV2RGB_COLOR_,CONV)                   \
     "vec3 rgb = (yuv - yuv2rgb_ofs) * yuv2rgb_mat;\n"   \
     "gl_FragColor = vec4(rgb, 1);\n"
 
@@ -249,7 +247,7 @@ do_create_objects_unlocked(GstMfxWindowEGL * window, guint width,
 	EglWindow *egl_window;
 	EglVTable *egl_vtable;
 
-	egl_window = egl_window_new(egl_context,
+    egl_window = egl_window_new(egl_context,
 		GSIZE_TO_POINTER(GST_MFX_OBJECT_ID(window->window)));
 	if (!egl_window)
 		return FALSE;
@@ -291,7 +289,7 @@ gst_mfx_window_egl_create(GstMfxWindowEGL * window,
 
 	g_return_val_if_fail(native_dpy_class != NULL, FALSE);
 
-	window->window = native_dpy_class->create_window(GST_MFX_DISPLAY(display),
+	window->window = native_dpy_class->create_window(GST_MFX_DISPLAY(display->display),
 		*width, *height);
 	if (!window->window)
 		return FALSE;

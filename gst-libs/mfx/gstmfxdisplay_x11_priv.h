@@ -48,6 +48,7 @@ struct _GstMfxDisplayX11Private
 	guint use_foreign_display : 1;  // Foreign native_display?
 	guint use_xrandr : 1;
 	guint synchronous : 1;
+	gchar *device_path_default;
 };
 
 /**

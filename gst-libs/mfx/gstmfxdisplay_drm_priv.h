@@ -31,7 +31,7 @@ typedef struct _GstMfxDisplayDRMClass         GstMfxDisplayDRMClass;
 
 struct _GstMfxDisplayDRMPrivate
 {
-    gchar *device_path_default;
+    //gchar *device_path_default;
     gchar *device_path;
     gint drm_device;
     guint use_foreign_display:1;

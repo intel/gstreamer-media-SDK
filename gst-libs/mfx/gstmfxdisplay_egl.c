@@ -16,31 +16,25 @@
 GST_DEBUG_CATEGORY(gst_debug_mfxdisplay_egl);
 
 typedef GstMfxDisplay *(*GstMfxDisplayCreateFunc) (const gchar *);
-typedef GstMfxDisplay *(*GstMfxDisplayCreateFromHandleFunc) (gpointer);
 
 typedef struct
 {
 	const gchar *type_str;
 	GstMfxDisplayType type;
 	GstMfxDisplayCreateFunc create_display;
-	GstMfxDisplayCreateFromHandleFunc create_display_from_handle;
 } DisplayMap;
 
 /* *INDENT-OFF* */
 static const DisplayMap g_display_map[] = {
-#if USE_X11
-	{ "x11",
-	GST_MFX_DISPLAY_TYPE_X11,
-	gst_mfx_display_x11_new,
-	(GstMfxDisplayCreateFromHandleFunc)
-	gst_mfx_display_x11_new_with_display },
-#endif
 #if USE_WAYLAND
 	{ "wayland",
 	GST_MFX_DISPLAY_TYPE_WAYLAND,
-	gst_mfx_display_wayland_new,
-	(GstMfxDisplayCreateFromHandleFunc)
-	gst_mfx_display_wayland_new_with_display },
+	gst_mfx_display_wayland_new },
+#endif
+#if USE_X11
+	{ "x11",
+	GST_MFX_DISPLAY_TYPE_X11,
+	gst_mfx_display_x11_new },
 #endif
 	{ NULL, }
 };
@@ -105,19 +99,10 @@ gst_mfx_display_egl_bind_display(GstMfxDisplayEGL * display,
 	EglDisplay *egl_display;
 	const DisplayMap *m;
 
-
-
 	for (m = g_display_map; m->type_str != NULL; m++) {
-		if (params->display_type != GST_MFX_DISPLAY_TYPE_ANY &&
-			params->display_type != m->type)
-			continue;
+        native_display = m->create_display(NULL);
 
-		if (params->display)
-			native_display = m->create_display_from_handle(params->display);
-		else
-			native_display = m->create_display(NULL);
-
-		if (native_display || params->display_type != GST_MFX_DISPLAY_TYPE_ANY) {
+		if (native_display) {
 			GST_INFO("selected backend: %s", m->type_str);
 			break;
 		}
@@ -236,11 +221,9 @@ gst_mfx_display_egl_get_visual_id(GstMfxDisplayEGL * display,
 }
 
 static GstMfxWindow *
-gst_mfx_display_egl_create_window(GstMfxDisplay * display, GstMfxID id,
+gst_mfx_display_egl_create_window(GstMfxDisplay * display,
 	guint width, guint height)
 {
-	if (id != GST_MFX_ID_INVALID)
-		return NULL;
 	return gst_mfx_window_egl_new(display, width, height);
 }
 

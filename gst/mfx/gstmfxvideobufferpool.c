@@ -21,7 +21,6 @@ struct _GstMfxVideoBufferPoolPrivate
 	GstMfxDisplay *display;
 	guint has_video_meta : 1;
 	guint has_video_alignment : 1;
-	guint has_texture_upload_meta : 1;
 };
 
 #define GST_MFX_VIDEO_BUFFER_POOL_GET_PRIVATE(obj) \
@@ -58,7 +57,6 @@ gst_mfx_video_buffer_pool_get_options(GstBufferPool * pool)
 	static const gchar *g_options[] = {
 		GST_BUFFER_POOL_OPTION_VIDEO_META,
 		GST_BUFFER_POOL_OPTION_MFX_VIDEO_META,
-		GST_BUFFER_POOL_OPTION_VIDEO_GL_TEXTURE_UPLOAD_META,
 		GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT,
 		NULL,
 	};
@@ -121,9 +119,6 @@ gst_mfx_video_buffer_pool_set_config(GstBufferPool * pool,
 		fill_video_alignment(GST_MFX_VIDEO_BUFFER_POOL(pool), &align);
 		gst_buffer_pool_config_set_video_alignment(config, &align);
 	}
-
-	priv->has_texture_upload_meta = gst_buffer_pool_config_has_option(config,
-		GST_BUFFER_POOL_OPTION_VIDEO_GL_TEXTURE_UPLOAD_META);
 
 	return
 		GST_BUFFER_POOL_CLASS

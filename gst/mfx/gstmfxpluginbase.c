@@ -163,7 +163,7 @@ void
 gst_mfx_plugin_base_close(GstMfxPluginBase * plugin)
 {
 	gst_mfx_display_replace(&plugin->display, NULL);
-	gst_object_replace(&plugin->gl_context, NULL);
+	//gst_object_replace(&plugin->gl_context, NULL);
 
 	gst_caps_replace(&plugin->sinkpad_caps, NULL);
 	plugin->sinkpad_caps_changed = FALSE;
@@ -455,46 +455,16 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	gboolean update_pool = FALSE;
 	gboolean has_video_meta = FALSE;
 	gboolean has_video_alignment = FALSE;
-#if (USE_GLX || USE_EGL)
-	gboolean has_texture_upload_meta = FALSE;
-	guint idx;
-#endif
 
 	g_return_val_if_fail(plugin->display != NULL, FALSE);
 
 	gst_query_parse_allocation(query, &caps, NULL);
-
-	/* We don't need any GL context beyond this point if not requested
-	so explicitly through GstVideoGLTextureUploadMeta */
-	gst_object_replace(&plugin->gl_context, NULL);
 
 	if (!caps)
 		goto error_no_caps;
 
 	has_video_meta = gst_query_find_allocation_meta(query,
 		GST_VIDEO_META_API_TYPE, NULL);
-
-#if (USE_GLX || USE_EGL)
-	has_texture_upload_meta = gst_query_find_allocation_meta(query,
-		GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx) &&
-		(feature == GST_MFX_CAPS_FEATURE_GL_TEXTURE_UPLOAD_META);
-
-#if USE_GST_GL_HELPERS
-	if (has_texture_upload_meta) {
-		const GstStructure *params;
-		GstObject *gl_context;
-
-		gst_query_parse_nth_allocation_meta(query, idx, &params);
-		if (params) {
-			if (gst_structure_get(params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
-				&gl_context, NULL) && gl_context) {
-				gst_mfx_plugin_base_set_gl_context(plugin, gl_context);
-				gst_object_unref(gl_context);
-			}
-		}
-	}
-#endif
-#endif
 
 	/* Make sure the display we pass down to the buffer pool is actually
 	the expected one, especially when the downstream element requires
@@ -555,15 +525,6 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 			GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT))
 			goto config_failed;
 	}
-
-	/* GstVideoGLTextureUploadMeta (OpenGL) */
-#if (USE_GLX || USE_EGL)
-	if (has_texture_upload_meta) {
-		if (!gst_mfx_plugin_base_set_pool_config(pool,
-			GST_BUFFER_POOL_OPTION_VIDEO_GL_TEXTURE_UPLOAD_META))
-			goto config_failed;
-	}
-#endif
 
 	if (update_pool)
 		gst_query_set_nth_allocation_pool(query, 0, pool, size, min, max);
@@ -712,43 +673,4 @@ error_copy_buffer:
 		gst_buffer_unref(outbuf);
 		return GST_FLOW_NOT_SUPPORTED;
 	}
-}
-
-/**
-* gst_mfx_plugin_base_set_gl_context:
-* @plugin: a #GstMfxPluginBase
-* @object: the new GL context from downstream
-*
-* Registers the new GL context. The change is effective at the next
-* call to gst_mfx_plugin_base_ensure_display(), where the
-* underlying display object could be re-allocated to fit the GL
-* context needs
-*/
-void
-gst_mfx_plugin_base_set_gl_context(GstMfxPluginBase * plugin,
-GstObject * object)
-{
-#if USE_GST_GL_HELPERS
-	GstGLContext *const gl_context = GST_GL_CONTEXT(object);
-	GstMfxDisplayType display_type;
-
-	gst_object_replace(&plugin->gl_context, object);
-
-	switch (gst_gl_context_get_gl_platform(gl_context)) {
-#if USE_GLX
-	case GST_GL_PLATFORM_GLX:
-		display_type = GST_MFX_DISPLAY_TYPE_GLX;
-		break;
-#endif
-#if USE_EGL
-	case GST_GL_PLATFORM_EGL:
-		display_type = GST_MFX_DISPLAY_TYPE_EGL;
-		break;
-#endif
-	default:
-		display_type = plugin->display_type;
-		break;
-	}
-	gst_mfx_plugin_base_set_display_type(plugin, display_type);
-#endif
 }

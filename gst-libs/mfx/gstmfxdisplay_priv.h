@@ -2,7 +2,6 @@
 #define GST_MFX_DISPLAY_PRIV_H
 
 #include "gstmfxdisplay.h"
-#include "gstmfxdisplaycache.h"
 #include "gstmfxwindow.h"
 #include "gstmfxtexture.h"
 #include "gstmfxminiobject.h"
@@ -99,24 +98,13 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
 #define GST_MFX_DISPLAY_VADISPLAY_TYPE(display) \
 	(GST_MFX_DISPLAY_GET_PRIVATE (display)->display_type)
 
-/**
-* GST_MFX_DISPLAY_CACHE:
-* @display: a @GstMfxDisplay
-*
-* Returns the #GstMfxDisplayCache attached to the supplied @display object.
-* This is an internal macro that does not do any run-time type check.
-*/
-#undef  GST_MFX_DISPLAY_CACHE
-#define GST_MFX_DISPLAY_CACHE(display) \
-	(GST_MFX_DISPLAY_GET_PRIVATE (display)->cache)
-
 struct _GstMfxDisplayPrivate
 {
 	GstMfxDisplay *parent;
 	GRecMutex mutex;
-	GstMfxDisplayCache *cache;
 	GstMfxDisplayType display_type;
 	gchar *display_name;
+	gchar *device_path_default;
 	VADisplay display;
 	gpointer native_display;
 	guint width;
@@ -190,8 +178,7 @@ struct _GstMfxDisplayClass
 enum _GstMfxDisplayInitType
 {
 	GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME = 1,
-	GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY,
-	GST_MFX_DISPLAY_INIT_FROM_VA_DISPLAY
+	GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY
 };
 
 void

@@ -7,11 +7,11 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/gst_msdk" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/gstmfx" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=bin/Debug/libgst_msdk.so filesrc location=/home/nuc/Videos/MPEG2_MP@HL_1920x1080_18.6Mbps_30.00fps_16-9_Progressive_NoSound_Sunflower_test.mpg ! mpegvideoparse ! mfxdecode ! mfxsink sync=false" />
+				<Option parameters="--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! mfxsink sync=false display=egl" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -34,15 +34,16 @@
 					<Add option="-lgthread-2.0 -lgio-2.0 -lgstbase-1.0" />
 					<Add option="-lgstvideo-1.0 -lva -lva-x11 -lX11 -lEGL" />
 					<Add option="-ldrm -ldrm_intel -lva-drm -ludev" />
+					<Add option="-lwayland-client -lwayland-egl" />
 					<Add library="/opt/intel/mediasdk/lib/lin_x64/libmfx.a" />
 				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/gst_msdk" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/gstmfx" imp_lib="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).a" def_file="$(TARGET_OUTPUT_DIR)$(TARGET_OUTPUT_BASENAME).def" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Release/libgst_msdk.so filesrc location=/home/nuc/Videos/bbb_sunflower_2160p_30fps_normal.mp4 ! qtdemux ! h264parse ! mfxdecode ! mfxsink" />
+				<Option parameters="--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=/home/nuc/Videos/HD.Club-4K-Chimei-inn-60mbps.mp4 ! qtdemux ! h264parse ! mfxdecode ! mfxsink" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -66,6 +67,7 @@
 					<Add option="-lgthread-2.0 -lgio-2.0 -lgstbase-1.0" />
 					<Add option="-lgstvideo-1.0 -lva -lva-x11 -lX11 -lEGL" />
 					<Add option="-ldrm -ldrm_intel -lva-drm -ludev" />
+					<Add option="-lwayland-client -lwayland-egl" />
 					<Add library="/opt/intel/mediasdk/lib/lin_x64/libmfx.a" />
 				</Linker>
 			</Target>
@@ -104,15 +106,16 @@
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_egl.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_egl_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_wayland.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_wayland.h" />
+		<Unit filename="gst-libs/mfx/gstmfxdisplay_wayland_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxdisplaycache.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxdisplaycache.h" />
 		<Unit filename="gst-libs/mfx/gstmfxminiobject.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -163,15 +166,15 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxwindow.h" />
-		<Unit filename="gst-libs/mfx/gstmfxwindow_drm.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxwindow_drm.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_egl.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxwindow_egl.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxwindow_wayland.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxwindow_wayland.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_x11.c">
 			<Option compilerVar="CC" />
 		</Unit>

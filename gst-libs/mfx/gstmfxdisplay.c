@@ -1,4 +1,9 @@
+#include "sysdeps.h"
 #include <string.h>
+#include <fcntl.h>
+#include <libudev.h>
+#include <xf86drm.h>
+#include <va/va_drm.h>
 #include "gstmfxdisplay.h"
 #include "gstmfxdisplay_priv.h"
 
@@ -7,30 +12,70 @@
 #undef gst_mfx_display_unref
 #undef gst_mfx_display_replace
 
-static GstMfxDisplayCache *g_display_cache;
-static GMutex g_display_cache_lock;
+static VADisplay g_va_display;
 
-static GstMfxDisplayCache *
-get_display_cache(void)
+/* Get default device path. Actually, the first match in the DRM subsystem */
+const gchar *
+get_default_device_path (GstMfxDisplay * display)
 {
-	GstMfxDisplayCache *cache = NULL;
+	GstMfxDisplayPrivate *const priv =
+		GST_MFX_DISPLAY_GET_PRIVATE(display);
+    const gchar *sysnames[] = {"renderD[0-9]*", "card[0-9]*", NULL};
+	const gchar *syspath, *devpath;
+	struct udev *udev = NULL;
+	struct udev_device *device, *parent;
+	struct udev_enumerate *e = NULL;
+	struct udev_list_entry *l;
+	int fd;
+	guint i;
 
-	g_mutex_lock(&g_display_cache_lock);
-	if (!g_display_cache)
-		g_display_cache = gst_mfx_display_cache_new();
-	if (g_display_cache)
-		cache = gst_mfx_display_cache_ref(g_display_cache);
-	g_mutex_unlock(&g_display_cache_lock);
-	return cache;
-}
+	if (!priv->device_path_default) {
+        udev = udev_new ();
+        if (!udev)
+            goto end;
 
-static void
-free_display_cache(void)
-{
-	g_mutex_lock(&g_display_cache_lock);
-	if (g_display_cache && gst_mfx_display_cache_is_empty(g_display_cache))
-		gst_mfx_display_cache_replace(&g_display_cache, NULL);
-	g_mutex_unlock(&g_display_cache_lock);
+        e = udev_enumerate_new (udev);
+        if (!e)
+            goto end;
+
+        udev_enumerate_add_match_subsystem (e, "drm");
+
+        for (i = 0; sysnames[i]; i++) {
+            udev_enumerate_add_match_sysname (e, sysnames[i]);
+            udev_enumerate_scan_devices (e);
+            udev_list_entry_foreach (l, udev_enumerate_get_list_entry (e)) {
+                syspath = udev_list_entry_get_name (l);
+                device = udev_device_new_from_syspath (udev, syspath);
+                parent = udev_device_get_parent (device);
+
+                if (strcmp (udev_device_get_subsystem (parent), "pci") != 0) {
+                    udev_device_unref (device);
+                    continue;
+                }
+
+                devpath = udev_device_get_devnode (device);
+                fd = open (devpath, O_RDWR | O_CLOEXEC);
+                if (fd < 0) {
+                    udev_device_unref (device);
+                    continue;
+                }
+
+                priv->device_path_default = g_strdup (devpath);
+                close (fd);
+                udev_device_unref (device);
+                break;
+            }
+            if (priv->device_path_default)
+                break;
+        }
+    }
+
+end:
+    if (e)
+        udev_enumerate_unref (e);
+    if (udev)
+        udev_unref (udev);
+	return priv->device_path_default;
 }
 
 /* GstMfxDisplayType enumerations */
@@ -42,16 +87,18 @@ gst_mfx_display_type_get_type(void)
 	static const GEnumValue display_types[] = {
 		{ GST_MFX_DISPLAY_TYPE_ANY,
 		"Auto detection", "any" },
-		{ GST_MFX_DISPLAY_TYPE_X11,
-		"VA/X11 display", "x11" },
-		{ GST_MFX_DISPLAY_TYPE_GLX,
-		"VA/GLX display", "glx" },
+#if USE_EGL
 		{ GST_MFX_DISPLAY_TYPE_EGL,
 		"VA/EGL display", "egl" },
-		{ GST_MFX_DISPLAY_TYPE_WAYLAND,
+#endif
+#if USE_WAYLAND
+        { GST_MFX_DISPLAY_TYPE_WAYLAND,
 		"VA/Wayland display", "wayland" },
+#endif
+#if USE_DRM
 		{ GST_MFX_DISPLAY_TYPE_DRM,
 		"VA/DRM display", "drm" },
+#endif
 		{ 0, NULL, NULL },
 	};
 
@@ -78,11 +125,8 @@ gst_mfx_display_type_is_compatible(GstMfxDisplayType type1,
 		return TRUE;
 
 	switch (type1) {
-	case GST_MFX_DISPLAY_TYPE_GLX:
-		if (type2 == GST_MFX_DISPLAY_TYPE_X11)
-			return TRUE;
-		break;
 	case GST_MFX_DISPLAY_TYPE_X11:
+	case GST_MFX_DISPLAY_TYPE_WAYLAND:
 		if (type2 == GST_MFX_DISPLAY_TYPE_EGL)
 			return TRUE;
 		break;
@@ -164,19 +208,14 @@ gst_mfx_display_destroy(GstMfxDisplay * display)
 	g_free(priv->vendor_string);
 	priv->vendor_string = NULL;
 
-	gst_mfx_display_replace_internal(&priv->parent, NULL);
+	g_free(priv->device_path_default);
+	priv->device_path_default = NULL;
 
-	if (priv->cache) {
-		gst_mfx_display_cache_lock(priv->cache);
-		gst_mfx_display_cache_remove(priv->cache, display);
-		gst_mfx_display_cache_unlock(priv->cache);
-	}
-	gst_mfx_display_cache_replace(&priv->cache, NULL);
-	free_display_cache();
+	gst_mfx_display_replace_internal(&priv->parent, NULL);
 }
 
 static gboolean
-gst_mfx_display_create_unlocked(GstMfxDisplay * display,
+gst_mfx_display_create(GstMfxDisplay * display,
 	GstMfxDisplayInitType init_type, gpointer init_value)
 {
 	GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE(display);
@@ -185,18 +224,12 @@ gst_mfx_display_create_unlocked(GstMfxDisplay * display,
 	gint major_version, minor_version;
 	VAStatus status;
 	GstMfxDisplayInfo info;
-	const GstMfxDisplayInfo *cached_info = NULL;
 
 	memset(&info, 0, sizeof (info));
 	info.display = display;
 	info.display_type = priv->display_type;
 
 	switch (init_type) {
-	case GST_MFX_DISPLAY_INIT_FROM_VA_DISPLAY:
-		info.va_display = init_value;
-		priv->display = init_value;
-		priv->use_foreign_display = TRUE;
-		break;
 	case GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME:
 		if (klass->open_display && !klass->open_display(display, init_value))
 			return FALSE;
@@ -208,7 +241,6 @@ gst_mfx_display_create_unlocked(GstMfxDisplay * display,
 	create_display:
 		if (!klass->get_display || !klass->get_display(display, &info))
 			return FALSE;
-		priv->display = info.va_display;
 		priv->display_type = info.display_type;
 		priv->native_display = info.native_display;
 		if (klass->get_size)
@@ -218,60 +250,37 @@ gst_mfx_display_create_unlocked(GstMfxDisplay * display,
 		gst_mfx_display_calculate_pixel_aspect_ratio(display);
 		break;
 	}
-	if (!priv->display)
-		return FALSE;
+	//if (!priv->display)
+		//return FALSE;
 
-	cached_info = gst_mfx_display_cache_lookup_by_va_display(priv->cache,
-		info.va_display);
-	if (cached_info) {
-		gst_mfx_display_replace_internal(&priv->parent, cached_info->display);
-		priv->display_type = cached_info->display_type;
-	}
+	//if (!priv->parent) {
+    if (!g_va_display) {
+        int fd = open(get_default_device_path(display), O_RDWR | O_CLOEXEC);
+        g_va_display = vaGetDisplayDRM (fd);
+        if (!g_va_display)
+            return FALSE;
 
-	if (!priv->parent) {
-		status = vaInitialize(priv->display, &major_version, &minor_version);
+		status = vaInitialize(g_va_display, &major_version, &minor_version);
 		if (!vaapi_check_status(status, "vaInitialize()"))
 			return FALSE;
 		GST_DEBUG("VA-API version %d.%d", major_version, minor_version);
 	}
-
-	if (!cached_info) {
-		if (!gst_mfx_display_cache_add(priv->cache, &info))
-			return FALSE;
-	}
+	priv->display = g_va_display;
 
 	g_free(priv->display_name);
 	priv->display_name = g_strdup(info.display_name);
 	return TRUE;
 }
 
-static gboolean
-gst_mfx_display_create(GstMfxDisplay * display,
-	GstMfxDisplayInitType init_type, gpointer init_value)
-{
-	GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE(display);
-	GstMfxDisplayCache *cache;
-	gboolean success;
-
-	cache = get_display_cache();
-	if (!cache)
-		return FALSE;
-	gst_mfx_display_cache_replace(&priv->cache, cache);
-	gst_mfx_display_cache_unref(cache);
-
-	success = gst_mfx_display_create_unlocked(display, init_type, init_value);
-
-	return success;
-}
-
 static void
 gst_mfx_display_lock_default(GstMfxDisplay * display)
 {
 	GstMfxDisplayPrivate *priv = GST_MFX_DISPLAY_GET_PRIVATE(display);
+	gboolean locked;
 
 	if (priv->parent)
 		priv = GST_MFX_DISPLAY_GET_PRIVATE(priv->parent);
-	g_rec_mutex_trylock(&priv->mutex);
+    g_rec_mutex_lock(&priv->mutex);
 }
 
 static void
@@ -355,26 +364,6 @@ gst_mfx_display_new(const GstMfxDisplayClass * klass,
 error:
 	gst_mfx_display_unref_internal(display);
 	return NULL;
-}
-
-/**
-* gst_mfx_display_new_with_display:
-* @va_display: a #VADisplay
-*
-* Creates a new #GstMfxDisplay, using @va_display as the VA
-* display.
-*
-* Return value: the newly created #GstMfxDisplay object
-*/
-GstMfxDisplay *
-gst_mfx_display_new_with_display(VADisplay va_display)
-{
-	const GstMfxDisplayInfo *info;
-
-	g_return_val_if_fail(va_display != NULL, NULL);
-
-	return gst_mfx_display_new(gst_mfx_display_class(),
-		GST_MFX_DISPLAY_INIT_FROM_VA_DISPLAY, va_display);
 }
 
 /**
@@ -705,6 +694,5 @@ gst_mfx_display_has_opengl(GstMfxDisplay * display)
 	g_return_val_if_fail(display != NULL, FALSE);
 
 	klass = GST_MFX_DISPLAY_GET_CLASS(display);
-	return (klass->display_type == GST_MFX_DISPLAY_TYPE_GLX ||
-		klass->display_type == GST_MFX_DISPLAY_TYPE_EGL);
+	return (klass->display_type == GST_MFX_DISPLAY_TYPE_EGL);
 }

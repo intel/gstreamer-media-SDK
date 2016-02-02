@@ -45,6 +45,7 @@ gst_vaapi_buffer_proxy_acquire_handle(GstVaapiBufferProxy * proxy)
 {
     VASurfaceID surf = GST_MFX_OBJECT_ID(proxy->parent);
 	VAStatus va_status;
+	GstMfxDisplay *display = GST_MFX_OBJECT_DISPLAY(proxy->parent);
 
 	if (!proxy->parent)
 		return FALSE;

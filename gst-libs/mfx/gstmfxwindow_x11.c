@@ -315,7 +315,7 @@ gst_mfx_window_x11_resize(GstMfxWindow * window, guint width, guint height)
 	return !has_errors;
 }
 
-static gboolean
+/*static gboolean
 gst_mfx_window_x11_render(GstMfxWindow * window,
 	GstMfxSurface * surface,
 	const GstMfxRectangle * src_rect,
@@ -323,11 +323,6 @@ gst_mfx_window_x11_render(GstMfxWindow * window,
 {
 	VASurfaceID surface_id;
 	VAStatus status;
-
-	GstMfxSurface *shared_surface;
-	GstVaapiBufferProxy *proxy;
-
-	//proxy = gst_vaapi_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
 
 	surface_id = GST_MFX_OBJECT_ID(surface);
 	if (surface_id == VA_INVALID_ID)
@@ -350,10 +345,8 @@ gst_mfx_window_x11_render(GstMfxWindow * window,
 	if (!vaapi_check_status(status, "vaPutSurface()"))
 		return FALSE;
 
-    //gst_vaapi_buffer_proxy_unref(proxy);
-
 	return TRUE;
-}
+}*/
 
 void
 gst_mfx_window_x11_class_init(GstMfxWindowX11Class * klass)
@@ -370,7 +363,7 @@ gst_mfx_window_x11_class_init(GstMfxWindowX11Class * klass)
 	window_class->get_geometry = gst_mfx_window_x11_get_geometry;
 	window_class->set_fullscreen = gst_mfx_window_x11_set_fullscreen;
 	window_class->resize = gst_mfx_window_x11_resize;
-	window_class->render = gst_mfx_window_x11_render;
+	//window_class->render = gst_mfx_window_x11_render;
 }
 
 #define gst_mfx_window_x11_finalize \

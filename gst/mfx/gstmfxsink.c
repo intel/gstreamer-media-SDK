@@ -59,12 +59,12 @@ enum
 	N_PROPERTIES
 };
 
-#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_ANY
+#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_EGL
 #define DEFAULT_SIGNAL_HANDOFFS         FALSE
 
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
 
-static void gst_mfxsink_video_overlay_expose(GstVideoOverlay * overlay);
+//static void gst_mfxsink_video_overlay_expose(GstVideoOverlay * overlay);
 
 static gboolean gst_mfxsink_reconfigure_window(GstMfxSink * sink);
 
@@ -338,7 +338,7 @@ gst_mfxsink_x11_pre_stop_event_thread(GstMfxSink * sink)
 	return TRUE;
 }
 
-static const inline GstMfxSinkBackend *
+/*static const inline GstMfxSinkBackend *
 gst_mfxsink_backend_x11(void)
 {
 	static const GstMfxSinkBackend GstMfxSinkBackendX11 = {
@@ -351,38 +351,7 @@ gst_mfxsink_backend_x11(void)
 		.pre_stop_event_thread = gst_mfxsink_x11_pre_stop_event_thread,
 	};
 	return &GstMfxSinkBackendX11;
-}
-#endif
-
-/* ------------------------------------------------------------------------ */
-/* --- Wayland Backend                                                  --- */
-/* ------------------------------------------------------------------------ */
-
-#if USE_WAYLAND
-#include <gst/mfx/gstmfxdisplay_wayland.h>
-#include <gst/mfx/gstmfxwindow_wayland.h>
-
-static gboolean
-gst_mfxsink_wayland_create_window(GstMfxSink * sink, guint width,
-guint height)
-{
-	GstMfxDisplay *const display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
-	g_return_val_if_fail(sink->window == NULL, FALSE);
-	sink->window = gst_mfx_window_wayland_new(display, width, height);
-	if (!sink->window)
-		return FALSE;
-	return TRUE;
-}
-
-static const inline GstMfxSinkBackend *
-gst_mfxsink_backend_wayland(void)
-{
-	static const GstMfxSinkBackend GstMfxSinkBackendWayland = {
-		.create_window = gst_mfxsink_wayland_create_window,
-		.render_surface = gst_mfxsink_render_surface,
-	};
-	return &GstMfxSinkBackendWayland;
-}
+}*/
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -391,7 +360,6 @@ gst_mfxsink_backend_wayland(void)
 
 #if USE_EGL
 #include "gstmfxdisplay_egl.h"
-#include "gstmfxdisplay_egl_priv.h"
 #include "gstmfxwindow_egl.h"
 
 static gboolean
@@ -399,17 +367,6 @@ gst_mfxsink_egl_create_window(GstMfxSink * sink, guint width,
 	guint height)
 {
 	GstMfxDisplay *display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
-
-	if (!GST_MFX_IS_DISPLAY_EGL(display)) {
-        GstMfxDisplay *egl_display;
-
-        egl_display = gst_mfx_display_egl_new (display, 2);
-        if (!egl_display)
-            return FALSE;
-
-        gst_mfx_display_replace(&display, egl_display);
-        gst_mfx_display_unref(egl_display);
-	}
 
 	g_return_val_if_fail(sink->window == NULL, FALSE);
 	sink->window = gst_mfx_window_egl_new(display, width, height);
@@ -435,7 +392,7 @@ gst_mfxsink_backend_egl(void)
 
 static void
 gst_mfxsink_navigation_send_event(GstNavigation * navigation,
-GstStructure * structure)
+    GstStructure * structure)
 {
 	GstMfxSink *const sink = GST_MFXSINK(navigation);
 	GstPad *peer;
@@ -559,21 +516,18 @@ gst_mfxsink_set_event_handling(GstMfxSink * sink, gboolean handle_events)
 static void
 gst_mfxsink_ensure_backend(GstMfxSink * sink)
 {
-	switch (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink)) {
+    GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(sink);
+
+	switch (plugin->display_type_req) {
 #if USE_EGL
-	case GST_MFX_DISPLAY_TYPE_X11:
-		sink->backend = gst_mfxsink_backend_egl();
-		break;
-#endif
-#if USE_X11
-	//case GST_MFX_DISPLAY_TYPE_X11:
-		//sink->backend = gst_mfxsink_backend_x11();
-		//break;
+	case GST_MFX_DISPLAY_TYPE_EGL:
+        sink->backend = gst_mfxsink_backend_egl();
+        break;
 #endif
 #if USE_WAYLAND
-	case GST_MFX_DISPLAY_TYPE_WAYLAND:
-		sink->backend = gst_mfxsink_backend_wayland();
-		break;
+	//case GST_MFX_DISPLAY_TYPE_WAYLAND:
+		//sink->backend = gst_mfxsink_backend_wayland();
+		//break;
 #endif
 	default:
 		GST_ERROR("failed to initialize GstMfxSink backend");
@@ -776,12 +730,26 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(base_sink);
 	GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
 	GstVideoInfo *const vip = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
-	GstMfxDisplay *display;
 	guint win_width, win_height;
 
 	if (!gst_mfxsink_ensure_display(sink))
 		return FALSE;
-	display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
+
+#if USE_EGL
+	if (plugin->display_type_req == GST_MFX_DISPLAY_TYPE_EGL &&
+        GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != GST_MFX_DISPLAY_TYPE_EGL) {
+        GstMfxDisplay *egl_display;
+
+        egl_display = gst_mfx_display_egl_new (NULL, 2);
+        if (!egl_display)
+            return FALSE;
+
+        gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(sink), egl_display);
+        gst_mfx_display_unref(egl_display);
+
+        GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_EGL;
+	}
+#endif
 
 	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_DRM)
 		return TRUE;
@@ -821,8 +789,9 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 }
 
 static GstFlowReturn
-gst_mfxsink_show_frame_unlocked(GstMfxSink * sink, GstBuffer * src_buffer)
+gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 {
+    GstMfxSink *const sink = GST_MFXSINK_CAST(video_sink);
 	GstMfxVideoMeta *meta;
 	GstMfxSurfaceProxy *proxy;
 	GstMfxSurface *surface;
@@ -860,17 +829,17 @@ gst_mfxsink_show_frame_unlocked(GstMfxSink * sink, GstBuffer * src_buffer)
 		goto no_surface;
 
 
-	//GST_DEBUG("render surface %" GST_MFX_ID_FORMAT,
-		//GST_MFX_ID_ARGS(gst_mfx_surface_get_id(surface)));
+	GST_DEBUG("render surface %" GST_MFX_ID_FORMAT,
+		GST_MFX_ID_ARGS(gst_mfx_surface_get_id(surface)));
 
 	if (!surface_rect)
 		surface_rect = (GstMfxRectangle *)
-		gst_mfx_video_meta_get_render_rect(meta);
+            gst_mfx_video_meta_get_render_rect(meta);
 
 	if (surface_rect)
 		GST_DEBUG("render rect (%d,%d), size %ux%u",
-		surface_rect->x, surface_rect->y,
-		surface_rect->width, surface_rect->height);
+            surface_rect->x, surface_rect->y,
+            surface_rect->width, surface_rect->height);
 
 	if (!sink->backend->render_surface(sink, surface, surface_rect))
 		goto error;
@@ -880,9 +849,9 @@ gst_mfxsink_show_frame_unlocked(GstMfxSink * sink, GstBuffer * src_buffer)
 
 	/* Retain VA surface until the next one is displayed */
 	/* Need to release the lock for the duration, otherwise a deadlock is possible */
-	gst_mfx_display_unlock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
+	//gst_mfx_display_unlock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
 	gst_buffer_replace(&sink->video_buffer, buffer);
-	gst_mfx_display_lock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
+	//gst_mfx_display_lock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
 
 	ret = GST_FLOW_OK;
 
@@ -901,22 +870,6 @@ no_surface:
 	GST_WARNING_OBJECT(sink, "could not get surface");
 	ret = GST_FLOW_ERROR;
 	goto done;
-}
-
-static GstFlowReturn
-gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
-{
-	GstMfxSink *const sink = GST_MFXSINK_CAST(video_sink);
-	GstFlowReturn ret;
-
-	/* We need at least to protect the gst_mfx_aplpy_composition()
-	* call to prevent a race during subpicture destruction.
-	* FIXME: a less coarse grained lock could be used, though */
-	gst_mfx_display_lock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
-	ret = gst_mfxsink_show_frame_unlocked(sink, src_buffer);
-	gst_mfx_display_unlock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
-
-	return ret;
 }
 
 static gboolean
@@ -971,7 +924,7 @@ gst_mfxsink_finalize(GObject * object)
 
 static void
 gst_mfxsink_set_property(GObject * object,
-guint prop_id, const GValue * value, GParamSpec * pspec)
+    guint prop_id, const GValue * value, GParamSpec * pspec)
 {
 	GstMfxSink *const sink = GST_MFXSINK_CAST(object);
 
@@ -1001,7 +954,7 @@ guint prop_id, const GValue * value, GParamSpec * pspec)
 
 static void
 gst_mfxsink_get_property(GObject * object,
-guint prop_id, GValue * value, GParamSpec * pspec)
+    guint prop_id, GValue * value, GParamSpec * pspec)
 {
 	GstMfxSink *const sink = GST_MFXSINK_CAST(object);
 
@@ -1176,7 +1129,6 @@ static void
 gst_mfxsink_init(GstMfxSink * sink)
 {
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(sink);
-	guint i;
 
 	gst_mfx_plugin_base_init(plugin, GST_CAT_DEFAULT);
 	gst_mfx_plugin_base_set_display_type(plugin, DEFAULT_DISPLAY_TYPE);

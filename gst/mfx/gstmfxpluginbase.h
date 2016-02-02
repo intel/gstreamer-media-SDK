@@ -107,10 +107,8 @@ struct _GstMfxPluginBase
 	GstVideoInfo srcpad_info;
 	GstBufferPool *srcpad_buffer_pool;
 
-#if !GST_CHECK_VERSION(1,4,0)
 	GstPadQueryFunction srcpad_query;
 	GstPadQueryFunction sinkpad_query;
-#endif
 
 	GstMfxContextAllocatorVaapi alloc_ctx;
 
@@ -118,8 +116,6 @@ struct _GstMfxPluginBase
 	GstMfxDisplayType display_type;
 	GstMfxDisplayType display_type_req;
 	gchar *display_name;
-
-	GstObject *gl_context;
 
 	GstCaps *allowed_raw_caps;
 };
@@ -189,10 +185,6 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 GstFlowReturn
 gst_mfx_plugin_base_get_input_buffer(GstMfxPluginBase * plugin,
 	GstBuffer * inbuf, GstBuffer ** outbuf_ptr);
-
-void
-gst_mfx_plugin_base_set_gl_context(GstMfxPluginBase * plugin,
-	GstObject * object);
 
 GstCaps *
 gst_mfx_plugin_base_get_allowed_raw_caps(GstMfxPluginBase * plugin);

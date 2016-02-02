@@ -28,11 +28,6 @@ typedef struct _GstMfxVideoBufferPoolPrivate GstMfxVideoBufferPoolPrivate;
 #define GST_BUFFER_POOL_OPTION_MFX_VIDEO_META \
 	"GstBufferPoolOptionMfxVideoMeta"
 
-#ifndef GST_BUFFER_POOL_OPTION_VIDEO_GL_TEXTURE_UPLOAD_META
-#define GST_BUFFER_POOL_OPTION_VIDEO_GL_TEXTURE_UPLOAD_META \
-    "GstBufferPoolOptionVideoGLTextureUploadMeta"
-#endif
-
 struct _GstMfxVideoBufferPool
 {
 	GstBufferPool bufferpool;

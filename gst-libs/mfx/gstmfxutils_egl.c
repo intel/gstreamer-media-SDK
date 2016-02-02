@@ -1385,7 +1385,7 @@ egl_create_texture(EglContext * ctx, guint target, guint format,
 }
 
 guint
-egl_create_texture_with_egl_image(EglContext * ctx, guint target,
+egl_create_texture_from_egl_image(EglContext * ctx, guint target,
 	EGLImageKHR * egl_image)
 {
 	EglVTable *const vtable = egl_context_get_vtable(ctx, TRUE);

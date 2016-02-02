@@ -203,7 +203,7 @@
 #define USE_VP9_DECODER 1
 
 /* Defined to 1 if WAYLAND is enabled */
-#define USE_WAYLAND 0
+#define USE_WAYLAND 1
 
 /* Defined to 1 if X11 is enabled */
 #define USE_X11 1

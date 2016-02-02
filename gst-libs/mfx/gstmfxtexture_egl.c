@@ -41,7 +41,7 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
 	GstVaapiBufferProxy *buffer_proxy;
 	GstVaapiImage *image;
 	VAImage *va_image;
-	uint32_t i;
+	guint i;
 
 	buffer_proxy = gst_vaapi_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
 	if (!buffer_proxy)
@@ -79,7 +79,7 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
                 is_uv_plane ? "UV" : "Y");
             return FALSE;
         }
-        texture->textures[i] = egl_create_texture_with_egl_image(texture->egl_context,
+        texture->textures[i] = egl_create_texture_from_egl_image(texture->egl_context,
             base_texture->gl_target, texture->egl_images[i]);
         if (!texture->textures[i]) {
             return FALSE;
@@ -131,7 +131,7 @@ do_destroy_texture_unlocked(GstMfxTextureEGL * texture)
 {
 	//GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
 	//const GLuint texture_id = GST_MFX_TEXTURE_ID(texture);
-	uint32_t i;
+	guint i;
 
 	destroy_objects(texture);
 
