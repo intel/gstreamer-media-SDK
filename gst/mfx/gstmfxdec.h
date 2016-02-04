@@ -40,12 +40,9 @@ struct _GstMfxDec {
 	GstCaps				*sinkpad_caps;
 	GstCaps				*srcpad_caps;
 	GstMfxDecoder		*decoder;
-	//GMutex			surface_ready_mutex;
-	//GCond				surface_ready;
 	GstCaps				*decoder_caps;
 	GstCaps				*allowed_caps;
 	guint				current_frame_size;
-	guint				has_texture_upload_meta : 1;
 
 	GstVideoCodecState	*input_state;
 	volatile gboolean	active;

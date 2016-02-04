@@ -1,3 +1,4 @@
+#include <mfxplugin.h>
 #include "gstmfxdecoder.h"
 #include "gstmfxobjectpool_priv.h"
 #include "gstmfxvideometa.h"
@@ -93,13 +94,13 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	memset(&(decoder->bs), 0, sizeof (mfxBitstream));
 	memset(&(decoder->param), 0, sizeof (mfxVideoParam));
 
+	decoder->codec = codec_id;
 	decoder->param.mfx.CodecId = codec_id;
 	decoder->param.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	decoder->alloc_ctx = ctx;
 	decoder->display = gst_mfx_display_ref(display);
 	decoder->context = NULL;
 	decoder->surfaces = g_async_queue_new();
-	decoder->work_surfaces = NULL;
 	decoder->pool = NULL;
 	decoder->decoder_inited = FALSE;
 }
@@ -148,6 +149,35 @@ gst_mfx_decoder_ensure_context(GstMfxDecoder *decoder)
 	return TRUE;
 }
 
+static mfxStatus
+gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder)
+{
+    mfxPluginUID uid;
+    mfxStatus sts;
+
+    switch (decoder->codec) {
+    case MFX_CODEC_HEVC:
+    {
+        gchar *plugin_uids[] = { "33a61c0b4c27454ca8d85dde757c6f8e",
+                                 "15dd936825ad475ea34e35f3f54217a6",
+                                 NULL };
+        guint i, c;
+        for (i = 0; plugin_uids[i]; i++) {
+            for (c = 0; c < sizeof(uid.Data); c++)
+                sscanf(plugin_uids[i] + 2 * c, "%2hhx", uid.Data + c);
+            sts = MFXVideoUSER_Load(decoder->session, &uid, 1);
+            if (MFX_ERR_NONE == sts)
+                break;
+        }
+    }
+        break;
+    default:
+        sts = MFX_ERR_NONE;
+    }
+
+    return sts;
+}
+
 static gint
 sync_output_surface(gconstpointer surface, gconstpointer surf)
 {
@@ -189,6 +219,10 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 
 	if (!gst_mfx_decoder_ensure_context(decoder))
 		return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
+
+    sts = gst_mfx_decoder_load_decoder_plugins(decoder);
+    if (sts < 0)
+        return GST_MFX_DECODER_STATUS_ERROR_UNSUPPORTED_CODEC;
 
 	sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs, &decoder->param);
 	if (MFX_ERR_MORE_DATA == sts) {
@@ -233,7 +267,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	}
 
 	if (decoder->bs.Data == NULL) {
-		decoder->bs.MaxLength = 4096 * 1024;
+		decoder->bs.MaxLength = 4096 * 4096;
 		decoder->bs.Data = g_slice_alloc(decoder->bs.MaxLength);
 	}
 
@@ -285,7 +319,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 		if (GST_MFX_OBJECT_ID(surface) != *(int*)(outsurf->Data.MemId)) {
             GList *l = g_list_find_custom(decoder->pool->used_objects, outsurf,
                                           sync_output_surface);
-            gst_mfx_object_replace(&surface, GST_MFX_SURFACE(l->data));
+            surface = GST_MFX_SURFACE(l->data);
 		}
 
 		crop_rect.x = surface->surface->Info.CropX;

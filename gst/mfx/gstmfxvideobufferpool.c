@@ -1,9 +1,6 @@
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
 #include "gstmfxdisplay.h"
-#if (USE_GLX || USE_EGL)
-#include "gstmfxvideometa_texture.h"
-#endif
 
 GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxvideopool);
 #define GST_CAT_DEFAULT gst_debug_mfxvideopool

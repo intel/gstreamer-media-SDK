@@ -65,6 +65,9 @@ gst_get_mfx_codec_from_caps(GstCaps * caps)
 		if (mpegversion == 2)
 			return MFX_CODEC_MPEG2;
 	}
+	else if (!strcmp(mimetype, "video/x-h265")) {
+        return MFX_CODEC_HEVC;
+    }
 
 	return 0;
 }
