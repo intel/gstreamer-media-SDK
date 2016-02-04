@@ -5,7 +5,8 @@
 #include "gstmfxutils_egl.h"
 #include "gstmfxdisplay_egl.h"
 #include "gstmfxdisplay_egl_priv.h"
-#include "gstvaapibufferproxy_priv.h"
+#include "gstmfxprimebufferproxy.h"
+#include "gstmfxprimebufferproxy_priv.h"
 #include "gstvaapiimage_priv.h"
 
 #include <drm/drm_fourcc.h>
@@ -38,12 +39,12 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
 	GLuint texture_id;
 
 	GLint attribs[23], *attrib;
-	GstVaapiBufferProxy *buffer_proxy;
+	GstMfxPrimeBufferProxy *buffer_proxy;
 	GstVaapiImage *image;
 	VAImage *va_image;
 	guint i;
 
-	buffer_proxy = gst_vaapi_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
+	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
 	if (!buffer_proxy)
 		return FALSE;
 
@@ -64,7 +65,7 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
         *attrib++ = EGL_HEIGHT;
         *attrib++ = (va_image->height + is_uv_plane) >> is_uv_plane;
         *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
-        *attrib++ = GST_VAAPI_BUFFER_PROXY_HANDLE(buffer_proxy);
+        *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
         *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
         *attrib++ = va_image->offsets[i];
         *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
@@ -88,7 +89,7 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
         texture->num_textures++;
     }
 
-    gst_vaapi_buffer_proxy_unref(buffer_proxy);
+    gst_mfx_prime_buffer_proxy_unref(buffer_proxy);
     gst_mfx_object_unref(image);
 
 	return TRUE;

@@ -280,10 +280,6 @@ gst_mfx_display_lock_default(GstMfxDisplay * display)
 	if (priv->parent)
 		priv = GST_MFX_DISPLAY_GET_PRIVATE(priv->parent);
     g_rec_mutex_lock(&priv->mutex);
-    /*if(g_rec_mutex_trylock(&priv->mutex))
-        printf("locked display %s\n", priv->display_name);
-    else
-        printf("failed to display %s\n", priv->display_name);*/
 }
 
 static void
@@ -294,7 +290,6 @@ gst_mfx_display_unlock_default(GstMfxDisplay * display)
 	if (priv->parent)
 		priv = GST_MFX_DISPLAY_GET_PRIVATE(priv->parent);
 	g_rec_mutex_unlock(&priv->mutex);
-	//printf("unlocked display %s\n", priv->display_name);
 }
 
 static void

@@ -1,13 +1,4 @@
-/*
- ============================================================================
- Name        : gst-mfx-dec.c
- Author      : Ishmael Sameen <ishmael.visayana.sameen@intel.com>
- Version     : 0.0.1
- Copyright   : Copyright (C) 2015
- Description :
- ============================================================================
- */
-
+#include "gstmfxcompat.h"
 #include "gstmfxdec.h"
 
 #include <string.h>
@@ -211,9 +202,6 @@ gst_mfxdec_update_src_caps(GstMfxDec * decode)
 static void
 gst_mfxdec_release(GstMfxDec * decode)
 {
-	//g_mutex_lock(&decode->surface_ready_mutex);
-	//g_cond_signal(&decode->surface_ready);
-	//g_mutex_unlock(&decode->surface_ready_mutex);
 	gst_object_unref(decode);
 }
 

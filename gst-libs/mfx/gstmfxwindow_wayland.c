@@ -1,5 +1,7 @@
 #include "sysdeps.h"
 #include <string.h>
+#include <wayland-client.h>
+#include <wayland-egl.h>
 #include "gstmfxwindow_wayland.h"
 #include "gstmfxwindow_priv.h"
 #include "gstmfxdisplay_wayland.h"
@@ -175,7 +177,6 @@ gst_mfx_window_wayland_create(GstMfxWindow * window,
 		GST_MFX_WINDOW_WAYLAND_GET_PRIVATE(window);
 	GstMfxDisplayWaylandPrivate *const priv_display =
 		GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(GST_MFX_OBJECT_DISPLAY(window));
-    struct wl_egl_window *egl_window;
 
 	GST_DEBUG("create window, size %ux%u", *width, *height);
 
@@ -214,8 +215,8 @@ gst_mfx_window_wayland_create(GstMfxWindow * window,
 	if (priv->fullscreen_on_show)
 		gst_mfx_window_wayland_set_fullscreen(window, TRUE);
 
-    egl_window = wl_egl_window_create(priv->surface, *width, *height);
-    GST_MFX_OBJECT_ID(window) = egl_window;
+    priv->egl_window = wl_egl_window_create(priv->surface, *width, *height);
+    GST_MFX_OBJECT_ID(window) = priv->egl_window;
 
 	priv->is_shown = TRUE;
 
@@ -244,6 +245,11 @@ gst_mfx_window_wayland_destroy(GstMfxWindow * window)
 	if (priv->event_queue) {
 		wl_event_queue_destroy(priv->event_queue);
 		priv->event_queue = NULL;
+	}
+
+	if (priv->egl_window) {
+		wl_egl_window_destroy(priv->egl_window);
+		priv->egl_window = NULL;
 	}
 
 	gst_poll_free(priv->poll);

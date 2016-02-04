@@ -64,7 +64,7 @@ default_display_changed(GstMfxPluginBase * plugin)
 
 static gboolean
 plugin_update_sinkpad_info_from_buffer(GstMfxPluginBase * plugin,
-GstBuffer * buf)
+    GstBuffer * buf)
 {
 	GstVideoInfo *const vip = &plugin->sinkpad_info;
 	GstVideoMeta *vmeta;
@@ -112,16 +112,12 @@ gst_mfx_plugin_base_init(GstMfxPluginBase * plugin,
 	/* sink pad */
 	plugin->sinkpad = gst_element_get_static_pad(GST_ELEMENT(plugin), "sink");
 	gst_video_info_init(&plugin->sinkpad_info);
-#if !GST_CHECK_VERSION(1,4,0)
 	plugin->sinkpad_query = GST_PAD_QUERYFUNC(plugin->sinkpad);
-#endif
 
 	/* src pad */
 	if (!(GST_OBJECT_FLAGS(plugin) & GST_ELEMENT_FLAG_SINK)) {
 		plugin->srcpad = gst_element_get_static_pad(GST_ELEMENT(plugin), "src");
-#if !GST_CHECK_VERSION(1,4,0)
 		plugin->srcpad_query = GST_PAD_QUERYFUNC(plugin->srcpad);
-#endif
 	}
 	gst_video_info_init(&plugin->srcpad_info);
 }
@@ -350,7 +346,7 @@ error_pool_config:
 */
 gboolean
 gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
-GstCaps * outcaps)
+    GstCaps * outcaps)
 {
 	if (incaps && incaps != plugin->sinkpad_caps) {
 		gst_caps_replace(&plugin->sinkpad_caps, incaps);

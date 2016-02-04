@@ -7,7 +7,6 @@
 #include "gstmfxdisplay_x11_priv.h"
 #include "video-utils.h"
 #include "gstmfxutils_x11.h"
-#include "gstvaapibufferproxy_priv.h"
 
 #define _NET_WM_STATE_REMOVE    0       /* remove/unset property */
 #define _NET_WM_STATE_ADD       1       /* add/set property      */

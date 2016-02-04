@@ -19,7 +19,6 @@ struct _GstMfxSurface
 	GstMfxObject parent_instance;
 
 	//GstMfxContext *parent_context;
-	GstVaapiBufferProxy *extbuf_proxy;
 	GstVideoFormat format;
 	guint width;
 	guint height;

@@ -1,10 +1,5 @@
 #include "sysdeps.h"
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <libudev.h>
-#include <xf86drm.h>
-#include <va/va_drm.h>
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_wayland_priv.h"

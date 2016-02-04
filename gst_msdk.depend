@@ -1859,7 +1859,7 @@
 	"gstmfxsurface.h"
 	"gstmfxsurfacepool.h"
 
-1454039174 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurface.h
+1454545397 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurface.h
 	<mfxvideo.h>
 	<gst/gst.h>
 	<gst/video/video.h>
@@ -1869,7 +1869,6 @@
 	"gstvaapiimage.h"
 	"video-utils.h"
 	"gstmfxcontext.h"
-	"gstvaapibufferproxy.h"
 
 1454039174 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxobject.h
 	"gstmfxtypes.h"
@@ -1912,7 +1911,7 @@
 	<glib.h>
 	"gstmfxdisplay.h"
 
-1454039174 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurface_priv.h
+1454545415 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurface_priv.h
 	"gstmfxsurface.h"
 	"gstmfxobject_priv.h"
 
@@ -2002,7 +2001,7 @@
 1454039174 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_priv.h
 	"gstmfxobject_priv.h"
 
-1454257378 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_x11.c
+1454545462 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_x11.c
 	"sysdeps.h"
 	<string.h>
 	<X11/Xatom.h>
@@ -2012,7 +2011,6 @@
 	"gstmfxdisplay_x11_priv.h"
 	"video-utils.h"
 	"gstmfxutils_x11.h"
-	"gstvaapibufferproxy_priv.h"
 
 1454039174 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_x11.h
 	<X11/Xlib.h>
@@ -2086,7 +2084,7 @@
 	"gstmfxdisplay.h"
 	<gst/allocators/allocators.h>
 
-1454039295 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxdec.c
+1454465086 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxdec.c
 	"gstmfxdec.h"
 	<string.h>
 	"gstmfxsurfaceproxy.h"
@@ -2132,7 +2130,7 @@
 	"gstmfxwindow_x11.h"
 	<X11/extensions/Xrandr.h>
 
-1454257556 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxsink.c
+1454544135 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxsink.c
 	<gst/gst.h>
 	<gst/video/video.h>
 	<gst/video/navigation.h>
@@ -2182,13 +2180,12 @@
 1404518350 /usr/include/glib-2.0/gmodule.h
 	<glib.h>
 
-1454039174 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurface.c
+1454545454 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurface.c
 	"sysdeps.h"
 	"gstmfxsurface.h"
 	"gstmfxsurface_priv.h"
 	"gstvaapiimage.h"
 	"gstvaapiimage_priv.h"
-	"gstvaapibufferproxy_priv.h"
 
 1454039174 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstvaapiimage.c
 	"sysdeps.h"
@@ -2196,7 +2193,7 @@
 	"gstvaapiimage_priv.h"
 	"gstmfxobject_priv.h"
 
-1454284768 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxutils_egl.c
+1454314520 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxutils_egl.c
 	"sysdeps.h"
 	"gstmfxutils_egl.h"
 	"egl_vtable.h"
@@ -2225,7 +2222,7 @@
 	"gstmfxtypes.h"
 	"gstmfxsurface.h"
 
-1454283459 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_egl.c
+1454314130 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_egl.c
 	"sysdeps.h"
 	"gstmfxdisplay_egl.h"
 	"gstmfxdisplay_egl_priv.h"
@@ -2263,7 +2260,7 @@
 1454039174 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtexture_priv.h
 	"gstmfxobject_priv.h"
 
-1454247917 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtexture_egl.c
+1454545403 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtexture_egl.c
 	"sysdeps.h"
 	"gstmfxtexture.h"
 	"gstmfxtexture_egl.h"
@@ -2271,11 +2268,12 @@
 	"gstmfxutils_egl.h"
 	"gstmfxdisplay_egl.h"
 	"gstmfxdisplay_egl_priv.h"
-	"gstvaapibufferproxy_priv.h"
+	"gstmfxprimebufferproxy.h"
+	"gstmfxprimebufferproxy_priv.h"
 	"gstvaapiimage_priv.h"
 	<drm/drm_fourcc.h>
 
-1454249693 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_egl.c
+1454544088 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_egl.c
 	"sysdeps.h"
 	"gstmfxwindow_egl.h"
 	"gstmfxwindow_priv.h"
@@ -2283,7 +2281,7 @@
 	"gstmfxtexture_priv.h"
 	"gstmfxdisplay_egl_priv.h"
 
-1454257469 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay.c
+1454464669 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay.c
 	"sysdeps.h"
 	<string.h>
 	<fcntl.h>
@@ -2301,7 +2299,7 @@
 	"gstmfxsurfaceproxy_priv.h"
 	"gstmfxsurfacepool.h"
 
-1454237572 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.c
+1454465268 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.c
 	<gst/base/gstpushsrc.h>
 	"gstmfxpluginbase.h"
 	"gstmfxpluginutil.h"
@@ -2323,8 +2321,7 @@
 	"gstmfxdisplay.h"
 	"gstmfxvideometa_texture.h"
 
-1454052620 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_wayland.h
-	<va/va_drm.h>
+1454545600 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_wayland.h
 	<wayland-client.h>
 	"gstmfxdisplay.h"
 
@@ -2345,15 +2342,15 @@
 	<va/va.h>
 	<va/va_x11.h>
 
-1453616960 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxminiobject.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxminiobject.h
 	<glib.h>
 
-1453955862 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdecoder.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdecoder.c
 	"gstmfxdecoder.h"
 	"gstmfxobjectpool_priv.h"
 	"gstmfxvideometa.h"
 
-1453955751 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdecoder.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdecoder.h
 	<gst/gstbuffer.h>
 	<gst/video/gstvideoutils.h>
 	"gstmfxsurfaceproxy.h"
@@ -2361,11 +2358,11 @@
 	"gstmfxobjectpool.h"
 	"gstmfxcontext.h"
 
-1453616958 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfaceproxy.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfaceproxy.h
 	"gstmfxsurface.h"
 	"gstmfxsurfacepool.h"
 
-1453616958 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurface.h
+1454545397 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurface.h
 	<mfxvideo.h>
 	<gst/gst.h>
 	<gst/video/video.h>
@@ -2375,53 +2372,51 @@
 	"gstvaapiimage.h"
 	"video-utils.h"
 	"gstmfxcontext.h"
-	"gstvaapibufferproxy.h"
 
-1453616960 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobject.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobject.h
 	"gstmfxtypes.h"
 	"gstmfxdisplay.h"
 
-1453616956 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtypes.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtypes.h
 	<glib.h>
 
-1453616962 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay.h
+1454226938 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay.h
 	<va/va.h>
 	<gst/gst.h>
 	"gstmfxtypes.h"
 
-1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimage.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimage.h
 	"gstmfxobject.h"
 	"gstmfxdisplay.h"
 	"video-utils.h"
 
-1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/video-utils.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/video-utils.h
 	<gst/video/video.h>
 	<mfxvideo.h>
 	<va/va.h>
 
 1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapibufferproxy.h
 
-1453616958 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfacepool.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfacepool.h
 	"gstmfxsurface.h"
 	"gstmfxobjectpool.h"
 	"video-utils.h"
 
-1453616960 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobjectpool.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobjectpool.h
 	<glib.h>
 	"gstmfxdisplay.h"
 
-1453616958 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurface_priv.h
+1454545415 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurface_priv.h
 	"gstmfxsurface.h"
 	"gstmfxobject_priv.h"
 
-1453616960 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobject_priv.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobject_priv.h
 	"gstmfxobject.h"
 	"gstmfxminiobject.h"
 	"gstmfxdisplay_priv.h"
 
-1453616962 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_priv.h
+1454219485 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_priv.h
 	"gstmfxdisplay.h"
-	"gstmfxdisplaycache.h"
 	"gstmfxwindow.h"
 	"gstmfxtexture.h"
 	"gstmfxminiobject.h"
@@ -2430,20 +2425,20 @@
 	"gstmfxdisplay.h"
 	"gstmfxminiobject.h"
 
-1453616954 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow.h
 	<gst/video/gstvideosink.h>
 	"gstmfxtypes.h"
 	"gstmfxdisplay.h"
 	"gstmfxsurface.h"
 
-1453616958 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture.h
 	"gstmfxtypes.h"
 	"gstmfxsurface.h"
 
-1453616960 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobjectpool_priv.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobjectpool_priv.h
 	"gstmfxminiobject.h"
 
-1453616964 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideometa.h
+1454039295 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideometa.h
 	<gst/video/video.h>
 	"gstmfxdisplay.h"
 	"gstmfxsurfaceproxy.h"
@@ -2451,12 +2446,17 @@
 	"gstmfxobjectpool.h"
 	"gstvaapiimage.h"
 
-1453879456 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay.c
+1454464669 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay.c
+	"sysdeps.h"
 	<string.h>
+	<fcntl.h>
+	<libudev.h>
+	<xf86drm.h>
+	<va/va_drm.h>
 	"gstmfxdisplay.h"
 	"gstmfxdisplay_priv.h"
 
-1453863910 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_egl.c
+1454314130 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_egl.c
 	"sysdeps.h"
 	"gstmfxdisplay_egl.h"
 	"gstmfxdisplay_egl_priv.h"
@@ -2467,26 +2467,26 @@
 	"gstmfxdisplay_x11.h"
 	"gstmfxdisplay_wayland.h"
 
-1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/sysdeps.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/sysdeps.h
 	"config.h"
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<gst/gst.h>
 
-1453865508 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/config.h
+1454167831 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/config.h
 
-1453616962 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_egl.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_egl.h
 	<EGL/egl.h>
 	"gstmfxdisplay.h"
 
-1453616962 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_egl_priv.h
+1454054220 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_egl_priv.h
 	"gstmfxwindow.h"
 	"gstmfxdisplay_egl.h"
 	"gstmfxdisplay_priv.h"
 	"gstmfxutils_egl.h"
 
-1453616954 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxutils_egl.h
+1454231026 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxutils_egl.h
 	<gmodule.h>
 	<gst/gstinfo.h>
 	<gst/video/video-format.h>
@@ -2501,30 +2501,30 @@
 	<EGL/eglext.h>
 	"ogl_compat.h"
 
-1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/ogl_compat.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/ogl_compat.h
 
 1453705416 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/egl_vtable.h
 
-1453616954 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_egl.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_egl.h
 	"gstmfxdisplay.h"
 	"gstmfxwindow.h"
 
-1453616954 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_priv.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_priv.h
 	"gstmfxobject_priv.h"
 
-1453740091 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture_egl.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture_egl.h
 	"gstmfxtexture.h"
 	"gstmfxtexture_priv.h"
 	"gstmfxutils_egl.h"
 
-1453616956 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture_priv.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture_priv.h
 	"gstmfxobject_priv.h"
 
-1453616960 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_x11.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_x11.h
 	<va/va_x11.h>
 	"gstmfxdisplay.h"
 
-1453616962 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_x11.c
+1454256606 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_x11.c
 	"sysdeps.h"
 	<string.h>
 	"gstmfxdisplay_priv.h"
@@ -2533,11 +2533,11 @@
 	"gstmfxwindow_x11.h"
 	<X11/extensions/Xrandr.h>
 
-1453616960 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_x11_priv.h
+1453975434 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_x11_priv.h
 	"gstmfxdisplay_x11.h"
 	"gstmfxdisplay_priv.h"
 
-1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_x11.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_x11.h
 	<X11/Xlib.h>
 	"gstmfxdisplay.h"
 	"gstmfxwindow.h"
@@ -2547,32 +2547,31 @@
 	<string.h>
 	"gstmfxdisplaycache.h"
 
-1453616960 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxminiobject.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxminiobject.c
 	<string.h>
 	"gstmfxminiobject.h"
 
-1453616960 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobject.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobject.c
 	"sysdeps.h"
 	"gstmfxobject.h"
 	"gstmfxobject_priv.h"
 	"gstmfxminiobject.h"
 	"gstmfxdisplay_priv.h"
 
-1453616960 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobjectpool.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxobjectpool.c
 	"sysdeps.h"
 	"gstmfxobjectpool.h"
 	"gstmfxobjectpool_priv.h"
 	"gstmfxobject.h"
 
-1453945679 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurface.c
+1454545454 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurface.c
 	"sysdeps.h"
 	"gstmfxsurface.h"
 	"gstmfxsurface_priv.h"
 	"gstvaapiimage.h"
 	"gstvaapiimage_priv.h"
-	"gstvaapibufferproxy_priv.h"
 
-1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimage_priv.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimage_priv.h
 	"gstmfxobject_priv.h"
 	"gstvaapiimage.h"
 	<va/va.h>
@@ -2582,28 +2581,28 @@
 	"gstmfxsurface.h"
 	"gstmfxminiobject.h"
 
-1453616958 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfacepool.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfacepool.c
 	"sysdeps.h"
 	"gstmfxsurfacepool.h"
 	"gstmfxobjectpool_priv.h"
 
-1453616958 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfaceproxy.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfaceproxy.c
 	"gstmfxsurfaceproxy.h"
 	"gstmfxsurfaceproxy_priv.h"
 	"gstmfxsurfacepool.h"
 
-1453616958 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfaceproxy_priv.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxsurfaceproxy_priv.h
 	"gstmfxminiobject.h"
 	"gstmfxsurfaceproxy.h"
 	"gstmfxobject_priv.h"
 	"gstmfxsurface_priv.h"
 
-1453616958 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture.c
 	"sysdeps.h"
 	"gstmfxtexture.h"
 	"gstmfxtexture_priv.h"
 
-1453944352 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture_egl.c
+1454545403 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxtexture_egl.c
 	"sysdeps.h"
 	"gstmfxtexture.h"
 	"gstmfxtexture_egl.h"
@@ -2611,34 +2610,35 @@
 	"gstmfxutils_egl.h"
 	"gstmfxdisplay_egl.h"
 	"gstmfxdisplay_egl_priv.h"
-	"gstvaapibufferproxy_priv.h"
+	"gstmfxprimebufferproxy.h"
+	"gstmfxprimebufferproxy_priv.h"
 	"gstvaapiimage_priv.h"
 	<drm/drm_fourcc.h>
 
-1453881282 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxutils_egl.c
+1454314520 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxutils_egl.c
 	"sysdeps.h"
 	"gstmfxutils_egl.h"
 	"egl_vtable.h"
 	"egl_vtable.h"
 
-1453616954 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxutils_x11.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxutils_x11.c
 	<glib.h>
 	<X11/Xutil.h>
 	"gstmfxutils_x11.h"
 
-1453616954 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxutils_x11.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxutils_x11.h
 	<X11/Xlib.h>
 	<glib.h>
 	<gst/gst.h>
 
-1453616954 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow.c
+1454029630 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow.c
 	"sysdeps.h"
 	"gstmfxwindow.h"
 	"gstmfxwindow_priv.h"
 	"gstmfxdisplay_priv.h"
 	"gstmfxsurface_priv.h"
 
-1453881116 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_egl.c
+1454544088 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_egl.c
 	"sysdeps.h"
 	"gstmfxwindow_egl.h"
 	"gstmfxwindow_priv.h"
@@ -2646,7 +2646,7 @@
 	"gstmfxtexture_priv.h"
 	"gstmfxdisplay_egl_priv.h"
 
-1453616954 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_x11.c
+1454545462 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_x11.c
 	"sysdeps.h"
 	<string.h>
 	<X11/Xatom.h>
@@ -2656,9 +2656,8 @@
 	"gstmfxdisplay_x11_priv.h"
 	"video-utils.h"
 	"gstmfxutils_x11.h"
-	"gstvaapibufferproxy_priv.h"
 
-1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_x11_priv.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_x11_priv.h
 	"gstmfxwindow_priv.h"
 
 1453945935 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapibufferproxy.c
@@ -2669,30 +2668,30 @@
 	"gstmfxobject_priv.h"
 	<gmodule.h>
 
-1453616952 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimage.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimage.c
 	"sysdeps.h"
 	"gstvaapiimage.h"
 	"gstvaapiimage_priv.h"
 	"gstmfxobject_priv.h"
 
-1453616952 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimagepool.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimagepool.c
 	"gstvaapiimagepool.h"
 	"gstmfxobjectpool_priv.h"
 
-1453616952 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimagepool.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstvaapiimagepool.h
 	"gstvaapiimage.h"
 	"gstmfxobjectpool.h"
 	"video-utils.h"
 
-1453616952 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/video-utils.c
+1454039174 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/video-utils.c
 	"video-utils.h"
 
-1453616972 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfx.c
+1454039295 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfx.c
 	<gst/gst.h>
 	"gstmfxdec.h"
 	"gstmfxsink.h"
 
-1453616970 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxdec.h
+1454039295 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxdec.h
 	<gst/gst.h>
 	<gst/video/gstvideodecoder.h>
 	<mfxvideo.h>
@@ -2701,7 +2700,7 @@
 	"gstmfxdecoder.h"
 	"gstmfxpluginbase.h"
 
-1453616970 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxpluginbase.h
+1454237572 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxpluginbase.h
 	<gst/base/gstbasetransform.h>
 	<gst/video/gstvideodecoder.h>
 	<gst/video/gstvideoencoder.h>
@@ -2710,17 +2709,17 @@
 	"gstmfxcontext.h"
 	<gst/gl/gstglcontext.h>
 
-1453616968 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxsink.h
+1454039295 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxsink.h
 	"gstmfxpluginbase.h"
 	"gstmfxwindow.h"
 	"gstmfxpluginutil.h"
 
-1453616968 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxpluginutil.h
+1454039295 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxpluginutil.h
 	"gstmfxdisplay.h"
 	"gstmfxsurface.h"
 	"gstmfxvideomemory.h"
 
-1453616966 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideomemory.h
+1454039295 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideomemory.h
 	<gst/gstallocator.h>
 	<gst/video/video-info.h>
 	"gstmfxsurfaceproxy.h"
@@ -2731,7 +2730,7 @@
 	"gstmfxdisplay.h"
 	<gst/allocators/allocators.h>
 
-1453616972 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxdec.c
+1454465086 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxdec.c
 	"gstmfxdec.h"
 	<string.h>
 	"gstmfxsurfaceproxy.h"
@@ -2742,12 +2741,12 @@
 	"gstmfxvideobufferpool.h"
 	"gstmfxpluginutil.h"
 
-1453616966 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideobufferpool.h
+1454039295 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideobufferpool.h
 	<gst/video/gstvideopool.h>
 	"gstmfxdisplay.h"
 	"gstmfxcontext.h"
 
-1453616970 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxpluginbase.c
+1454465268 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxpluginbase.c
 	<gst/base/gstpushsrc.h>
 	"gstmfxpluginbase.h"
 	"gstmfxpluginutil.h"
@@ -2756,24 +2755,20 @@
 	"gstmfxvideobufferpool.h"
 	<gst/allocators/allocators.h>
 
-1453616966 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideocontext.h
+1454039295 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideocontext.h
 	"gstmfxdisplay.h"
 
-1453616970 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxpluginutil.c
+1454048204 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxpluginutil.c
 	"sysdeps.h"
 	"gstmfxvideocontext.h"
-	"gstmfxdisplay_drm.h"
-	"gstmfxdisplay_x11.h"
-	"gstmfxdisplay_glx.h"
-	"gstmfxdisplay_egl.h"
-	"gstmfxdisplay_wayland.h"
 	"gstmfxpluginutil.h"
 	"gstmfxpluginbase.h"
+	"gstmfxdisplay_drm.h"
 
-1452735493 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_drm.h
+1454039174 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_drm.h
 	"gstmfxdisplay.h"
 
-1453740941 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxsink.c
+1454545747 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxsink.c
 	<gst/gst.h>
 	<gst/video/video.h>
 	<gst/video/navigation.h>
@@ -2786,31 +2781,28 @@
 	"gstmfxdisplay_x11.h"
 	"gstmfxwindow_x11.h"
 	<X11/XKBlib.h>
-	<gst/mfx/gstmfxdisplay_wayland.h>
-	<gst/mfx/gstmfxwindow_wayland.h>
 	"gstmfxdisplay_egl.h"
-	"gstmfxdisplay_egl_priv.h"
 	"gstmfxwindow_egl.h"
 
-1453616966 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideobufferpool.c
+1454039295 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideobufferpool.c
 	"gstmfxvideobufferpool.h"
 	"gstmfxvideomemory.h"
 	"gstmfxdisplay.h"
 	"gstmfxvideometa_texture.h"
 
-1453616966 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideocontext.c
+1454039295 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideocontext.c
 	"gstmfxvideocontext.h"
 
-1453616966 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideomemory.c
+1454039295 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideomemory.c
 	"gstmfxvideomemory.h"
 
-1453616966 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideometa.c
+1454039295 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxvideometa.c
 	"gstmfxvideometa.h"
 	"gstmfxsurfacepool.h"
 	"gstvaapiimagepool.h"
 	"gstmfxvideomemory.h"
 
-1452735493 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_drm.c
+1454256020 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_drm.c
 	"sysdeps.h"
 	<string.h>
 	<unistd.h>
@@ -2822,9 +2814,8 @@
 	"gstmfxdisplay_priv.h"
 	"gstmfxdisplay_drm.h"
 	"gstmfxdisplay_drm_priv.h"
-	"gstmfxwindow_drm.h"
 
-1452735493 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_drm_priv.h
+1454178149 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_drm_priv.h
 	"gstmfxdisplay_drm.h"
 	"gstmfxdisplay_priv.h"
 
@@ -2870,14 +2861,9 @@
 	"gstmfxdisplay_drm.h"
 	"gstmfxdisplay_priv.h"
 
-1454256003 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_wayland.c
+1454483500 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdisplay_wayland.c
 	"sysdeps.h"
 	<string.h>
-	<unistd.h>
-	<fcntl.h>
-	<libudev.h>
-	<xf86drm.h>
-	<va/va_drm.h>
 	"gstmfxdisplay_priv.h"
 	"gstmfxdisplay_wayland.h"
 	"gstmfxdisplay_wayland_priv.h"
@@ -2887,12 +2873,13 @@
 	"gstmfxdisplay_wayland.h"
 	"gstmfxdisplay_priv.h"
 
-1454064306 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_wayland.h
+1454315025 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_wayland.h
 	<wayland-client.h>
+	<wayland-egl.h>
 	"gstmfxdisplay.h"
 	"gstmfxwindow.h"
 
-1454284242 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_wayland.c
+1454483763 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxwindow_wayland.c
 	"sysdeps.h"
 	<string.h>
 	"gstmfxwindow_wayland.h"
@@ -3444,4 +3431,64 @@
 	"gstmfxsurfacepool.h"
 	"gstvaapiimagepool.h"
 	"gstmfxvideomemory.h"
+
+1454545445 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxprimebufferproxy.c
+	"sysdeps.h"
+	"gstmfxprimebufferproxy.h"
+	"gstmfxprimebufferproxy_priv.h"
+	"video-utils.h"
+	"gstmfxobject_priv.h"
+	<gmodule.h>
+
+1454545089 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxprimebufferproxy.h
+
+1454545205 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxprimebufferproxy_priv.h
+	"gstmfxprimebufferproxy.h"
+	"gstmfxsurface.h"
+	"gstmfxminiobject.h"
+
+1454545600 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_wayland.h
+	<wayland-client.h>
+	"gstmfxdisplay.h"
+
+1454483500 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_wayland.c
+	"sysdeps.h"
+	<string.h>
+	"gstmfxdisplay_priv.h"
+	"gstmfxdisplay_wayland.h"
+	"gstmfxdisplay_wayland_priv.h"
+	"gstmfxwindow_wayland.h"
+
+1454044822 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_wayland_priv.h
+	"gstmfxdisplay_wayland.h"
+	"gstmfxdisplay_priv.h"
+
+1454546131 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_wayland.h
+	"gstmfxdisplay.h"
+	"gstmfxwindow.h"
+
+1454545445 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxprimebufferproxy.c
+	"sysdeps.h"
+	"gstmfxprimebufferproxy.h"
+	"gstmfxprimebufferproxy_priv.h"
+	"video-utils.h"
+	"gstmfxobject_priv.h"
+	<gmodule.h>
+
+1454545089 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxprimebufferproxy.h
+
+1454545205 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxprimebufferproxy_priv.h
+	"gstmfxprimebufferproxy.h"
+	"gstmfxsurface.h"
+	"gstmfxminiobject.h"
+
+1454546151 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_wayland.c
+	"sysdeps.h"
+	<string.h>
+	<wayland-client.h>
+	<wayland-egl.h>
+	"gstmfxwindow_wayland.h"
+	"gstmfxwindow_priv.h"
+	"gstmfxdisplay_wayland.h"
+	"gstmfxdisplay_wayland_priv.h"
 

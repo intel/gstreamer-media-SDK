@@ -3,7 +3,6 @@
 #include "gstmfxsurface_priv.h"
 #include "gstvaapiimage.h"
 #include "gstvaapiimage_priv.h"
-#include "gstvaapibufferproxy_priv.h"
 
 static void
 gst_mfx_surface_destroy(GstMfxSurface * surface)

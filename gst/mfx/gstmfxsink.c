@@ -141,7 +141,7 @@ configure_notify_event_pending_cb(Display * dpy, XEvent * xev, XPointer arg)
 
 static gboolean
 configure_notify_event_pending(GstMfxSink * sink, Window window,
-guint width, guint height)
+    guint width, guint height)
 {
 	GstMfxDisplayX11 *const display =
 		GST_MFX_DISPLAY_X11(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
@@ -168,41 +168,6 @@ gst_mfxsink_x11_create_window(GstMfxSink * sink, guint width, guint height)
 	return TRUE;
 }
 
-static gboolean
-gst_mfxsink_x11_create_window_from_handle(GstMfxSink * sink,
-	guintptr window)
-{
-	GstMfxDisplay *display;
-	Window rootwin;
-	unsigned int width, height, border_width, depth;
-	int x, y;
-	XID xid = window;
-	if (!gst_mfxsink_ensure_display(sink))
-		return FALSE;
-	display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
-	gst_mfx_display_lock(display);
-	XGetGeometry(gst_mfx_display_x11_get_display(GST_MFX_DISPLAY_X11
-		(display)), xid, &rootwin, &x, &y, &width, &height, &border_width,
-		&depth);
-	gst_mfx_display_unlock(display);
-	if ((width != sink->window_width || height != sink->window_height) &&
-		!configure_notify_event_pending(sink, xid, width, height)) {
-		if (!gst_mfxsink_ensure_render_rect(sink, width, height))
-			return FALSE;
-		sink->window_width = width;
-		sink->window_height = height;
-	}
-	/*if (!sink->window
-		|| gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(sink->window)) !=
-		xid) {
-		gst_mfx_window_replace(&sink->window, NULL);
-		sink->window = gst_mfx_window_x11_new_with_xid(display, xid);
-		if (!sink->window)
-			return FALSE;
-	}*/
-	gst_mfxsink_set_event_handling(sink, sink->handle_events);
-	return TRUE;
-}
 
 static gboolean
 gst_mfxsink_x11_handle_events(GstMfxSink * sink)
@@ -343,7 +308,6 @@ gst_mfxsink_backend_x11(void)
 {
 	static const GstMfxSinkBackend GstMfxSinkBackendX11 = {
 		.create_window = gst_mfxsink_x11_create_window,
-		.create_window_from_handle = gst_mfxsink_x11_create_window_from_handle,
 		.render_surface = gst_mfxsink_render_surface,
 		.event_thread_needed = TRUE,
 		.handle_events = gst_mfxsink_x11_handle_events,
@@ -359,8 +323,8 @@ gst_mfxsink_backend_x11(void)
 /* ------------------------------------------------------------------------ */
 
 #if USE_EGL
-#include "gstmfxdisplay_egl.h"
-#include "gstmfxwindow_egl.h"
+# include "gstmfxdisplay_egl.h"
+# include "gstmfxwindow_egl.h"
 
 static gboolean
 gst_mfxsink_egl_create_window(GstMfxSink * sink, guint width,

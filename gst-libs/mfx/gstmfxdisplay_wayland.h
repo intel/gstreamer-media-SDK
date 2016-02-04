@@ -1,7 +1,6 @@
 #ifndef GST_MFX_DISPLAY_WAYLAND_H
 #define GST_MFX_DISPLAY_WAYLAND_H
 
-#include <va/va_drm.h>
 #include <wayland-client.h>
 #include "gstmfxdisplay.h"
 

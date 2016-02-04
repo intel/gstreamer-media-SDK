@@ -184,14 +184,17 @@ static gboolean
 ensure_texture(GstMfxWindowEGL * window, guint width, guint height)
 {
 	GstMfxTexture *texture;
+	GstMfxDisplay *display = GST_MFX_OBJECT_DISPLAY(window);
 
 	/*if (window->texture &&
 		GST_MFX_TEXTURE_WIDTH(window->texture) == width &&
 		GST_MFX_TEXTURE_HEIGHT(window->texture) == height)
 		return TRUE;*/
 
-	texture = gst_mfx_texture_egl_new(GST_MFX_OBJECT_DISPLAY(window),
-		GL_TEXTURE_EXTERNAL_OES, GL_RGBA, width, height);
+	texture = gst_mfx_texture_egl_new(display,
+		GST_MFX_DISPLAY_EGL(display)->gles_version ?
+        GL_TEXTURE_EXTERNAL_OES : GL_TEXTURE_2D,
+        GL_RGBA, width, height);
 
 	gst_mfx_texture_replace(&window->texture, texture);
 	gst_mfx_texture_replace(&texture, NULL);
@@ -559,8 +562,6 @@ gst_mfx_window_egl_render(GstMfxWindowEGL * window,
 	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
-    const GstMfxWindowClass *const klass =
-		GST_MFX_WINDOW_GET_CLASS(window->window);
 	UploadSurfaceArgs args = { window, surface, src_rect, dst_rect };
 
 	return egl_context_run(window->egl_window->context,
