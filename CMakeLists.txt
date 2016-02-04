@@ -50,7 +50,8 @@ pkg_check_modules (LIBDRM_INTEL REQUIRED libdrm_intel)
 pkg_check_modules (LIBVA_DRM REQUIRED libva-drm)
 pkg_check_modules (WAYLAND_CLIENT REQUIRED wayland-client)
 pkg_check_modules (LIBUDEV REQUIRED libudev)
-
+pkg_check_modules (EGL REQUIRED egl)
+pkg_check_modules (WAYLAND_EGL REQUIRED wayland-egl)
 
 include_directories(
 	${GLIB-2.0_INCLUDE_DIRS}
@@ -99,5 +100,7 @@ target_link_libraries(gstmfx
     ${LIBDRM_INTEL_LIBRARIES}
 	${LIBVA_X11_LIBRARIES}
     ${LIBUDEV_LIBRARIES}
+    ${EGL_LIBRARIES}
+    ${WAYLAND_EGL_LIBRARIES}
     libmfx
 	)
