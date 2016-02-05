@@ -3,6 +3,9 @@
 #include "gstmfxobjectpool_priv.h"
 #include "gstmfxobject.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 /* Ensure those symbols are actually defined in the resulting libraries */
 #undef gst_mfx_object_pool_ref
 #undef gst_mfx_object_pool_unref

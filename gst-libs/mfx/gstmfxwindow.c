@@ -4,6 +4,9 @@
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxsurface_priv.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 /* Ensure those symbols are actually defined in the resulting libraries */
 #undef gst_mfx_window_ref
 #undef gst_mfx_window_unref

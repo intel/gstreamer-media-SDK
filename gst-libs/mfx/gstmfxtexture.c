@@ -2,6 +2,8 @@
 #include "gstmfxtexture.h"
 #include "gstmfxtexture_priv.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
 
 /* Ensure those symbols are actually defined in the resulting libraries */
 #undef gst_mfx_texture_ref

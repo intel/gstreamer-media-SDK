@@ -2,6 +2,9 @@
 #include "gstmfxsurfaceproxy_priv.h"
 #include "gstmfxsurfacepool.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 static void
 gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 {

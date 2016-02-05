@@ -54,7 +54,6 @@ static GstStaticPadTemplate src_template_factory =
 	GST_STATIC_PAD_TEMPLATE("src",
 	GST_PAD_SRC,
 	GST_PAD_ALWAYS,
-	//GST_STATIC_CAPS(GST_VIDEO_CAPS_MAKE("NV12"))
 	GST_STATIC_CAPS(gst_mfxdecode_src_caps_str)
 );
 

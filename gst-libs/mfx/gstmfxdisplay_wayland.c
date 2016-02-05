@@ -5,6 +5,9 @@
 #include "gstmfxdisplay_wayland_priv.h"
 #include "gstmfxwindow_wayland.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 static const guint g_display_types = 1U << GST_MFX_DISPLAY_TYPE_WAYLAND;
 
 static inline const gchar *

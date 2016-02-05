@@ -7,6 +7,11 @@
 #include "gstmfxdisplay.h"
 #include "gstmfxdisplay_priv.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
+GST_DEBUG_CATEGORY (gst_debug_mfx);
+
 /* Ensure those symbols are actually defined in the resulting libraries */
 #undef gst_mfx_display_ref
 #undef gst_mfx_display_unref

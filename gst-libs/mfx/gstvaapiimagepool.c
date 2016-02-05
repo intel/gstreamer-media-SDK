@@ -1,5 +1,9 @@
+#include "sysdeps.h"
 #include "gstvaapiimagepool.h"
 #include "gstmfxobjectpool_priv.h"
+
+#define DEBUG 1
+#include "gstmfxdebug.h"
 
 /**
  * GstVaapiImagePool:

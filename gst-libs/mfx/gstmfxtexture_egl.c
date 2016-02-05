@@ -1,4 +1,5 @@
 #include "sysdeps.h"
+#include <drm/drm_fourcc.h>
 #include "gstmfxtexture.h"
 #include "gstmfxtexture_egl.h"
 #include "gstmfxtexture_priv.h"
@@ -8,8 +9,6 @@
 #include "gstmfxprimebufferproxy.h"
 #include "gstmfxprimebufferproxy_priv.h"
 #include "gstvaapiimage_priv.h"
-
-#include <drm/drm_fourcc.h>
 
 /* Additional DRM formats */
 #ifndef DRM_FORMAT_R8
@@ -21,6 +20,9 @@
 #ifndef DRM_FORMAT_GR88
 #define DRM_FORMAT_GR88 fourcc_code('G', 'R', '8', '8')
 #endif
+
+#define DEBUG 1
+#include "gstmfxdebug.h"
 
 typedef struct
 {

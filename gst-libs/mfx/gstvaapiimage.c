@@ -3,6 +3,9 @@
 #include "gstvaapiimage_priv.h"
 #include "gstmfxobject_priv.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 static gboolean
 _gst_vaapi_image_map(GstVaapiImage *image);
 

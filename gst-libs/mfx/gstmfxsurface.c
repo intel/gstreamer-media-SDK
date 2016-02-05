@@ -4,6 +4,9 @@
 #include "gstvaapiimage.h"
 #include "gstvaapiimage_priv.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 static void
 gst_mfx_surface_destroy(GstMfxSurface * surface)
 {

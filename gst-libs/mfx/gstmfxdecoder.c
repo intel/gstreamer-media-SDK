@@ -3,6 +3,9 @@
 #include "gstmfxobjectpool_priv.h"
 #include "gstmfxvideometa.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 /**
 * gst_mfx_decoder_ref:
 * @decoder: a #GstMfxDecoder

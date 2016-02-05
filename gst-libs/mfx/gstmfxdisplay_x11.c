@@ -9,6 +9,8 @@
 # include <X11/extensions/Xrandr.h>
 #endif
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
 
 static const guint g_display_types = 1U << GST_MFX_DISPLAY_TYPE_X11;
 

@@ -1373,7 +1373,7 @@ egl_create_texture(EglContext * ctx, guint target, guint format,
 
 	if (width > 0 && height > 0)
 		vtable->glTexImage2D(target, 0, internal_format, width, height, 0,
-		format, GL_UNSIGNED_BYTE, NULL);
+            format, GL_UNSIGNED_BYTE, NULL);
 
 	vtable->glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	vtable->glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

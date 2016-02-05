@@ -2,6 +2,9 @@
 #include "gstmfxsurfacepool.h"
 #include "gstmfxobjectpool_priv.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 /**
 * GstMfxSurfacePool:
 *

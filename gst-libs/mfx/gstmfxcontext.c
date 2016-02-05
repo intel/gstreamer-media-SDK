@@ -1,5 +1,8 @@
 #include "gstmfxcontext.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 static mfxStatus
 frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     mfxFrameAllocResponse *resp)
@@ -9,17 +12,17 @@ frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     int err, i;
 
     if (ctx->surfaces) {
-        g_printerr("Multiple allocation requests.\n");
+        GST_ERROR("Multiple allocation requests.\n");
         return MFX_ERR_MEMORY_ALLOC;
     }
 
     if (!(req->Type & MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET)) {
-        g_printerr("Unsupported surface type: %d\n", req->Type);
+        GST_ERROR("Unsupported surface type: %d\n", req->Type);
         return MFX_ERR_UNSUPPORTED;
     }
 
     if (req->Info.FourCC != MFX_FOURCC_NV12 || req->Info.ChromaFormat != MFX_CHROMAFORMAT_YUV420) {
-        g_printerr("Unsupported surface properties.\n");
+        GST_ERROR("Unsupported surface properties.\n");
         return MFX_ERR_UNSUPPORTED;
     }
 
@@ -36,7 +39,7 @@ frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
                            NULL, 0);
 
     if (err != VA_STATUS_SUCCESS) {
-        g_printerr("Error allocating VA surfaces\n");
+        GST_ERROR("Error allocating VA surfaces\n");
         goto fail;
     }
 
@@ -128,7 +131,7 @@ gst_mfx_context_init_session(GstMfxContext * context)
 
 	ret = MFXInit(impl, &ver, &(context->session));
 	if (ret < 0) {
-		//GST_ERROR_OBJECT(context, "Error initializing an internal MFX session");
+		GST_ERROR_OBJECT(context, "Error initializing an internal MFX session");
 		return FALSE;
 	}
 
@@ -148,8 +151,8 @@ gst_mfx_context_init_session(GstMfxContext * context)
 		desc = "unknown";
 	}
 
-	//GST_INFO_OBJECT(context->session, "Initialized an internal MFX session using %s implementation",
-		//desc);
+	GST_INFO_OBJECT(context->session, "Initialized an internal MFX session using %s implementation",
+		desc);
 
 	return TRUE;
 }

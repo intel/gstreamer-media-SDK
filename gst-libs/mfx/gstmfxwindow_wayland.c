@@ -7,6 +7,9 @@
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_wayland_priv.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 #define GST_MFX_WINDOW_WAYLAND_CAST(obj) \
 	((GstMfxWindowWayland *)(obj))
 

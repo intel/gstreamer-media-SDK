@@ -5,6 +5,8 @@
 #include "gstmfxobject_priv.h"
 #include <gmodule.h>
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
 
 /* Ensure those symbols are actually defined in the resulting libraries */
 #undef gst_mfx_prime_buffer_proxy_ref
