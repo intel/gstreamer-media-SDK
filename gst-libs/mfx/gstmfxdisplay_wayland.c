@@ -1,5 +1,10 @@
 #include "sysdeps.h"
+#include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
+#include <drm.h>
+#include <xf86drm.h>
+#include <intel_bufmgr.h>
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_wayland_priv.h"
@@ -66,6 +71,55 @@ static const struct wl_output_listener output_listener = {
 	output_handle_mode,
 };
 
+/* DRM listeners for wl_drm interface */
+static void drm_handle_device(void *data
+    , struct wl_drm *drm
+    , const char *device)
+{
+	GstMfxDisplayWaylandPrivate *const priv = data;
+	priv->drm_device_name = g_strdup(device);
+    if (!priv->drm_device_name)
+        return;
+
+    drm_magic_t magic;
+    priv->drm_fd = open(priv->drm_device_name, O_RDWR | O_CLOEXEC);
+    if (-1 == priv->drm_fd) {
+        g_printf("Error: Could not open %s\n",priv->drm_device_name);
+        return;
+    }
+    drmGetMagic(priv->drm_fd, &magic);
+    wl_drm_authenticate(priv->drm, magic);
+}
+
+static void drm_handle_format(void *data
+    , struct wl_drm *drm
+    , uint32_t format)
+{
+    /* NOT IMPLEMENTED */
+}
+
+static void drm_handle_capabilities(void *data
+    , struct wl_drm *drm
+    , uint32_t value)
+{
+    /* NOT IMPLEMENTED */
+}
+
+static void drm_handle_authenticated(void *data
+    , struct wl_drm *drm)
+{
+	GstMfxDisplayWaylandPrivate *const priv = data;
+	priv->bufmgr = drm_intel_bufmgr_gem_init(priv->drm_fd, BATCH_SIZE);
+	priv->is_auth = TRUE;
+}
+
+
+static const struct wl_drm_listener drm_listener = {
+	drm_handle_device,
+	drm_handle_format,
+	drm_handle_authenticated,
+	drm_handle_capabilities
+};
 static void
 registry_handle_global(void *data,
 struct wl_registry *registry,
@@ -81,6 +135,10 @@ struct wl_registry *registry,
 	else if (strcmp(interface, "wl_output") == 0) {
 		priv->output = wl_registry_bind(registry, id, &wl_output_interface, 1);
 		wl_output_add_listener(priv->output, &output_listener, priv);
+	}
+	else if (strcmp(interface, "wl_drm") == 0) {
+		priv->drm = wl_registry_bind(registry, id, &wl_drm_interface, 2);
+		wl_drm_add_listener(priv->drm, &drm_listener, priv);
 	}
 }
 
@@ -100,7 +158,6 @@ gst_mfx_display_wayland_setup(GstMfxDisplay * display)
 	wl_registry_add_listener(priv->registry, &registry_listener, priv);
 	priv->event_fd = wl_display_get_fd(priv->wl_display);
 	wl_display_roundtrip(priv->wl_display);
-
 	if (!priv->width || !priv->height) {
 		wl_display_roundtrip(priv->wl_display);
 		if (!priv->width || !priv->height) {
@@ -112,6 +169,10 @@ gst_mfx_display_wayland_setup(GstMfxDisplay * display)
 	if (!priv->compositor) {
 		GST_ERROR("failed to bind compositor interface");
 		return FALSE;
+	}
+	
+	if (!priv->is_auth) {
+		wl_display_roundtrip(priv->wl_display);
 	}
 
 	if (!priv->shell) {
@@ -162,6 +223,18 @@ gst_mfx_display_wayland_close_display(GstMfxDisplay * display)
 	GstMfxDisplayWaylandPrivate *const priv =
 		GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display);
 
+	if (priv->bufmgr) {
+        drm_intel_bufmgr_destroy(priv->bufmgr);
+		priv->bufmgr = NULL;
+	}
+	
+	if (priv->drm) {
+		wl_drm_destroy(priv->drm);
+		close(priv->drm_fd);
+		g_free(priv->drm_device_name);
+		priv->drm = NULL;
+	}
+	
 	if (priv->output) {
 		wl_output_destroy(priv->output);
 		priv->output = NULL;
@@ -256,6 +329,7 @@ gst_mfx_display_wayland_init(GstMfxDisplay * display)
 		GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display);
 
 	priv->event_fd = -1;
+	priv->is_auth = FALSE;
 }
 
 static void

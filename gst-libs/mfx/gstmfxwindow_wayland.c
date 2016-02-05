@@ -6,6 +6,11 @@
 #include "gstmfxwindow_priv.h"
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_wayland_priv.h"
+#include "gstmfxprimebufferproxy.h"
+#include "gstmfxprimebufferproxy_priv.h"
+#include "gstvaapiimage_priv.h"
+#include "wayland-drm-client-protocol.h"
+
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -18,6 +23,45 @@
 
 typedef struct _GstMfxWindowWaylandPrivate GstMfxWindowWaylandPrivate;
 typedef struct _GstMfxWindowWaylandClass GstMfxWindowWaylandClass;
+typedef struct _FrameState FrameState;
+struct _FrameState
+{
+  GstMfxWindow *window;
+  GstMfxSurface *surface;
+  struct wl_callback *callback;
+};
+
+static FrameState *
+frame_state_new (GstMfxWindow * window)
+{
+  FrameState *frame;
+
+  frame = g_slice_new (FrameState);
+  if (!frame)
+    return NULL;
+
+  frame->window = window;
+  frame->surface = NULL;
+  frame->callback = NULL;
+  return frame;
+}
+
+static void
+frame_state_free (FrameState * frame)
+{
+  if (!frame)
+    return;
+
+  if (frame->surface) {
+    frame->surface = NULL;
+  }
+
+  if (frame->callback) {
+    wl_callback_destroy (frame->callback);
+    frame->callback = NULL;
+  }
+  g_slice_free (FrameState, frame);
+}
 
 
 struct _GstMfxWindowWaylandPrivate
@@ -29,6 +73,7 @@ struct _GstMfxWindowWaylandPrivate
 	struct wl_egl_window *egl_window;
 	GstPoll *poll;
 	GstPollFD pollfd;
+	FrameState *last_frame;
 	guint is_shown : 1;
 	guint fullscreen_on_show : 1;
 	guint sync_failed : 1;
@@ -48,6 +93,32 @@ struct _GstMfxWindowWayland
 	GstMfxWindowWaylandPrivate priv;
 };
 
+static void
+frame_done_callback (void *data, struct wl_callback *callback, uint32_t time)
+{
+  FrameState *const frame = data;
+  GstMfxWindowWaylandPrivate *const priv =
+      GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (frame->window);
+
+  g_atomic_pointer_compare_and_exchange (&priv->last_frame, frame, NULL);
+  g_atomic_int_dec_and_test (&priv->num_frames_pending);
+}
+
+static const struct wl_callback_listener frame_callback_listener = {
+  frame_done_callback
+};
+
+static void
+frame_release_callback (void *data, struct wl_buffer *wl_buffer)
+{
+  wl_buffer_destroy (wl_buffer);
+  frame_state_free (data);
+}
+
+static const struct wl_buffer_listener frame_buffer_listener = {
+  frame_release_callback
+};
+
 /**
 * GstMfxWindowWaylandClass:
 *
@@ -63,14 +134,6 @@ static gboolean
 gst_mfx_window_wayland_show(GstMfxWindow * window)
 {
 	GST_WARNING("unimplemented GstMfxWindowWayland::show()");
-
-	return TRUE;
-}
-
-static gboolean
-gst_mfx_window_wayland_hide(GstMfxWindow * window)
-{
-	GST_WARNING("unimplemented GstMfxWindowWayland::hide()");
 
 	return TRUE;
 }
@@ -124,6 +187,107 @@ error:
 	priv->sync_failed = TRUE;
 	GST_ERROR("Error on dispatching events: %s", g_strerror(errno));
 	return FALSE;
+}
+
+static gboolean
+gst_mfx_window_wayland_render (GstMfxWindow * window,
+		GstMfxSurface * surface,
+		const GstMfxRectangle * src_rect,
+		const GstMfxRectangle * dst_rect)
+{
+	GstMfxWindowWaylandPrivate *const priv = GST_MFX_WINDOW_WAYLAND_GET_PRIVATE(window);
+	GstMfxDisplayWaylandPrivate *const display_priv = 
+			GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(GST_MFX_OBJECT_DISPLAY(window));
+	struct wl_display *const display = GST_MFX_OBJECT_NATIVE_DISPLAY(window);
+	GstMfxPrimeBufferProxy *buffer_proxy;
+	struct wl_buffer *buffer;
+	FrameState *frame;
+	GstVaapiImage *image;
+	guintptr fd; 
+	guint32 drm_format;
+	gint offsets[3], pitches[3];
+	
+	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
+	if(!buffer_proxy)
+		return FALSE;
+	
+	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
+	image = gst_mfx_surface_derive_image(surface);
+	if(!image)
+		return FALSE;
+	
+	offsets[0] = image->image.offsets[0];
+	offsets[1] = image->image.offsets[1];
+	offsets[2] = image->image.offsets[2];
+	pitches[0] = image->image.pitches[0];
+	pitches[1] = image->image.pitches[1];
+	pitches[2] = image->image.pitches[2];
+	
+	//only support NV12 for now
+	if ( GST_VIDEO_FORMAT_NV12 == image->internal_format ) {
+		drm_format = WL_DRM_FORMAT_NV12;
+	}
+	if(!display_priv->drm)
+		return FALSE;
+	GST_MFX_OBJECT_LOCK_DISPLAY(window);
+	buffer = wl_drm_create_prime_buffer(display_priv->drm
+				, fd
+				, dst_rect->width
+				, dst_rect->height
+				, drm_format
+				, offsets[0]
+				, pitches[0]
+				, offsets[1]
+				, pitches[1]
+				, offsets[2]
+				, pitches[2]);
+	GST_MFX_OBJECT_UNLOCK_DISPLAY(window);			
+	if(!buffer) {
+		GST_ERROR("No wl_buffer created\n");
+		return FALSE;
+	}
+	
+	if (!gst_mfx_window_wayland_sync (window)) {
+		wl_buffer_destroy (buffer);
+		return !priv->sync_failed;
+	}
+	
+	frame = frame_state_new(window);
+	if (!frame)
+		return FALSE;
+	g_atomic_pointer_set(&priv->last_frame, frame);
+	g_atomic_int_inc(&priv->num_frames_pending);
+	
+	GST_MFX_OBJECT_LOCK_DISPLAY(window);
+	wl_surface_attach (priv->surface, buffer, 0, 0);
+	wl_surface_damage (priv->surface, 0, 0, dst_rect->width, dst_rect->height);
+	
+	if (priv->opaque_region) {
+		wl_surface_set_opaque_region (priv->surface, priv->opaque_region);
+		wl_region_destroy (priv->opaque_region);
+		priv->opaque_region = NULL;
+	}
+	wl_proxy_set_queue ((struct wl_proxy *) buffer, priv->event_queue);
+	wl_buffer_add_listener (buffer, &frame_buffer_listener, frame);
+
+	frame->callback = wl_surface_frame (priv->surface);
+	wl_callback_add_listener (frame->callback, &frame_callback_listener, frame);
+
+	wl_surface_commit (priv->surface);
+	wl_display_flush (display);
+	
+	GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
+	
+	gst_mfx_prime_buffer_proxy_unref(buffer_proxy);
+	gst_mfx_object_unref(image);
+	return TRUE;
+}
+static gboolean
+gst_mfx_window_wayland_hide(GstMfxWindow * window)
+{
+	GST_WARNING("unimplemented GstMfxWindowWayland::hide()");
+
+	return TRUE;
 }
 
 static void
@@ -239,7 +403,6 @@ gst_mfx_window_wayland_destroy(GstMfxWindow * window)
 		wl_shell_surface_destroy(priv->shell_surface);
 		priv->shell_surface = NULL;
 	}
-
 	if (priv->surface) {
 		wl_surface_destroy(priv->surface);
 		priv->surface = NULL;
@@ -312,6 +475,7 @@ gst_mfx_window_wayland_class_init(GstMfxWindowWaylandClass * klass)
 
 	window_class->create = gst_mfx_window_wayland_create;
 	window_class->show = gst_mfx_window_wayland_show;
+	window_class->render = gst_mfx_window_wayland_render;
 	window_class->hide = gst_mfx_window_wayland_hide;
 	window_class->resize = gst_mfx_window_wayland_resize;
 	window_class->set_fullscreen = gst_mfx_window_wayland_set_fullscreen;

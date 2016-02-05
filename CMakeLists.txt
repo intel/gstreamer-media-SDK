@@ -63,7 +63,8 @@ include_directories(
     ${LIBDRM_INTEL_INCLUDE_DIRS}   
     ${LIBVA_DRM_INCLUDE_DIRS}
 	${LIBVA_X11_INLCUDE_DIRS}
-    ${LIBUDEV_INCLUDE_DIR}
+	${LIBUDEV_INCLUDE_DIRS}
+	${EGL_INCLUDE_DIRS}
     )
 
 if (DEFINED ENV{MFX_HOME})
@@ -104,3 +105,5 @@ target_link_libraries(gstmfx
     ${WAYLAND_EGL_LIBRARIES}
     libmfx
 	)
+
+#install (TARGETS gstmfx DESTINATION /usr/lib64)

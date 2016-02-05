@@ -164,7 +164,7 @@
 #define USE_DRM 1
 
 /* Defined to 1 if EGL is enabled */
-#define USE_EGL 1
+#define USE_EGL 0
 
 /* Defined to 1 if video encoders are used */
 #define USE_ENCODERS 1

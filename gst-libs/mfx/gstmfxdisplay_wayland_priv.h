@@ -1,8 +1,10 @@
 #ifndef GST_MFX_DISPLAY_WAYLAND_PRIV_H
 #define GST_MFX_DISPLAY_WAYLAND_PRIV_H
 
+#include <intel_bufmgr.h>
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_priv.h"
+#include "wayland-drm-client-protocol.h"
 
 G_BEGIN_DECLS
 
@@ -15,6 +17,10 @@ G_BEGIN_DECLS
 
 #define GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display) \
 	(&GST_MFX_DISPLAY_WAYLAND_CAST(display)->priv)
+
+#ifndef BATCH_SIZE
+#define BATCH_SIZE 0x80000
+#endif 
 
 typedef struct _GstMfxDisplayWaylandPrivate   GstMfxDisplayWaylandPrivate;
 typedef struct _GstMfxDisplayWaylandClass     GstMfxDisplayWaylandClass;
@@ -38,11 +44,16 @@ struct _GstMfxDisplayWaylandPrivate
 	struct wl_shell *shell;
 	struct wl_output *output;
 	struct wl_registry *registry;
+	struct wl_drm *drm;
 	guint width;
 	guint height;
 	guint phys_width;
 	guint phys_height;
 	gint event_fd;
+	gint drm_fd;
+	gchar *drm_device_name;	
+	drm_intel_bufmgr *bufmgr;
+	gboolean is_auth;
 	guint use_foreign_display : 1;
 };
 

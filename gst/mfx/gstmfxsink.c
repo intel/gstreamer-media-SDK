@@ -59,7 +59,7 @@ enum
 	N_PROPERTIES
 };
 
-#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_EGL
+#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_WAYLAND
 #define DEFAULT_SIGNAL_HANDOFFS         FALSE
 
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
@@ -351,6 +351,36 @@ gst_mfxsink_backend_egl(void)
 #endif
 
 /* ------------------------------------------------------------------------ */
+/* --- Wayland Backend                                                  --- */
+/* -------------------------------------------------------------------------*/
+#if USE_WAYLAND
+#include "gstmfxdisplay_wayland.h"
+#include "gstmfxwindow_wayland.h"
+
+static gboolean
+gst_mfxsink_wayland_create_window(GstMfxSink * sink, guint width,
+		guint height)
+{
+	GstMfxDisplay *display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
+	
+	g_return_val_if_fail(sink->window == NULL, FALSE);
+	sink->window = gst_mfx_window_wayland_new(display, width, height);
+	if (!sink->window)
+		return FALSE;
+	return TRUE;
+}
+
+static const inline GstMfxSinkBackend * 
+gst_mfxsink_backend_wayland(void)
+{
+	static const GstMfxSinkBackend GstMfxSinkBackendWayland = {
+		.create_window = gst_mfxsink_wayland_create_window,
+		.render_surface = gst_mfxsink_render_surface,
+	};
+	return &GstMfxSinkBackendWayland;
+}
+#endif
+/* ------------------------------------------------------------------------ */
 /* --- GstNavigation interface                                          --- */
 /* ------------------------------------------------------------------------ */
 
@@ -489,9 +519,9 @@ gst_mfxsink_ensure_backend(GstMfxSink * sink)
         break;
 #endif
 #if USE_WAYLAND
-	//case GST_MFX_DISPLAY_TYPE_WAYLAND:
-		//sink->backend = gst_mfxsink_backend_wayland();
-		//break;
+	case GST_MFX_DISPLAY_TYPE_WAYLAND:
+		sink->backend = gst_mfxsink_backend_wayland();
+		break;
 #endif
 	default:
 		GST_ERROR("failed to initialize GstMfxSink backend");
@@ -712,6 +742,21 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
         gst_mfx_display_unref(egl_display);
 
         GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_EGL;
+	}
+#endif
+#if USE_WAYLAND
+	if(plugin->display_type_req == GST_MFX_DISPLAY_TYPE_WAYLAND &&
+	GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != GST_MFX_DISPLAY_TYPE_WAYLAND) {
+	GstMfxDisplay *wayland_display;
+
+	wayland_display = gst_mfx_display_wayland_new(NULL);
+	if (!wayland_display)
+		return FALSE;
+
+	gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(sink), wayland_display);
+	gst_mfx_display_unref(wayland_display);
+
+	GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_WAYLAND;
 	}
 #endif
 
