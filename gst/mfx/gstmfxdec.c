@@ -21,9 +21,15 @@ GST_DEBUG_CATEGORY_STATIC(mfxdec_debug);
 /* *INDENT-OFF* */
 static const char gst_mfxdecode_sink_caps_str[] =
 	GST_CAPS_CODEC("video/mpeg, mpegversion=2, systemstream=(boolean)false")
-	GST_CAPS_CODEC("video/x-h264, stream-format = (string) { byte-stream }, alignment = (string) { au, nal }")
-	GST_CAPS_CODEC("video/x-h265, stream-format = (string) { byte-stream }, alignment = (string) { au, nal }")
-	GST_CAPS_CODEC("video/x-wmv")
+	GST_CAPS_CODEC("video/x-h264, \
+                stream-format = (string) { byte-stream }, \
+                alignment = (string) { au, nal }")
+	GST_CAPS_CODEC("video/x-h265, \
+                stream-format = (string) { byte-stream }, \
+                alignment = (string) { au, nal }")
+	GST_CAPS_CODEC("video/x-wmv, \
+                stream-format = (string) { sequence-layer-frame-layer }, \
+                header-format = (string) { none }")
 	;
 
 static const char gst_mfxdecode_src_caps_str[] =
