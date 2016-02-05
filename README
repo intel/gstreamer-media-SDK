@@ -1,0 +1,70 @@
+
+  gstreamer-mediasdk
+  MediaSDK support to GStreamer
+
+Overview
+--------
+
+gstreamer-mediasdk consists in a collection of MediaSDK based plugins for
+GStreamer.
+
+  * `mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1,
+    JPEG videos using the underlying hardware capabilities. 
+
+  * `mfxsink' is used to render the decoded frame to an Wayland
+    display.
+  
+
+Features
+--------
+
+  * Decode H264 AVC, MPEG-2, JPEG, VC-1 and HEVC Videos
+  * Support for the Wayland display server
+  * Support for headless decode pipelines
+
+
+Requirements
+------------
+
+Software requirements
+
+  * MediaSDK 2016 R1 for Yocto Embedded (MediaSDK2016R1forYoctoEmbedded-Alpha2.tar.gz)
+  * GStreamer 1.4.x (up to including GStreamer 1.6):
+  * GStreamer-Plugins-Base 1.4.x (up to including GStreamer 1.6):
+  * CMake
+  
+  * Renderers:
+	  Wayland (>=1.7)
+
+Hardware requirements
+
+  * Intel Apollo Lake
+  * Intel Braswell
+  * Intel Skylake
+
+Compiling
+---------
+
+GStreamer-MediaSDK uses CMake build tool to build the libraries.
+Create build directory within then source directory and run the CMake
+command to configure the build.
+
+	mkdir -p build
+	cd build
+	cmake "Unix Makefiles" ../
+	
+Next step is to build GStreamer-MediaSDK:
+
+	make
+
+and once make finishes successfully, go to lib directory to find the library 
+load the plugin into gst-launch with --gst-plugin-load=./libgstmfx.so argument.
+	
+
+Usage
+-----
+
+
+  * Play an H.264 video with an MP4 container
+  $ gst-launch-1.0 --gst-plugin-load=./libgstmfx filesrc location=/path/to/video.mp4 ! \
+      qtdemux ! h264parse !mfxdecode ! mfxsink
