@@ -1394,8 +1394,7 @@ egl_create_texture_from_egl_image(EglContext * ctx, guint target,
 	vtable->glGenTextures(1, &texture);
 	vtable->glBindTexture(target, texture);
 
-	vtable->glEGLImageTargetTexture2DOES(target,
-		egl_image);
+	vtable->glEGLImageTargetTexture2DOES(target, egl_image);
 
 	vtable->glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	vtable->glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

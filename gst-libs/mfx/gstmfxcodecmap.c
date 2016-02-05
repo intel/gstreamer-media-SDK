@@ -68,6 +68,9 @@ gst_get_mfx_codec_from_caps(GstCaps * caps)
 	else if (!strcmp(mimetype, "video/x-h265")) {
         return MFX_CODEC_HEVC;
     }
+    else if (!strcmp(mimetype, "image/jpeg")) {
+		return MFX_CODEC_JPEG;
+	}
 
 	return 0;
 }

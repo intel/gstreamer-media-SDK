@@ -3,6 +3,7 @@
 
 #include <gst/gst.h>
 #include <mfxvideo.h>
+#include <mfxjpeg.h>
 
 mfxU32
 gst_get_mfx_codec_from_caps(GstCaps * caps);

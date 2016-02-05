@@ -192,8 +192,8 @@ ensure_texture(GstMfxWindowEGL * window, guint width, guint height)
 		return TRUE;*/
 
 	texture = gst_mfx_texture_egl_new(display,
-		GST_MFX_DISPLAY_EGL(display)->gles_version ?
-        GL_TEXTURE_EXTERNAL_OES : GL_TEXTURE_2D,
+		GST_MFX_DISPLAY_EGL(display)->gles_version == 0 ?
+        GL_TEXTURE_2D : GL_TEXTURE_EXTERNAL_OES,
         GL_RGBA, width, height);
 
 	gst_mfx_texture_replace(&window->texture, texture);

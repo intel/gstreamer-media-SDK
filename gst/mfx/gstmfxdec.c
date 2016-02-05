@@ -30,6 +30,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 	GST_CAPS_CODEC("video/x-wmv, \
                 stream-format = (string) { sequence-layer-frame-layer }, \
                 header-format = (string) { none }")
+    GST_CAPS_CODEC("image/jpeg")
 	;
 
 static const char gst_mfxdecode_src_caps_str[] =
