@@ -56,6 +56,9 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
 	//gst_vaapi_image_get_image(image, va_image);
     va_image = &image->image;
 
+    GST_MFX_TEXTURE_WIDTH(base_texture) = va_image->width;
+    GST_MFX_TEXTURE_HEIGHT(base_texture) = va_image->height;
+
     for (i = 0; i < va_image->num_planes; i++) {
         const uint32_t is_uv_plane = i > 0;
 

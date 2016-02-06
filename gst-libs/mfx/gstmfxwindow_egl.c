@@ -177,7 +177,7 @@ static const char *frag_shader_text_nv12 =
     "    vec4 p_y  = texture2D(tex0, v_texcoord);\n"
     "    vec4 p_uv = texture2D(tex1, v_texcoord);\n"
     "    vec3 yuv  = vec3(p_y.r, p_uv.r, p_uv.g);\n"
-    YUV2RGB_COLOR(BT601_LIMITED)
+    YUV2RGB_COLOR(BT709_LIMITED)
     "}\n";
 
 static gboolean
@@ -449,10 +449,10 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * rect)
 	tex_height = GST_MFX_TEXTURE_HEIGHT(window->texture);
 
 	// Source coords in VA surface
-	x0 = 0.0f;
-	y0 = 0.0f;
-	x1 = 1.0f;
-	y1 = 1.0f;
+	x0 = (GLfloat)rect->x / tex_width;
+	y0 = (GLfloat)rect->y / tex_height;
+	x1 = (GLfloat)(rect->x + rect->width) / tex_width;
+	y1 = (GLfloat)(rect->y + rect->height) / tex_height;
 	texcoords[0][0] = x0;
 	texcoords[0][1] = y1;
 	texcoords[1][0] = x1;
