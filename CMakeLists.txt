@@ -11,7 +11,10 @@ option (DEBUG "Turn on debug build." OFF)
 option (HAVE_MFX_DECODER "Build MSDK Decoder plugin." ON)
 option (HAVE_MFX_ENCODER "Build MSDK Encoder plugin." OFF)
 option (HAVE_MFX_VPP "Build MSDK VPP plugin." OFF)
-option (HAVE_MFX_SINK "Build MSDK SINK plugin for Decoder and VPP plugin." OFF)
+option (HAVE_MFX_SINK "Build MSDK SINK plugin." OFF)
+option (HAVE_EGL_RENDERER "Build MSDK SINK plugin with EGL renderer" OFF)
+option (HAVE_WAYLAND_RENDERER "Build MSDK SINK plugin with Wayland renderer." OFF)
+option (HAVE_X11_RENDERER "Build MSDK SINK plugin with X11 renderer." OFF)
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
 
 #Add gst and gst-libs as subdirectory
@@ -106,4 +109,9 @@ target_link_libraries(gstmfx
     libmfx
 	)
 
-#install (TARGETS gstmfx DESTINATION /usr/lib64)
+install (TARGETS gstmfx 
+    LIBRARY DESTINATION /opt/gst-msdk/
+    RUNTIME DESTINATION /opt/gst-msdk/
+    )
+file(WRITE ${PROJECT_BINARY_DIR}/gst_msdk_export.sh "!#/bin/sh\nexport GST_PLUGIN_PATH=/opt/gst-msdk/")
+file(INSTALL ${PROJECT_BINARY_DIR}/gst_msdk_export.sh DESTINATION /etc/profile.d/)
