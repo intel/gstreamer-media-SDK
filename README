@@ -57,14 +57,20 @@ Next step is to build GStreamer-MediaSDK:
 
 	make
 
-and once make finishes successfully, go to lib directory to find the library 
-load the plugin into gst-launch with --gst-plugin-load=./libgstmfx.so argument.
-	
+To install the plugin:
+
+    make install
+
+The plugin will be install in /opt/gst-msdk directory.
 
 Usage
 -----
 
+  Check if GST_PLUGIN_PATH is exported with value /opt/gst-msdk.
+  If not, export the environment variable.
+
+  export GST_PLUGIN_PATH=/opt/gst-msdk
 
   * Play an H.264 video with an MP4 container
-  $ gst-launch-1.0 --gst-plugin-load=./libgstmfx filesrc location=/path/to/video.mp4 ! \
+  $ gst-launch-1.0 filesrc location=/path/to/video.mp4 ! \
       qtdemux ! h264parse !mfxdecode ! mfxsink
