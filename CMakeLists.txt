@@ -109,9 +109,15 @@ target_link_libraries(gstmfx
     libmfx
 	)
 
-install (TARGETS gstmfx 
-    LIBRARY DESTINATION /opt/gst-msdk/
-    RUNTIME DESTINATION /opt/gst-msdk/
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set (CMAKE_INSTALL_PREFIX "/usr/lib64/gstreamer-1.0")
+endif()
+
+# Add uninstall target. Taken from the KDE4 scripts
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in" "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake" @ONLY)
+add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake")
+
+install (TARGETS gstmfx
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}
     )
-file(WRITE ${PROJECT_BINARY_DIR}/gst_msdk_export.sh "!#/bin/sh\nexport GST_PLUGIN_PATH=/opt/gst-msdk/")
-file(INSTALL ${PROJECT_BINARY_DIR}/gst_msdk_export.sh DESTINATION /etc/profile.d/)
