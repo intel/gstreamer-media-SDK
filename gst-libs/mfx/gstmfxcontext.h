@@ -2,11 +2,9 @@
 #define GST_MFX_CONTEXT_H
 
 #include "gstmfxminiobject.h"
-#include "gstmfxcontext.h"
 #include <mfxvideo.h>
 
 #include <va/va.h>
-#include <va/va_x11.h>
 
 G_BEGIN_DECLS
 

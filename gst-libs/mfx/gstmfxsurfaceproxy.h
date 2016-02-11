@@ -69,10 +69,6 @@ gst_mfx_surface_proxy_get_timestamp(GstMfxSurfaceProxy * proxy);
 GstClockTime
 gst_mfx_surface_proxy_get_duration(GstMfxSurfaceProxy * proxy);
 
-void
-gst_mfx_surface_proxy_set_destroy_notify(GstMfxSurfaceProxy * proxy,
-	GDestroyNotify destroy_func, gpointer user_data);
-
 const GstMfxRectangle *
 gst_mfx_surface_proxy_get_crop_rect(GstMfxSurfaceProxy * proxy);
 

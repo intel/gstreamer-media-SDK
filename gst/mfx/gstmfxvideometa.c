@@ -1,6 +1,5 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxsurfacepool.h"
-#include "gstvaapiimagepool.h"
 #include "gstmfxvideomemory.h"
 
 #define GST_MFX_VIDEO_META(obj) \
@@ -108,7 +107,6 @@ gst_mfx_video_meta_init(GstMfxVideoMeta * meta)
     meta->display = NULL;
     meta->image = NULL;
     meta->proxy = NULL;
-    //meta->converter = NULL;
     meta->has_render_rect = FALSE;
 }
 
@@ -164,7 +162,6 @@ gst_mfx_video_meta_copy(GstMfxVideoMeta * meta)
     copy->display = gst_mfx_display_ref (meta->display);
     copy->image = meta->image ? gst_mfx_object_ref (meta->image) : NULL;
     copy->proxy = meta->proxy ? gst_mfx_surface_proxy_copy (meta->proxy) : NULL;
-    //copy->converter = meta->converter;
 
 	copy->has_render_rect = meta->has_render_rect;
 	if (copy->has_render_rect)

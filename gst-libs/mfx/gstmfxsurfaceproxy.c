@@ -16,10 +16,6 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 	}
 	gst_mfx_object_pool_replace(&proxy->pool, NULL);
 	gst_mfx_surface_proxy_replace(&proxy->parent, NULL);
-
-	/* Notify the user function that the object is now destroyed */
-	if (proxy->destroy_func)
-		proxy->destroy_func(proxy->destroy_data);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -63,7 +59,6 @@ gst_mfx_surface_proxy_new(GstMfxSurface * surface)
 		return NULL;
 
 	proxy->parent = NULL;
-	proxy->destroy_func = NULL;
 	proxy->pool = NULL;
 	proxy->surface = gst_mfx_object_ref(surface);
 	if (!proxy->surface)
@@ -100,7 +95,6 @@ gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool)
 		return NULL;
 
 	proxy->parent = NULL;
-	proxy->destroy_func = NULL;
 	proxy->pool = gst_mfx_object_pool_ref(pool);
 	proxy->surface = gst_mfx_object_pool_get_object(proxy->pool);
 	if (!proxy->surface)
@@ -145,7 +139,6 @@ gst_mfx_surface_proxy_copy(GstMfxSurfaceProxy * proxy)
 	copy->surface = gst_mfx_object_ref(proxy->surface);
 	copy->timestamp = proxy->timestamp;
 	copy->duration = proxy->duration;
-	copy->destroy_func = NULL;
 	copy->has_crop_rect = proxy->has_crop_rect;
 	if (copy->has_crop_rect)
 		copy->crop_rect = proxy->crop_rect;
@@ -276,27 +269,6 @@ gst_mfx_surface_proxy_get_duration(GstMfxSurfaceProxy * proxy)
 	g_return_val_if_fail(proxy != NULL, 0);
 
 	return GST_MFX_SURFACE_PROXY_DURATION(proxy);
-}
-
-/**
-* gst_mfx_surface_proxy_set_destroy_notify:
-* @proxy: a @GstMfxSurfaceProxy
-* @destroy_func: a #GDestroyNotify function
-* @user_data: some extra data to pass to the @destroy_func function
-*
-* Sets @destroy_func as the function to call when the surface @proxy
-* was released. At this point, the proxy object is considered
-* released, i.e. the underlying data storage is no longer valid and
-* the callback function shall not expect anything from that.
-*/
-void
-gst_mfx_surface_proxy_set_destroy_notify(GstMfxSurfaceProxy * proxy,
-	GDestroyNotify destroy_func, gpointer user_data)
-{
-	g_return_if_fail(proxy != NULL);
-
-	proxy->destroy_func = destroy_func;
-	proxy->destroy_data = user_data;
 }
 
 /**

@@ -12,7 +12,7 @@ vaapi_check_status (VAStatus status, const gchar * msg)
 }
 
 GstVideoFormat
-gst_mfx_video_format_from_mfx_fourcc(mfxU32 fourcc)
+gst_video_format_from_mfx_fourcc(mfxU32 fourcc)
 {
 	switch (fourcc) {
 	case MFX_FOURCC_YUY2:

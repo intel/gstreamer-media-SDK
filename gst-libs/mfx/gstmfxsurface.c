@@ -22,7 +22,7 @@ gst_mfx_surface_create(GstMfxSurface * surface, GstMfxContextAllocatorVaapi *ctx
 	VASurfaceID *surface_id;
 
     surface->alloc_ctx = ctx;
-	surface->format = gst_mfx_video_format_from_mfx_fourcc(ctx->frame_info.FourCC);
+	surface->format = gst_video_format_from_mfx_fourcc(ctx->frame_info.FourCC);
 	surface->width = ctx->frame_info.Width;
 	surface->height = ctx->frame_info.Height;
 

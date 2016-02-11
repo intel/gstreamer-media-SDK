@@ -52,7 +52,7 @@ GstMfxDecoder * new_decoder)
 mfxU32
 gst_mfx_decoder_get_codec(GstMfxDecoder * decoder)
 {
-	g_return_val_if_fail(decoder != NULL, -1);
+	g_return_val_if_fail(decoder != NULL, 0);
 
 	return decoder->codec;
 }
@@ -67,22 +67,18 @@ gst_mfx_decoder_get_surface_proxy(GstMfxDecoder * decoder,
 		GST_MFX_DECODER_STATUS_ERROR_INVALID_PARAMETER);
 
 	*out_proxy_ptr = g_async_queue_try_pop(decoder->surfaces);
+	if (!*out_proxy_ptr)
+        return GST_MFX_DECODER_STATUS_ERROR_NO_SURFACE;
 
 	return GST_MFX_DECODER_STATUS_SUCCESS;
 }
 
 static void
-gst_mfx_decoder_push_surface(GstMfxDecoder * decoder, GstMfxSurfaceProxy * proxy)
-{
-	g_async_queue_push(decoder->surfaces, proxy);
-}
-
-static void
 gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
+    g_async_queue_unref(decoder->surfaces);
+	g_byte_array_unref(decoder->bitstream);
 	gst_mfx_object_pool_unref(decoder->pool);
-
-	g_slice_free1(decoder->bs.MaxLength, decoder->bs.Data);
 
 	MFXVideoDECODE_Close(decoder->session);
 }
@@ -106,6 +102,8 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	decoder->surfaces = g_async_queue_new();
 	decoder->pool = NULL;
 	decoder->decoder_inited = FALSE;
+	decoder->bs.MaxLength = 1024 * 16;
+    decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -269,14 +267,12 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 		return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
 	}
 
-	if (decoder->bs.Data == NULL) {
-		decoder->bs.MaxLength = 8192 * 4096;
-		decoder->bs.Data = g_slice_alloc(decoder->bs.MaxLength);
-	}
-
 	if (minfo.size) {
-		memcpy(decoder->bs.Data + decoder->bs.DataOffset + decoder->bs.DataLength, minfo.data, minfo.size);
-		decoder->bs.DataLength += minfo.size;
+        decoder->bs.DataLength += minfo.size;
+        if (decoder->bs.MaxLength < decoder->bs.DataLength + decoder->bitstream->len)
+            decoder->bs.MaxLength = decoder->bs.DataLength + decoder->bitstream->len;
+		decoder->bitstream = g_byte_array_append(decoder->bitstream, minfo.data, minfo.size);
+		decoder->bs.Data = decoder->bitstream->data;
 		decoder->bs.TimeStamp = GST_BUFFER_PTS(frame->input_buffer);
 	}
 
@@ -302,21 +298,19 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	} while (sts == MFX_WRN_DEVICE_BUSY || sts == MFX_ERR_MORE_SURFACE);
 
 	if (sts == MFX_ERR_MORE_DATA || sts > 0) {
-		ret = GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
+		return GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
 	}
 
 	if (sts != MFX_ERR_NONE &&
 		sts != MFX_ERR_MORE_DATA &&
 		sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
 		GST_ERROR_OBJECT(decoder, "Error during MFX decoding.");
-		ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+		return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
 	}
 
 	if (sync) {
-		MFXVideoCORE_SyncOperation(decoder->session, sync, 60000);
-
-		memmove(decoder->bs.Data, decoder->bs.Data + decoder->bs.DataOffset,
-          decoder->bs.DataLength);
+		decoder->bitstream = g_byte_array_remove_range(decoder->bitstream, 0,
+            decoder->bs.DataOffset);
 		decoder->bs.DataOffset = 0;
 
 		if (GST_MFX_OBJECT_ID(surface) != *(int*)(outsurf->Data.MemId)) {
@@ -324,6 +318,10 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
                                           sync_output_surface);
             surface = GST_MFX_SURFACE(l->data);
 		}
+
+		do {
+            sts = MFXVideoCORE_SyncOperation(decoder->session, sync, 1000);
+        } while (sts == MFX_WRN_IN_EXECUTION);
 
 		crop_rect.x = surface->surface->Info.CropX;
 		crop_rect.y = surface->surface->Info.CropY;
@@ -333,11 +331,10 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
         proxy = gst_mfx_surface_proxy_new(surface);
 		gst_mfx_surface_proxy_set_crop_rect(proxy, &crop_rect);
 
-		gst_mfx_decoder_push_surface(decoder, proxy);
+		g_async_queue_push(decoder->surfaces, proxy);
 	}
 
 	gst_buffer_unmap(frame->input_buffer, &minfo);
 
-	return ret;
-
+	return GST_MFX_DECODER_STATUS_SUCCESS;
 }

@@ -8,7 +8,6 @@
 #include "gstvaapiimage.h"
 #include "gstmfxvideometa.h"
 #include "gstmfxobjectpool.h"
-#include "gstvaapiimagepool.h"
 #include "gstmfxdisplay.h"
 #include <gst/allocators/allocators.h>
 
@@ -76,7 +75,6 @@ struct _GstMfxVideoMemory
 	GstMfxVideoMeta *meta;
 	guint map_type;
 	gint map_count;
-	//gboolean use_direct_rendering;
 };
 
 GstMemory *
@@ -122,12 +120,8 @@ struct _GstMfxVideoAllocator
 
 	/*< private >*/
 	GstVideoInfo video_info;
-	//GstVideoInfo surface_info;
-	GstMfxObjectPool *image_pool;
 	GstMfxObjectPool *surface_pool;
 	GstVideoInfo image_info;
-
-	//gboolean has_direct_rendering;
 };
 
 /**

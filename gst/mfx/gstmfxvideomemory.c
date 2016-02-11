@@ -40,15 +40,6 @@ ensure_image (GstMfxVideoMemory * mem)
         }
     }
 
-    if (!mem->image) {
-        GstMfxVideoAllocator *const allocator =
-            GST_MFX_VIDEO_ALLOCATOR_CAST (GST_MEMORY_CAST (mem)->allocator);
-
-        mem->image = gst_mfx_object_pool_get_object (allocator->image_pool);
-        if (!mem->image)
-            return FALSE;
-    }
-
     gst_mfx_video_meta_set_image (mem->meta, mem->image);
     return TRUE;
 }
@@ -124,14 +115,14 @@ error_incompatible_map:
     }
 error_ensure_surface:
     {
-        const GstVideoInfo *const vip = mem->surface_info;
+        const GstVideoInfo *const vip = mem->image_info;
         GST_ERROR ("failed to create NV12 surface of size %ux%u",
             GST_VIDEO_INFO_WIDTH (vip), GST_VIDEO_INFO_HEIGHT (vip));
         return FALSE;
     }
 error_ensure_image:
     {
-        const GstVideoInfo *const vip = mem->surface_info;
+        const GstVideoInfo *const vip = mem->image_info;
         GST_ERROR ("failed to create NV12 image of size %ux%u",
             GST_VIDEO_INFO_WIDTH (vip), GST_VIDEO_INFO_HEIGHT (vip));
         return FALSE;
@@ -193,7 +184,6 @@ gst_mfx_video_memory_new(GstAllocator * base_allocator,
 		0, GST_VIDEO_INFO_SIZE(vip));
 
 	mem->proxy = NULL;
-	mem->surface_info = &allocator->image_info;
 	mem->surface = NULL;
     mem->image_info = &allocator->image_info;
 	mem->image = NULL;
@@ -222,7 +212,7 @@ gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem)
         GST_MFX_VIDEO_ALLOCATOR_CAST (GST_MEMORY_CAST (mem)->allocator);
 
     if (mem->image) {
-        gst_mfx_object_pool_put_object (allocator->image_pool, mem->image);
+        gst_mfx_object_unref (mem->image);
         mem->image = NULL;
     }
 }
@@ -423,7 +413,6 @@ gst_mfx_video_allocator_finalize (GObject * object)
         GST_MFX_VIDEO_ALLOCATOR_CAST (object);
 
     gst_mfx_object_pool_replace (&allocator->surface_pool, NULL);
-    gst_mfx_object_pool_replace (&allocator->image_pool, NULL);
 
     G_OBJECT_CLASS (gst_mfx_video_allocator_parent_class)->finalize (object);
 }
@@ -520,7 +509,7 @@ allocator_configure_image_info(GstMfxDisplay * display,
 
 bail:
     if (image)
-        gst_mfx_mini_object_unref (image);
+        gst_mfx_object_unref (image);
 }
 
 GstAllocator *
@@ -544,10 +533,6 @@ gst_mfx_video_allocator_new(GstMfxDisplay * display,
 		goto error_create_surface_pool;
 
     allocator_configure_image_info (display, allocator);
-    allocator->image_pool = gst_vaapi_image_pool_new (display,
-        &allocator->image_info);
-    if (!allocator->image_pool)
-        goto error_create_image_pool;
 
 	gst_allocator_set_mfx_video_info(GST_ALLOCATOR_CAST(allocator),
 		&allocator->image_info, 0);
@@ -560,12 +545,6 @@ error_create_surface_pool:
 		gst_object_unref(allocator);
 		return NULL;
 	}
-error_create_image_pool:
-    {
-        GST_ERROR ("failed to allocate VA image pool");
-        gst_object_unref (allocator);
-        return NULL;
-    }
 }
 
 

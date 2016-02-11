@@ -19,8 +19,6 @@ struct _GstMfxSurfaceProxy
 	GstMfxSurface *surface;
 	GstClockTime timestamp;
 	GstClockTime duration;
-	GDestroyNotify destroy_func;
-	gpointer destroy_data;
 	GstMfxRectangle crop_rect;
 	guint has_crop_rect : 1;
 };

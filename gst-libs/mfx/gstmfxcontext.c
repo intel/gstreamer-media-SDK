@@ -9,7 +9,8 @@ frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 {
     GstMfxContextAllocatorVaapi *ctx = pthis;
     mfxU16 surfaces_num = req->NumFrameSuggested;
-    int err, i;
+    VAStatus sts;
+    guint16 i;
 
     if (ctx->surfaces) {
         GST_ERROR("Multiple allocation requests.\n");
@@ -26,19 +27,19 @@ frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
         return MFX_ERR_UNSUPPORTED;
     }
 
-    ctx->surfaces     = g_malloc_n(surfaces_num, sizeof(*ctx->surfaces));
-    ctx->surface_ids  = g_malloc_n(surfaces_num, sizeof(*ctx->surface_ids));
+    ctx->surfaces     = g_slice_alloc(surfaces_num * sizeof(*ctx->surfaces));
+    ctx->surface_ids  = g_slice_alloc(surfaces_num * sizeof(*ctx->surface_ids));
     ctx->surface_queue = g_async_queue_new();
 
     if (!ctx->surfaces || !ctx->surface_ids)
         goto fail;
 
-    err = vaCreateSurfaces(ctx->va_dpy, VA_RT_FORMAT_YUV420,
+    sts = vaCreateSurfaces(ctx->va_dpy, VA_RT_FORMAT_YUV420,
                            req->Info.Width, req->Info.Height,
                            ctx->surfaces, surfaces_num,
                            NULL, 0);
 
-    if (err != VA_STATUS_SUCCESS) {
+    if (sts != VA_STATUS_SUCCESS) {
         GST_ERROR("Error allocating VA surfaces\n");
         goto fail;
     }
@@ -56,8 +57,9 @@ frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
     return MFX_ERR_NONE;
 fail:
-    g_free(ctx->surfaces);
-    g_free(ctx->surface_ids);
+    g_slice_free1(surfaces_num * sizeof(*ctx->surfaces), ctx->surfaces);
+    g_slice_free1(surfaces_num * sizeof(*ctx->surface_ids), ctx->surface_ids);
+    g_async_queue_unref(ctx->surface_queue);
 
     return MFX_ERR_MEMORY_ALLOC;
 }
@@ -70,8 +72,8 @@ frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
     if (ctx->surfaces)
         vaDestroySurfaces(ctx->va_dpy, ctx->surfaces, ctx->nb_surfaces);
 
-    g_free(ctx->surfaces);
-    g_free(ctx->surface_ids);
+    g_slice_free1(ctx->nb_surfaces * sizeof(*ctx->surfaces), ctx->surfaces);
+    g_slice_free1(ctx->nb_surfaces * sizeof(*ctx->surface_ids), ctx->surface_ids);
     g_async_queue_unref(ctx->surface_queue);
 
     ctx->nb_surfaces = 0;
@@ -131,7 +133,7 @@ gst_mfx_context_init_session(GstMfxContext * context)
 
 	ret = MFXInit(impl, &ver, &(context->session));
 	if (ret < 0) {
-		GST_ERROR_OBJECT(context, "Error initializing an internal MFX session");
+		GST_ERROR_OBJECT(context, "Error initializing internal MFX session");
 		return FALSE;
 	}
 
@@ -151,8 +153,7 @@ gst_mfx_context_init_session(GstMfxContext * context)
 		desc = "unknown";
 	}
 
-	GST_INFO_OBJECT(context->session, "Initialized an internal MFX session using %s implementation",
-		desc);
+	GST_INFO("Initialized internal MFX session using %s implementation", desc);
 
 	return TRUE;
 }
@@ -163,7 +164,7 @@ context_create(GstMfxContext * context, GstMfxContextAllocatorVaapi * allocator)
 	g_return_val_if_fail(allocator != NULL, FALSE);
 
 	if (!gst_mfx_context_init_session(context))
-		goto error;
+		return FALSE;
 
     mfxFrameAllocator frame_allocator = {
         .pthis = allocator,
@@ -177,8 +178,6 @@ context_create(GstMfxContext * context, GstMfxContextAllocatorVaapi * allocator)
     MFXVideoCORE_SetFrameAllocator(context->session, &frame_allocator);
 
 	return TRUE;
-error:
-	return FALSE;
 }
 
 GstMfxContext *

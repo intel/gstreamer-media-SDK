@@ -430,9 +430,6 @@ gst_mfxdec_finalize(GObject * object)
 	gst_caps_replace(&decode->srcpad_caps, NULL);
 	//gst_caps_replace(&decode->allowed_caps, NULL);
 
-	//g_cond_clear(&decode->surface_ready);
-	//g_mutex_clear(&decode->surface_ready_mutex);
-
 	gst_mfx_plugin_base_finalize(GST_MFX_PLUGIN_BASE(object));
 	G_OBJECT_CLASS(gst_mfxdec_parent_class)->finalize(object);
 }

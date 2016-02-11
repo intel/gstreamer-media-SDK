@@ -25,9 +25,6 @@
 #ifndef GST_MFX_DECODER_H
 #define GST_MFX_DECODER_H
 
-#include <gst/gstbuffer.h>
-#include <gst/video/gstvideoutils.h>
-
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxsurface_priv.h"
 #include "gstmfxobjectpool.h"
@@ -49,6 +46,7 @@ struct _GstMfxDecoder
 	GstMfxContext *context;
 	GstMfxObjectPool *pool;
 	GAsyncQueue *surfaces;
+	GByteArray *bitstream;
 
 	mfxSession session;
 	mfxFrameAllocRequest req;

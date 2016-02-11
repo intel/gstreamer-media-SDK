@@ -602,7 +602,7 @@ gst_mfxsink_ensure_window(GstMfxSink * sink, guint width, guint height)
 
 static void
 gst_mfxsink_ensure_window_size(GstMfxSink * sink, guint * width_ptr,
-guint * height_ptr)
+    guint * height_ptr)
 {
 	GstMfxDisplay *const display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
 	GstVideoRectangle src_rect, dst_rect, out_rect;
@@ -729,36 +729,33 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 	if (!gst_mfxsink_ensure_display(sink))
 		return FALSE;
 
+    if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != plugin->display_type_req) {
+        GstMfxDisplay *display = NULL;
+
+        switch (plugin->display_type_req) {
 #if USE_EGL
-	if (plugin->display_type_req == GST_MFX_DISPLAY_TYPE_EGL &&
-        GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != GST_MFX_DISPLAY_TYPE_EGL) {
-        GstMfxDisplay *egl_display;
-
-        egl_display = gst_mfx_display_egl_new (NULL, 2);
-        if (!egl_display)
-            return FALSE;
-
-        gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(sink), egl_display);
-        gst_mfx_display_unref(egl_display);
-
-        GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_EGL;
-	}
+        case GST_MFX_DISPLAY_TYPE_EGL:
+            display = gst_mfx_display_egl_new (NULL, 2);
+            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_EGL;
+            break;
 #endif
 #if USE_WAYLAND
-	else if(plugin->display_type_req == GST_MFX_DISPLAY_TYPE_WAYLAND &&
-        GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != GST_MFX_DISPLAY_TYPE_WAYLAND) {
-        GstMfxDisplay *wayland_display;
-
-        wayland_display = gst_mfx_display_wayland_new(NULL);
-        if (!wayland_display)
-            return FALSE;
-
-        gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(sink), wayland_display);
-        gst_mfx_display_unref(wayland_display);
-
-        GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_WAYLAND;
-	}
+        case GST_MFX_DISPLAY_TYPE_WAYLAND:
+            display = gst_mfx_display_wayland_new(NULL);
+            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_WAYLAND;
+            break;
 #endif
+        default:
+            GST_ERROR("display type %s not supported",
+                get_display_type_name(plugin->display_type_req));
+            break;
+        }
+
+        if (display) {
+            gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(sink), display);
+            gst_mfx_display_unref(display);
+        }
+    }
 
 	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_DRM)
 		return TRUE;
