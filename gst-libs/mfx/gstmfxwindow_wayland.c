@@ -231,8 +231,8 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	GST_MFX_OBJECT_LOCK_DISPLAY(window);
 	buffer = wl_drm_create_prime_buffer(display_priv->drm
 				, fd
-				, dst_rect->width
-				, dst_rect->height
+				, src_rect->width
+				, src_rect->height
 				, drm_format
 				, offsets[0]
 				, pitches[0]
