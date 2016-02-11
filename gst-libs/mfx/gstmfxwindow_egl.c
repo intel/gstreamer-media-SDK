@@ -431,7 +431,8 @@ gst_mfx_window_egl_resize(GstMfxWindowEGL * window, guint width,
 }
 
 static gboolean
-do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * rect)
+do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
+    const GstMfxRectangle * dst_rect)
 {
 	//const GLuint tex_id = GST_MFX_OBJECT_ID(window->texture);
 	GstMfxTextureEGL *const texture = GST_MFX_TEXTURE_EGL(window->texture);
@@ -439,7 +440,7 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * rect)
 	GLfloat x0, y0, x1, y1;
 	GLfloat texcoords[4][2];
 	GLfloat positions[4][2];
-	guint tex_width, tex_height;
+	guint tex_width, tex_height, win_width, win_height;
 	uint32_t i;
 
 	if (!ensure_shaders(window))
@@ -447,12 +448,14 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * rect)
 
 	tex_width = GST_MFX_TEXTURE_WIDTH(window->texture);
 	tex_height = GST_MFX_TEXTURE_HEIGHT(window->texture);
+	win_width = dst_rect->width + dst_rect->x * 2;
+	win_height = dst_rect->height + dst_rect->y * 2;
 
 	// Source coords in VA surface
-	x0 = (GLfloat)rect->x / tex_width;
-	y0 = (GLfloat)rect->y / tex_height;
-	x1 = (GLfloat)(rect->x + rect->width) / tex_width;
-	y1 = (GLfloat)(rect->y + rect->height) / tex_height;
+	x0 = (GLfloat)src_rect->x / tex_width;
+	y0 = (GLfloat)src_rect->y / tex_height;
+	x1 = (GLfloat)(src_rect->x + src_rect->width) / tex_width;
+	y1 = (GLfloat)(src_rect->y + src_rect->height) / tex_height;
 	texcoords[0][0] = x0;
 	texcoords[0][1] = y1;
 	texcoords[1][0] = x1;
@@ -463,10 +466,10 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * rect)
 	texcoords[3][1] = y0;
 
 	// Target coords in EGL surface
-	x0 = 2.0f * ((GLfloat)rect->x / rect->width) - 1.0f;
-	y1 = -2.0f * ((GLfloat)rect->y / rect->height) + 1.0f;
-	x1 = 2.0f * ((GLfloat)(rect->x + rect->width) / rect->width) - 1.0f;
-	y0 = -2.0f * ((GLfloat)(rect->y + rect->height) / rect->height) + 1.0f;
+	x0 = 2.0f * ((GLfloat)dst_rect->x / win_width) - 1.0f;
+	y1 = -2.0f * ((GLfloat)dst_rect->y / win_height) + 1.0f;
+	x1 = 2.0f * ((GLfloat)(dst_rect->x + dst_rect->width) / win_width) - 1.0f;
+	y0 = -2.0f * ((GLfloat)(dst_rect->y + dst_rect->height) / win_height) + 1.0f;
 	positions[0][0] = x0;
 	positions[0][1] = y0;
 	positions[1][0] = x1;
@@ -534,7 +537,7 @@ do_upload_surface_unlocked(GstMfxWindowEGL * window,
 		return FALSE;
 	if (!gst_mfx_texture_put_surface(window->texture, surface, src_rect))
 		return FALSE;
-	if (!do_render_texture(window, src_rect))
+	if (!do_render_texture(window, src_rect, dst_rect))
 		return FALSE;
 
 	return TRUE;
