@@ -59,7 +59,7 @@ enum
 	N_PROPERTIES
 };
 
-#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_EGL
+#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_ANY
 #define DEFAULT_SIGNAL_HANDOFFS         FALSE
 
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
@@ -507,12 +507,62 @@ gst_mfxsink_set_event_handling(GstMfxSink * sink, gboolean handle_events)
 	}
 }
 
+static const gchar *
+get_display_type_name(GstMfxDisplayType display_type)
+{
+	gpointer const klass = g_type_class_peek(GST_MFX_TYPE_DISPLAY_TYPE);
+	GEnumValue *const e = g_enum_get_value(klass, display_type);
+
+	if (e)
+		return e->value_name;
+	return "<unknown-type>";
+}
+
 static void
-gst_mfxsink_ensure_backend(GstMfxSink * sink)
+gst_mfxsink_set_display_type(GstMfxSink * sink)
 {
     GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(sink);
 
-	switch (plugin->display_type_req) {
+    if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != plugin->display_type_req) {
+        GstMfxDisplay *display = NULL;
+
+        switch (plugin->display_type_req) {
+        case GST_MFX_DISPLAY_TYPE_ANY:
+#if USE_WAYLAND
+        case GST_MFX_DISPLAY_TYPE_WAYLAND:
+            display = gst_mfx_display_wayland_new(NULL);
+            if (!display)
+                goto egl;
+            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_WAYLAND;
+            break;
+#endif
+egl:
+#if USE_EGL
+        case GST_MFX_DISPLAY_TYPE_EGL:
+            display = gst_mfx_display_egl_new (NULL, 2);
+            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_EGL;
+            break;
+#endif
+        default:
+            GST_ERROR("display type %s not supported",
+                get_display_type_name(plugin->display_type_req));
+            break;
+        }
+
+        if (display) {
+            gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(sink), display);
+            gst_mfx_display_unref(display);
+        }
+    }
+}
+
+static void
+gst_mfxsink_ensure_backend(GstMfxSink * sink)
+{
+    GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(sink);
+
+	//switch (plugin->display_type_req) {
+    switch (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink)) {
 #if USE_EGL
 	case GST_MFX_DISPLAY_TYPE_EGL:
         sink->backend = gst_mfxsink_backend_egl();
@@ -641,27 +691,17 @@ gst_mfxsink_ensure_window_size(GstMfxSink * sink, guint * width_ptr,
 	*height_ptr = out_rect.h;
 }
 
-static const gchar *
-get_display_type_name(GstMfxDisplayType display_type)
-{
-	gpointer const klass = g_type_class_peek(GST_MFX_TYPE_DISPLAY_TYPE);
-	GEnumValue *const e = g_enum_get_value(klass, display_type);
-
-	if (e)
-		return e->value_name;
-	return "<unknown-type>";
-}
-
-static void
+/*static void
 gst_mfxsink_display_changed(GstMfxPluginBase * plugin)
 {
 	GstMfxSink *const sink = GST_MFXSINK_CAST(plugin);
 
+    gst_mfxsink_set_display_type(sink);
 	GST_INFO("created %s %p", get_display_type_name(plugin->display_type),
 		plugin->display);
 
 	gst_mfxsink_ensure_backend(sink);
-}
+}*/
 
 static gboolean
 gst_mfxsink_start(GstBaseSink * base_sink)
@@ -726,36 +766,12 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 	GstVideoInfo *const vip = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
 	guint win_width, win_height;
 
+    gst_mfxsink_set_display_type(sink);
+
 	if (!gst_mfxsink_ensure_display(sink))
 		return FALSE;
 
-    if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != plugin->display_type_req) {
-        GstMfxDisplay *display = NULL;
-
-        switch (plugin->display_type_req) {
-#if USE_EGL
-        case GST_MFX_DISPLAY_TYPE_EGL:
-            display = gst_mfx_display_egl_new (NULL, 2);
-            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_EGL;
-            break;
-#endif
-#if USE_WAYLAND
-        case GST_MFX_DISPLAY_TYPE_WAYLAND:
-            display = gst_mfx_display_wayland_new(NULL);
-            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_WAYLAND;
-            break;
-#endif
-        default:
-            GST_ERROR("display type %s not supported",
-                get_display_type_name(plugin->display_type_req));
-            break;
-        }
-
-        if (display) {
-            gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(sink), display);
-            gst_mfx_display_unref(display);
-        }
-    }
+    gst_mfxsink_ensure_backend(sink);
 
 	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_DRM)
 		return TRUE;
@@ -1036,7 +1052,7 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		GST_PLUGIN_NAME, 0, GST_PLUGIN_DESC);
 
 	gst_mfx_plugin_base_class_init(base_plugin_class);
-	base_plugin_class->display_changed = gst_mfxsink_display_changed;
+	//base_plugin_class->display_changed = gst_mfxsink_display_changed;
 
 	object_class->finalize = gst_mfxsink_finalize;
 	object_class->set_property = gst_mfxsink_set_property;
