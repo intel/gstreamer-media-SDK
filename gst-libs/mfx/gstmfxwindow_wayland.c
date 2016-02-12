@@ -202,7 +202,6 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	GstMfxPrimeBufferProxy *buffer_proxy;
 	struct wl_buffer *buffer;
 	FrameState *frame;
-	GstVaapiImage *image;
 	guintptr fd;
 	guint32 drm_format;
 	gint offsets[3], pitches[3];
@@ -211,20 +210,17 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	if(!buffer_proxy)
 		return FALSE;
 
-	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
-	image = gst_mfx_surface_derive_image(surface);
-	if(!image)
-		return FALSE;
+	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy)
 
-	offsets[0] = image->image.offsets[0];
-	offsets[1] = image->image.offsets[1];
-	offsets[2] = image->image.offsets[2];
-	pitches[0] = image->image.pitches[0];
-	pitches[1] = image->image.pitches[1];
-	pitches[2] = image->image.pitches[2];
+	offsets[0] = buffer_proxy->image->image.offsets[0];
+	offsets[1] = buffer_proxy->image->image.offsets[1];
+	offsets[2] = buffer_proxy->image->image.offsets[2];
+	pitches[0] = buffer_proxy->image->image.pitches[0];
+	pitches[1] = buffer_proxy->image->image.pitches[1];
+	pitches[2] = buffer_proxy->image->image.pitches[2];
 
 	//only support NV12 for now
-	if ( GST_VIDEO_FORMAT_NV12 == image->internal_format ) {
+	if ( GST_VIDEO_FORMAT_NV12 == buffer_proxy->image->internal_format ) {
 		drm_format = WL_DRM_FORMAT_NV12;
 	}
 	if(!display_priv->drm)
@@ -232,8 +228,8 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	GST_MFX_OBJECT_LOCK_DISPLAY(window);
 	buffer = wl_drm_create_prime_buffer(display_priv->drm
 				, fd
-				, dst_rect->width
-				, dst_rect->height
+				, src_rect->width
+				, src_rect->height
 				, drm_format
 				, offsets[0]
 				, pitches[0]
@@ -279,7 +275,6 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
 
 	gst_mfx_prime_buffer_proxy_unref(buffer_proxy);
-	gst_mfx_object_unref(image);
 	return TRUE;
 }
 static gboolean

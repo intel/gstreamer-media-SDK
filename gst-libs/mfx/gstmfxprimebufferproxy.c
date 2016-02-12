@@ -3,6 +3,7 @@
 #include "gstmfxprimebufferproxy_priv.h"
 #include "video-utils.h"
 #include "gstmfxobject_priv.h"
+#include "gstvaapiimage_priv.h"
 #include <gmodule.h>
 
 #define DEBUG 1
@@ -46,30 +47,49 @@ static gboolean
 gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 {
     VASurfaceID surf = GST_MFX_OBJECT_ID(proxy->parent);
-	VAStatus va_status;
-	GstMfxDisplay *display = GST_MFX_OBJECT_DISPLAY(proxy->parent);
+    GstMfxSurface const *surface = GST_MFX_SURFACE(proxy->parent);
+    VAStatus va_status;
 
-	if (!proxy->parent)
-		return FALSE;
+    proxy->image = gst_mfx_surface_derive_image(surface);
+    proxy->va_img = &proxy->image->image;
 
-    if(!vpg_load_symbol("vpgExtGetSurfaceHandle"))
-        return FALSE;
+    if (!proxy->parent)
+	    return FALSE;
 
-	GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
-	va_status = g_va_get_surface_handle(GST_MFX_OBJECT_VADISPLAY(proxy->parent),
-		&surf, &proxy->fd);
+    if(vpg_load_symbol("vpgExtGetSurfaceHandle"))
+    {
+    GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
+	va_status = g_va_get_surface_handle(GST_MFX_OBJECT_VADISPLAY(proxy->parent)
+			, &(surf)
+			, &(proxy->fd));
 	GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
-	if (!vaapi_check_status(va_status, "vaExtGetSurfaceHandle()"))
+	if(!vaapi_check_status(va_status, "vpgExtGetSurfaceHandle()"))
 		return FALSE;
+    } else {
+        proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
+        GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
+        va_status = vaAcquireBufferHandle(GST_MFX_OBJECT_VADISPLAY(proxy->parent)
+		        , proxy->image->image.buf
+		        , &(proxy->buf_info));
 
-	return TRUE;
+        GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
+        if(!vaapi_check_status(va_status, "vaAcquireBufferHandle()"))
+	        return FALSE;
+	proxy->fd = proxy->buf_info.handle;
+    }
+    return TRUE;
 }
 
 static void
 gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
 {
+	if(g_va_get_surface_handle)
+		close(proxy->fd);
+	else {
+	    vaReleaseBufferHandle(GST_MFX_DISPLAY_VADISPLAY(GST_MFX_OBJECT_DISPLAY(proxy->parent)), proxy->image->image.buf);
+            gst_mfx_object_unref(proxy->image);
+	}
 	gst_mfx_object_replace(&proxy->parent, NULL);
-	close(proxy->fd);
 }
 
 static inline const GstMfxMiniObjectClass *

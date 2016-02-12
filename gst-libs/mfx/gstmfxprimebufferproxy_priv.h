@@ -20,10 +20,12 @@ G_BEGIN_DECLS
 
 struct _GstMfxPrimeBufferProxy {
 	/*< private >*/
-	GstMfxMiniObject	parent_instance;
-	GstMfxObject       *parent;
-
-	int					fd;
+    GstMfxMiniObject	parent_instance;
+    GstMfxObject       *parent;
+    GstVaapiImage      *image;
+    VABufferInfo       buf_info;
+    VAImage *va_img;
+    guintptr fd;
 };
 
 GstMfxPrimeBufferProxy *
