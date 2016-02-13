@@ -11,6 +11,17 @@
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
 
+#if USE_EGL
+# include "gstmfxdisplay_egl.h"
+# include "gstmfxwindow_egl.h"
+#endif
+
+#if USE_X11
+#include "gstmfxdisplay_x11.h"
+#include "gstmfxdisplay_x11_priv.h"
+#include "gstmfxwindow_x11.h"
+#endif
+
 #define GST_PLUGIN_NAME "mfxsink"
 #define GST_PLUGIN_DESC "A MFX-based videosink"
 
@@ -98,13 +109,7 @@ gst_mfxsink_render_surface(GstMfxSink * sink, GstMfxSurface * surface,
 /* ------------------------------------------------------------------------ */
 
 #if USE_EGL
-# include "gstmfxdisplay_egl.h"
-# include "gstmfxwindow_egl.h"
-
 #if USE_X11
-#include "gstmfxdisplay_x11.h"
-#include "gstmfxwindow_x11.h"
-
 #if HAVE_XKBLIB
 # include <X11/XKBlib.h>
 #endif
@@ -148,13 +153,10 @@ static gboolean
 configure_notify_event_pending(GstMfxSink * sink, Window window,
     guint width, guint height)
 {
-    GstMfxDisplayX11 * display;
-    GstMfxWindow *native_window;
-
-	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_EGL) {
-        native_window = gst_mfx_window_egl_get_native_window(sink->window);
-        display = GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(native_window));
-	}
+    GstMfxWindow *const native_window =
+        gst_mfx_window_egl_get_native_window(sink->window);
+    GstMfxDisplayX11 *const display =
+        GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(native_window));
 
 	ConfigureNotifyEventPendingArgs args;
 	XEvent xev;
@@ -171,13 +173,8 @@ configure_notify_event_pending(GstMfxSink * sink, Window window,
 static gboolean
 gst_mfxsink_x11_handle_events(GstMfxSink * sink)
 {
-	GstMfxDisplayX11 * display;
-    GstMfxWindow *window;
-
-	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_EGL) {
-        window = gst_mfx_window_egl_get_native_window(sink->window);
-        display = GST_MFX_OBJECT_DISPLAY(window);
-	}
+    GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
+	GstMfxDisplay *const display = GST_MFX_OBJECT_DISPLAY(window);
 
 	gboolean has_events, do_expose = FALSE;
 	guint pointer_x = 0, pointer_y = 0;
@@ -280,13 +277,9 @@ gst_mfxsink_x11_handle_events(GstMfxSink * sink)
 static gboolean
 gst_mfxsink_x11_pre_start_event_thread(GstMfxSink * sink)
 {
-    GstMfxDisplayX11 * display;
-    GstMfxWindow *window;
-
-	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_EGL) {
-        window = gst_mfx_window_egl_get_native_window(sink->window);
-        display = GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
-	}
+    GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
+    GstMfxDisplayX11 *const display =
+        GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
 
 	static const int x11_event_mask = (KeyPressMask | KeyReleaseMask |
 		ButtonPressMask | ButtonReleaseMask | PointerMotionMask |
@@ -304,13 +297,9 @@ gst_mfxsink_x11_pre_start_event_thread(GstMfxSink * sink)
 static gboolean
 gst_mfxsink_x11_pre_stop_event_thread(GstMfxSink * sink)
 {
-    GstMfxDisplayX11 * display;
-    GstMfxWindow *window;
-
-	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_EGL) {
-        window = gst_mfx_window_egl_get_native_window(sink->window);
-        display = GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
-	}
+    GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
+    GstMfxDisplayX11 *const display =
+        GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
 
 	if (window) {
 		gst_mfx_display_lock(GST_MFX_DISPLAY(display));
@@ -328,7 +317,6 @@ gst_mfxsink_egl_create_window(GstMfxSink * sink, guint width,
 	guint height)
 {
 	GstMfxDisplay *display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
-	GstMfxWindow *window;
 
 	g_return_val_if_fail(sink->window == NULL, FALSE);
 	sink->window = gst_mfx_window_egl_new(display, width, height);
@@ -477,6 +465,13 @@ gst_mfxsink_set_event_handling(GstMfxSink * sink, gboolean handle_events)
 {
 	GThread *thread = NULL;
 
+#if USE_EGL
+	GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
+#if USE_X11
+    if (!GST_MFX_IS_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window)))
+        return;
+#endif
+#endif
 	if (!sink->backend || !sink->backend->event_thread_needed)
 		return;
 
