@@ -137,25 +137,23 @@
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "gstreamer-vaapi"
+#define PACKAGE "gstreamer-msdk"
 
-/* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "gwenole.beauchesne@intel.com, sreerenj.balachandran@intel.com"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "gst_vaapi"
+#define PACKAGE_NAME "gst_msdk"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gst_vaapi 0.7.1.pre1"
+#define PACKAGE_STRING "gst_msdk 0.0.1"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "gstreamer-vaapi"
+#define PACKAGE_TARNAME "gstreamer-msdk"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.7.1.pre1"
+#define PACKAGE_VERSION "0.0.1"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -171,9 +169,6 @@
 
 /* Defined to the set of enabled OpenGL ES APIs */
 #define USE_GLES_VERSION_MASK 13
-
-/* Defined to 1 if GLX is enabled */
-#define USE_GLX 0
 
 /* Defined to 1 if GStreamer OpenGL helper libraries are available */
 #define USE_GST_GL_HELPERS 0

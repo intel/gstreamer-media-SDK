@@ -111,6 +111,8 @@ gst_mfx_display_egl_bind_display(GstMfxDisplayEGL * display,
 	if (!native_display)
 		goto error_unsupported_display_type;
 
+    gst_mfx_display_use_opengl(native_display);
+
 	gst_mfx_display_replace(&display->display, native_display);
 	gst_mfx_display_unref(native_display);
 

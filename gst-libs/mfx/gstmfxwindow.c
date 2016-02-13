@@ -42,6 +42,7 @@ gst_mfx_window_create(GstMfxWindow * window, guint width, guint height)
 		window->width = width;
 		window->height = height;
 	}
+
 	return TRUE;
 }
 

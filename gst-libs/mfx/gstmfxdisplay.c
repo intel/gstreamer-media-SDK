@@ -307,6 +307,7 @@ gst_mfx_display_init(GstMfxDisplay * display)
 	priv->display_type = GST_MFX_DISPLAY_TYPE_ANY;
 	priv->par_n = 1;
 	priv->par_d = 1;
+	priv->is_opengl = FALSE;
 
 	g_rec_mutex_init(&priv->mutex);
 
@@ -678,25 +679,16 @@ gst_mfx_display_get_vendor_string(GstMfxDisplay * display)
 	return display->priv.vendor_string;
 }
 
-/**
-* gst_mfx_display_has_opengl:
-* @display: a #GstMfxDisplay
-*
-* Returns wether the @display that was created does support OpenGL
-* context to be attached.
-*
-* This function is thread safe.
-*
-* Return value: %TRUE if the @display supports OpenGL context, %FALSE
-*   otherwise
-*/
 gboolean
 gst_mfx_display_has_opengl(GstMfxDisplay * display)
 {
-	GstMfxDisplayClass *klass;
+    g_return_val_if_fail(display != NULL, FALSE);
 
-	g_return_val_if_fail(display != NULL, FALSE);
+	return display->priv.is_opengl;
+}
 
-	klass = GST_MFX_DISPLAY_GET_CLASS(display);
-	return (klass->display_type == GST_MFX_DISPLAY_TYPE_EGL);
+void
+gst_mfx_display_use_opengl(GstMfxDisplay * display)
+{
+    display->priv.is_opengl = TRUE;
 }

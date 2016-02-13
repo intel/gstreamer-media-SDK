@@ -23,43 +23,44 @@
 typedef struct _GstMfxWindowWaylandPrivate GstMfxWindowWaylandPrivate;
 typedef struct _GstMfxWindowWaylandClass GstMfxWindowWaylandClass;
 typedef struct _FrameState FrameState;
+
 struct _FrameState
 {
-  GstMfxWindow *window;
-  GstMfxSurface *surface;
-  struct wl_callback *callback;
+    GstMfxWindow *window;
+    GstMfxSurface *surface;
+    struct wl_callback *callback;
 };
 
 static FrameState *
 frame_state_new (GstMfxWindow * window)
 {
-  FrameState *frame;
+    FrameState *frame;
 
-  frame = g_slice_new (FrameState);
-  if (!frame)
-    return NULL;
+    frame = g_slice_new (FrameState);
+    if (!frame)
+        return NULL;
 
-  frame->window = window;
-  frame->surface = NULL;
-  frame->callback = NULL;
-  return frame;
+    frame->window = window;
+    frame->surface = NULL;
+    frame->callback = NULL;
+    return frame;
 }
 
 static void
 frame_state_free (FrameState * frame)
 {
-  if (!frame)
-    return;
+    if (!frame)
+        return;
 
-  if (frame->surface) {
-    frame->surface = NULL;
-  }
+    if (frame->surface) {
+        frame->surface = NULL;
+    }
 
-  if (frame->callback) {
-    wl_callback_destroy (frame->callback);
-    frame->callback = NULL;
-  }
-  g_slice_free (FrameState, frame);
+    if (frame->callback) {
+        wl_callback_destroy (frame->callback);
+        frame->callback = NULL;
+    }
+    g_slice_free (FrameState, frame);
 }
 
 
@@ -95,23 +96,23 @@ struct _GstMfxWindowWayland
 static void
 frame_done_callback (void *data, struct wl_callback *callback, uint32_t time)
 {
-  FrameState *const frame = data;
-  GstMfxWindowWaylandPrivate *const priv =
+    FrameState *const frame = data;
+    GstMfxWindowWaylandPrivate *const priv =
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (frame->window);
 
-  g_atomic_pointer_compare_and_exchange (&priv->last_frame, frame, NULL);
-  g_atomic_int_dec_and_test (&priv->num_frames_pending);
+    g_atomic_pointer_compare_and_exchange (&priv->last_frame, frame, NULL);
+    g_atomic_int_dec_and_test (&priv->num_frames_pending);
 }
 
 static const struct wl_callback_listener frame_callback_listener = {
-  frame_done_callback
+    frame_done_callback
 };
 
 static void
 frame_release_callback (void *data, struct wl_buffer *wl_buffer)
 {
-  wl_buffer_destroy (wl_buffer);
-  frame_state_free (data);
+    wl_buffer_destroy (wl_buffer);
+    frame_state_free (data);
 }
 
 static const struct wl_buffer_listener frame_buffer_listener = {
@@ -231,8 +232,8 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	GST_MFX_OBJECT_LOCK_DISPLAY(window);
 	buffer = wl_drm_create_prime_buffer(display_priv->drm
 				, fd
-				, src_rect->width
-				, src_rect->height
+				, dst_rect->width
+				, dst_rect->height
 				, drm_format
 				, offsets[0]
 				, pitches[0]
@@ -381,8 +382,12 @@ gst_mfx_window_wayland_create(GstMfxWindow * window,
 	if (priv->fullscreen_on_show)
 		gst_mfx_window_wayland_set_fullscreen(window, TRUE);
 
-    priv->egl_window = wl_egl_window_create(priv->surface, *width, *height);
-    GST_MFX_OBJECT_ID(window) = priv->egl_window;
+    if (gst_mfx_display_has_opengl(GST_MFX_OBJECT_DISPLAY(window))) {
+        priv->egl_window = wl_egl_window_create(priv->surface, *width, *height);
+        if (!priv->egl_window)
+            return FALSE;
+        GST_MFX_OBJECT_ID(window) = priv->egl_window;
+    }
 
 	priv->is_shown = TRUE;
 

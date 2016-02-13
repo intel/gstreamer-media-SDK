@@ -57,10 +57,10 @@ default_has_interface(GstMfxPluginBase * plugin, GType type)
 	return FALSE;
 }
 
-static void
+/*static void
 default_display_changed(GstMfxPluginBase * plugin)
 {
-}
+}*/
 
 static gboolean
 plugin_update_sinkpad_info_from_buffer(GstMfxPluginBase * plugin,
@@ -93,7 +93,7 @@ void
 gst_mfx_plugin_base_class_init(GstMfxPluginBaseClass * klass)
 {
 	klass->has_interface = default_has_interface;
-	klass->display_changed = default_display_changed;
+	//klass->display_changed = default_display_changed;
 
 	plugin_parent_class = g_type_class_peek_parent(klass);
 
@@ -258,7 +258,7 @@ gst_mfx_plugin_base_ensure_display(GstMfxPluginBase * plugin)
 		return FALSE;
 	plugin->display_type = gst_mfx_display_get_display_type(plugin->display);
 
-	GST_MFX_PLUGIN_BASE_GET_CLASS(plugin)->display_changed(plugin);
+	//GST_MFX_PLUGIN_BASE_GET_CLASS(plugin)->display_changed(plugin);
 	return TRUE;
 }
 

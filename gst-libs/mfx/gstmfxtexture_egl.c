@@ -174,9 +174,9 @@ gst_mfx_texture_egl_destroy(GstMfxTextureEGL * texture)
 
 static gboolean
 gst_mfx_texture_egl_put_surface(GstMfxTextureEGL * texture,
-	GstMfxSurface * surface, const GstMfxRectangle * crop_rect)
+	GstMfxSurface * surface)
 {
-	UploadSurfaceArgs args = { texture, surface, crop_rect };
+	UploadSurfaceArgs args = { texture, surface };
 
 	return egl_context_run(texture->egl_context,
 		(EglContextRunFunc)do_bind_texture, &args) && args.success;

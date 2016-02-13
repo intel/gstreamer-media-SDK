@@ -8,9 +8,6 @@
 #include "gstmfxdisplay.h"
 #include "gstmfxcontext.h"
 
-#ifdef HAVE_GST_GL_GL_H
-# include <gst/gl/gstglcontext.h>
-#endif
 
 G_BEGIN_DECLS
 

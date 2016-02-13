@@ -519,20 +519,26 @@ get_display_type_name(GstMfxDisplayType display_type)
 }
 
 static void
-gst_mfxsink_set_display_type(GstMfxSink * sink)
+gst_mfxsink_set_render_backend(GstMfxSink * sink)
 {
     GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(sink);
+    gboolean autoselect = FALSE;
 
     if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != plugin->display_type_req) {
         GstMfxDisplay *display = NULL;
 
         switch (plugin->display_type_req) {
         case GST_MFX_DISPLAY_TYPE_ANY:
+            autoselect = TRUE;
 #if USE_WAYLAND
         case GST_MFX_DISPLAY_TYPE_WAYLAND:
             display = gst_mfx_display_wayland_new(NULL);
             if (!display)
-                goto egl;
+                if (autoselect)
+                    goto egl;
+                else
+                    goto display_unsupported;
+            sink->backend = gst_mfxsink_backend_wayland();
             GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_WAYLAND;
             break;
 #endif
@@ -540,12 +546,19 @@ egl:
 #if USE_EGL
         case GST_MFX_DISPLAY_TYPE_EGL:
             display = gst_mfx_display_egl_new (NULL, 2);
+            if (!display)
+                goto display_unsupported;
+            sink->backend = gst_mfxsink_backend_egl();
             GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_EGL;
             break;
 #endif
+        case GST_MFX_DISPLAY_TYPE_DRM:
+            break;
+display_unsupported:
         default:
             GST_ERROR("display type %s not supported",
                 get_display_type_name(plugin->display_type_req));
+            g_assert_not_reached();
             break;
         }
 
@@ -554,30 +567,6 @@ egl:
             gst_mfx_display_unref(display);
         }
     }
-}
-
-static void
-gst_mfxsink_ensure_backend(GstMfxSink * sink)
-{
-    GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(sink);
-
-	//switch (plugin->display_type_req) {
-    switch (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink)) {
-#if USE_EGL
-	case GST_MFX_DISPLAY_TYPE_EGL:
-        sink->backend = gst_mfxsink_backend_egl();
-        break;
-#endif
-#if USE_WAYLAND
-	case GST_MFX_DISPLAY_TYPE_WAYLAND:
-		sink->backend = gst_mfxsink_backend_wayland();
-		break;
-#endif
-	default:
-		GST_ERROR("failed to initialize GstMfxSink backend");
-		g_assert_not_reached();
-		break;
-	}
 }
 
 static gboolean
@@ -766,12 +755,10 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 	GstVideoInfo *const vip = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
 	guint win_width, win_height;
 
-    gst_mfxsink_set_display_type(sink);
+    gst_mfxsink_set_render_backend(sink);
 
 	if (!gst_mfxsink_ensure_display(sink))
 		return FALSE;
-
-    gst_mfxsink_ensure_backend(sink);
 
 	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_DRM)
 		return TRUE;

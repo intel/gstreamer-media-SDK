@@ -70,7 +70,7 @@ G_BEGIN_DECLS
 /* GstMfxTextureClass hooks */
 typedef gboolean(*GstMfxTextureAllocateFunc) (GstMfxTexture * texture);
 typedef gboolean(*GstMfxTexturePutSurfaceFunc) (GstMfxTexture * texture,
-	GstMfxSurface * surface, const GstMfxRectangle * crop_rect);
+	GstMfxSurface * surface);
 
 typedef struct _GstMfxTextureClass GstMfxTextureClass;
 

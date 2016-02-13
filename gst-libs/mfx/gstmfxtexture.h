@@ -87,7 +87,7 @@ gst_mfx_texture_set_orientation_flags(GstMfxTexture * texture,
 
 gboolean
 gst_mfx_texture_put_surface(GstMfxTexture * texture,
-	GstMfxSurface * surface, const GstMfxRectangle * crop_rect);
+	GstMfxSurface * surface);
 
 G_END_DECLS
 

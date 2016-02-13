@@ -292,8 +292,8 @@ gst_mfx_window_egl_create(GstMfxWindowEGL * window,
 
 	g_return_val_if_fail(native_dpy_class != NULL, FALSE);
 
-	window->window = native_dpy_class->create_window(GST_MFX_DISPLAY(display->display),
-		*width, *height);
+	window->window = native_dpy_class->create_window(
+        GST_MFX_DISPLAY(display->display), *width, *height);
 	if (!window->window)
 		return FALSE;
 
@@ -535,7 +535,7 @@ do_upload_surface_unlocked(GstMfxWindowEGL * window,
 {
 	if (!ensure_texture(window, src_rect->width, src_rect->height))
 		return FALSE;
-	if (!gst_mfx_texture_put_surface(window->texture, surface, src_rect))
+	if (!gst_mfx_texture_put_surface(window->texture, surface))
 		return FALSE;
 	if (!do_render_texture(window, src_rect, dst_rect))
 		return FALSE;

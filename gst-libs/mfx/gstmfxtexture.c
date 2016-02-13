@@ -307,7 +307,7 @@ gst_mfx_texture_set_orientation_flags(GstMfxTexture * texture, guint flags)
 */
 gboolean
 gst_mfx_texture_put_surface(GstMfxTexture * texture,
-	GstMfxSurface * surface, const GstMfxRectangle * crop_rect)
+	GstMfxSurface * surface)
 {
 	const GstMfxTextureClass *klass;
 	GstMfxRectangle rect;
@@ -319,11 +319,5 @@ gst_mfx_texture_put_surface(GstMfxTexture * texture,
 	if (!klass)
 		return FALSE;
 
-	if (!crop_rect) {
-		rect.x = 0;
-		rect.y = 0;
-		gst_mfx_surface_get_size(surface, &rect.width, &rect.height);
-		crop_rect = &rect;
-	}
-	return klass->put_surface(texture, surface, crop_rect);
+	return klass->put_surface(texture, surface);
 }
