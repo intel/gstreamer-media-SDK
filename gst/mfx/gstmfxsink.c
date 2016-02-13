@@ -92,9 +92,14 @@ gst_mfxsink_render_surface(GstMfxSink * sink, GstMfxSurface * surface,
 		surface_rect, &sink->display_rect);
 }
 
+
 /* ------------------------------------------------------------------------ */
-/* --- X11 Backend                                                      --- */
+/* --- EGL Backend                                                  --- */
 /* ------------------------------------------------------------------------ */
+
+#if USE_EGL
+# include "gstmfxdisplay_egl.h"
+# include "gstmfxwindow_egl.h"
 
 #if USE_X11
 #include "gstmfxdisplay_x11.h"
@@ -143,8 +148,14 @@ static gboolean
 configure_notify_event_pending(GstMfxSink * sink, Window window,
     guint width, guint height)
 {
-	GstMfxDisplayX11 *const display =
-		GST_MFX_DISPLAY_X11(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
+    GstMfxDisplayX11 * display;
+    GstMfxWindow *native_window;
+
+	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_EGL) {
+        native_window = gst_mfx_window_egl_get_native_window(sink->window);
+        display = GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(native_window));
+	}
+
 	ConfigureNotifyEventPendingArgs args;
 	XEvent xev;
 	args.window = window;
@@ -158,30 +169,25 @@ configure_notify_event_pending(GstMfxSink * sink, Window window,
 }
 
 static gboolean
-gst_mfxsink_x11_create_window(GstMfxSink * sink, guint width, guint height)
-{
-	GstMfxDisplay *const display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
-	g_return_val_if_fail(sink->window == NULL, FALSE);
-	sink->window = gst_mfx_window_x11_new(display, width, height);
-	if (!sink->window)
-		return FALSE;
-	return TRUE;
-}
-
-
-static gboolean
 gst_mfxsink_x11_handle_events(GstMfxSink * sink)
 {
-	GstMfxDisplay *const display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
+	GstMfxDisplayX11 * display;
+    GstMfxWindow *window;
+
+	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_EGL) {
+        window = gst_mfx_window_egl_get_native_window(sink->window);
+        display = GST_MFX_OBJECT_DISPLAY(window);
+	}
+
 	gboolean has_events, do_expose = FALSE;
 	guint pointer_x = 0, pointer_y = 0;
 	gboolean pointer_moved = FALSE;
 	XEvent e;
-	if (sink->window) {
+	if (window) {
 		Display *const x11_dpy =
 			gst_mfx_display_x11_get_display(GST_MFX_DISPLAY_X11(display));
 		Window x11_win =
-			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(sink->window));
+			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(window));
 		/* Track MousePointer interaction */
 		for (;;) {
 			gst_mfx_display_lock(display);
@@ -274,15 +280,21 @@ gst_mfxsink_x11_handle_events(GstMfxSink * sink)
 static gboolean
 gst_mfxsink_x11_pre_start_event_thread(GstMfxSink * sink)
 {
-	GstMfxDisplayX11 *const display =
-		GST_MFX_DISPLAY_X11(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
+    GstMfxDisplayX11 * display;
+    GstMfxWindow *window;
+
+	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_EGL) {
+        window = gst_mfx_window_egl_get_native_window(sink->window);
+        display = GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
+	}
+
 	static const int x11_event_mask = (KeyPressMask | KeyReleaseMask |
 		ButtonPressMask | ButtonReleaseMask | PointerMotionMask |
 		ExposureMask | StructureNotifyMask);
-	if (sink->window) {
+	if (window) {
 		gst_mfx_display_lock(GST_MFX_DISPLAY(display));
 		XSelectInput(gst_mfx_display_x11_get_display(display),
-			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(sink->window)),
+			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(window)),
 			x11_event_mask);
 		gst_mfx_display_unlock(GST_MFX_DISPLAY(display));
 	}
@@ -292,45 +304,31 @@ gst_mfxsink_x11_pre_start_event_thread(GstMfxSink * sink)
 static gboolean
 gst_mfxsink_x11_pre_stop_event_thread(GstMfxSink * sink)
 {
-	GstMfxDisplayX11 *const display =
-		GST_MFX_DISPLAY_X11(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
-	if (sink->window) {
+    GstMfxDisplayX11 * display;
+    GstMfxWindow *window;
+
+	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_EGL) {
+        window = gst_mfx_window_egl_get_native_window(sink->window);
+        display = GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
+	}
+
+	if (window) {
 		gst_mfx_display_lock(GST_MFX_DISPLAY(display));
 		XSelectInput(gst_mfx_display_x11_get_display(display),
-			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(sink->window)), 0);
+			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(window)), 0);
 		gst_mfx_display_unlock(GST_MFX_DISPLAY(display));
 	}
 	return TRUE;
 }
 
-/*static const inline GstMfxSinkBackend *
-gst_mfxsink_backend_x11(void)
-{
-	static const GstMfxSinkBackend GstMfxSinkBackendX11 = {
-		.create_window = gst_mfxsink_x11_create_window,
-		.render_surface = gst_mfxsink_render_surface,
-		.event_thread_needed = TRUE,
-		.handle_events = gst_mfxsink_x11_handle_events,
-		.pre_start_event_thread = gst_mfxsink_x11_pre_start_event_thread,
-		.pre_stop_event_thread = gst_mfxsink_x11_pre_stop_event_thread,
-	};
-	return &GstMfxSinkBackendX11;
-}*/
 #endif
-
-/* ------------------------------------------------------------------------ */
-/* --- EGL Backend                                                  --- */
-/* ------------------------------------------------------------------------ */
-
-#if USE_EGL
-# include "gstmfxdisplay_egl.h"
-# include "gstmfxwindow_egl.h"
 
 static gboolean
 gst_mfxsink_egl_create_window(GstMfxSink * sink, guint width,
 	guint height)
 {
 	GstMfxDisplay *display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
+	GstMfxWindow *window;
 
 	g_return_val_if_fail(sink->window == NULL, FALSE);
 	sink->window = gst_mfx_window_egl_new(display, width, height);
@@ -345,6 +343,12 @@ gst_mfxsink_backend_egl(void)
 	static const GstMfxSinkBackend GstMfxSinkBackendEGL = {
 		.create_window = gst_mfxsink_egl_create_window,
 		.render_surface = gst_mfxsink_render_surface,
+#if USE_X11
+		.event_thread_needed = TRUE,
+		.handle_events = gst_mfxsink_x11_handle_events,
+		.pre_start_event_thread = gst_mfxsink_x11_pre_start_event_thread,
+		.pre_stop_event_thread = gst_mfxsink_x11_pre_stop_event_thread,
+#endif
 	};
 	return &GstMfxSinkBackendEGL;
 }

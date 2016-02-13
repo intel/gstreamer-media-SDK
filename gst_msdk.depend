@@ -2794,7 +2794,7 @@
 1455106127 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxdisplay_drm.h
 	"gstmfxdisplay.h"
 
-1455320154 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxsink.c
+1455325503 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst/mfx/gstmfxsink.c
 	<gst/gst.h>
 	<gst/video/video.h>
 	<gst/video/navigation.h>
@@ -3538,23 +3538,24 @@
 	"gstmfxdisplay.h"
 	"gstmfxwindow.h"
 
-1455106123 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxprimebufferproxy.c
+1455332462 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxprimebufferproxy.c
 	"sysdeps.h"
 	"gstmfxprimebufferproxy.h"
 	"gstmfxprimebufferproxy_priv.h"
 	"video-utils.h"
 	"gstmfxobject_priv.h"
+	"gstvaapiimage_priv.h"
 	<gmodule.h>
 	"gstmfxdebug.h"
 
 1455106123 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxprimebufferproxy.h
 
-1455106123 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxprimebufferproxy_priv.h
+1455332462 /home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxprimebufferproxy_priv.h
 	"gstmfxprimebufferproxy.h"
 	"gstmfxsurface.h"
 	"gstmfxminiobject.h"
 
-1455237751 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_wayland.c
+1455332520 source:/home/nuc/work/siv_val-bxt-gstreamer-msdk-plugins/gst-libs/mfx/gstmfxwindow_wayland.c
 	"sysdeps.h"
 	<string.h>
 	<wayland-client.h>

@@ -533,7 +533,7 @@ do_upload_surface_unlocked(GstMfxWindowEGL * window,
 	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
-	if (!ensure_texture(window, src_rect->width, src_rect->height))
+	if (!ensure_texture(window, dst_rect->width, dst_rect->height))
 		return FALSE;
 	if (!gst_mfx_texture_put_surface(window->texture, surface))
 		return FALSE;
@@ -641,4 +641,12 @@ gst_mfx_window_egl_new(GstMfxDisplay * display, guint width, guint height)
 		gst_mfx_window_new_internal(GST_MFX_WINDOW_CLASS
 		(gst_mfx_window_egl_class()), display, width,
 		height);
+}
+
+GstMfxWindow *
+gst_mfx_window_egl_get_native_window(GstMfxWindow *window)
+{
+    g_return_val_if_fail(window != NULL, NULL);
+
+    return GST_MFX_WINDOW_EGL(window)->window;
 }

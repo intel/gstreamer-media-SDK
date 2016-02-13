@@ -210,7 +210,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	if(!buffer_proxy)
 		return FALSE;
 
-	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy)
+	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
 
 	offsets[0] = buffer_proxy->image->image.offsets[0];
 	offsets[1] = buffer_proxy->image->image.offsets[1];
