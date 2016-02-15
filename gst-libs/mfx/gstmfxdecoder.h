@@ -118,7 +118,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 
 GstMfxDecoder *
 gst_mfx_decoder_new(GstMfxDisplay * display,
-	GstMfxContextAllocatorVaapi *allocator, mfxU32 codec_id);
+	GstMfxContextAllocatorVaapi *allocator, mfxU32 codec, mfxU16 async_depth);
 
 G_END_DECLS
 

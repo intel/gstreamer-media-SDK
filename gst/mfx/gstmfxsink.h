@@ -39,11 +39,8 @@ typedef gboolean(*GstMfxSinkPreStopEventThreadFunc) (GstMfxSink * sink);
 struct _GstMfxSinkBackend
 {
 	GstMfxSinkCreateWindowFunc create_window;
-	GstMfxSinkCreateWindowFromHandleFunc create_window_from_handle;
-	GstMfxSinkRenderSurfaceFunc render_surface;
 
 	/* Event threads handling */
-	gboolean event_thread_needed;
 	GstMfxSinkHandleEventsFunc handle_events;
 	GstMfxSinkPreStartEventThreadFunc pre_start_event_thread;
 	GstMfxSinkPreStopEventThreadFunc pre_stop_event_thread;

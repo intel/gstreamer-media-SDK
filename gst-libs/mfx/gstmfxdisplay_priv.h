@@ -100,7 +100,6 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
 
 struct _GstMfxDisplayPrivate
 {
-	GstMfxDisplay *parent;
 	GRecMutex mutex;
 	GstMfxDisplayType display_type;
 	gchar *display_name;

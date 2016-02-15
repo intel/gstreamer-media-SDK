@@ -42,6 +42,7 @@ struct _GstMfxDec {
 	GstMfxDecoder		*decoder;
 	GstCaps				*decoder_caps;
 	GstCaps				*allowed_caps;
+	guint8              async_depth;
 
 	GstVideoCodecState	*input_state;
 	volatile gboolean	active;

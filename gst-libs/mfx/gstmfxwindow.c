@@ -16,6 +16,7 @@ static void
 gst_mfx_window_ensure_size(GstMfxWindow * window)
 {
 	const GstMfxWindowClass *const klass = GST_MFX_WINDOW_GET_CLASS(window);
+	guint width = window->width, height = window->height;
 
 	if (!window->check_geometry)
 		return;
@@ -26,6 +27,12 @@ gst_mfx_window_ensure_size(GstMfxWindow * window)
 	window->check_geometry = FALSE;
 	window->is_fullscreen = (window->width == window->display_width &&
 		window->height == window->display_height);
+
+    if (width == window->width && height == window->height)
+        return;
+
+    if (klass->resize)
+		klass->resize(window, window->width, window->height);
 }
 
 static gboolean
@@ -414,7 +421,9 @@ gst_mfx_window_put_surface(GstMfxWindow * window,
 void
 gst_mfx_window_reconfigure(GstMfxWindow * window)
 {
-	g_return_if_fail(window != NULL);
+    g_return_if_fail(window != NULL);
+
+    const GstMfxWindowClass *const klass = GST_MFX_WINDOW_GET_CLASS(window);
 
 	window->check_geometry = TRUE;
 	gst_mfx_window_ensure_size(window);

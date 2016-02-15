@@ -533,7 +533,7 @@ do_upload_surface_unlocked(GstMfxWindowEGL * window,
 	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
-	if (!ensure_texture(window, dst_rect->width, dst_rect->height))
+	if (!ensure_texture(window, src_rect->width, src_rect->height))
 		return FALSE;
 	if (!gst_mfx_texture_put_surface(window->texture, surface))
 		return FALSE;

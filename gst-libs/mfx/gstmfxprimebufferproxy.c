@@ -58,13 +58,13 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 
     if(vpg_load_symbol("vpgExtGetSurfaceHandle"))
     {
-    GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
-	va_status = g_va_get_surface_handle(GST_MFX_OBJECT_VADISPLAY(proxy->parent)
-			, &(surf)
-			, &(proxy->fd));
-	GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
-	if(!vaapi_check_status(va_status, "vpgExtGetSurfaceHandle()"))
-		return FALSE;
+        GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
+        va_status = g_va_get_surface_handle(GST_MFX_OBJECT_VADISPLAY(proxy->parent)
+                , &(surf)
+                , &(proxy->fd));
+        GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
+        if(!vaapi_check_status(va_status, "vpgExtGetSurfaceHandle()"))
+            return FALSE;
     } else {
         proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
         GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
@@ -75,7 +75,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
         GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
         if(!vaapi_check_status(va_status, "vaAcquireBufferHandle()"))
 	        return FALSE;
-	proxy->fd = proxy->buf_info.handle;
+        proxy->fd = proxy->buf_info.handle;
     }
     return TRUE;
 }

@@ -9,9 +9,9 @@
 static gboolean
 plugin_init(GstPlugin * plugin)
 {
-	gst_element_register(plugin, "mfxdecode", GST_RANK_NONE,
+	gst_element_register(plugin, "mfxdecode", GST_RANK_PRIMARY,
 		GST_TYPE_MFXDEC);
-	gst_element_register(plugin, "mfxsink", GST_RANK_NONE,
+	gst_element_register(plugin, "mfxsink", GST_RANK_PRIMARY,
 		GST_TYPE_MFXSINK);
 
 	return TRUE;

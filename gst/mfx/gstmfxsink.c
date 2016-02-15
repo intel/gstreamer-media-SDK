@@ -11,17 +11,6 @@
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
 
-#if USE_EGL
-# include "gstmfxdisplay_egl.h"
-# include "gstmfxwindow_egl.h"
-#endif
-
-#if USE_X11
-#include "gstmfxdisplay_x11.h"
-#include "gstmfxdisplay_x11_priv.h"
-#include "gstmfxwindow_x11.h"
-#endif
-
 #define GST_PLUGIN_NAME "mfxsink"
 #define GST_PLUGIN_DESC "A MFX-based videosink"
 
@@ -31,8 +20,7 @@ GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxsink);
 /* Default template */
 /* *INDENT-OFF* */
 static const char gst_mfxsink_sink_caps_str[] =
-	GST_MFX_MAKE_ENC_SURFACE_CAPS ";"
-	GST_VIDEO_CAPS_MAKE(GST_VIDEO_FORMATS_ALL);
+	GST_MFX_MAKE_SURFACE_CAPS ";";
 /* *INDENT-ON* */
 
 static GstStaticPadTemplate gst_mfxsink_sink_factory =
@@ -109,7 +97,13 @@ gst_mfxsink_render_surface(GstMfxSink * sink, GstMfxSurface * surface,
 /* ------------------------------------------------------------------------ */
 
 #if USE_EGL
+# include "gstmfxdisplay_egl.h"
+# include "gstmfxwindow_egl.h"
+
 #if USE_X11
+# include "gstmfxdisplay_x11.h"
+# include "gstmfxwindow_x11.h"
+
 #if HAVE_XKBLIB
 # include <X11/XKBlib.h>
 #endif
@@ -124,67 +118,22 @@ x11_keycode_to_keysym(Display * dpy, unsigned int kc)
 #endif
 }
 
-/* Checks whether a ConfigureNotify event is in the queue */
-typedef struct _ConfigureNotifyEventPendingArgs ConfigureNotifyEventPendingArgs;
-struct _ConfigureNotifyEventPendingArgs
-{
-	Window window;
-	guint width;
-	guint height;
-	gboolean match;
-};
-
-static Bool
-configure_notify_event_pending_cb(Display * dpy, XEvent * xev, XPointer arg)
-{
-	ConfigureNotifyEventPendingArgs *const args =
-		(ConfigureNotifyEventPendingArgs *)arg;
-	if (xev->type == ConfigureNotify &&
-		xev->xconfigure.window == args->window &&
-		xev->xconfigure.width == args->width &&
-		xev->xconfigure.height == args->height)
-		args->match = TRUE;
-	/* XXX: this is a hack to traverse the whole queue because we
-	can't use XPeekIfEvent() since it could block */
-	return False;
-}
-
-static gboolean
-configure_notify_event_pending(GstMfxSink * sink, Window window,
-    guint width, guint height)
-{
-    GstMfxWindow *const native_window =
-        gst_mfx_window_egl_get_native_window(sink->window);
-    GstMfxDisplayX11 *const display =
-        GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(native_window));
-
-	ConfigureNotifyEventPendingArgs args;
-	XEvent xev;
-	args.window = window;
-	args.width = width;
-	args.height = height;
-	args.match = FALSE;
-	/* XXX: don't use XPeekIfEvent() because it might block */
-	XCheckIfEvent(gst_mfx_display_x11_get_display(display),
-		&xev, configure_notify_event_pending_cb, (XPointer)& args);
-	return args.match;
-}
-
 static gboolean
 gst_mfxsink_x11_handle_events(GstMfxSink * sink)
 {
-    GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
-	GstMfxDisplay *const display = GST_MFX_OBJECT_DISPLAY(window);
-
 	gboolean has_events, do_expose = FALSE;
 	guint pointer_x = 0, pointer_y = 0;
 	gboolean pointer_moved = FALSE;
 	XEvent e;
-	if (window) {
+
+	if (sink->window) {
+        GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
+        GstMfxDisplay *const display = GST_MFX_OBJECT_DISPLAY(window);
 		Display *const x11_dpy =
 			gst_mfx_display_x11_get_display(GST_MFX_DISPLAY_X11(display));
 		Window x11_win =
 			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(window));
+
 		/* Track MousePointer interaction */
 		for (;;) {
 			gst_mfx_display_lock(display);
@@ -277,14 +226,15 @@ gst_mfxsink_x11_handle_events(GstMfxSink * sink)
 static gboolean
 gst_mfxsink_x11_pre_start_event_thread(GstMfxSink * sink)
 {
-    GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
-    GstMfxDisplayX11 *const display =
-        GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
-
 	static const int x11_event_mask = (KeyPressMask | KeyReleaseMask |
 		ButtonPressMask | ButtonReleaseMask | PointerMotionMask |
 		ExposureMask | StructureNotifyMask);
-	if (window) {
+
+	if (sink->window) {
+        GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
+        GstMfxDisplayX11 *const display =
+            GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
+
 		gst_mfx_display_lock(GST_MFX_DISPLAY(display));
 		XSelectInput(gst_mfx_display_x11_get_display(display),
 			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(window)),
@@ -297,11 +247,11 @@ gst_mfxsink_x11_pre_start_event_thread(GstMfxSink * sink)
 static gboolean
 gst_mfxsink_x11_pre_stop_event_thread(GstMfxSink * sink)
 {
-    GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
-    GstMfxDisplayX11 *const display =
-        GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
+	if (sink->window) {
+        GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
+        GstMfxDisplayX11 *const display =
+            GST_MFX_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window));
 
-	if (window) {
 		gst_mfx_display_lock(GST_MFX_DISPLAY(display));
 		XSelectInput(gst_mfx_display_x11_get_display(display),
 			gst_mfx_window_x11_get_xid(GST_MFX_WINDOW_X11(window)), 0);
@@ -330,9 +280,7 @@ gst_mfxsink_backend_egl(void)
 {
 	static const GstMfxSinkBackend GstMfxSinkBackendEGL = {
 		.create_window = gst_mfxsink_egl_create_window,
-		.render_surface = gst_mfxsink_render_surface,
 #if USE_X11
-		.event_thread_needed = TRUE,
 		.handle_events = gst_mfxsink_x11_handle_events,
 		.pre_start_event_thread = gst_mfxsink_x11_pre_start_event_thread,
 		.pre_stop_event_thread = gst_mfxsink_x11_pre_stop_event_thread,
@@ -367,7 +315,6 @@ gst_mfxsink_backend_wayland(void)
 {
 	static const GstMfxSinkBackend GstMfxSinkBackendWayland = {
 		.create_window = gst_mfxsink_wayland_create_window,
-		.render_surface = gst_mfxsink_render_surface,
 	};
 	return &GstMfxSinkBackendWayland;
 }
@@ -432,16 +379,18 @@ gst_mfxsink_reconfigure_window(GstMfxSink * sink)
 {
 	guint win_width, win_height;
 
-	gst_mfx_window_reconfigure(sink->window);
-	gst_mfx_window_get_size(sink->window, &win_width, &win_height);
-	if (win_width != sink->window_width || win_height != sink->window_height) {
-		if (!gst_mfxsink_ensure_render_rect(sink, win_width, win_height))
-			return FALSE;
-		GST_INFO("window was resized from %ux%u to %ux%u",
-			sink->window_width, sink->window_height, win_width, win_height);
-		sink->window_width = win_width;
-		sink->window_height = win_height;
-		return TRUE;
+	if (sink->window) {
+        gst_mfx_window_reconfigure(sink->window);
+        gst_mfx_window_get_size(sink->window, &win_width, &win_height);
+        if (win_width != sink->window_width || win_height != sink->window_height) {
+            if (!gst_mfxsink_ensure_render_rect(sink, win_width, win_height))
+                return FALSE;
+            GST_INFO("window was resized from %ux%u to %ux%u",
+                sink->window_width, sink->window_height, win_width, win_height);
+            sink->window_width = win_width;
+            sink->window_height = win_height;
+            return TRUE;
+        }
 	}
 	return FALSE;
 }
@@ -465,14 +414,8 @@ gst_mfxsink_set_event_handling(GstMfxSink * sink, gboolean handle_events)
 {
 	GThread *thread = NULL;
 
-#if USE_EGL
-	GstMfxWindow *window = gst_mfx_window_egl_get_native_window(sink->window);
-#if USE_X11
-    if (!GST_MFX_IS_DISPLAY_X11(GST_MFX_OBJECT_DISPLAY(window)))
-        return;
-#endif
-#endif
-	if (!sink->backend || !sink->backend->event_thread_needed)
+	if ((GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != GST_MFX_DISPLAY_TYPE_X11) ||
+        !sink->backend)
 		return;
 
 	GST_OBJECT_LOCK(sink);
@@ -548,7 +491,8 @@ egl:
             if (!display)
                 goto display_unsupported;
             sink->backend = gst_mfxsink_backend_egl();
-            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_EGL;
+            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) =
+                GST_MFX_DISPLAY_VADISPLAY_TYPE(display);
             break;
 #endif
         case GST_MFX_DISPLAY_TYPE_DRM:
@@ -849,7 +793,7 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
             surface_rect->x, surface_rect->y,
             surface_rect->width, surface_rect->height);
 
-	if (!sink->backend->render_surface(sink, surface, surface_rect))
+	if (!gst_mfxsink_render_surface(sink, surface, surface_rect))
 		goto error;
 
 	if (sink->signal_handoffs)

@@ -307,7 +307,7 @@ const GValue * value, GParamSpec * pspec)
 	GST_DEBUG_OBJECT(object, "gst_mfx_dec_set_property");
 	switch (prop_id) {
 	case PROP_ASYNC_DEPTH:
-		//dec->async_depth = g_value_get_uint(value);
+		dec->async_depth = g_value_get_uint(value);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -326,7 +326,7 @@ gst_mfx_dec_get_property(GObject * object, guint prop_id, GValue * value,
 
 	switch (prop_id) {
 	case PROP_ASYNC_DEPTH:
-		//g_value_set_uint(value, dec->async_depth);
+		g_value_set_uint(value, dec->async_depth);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -350,13 +350,13 @@ gst_mfxdec_ensure_display(GstMfxDec * decode)
 static gboolean
 gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 {
-	mfxU32 codec_id = gst_get_mfx_codec_from_caps(caps);
+	mfxU32 codec = gst_get_mfx_codec_from_caps(caps);
 
-	if (!codec_id)
+	if (!codec)
 		return FALSE;
 
 	mfxdec->decoder = gst_mfx_decoder_new(GST_MFX_PLUGIN_BASE(mfxdec)->display,
-        &GST_MFX_PLUGIN_BASE(mfxdec)->alloc_ctx, codec_id);
+        &GST_MFX_PLUGIN_BASE(mfxdec)->alloc_ctx, codec, mfxdec->async_depth);
 	if (!mfxdec->decoder)
 		return FALSE;
 
@@ -594,7 +594,7 @@ gst_mfxdec_class_init(GstMfxDecClass *klass)
 static void
 gst_mfxdec_init(GstMfxDec *mfxdec)
 {
-	//mfxdec->async_depth = DEFAULT_ASYNC_DEPTH;
+	mfxdec->async_depth = DEFAULT_ASYNC_DEPTH;
 
 	gst_video_decoder_set_packetized(GST_VIDEO_DECODER(mfxdec), TRUE);
 	gst_video_decoder_set_needs_format(GST_VIDEO_DECODER(mfxdec), TRUE);

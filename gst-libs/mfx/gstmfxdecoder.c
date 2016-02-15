@@ -86,16 +86,17 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 
 static void
 gst_mfx_decoder_init(GstMfxDecoder * decoder,
-	GstMfxDisplay * display, mfxU32 codec_id,
+	GstMfxDisplay * display, mfxU32 codec, mfxU16 async_depth,
 	GstMfxContextAllocatorVaapi * ctx)
 {
 	memset(&(decoder->session), 0, sizeof (mfxSession));
 	memset(&(decoder->bs), 0, sizeof (mfxBitstream));
 	memset(&(decoder->param), 0, sizeof (mfxVideoParam));
 
-	decoder->codec = codec_id;
-	decoder->param.mfx.CodecId = codec_id;
+	decoder->codec = codec;
+	decoder->param.mfx.CodecId = codec;
 	decoder->param.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+	decoder->param.AsyncDepth = async_depth;
 	decoder->alloc_ctx = ctx;
 	decoder->display = gst_mfx_display_ref(display);
 	decoder->context = NULL;
@@ -118,7 +119,7 @@ gst_mfx_decoder_class(void)
 
 GstMfxDecoder *
 gst_mfx_decoder_new(GstMfxDisplay * display,
-	GstMfxContextAllocatorVaapi *allocator, mfxU32 codec_id)
+	GstMfxContextAllocatorVaapi *allocator, mfxU32 codec, mfxU16 async_depth)
 {
 	GstMfxDecoder *decoder;
 
@@ -126,7 +127,7 @@ gst_mfx_decoder_new(GstMfxDisplay * display,
 	if (!decoder)
 		goto error;
 
-	gst_mfx_decoder_init(decoder, display, codec_id, allocator);
+	gst_mfx_decoder_init(decoder, display, codec, async_depth, allocator);
 
 	return decoder;
 

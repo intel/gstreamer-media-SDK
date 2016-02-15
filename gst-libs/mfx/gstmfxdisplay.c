@@ -196,8 +196,7 @@ gst_mfx_display_destroy(GstMfxDisplay * display)
 	GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE(display);
 
 	if (priv->display) {
-		if (!priv->parent)
-			vaTerminate(priv->display);
+        vaTerminate(priv->display);
 		priv->display = NULL;
 	}
 
@@ -215,8 +214,6 @@ gst_mfx_display_destroy(GstMfxDisplay * display)
 
 	g_free(priv->device_path_default);
 	priv->device_path_default = NULL;
-
-	gst_mfx_display_replace_internal(&priv->parent, NULL);
 }
 
 static gboolean
@@ -258,7 +255,6 @@ gst_mfx_display_create(GstMfxDisplay * display,
 	//if (!priv->display)
 		//return FALSE;
 
-	//if (!priv->parent) {
     if (!g_va_display) {
         int fd = open(get_default_device_path(display), O_RDWR | O_CLOEXEC);
         g_va_display = vaGetDisplayDRM (fd);
@@ -282,8 +278,6 @@ gst_mfx_display_lock_default(GstMfxDisplay * display)
 {
 	GstMfxDisplayPrivate *priv = GST_MFX_DISPLAY_GET_PRIVATE(display);
 
-	if (priv->parent)
-		priv = GST_MFX_DISPLAY_GET_PRIVATE(priv->parent);
     g_rec_mutex_lock(&priv->mutex);
 }
 
@@ -292,8 +286,6 @@ gst_mfx_display_unlock_default(GstMfxDisplay * display)
 {
 	GstMfxDisplayPrivate *priv = GST_MFX_DISPLAY_GET_PRIVATE(display);
 
-	if (priv->parent)
-		priv = GST_MFX_DISPLAY_GET_PRIVATE(priv->parent);
 	g_rec_mutex_unlock(&priv->mutex);
 }
 
