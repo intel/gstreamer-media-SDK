@@ -69,6 +69,7 @@ struct _GstMfxWindowWaylandPrivate
 	struct wl_shell_surface *shell_surface;
 	struct wl_surface *surface;
 	struct wl_region *opaque_region;
+	struct wl_viewport *viewport;
 	struct wl_event_queue *event_queue;
 	struct wl_egl_window *egl_window;
 	GstPoll *poll;
@@ -205,26 +206,37 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	guintptr fd;
 	guint32 drm_format;
 	gint offsets[3], pitches[3];
+	VAImage *va_image;
 
 	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
 	if(!buffer_proxy)
 		return FALSE;
 
 	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
+	va_image = &(GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(buffer_proxy));
 
-	offsets[0] = buffer_proxy->image->image.offsets[0];
-	offsets[1] = buffer_proxy->image->image.offsets[1];
-	offsets[2] = buffer_proxy->image->image.offsets[2];
-	pitches[0] = buffer_proxy->image->image.pitches[0];
-	pitches[1] = buffer_proxy->image->image.pitches[1];
-	pitches[2] = buffer_proxy->image->image.pitches[2];
+	/* Using compositor scaling. Correct way is to use VPP scaling */
+	if(src_rect->width > window->width && src_rect->height > window->height)
+	{
+		if(priv->viewport)
+			wl_viewport_set_destination(priv->viewport, dst_rect->width, dst_rect->height);
+	}
+
+	offsets[0] = va_image->offsets[0];
+	offsets[1] = va_image->offsets[1];
+	offsets[2] = va_image->offsets[2];
+	pitches[0] = va_image->pitches[0];
+	pitches[1] = va_image->pitches[1];
+	pitches[2] = va_image->pitches[2];
 
 	//only support NV12 for now
-	if ( GST_VIDEO_FORMAT_NV12 == buffer_proxy->image->internal_format ) {
+	if ( GST_VIDEO_FORMAT_NV12 == GST_VAAPI_IMAGE_FORMAT(buffer_proxy->image) ) {
 		drm_format = WL_DRM_FORMAT_NV12;
 	}
+
 	if(!display_priv->drm)
 		return FALSE;
+
 	GST_MFX_OBJECT_LOCK_DISPLAY(window);
 	buffer = wl_drm_create_prime_buffer(display_priv->drm
 				, fd
@@ -371,21 +383,26 @@ gst_mfx_window_wayland_create(GstMfxWindow * window,
 		&shell_surface_listener, priv);
 	wl_shell_surface_set_toplevel(priv->shell_surface);
 
+	if(priv_display->scaler) {
+		GST_MFX_OBJECT_LOCK_DISPLAY(window);
+		priv->viewport = wl_scaler_get_viewport(priv_display->scaler, priv->surface);
+		GST_MFX_OBJECT_UNLOCK_DISPLAY(window);
+	}
+
 	priv->poll = gst_poll_new(TRUE);
 	gst_poll_fd_init(&priv->pollfd);
 
 	if (priv->fullscreen_on_show)
 		gst_mfx_window_wayland_set_fullscreen(window, TRUE);
-
-    if (gst_mfx_display_has_opengl(GST_MFX_OBJECT_DISPLAY(window))) {
-        priv->egl_window = wl_egl_window_create(priv->surface, *width, *height);
-        if (!priv->egl_window)
-            return FALSE;
-        GST_MFX_OBJECT_ID(window) = priv->egl_window;
-    }
+	
+	if (gst_mfx_display_has_opengl(GST_MFX_OBJECT_DISPLAY(window))) {
+        	priv->egl_window = wl_egl_window_create(priv->surface, *width, *height);
+        	if (!priv->egl_window)
+            		return FALSE;
+        	GST_MFX_OBJECT_ID(window) = priv->egl_window;
+	}
 
 	priv->is_shown = TRUE;
-
 	return TRUE;
 }
 

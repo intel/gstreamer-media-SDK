@@ -17,6 +17,12 @@ G_BEGIN_DECLS
 #define GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buf) \
 	(GST_MFX_PRIME_BUFFER_PROXY (buf)->fd)
 
+#define GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buf) \
+	(GST_MFX_PRIME_BUFFER_PROXY (buf)->image)
+
+#define GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(buf) \
+	(GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buf)->image)
+
 
 struct _GstMfxPrimeBufferProxy {
 	/*< private >*/
@@ -24,7 +30,6 @@ struct _GstMfxPrimeBufferProxy {
     GstMfxObject       *parent;
     GstVaapiImage      *image;
     VABufferInfo       buf_info;
-    VAImage *va_img;
     guintptr fd;
 };
 

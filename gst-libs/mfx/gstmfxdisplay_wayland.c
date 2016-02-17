@@ -120,6 +120,7 @@ static const struct wl_drm_listener drm_listener = {
 	drm_handle_authenticated,
 	drm_handle_capabilities
 };
+
 static void
 registry_handle_global(void *data,
 struct wl_registry *registry,
@@ -139,6 +140,9 @@ struct wl_registry *registry,
 	else if (strcmp(interface, "wl_drm") == 0) {
 		priv->drm = wl_registry_bind(registry, id, &wl_drm_interface, 2);
 		wl_drm_add_listener(priv->drm, &drm_listener, priv);
+	}
+	else if(strcmp(interface, "wl_scaler") == 0) {
+		priv->scaler = wl_registry_bind(registry, id, &wl_scaler_interface, 2);
 	}
 }
 

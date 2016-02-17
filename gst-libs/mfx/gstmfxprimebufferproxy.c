@@ -51,7 +51,6 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
     VAStatus va_status;
 
     proxy->image = gst_mfx_surface_derive_image(surface);
-    proxy->va_img = &proxy->image->image;
 
     if (!proxy->parent)
 	    return FALSE;
@@ -69,7 +68,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
         proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
         GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
         va_status = vaAcquireBufferHandle(GST_MFX_OBJECT_VADISPLAY(proxy->parent)
-		        , proxy->image->image.buf
+		        , GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(proxy).buf
 		        , &(proxy->buf_info));
 
         GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
