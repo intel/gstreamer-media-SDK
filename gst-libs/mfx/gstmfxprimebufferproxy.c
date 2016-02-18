@@ -82,11 +82,16 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 static void
 gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
 {
-	if(g_va_get_surface_handle)
+	if(g_va_get_surface_handle) {
+        GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
 		close(proxy->fd);
+        GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
+    }
 	else {
+        GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
 	    vaReleaseBufferHandle(GST_MFX_DISPLAY_VADISPLAY(GST_MFX_OBJECT_DISPLAY(proxy->parent)), proxy->image->image.buf);
-            gst_mfx_object_unref(proxy->image);
+        gst_mfx_object_unref(proxy->image);
+        GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
 	}
 	gst_mfx_object_replace(&proxy->parent, NULL);
 }
