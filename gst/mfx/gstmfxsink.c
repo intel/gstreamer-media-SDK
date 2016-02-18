@@ -97,12 +97,12 @@ gst_mfxsink_render_surface(GstMfxSink * sink, GstMfxSurface * surface,
 /* ------------------------------------------------------------------------ */
 
 #if USE_EGL
-# include "gstmfxdisplay_egl.h"
-# include "gstmfxwindow_egl.h"
+# include "egl/gstmfxdisplay_egl.h"
+# include "egl/gstmfxwindow_egl.h"
 
 #if USE_X11
-# include "gstmfxdisplay_x11.h"
-# include "gstmfxwindow_x11.h"
+# include "x11/gstmfxdisplay_x11.h"
+# include "x11/gstmfxwindow_x11.h"
 
 #if HAVE_XKBLIB
 # include <X11/XKBlib.h>
@@ -294,8 +294,8 @@ gst_mfxsink_backend_egl(void)
 /* --- Wayland Backend                                                  --- */
 /* -------------------------------------------------------------------------*/
 #if USE_WAYLAND
-#include "gstmfxdisplay_wayland.h"
-#include "gstmfxwindow_wayland.h"
+#include "wayland/gstmfxdisplay_wayland.h"
+#include "wayland/gstmfxwindow_wayland.h"
 
 static gboolean
 gst_mfxsink_wayland_create_window(GstMfxSink * sink, guint width,

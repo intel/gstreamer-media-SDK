@@ -1,2 +1,39 @@
 file(GLOB SOURCE  "mfx/*.c")
-set( GST_LIBS_SOURCE ${SOURCE} PARENT_SCOPE )
+
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	    set (CMAKE_INSTALL_PREFIX "/usr/lib64/gstreamer-1.0")
+    endif()
+
+
+if(HAVE_WAYLAND_RENDERER)
+	file(GLOB WAYLAND_SOURCE "mfx/wayland/*.c")
+	include_directories( mfx/wayland )
+endif()
+if (HAVE_X11_RENDERER)
+	file(GLOB X11_SOURCE "mfx/x11/*.c")
+	include_directories ( mfx/x11 )
+endif()
+if (HAVE_EGL_RENDERER)
+	file(GLOB EGL_RENDERER "mfx/egl/*.c")
+	include_directories ( mfx/egl )
+endif()
+
+add_library(gstmfxhelper SHARED ${SOURCE} ${WAYLAND_SOURCE} ${X11_SOURCE} ${EGL_RENDERER})
+target_link_libraries(gstmfxhelper
+	${GLIB-2.0_LIBRARIES}
+	${GOBJECT-2.0_LIBRARIES}
+	${GSTREAMER_LIBRARIES}
+	${GSTREAMER_VIDEO_LIBRARIES}
+	${LIBVA_LIBRARIES}
+	${LIBVA_DRM_LIBRARIES}
+	${LIBDRM_LIBRARIES}
+	${LIBDRM_INTEL_LIBRARIES}
+	${LIBUDEV_LIBRARIES}
+	${SINK_LIBRARIES}
+	libmfx)
+
+install (TARGETS gstmfxhelper 
+	LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX} 
+	RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}
+	)
+

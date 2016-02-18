@@ -3,9 +3,6 @@
 #include "gstmfxdec.h"
 #include "gstmfxsink.h"
 
-#define PACKAGE "gstmfx"
-#define VERSION "0.0.1"
-
 static gboolean
 plugin_init(GstPlugin * plugin)
 {
@@ -26,5 +23,5 @@ GST_PLUGIN_DEFINE(
 	VERSION,        /* version */
 	"LGPL",          /* license */
 	PACKAGE,        /* package-name, usually the file archive name */
-	"http://www.intel.com.my" /* origin */
+	"http://www.intel.com" /* origin */
 	)

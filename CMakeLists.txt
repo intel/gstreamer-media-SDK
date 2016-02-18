@@ -5,56 +5,77 @@ project (GstMfx C)
 
 set(GstMfx_VERSION_MAJOR 0)
 set(GstMfx_VERSION_MINOR 1)
-
+string(CONCAT GST_MFX_VERSION ${GstMfx_VERSION_MAJOR} "." ${GstMfx_VERSION_MINOR})
 
 option (DEBUG "Turn on debug build." OFF)
+
 option (HAVE_MFX_DECODER "Build MSDK Decoder plugin." ON)
 option (HAVE_MFX_ENCODER "Build MSDK Encoder plugin." OFF)
 option (HAVE_MFX_VPP "Build MSDK VPP plugin." OFF)
-option (HAVE_MFX_SINK "Build MSDK SINK plugin." OFF)
-option (HAVE_EGL_RENDERER "Build MSDK SINK plugin with EGL renderer" OFF)
-option (HAVE_WAYLAND_RENDERER "Build MSDK SINK plugin with Wayland renderer." OFF)
+option (HAVE_MFX_SINK "Build MSDK SINK plugin." ON)
+
+option (HAVE_WAYLAND_RENDERER "Build MSDK SINK plugin with Wayland renderer." ON)
 option (HAVE_X11_RENDERER "Build MSDK SINK plugin with X11 renderer." OFF)
+option (HAVE_EGL_RENDERER "Build MSDK SINK plugin with EGL renderer." OFF)
+
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
 
-#Add gst and gst-libs as subdirectory
-add_subdirectory (gst-libs)
-add_subdirectory (gst)
-
-include_directories(
-    gst/mfx
-	gst-libs/mfx
-	${CMAKE_SOURCE_DIR}
-	)
-
 if (UNIX)
-	INCLUDE(CheckFunctionExists)
-	INCLUDE(CheckSymbolExists)
 	INCLUDE(FindPkgConfig)
 endif()
 
-if (DEBUG)
-	set (CMAKE_BUILD_TYPE "Debug")
-	MESSAGE( STATUS "Build Type: Debug")
+set(HAVE_EGL 0)
+set(HAVE_X11 0)
+set(HAVE_WAYLAND 0)
+set(HAVE_XRANDR 0)
+set(HAVE_XKBLIB 0)
+
+if(HAVE_MFX_SINK)
+	set(MFX_SINK 1)
+else()
+	set(MFX_SINK 0)
 endif()
 
-LIST(APPEND SOURCE ${GST_SOURCE} ${GST_LIBS_SOURCE} )
+if(HAVE_MFX_DECODER)
+	set(MFX_DECODE 1)
+else()
+	set(MFX_DECODE 0)
+endif()
+
+if(HAVE_MFX_ENCODE)
+	set(MFX_ENCODE 1)
+else()
+	set(MFX_ENCODE 0)
+endif()
+
+if(HAVE_MFX_VPP)
+	set(MFX_VPP 1)
+else()
+	set(MFX_VPP 0)
+endif()
+
+
+include(cmake/FindSinkDependencies.cmake)
 
 pkg_check_modules (GLIB-2.0 REQUIRED glib-2.0)
 pkg_check_modules (GOBJECT-2.0 REQUIRED gobject-2.0)
 pkg_check_modules (GIO-2.0 REQUIRED gio-2.0)
 pkg_check_modules (GSTREAMER REQUIRED gstreamer-1.0>=1.4)
 pkg_check_modules (GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0>=1.4)
-pkg_check_modules (X11 REQUIRED x11)
 pkg_check_modules (LIBVA REQUIRED libva)
-pkg_check_modules (LIBVA_X11 REQUIRED libva-x11)
 pkg_check_modules (LIBDRM REQUIRED libdrm)
 pkg_check_modules (LIBDRM_INTEL REQUIRED libdrm_intel)
 pkg_check_modules (LIBVA_DRM REQUIRED libva-drm)
-pkg_check_modules (WAYLAND_CLIENT REQUIRED wayland-client)
 pkg_check_modules (LIBUDEV REQUIRED libudev)
-pkg_check_modules (EGL REQUIRED egl)
-pkg_check_modules (WAYLAND_EGL REQUIRED wayland-egl)
+
+set(GST_API_VERSION ${GSTREAMER_VERSION})
+
+configure_file (
+    "${PROJECT_SOURCE_DIR}/config.h.in"
+    "${PROJECT_BINARY_DIR}/config.h"
+    )
+
+include_directories("${PROJECT_BINARY_DIR}")
 
 include_directories(
 	${GLIB-2.0_INCLUDE_DIRS}
@@ -62,13 +83,11 @@ include_directories(
 	${GSTREAMER_INCLUDE_DIR}
 	${GSTREAMER_VIDEO_INCLUDE_DIRS}
 	${LIBVA_INCLUDE_DIRS}
-    ${LIBDRM_INCLUDE_DIRS}
-    ${LIBDRM_INTEL_INCLUDE_DIRS}   
-    ${LIBVA_DRM_INCLUDE_DIRS}
-	${LIBVA_X11_INLCUDE_DIRS}
+	${LIBDRM_INCLUDE_DIRS}
+	${LIBDRM_INTEL_INCLUDE_DIRS}
+	${LIBVA_DRM_INCLUDE_DIRS}
 	${LIBUDEV_INCLUDE_DIRS}
-	${EGL_INCLUDE_DIRS}
-    )
+	)
 
 if (DEFINED ENV{MFX_HOME})
 	MESSAGE( STATUS "MFX_HOME=$ENV{MFX_HOME}")
@@ -90,8 +109,35 @@ MESSAGE( STATUS "MFX_LIBRARY=${MFX_LIBRARY}")
 add_library(libmfx STATIC IMPORTED)
 set_property(TARGET libmfx PROPERTY IMPORTED_LOCATION ${MFX_LIBRARY})
 add_definitions(-DHAVE_MFX_DECODER -DHAVE_CONFIG_H)
-
 include_directories( ${MFX_INCLUDES} )
+
+include_directories(
+	gst/mfx
+	gst-libs/mfx
+	)
+
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	set (CMAKE_INSTALL_PREFIX "/usr/lib64/gstreamer-1.0")
+endif()
+
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+#Add gst and gst-libs as subdirectory
+add_subdirectory (gst-libs)
+add_subdirectory (gst)
+				        
+LIST(APPEND SOURCE ${GST_SOURCE})
+
 add_library(gstmfx SHARED ${SOURCE})
 target_link_libraries(gstmfx
 	${GLIB-2.0_LIBRARIES}
@@ -100,18 +146,13 @@ target_link_libraries(gstmfx
 	${GSTREAMER_VIDEO_LIBRARIES}
 	${LIBVA_LIBRARIES}
 	${LIBVA_DRM_LIBRARIES}
-    ${LIBDRM_LIBRARIES}
-    ${LIBDRM_INTEL_LIBRARIES}
-	${LIBVA_X11_LIBRARIES}
-    ${LIBUDEV_LIBRARIES}
-    ${EGL_LIBRARIES}
-    ${WAYLAND_EGL_LIBRARIES}
-    libmfx
+	${LIBDRM_LIBRARIES}
+	${LIBDRM_INTEL_LIBRARIES}
+	${LIBUDEV_LIBRARIES}
+	${SINK_LIBRARIES}
+	libmfx
+	gstmfxhelper
 	)
-
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set (CMAKE_INSTALL_PREFIX "/usr/lib64/gstreamer-1.0")
-endif()
 
 # Add uninstall target. Taken from the KDE4 scripts
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in" "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake" @ONLY)
