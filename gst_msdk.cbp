@@ -79,8 +79,26 @@
 			<Add option="-DHAVE_CONFIG_H" />
 		</Compiler>
 		<Unit filename="config.h" />
-		<Unit filename="gst-libs/mfx/egl_compat.h" />
-		<Unit filename="gst-libs/mfx/egl_vtable.h" />
+		<Unit filename="gst-libs/mfx/egl/egl_compat.h" />
+		<Unit filename="gst-libs/mfx/egl/egl_vtable.h" />
+		<Unit filename="gst-libs/mfx/egl/gstmfxdisplay_egl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/egl/gstmfxdisplay_egl.h" />
+		<Unit filename="gst-libs/mfx/egl/gstmfxdisplay_egl_priv.h" />
+		<Unit filename="gst-libs/mfx/egl/gstmfxtexture_egl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/egl/gstmfxtexture_egl.h" />
+		<Unit filename="gst-libs/mfx/egl/gstmfxutils_egl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/egl/gstmfxutils_egl.h" />
+		<Unit filename="gst-libs/mfx/egl/gstmfxwindow_egl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/egl/gstmfxwindow_egl.h" />
+		<Unit filename="gst-libs/mfx/egl/ogl_compat.h" />
 		<Unit filename="gst-libs/mfx/gstmfxcodecmap.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -103,22 +121,7 @@
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_drm.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_drm_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_egl.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_egl.h" />
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_egl_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_wayland.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_wayland.h" />
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_wayland_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11.h" />
-		<Unit filename="gst-libs/mfx/gstmfxdisplay_x11_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxminiobject.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -156,53 +159,54 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxtexture.h" />
-		<Unit filename="gst-libs/mfx/gstmfxtexture_egl.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxtexture_egl.h" />
 		<Unit filename="gst-libs/mfx/gstmfxtexture_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxtypes.h" />
-		<Unit filename="gst-libs/mfx/gstmfxutils_egl.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxutils_egl.h" />
-		<Unit filename="gst-libs/mfx/gstmfxutils_x11.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxutils_x11.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxwindow.h" />
-		<Unit filename="gst-libs/mfx/gstmfxwindow_egl.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxwindow_egl.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxwindow_wayland.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxwindow_wayland.h" />
-		<Unit filename="gst-libs/mfx/gstmfxwindow_x11.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxwindow_x11.h" />
-		<Unit filename="gst-libs/mfx/gstmfxwindow_x11_priv.h" />
 		<Unit filename="gst-libs/mfx/gstvaapiimage.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstvaapiimage.h" />
 		<Unit filename="gst-libs/mfx/gstvaapiimage_priv.h" />
-		<Unit filename="gst-libs/mfx/ogl_compat.h" />
 		<Unit filename="gst-libs/mfx/sysdeps.h" />
 		<Unit filename="gst-libs/mfx/video-utils.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/video-utils.h" />
-		<Unit filename="gst-libs/mfx/wayland-drm-client-protocol.h" />
-		<Unit filename="gst-libs/mfx/wayland-drm-protocol.c">
+		<Unit filename="gst-libs/mfx/wayland/gstmfxdisplay_wayland.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="gst-libs/mfx/wayland/gstmfxdisplay_wayland.h" />
+		<Unit filename="gst-libs/mfx/wayland/gstmfxdisplay_wayland_priv.h" />
+		<Unit filename="gst-libs/mfx/wayland/gstmfxwindow_wayland.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/wayland/gstmfxwindow_wayland.h" />
+		<Unit filename="gst-libs/mfx/wayland/scaler-client-protocol.h" />
+		<Unit filename="gst-libs/mfx/wayland/scaler-protocol.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/wayland/wayland-drm-client-protocol.h" />
+		<Unit filename="gst-libs/mfx/wayland/wayland-drm-protocol.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/x11/gstmfxdisplay_x11.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/x11/gstmfxdisplay_x11.h" />
+		<Unit filename="gst-libs/mfx/x11/gstmfxdisplay_x11_priv.h" />
+		<Unit filename="gst-libs/mfx/x11/gstmfxutils_x11.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/x11/gstmfxutils_x11.h" />
+		<Unit filename="gst-libs/mfx/x11/gstmfxwindow_x11.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/x11/gstmfxwindow_x11.h" />
+		<Unit filename="gst-libs/mfx/x11/gstmfxwindow_x11_priv.h" />
 		<Unit filename="gst/mfx/gstmfx.c">
 			<Option compilerVar="CC" />
 		</Unit>

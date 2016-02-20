@@ -1,17 +1,17 @@
 
-  gstreamer-mediasdk
-  MediaSDK support to GStreamer
+  GStreamer-MSDK
+  Media SDK plugins for GStreamer
 
 Overview
 --------
 
-gstreamer-mediasdk consists in a collection of MediaSDK based plugins for
+GStreamer-MSDK consists of a collection of Media SDK-based plugins for
 GStreamer.
 
-  * `mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1,
+  * `mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1 and
     JPEG videos using the underlying hardware capabilities. 
 
-  * `mfxsink' is used to render the decoded frame to an Wayland
+  * `mfxsink' is used to render the decoded frame to a Wayland / X11
     display.
   
 
@@ -28,13 +28,14 @@ Requirements
 
 Software requirements
 
-  * MediaSDK 2016 R1 for Yocto Embedded (MediaSDK2016R1forYoctoEmbedded-Alpha2.tar.gz)
+  * Media SDK 2016 R1 for Yocto Embedded (MediaSDK2016R1forYoctoEmbedded-Alpha2.tar.gz) or
+    Media Server Studio 2016 Professional R1 (Haswell)
   * GStreamer 1.4.x (up to including GStreamer 1.6):
   * GStreamer-Plugins-Base 1.4.x (up to including GStreamer 1.6):
   * CMake
   
   * Renderers:
-	  Wayland (>=1.7)
+      Wayland (>=1.7)
       X11 (With EGL backend)
       EGL
 
@@ -42,37 +43,41 @@ Hardware requirements
 
   * Intel Apollo Lake
   * Intel Braswell
-  * Intel Skylake
+  * Intel Haswell / Broadwell
 
 Compiling
 ---------
 
-GStreamer-MediaSDK uses CMake build tool to build the libraries.
-Create build directory within then source directory and run the CMake
+GStreamer-MSDK uses the CMake build tool to build the libraries.
+Create a build directory within the source directory and run the CMake
 command to configure the build.
 
-	mkdir -p build
+	mkdir build
 	cd build
-	cmake "Unix Makefiles" ../
+	cmake ..
 	
-Next step is to build GStreamer-MediaSDK:
+Next step is to compile the GStreamer-MSDK plugins:
 
 	make
 
-To install the plugin:
+To install the plugins:
 
-    make install
+        make install
 
-The plugin will be install in /usr/lib64/gstreamer-1.0 directory.
+The plugins will be installed in the /usr/lib64/gstreamer-1.0 directory.
 
 Usage
 -----
 
   * Play an H.264 video with an MP4 container
   $ gst-launch-1.0 filesrc location=/path/to/video.mp4 ! \
-      qtdemux ! h264parse !mfxdecode ! mfxsink
+      qtdemux ! h264parse ! mfxdecode ! mfxsink
 
-Known Issue
+Known Issues
 -----------
 
-  * Deocde for VC-1 Advance Profile bitstream is not working. 
+  * Decode for VC-1 Advance Profile bitstream is not working.
+  * EGL-based renderer for X11 / Wayland does not work with the Intel UFO driver,
+    only the MESA  OTC driver. Hence, EGL options are turned off in the default
+    cmake configuration. You may turn on those options during the cmake configuration
+    to enable the EGL renderer.

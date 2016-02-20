@@ -83,9 +83,7 @@ static void
 gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
 {
 	if(g_va_get_surface_handle) {
-        GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
 		close(proxy->fd);
-        GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
     }
 	else {
         GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);

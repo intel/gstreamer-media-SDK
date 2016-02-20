@@ -9,13 +9,12 @@ static void
 gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 {
 	if (proxy->surface) {
-		if (proxy->pool && !proxy->parent)
+		if (proxy->pool)
 			gst_mfx_object_pool_put_object(proxy->pool, proxy->surface);
 		gst_mfx_object_unref(proxy->surface);
 		proxy->surface = NULL;
 	}
 	gst_mfx_object_pool_replace(&proxy->pool, NULL);
-	gst_mfx_surface_proxy_replace(&proxy->parent, NULL);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -31,8 +30,6 @@ gst_mfx_surface_proxy_class(void)
 static void
 gst_mfx_surface_proxy_init_properties(GstMfxSurfaceProxy * proxy)
 {
-	proxy->timestamp = GST_CLOCK_TIME_NONE;
-	proxy->duration = GST_CLOCK_TIME_NONE;
 	proxy->has_crop_rect = FALSE;
 }
 
@@ -58,7 +55,6 @@ gst_mfx_surface_proxy_new(GstMfxSurface * surface)
 	if (!proxy)
 		return NULL;
 
-	proxy->parent = NULL;
 	proxy->pool = NULL;
 	proxy->surface = gst_mfx_object_ref(surface);
 	if (!proxy->surface)
@@ -94,7 +90,6 @@ gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool)
 	if (!proxy)
 		return NULL;
 
-	proxy->parent = NULL;
 	proxy->pool = gst_mfx_object_pool_ref(pool);
 	proxy->surface = gst_mfx_object_pool_get_object(proxy->pool);
 	if (!proxy->surface)
@@ -133,12 +128,8 @@ gst_mfx_surface_proxy_copy(GstMfxSurfaceProxy * proxy)
 	if (!copy)
 		return NULL;
 
-	copy->parent = gst_mfx_surface_proxy_ref(proxy->parent ?
-		proxy->parent : proxy);
 	copy->pool = proxy->pool ? gst_mfx_object_pool_ref(proxy->pool) : NULL;
 	copy->surface = gst_mfx_object_ref(proxy->surface);
-	copy->timestamp = proxy->timestamp;
-	copy->duration = proxy->duration;
 	copy->has_crop_rect = proxy->has_crop_rect;
 	if (copy->has_crop_rect)
 		copy->crop_rect = proxy->crop_rect;
@@ -236,39 +227,6 @@ gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy)
 	g_return_val_if_fail(proxy != NULL, NULL);
 
 	return GST_MFX_SURFACE_PROXY_SURFACE(proxy)->surface;
-}
-
-
-/**
-* gst_mfx_surface_proxy_get_timestamp:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Returns the presentation timestamp for this surface @proxy.
-*
-* Return value: the presentation timestamp
-*/
-GstClockTime
-gst_mfx_surface_proxy_get_timestamp(GstMfxSurfaceProxy * proxy)
-{
-	g_return_val_if_fail(proxy != NULL, 0);
-
-	return GST_MFX_SURFACE_PROXY_TIMESTAMP(proxy);
-}
-
-/**
-* gst_mfx_surface_proxy_get_duration:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Returns the presentation duration for this surface @proxy.
-*
-* Return value: the presentation duration
-*/
-GstClockTime
-gst_mfx_surface_proxy_get_duration(GstMfxSurfaceProxy * proxy)
-{
-	g_return_val_if_fail(proxy != NULL, 0);
-
-	return GST_MFX_SURFACE_PROXY_DURATION(proxy);
 }
 
 /**

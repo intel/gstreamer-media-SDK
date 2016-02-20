@@ -6,7 +6,6 @@
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxsurface.h"
 #include "gstmfxobjectpool.h"
-#include "gstvaapiimage.h"
 
 G_BEGIN_DECLS
 
@@ -28,9 +27,6 @@ GstMfxVideoMeta *
 gst_mfx_video_meta_new_from_pool(GstMfxSurfacePool * pool);
 
 GstMfxVideoMeta *
-gst_vaapi_video_meta_new_with_image (GstVaapiImage * image);
-
-GstMfxVideoMeta *
 gst_mfx_video_meta_new_with_surface_proxy(GstMfxSurfaceProxy * proxy);
 
 GstMfxVideoMeta *
@@ -45,13 +41,6 @@ gst_mfx_video_meta_replace (GstMfxVideoMeta ** old_meta_ptr,
 
 GstMfxDisplay *
 gst_mfx_video_meta_get_display (GstMfxVideoMeta * meta);
-
-GstVaapiImage *
-gst_mfx_video_meta_get_image (GstMfxVideoMeta * meta);
-
-void
-gst_mfx_video_meta_set_image (GstMfxVideoMeta * meta,
-    GstVaapiImage * image);
 
 GstMfxSurfaceProxy *
 gst_mfx_video_meta_get_surface_proxy(GstMfxVideoMeta * meta);

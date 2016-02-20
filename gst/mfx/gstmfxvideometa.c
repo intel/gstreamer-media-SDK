@@ -12,7 +12,6 @@ struct _GstMfxVideoMeta
 	GstBuffer *buffer;
 	gint ref_count;
 	GstMfxDisplay *display;
-	GstVaapiImage *image;
 	GstMfxSurfaceProxy *proxy;
 	GstMfxRectangle render_rect;
 	guint has_render_rect : 1;
@@ -23,29 +22,6 @@ set_display (GstMfxVideoMeta * meta, GstMfxDisplay * display)
 {
     gst_mfx_display_replace (&meta->display, display);
 }
-
-/*static gboolean
-ensure_surface_proxy(GstMfxVideoMeta * meta)
-{
-	if (!meta->proxy)
-		return FALSE;
-
-	if (meta->buffer) {
-		GstMemory *const mem = gst_buffer_peek_memory(meta->buffer, 0);
-
-		if (GST_MFX_IS_VIDEO_MEMORY(mem))
-			return gst_mfx_video_memory_sync(GST_MFX_VIDEO_MEMORY_CAST(mem));
-	}
-	return TRUE;
-}*/
-
-static inline void
-set_image (GstMfxVideoMeta * meta, GstVaapiImage * image)
-{
-    meta->image = gst_mfx_object_ref (image);
-    set_display(meta, gst_mfx_object_get_display(GST_MFX_OBJECT(image)));
-}
-
 
 static gboolean
 set_surface_proxy(GstMfxVideoMeta * meta, GstMfxSurfaceProxy * proxy)
@@ -76,15 +52,6 @@ set_surface_proxy_from_pool(GstMfxVideoMeta * meta, GstMfxSurfacePool * pool)
 	return success;
 }
 
-static void
-gst_mfx_video_meta_destroy_image (GstMfxVideoMeta * meta)
-{
-    if (meta->image) {
-        gst_mfx_object_unref (meta->image);
-        meta->image = NULL;
-  }
-}
-
 static inline void
 gst_mfx_video_meta_destroy_proxy(GstMfxVideoMeta * meta)
 {
@@ -94,7 +61,6 @@ gst_mfx_video_meta_destroy_proxy(GstMfxVideoMeta * meta)
 static void
 gst_mfx_video_meta_finalize(GstMfxVideoMeta * meta)
 {
-    gst_mfx_video_meta_destroy_image(meta);
 	gst_mfx_video_meta_destroy_proxy(meta);
 	gst_mfx_display_replace(&meta->display, NULL);
 }
@@ -105,7 +71,6 @@ gst_mfx_video_meta_init(GstMfxVideoMeta * meta)
     meta->buffer = NULL;
     meta->ref_count = 1;
     meta->display = NULL;
-    meta->image = NULL;
     meta->proxy = NULL;
     meta->has_render_rect = FALSE;
 }
@@ -160,7 +125,6 @@ gst_mfx_video_meta_copy(GstMfxVideoMeta * meta)
     copy->buffer = NULL;
     copy->ref_count = 1;
     copy->display = gst_mfx_display_ref (meta->display);
-    copy->image = meta->image ? gst_mfx_object_ref (meta->image) : NULL;
     copy->proxy = meta->proxy ? gst_mfx_surface_proxy_copy (meta->proxy) : NULL;
 
 	copy->has_render_rect = meta->has_render_rect;
@@ -201,33 +165,6 @@ gst_mfx_video_meta_new_from_pool(GstMfxSurfacePool * pool)
 error:
 	gst_mfx_video_meta_unref(meta);
 	return NULL;
-}
-
-/**
- * gst_mfx_video_meta_new_with_image:
- * @image: a #GstMfxImage
- *
- * Creates a #GstMfxVideoMeta with the specified @image. The resulting
- * meta holds an additional reference to the @image.
- *
- * This function shall only be called from within gstreamer-mfx
- * plugin elements.
- *
- * Return value: the newly allocated #GstMfxVideoMeta, or %NULL on error
- */
-GstMfxVideoMeta *
-gst_mfx_video_meta_new_with_image (GstVaapiImage * image)
-{
-    GstMfxVideoMeta *meta;
-
-    g_return_val_if_fail (image != NULL, NULL);
-
-    meta = _gst_mfx_video_meta_new ();
-    if (G_UNLIKELY (!meta))
-        return NULL;
-
-    gst_mfx_video_meta_set_image (meta, image);
-    return meta;
 }
 
 GstMfxVideoMeta *
@@ -296,32 +233,11 @@ gst_mfx_video_meta_get_display (GstMfxVideoMeta * meta)
     return meta->display;
 }
 
-
-GstVaapiImage *
-gst_mfx_video_meta_get_image (GstMfxVideoMeta * meta)
-{
-    g_return_val_if_fail (GST_MFX_IS_VIDEO_META (meta), NULL);
-
-    return meta->image;
-}
-
-void
-gst_mfx_video_meta_set_image (GstMfxVideoMeta * meta, GstVaapiImage * image)
-{
-    g_return_if_fail (GST_MFX_IS_VIDEO_META (meta));
-
-    gst_mfx_video_meta_destroy_image (meta);
-
-    if (image)
-        set_image (meta, image);
-}
-
 GstMfxSurfaceProxy *
 gst_mfx_video_meta_get_surface_proxy(GstMfxVideoMeta * meta)
 {
 	g_return_val_if_fail(GST_MFX_IS_VIDEO_META(meta), NULL);
 
-	//return ensure_surface_proxy(meta) ? meta->proxy : NULL;
 	return meta->proxy;
 }
 
@@ -330,7 +246,6 @@ gst_mfx_video_meta_get_surface(GstMfxVideoMeta * meta)
 {
 	g_return_val_if_fail(GST_MFX_IS_VIDEO_META(meta), NULL);
 
-	//return ensure_surface_proxy(meta) ? meta->proxy : NULL;
 	return GST_MFX_SURFACE_PROXY_SURFACE(meta->proxy);
 }
 

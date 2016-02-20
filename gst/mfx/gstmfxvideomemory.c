@@ -40,7 +40,6 @@ ensure_image (GstMfxVideoMemory * mem)
         }
     }
 
-    gst_mfx_video_meta_set_image (mem->meta, mem->image);
     return TRUE;
 }
 

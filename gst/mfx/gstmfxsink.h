@@ -28,10 +28,6 @@ typedef struct _GstMfxSinkBackend             GstMfxSinkBackend;
 
 typedef gboolean(*GstMfxSinkCreateWindowFunc) (GstMfxSink * sink,
 	guint width, guint height);
-typedef gboolean(*GstMfxSinkCreateWindowFromHandleFunc) (GstMfxSink * sink,
-	guintptr window);
-typedef gboolean(*GstMfxSinkRenderSurfaceFunc) (GstMfxSink * sink,
-	GstMfxSurface * surface, const GstMfxRectangle * surface_rect);
 typedef gboolean(*GstMfxSinkHandleEventsFunc) (GstMfxSink * sink);
 typedef gboolean(*GstMfxSinkPreStartEventThreadFunc) (GstMfxSink * sink);
 typedef gboolean(*GstMfxSinkPreStopEventThreadFunc) (GstMfxSink * sink);

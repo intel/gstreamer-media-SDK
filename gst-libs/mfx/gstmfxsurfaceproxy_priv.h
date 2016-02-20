@@ -13,12 +13,9 @@ struct _GstMfxSurfaceProxy
 {
 	/*< private >*/
 	GstMfxMiniObject parent_instance;
-	GstMfxSurfaceProxy *parent;
 
 	GstMfxSurfacePool *pool;
 	GstMfxSurface *surface;
-	GstClockTime timestamp;
-	GstClockTime duration;
 	GstMfxRectangle crop_rect;
 	guint has_crop_rect : 1;
 };

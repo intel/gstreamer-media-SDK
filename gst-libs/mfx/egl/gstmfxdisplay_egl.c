@@ -7,10 +7,10 @@
 #include "gstmfxtexture_egl.h"
 
 #if USE_X11
-# include "gstmfxdisplay_x11.h"
+# include <x11/gstmfxdisplay_x11.h>
 #endif
 #if USE_WAYLAND
-# include "gstmfxdisplay_wayland.h"
+# include <wayland/gstmfxdisplay_wayland.h>
 #endif
 
 GST_DEBUG_CATEGORY(gst_debug_mfxdisplay_egl);
