@@ -48,7 +48,7 @@ Hardware requirements
 Compiling
 ---------
 
-GStreamer-MSDK uses the CMake build tool to build the libraries.
+GStreamer-MSDK uses the CMake build tool to build the plugins.
 Create a build directory within the source directory and run the CMake
 command to configure the build.
 
