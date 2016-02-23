@@ -32,7 +32,7 @@ static gboolean
 ensure_image (GstMfxVideoMemory * mem)
 {
     if (!mem->image) {
-        mem->image = gst_mfx_surface_derive_image (mem->surface);
+        mem->image = gst_mfx_surface_proxy_derive_image (mem->proxy);
 
         if (!mem->image) {
             GST_WARNING ("failed to derive image");
@@ -68,8 +68,9 @@ ensure_surface (GstMfxVideoMemory * mem)
             gst_mfx_video_meta_set_surface_proxy (mem->meta, mem->proxy);
         }
     }
-    mem->surface = GST_MFX_SURFACE_PROXY_SURFACE (mem->proxy);
-    return mem->surface != NULL;
+    //mem->proxy = GST_MFX_SURFACE_PROXY_SURFACE (mem->proxy);
+    //return mem->surface != NULL;
+    return TRUE;
 }
 
 
@@ -147,7 +148,7 @@ gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
     g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->parent_instance.
         allocator), FALSE);
     g_return_val_if_fail (mem->meta, FALSE);
-    g_return_val_if_fail (mem->surface, FALSE);
+    g_return_val_if_fail (mem->proxy, FALSE);
     g_return_val_if_fail (mem->image, FALSE);
 
     if (--mem->map_count == 0) {
@@ -183,7 +184,6 @@ gst_mfx_video_memory_new(GstAllocator * base_allocator,
 		0, GST_VIDEO_INFO_SIZE(vip));
 
 	mem->proxy = NULL;
-	mem->surface = NULL;
     mem->image_info = &allocator->image_info;
 	mem->image = NULL;
 	mem->meta = meta ? gst_mfx_video_meta_ref(meta) : NULL;
@@ -196,7 +196,6 @@ gst_mfx_video_memory_new(GstAllocator * base_allocator,
 static void
 gst_mfx_video_memory_free (GstMfxVideoMemory * mem)
 {
-    mem->surface = NULL;
     gst_mfx_video_memory_reset_image (mem);
     gst_mfx_surface_proxy_replace (&mem->proxy, NULL);
     gst_mfx_video_meta_replace (&mem->meta, NULL);
@@ -207,9 +206,6 @@ gst_mfx_video_memory_free (GstMfxVideoMemory * mem)
 void
 gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem)
 {
-    GstMfxVideoAllocator *const allocator =
-        GST_MFX_VIDEO_ALLOCATOR_CAST (GST_MEMORY_CAST (mem)->allocator);
-
     if (mem->image) {
         gst_mfx_object_unref (mem->image);
         mem->image = NULL;
@@ -219,7 +215,6 @@ gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem)
 void
 gst_mfx_video_memory_reset_surface (GstMfxVideoMemory * mem)
 {
-    mem->surface = NULL;
     gst_mfx_video_memory_reset_image (mem);
     gst_mfx_surface_proxy_replace (&mem->proxy, NULL);
     if (mem->meta)
@@ -285,7 +280,7 @@ error_unsupported_map_type:
     GST_ERROR ("unsupported map type (%d)", mem->map_type);
     return NULL;
 error_no_surface_proxy:
-    GST_ERROR ("failed to extract GstVaapiSurfaceProxy from video meta");
+    GST_ERROR ("failed to extract GstMfxSurfaceProxy from video meta");
     return NULL;
 error_no_surface:
     GST_ERROR ("failed to extract VA surface from video buffer");
@@ -512,8 +507,8 @@ bail:
 }
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxDisplay * display,
-	GstMfxContextAllocatorVaapi * ctx, const GstVideoInfo * vip)
+gst_mfx_video_allocator_new(GstMfxContextAllocator * ctx,
+	const GstVideoInfo * vip)
 {
 	GstMfxVideoAllocator *allocator;
 
@@ -526,12 +521,12 @@ gst_mfx_video_allocator_new(GstMfxDisplay * display,
 
 	allocator->video_info = *vip;
 
-	allocator->surface_pool = gst_mfx_surface_pool_new(display, ctx);
+	allocator->surface_pool = gst_mfx_surface_pool_new(ctx);
 
 	if (!allocator->surface_pool)
 		goto error_create_surface_pool;
 
-    allocator_configure_image_info (display, allocator);
+    allocator_configure_image_info (ctx->display, allocator);
 
 	gst_allocator_set_mfx_video_info(GST_ALLOCATOR_CAST(allocator),
 		&allocator->image_info, 0);

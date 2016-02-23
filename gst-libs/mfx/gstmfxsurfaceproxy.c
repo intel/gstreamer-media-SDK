@@ -1,18 +1,54 @@
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurfaceproxy_priv.h"
 #include "gstmfxsurfacepool.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
+
+struct _GstMfxSurfaceProxy
+{
+	/*< private >*/
+	GstMfxMiniObject parent_instance;
+
+	GstMfxContextAllocator *ctx;
+	GstMfxSurfacePool *pool;
+
+	mfxFrameSurface1 *surface;
+	GstVideoFormat format;
+	guint width;
+	guint height;
+	GstMfxRectangle crop_rect;
+};
+
+static gboolean
+mfx_surface_create(GstMfxSurfaceProxy * proxy)
+{
+	mfxMemId surface_id;
+
+	surface_id = g_async_queue_try_pop(proxy->ctx->surface_queue);
+	if (!surface_id)
+		return FALSE;
+
+	proxy->surface = g_slice_new0(mfxFrameSurface1);
+	if (!proxy->surface)
+		return FALSE;
+
+	proxy->surface->Data.MemId = surface_id;
+	memcpy(&proxy->surface->Info, &proxy->ctx->frame_info,
+		sizeof(mfxFrameInfo));
+
+	return TRUE;
+}
 
 static void
 gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 {
 	if (proxy->surface) {
 		if (proxy->pool)
-			gst_mfx_object_pool_put_object(proxy->pool, proxy->surface);
-		gst_mfx_object_unref(proxy->surface);
-		proxy->surface = NULL;
+			gst_mfx_object_pool_put_object(proxy->pool, proxy);
+
+		g_async_queue_push(proxy->ctx->surface_queue,
+			GST_MFX_SURFACE_PROXY_MEMID(proxy));
+		g_slice_free(mfxFrameSurface1, proxy->surface);
 	}
 	gst_mfx_object_pool_replace(&proxy->pool, NULL);
 }
@@ -30,25 +66,22 @@ gst_mfx_surface_proxy_class(void)
 static void
 gst_mfx_surface_proxy_init_properties(GstMfxSurfaceProxy * proxy)
 {
-	proxy->has_crop_rect = FALSE;
+	proxy->format = gst_video_format_from_mfx_fourcc(proxy->surface->Info.FourCC);
+	proxy->width = proxy->surface->Info.Width;
+	proxy->height = proxy->surface->Info.Height;
+
+	proxy->crop_rect.x = proxy->surface->Info.CropX;
+	proxy->crop_rect.y = proxy->surface->Info.CropY;
+	proxy->crop_rect.width = proxy->surface->Info.CropW;
+	proxy->crop_rect.height = proxy->surface->Info.CropH;
 }
 
-/**
-* gst_mfx_surface_proxy_new:
-* @surface: a #GstMfxSurface
-*
-* Creates a new #GstMfxSurfaceProxy with the specified
-* surface. This allows for transporting additional information that
-* are not to be attached to the @surface directly.
-*
-* Return value: the newly allocated #GstMfxSurfaceProxy object
-*/
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new(GstMfxSurface * surface)
+gst_mfx_surface_proxy_new(GstMfxContextAllocator * ctx)
 {
 	GstMfxSurfaceProxy *proxy;
 
-	g_return_val_if_fail(surface != NULL, NULL);
+	g_return_val_if_fail(ctx != NULL, NULL);
 
 	proxy = (GstMfxSurfaceProxy *)
 		gst_mfx_mini_object_new(gst_mfx_surface_proxy_class());
@@ -56,8 +89,8 @@ gst_mfx_surface_proxy_new(GstMfxSurface * surface)
 		return NULL;
 
 	proxy->pool = NULL;
-	proxy->surface = gst_mfx_object_ref(surface);
-	if (!proxy->surface)
+	proxy->ctx = ctx;
+	if (!mfx_surface_create(proxy))
 		goto error;
 	gst_mfx_surface_proxy_init_properties(proxy);
 	return proxy;
@@ -67,17 +100,6 @@ error:
 	return NULL;
 }
 
-/**
-* gst_mfx_surface_proxy_new_from_pool:
-* @pool: a #GstMfxSurfacePool
-*
-* Allocates a new surface from the supplied surface @pool and creates
-* the wrapped surface proxy object from it. When the last reference
-* to the proxy object is released, then the underlying VA surface is
-* pushed back to its parent pool.
-*
-* Returns: The same newly allocated @proxy object, or %NULL on error
-*/
 GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool)
 {
@@ -91,10 +113,9 @@ gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool)
 		return NULL;
 
 	proxy->pool = gst_mfx_object_pool_ref(pool);
-	proxy->surface = gst_mfx_object_pool_get_object(proxy->pool);
-	if (!proxy->surface)
+	proxy = gst_mfx_object_pool_get_object(proxy->pool);
+	if (!proxy)
 		goto error;
-	gst_mfx_object_ref(proxy->surface);
 	gst_mfx_surface_proxy_init_properties(proxy);
 	return proxy;
 
@@ -103,19 +124,6 @@ error:
 	return NULL;
 }
 
-/**
-* gst_mfx_surface_proxy_copy:
-* @proxy: the parent #GstMfxSurfaceProxy
-*
-* Creates are new VA surface proxy object from the supplied parent
-* @proxy object with the same initial information, e.g. timestamp,
-* duration.
-*
-* Note: the destroy notify function is not copied into the new
-* surface proxy object.
-*
-* Returns: The same newly allocated @proxy object, or %NULL on error
-*/
 GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_copy(GstMfxSurfaceProxy * proxy)
 {
@@ -129,21 +137,16 @@ gst_mfx_surface_proxy_copy(GstMfxSurfaceProxy * proxy)
 		return NULL;
 
 	copy->pool = proxy->pool ? gst_mfx_object_pool_ref(proxy->pool) : NULL;
-	copy->surface = gst_mfx_object_ref(proxy->surface);
-	copy->has_crop_rect = proxy->has_crop_rect;
-	if (copy->has_crop_rect)
-		copy->crop_rect = proxy->crop_rect;
+	copy->ctx = proxy->ctx;
+	copy->surface = proxy->surface;
+	copy->format = proxy->format;
+	copy->width = proxy->width;
+	copy->height = proxy->height;
+	copy->crop_rect = proxy->crop_rect;
+
 	return copy;
 }
 
-/**
-* gst_mfx_surface_proxy_ref:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Atomically increases the reference count of the given @proxy by one.
-*
-* Returns: The same @proxy argument
-*/
 GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_ref(GstMfxSurfaceProxy * proxy)
 {
@@ -154,13 +157,6 @@ gst_mfx_surface_proxy_ref(GstMfxSurfaceProxy * proxy)
 		(proxy)));
 }
 
-/**
-* gst_mfx_surface_proxy_unref:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Atomically decreases the reference count of the @proxy by one. If
-* the reference count reaches zero, the object will be free'd.
-*/
 void
 gst_mfx_surface_proxy_unref(GstMfxSurfaceProxy * proxy)
 {
@@ -169,15 +165,6 @@ gst_mfx_surface_proxy_unref(GstMfxSurfaceProxy * proxy)
 	gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(proxy));
 }
 
-/**
-* gst_mfx_surface_proxy_replace:
-* @old_proxy_ptr: a pointer to a #GstMfxSurfaceProxy
-* @new_proxy: a #GstMfxSurfaceProxy
-*
-* Atomically replaces the proxy object held in @old_proxy_ptr with
-* @new_proxy. This means that @old_proxy_ptr shall reference a valid
-* object. However, @new_proxy can be NULL.
-*/
 void
 gst_mfx_surface_proxy_replace(GstMfxSurfaceProxy ** old_proxy_ptr,
 	GstMfxSurfaceProxy * new_proxy)
@@ -188,83 +175,99 @@ gst_mfx_surface_proxy_replace(GstMfxSurfaceProxy ** old_proxy_ptr,
 		GST_MFX_MINI_OBJECT(new_proxy));
 }
 
-/**
-* gst_mfx_surface_proxy_get_surface:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Returns the #GstMfxSurface stored in the @proxy.
-*
-* Return value: the #GstMfxSurface
-*/
-GstMfxSurface *
-gst_mfx_surface_proxy_get_surface(GstMfxSurfaceProxy * proxy)
-{
-	g_return_val_if_fail(proxy != NULL, NULL);
-
-	return GST_MFX_SURFACE_PROXY_SURFACE(proxy);
-}
-
-/**
-* gst_mfx_surface_proxy_get_surface_id:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Returns the VA surface ID stored in the @proxy.
-*
-* Return value: the #GstMfxID
-*/
-GstMfxID
-gst_mfx_surface_proxy_get_surface_id(GstMfxSurfaceProxy * proxy)
-{
-	g_return_val_if_fail(proxy != NULL, VA_INVALID_ID);
-	g_return_val_if_fail(proxy->surface != NULL, VA_INVALID_ID);
-
-	return GST_MFX_SURFACE_PROXY_SURFACE_ID(proxy);
-}
-
 mfxFrameSurface1 *
 gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, NULL);
 
-	return GST_MFX_SURFACE_PROXY_SURFACE(proxy)->surface;
+	return proxy->surface;
 }
 
-/**
-* gst_mfx_surface_proxy_get_crop_rect:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Returns the #GstMfxRectangle stored in the @proxy and that
-* represents the cropping rectangle for the underlying surface to be
-* used for rendering.
-*
-* If no cropping rectangle was associated with the @proxy, then this
-* function returns %NULL.
-*
-* Return value: the #GstMfxRectangle, or %NULL if none was
-*   associated with the surface proxy
-*/
+GstMfxID
+gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy)
+{
+	g_return_val_if_fail(proxy != NULL, VA_INVALID_ID);
+	g_return_val_if_fail(proxy->surface != NULL, VA_INVALID_ID);
+
+	return *(GstMfxID *)proxy->surface->Data.MemId;
+}
+
 const GstMfxRectangle *
 gst_mfx_surface_proxy_get_crop_rect(GstMfxSurfaceProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, NULL);
 
-	return GST_MFX_SURFACE_PROXY_CROP_RECT(proxy);
+	return &proxy->crop_rect;
 }
 
-/**
-* gst_mfx_surface_proxy_set_crop_rect:
-* @proxy: #GstMfxSurfaceProxy
-* @crop_rect: the #GstMfxRectangle to be stored in @proxy
-*
-* Associates the @crop_rect with the @proxy
-*/
+GstVideoFormat
+gst_mfx_surface_proxy_get_format(GstMfxSurfaceProxy * proxy)
+{
+	g_return_val_if_fail(proxy != NULL, 0);
+
+	return proxy->format;
+}
+
+guint
+gst_mfx_surface_proxy_get_width(GstMfxSurfaceProxy * proxy)
+{
+	g_return_val_if_fail(proxy != NULL, 0);
+
+	return proxy->width;
+}
+
+guint
+gst_mfx_surface_proxy_get_height(GstMfxSurfaceProxy * proxy)
+{
+	g_return_val_if_fail(proxy != NULL, 0);
+
+	return proxy->height;
+}
+
 void
-gst_mfx_surface_proxy_set_crop_rect(GstMfxSurfaceProxy * proxy,
-	const GstMfxRectangle * crop_rect)
+gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy,
+	guint * width_ptr, guint * height_ptr)
 {
 	g_return_if_fail(proxy != NULL);
 
-	proxy->has_crop_rect = crop_rect != NULL;
-	if (proxy->has_crop_rect)
-		proxy->crop_rect = *crop_rect;
+	if (width_ptr)
+		*width_ptr = proxy->width;
+
+	if (height_ptr)
+		*height_ptr = proxy->height;
 }
+
+GstMfxContextAllocator *
+gst_mfx_surface_proxy_get_allocator_context(GstMfxSurfaceProxy * proxy)
+{
+	g_return_val_if_fail(proxy != NULL, NULL);
+
+	return proxy->ctx;
+}
+
+GstVaapiImage *
+gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy)
+{
+	GstMfxDisplay *display;
+	VAImage va_image;
+	VAStatus status;
+
+	g_return_val_if_fail(proxy != NULL, NULL);
+
+	display = proxy->ctx->display;
+	va_image.image_id = VA_INVALID_ID;
+	va_image.buf = VA_INVALID_ID;
+
+	GST_MFX_DISPLAY_LOCK(display);
+	status = vaDeriveImage(GST_MFX_DISPLAY_VADISPLAY(display),
+		GST_MFX_SURFACE_PROXY_MEMID(proxy), &va_image);
+	GST_MFX_DISPLAY_UNLOCK(display);
+	if (!vaapi_check_status(status, "vaDeriveImage()")) {
+		return NULL;
+	}
+	if (va_image.image_id == VA_INVALID_ID || va_image.buf == VA_INVALID_ID)
+		return NULL;
+
+	return gst_vaapi_image_new_with_image(display, &va_image);
+}
+

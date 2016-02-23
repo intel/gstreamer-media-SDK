@@ -27,18 +27,17 @@
 typedef struct
 {
 	GstMfxTextureEGL *texture;
-	GstMfxSurface *surface;
+	GstMfxSurfaceProxy *proxy;
 	const GstMfxRectangle *crop_rect;
 	gboolean success;             /* result */
 } UploadSurfaceArgs;
 
 static gboolean
-do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
+do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 {
 	EglContext *const ctx = texture->egl_context;
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
 	GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
-	GLuint texture_id;
 
 	GLint attribs[23], *attrib;
 	GstMfxPrimeBufferProxy *buffer_proxy;
@@ -46,11 +45,11 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
 	VAImage *va_image;
 	guint i;
 
-	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
+	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(proxy);
 	if (!buffer_proxy)
 		return FALSE;
 
-	image = gst_mfx_surface_derive_image(surface);
+	image = gst_mfx_surface_proxy_derive_image(proxy);
 	if (!image)
 		return FALSE;
 	//gst_vaapi_image_get_image(image, va_image);
@@ -110,7 +109,7 @@ do_bind_texture(UploadSurfaceArgs * args)
 
 	GST_MFX_OBJECT_LOCK_DISPLAY(texture);
 	if (egl_context_set_current(texture->egl_context, TRUE, &old_cs)) {
-		args->success = do_bind_texture_unlocked(texture, args->surface);
+		args->success = do_bind_texture_unlocked(texture, args->proxy);
 		egl_context_set_current(texture->egl_context, FALSE, &old_cs);
 	}
 	GST_MFX_OBJECT_UNLOCK_DISPLAY(texture);
@@ -174,9 +173,9 @@ gst_mfx_texture_egl_destroy(GstMfxTextureEGL * texture)
 
 static gboolean
 gst_mfx_texture_egl_put_surface(GstMfxTextureEGL * texture,
-	GstMfxSurface * surface)
+	GstMfxSurfaceProxy * proxy)
 {
-	UploadSurfaceArgs args = { texture, surface };
+	UploadSurfaceArgs args = { texture, proxy };
 
 	return egl_context_run(texture->egl_context,
 		(EglContextRunFunc)do_bind_texture, &args) && args.success;

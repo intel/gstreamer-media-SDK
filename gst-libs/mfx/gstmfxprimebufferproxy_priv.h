@@ -2,7 +2,7 @@
 #define GST_MFX_PRIME_BUFFER_PROXY_PRIV_H
 
 #include "gstmfxprimebufferproxy.h"
-#include "gstmfxsurface.h"
+#include "gstmfxsurfaceproxy.h"
 #include "gstmfxminiobject.h"
 
 G_BEGIN_DECLS
@@ -27,14 +27,15 @@ G_BEGIN_DECLS
 struct _GstMfxPrimeBufferProxy {
 	/*< private >*/
     GstMfxMiniObject	parent_instance;
-    GstMfxObject       *parent;
+    GstMfxSurfaceProxy *parent;
     GstVaapiImage      *image;
-    VABufferInfo       buf_info;
-    guintptr fd;
+    VABufferInfo        buf_info;
+    VAImage            *va_img;
+    guintptr            fd;
 };
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_object(GstMfxObject * object);
+gst_mfx_prime_buffer_proxy_new_from_surface(GstMfxSurfaceProxy * parent);
 
 #define gst_mfx_prime_buffer_proxy_ref_internal(proxy) \
 	((gpointer) gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (proxy)))

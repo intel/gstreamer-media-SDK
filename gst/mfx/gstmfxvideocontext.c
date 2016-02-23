@@ -2,16 +2,16 @@
 
 GST_DEBUG_CATEGORY_STATIC(GST_CAT_CONTEXT);
 
-#define GST_MFX_TYPE_DISPLAY \
-	gst_mfx_display_get_type ()
+#define GST_MFX_TYPE_CONTEXT \
+	gst_mfx_context_get_type ()
 
 /* *INDENT-OFF* */
-static GType gst_mfx_display_get_type(void);
+static GType gst_mfx_context_get_type(void);
 /* *INDENT-ON* */
 
-G_DEFINE_BOXED_TYPE(GstMfxDisplay, gst_mfx_display,
-	(GBoxedCopyFunc)gst_mfx_display_ref,
-	(GBoxedFreeFunc)gst_mfx_display_unref);
+G_DEFINE_BOXED_TYPE(GstMfxContext, gst_mfx_context,
+	(GBoxedCopyFunc)gst_mfx_context_ref,
+	(GBoxedFreeFunc)gst_mfx_context_unref);
 
 static void
 _init_context_debug(void)
@@ -27,42 +27,42 @@ _init_context_debug(void)
 }
 
 void
-gst_mfx_video_context_set_display(GstContext * context,
-	GstMfxDisplay * display)
+gst_mfx_video_context_set_context(GstContext * context,
+	GstMfxContext * mfx_ctx)
 {
 	GstStructure *structure;
 
 	g_return_if_fail(context != NULL);
 
 	structure = gst_context_writable_structure(context);
-	gst_structure_set(structure, GST_MFX_DISPLAY_CONTEXT_TYPE_NAME,
-		GST_MFX_TYPE_DISPLAY, display, NULL);
+	gst_structure_set(structure, GST_MFX_CONTEXT_TYPE_NAME,
+		GST_MFX_TYPE_CONTEXT, mfx_ctx, NULL);
 }
 
 GstContext *
-gst_mfx_video_context_new_with_display(GstMfxDisplay * display,
+gst_mfx_video_context_new_with_context(GstMfxContext * mfx_ctx,
 	gboolean persistent)
 {
 	GstContext *context;
 
-	context = gst_context_new(GST_MFX_DISPLAY_CONTEXT_TYPE_NAME, persistent);
-	gst_mfx_video_context_set_display(context, display);
+	context = gst_context_new(GST_MFX_CONTEXT_TYPE_NAME, persistent);
+	gst_mfx_video_context_set_context(context, mfx_ctx);
 	return context;
 }
 
 gboolean
-gst_mfx_video_context_get_display(GstContext * context,
-	GstMfxDisplay ** display_ptr)
+gst_mfx_video_context_get_context(GstContext * context,
+	GstMfxContext ** context_ptr)
 {
 	const GstStructure *structure;
 
 	g_return_val_if_fail(GST_IS_CONTEXT(context), FALSE);
 	g_return_val_if_fail(g_strcmp0(gst_context_get_context_type(context),
-		GST_MFX_DISPLAY_CONTEXT_TYPE_NAME) == 0, FALSE);
+		GST_MFX_CONTEXT_TYPE_NAME) == 0, FALSE);
 
 	structure = gst_context_get_structure(context);
-	return gst_structure_get(structure, GST_MFX_DISPLAY_CONTEXT_TYPE_NAME,
-		GST_MFX_TYPE_DISPLAY, display_ptr, NULL);
+	return gst_structure_get(structure, GST_MFX_CONTEXT_TYPE_NAME,
+		GST_MFX_TYPE_CONTEXT, context_ptr, NULL);
 }
 
 static gboolean
@@ -155,7 +155,7 @@ _gst_context_query(GstElement * element, const gchar * context_type)
 	/*
 	* Whomever responds to the need-context message performs a
 	* GstElement::set_context() with the required context in which the
-	* element is required to update the display_ptr
+	* element is required to update the context_ptr
 	*/
 
 found:
@@ -164,43 +164,43 @@ found:
 
 gboolean
 gst_mfx_video_context_prepare(GstElement * element,
-	GstMfxDisplay ** display_ptr)
+	GstMfxContext ** context_ptr)
 {
 	g_return_val_if_fail(element != NULL, FALSE);
-	g_return_val_if_fail(display_ptr != NULL, FALSE);
+	g_return_val_if_fail(context_ptr != NULL, FALSE);
 
 	/*  1) Check if the element already has a context of the specific
 	*     type.
 	*/
-	if (*display_ptr) {
-		GST_LOG_OBJECT(element, "already have a display (%p)", *display_ptr);
+	if (*context_ptr) {
+		GST_LOG_OBJECT(element, "already have a context (%p)", *context_ptr);
 		return TRUE;
 	}
 
-	_gst_context_query(element, GST_MFX_DISPLAY_CONTEXT_TYPE_NAME);
+	_gst_context_query(element, GST_MFX_CONTEXT_TYPE_NAME);
 
-	if (*display_ptr)
-		GST_LOG_OBJECT(element, "found a display (%p)", *display_ptr);
+	if (*context_ptr)
+		GST_LOG_OBJECT(element, "found a context (%p)", *context_ptr);
 
-	return *display_ptr != NULL;
+	return *context_ptr != NULL;
 }
 
 /* 5) Create a context by itself and post a GST_MESSAGE_HAVE_CONTEXT message
 on the bus. */
 void
 gst_mfx_video_context_propagate(GstElement * element,
-	GstMfxDisplay * display)
+	GstMfxContext * mfx_ctx)
 {
 	GstContext *context;
 	GstMessage *msg;
 
-	context = gst_mfx_video_context_new_with_display(display, FALSE);
+	context = gst_mfx_video_context_new_with_context(mfx_ctx, FALSE);
 	gst_element_set_context(element, context);
 
 	_init_context_debug();
 	GST_CAT_INFO_OBJECT(GST_CAT_CONTEXT, element,
-		"posting `have-context' (%p) message with display (%p)",
-		context, display);
+		"posting `have-context' (%p) message with context (%p)",
+		context, context);
 	msg = gst_message_new_have_context(GST_OBJECT_CAST(element), context);
 	gst_element_post_message(GST_ELEMENT_CAST(element), msg);
 }

@@ -4,8 +4,8 @@
 #include <gst/video/video.h>
 #include "gstmfxdisplay.h"
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurface.h"
 #include "gstmfxobjectpool.h"
+#include "gstvaapiimage.h"
 
 G_BEGIN_DECLS
 
@@ -39,25 +39,12 @@ void
 gst_mfx_video_meta_replace (GstMfxVideoMeta ** old_meta_ptr,
     GstMfxVideoMeta * new_meta);
 
-GstMfxDisplay *
-gst_mfx_video_meta_get_display (GstMfxVideoMeta * meta);
-
 GstMfxSurfaceProxy *
 gst_mfx_video_meta_get_surface_proxy(GstMfxVideoMeta * meta);
-
-GstMfxSurface *
-gst_mfx_video_meta_get_surface(GstMfxVideoMeta * meta);
 
 void
 gst_mfx_video_meta_set_surface_proxy(GstMfxVideoMeta * meta,
 	GstMfxSurfaceProxy * proxy);
-
-const GstMfxRectangle *
-gst_mfx_video_meta_get_render_rect(GstMfxVideoMeta * meta);
-
-void
-gst_mfx_video_meta_set_render_rect(GstMfxVideoMeta * meta,
-	const GstMfxRectangle * rect);
 
 GstMfxVideoMeta *
 gst_buffer_get_mfx_video_meta(GstBuffer * buffer);

@@ -2,57 +2,51 @@
 #include "gstmfxvideocontext.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxpluginbase.h"
-#if USE_DRM
-# include "gstmfxdisplay_drm.h"
-#endif
+
 
 gboolean
-gst_mfx_ensure_display(GstElement * element, GstMfxDisplayType type)
+gst_mfx_ensure_context(GstElement * element)
 {
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(element);
-	GstMfxDisplay *display;
+	GstMfxContext *context;
 
 	g_return_val_if_fail(GST_IS_ELEMENT(element), FALSE);
 
-	if (gst_mfx_video_context_prepare(element, &plugin->display)) {
-		/* Neighbour found and it updated the display */
-		if (gst_mfx_plugin_base_has_display_type(plugin, type))
-			return TRUE;
-	}
+	if (gst_mfx_video_context_prepare(element, &plugin->context))
+		return TRUE;
 
-	/* If no neighboor, or application not interested, use system default */
-	display = gst_mfx_display_drm_new(NULL);
-	if (!display)
-		return FALSE;
+	context = gst_mfx_context_new(&plugin->alloc_ctx);
+    if (!context)
+        return FALSE;
 
-	gst_mfx_video_context_propagate(element, display);
-	gst_mfx_display_unref(display);
+	gst_mfx_video_context_propagate(element, context);
+	gst_mfx_context_unref(context);
 	return TRUE;
 }
 
 gboolean
-gst_mfx_handle_context_query (GstQuery * query, GstMfxDisplay * display)
+gst_mfx_handle_context_query (GstQuery * query, GstMfxContext * mfx_ctx)
 {
     const gchar *type = NULL;
     GstContext *context, *old_context;
 
     g_return_val_if_fail (query != NULL, FALSE);
 
-    if (!display)
+    if (!mfx_ctx)
         return FALSE;
 
     if (!gst_query_parse_context_type (query, &type))
         return FALSE;
 
-    if (g_strcmp0 (type, GST_MFX_DISPLAY_CONTEXT_TYPE_NAME))
+    if (g_strcmp0 (type, GST_MFX_CONTEXT_TYPE_NAME))
         return FALSE;
 
     gst_query_parse_context (query, &old_context);
     if (old_context) {
         context = gst_context_copy (old_context);
-        gst_mfx_video_context_set_display (context, display);
+        gst_mfx_video_context_set_context (context, mfx_ctx);
     } else {
-        context = gst_mfx_video_context_new_with_display (display, FALSE);
+        context = gst_mfx_video_context_new_with_context (mfx_ctx, FALSE);
     }
 
     gst_query_set_context (query, context);

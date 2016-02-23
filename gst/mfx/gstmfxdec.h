@@ -44,6 +44,8 @@ struct _GstMfxDec {
 	GstCaps				*allowed_caps;
 	guint8              async_depth;
 
+	GstMfxContext       *context;
+
 	GstVideoCodecState	*input_state;
 	volatile gboolean	active;
 	volatile gboolean   do_renego;

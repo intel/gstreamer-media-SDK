@@ -296,7 +296,7 @@ gst_mfx_texture_set_orientation_flags(GstMfxTexture * texture, guint flags)
 /**
 * gst_mfx_texture_put_surface:
 * @texture: a #GstMfxTexture
-* @surface: a #GstMfxSurface
+* @surface: a #GstMfxSurfaceProxy
 * @flags: postprocessing flags. See #GstMfxTextureRenderFlags
 *
 * Renders the @surface into the àtexture. The @flags specify how
@@ -307,17 +307,17 @@ gst_mfx_texture_set_orientation_flags(GstMfxTexture * texture, guint flags)
 */
 gboolean
 gst_mfx_texture_put_surface(GstMfxTexture * texture,
-	GstMfxSurface * surface)
+	GstMfxSurfaceProxy * proxy)
 {
 	const GstMfxTextureClass *klass;
 	GstMfxRectangle rect;
 
 	g_return_val_if_fail(texture != NULL, FALSE);
-	g_return_val_if_fail(surface != NULL, FALSE);
+	g_return_val_if_fail(proxy != NULL, FALSE);
 
 	klass = GST_MFX_TEXTURE_GET_CLASS(texture);
 	if (!klass)
 		return FALSE;
 
-	return klass->put_surface(texture, surface);
+	return klass->put_surface(texture, proxy);
 }

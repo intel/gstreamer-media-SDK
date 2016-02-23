@@ -62,7 +62,7 @@ typedef struct
 typedef struct
 {
 	GstMfxWindowEGL *window;
-	GstMfxSurface *surface;
+	GstMfxSurfaceProxy *proxy;
 	const GstMfxRectangle *src_rect;
 	const GstMfxRectangle *dst_rect;
 	gboolean success;             /* result */
@@ -530,12 +530,12 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 
 static gboolean
 do_upload_surface_unlocked(GstMfxWindowEGL * window,
-	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
+	GstMfxSurfaceProxy * proxy, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
 	if (!ensure_texture(window, src_rect->width, src_rect->height))
 		return FALSE;
-	if (!gst_mfx_texture_put_surface(window->texture, surface))
+	if (!gst_mfx_texture_put_surface(window->texture, proxy))
 		return FALSE;
 	if (!do_render_texture(window, src_rect, dst_rect))
 		return FALSE;
@@ -553,7 +553,7 @@ do_upload_surface(UploadSurfaceArgs * args)
 
 	GST_MFX_OBJECT_LOCK_DISPLAY(window);
 	if (egl_context_set_current(window->egl_window->context, TRUE, &old_cs)) {
-		args->success = do_upload_surface_unlocked(window, args->surface,
+		args->success = do_upload_surface_unlocked(window, args->proxy,
 			args->src_rect, args->dst_rect);
 		egl_context_set_current(window->egl_window->context, FALSE, &old_cs);
 	}
@@ -562,10 +562,10 @@ do_upload_surface(UploadSurfaceArgs * args)
 
 static gboolean
 gst_mfx_window_egl_render(GstMfxWindowEGL * window,
-	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
+	GstMfxSurfaceProxy * proxy, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
-	UploadSurfaceArgs args = { window, surface, src_rect, dst_rect };
+	UploadSurfaceArgs args = { window, proxy, src_rect, dst_rect };
 
 	return egl_context_run(window->egl_window->context,
 		(EglContextRunFunc)do_upload_surface, &args) && args.success;

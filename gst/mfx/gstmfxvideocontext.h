@@ -1,28 +1,28 @@
 #ifndef GST_MFX_VIDEO_CONTEXT_H
 #define GST_MFX_VIDEO_CONTEXT_H
 
-#include "gstmfxdisplay.h"
+#include "gstmfxcontext.h"
 
-#define GST_MFX_DISPLAY_CONTEXT_TYPE_NAME "gst.mfx.Display"
+#define GST_MFX_CONTEXT_TYPE_NAME "gst.mfx.Context"
 
 void
-gst_mfx_video_context_set_display(GstContext * context,
-	GstMfxDisplay * display);
+gst_mfx_video_context_set_context(GstContext * context,
+	GstMfxContext * mfx_ctx);
 
 GstContext *
-gst_mfx_video_context_new_with_display(GstMfxDisplay * display,
+gst_mfx_video_context_new_with_context(GstMfxContext * mfx_ctx,
 	gboolean persistent);
 
 gboolean
-gst_mfx_video_context_get_display(GstContext * context,
-	GstMfxDisplay ** display_ptr);
+gst_mfx_video_context_get_context(GstContext * context,
+	GstMfxContext ** context_ptr);
 
 gboolean
 gst_mfx_video_context_prepare(GstElement * element,
-	GstMfxDisplay ** display_ptr);
+	GstMfxContext ** context_ptr);
 
 void
 gst_mfx_video_context_propagate(GstElement * element,
-	GstMfxDisplay * display);
+	GstMfxContext * mfx_ctx);
 
 #endif /* GST_MFX_VIDEO_CONTEXT_H */

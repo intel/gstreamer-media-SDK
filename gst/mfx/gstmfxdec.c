@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurfaceproxy_priv.h"
 #include "gstmfxcodecmap.h"
 #include "gstmfxvideomemory.h"
 #include "gstmfxvideobufferpool.h"
@@ -209,7 +208,6 @@ gst_mfxdec_release(GstMfxDec * decode)
 	gst_object_unref(decode);
 }
 
-
 static GstFlowReturn
 gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 {
@@ -342,9 +340,9 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 }
 
 static inline gboolean
-gst_mfxdec_ensure_display(GstMfxDec * decode)
+gst_mfxdec_ensure_context(GstMfxDec * decode)
 {
-	return gst_mfx_plugin_base_ensure_display(GST_MFX_PLUGIN_BASE(decode));
+	return gst_mfx_plugin_base_ensure_context(GST_MFX_PLUGIN_BASE(decode));
 }
 
 static gboolean
@@ -355,46 +353,18 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 	if (!codec)
 		return FALSE;
 
-	mfxdec->decoder = gst_mfx_decoder_new(GST_MFX_PLUGIN_BASE(mfxdec)->display,
-        &GST_MFX_PLUGIN_BASE(mfxdec)->alloc_ctx, codec, mfxdec->async_depth);
+	mfxdec->decoder = gst_mfx_decoder_new(GST_MFX_PLUGIN_BASE(mfxdec)->context,
+		codec, mfxdec->async_depth);
 	if (!mfxdec->decoder)
 		return FALSE;
 
 	return TRUE;
 }
 
-static void
-gst_mfxdec_purge(GstMfxDec * decode)
-{
-	GstMfxDecoderStatus status;
-
-	if (!decode->decoder)
-		return;
-
-	//status = gst_mfx_decoder_flush(decode->decoder);
-	//if (status != GST_MFX_DECODER_STATUS_SUCCESS)
-		//GST_INFO_OBJECT(decode, "failed to flush decoder (status %d)", status);
-
-	/* Purge all decoded frames as we don't need them (e.g. flush and close)
-	* Releasing the frames is important, otherwise the frames are not
-	* freed. */
-	/*do {
-		GstVideoCodecFrame *frame = NULL;
-
-		status =
-			gst_vaapi_decoder_get_frame_with_timeout(decode->decoder, &frame, 0);
-		if (frame) {
-			gst_video_decoder_release_frame(GST_VIDEO_DECODER(decode), frame);
-			gst_video_codec_frame_unref(frame);
-		}
-	} while (status == GST_MFX_DECODER_STATUS_SUCCESS);*/
-}
 
 static void
 gst_mfxdec_destroy(GstMfxDec * decode)
 {
-	gst_mfxdec_purge(decode);
-
 	gst_mfx_decoder_replace(&decode->decoder, NULL);
 	gst_caps_replace(&decode->decoder_caps, NULL);
 
@@ -437,23 +407,7 @@ gst_mfxdec_finalize(GObject * object)
 static gboolean
 gst_mfxdec_open(GstVideoDecoder * vdec)
 {
-	GstMfxDec *const decode = GST_MFXDEC(vdec);
-	GstMfxDisplay *const old_display = GST_MFX_PLUGIN_BASE_DISPLAY(decode);
-	gboolean success;
-
-	/* Let GstVideoContext ask for a proper display to its neighbours */
-	/* Note: steal old display that may be allocated from get_caps()
-	so that to retain a reference to it, thus avoiding extra
-	initialization steps if we turn out to simply re-use the
-	existing (cached) VA display */
-	GST_MFX_PLUGIN_BASE_DISPLAY(decode) = NULL;
-	success = gst_mfxdec_ensure_display(decode);
-	if (success)
-        GST_MFX_PLUGIN_BASE(decode)->alloc_ctx.va_dpy =
-            GST_MFX_DISPLAY_VADISPLAY(GST_MFX_PLUGIN_BASE(decode)->display);
-	if (old_display)
-		gst_mfx_display_unref(old_display);
-	return success;
+	return gst_mfxdec_ensure_context(GST_MFXDEC(vdec));
 }
 
 static gboolean
@@ -485,8 +439,6 @@ gst_mfxdec_set_format(GstVideoDecoder * vdec, GstVideoCodecState * state)
 {
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(vdec);
 	GstMfxDec *const decode = GST_MFXDEC(vdec);
-
-	GstMfxContextAllocatorVaapi *ctx = &GST_MFX_PLUGIN_BASE(decode)->alloc_ctx;
 
 	if (!gst_mfxdec_input_state_replace(decode, state))
 		return TRUE;

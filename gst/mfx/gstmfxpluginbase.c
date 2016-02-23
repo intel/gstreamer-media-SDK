@@ -11,36 +11,15 @@
 
 static gpointer plugin_parent_class = NULL;
 
-/* GstVideoContext interface */
-static void
-plugin_set_display(GstMfxPluginBase * plugin, GstMfxDisplay * display)
-{
-	const gchar *const display_name =
-		gst_mfx_display_get_display_name(display);
-
-	if (plugin->display_name && g_strcmp0(plugin->display_name, display_name)) {
-		GST_DEBUG_OBJECT(plugin, "incompatible display name '%s', requested '%s'",
-			display_name, plugin->display_name);
-		gst_mfx_display_replace(&plugin->display, NULL);
-	}
-	else {
-		GST_INFO_OBJECT(plugin, "set display %p", display);
-		gst_mfx_display_replace(&plugin->display, display);
-		plugin->display_type = gst_mfx_display_get_display_type(display);
-		gst_mfx_plugin_base_set_display_name(plugin, display_name);
-	}
-	gst_mfx_display_unref(display);
-}
-
 static void
 plugin_set_context(GstElement * element, GstContext * context)
 {
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(element);
 	GstElementClass *element_class = GST_ELEMENT_CLASS(plugin_parent_class);
-	GstMfxDisplay *display = NULL;
+	GstMfxContext *mfx_ctx = NULL;
 
-	if (gst_mfx_video_context_get_display(context, &display))
-		plugin_set_display(plugin, display);
+	if (gst_mfx_video_context_get_context(context, &mfx_ctx))
+        gst_mfx_context_replace(&plugin->context, mfx_ctx);
 
 	if (element_class->set_context)
 		element_class->set_context(element, context);
@@ -56,11 +35,6 @@ default_has_interface(GstMfxPluginBase * plugin, GType type)
 {
 	return FALSE;
 }
-
-/*static void
-default_display_changed(GstMfxPluginBase * plugin)
-{
-}*/
 
 static gboolean
 plugin_update_sinkpad_info_from_buffer(GstMfxPluginBase * plugin,
@@ -93,7 +67,6 @@ void
 gst_mfx_plugin_base_class_init(GstMfxPluginBaseClass * klass)
 {
 	klass->has_interface = default_has_interface;
-	//klass->display_changed = default_display_changed;
 
 	plugin_parent_class = g_type_class_peek_parent(klass);
 
@@ -106,8 +79,6 @@ gst_mfx_plugin_base_init(GstMfxPluginBase * plugin,
 	GstDebugCategory * debug_category)
 {
 	plugin->debug_category = debug_category;
-	plugin->display_type = GST_MFX_DISPLAY_TYPE_ANY;
-	plugin->display_type_req = GST_MFX_DISPLAY_TYPE_ANY;
 
 	/* sink pad */
 	plugin->sinkpad = gst_element_get_static_pad(GST_ELEMENT(plugin), "sink");
@@ -126,7 +97,6 @@ void
 gst_mfx_plugin_base_finalize(GstMfxPluginBase * plugin)
 {
 	gst_mfx_plugin_base_close(plugin);
-	g_free(plugin->display_name);
 	if (plugin->sinkpad)
 		gst_object_unref(plugin->sinkpad);
 	if (plugin->srcpad)
@@ -158,7 +128,7 @@ gst_mfx_plugin_base_open(GstMfxPluginBase * plugin)
 void
 gst_mfx_plugin_base_close(GstMfxPluginBase * plugin)
 {
-	gst_mfx_display_replace(&plugin->display, NULL);
+	gst_mfx_context_replace(&plugin->context, NULL);
 	//gst_object_replace(&plugin->gl_context, NULL);
 
 	gst_caps_replace(&plugin->sinkpad_caps, NULL);
@@ -177,66 +147,6 @@ gst_mfx_plugin_base_close(GstMfxPluginBase * plugin)
 }
 
 /**
-* gst_mfx_plugin_base_has_display_type:
-* @plugin: a #GstMfxPluginBase
-* @display_type_req: the desired #GstMfxDisplayType
-*
-* Checks whether the @plugin elements already has a #GstMfxDisplay
-* instance compatible with type @display_type_req.
-*
-* Return value: %TRUE if @plugin has a compatible display, %FALSE otherwise
-*/
-gboolean
-gst_mfx_plugin_base_has_display_type(GstMfxPluginBase * plugin,
-	GstMfxDisplayType display_type_req)
-{
-	GstMfxDisplayType display_type;
-
-	if (!plugin->display)
-		return FALSE;
-
-	display_type = plugin->display_type;
-	if (gst_mfx_display_type_is_compatible(display_type, display_type_req))
-		return TRUE;
-
-	display_type = gst_mfx_display_get_class_type(plugin->display);
-	if (gst_mfx_display_type_is_compatible(display_type, display_type_req))
-		return TRUE;
-	return FALSE;
-}
-
-/**
-* gst_mfx_plugin_base_set_display_type:
-* @plugin: a #GstMfxPluginBase
-* @display_type: the new request #GstMfxDisplayType
-*
-* Requests a new display type. The change is effective at the next
-* call to gst_mfx_plugin_base_ensure_display().
-*/
-void
-gst_mfx_plugin_base_set_display_type(GstMfxPluginBase * plugin,
-	GstMfxDisplayType display_type)
-{
-	plugin->display_type_req = display_type;
-}
-
-/**
-* gst_mfx_plugin_base_set_display_name:
-* @plugin: a #GstMfxPluginBase
-* @display_name: the new display name to match
-*
-* Sets the name of the display to look for. The change is effective
-* at the next call to gst_mfx_plugin_base_ensure_display().
-*/
-void
-gst_mfx_plugin_base_set_display_name(GstMfxPluginBase * plugin,
-	const gchar * display_name)
-{
-	g_free(plugin->display_name);
-	plugin->display_name = g_strdup(display_name);
-}
-
-/**
 * gst_mfx_plugin_base_ensure_display:
 * @plugin: a #GstMfxPluginBase
 *
@@ -247,18 +157,13 @@ gst_mfx_plugin_base_set_display_name(GstMfxPluginBase * plugin,
 *   type, %FALSE otherwise.
 */
 gboolean
-gst_mfx_plugin_base_ensure_display(GstMfxPluginBase * plugin)
+gst_mfx_plugin_base_ensure_context(GstMfxPluginBase * plugin)
 {
-	if (gst_mfx_plugin_base_has_display_type(plugin, plugin->display_type_req))
-		return TRUE;
-	gst_mfx_display_replace(&plugin->display, NULL);
+	gst_mfx_context_replace(&plugin->context, NULL);
 
-	if (!gst_mfx_ensure_display(GST_ELEMENT(plugin),
-		plugin->display_type_req))
+	if (!gst_mfx_ensure_context(GST_ELEMENT(plugin)))
 		return FALSE;
-	plugin->display_type = gst_mfx_display_get_display_type(plugin->display);
 
-	//GST_MFX_PLUGIN_BASE_GET_CLASS(plugin)->display_changed(plugin);
 	return TRUE;
 }
 
@@ -281,7 +186,7 @@ ensure_sinkpad_buffer_pool(GstMfxPluginBase * plugin, GstCaps * caps)
 	GstVideoInfo vi;
 	gboolean need_pool;
 
-	if (!gst_mfx_plugin_base_ensure_display(plugin))
+	if (!gst_mfx_plugin_base_ensure_context(plugin))
 		return FALSE;
 
 	if (plugin->sinkpad_buffer_pool) {
@@ -295,7 +200,7 @@ ensure_sinkpad_buffer_pool(GstMfxPluginBase * plugin, GstCaps * caps)
 		plugin->sinkpad_buffer_size = 0;
 	}
 
-	pool = gst_mfx_video_buffer_pool_new(plugin->display, &plugin->alloc_ctx);
+	pool = gst_mfx_video_buffer_pool_new(&plugin->alloc_ctx);
 	if (!pool)
 		goto error_create_pool;
 
@@ -452,7 +357,7 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	gboolean has_video_meta = FALSE;
 	gboolean has_video_alignment = FALSE;
 
-	g_return_val_if_fail(plugin->display != NULL, FALSE);
+	g_return_val_if_fail(plugin->context != NULL, FALSE);
 
 	gst_query_parse_allocation(query, &caps, NULL);
 
@@ -465,8 +370,8 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	/* Make sure the display we pass down to the buffer pool is actually
 	the expected one, especially when the downstream element requires
 	a GLX or EGL display */
-	if (!gst_mfx_plugin_base_ensure_display(plugin))
-		goto error_ensure_display;
+	if (!gst_mfx_plugin_base_ensure_context(plugin))
+		goto error_ensure_context;
 
 	gst_video_info_init(&vi);
 	gst_video_info_from_caps(&vi, caps);
@@ -498,7 +403,7 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 			"Pool hasn't GstMfxVideoMeta");
 		if (pool)
 			gst_object_unref(pool);
-		pool = gst_mfx_video_buffer_pool_new(plugin->display, &plugin->alloc_ctx);
+		pool = gst_mfx_video_buffer_pool_new(&plugin->alloc_ctx);
 		if (!pool)
 			goto error_create_pool;
 
@@ -537,10 +442,9 @@ error_no_caps:
 		GST_ERROR_OBJECT(plugin, "no caps specified");
 		return FALSE;
 	}
-error_ensure_display:
+error_ensure_context:
 	{
-		GST_ERROR_OBJECT(plugin, "failed to ensure display of type %d",
-			plugin->display_type_req);
+		GST_ERROR_OBJECT(plugin, "failed to ensure context");
 		return FALSE;
 	}
 error_create_pool:

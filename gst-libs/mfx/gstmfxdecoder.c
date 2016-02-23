@@ -2,52 +2,10 @@
 #include "gstmfxdecoder.h"
 #include "gstmfxobjectpool_priv.h"
 #include "gstmfxvideometa.h"
+#include "gstmfxsurfaceproxy.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
-
-/**
-* gst_mfx_decoder_ref:
-* @decoder: a #GstMfxDecoder
-*
-* Atomically increases the reference count of the given @decoder by one.
-*
-* Returns: The same @decoder argument
-*/
-GstMfxDecoder *
-gst_mfx_decoder_ref(GstMfxDecoder * decoder)
-{
-	return gst_mfx_mini_object_ref(decoder);
-}
-
-/**
-* gst_mfx_decoder_unref:
-* @decoder: a #GstMfxDecoder
-*
-* Atomically decreases the reference count of the @decoder by one. If
-* the reference count reaches zero, the decoder will be free'd.
-*/
-void
-gst_mfx_decoder_unref(GstMfxDecoder * decoder)
-{
-	gst_mfx_mini_object_unref(decoder);
-}
-
-/**
-* gst_mfx_decoder_replace:
-* @old_decoder_ptr: a pointer to a #GstMfxDecoder
-* @new_decoder: a #GstMfxDecoder
-*
-* Atomically replaces the decoder decoder held in @old_decoder_ptr
-* with @new_decoder. This means that @old_decoder_ptr shall reference
-* a valid decoder. However, @new_decoder can be NULL.
-*/
-void
-gst_mfx_decoder_replace(GstMfxDecoder ** old_decoder_ptr,
-GstMfxDecoder * new_decoder)
-{
-	gst_mfx_mini_object_replace(old_decoder_ptr, new_decoder);
-}
 
 mfxU32
 gst_mfx_decoder_get_codec(GstMfxDecoder * decoder)
@@ -78,6 +36,7 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
     g_async_queue_unref(decoder->surfaces);
 	g_byte_array_unref(decoder->bitstream);
+	gst_mfx_context_unref(decoder->context);
 	gst_mfx_object_pool_unref(decoder->pool);
 
 	MFXVideoDECODE_Close(decoder->session);
@@ -86,8 +45,7 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 
 static void
 gst_mfx_decoder_init(GstMfxDecoder * decoder,
-	GstMfxDisplay * display, mfxU32 codec, mfxU16 async_depth,
-	GstMfxContextAllocatorVaapi * ctx)
+	GstMfxContext * context, mfxU32 codec, mfxU16 async_depth)
 {
 	memset(&(decoder->session), 0, sizeof (mfxSession));
 	memset(&(decoder->bs), 0, sizeof (mfxBitstream));
@@ -97,9 +55,7 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	decoder->param.mfx.CodecId = codec;
 	decoder->param.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	decoder->param.AsyncDepth = async_depth;
-	decoder->alloc_ctx = ctx;
-	decoder->display = gst_mfx_display_ref(display);
-	decoder->context = NULL;
+	decoder->context = gst_mfx_context_ref(context);
 	decoder->surfaces = g_async_queue_new();
 	decoder->pool = NULL;
 	decoder->decoder_inited = FALSE;
@@ -118,16 +74,18 @@ gst_mfx_decoder_class(void)
 }
 
 GstMfxDecoder *
-gst_mfx_decoder_new(GstMfxDisplay * display,
-	GstMfxContextAllocatorVaapi *allocator, mfxU32 codec, mfxU16 async_depth)
+gst_mfx_decoder_new(GstMfxContext * context,
+	mfxU32 codec, mfxU16 async_depth)
 {
 	GstMfxDecoder *decoder;
+
+	g_return_val_if_fail(context != NULL, NULL);
 
 	decoder = gst_mfx_mini_object_new(gst_mfx_decoder_class());
 	if (!decoder)
 		goto error;
 
-	gst_mfx_decoder_init(decoder, display, codec, async_depth, allocator);
+	gst_mfx_decoder_init(decoder, context, codec, async_depth);
 
 	return decoder;
 
@@ -136,16 +94,37 @@ error:
 	return NULL;
 }
 
-static gboolean
-gst_mfx_decoder_ensure_context(GstMfxDecoder *decoder)
+GstMfxDecoder *
+gst_mfx_decoder_ref(GstMfxDecoder * decoder)
 {
-	if (!decoder->context) {
-		decoder->context = gst_mfx_context_new(decoder->alloc_ctx);
-		if (!decoder->context)
-			return FALSE;
+	g_return_val_if_fail(decoder != NULL, NULL);
 
+	return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(decoder));
+}
+
+void
+gst_mfx_decoder_unref(GstMfxDecoder * decoder)
+{
+	gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(decoder));
+}
+
+void
+gst_mfx_decoder_replace(GstMfxDecoder ** old_decoder_ptr,
+	GstMfxDecoder * new_decoder)
+{
+	g_return_if_fail(old_decoder_ptr != NULL);
+
+	gst_mfx_mini_object_replace((GstMfxMiniObject **)old_decoder_ptr,
+		GST_MFX_MINI_OBJECT(new_decoder));
+}
+
+static gboolean
+gst_mfx_decoder_ensure_session(GstMfxDecoder *decoder)
+{
+	if (!decoder->session) {
 		decoder->session = gst_mfx_context_get_session(decoder->context);
-		MFXVideoCORE_SetHandle(decoder->session, MFX_HANDLE_VA_DISPLAY, decoder->alloc_ctx->va_dpy);
+		MFXVideoCORE_SetHandle(decoder->session, MFX_HANDLE_VA_DISPLAY,
+            GST_MFX_DISPLAY_VADISPLAY(GST_MFX_CONTEXT_DISPLAY(decoder->context)));
 	}
 
 	return TRUE;
@@ -181,33 +160,33 @@ gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder)
 }
 
 static gint
-sync_output_surface(gconstpointer surface, gconstpointer surf)
+sync_output_surface(gconstpointer proxy, gconstpointer surf)
 {
-    GstMfxSurface *_surface = (GstMfxSurface *)surface;
+    GstMfxSurfaceProxy *_proxy = (GstMfxSurfaceProxy *)proxy;
     mfxFrameSurface1 *_surf = (mfxFrameSurface1 *)surf;
 
-    return (*(int *)(_surf->Data.MemId) !=
-            *(int *)_surface->surface->Data.MemId);
+    return (*(GstMfxID *)(_surf->Data.MemId) !=
+            GST_MFX_SURFACE_PROXY_MEMID(_proxy));
 }
 
 static void
-put_unused_frames(gpointer surface, gpointer pool)
+release_surfaces(gpointer proxy, gpointer pool)
 {
-	GstMfxSurface *_surface = (GstMfxSurface *)surface;
+	GstMfxSurfaceProxy *_proxy = (GstMfxSurfaceProxy *)proxy;
 	GstMfxObjectPool *_pool = (GstMfxObjectPool *)pool;
 
-	mfxFrameSurface1 *surf = gst_mfx_surface_get_frame_surface(_surface);
-	if (surf && !surf->Data.Locked)
-		gst_mfx_object_pool_put_object(_pool, _surface);
+	mfxFrameSurface1 *surface = gst_mfx_surface_proxy_get_frame_surface(_proxy);
+	if (surface && !surface->Data.Locked)
+		gst_mfx_object_pool_put_object(_pool, _proxy);
 }
 
 static gboolean
-get_surface(GstMfxDecoder *decoder, GstMfxSurface **surface)
+get_surface(GstMfxDecoder *decoder, GstMfxSurfaceProxy **proxy)
 {
-	g_list_foreach(decoder->pool->used_objects, put_unused_frames, decoder->pool);
+	g_list_foreach(decoder->pool->used_objects, release_surfaces, decoder->pool);
 
-	*surface = gst_mfx_object_pool_get_object(decoder->pool);
-    if (!*surface)
+	*proxy = gst_mfx_surface_proxy_new_from_pool(decoder->pool);
+    if (!*proxy)
 		return FALSE;
 
 	return TRUE;
@@ -219,7 +198,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_READY;
 	mfxStatus sts = MFX_ERR_NONE;
 
-	if (!gst_mfx_decoder_ensure_context(decoder))
+	if (!gst_mfx_decoder_ensure_session(decoder))
 		return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 
     sts = gst_mfx_decoder_load_decoder_plugins(decoder);
@@ -241,7 +220,8 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 		return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 	}
 
-	decoder->pool = gst_mfx_surface_pool_new(decoder->display, decoder->alloc_ctx);
+	decoder->pool = gst_mfx_surface_pool_new(
+        GST_MFX_CONTEXT_ALLOCATOR_CONTEXT(decoder->context));
 	if (!decoder->pool)
 		return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 
@@ -256,10 +236,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
 
 	GstMfxSurfaceProxy *proxy;
-	GstMfxSurface *surface;
-	GstMfxRectangle crop_rect;
-	mfxFrameSurface1 *insurf;
-	mfxFrameSurface1 *outsurf = NULL;
+	mfxFrameSurface1 *insurf, *outsurf = NULL;
 	mfxSyncPoint sync;
 	mfxStatus sts = MFX_ERR_NONE;
 
@@ -287,16 +264,16 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	}
 
 	do {
-		if (!get_surface(decoder, &surface))
+		if (!get_surface(decoder, &proxy))
 			return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 
-		insurf = gst_mfx_surface_get_frame_surface(surface);
+		insurf = gst_mfx_surface_proxy_get_frame_surface(proxy);
 		sts = MFXVideoDECODE_DecodeFrameAsync(decoder->session, &decoder->bs,
 			insurf, &outsurf, &sync);
 
-		if (sts == MFX_WRN_DEVICE_BUSY)
+		if (MFX_WRN_DEVICE_BUSY == sts)
 			g_usleep(500);
-	} while (sts == MFX_WRN_DEVICE_BUSY || sts == MFX_ERR_MORE_SURFACE);
+	} while (MFX_WRN_DEVICE_BUSY == sts || MFX_ERR_MORE_SURFACE == sts);
 
 	if (sts == MFX_ERR_MORE_DATA || sts > 0) {
 		return GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
@@ -314,23 +291,15 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
             decoder->bs.DataOffset);
 		decoder->bs.DataOffset = 0;
 
-		if (GST_MFX_OBJECT_ID(surface) != *(int*)(outsurf->Data.MemId)) {
+		if (GST_MFX_SURFACE_PROXY_MEMID(proxy) != *(GstMfxID *)(outsurf->Data.MemId)) {
             GList *l = g_list_find_custom(decoder->pool->used_objects, outsurf,
                                           sync_output_surface);
-            surface = GST_MFX_SURFACE(l->data);
+            proxy = GST_MFX_SURFACE_PROXY(l->data);
 		}
 
 		do {
             sts = MFXVideoCORE_SyncOperation(decoder->session, sync, 1000);
         } while (sts == MFX_WRN_IN_EXECUTION);
-
-		crop_rect.x = surface->surface->Info.CropX;
-		crop_rect.y = surface->surface->Info.CropY;
-		crop_rect.width = surface->surface->Info.CropW;
-		crop_rect.height = surface->surface->Info.CropH;
-
-        proxy = gst_mfx_surface_proxy_new(surface);
-		gst_mfx_surface_proxy_set_crop_rect(proxy, &crop_rect);
 
 		g_async_queue_push(decoder->surfaces, proxy);
 	}

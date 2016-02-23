@@ -27,7 +27,7 @@ typedef struct _FrameState FrameState;
 struct _FrameState
 {
     GstMfxWindow *window;
-    GstMfxSurface *surface;
+    GstMfxSurfaceProxy *surface;
     struct wl_callback *callback;
 };
 
@@ -194,7 +194,7 @@ error:
 
 static gboolean
 gst_mfx_window_wayland_render (GstMfxWindow * window,
-		GstMfxSurface * surface,
+		GstMfxSurfaceProxy * surface,
 		const GstMfxRectangle * src_rect,
 		const GstMfxRectangle * dst_rect)
 {
@@ -210,7 +210,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	gint offsets[3], pitches[3];
 	VAImage *va_image;
 
-	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
+	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(surface);
 	if(!buffer_proxy)
 		return FALSE;
 
@@ -430,7 +430,7 @@ gst_mfx_window_wayland_destroy(GstMfxWindow * window)
 		wl_event_queue_destroy(priv->event_queue);
 		priv->event_queue = NULL;
 	}
-#if HAVE_EGL
+#if USE_EGL
 	if (priv->egl_window) {
 		wl_egl_window_destroy(priv->egl_window);
 		priv->egl_window = NULL;

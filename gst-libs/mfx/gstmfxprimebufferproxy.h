@@ -18,9 +18,6 @@ G_BEGIN_DECLS
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new();
-
-GstMfxPrimeBufferProxy *
 gst_mfx_prime_buffer_proxy_ref(GstMfxPrimeBufferProxy * proxy);
 
 void

@@ -1,32 +1,7 @@
-/*
-*  gstmfxdecoder.h - VA decoder abstraction
-*
-*  Copyright (C) 2010-2011 Splitted-Desktop Systems
-*    Author: Gwenole Beauchesne <gwenole.beauchesne@splitted-desktop.com>
-*  Copyright (C) 2011-2013 Intel Corporation
-*    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
-*
-*  This library is free software; you can redistribute it and/or
-*  modify it under the terms of the GNU Lesser General Public License
-*  as published by the Free Software Foundation; either version 2.1
-*  of the License, or (at your option) any later version.
-*
-*  This library is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-*  Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; if not, write to the Free
-*  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-*  Boston, MA 02110-1301 USA
-*/
-
 #ifndef GST_MFX_DECODER_H
 #define GST_MFX_DECODER_H
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurface_priv.h"
 #include "gstmfxobjectpool.h"
 #include "gstmfxcontext.h"
 
@@ -42,19 +17,15 @@ struct _GstMfxDecoder
 	/*< private >*/
 	GstMfxMiniObject parent_instance;
 
-	GstMfxDisplay *display;
 	GstMfxContext *context;
 	GstMfxObjectPool *pool;
 	GAsyncQueue *surfaces;
 	GByteArray *bitstream;
 
 	mfxSession session;
-	mfxFrameAllocRequest req;
 	mfxVideoParam param;
 	mfxBitstream bs;
 	mfxU32 codec;
-
-	GstMfxContextAllocatorVaapi *alloc_ctx;
 
 	gboolean decoder_inited;
 };
@@ -89,7 +60,6 @@ typedef enum {
 	GST_MFX_DECODER_STATUS_ERROR_INVALID_SURFACE,
 	GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER,
 	GST_MFX_DECODER_STATUS_ERROR_UNSUPPORTED_PROFILE,
-	GST_MFX_DECODER_STATUS_ERROR_UNSUPPORTED_CHROMA_FORMAT,
 	GST_MFX_DECODER_STATUS_ERROR_INVALID_PARAMETER,
 	GST_MFX_DECODER_STATUS_ERROR_UNKNOWN = -1
 } GstMfxDecoderStatus;
@@ -115,10 +85,9 @@ GstMfxDecoderStatus
 gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	GstVideoCodecFrame * frame);
 
-
 GstMfxDecoder *
-gst_mfx_decoder_new(GstMfxDisplay * display,
-	GstMfxContextAllocatorVaapi *allocator, mfxU32 codec, mfxU16 async_depth);
+gst_mfx_decoder_new(GstMfxContext * context,
+	mfxU32 codec, mfxU16 async_depth);
 
 G_END_DECLS
 

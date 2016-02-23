@@ -2,9 +2,11 @@
 #include "gstmfxprimebufferproxy.h"
 #include "gstmfxprimebufferproxy_priv.h"
 #include "video-utils.h"
-#include "gstmfxobject_priv.h"
+#include "gstmfxsurfaceproxy.h"
 #include "gstvaapiimage_priv.h"
+#include "gstmfxcontext.h"
 #include <gmodule.h>
+#include <va/va_drmcommon.h>
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -46,32 +48,34 @@ vpg_load_symbol(const gchar* vpg_extension)
 static gboolean
 gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 {
-    VASurfaceID surf = GST_MFX_OBJECT_ID(proxy->parent);
-    GstMfxSurface const *surface = GST_MFX_SURFACE(proxy->parent);
+    GstMfxContextAllocator *ctx;
+    VASurfaceID surf;
     VAStatus va_status;
-
-    proxy->image = gst_mfx_surface_derive_image(surface);
 
     if (!proxy->parent)
 	    return FALSE;
 
+	surf = GST_MFX_SURFACE_PROXY_MEMID(proxy->parent);
+	ctx = gst_mfx_surface_proxy_get_allocator_context(proxy->parent);
+    proxy->image = gst_mfx_surface_proxy_derive_image(proxy->parent);
+    proxy->va_img = &proxy->image->image;
+
     if(vpg_load_symbol("vpgExtGetSurfaceHandle"))
     {
-        GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
-        va_status = g_va_get_surface_handle(GST_MFX_OBJECT_VADISPLAY(proxy->parent)
+        GST_MFX_DISPLAY_LOCK(ctx->display);
+        va_status = g_va_get_surface_handle(GST_MFX_DISPLAY_VADISPLAY(ctx->display)
                 , &(surf)
                 , &(proxy->fd));
-        GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
+        GST_MFX_DISPLAY_UNLOCK(ctx->display);
         if(!vaapi_check_status(va_status, "vpgExtGetSurfaceHandle()"))
             return FALSE;
     } else {
         proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
-        GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
-        va_status = vaAcquireBufferHandle(GST_MFX_OBJECT_VADISPLAY(proxy->parent)
-		        , GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(proxy).buf
+        GST_MFX_DISPLAY_LOCK(ctx->display);
+        va_status = vaAcquireBufferHandle(GST_MFX_DISPLAY_VADISPLAY(ctx->display)
+		        , proxy->image->image.buf
 		        , &(proxy->buf_info));
-
-        GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
+        GST_MFX_DISPLAY_UNLOCK(ctx->display);
         if(!vaapi_check_status(va_status, "vaAcquireBufferHandle()"))
 	        return FALSE;
         proxy->fd = proxy->buf_info.handle;
@@ -82,16 +86,18 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 static void
 gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
 {
-	if(g_va_get_surface_handle) {
+	if(g_va_get_surface_handle)
 		close(proxy->fd);
-    }
 	else {
-        GST_MFX_OBJECT_LOCK_DISPLAY(proxy->parent);
-	    vaReleaseBufferHandle(GST_MFX_DISPLAY_VADISPLAY(GST_MFX_OBJECT_DISPLAY(proxy->parent)), proxy->image->image.buf);
+	    GstMfxContextAllocator *ctx =
+            gst_mfx_surface_proxy_get_allocator_context(proxy->parent);
+        GST_MFX_DISPLAY_LOCK(ctx->display);
+	    vaReleaseBufferHandle(GST_MFX_DISPLAY_VADISPLAY(ctx->display),
+            proxy->image->image.buf);
+        GST_MFX_DISPLAY_UNLOCK(ctx->display);
         gst_mfx_object_unref(proxy->image);
-        GST_MFX_OBJECT_UNLOCK_DISPLAY(proxy->parent);
 	}
-	gst_mfx_object_replace(&proxy->parent, NULL);
+	gst_mfx_surface_proxy_replace(&proxy->parent, NULL);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -105,33 +111,18 @@ gst_mfx_prime_buffer_proxy_class(void)
 }
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new()
+gst_mfx_prime_buffer_proxy_new_from_surface(GstMfxSurfaceProxy * parent)
 {
 	GstMfxPrimeBufferProxy *proxy;
+
+	g_return_val_if_fail(parent != NULL, NULL);
 
 	proxy = (GstMfxPrimeBufferProxy *)
 		gst_mfx_mini_object_new(gst_mfx_prime_buffer_proxy_class());
 	if (!proxy)
 		return NULL;
 
-	proxy->parent = NULL;
-
-	return proxy;
-}
-
-GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_object(GstMfxObject * object)
-{
-	GstMfxPrimeBufferProxy *proxy;
-
-	g_return_val_if_fail(object != NULL, NULL);
-
-	proxy = (GstMfxPrimeBufferProxy *)
-		gst_mfx_mini_object_new(gst_mfx_prime_buffer_proxy_class());
-	if (!proxy)
-		return NULL;
-
-	proxy->parent = gst_mfx_object_ref(object);
+	proxy->parent = gst_mfx_surface_proxy_ref(parent);
 
 	if (!gst_mfx_prime_buffer_proxy_acquire_handle(proxy))
 		goto error_acquire_handle;

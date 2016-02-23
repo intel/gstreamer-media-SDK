@@ -1,7 +1,7 @@
 #include "sysdeps.h"
 #include "gstmfxobjectpool.h"
 #include "gstmfxobjectpool_priv.h"
-#include "gstmfxobject.h"
+#include "gstmfxminiobject.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -27,11 +27,8 @@ gst_mfx_object_pool_alloc_object (GstMfxObjectPool * pool)
 }
 
 void
-gst_mfx_object_pool_init (GstMfxObjectPool * pool, GstMfxDisplay * display,
-    GstMfxPoolObjectType object_type)
+gst_mfx_object_pool_init (GstMfxObjectPool * pool)
 {
-    pool->object_type = object_type;
-    pool->display = gst_mfx_display_ref (display);
     pool->used_objects = NULL;
     pool->used_count = 0;
     pool->capacity = 0;
@@ -43,10 +40,9 @@ gst_mfx_object_pool_init (GstMfxObjectPool * pool, GstMfxDisplay * display,
 void
 gst_mfx_object_pool_finalize (GstMfxObjectPool * pool)
 {
-    g_list_free_full (pool->used_objects, gst_mfx_object_unref);
-    g_queue_foreach (&pool->free_objects, (GFunc) gst_mfx_object_unref, NULL);
+    g_list_free_full (pool->used_objects, gst_mfx_mini_object_unref);
+    g_queue_foreach (&pool->free_objects, (GFunc) gst_mfx_mini_object_unref, NULL);
     g_queue_clear (&pool->free_objects);
-    gst_mfx_display_replace (&pool->display, NULL);
     g_mutex_clear (&pool->mutex);
 }
 
@@ -94,40 +90,6 @@ gst_mfx_object_pool_replace (GstMfxObjectPool ** old_pool_ptr,
 }
 
 /**
- * gst_mfx_object_pool_get_display:
- * @pool: a #GstMfxObjectPool
- *
- * Retrieves the #GstMfxDisplay the @pool is bound to. The @pool
- * owns the returned object and it shall not be unref'ed.
- *
- * Return value: the #GstMfxDisplay the @pool is bound to
- */
-GstMfxDisplay *
-gst_mfx_object_pool_get_display (GstMfxObjectPool * pool)
-{
-    g_return_val_if_fail (pool != NULL, NULL);
-
-    return pool->display;
-}
-
-/**
- * gst_mfx_object_pool_get_object_type:
- * @pool: a #GstMfxObjectPool
- *
- * Retrieves the type of objects the object @pool supports.
- *
- * Return value: the #GstMfxObjectPoolObjectType of the underlying pool
- *   objects
- */
-GstMfxPoolObjectType
-gst_mfx_object_pool_get_object_type (GstMfxObjectPool * pool)
-{
-    g_return_val_if_fail (pool != NULL, (GstMfxPoolObjectType) 0);
-
-    return pool->object_type;
-}
-
-/**
  * gst_mfx_object_pool_get_object:
  * @pool: a #GstMfxObjectPool
  *
@@ -158,7 +120,7 @@ gst_mfx_object_pool_get_object_unlocked (GstMfxObjectPool * pool)
 
     ++pool->used_count;
     pool->used_objects = g_list_prepend (pool->used_objects, object);
-    return gst_mfx_object_ref (object);
+    return gst_mfx_mini_object_ref (object);
 }
 
 gpointer
@@ -194,7 +156,7 @@ gst_mfx_object_pool_put_object_unlocked (GstMfxObjectPool * pool,
     if (!elem)
         return;
 
-    gst_mfx_object_unref (object);
+    gst_mfx_mini_object_unref (object);
     --pool->used_count;
     pool->used_objects = g_list_delete_link (pool->used_objects, elem);
     g_queue_push_tail (&pool->free_objects, object);
@@ -209,77 +171,6 @@ gst_mfx_object_pool_put_object (GstMfxObjectPool * pool, gpointer object)
     g_mutex_lock (&pool->mutex);
     gst_mfx_object_pool_put_object_unlocked (pool, object);
     g_mutex_unlock (&pool->mutex);
-}
-
-/**
- * gst_mfx_object_pool_add_object:
- * @pool: a #GstMfxObjectPool
- * @object: the object to add to the pool
- *
- * Adds the @object to the pool. The pool then holds a reference on
- * the @object. This operation does not change the capacity of the
- * pool.
- *
- * Return value: %TRUE on success.
- */
-static inline gboolean
-gst_mfx_object_pool_add_object_unlocked (GstMfxObjectPool * pool,
-    gpointer object)
-{
-    g_queue_push_tail (&pool->free_objects, gst_mfx_object_ref (object));
-    return TRUE;
-}
-
-gboolean
-gst_mfx_object_pool_add_object (GstMfxObjectPool * pool, gpointer object)
-{
-    gboolean success;
-
-    g_return_val_if_fail (pool != NULL, FALSE);
-    g_return_val_if_fail (object != NULL, FALSE);
-
-    g_mutex_lock (&pool->mutex);
-    success = gst_mfx_object_pool_add_object_unlocked (pool, object);
-    g_mutex_unlock (&pool->mutex);
-    return success;
-}
-
-/**
- * gst_mfx_object_pool_add_objects:
- * @pool: a #GstMfxObjectPool
- * @objects: a #GPtrArray of objects
- *
- * Adds the @objects to the pool. The pool then holds a reference on
- * the @objects. This operation does not change the capacity of the
- * pool and is just a wrapper around gst_mfx_object_pool_add_object().
- *
- * Return value: %TRUE on success.
- */
-static gboolean
-gst_mfx_object_pool_add_objects_unlocked (GstMfxObjectPool * pool,
-    GPtrArray * objects)
-{
-    guint i;
-
-    for (i = 0; i < objects->len; i++) {
-    gpointer const object = g_ptr_array_index (objects, i);
-    if (!gst_mfx_object_pool_add_object_unlocked (pool, object))
-      return FALSE;
-    }
-    return TRUE;
-}
-
-gboolean
-gst_mfx_object_pool_add_objects (GstMfxObjectPool * pool, GPtrArray * objects)
-{
-    gboolean success;
-
-    g_return_val_if_fail (pool != NULL, FALSE);
-
-    g_mutex_lock (&pool->mutex);
-    success = gst_mfx_object_pool_add_objects_unlocked (pool, objects);
-    g_mutex_unlock (&pool->mutex);
-    return success;
 }
 
 /**

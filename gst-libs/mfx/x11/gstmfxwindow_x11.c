@@ -317,38 +317,16 @@ gst_mfx_window_x11_resize(GstMfxWindow * window, guint width, guint height)
 	return !has_errors;
 }
 
-/*static gboolean
+static gboolean
 gst_mfx_window_x11_render(GstMfxWindow * window,
-	GstMfxSurface * surface,
+	GstMfxSurfaceProxy * proxy,
 	const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
-	VASurfaceID surface_id;
-	VAStatus status;
+	
 
-	surface_id = GST_MFX_OBJECT_ID(surface);
-	if (surface_id == VA_INVALID_ID)
-		return FALSE;
-
-	GST_MFX_OBJECT_LOCK_DISPLAY(window);
-	status = vaPutSurface(GST_MFX_OBJECT_VADISPLAY(window),
-		surface_id,
-		GST_MFX_OBJECT_ID(window),
-		src_rect->x,
-		src_rect->y,
-		src_rect->width,
-		src_rect->height,
-		dst_rect->x,
-		dst_rect->y,
-		dst_rect->width,
-		dst_rect->height, NULL, 0, VA_FRAME_PICTURE
-		);
-	GST_MFX_OBJECT_UNLOCK_DISPLAY(window);
-	if (!vaapi_check_status(status, "vaPutSurface()"))
-		return FALSE;
-
-	return TRUE;
-}*/
+	return FALSE;
+}
 
 void
 gst_mfx_window_x11_class_init(GstMfxWindowX11Class * klass)
@@ -365,7 +343,7 @@ gst_mfx_window_x11_class_init(GstMfxWindowX11Class * klass)
 	window_class->get_geometry = gst_mfx_window_x11_get_geometry;
 	window_class->set_fullscreen = gst_mfx_window_x11_set_fullscreen;
 	window_class->resize = gst_mfx_window_x11_resize;
-	//window_class->render = gst_mfx_window_x11_render;
+	window_class->render = gst_mfx_window_x11_render;
 }
 
 #define gst_mfx_window_x11_finalize \
