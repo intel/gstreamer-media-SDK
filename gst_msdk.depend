@@ -1843,7 +1843,7 @@
 	<mfxvideo.h>
 	<mfxjpeg.h>
 
-1456305933 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdecoder.c
+1456357249 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdecoder.c
 	<mfxplugin.h>
 	"gstmfxdecoder.h"
 	"gstmfxsurfacepool.h"
@@ -1856,7 +1856,7 @@
 	"gstmfxsurfacepool.h"
 	"gstmfxcontext.h"
 
-1456308023 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfaceproxy.h
+1456356917 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfaceproxy.h
 	<gst/video/video.h>
 	"gstmfxcontext.h"
 	"gstvaapiimage.h"
@@ -1894,7 +1894,7 @@
 	<mfxvideo.h>
 	<va/va.h>
 
-1456303078 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.h
+1456309972 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.h
 	"gstmfxminiobject.h"
 	"gstmfxdisplay.h"
 	<mfxvideo.h>
@@ -1903,7 +1903,7 @@
 1455878866 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxminiobject.h
 	<glib.h>
 
-1456307984 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfacepool.h
+1456308720 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfacepool.h
 	"gstmfxsurfaceproxy.h"
 	"gstmfxcontext.h"
 	<glib.h>
@@ -1978,11 +1978,10 @@
 	"gstmfxminiobject.h"
 	"gstmfxdebug.h"
 
-1456307592 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfacepool.c
+1456357132 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfacepool.c
 	"sysdeps.h"
 	"gstmfxsurfacepool.h"
 	"gstmfxsurfaceproxy.h"
-	"gstmfxsurfaceproxy_priv.h"
 	"gstmfxminiobject.h"
 	"gstmfxdebug.h"
 
@@ -2063,7 +2062,7 @@
 	"gstmfxdecoder.h"
 	"gstmfxpluginbase.h"
 
-1456214084 /home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.h
+1456309885 /home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.h
 	<gst/base/gstbasetransform.h>
 	<gst/video/gstvideodecoder.h>
 	<gst/video/gstvideoencoder.h>
@@ -2306,13 +2305,12 @@
 	"gstmfxdisplay_priv.h"
 	"gstmfxdebug.h"
 
-1456303078 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.c
+1456357614 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.c
 	"gstmfxcontext.h"
 	"gstmfxdebug.h"
 
-1456307268 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfaceproxy.c
+1456357136 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfaceproxy.c
 	"gstmfxsurfaceproxy.h"
-	"gstmfxsurfaceproxy_priv.h"
 	"gstmfxsurfacepool.h"
 	"gstmfxdebug.h"
 
@@ -2325,13 +2323,13 @@
 	"gstmfxvideobufferpool.h"
 	<gst/allocators/allocators.h>
 
-1456209147 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginutil.c
+1456309628 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginutil.c
 	"sysdeps.h"
 	"gstmfxvideocontext.h"
 	"gstmfxpluginutil.h"
 	"gstmfxpluginbase.h"
 
-1456280024 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideobufferpool.c
+1456357788 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideobufferpool.c
 	"gstmfxvideobufferpool.h"
 	"gstmfxvideomemory.h"
 	"gstmfxdisplay.h"

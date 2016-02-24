@@ -1,14 +1,23 @@
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurfaceproxy_priv.h"
 #include "gstmfxsurfacepool.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-/* Ensure those symbols are actually defined in the resulting libraries */
-#undef gst_mfx_surface_proxy_ref
-#undef gst_mfx_surface_proxy_unref
-#undef gst_mfx_surface_proxy_replace
+struct _GstMfxSurfaceProxy
+{
+	/*< private >*/
+	GstMfxMiniObject parent_instance;
+
+	GstMfxContext *ctx;
+	GstMfxSurfacePool *pool;
+
+	mfxFrameSurface1 *surface;
+	GstVideoFormat format;
+	guint width;
+	guint height;
+	GstMfxRectangle crop_rect;
+};
 
 static gboolean
 mfx_surface_create(GstMfxSurfaceProxy * proxy)
@@ -69,7 +78,7 @@ gst_mfx_surface_proxy_init_properties(GstMfxSurfaceProxy * proxy)
 }
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new_internal(GstMfxContext * ctx)
+gst_mfx_surface_proxy_new(GstMfxContext * ctx)
 {
 	GstMfxSurfaceProxy *proxy;
 
@@ -144,15 +153,13 @@ gst_mfx_surface_proxy_ref(GstMfxSurfaceProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, NULL);
 
-	return gst_mfx_surface_proxy_ref_internal(proxy);
+	return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(proxy));
 }
 
 void
 gst_mfx_surface_proxy_unref(GstMfxSurfaceProxy * proxy)
 {
-	g_return_if_fail(proxy != NULL);
-
-	gst_mfx_surface_proxy_unref_internal(proxy);
+	gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(proxy));
 }
 
 void
@@ -161,7 +168,8 @@ gst_mfx_surface_proxy_replace(GstMfxSurfaceProxy ** old_proxy_ptr,
 {
 	g_return_if_fail(old_proxy_ptr != NULL);
 
-	gst_mfx_surface_proxy_replace_internal(old_proxy_ptr, new_proxy);
+	gst_mfx_mini_object_replace((GstMfxMiniObject **)old_proxy_ptr,
+		GST_MFX_MINI_OBJECT(new_proxy));
 }
 
 mfxFrameSurface1 *

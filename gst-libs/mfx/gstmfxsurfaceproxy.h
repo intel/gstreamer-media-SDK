@@ -26,6 +26,9 @@ typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
 
 GstMfxSurfaceProxy *
+gst_mfx_surface_proxy_new(GstMfxContext * ctx);
+
+GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool);
 
 GstMfxSurfaceProxy *

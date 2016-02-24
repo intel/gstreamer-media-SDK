@@ -150,16 +150,6 @@ gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder)
     return sts;
 }
 
-static gboolean
-get_surface(GstMfxDecoder *decoder, GstMfxSurfaceProxy **proxy)
-{
-	*proxy = gst_mfx_surface_proxy_new_from_pool(decoder->pool);
-    if (!*proxy)
-		return FALSE;
-
-	return TRUE;
-}
-
 static GstMfxDecoderStatus
 gst_mfx_decoder_start(GstMfxDecoder *decoder)
 {
@@ -228,8 +218,9 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	}
 
 	do {
-		if (!get_surface(decoder, &proxy))
-			return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
+        proxy = gst_mfx_surface_proxy_new_from_pool(decoder->pool);
+        if (!proxy)
+            return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 
 		insurf = gst_mfx_surface_proxy_get_frame_surface(proxy);
 		sts = MFXVideoDECODE_DecodeFrameAsync(decoder->session, &decoder->bs,

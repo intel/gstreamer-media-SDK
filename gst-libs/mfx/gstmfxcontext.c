@@ -154,33 +154,22 @@ gst_mfx_context_class(void)
 }
 
 static gboolean
-gst_mfx_context_ensure_display(GstMfxContext * ctx)
-{
-    if (!ctx->priv.display) {
-        ctx->priv.display = gst_mfx_display_drm_new(NULL);
-        if (!ctx->priv.display)
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
-static gboolean
 gst_mfx_context_init_session(GstMfxContext * context)
 {
+    GstMfxContextPrivate *const priv = GST_MFX_CONTEXT_GET_PRIVATE(context);
 	mfxIMPL impl = MFX_IMPL_AUTO_ANY;
 	mfxVersion ver = { { 1, 1 } };
 
 	const char *desc;
 	int ret;
 
-	ret = MFXInit(impl, &ver, &context->priv.session);
+	ret = MFXInit(impl, &ver, &priv->session);
 	if (ret < 0) {
 		GST_ERROR("Error initializing internal MFX session");
 		return FALSE;
 	}
 
-	MFXQueryIMPL(context->priv.session, &impl);
+	MFXQueryIMPL(priv->session, &impl);
 
 	switch (MFX_IMPL_BASETYPE(impl)) {
 	case MFX_IMPL_SOFTWARE:
@@ -206,16 +195,19 @@ context_create(GstMfxContext * context)
 {
 	g_return_val_if_fail(context != NULL, FALSE);
 
-    memset(&(context->priv), 0, sizeof (GstMfxContextPrivate));
+	GstMfxContextPrivate *const priv = GST_MFX_CONTEXT_GET_PRIVATE(context);
 
-    if (!gst_mfx_context_ensure_display(context))
+    memset(priv, 0, sizeof (GstMfxContextPrivate));
+
+    priv->display = gst_mfx_display_drm_new(NULL);
+    if (!priv->display)
         return FALSE;
 
 	if (!gst_mfx_context_init_session(context))
 		return FALSE;
 
     mfxFrameAllocator frame_allocator = {
-        .pthis = &context->priv,
+        .pthis = priv,
         .Alloc = frame_alloc,
         .Lock = frame_lock,
         .Unlock = frame_unlock,
@@ -223,7 +215,7 @@ context_create(GstMfxContext * context)
         .Free = frame_free,
     };
 
-    MFXVideoCORE_SetFrameAllocator(context->priv.session, &frame_allocator);
+    MFXVideoCORE_SetFrameAllocator(priv->session, &frame_allocator);
 
 	return TRUE;
 }

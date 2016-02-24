@@ -144,7 +144,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxsurfaceproxy.h" />
-		<Unit filename="gst-libs/mfx/gstmfxsurfaceproxy_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxtexture.c">
 			<Option compilerVar="CC" />
 		</Unit>

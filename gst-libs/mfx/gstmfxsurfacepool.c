@@ -1,7 +1,6 @@
 #include "sysdeps.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurfaceproxy_priv.h"
 #include "gstmfxminiobject.h"
 
 #define DEBUG 1
@@ -127,7 +126,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
 
     if (!surface) {
         g_mutex_unlock (&pool->mutex);
-        surface = gst_mfx_surface_proxy_new_internal(pool->ctx);
+        surface = gst_mfx_surface_proxy_new(pool->ctx);
         g_mutex_lock (&pool->mutex);
     if (!surface)
         return NULL;
