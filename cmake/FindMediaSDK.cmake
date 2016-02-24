@@ -11,7 +11,7 @@ endif()
 set(MFX_INCLUDES "${MFX_HOME}/include")
 set(MFX_LIBRARY  "${MFX_HOME}/lib/lin_x64/libmfx.a")
 MESSAGE( STATUS "MediaSDK include directory: ${MFX_INCLUDES}")
-MESSAGE( STATUS "MediaSDK library directory: ${MFX_LIBRARI}")
+MESSAGE( STATUS "MediaSDK library directory: ${MFX_LIBRARY}")
 
 #Add MFX library
 add_library(libmfx STATIC IMPORTED)
