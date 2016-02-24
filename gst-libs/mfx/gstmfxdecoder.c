@@ -47,6 +47,7 @@ static void
 gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	GstMfxContext * context, mfxU32 codec, mfxU16 async_depth)
 {
+    memset(&(decoder->bs), 0, sizeof (mfxBitstream));
 	memset(&(decoder->param), 0, sizeof (mfxVideoParam));
 
 	decoder->codec = codec;
