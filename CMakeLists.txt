@@ -56,19 +56,8 @@ endif()
 
 
 include(cmake/FindSinkDependencies.cmake)
-
-pkg_check_modules (GLIB-2.0 REQUIRED glib-2.0)
-pkg_check_modules (GOBJECT-2.0 REQUIRED gobject-2.0)
-pkg_check_modules (GIO-2.0 REQUIRED gio-2.0)
-pkg_check_modules (GSTREAMER REQUIRED gstreamer-1.0>=1.4)
-pkg_check_modules (GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0>=1.4)
-pkg_check_modules (LIBVA REQUIRED libva)
-pkg_check_modules (LIBDRM REQUIRED libdrm)
-pkg_check_modules (LIBDRM_INTEL REQUIRED libdrm_intel)
-pkg_check_modules (LIBVA_DRM REQUIRED libva-drm)
-pkg_check_modules (LIBUDEV REQUIRED libudev)
-
-set(GST_API_VERSION ${GSTREAMER_VERSION})
+include(cmake/FindMediaSDK.cmake)
+include(cmake/FindBaseDependencies.cmake)
 
 configure_file (
     "${PROJECT_SOURCE_DIR}/config.h.in"
@@ -77,39 +66,7 @@ configure_file (
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-include_directories(
-	${GLIB-2.0_INCLUDE_DIRS}
-	${GOBJECT-2.0_INCLUDE_DIRS}
-	${GSTREAMER_INCLUDE_DIR}
-	${GSTREAMER_VIDEO_INCLUDE_DIRS}
-	${LIBVA_INCLUDE_DIRS}
-	${LIBDRM_INCLUDE_DIRS}
-	${LIBDRM_INTEL_INCLUDE_DIRS}
-	${LIBVA_DRM_INCLUDE_DIRS}
-	${LIBUDEV_INCLUDE_DIRS}
-	)
-
-if (DEFINED ENV{MFX_HOME})
-	MESSAGE( STATUS "MFX_HOME=$ENV{MFX_HOME}")
-	set(MFX_HOME $ENV{MFX_HOME})
-elseif (EXISTS "/opt/intel/mediasdk")
-	MESSAGE( STATUS "MediaSDK distribution found in /opt/intel/mediasdk")
-	set(MFX_HOME "/opt/intel/mediasdk")
-else()
-	MESSAGE( FATAL_ERROR "No MediaSDK distribution is found.")
-endif()
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fPIC -lstdc++")
-set(MFX_INCLUDES "${MFX_HOME}/include")
-set(MFX_LIBRARY  "${MFX_HOME}/lib/lin_x64/libmfx.a")
-MESSAGE( STATUS "MFX_INCLUDES=${MFX_INCLUDES}")
-MESSAGE( STATUS "MFX_LIBRARY=${MFX_LIBRARY}")
-
-#Add MFX library
-add_library(libmfx STATIC IMPORTED)
-set_property(TARGET libmfx PROPERTY IMPORTED_LOCATION ${MFX_LIBRARY})
-add_definitions(-DHAVE_MFX_DECODER -DHAVE_CONFIG_H)
-include_directories( ${MFX_INCLUDES} )
 
 include_directories(
 	gst/mfx
@@ -117,7 +74,7 @@ include_directories(
 	)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set (CMAKE_INSTALL_PREFIX "/usr/lib64/gstreamer-1.0")
+    set (CMAKE_INSTALL_PREFIX "${GSTREAMER_LIBDIR}/gstreamer-1.0")
 endif()
 
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -140,15 +97,7 @@ LIST(APPEND SOURCE ${GST_SOURCE})
 
 add_library(gstmfx SHARED ${SOURCE})
 target_link_libraries(gstmfx
-	${GLIB-2.0_LIBRARIES}
-	${GOBJECT-2.0_LIBRARIES}
-	${GSTREAMER_LIBRARIES}
-	${GSTREAMER_VIDEO_LIBRARIES}
-	${LIBVA_LIBRARIES}
-	${LIBVA_DRM_LIBRARIES}
-	${LIBDRM_LIBRARIES}
-	${LIBDRM_INTEL_LIBRARIES}
-	${LIBUDEV_LIBRARIES}
+    ${BASE_LIBRARIES}
 	${SINK_LIBRARIES}
 	libmfx
 	gstmfxhelper
