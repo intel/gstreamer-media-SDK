@@ -406,7 +406,7 @@ gst_mfx_video_allocator_finalize (GObject * object)
     GstMfxVideoAllocator *const allocator =
         GST_MFX_VIDEO_ALLOCATOR_CAST (object);
 
-    gst_mfx_object_pool_replace (&allocator->surface_pool, NULL);
+    gst_mfx_surface_pool_replace (&allocator->surface_pool, NULL);
 
     G_OBJECT_CLASS (gst_mfx_video_allocator_parent_class)->finalize (object);
 }
@@ -507,7 +507,7 @@ bail:
 }
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxContextAllocator * ctx,
+gst_mfx_video_allocator_new(GstMfxContext * ctx,
 	const GstVideoInfo * vip)
 {
 	GstMfxVideoAllocator *allocator;
@@ -526,7 +526,7 @@ gst_mfx_video_allocator_new(GstMfxContextAllocator * ctx,
 	if (!allocator->surface_pool)
 		goto error_create_surface_pool;
 
-    allocator_configure_image_info (ctx->display, allocator);
+    allocator_configure_image_info (GST_MFX_CONTEXT_DISPLAY(ctx), allocator);
 
 	gst_allocator_set_mfx_video_info(GST_ALLOCATOR_CAST(allocator),
 		&allocator->image_info, 0);

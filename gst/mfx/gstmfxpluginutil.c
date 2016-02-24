@@ -15,7 +15,7 @@ gst_mfx_ensure_context(GstElement * element)
 	if (gst_mfx_video_context_prepare(element, &plugin->context))
 		return TRUE;
 
-	context = gst_mfx_context_new(&plugin->alloc_ctx);
+	context = gst_mfx_context_new();
     if (!context)
         return FALSE;
 

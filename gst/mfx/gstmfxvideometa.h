@@ -4,7 +4,7 @@
 #include <gst/video/video.h>
 #include "gstmfxdisplay.h"
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxobjectpool.h"
+#include "gstmfxsurfacepool.h"
 #include "gstvaapiimage.h"
 
 G_BEGIN_DECLS

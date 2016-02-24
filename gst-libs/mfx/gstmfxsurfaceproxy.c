@@ -1,30 +1,21 @@
 #include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurfaceproxy_priv.h"
 #include "gstmfxsurfacepool.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-struct _GstMfxSurfaceProxy
-{
-	/*< private >*/
-	GstMfxMiniObject parent_instance;
-
-	GstMfxContextAllocator *ctx;
-	GstMfxSurfacePool *pool;
-
-	mfxFrameSurface1 *surface;
-	GstVideoFormat format;
-	guint width;
-	guint height;
-	GstMfxRectangle crop_rect;
-};
+/* Ensure those symbols are actually defined in the resulting libraries */
+#undef gst_mfx_surface_proxy_ref
+#undef gst_mfx_surface_proxy_unref
+#undef gst_mfx_surface_proxy_replace
 
 static gboolean
 mfx_surface_create(GstMfxSurfaceProxy * proxy)
 {
 	mfxMemId surface_id;
 
-	surface_id = g_async_queue_try_pop(proxy->ctx->surface_queue);
+	surface_id = g_async_queue_try_pop(GST_MFX_CONTEXT_SURFACES(proxy->ctx));
 	if (!surface_id)
 		return FALSE;
 
@@ -33,7 +24,7 @@ mfx_surface_create(GstMfxSurfaceProxy * proxy)
 		return FALSE;
 
 	proxy->surface->Data.MemId = surface_id;
-	memcpy(&proxy->surface->Info, &proxy->ctx->frame_info,
+	memcpy(&proxy->surface->Info, gst_mfx_context_get_frame_info(proxy->ctx),
 		sizeof(mfxFrameInfo));
 
 	return TRUE;
@@ -44,13 +35,14 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 {
 	if (proxy->surface) {
 		if (proxy->pool)
-			gst_mfx_object_pool_put_object(proxy->pool, proxy);
+			gst_mfx_surface_pool_put_surface(proxy->pool, proxy);
 
-		g_async_queue_push(proxy->ctx->surface_queue,
+		g_async_queue_push(GST_MFX_CONTEXT_SURFACES(proxy->ctx),
 			GST_MFX_SURFACE_PROXY_MEMID(proxy));
 		g_slice_free(mfxFrameSurface1, proxy->surface);
 	}
-	gst_mfx_object_pool_replace(&proxy->pool, NULL);
+	gst_mfx_surface_pool_replace(&proxy->pool, NULL);
+	gst_mfx_context_unref(proxy->ctx);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -77,7 +69,7 @@ gst_mfx_surface_proxy_init_properties(GstMfxSurfaceProxy * proxy)
 }
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new(GstMfxContextAllocator * ctx)
+gst_mfx_surface_proxy_new_internal(GstMfxContext * ctx)
 {
 	GstMfxSurfaceProxy *proxy;
 
@@ -89,7 +81,7 @@ gst_mfx_surface_proxy_new(GstMfxContextAllocator * ctx)
 		return NULL;
 
 	proxy->pool = NULL;
-	proxy->ctx = ctx;
+	proxy->ctx = gst_mfx_context_ref(ctx);
 	if (!mfx_surface_create(proxy))
 		goto error;
 	gst_mfx_surface_proxy_init_properties(proxy);
@@ -112,8 +104,8 @@ gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool)
 	if (!proxy)
 		return NULL;
 
-	proxy->pool = gst_mfx_object_pool_ref(pool);
-	proxy = gst_mfx_object_pool_get_object(proxy->pool);
+	proxy->pool = gst_mfx_surface_pool_ref(pool);
+	proxy = gst_mfx_surface_pool_get_surface(proxy->pool);
 	if (!proxy)
 		goto error;
 	gst_mfx_surface_proxy_init_properties(proxy);
@@ -136,8 +128,8 @@ gst_mfx_surface_proxy_copy(GstMfxSurfaceProxy * proxy)
 	if (!copy)
 		return NULL;
 
-	copy->pool = proxy->pool ? gst_mfx_object_pool_ref(proxy->pool) : NULL;
-	copy->ctx = proxy->ctx;
+	copy->pool = proxy->pool ? gst_mfx_surface_pool_ref(proxy->pool) : NULL;
+	copy->ctx = proxy->ctx ? gst_mfx_context_ref(proxy->ctx) : NULL;
 	copy->surface = proxy->surface;
 	copy->format = proxy->format;
 	copy->width = proxy->width;
@@ -152,9 +144,7 @@ gst_mfx_surface_proxy_ref(GstMfxSurfaceProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, NULL);
 
-	return
-		GST_MFX_SURFACE_PROXY(gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT
-		(proxy)));
+	return gst_mfx_surface_proxy_ref_internal(proxy);
 }
 
 void
@@ -162,7 +152,7 @@ gst_mfx_surface_proxy_unref(GstMfxSurfaceProxy * proxy)
 {
 	g_return_if_fail(proxy != NULL);
 
-	gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(proxy));
+	gst_mfx_surface_proxy_unref_internal(proxy);
 }
 
 void
@@ -171,8 +161,7 @@ gst_mfx_surface_proxy_replace(GstMfxSurfaceProxy ** old_proxy_ptr,
 {
 	g_return_if_fail(old_proxy_ptr != NULL);
 
-	gst_mfx_mini_object_replace((GstMfxMiniObject **)old_proxy_ptr,
-		GST_MFX_MINI_OBJECT(new_proxy));
+	gst_mfx_surface_proxy_replace_internal(old_proxy_ptr, new_proxy);
 }
 
 mfxFrameSurface1 *
@@ -237,7 +226,7 @@ gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy,
 		*height_ptr = proxy->height;
 }
 
-GstMfxContextAllocator *
+GstMfxContext *
 gst_mfx_surface_proxy_get_allocator_context(GstMfxSurfaceProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, NULL);
@@ -254,7 +243,7 @@ gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy)
 
 	g_return_val_if_fail(proxy != NULL, NULL);
 
-	display = proxy->ctx->display;
+	display = GST_MFX_CONTEXT_DISPLAY(proxy->ctx);
 	va_image.image_id = VA_INVALID_ID;
 	va_image.buf = VA_INVALID_ID;
 

@@ -2,7 +2,7 @@
 #define GST_MFX_DECODER_H
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxobjectpool.h"
+#include "gstmfxsurfacepool.h"
 #include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
@@ -18,7 +18,7 @@ struct _GstMfxDecoder
 	GstMfxMiniObject parent_instance;
 
 	GstMfxContext *context;
-	GstMfxObjectPool *pool;
+	GstMfxSurfacePool *pool;
 	GAsyncQueue *surfaces;
 	GByteArray *bitstream;
 

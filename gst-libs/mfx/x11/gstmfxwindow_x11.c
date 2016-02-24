@@ -161,9 +161,7 @@ gst_mfx_window_x11_create(GstMfxWindow * window, guint * width,
 	Colormap cmap = None;
 	const GstMfxDisplayClass *display_class;
 	const GstMfxWindowClass *window_class;
-	XWindowAttributes wattr;
 	Atom atoms[2];
-	gboolean ok;
 
 	static const char *atom_names[2] = {
 		"_NET_WM_STATE",
@@ -323,7 +321,7 @@ gst_mfx_window_x11_render(GstMfxWindow * window,
 	const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
-	
+
 
 	return FALSE;
 }

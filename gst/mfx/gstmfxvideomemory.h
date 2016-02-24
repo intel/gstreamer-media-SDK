@@ -7,7 +7,7 @@
 #include "gstmfxsurfaceproxy.h"
 #include "gstvaapiimage.h"
 #include "gstmfxvideometa.h"
-#include "gstmfxobjectpool.h"
+#include "gstmfxsurfacepool.h"
 #include "gstmfxdisplay.h"
 #include "gstmfxcontext.h"
 #include <gst/allocators/allocators.h>
@@ -120,7 +120,7 @@ struct _GstMfxVideoAllocator
 
 	/*< private >*/
 	GstVideoInfo video_info;
-	GstMfxObjectPool *surface_pool;
+	GstMfxSurfacePool *surface_pool;
 	GstVideoInfo image_info;
 };
 
@@ -138,7 +138,7 @@ GType
 gst_mfx_video_allocator_get_type(void);
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxContextAllocator * ctx,
+gst_mfx_video_allocator_new(GstMfxContext * ctx,
 	const GstVideoInfo * vip);
 
 const GstVideoInfo *

@@ -1,88 +1,52 @@
 #ifndef GST_MFX_SURFACE_PROXY_PRIV_H
 #define GST_MFX_SURFACE_PROXY_PRIV_H
 
-#include "gstmfxminiobject.h"
+#include "gstmfxcontext.h"
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxobject_priv.h"
-#include "gstmfxsurface_priv.h"
+#include "gstmfxminiobject.h"
 
-#define GST_MFX_SURFACE_PROXY(obj) \
-	((GstMfxSurfaceProxy *) (obj))
+G_BEGIN_DECLS
 
 struct _GstMfxSurfaceProxy
 {
 	/*< private >*/
 	GstMfxMiniObject parent_instance;
 
+	GstMfxContext *ctx;
 	GstMfxSurfacePool *pool;
-	GstMfxSurface *surface;
+
+	mfxFrameSurface1 *surface;
+	GstVideoFormat format;
+	guint width;
+	guint height;
 	GstMfxRectangle crop_rect;
-	guint has_crop_rect : 1;
 };
 
-#define GST_MFX_SURFACE_PROXY_FLAGS       GST_MFX_MINI_OBJECT_FLAGS
-#define GST_MFX_SURFACE_PROXY_FLAG_IS_SET GST_MFX_MINI_OBJECT_FLAG_IS_SET
-#define GST_MFX_SURFACE_PROXY_FLAG_SET    GST_MFX_MINI_OBJECT_FLAG_SET
-#define GST_MFX_SURFACE_PROXY_FLAG_UNSET  GST_MFX_MINI_OBJECT_FLAG_UNSET
+GstMfxSurfaceProxy *
+gst_mfx_surface_proxy_new_internal(GstMfxContext * ctx);
 
-/**
-* GST_MFX_SURFACE_PROXY_SURFACE:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Macro that evaluates to the #GstMfxSurface of @proxy.
-* This is an internal macro that does not do any run-time type check.
-*/
-#undef  GST_MFX_SURFACE_PROXY_SURFACE
-#define GST_MFX_SURFACE_PROXY_SURFACE(proxy) \
-	(GST_MFX_SURFACE_PROXY (proxy)->surface)
+#define gst_mfx_surface_proxy_ref_internal(proxy) \
+	((gpointer) gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (proxy)))
 
-/**
-* GST_MFX_SURFACE_PROXY_SURFACE_ID:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Macro that evaluates to the VA surface ID of the underlying @proxy
-* surface.
-*/
-#define GST_MFX_SURFACE_PROXY_SURFACE_ID(proxy) \
-	gst_mfx_surface_proxy_get_surface_id (proxy)
+#define gst_mfx_surface_proxy_unref_internal(proxy) \
+	gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (proxy))
 
-/**
-* GST_MFX_SURFACE_PROXY_TIMESTAMP:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Macro that evaluates to the presentation timestamp of the
-* underlying @proxy surface.
-*
-* This is an internal macro that does not do any run-time type check.
-*/
-#undef  GST_MFX_SURFACE_PROXY_TIMESTAMP
-#define GST_MFX_SURFACE_PROXY_TIMESTAMP(proxy) \
-	(GST_MFX_SURFACE_PROXY (proxy)->timestamp)
+#define gst_mfx_surface_proxy_replace_internal(old_proxy_ptr, new_proxy) \
+	gst_mfx_mini_object_replace ((GstMfxMiniObject **)(old_proxy_ptr), \
+	GST_MFX_MINI_OBJECT (new_proxy))
 
-/**
-* GST_MFX_SURFACE_PROXY_DURATION:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Macro that evaluates to the presentation duration of the
-* underlying @proxy surface.
-*
-* This is an internal macro that does not do any run-time type check.
-*/
-#undef  GST_MFX_SURFACE_PROXY_DURATION
-#define GST_MFX_SURFACE_PROXY_DURATION(proxy) \
-	(GST_MFX_SURFACE_PROXY (proxy)->duration)
+#undef  gst_mfx_surface_proxy_ref
+#define gst_mfx_surface_proxy_ref(proxy) \
+	gst_mfx_surface_proxy_ref_internal ((proxy))
 
-/**
-* GST_MFX_SURFACE_PROXY_CROP_RECT:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Macro that evaluates to the video cropping rectangle of the underlying @proxy surface.
-*
-* This is an internal macro that does not do any run-time type check.
-*/
-#undef  GST_MFX_SURFACE_PROXY_CROP_RECT
-#define GST_MFX_SURFACE_PROXY_CROP_RECT(proxy) \
-	(GST_MFX_SURFACE_PROXY (proxy)->has_crop_rect ? \
-	&GST_MFX_SURFACE_PROXY (proxy)->crop_rect : NULL)
+#undef  gst_mfx_surface_proxy_unref
+#define gst_mfx_surface_proxy_unref(proxy) \
+	gst_mfx_surface_proxy_unref_internal ((proxy))
+
+#undef  gst_mfx_surface_proxy_replace
+#define gst_mfx_surface_proxy_replace(old_proxy_ptr, new_proxy) \
+	gst_mfx_surface_proxy_replace_internal ((old_proxy_ptr), (new_proxy))
+
+G_END_DECLS
 
 #endif /* GST_MFX_SURFACE_PROXY_PRIV_H */

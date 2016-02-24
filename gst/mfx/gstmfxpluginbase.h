@@ -97,7 +97,6 @@ struct _GstMfxPluginBase
 	GstPadQueryFunction sinkpad_query;
 
 	GstMfxContext *context;
-	GstMfxContextAllocator alloc_ctx;
 
 	GstCaps *allowed_raw_caps;
 };

@@ -48,7 +48,7 @@ vpg_load_symbol(const gchar* vpg_extension)
 static gboolean
 gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 {
-    GstMfxContextAllocator *ctx;
+    GstMfxDisplay *display;
     VASurfaceID surf;
     VAStatus va_status;
 
@@ -56,26 +56,25 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 	    return FALSE;
 
 	surf = GST_MFX_SURFACE_PROXY_MEMID(proxy->parent);
-	ctx = gst_mfx_surface_proxy_get_allocator_context(proxy->parent);
+	display = GST_MFX_CONTEXT_DISPLAY(
+        gst_mfx_surface_proxy_get_allocator_context(proxy->parent));
     proxy->image = gst_mfx_surface_proxy_derive_image(proxy->parent);
     proxy->va_img = &proxy->image->image;
 
     if(vpg_load_symbol("vpgExtGetSurfaceHandle"))
     {
-        GST_MFX_DISPLAY_LOCK(ctx->display);
-        va_status = g_va_get_surface_handle(GST_MFX_DISPLAY_VADISPLAY(ctx->display)
-                , &(surf)
-                , &(proxy->fd));
-        GST_MFX_DISPLAY_UNLOCK(ctx->display);
+        GST_MFX_DISPLAY_LOCK(display);
+        va_status = g_va_get_surface_handle(GST_MFX_DISPLAY_VADISPLAY(display),
+                        &surf, &proxy->fd);
+        GST_MFX_DISPLAY_UNLOCK(display);
         if(!vaapi_check_status(va_status, "vpgExtGetSurfaceHandle()"))
             return FALSE;
     } else {
         proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
-        GST_MFX_DISPLAY_LOCK(ctx->display);
-        va_status = vaAcquireBufferHandle(GST_MFX_DISPLAY_VADISPLAY(ctx->display)
-		        , proxy->image->image.buf
-		        , &(proxy->buf_info));
-        GST_MFX_DISPLAY_UNLOCK(ctx->display);
+        GST_MFX_DISPLAY_LOCK(display);
+        va_status = vaAcquireBufferHandle(GST_MFX_DISPLAY_VADISPLAY(display),
+                        proxy->image->image.buf, &proxy->buf_info);
+        GST_MFX_DISPLAY_UNLOCK(display);
         if(!vaapi_check_status(va_status, "vaAcquireBufferHandle()"))
 	        return FALSE;
         proxy->fd = proxy->buf_info.handle;
@@ -89,12 +88,12 @@ gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
 	if(g_va_get_surface_handle)
 		close(proxy->fd);
 	else {
-	    GstMfxContextAllocator *ctx =
-            gst_mfx_surface_proxy_get_allocator_context(proxy->parent);
-        GST_MFX_DISPLAY_LOCK(ctx->display);
-	    vaReleaseBufferHandle(GST_MFX_DISPLAY_VADISPLAY(ctx->display),
+	    GstMfxDisplay *display = GST_MFX_CONTEXT_DISPLAY(
+            gst_mfx_surface_proxy_get_allocator_context(proxy->parent));
+        GST_MFX_DISPLAY_LOCK(display);
+	    vaReleaseBufferHandle(GST_MFX_DISPLAY_VADISPLAY(display),
             proxy->image->image.buf);
-        GST_MFX_DISPLAY_UNLOCK(ctx->display);
+        GST_MFX_DISPLAY_UNLOCK(display);
         gst_mfx_object_unref(proxy->image);
 	}
 	gst_mfx_surface_proxy_replace(&proxy->parent, NULL);

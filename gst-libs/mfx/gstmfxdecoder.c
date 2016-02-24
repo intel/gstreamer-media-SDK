@@ -1,6 +1,6 @@
 #include <mfxplugin.h>
 #include "gstmfxdecoder.h"
-#include "gstmfxobjectpool_priv.h"
+#include "gstmfxsurfacepool.h"
 #include "gstmfxvideometa.h"
 #include "gstmfxsurfaceproxy.h"
 
@@ -37,7 +37,7 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
     g_async_queue_unref(decoder->surfaces);
 	g_byte_array_unref(decoder->bitstream);
 	gst_mfx_context_unref(decoder->context);
-	gst_mfx_object_pool_unref(decoder->pool);
+	gst_mfx_surface_pool_unref(decoder->pool);
 
 	MFXVideoDECODE_Close(decoder->session);
 }
@@ -47,8 +47,6 @@ static void
 gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	GstMfxContext * context, mfxU32 codec, mfxU16 async_depth)
 {
-	memset(&(decoder->session), 0, sizeof (mfxSession));
-	memset(&(decoder->bs), 0, sizeof (mfxBitstream));
 	memset(&(decoder->param), 0, sizeof (mfxVideoParam));
 
 	decoder->codec = codec;
@@ -61,6 +59,10 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	decoder->decoder_inited = FALSE;
 	decoder->bs.MaxLength = 1024 * 16;
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
+    decoder->session = gst_mfx_context_get_session(decoder->context);
+
+    MFXVideoCORE_SetHandle(decoder->session, MFX_HANDLE_VA_DISPLAY,
+            GST_MFX_DISPLAY_VADISPLAY(GST_MFX_CONTEXT_DISPLAY(decoder->context)));
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -118,18 +120,6 @@ gst_mfx_decoder_replace(GstMfxDecoder ** old_decoder_ptr,
 		GST_MFX_MINI_OBJECT(new_decoder));
 }
 
-static gboolean
-gst_mfx_decoder_ensure_session(GstMfxDecoder *decoder)
-{
-	if (!decoder->session) {
-		decoder->session = gst_mfx_context_get_session(decoder->context);
-		MFXVideoCORE_SetHandle(decoder->session, MFX_HANDLE_VA_DISPLAY,
-            GST_MFX_DISPLAY_VADISPLAY(GST_MFX_CONTEXT_DISPLAY(decoder->context)));
-	}
-
-	return TRUE;
-}
-
 static mfxStatus
 gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder)
 {
@@ -159,32 +149,9 @@ gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder)
     return sts;
 }
 
-static gint
-sync_output_surface(gconstpointer proxy, gconstpointer surf)
-{
-    GstMfxSurfaceProxy *_proxy = (GstMfxSurfaceProxy *)proxy;
-    mfxFrameSurface1 *_surf = (mfxFrameSurface1 *)surf;
-
-    return (*(GstMfxID *)(_surf->Data.MemId) !=
-            GST_MFX_SURFACE_PROXY_MEMID(_proxy));
-}
-
-static void
-release_surfaces(gpointer proxy, gpointer pool)
-{
-	GstMfxSurfaceProxy *_proxy = (GstMfxSurfaceProxy *)proxy;
-	GstMfxObjectPool *_pool = (GstMfxObjectPool *)pool;
-
-	mfxFrameSurface1 *surface = gst_mfx_surface_proxy_get_frame_surface(_proxy);
-	if (surface && !surface->Data.Locked)
-		gst_mfx_object_pool_put_object(_pool, _proxy);
-}
-
 static gboolean
 get_surface(GstMfxDecoder *decoder, GstMfxSurfaceProxy **proxy)
 {
-	g_list_foreach(decoder->pool->used_objects, release_surfaces, decoder->pool);
-
 	*proxy = gst_mfx_surface_proxy_new_from_pool(decoder->pool);
     if (!*proxy)
 		return FALSE;
@@ -197,9 +164,6 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 {
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_READY;
 	mfxStatus sts = MFX_ERR_NONE;
-
-	if (!gst_mfx_decoder_ensure_session(decoder))
-		return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 
     sts = gst_mfx_decoder_load_decoder_plugins(decoder);
     if (sts < 0)
@@ -220,8 +184,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 		return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 	}
 
-	decoder->pool = gst_mfx_surface_pool_new(
-        GST_MFX_CONTEXT_ALLOCATOR_CONTEXT(decoder->context));
+	decoder->pool = gst_mfx_surface_pool_new(decoder->context);
 	if (!decoder->pool)
 		return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 
@@ -291,11 +254,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
             decoder->bs.DataOffset);
 		decoder->bs.DataOffset = 0;
 
-		if (GST_MFX_SURFACE_PROXY_MEMID(proxy) != *(GstMfxID *)(outsurf->Data.MemId)) {
-            GList *l = g_list_find_custom(decoder->pool->used_objects, outsurf,
-                                          sync_output_surface);
-            proxy = GST_MFX_SURFACE_PROXY(l->data);
-		}
+		proxy = gst_mfx_surface_pool_find_proxy(decoder->pool, outsurf);
 
 		do {
             sts = MFXVideoCORE_SyncOperation(decoder->session, sync, 1000);

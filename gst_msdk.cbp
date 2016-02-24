@@ -131,17 +131,11 @@
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxobject.h" />
 		<Unit filename="gst-libs/mfx/gstmfxobject_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxobjectpool.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxobjectpool.h" />
-		<Unit filename="gst-libs/mfx/gstmfxobjectpool_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxprimebufferproxy.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxprimebufferproxy.h" />
 		<Unit filename="gst-libs/mfx/gstmfxprimebufferproxy_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxsurface_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxsurfacepool.c">
 			<Option compilerVar="CC" />
 		</Unit>

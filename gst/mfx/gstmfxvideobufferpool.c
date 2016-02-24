@@ -14,7 +14,7 @@ struct _GstMfxVideoBufferPoolPrivate
 	guint video_info_index;
 	GstAllocator *allocator;
 	GstVideoInfo alloc_info;
-	GstMfxContextAllocator *ctx;
+	GstMfxContext *ctx;
 	guint has_video_meta : 1;
 	guint has_video_alignment : 1;
 };
@@ -29,8 +29,7 @@ gst_mfx_video_buffer_pool_finalize(GObject * object)
 	GstMfxVideoBufferPoolPrivate *const priv =
 		GST_MFX_VIDEO_BUFFER_POOL(object)->priv;
 
-	//gst_mfx_context_replace(&priv->ctx, NULL);
-	priv->ctx = NULL;
+	gst_mfx_context_replace(&priv->ctx, NULL);
 	g_clear_object(&priv->allocator);
 
 	G_OBJECT_CLASS(gst_mfx_video_buffer_pool_parent_class)->finalize(object);
@@ -271,13 +270,13 @@ gst_mfx_video_buffer_pool_init(GstMfxVideoBufferPool * pool)
 }
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new(GstMfxContextAllocator * ctx)
+gst_mfx_video_buffer_pool_new(GstMfxContext * ctx)
 {
     GstMfxVideoBufferPool *pool;
 
     pool = g_object_new(GST_MFX_TYPE_VIDEO_BUFFER_POOL, NULL);
 
-    pool->priv->ctx = ctx;
+    pool->priv->ctx = gst_mfx_context_ref(ctx);
 
 	return GST_BUFFER_POOL_CAST(pool);
 }
