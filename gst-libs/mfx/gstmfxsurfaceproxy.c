@@ -43,14 +43,15 @@ static void
 gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 {
 	if (proxy->surface) {
-		if (proxy->pool)
+		if (proxy->pool) {
 			gst_mfx_surface_pool_put_surface(proxy->pool, proxy);
+			gst_mfx_surface_pool_replace(&proxy->pool, NULL);
+		}
 
 		g_async_queue_push(GST_MFX_CONTEXT_SURFACES(proxy->ctx),
 			GST_MFX_SURFACE_PROXY_MEMID(proxy));
 		g_slice_free(mfxFrameSurface1, proxy->surface);
 	}
-	gst_mfx_surface_pool_replace(&proxy->pool, NULL);
 	gst_mfx_context_unref(proxy->ctx);
 }
 
@@ -183,8 +184,8 @@ gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy)
 GstMfxID
 gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy)
 {
-	g_return_val_if_fail(proxy != NULL, VA_INVALID_ID);
-	g_return_val_if_fail(proxy->surface != NULL, VA_INVALID_ID);
+	g_return_val_if_fail(proxy != NULL, GST_MFX_ID_INVALID);
+	g_return_val_if_fail(proxy->surface != NULL, GST_MFX_ID_INVALID);
 
 	return *(GstMfxID *)proxy->surface->Data.MemId;
 }

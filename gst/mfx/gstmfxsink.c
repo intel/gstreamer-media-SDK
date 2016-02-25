@@ -763,7 +763,7 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 		goto no_surface;
 
 	GST_DEBUG("render surface %" GST_MFX_ID_FORMAT,
-		GST_MFX_ID_ARGS(GST_MFX_SURFACE_PROXY_MEMID(proxy)));
+		GST_MFX_SURFACE_PROXY_MEMID(proxy));
 
 	if (!surface_rect)
 		surface_rect = (GstMfxRectangle *)
@@ -782,9 +782,9 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 
 	/* Retain VA surface until the next one is displayed */
 	/* Need to release the lock for the duration, otherwise a deadlock is possible */
-	//gst_mfx_display_unlock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
+	//gst_mfx_display_unlock(sink->display);
 	//gst_buffer_replace(&sink->video_buffer, buffer);
-	//gst_mfx_display_lock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
+	//gst_mfx_display_lock(sink->display);
 
 	ret = GST_FLOW_OK;
 

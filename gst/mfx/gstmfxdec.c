@@ -339,12 +339,6 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 		query);
 }
 
-static inline gboolean
-gst_mfxdec_ensure_context(GstMfxDec * decode)
-{
-	return gst_mfx_plugin_base_ensure_context(GST_MFX_PLUGIN_BASE(decode));
-}
-
 static gboolean
 gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 {
@@ -407,7 +401,7 @@ gst_mfxdec_finalize(GObject * object)
 static gboolean
 gst_mfxdec_open(GstVideoDecoder * vdec)
 {
-	return gst_mfxdec_ensure_context(GST_MFXDEC(vdec));
+	return gst_mfx_plugin_base_ensure_context(GST_MFX_PLUGIN_BASE(vdec));
 }
 
 static gboolean

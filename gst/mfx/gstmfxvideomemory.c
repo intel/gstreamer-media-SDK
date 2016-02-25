@@ -49,9 +49,7 @@ new_surface_proxy (GstMfxVideoMemory * mem)
     GstMfxVideoAllocator *const allocator =
         GST_MFX_VIDEO_ALLOCATOR_CAST (GST_MEMORY_CAST (mem)->allocator);
 
-    return
-        gst_mfx_surface_proxy_new_from_pool (GST_MFX_SURFACE_POOL
-            (allocator->surface_pool));
+    return gst_mfx_surface_proxy_new_from_pool (allocator->surface_pool);
 }
 
 static gboolean
@@ -68,9 +66,8 @@ ensure_surface (GstMfxVideoMemory * mem)
             gst_mfx_video_meta_set_surface_proxy (mem->meta, mem->proxy);
         }
     }
-    //mem->proxy = GST_MFX_SURFACE_PROXY_SURFACE (mem->proxy);
-    //return mem->surface != NULL;
-    return TRUE;
+
+    return GST_MFX_SURFACE_PROXY_SURFACE (mem->proxy) != NULL;
 }
 
 

@@ -25,7 +25,7 @@ set_surface_proxy_from_pool(GstMfxVideoMeta * meta, GstMfxSurfacePool * pool)
 {
 	GstMfxSurfaceProxy *proxy;
 
-	proxy = gst_mfx_surface_proxy_new_from_pool(GST_MFX_SURFACE_POOL(pool));
+	proxy = gst_mfx_surface_proxy_new_from_pool(pool);
 	if (!proxy)
 		return FALSE;
 

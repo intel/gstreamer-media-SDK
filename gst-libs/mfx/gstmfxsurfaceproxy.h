@@ -10,6 +10,9 @@ G_BEGIN_DECLS
 #define GST_MFX_SURFACE_PROXY(obj) \
 	((GstMfxSurfaceProxy *) (obj))
 
+#define GST_MFX_SURFACE_PROXY_SURFACE(proxy) \
+	gst_mfx_surface_proxy_get_frame_surface(proxy)
+
 #define GST_MFX_SURFACE_PROXY_MEMID(proxy) \
 	gst_mfx_surface_proxy_get_id(proxy)
 
