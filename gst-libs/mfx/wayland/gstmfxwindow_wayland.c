@@ -6,8 +6,8 @@
 #include "gstmfxwindow_priv.h"
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_wayland_priv.h"
+#include "gstmfxsurfaceproxy.h"
 #include "gstmfxprimebufferproxy.h"
-#include "gstmfxprimebufferproxy_priv.h"
 #include "gstvaapiimage_priv.h"
 #include "wayland-drm-client-protocol.h"
 
@@ -215,7 +215,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 		return FALSE;
 
 	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
-	va_image = &(GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(buffer_proxy));
+	va_image = GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(buffer_proxy);
 
 	/* Using compositor scaling. Correct way is to use VPP scaling */
 	if(src_rect->width > window->width && src_rect->height > window->height)
@@ -232,7 +232,8 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	pitches[2] = va_image->pitches[2];
 
 	//only support NV12 for now
-	if ( GST_VIDEO_FORMAT_NV12 == GST_VAAPI_IMAGE_FORMAT(buffer_proxy->image) ) {
+	if ( GST_VIDEO_FORMAT_NV12 == GST_VAAPI_IMAGE_FORMAT(
+                GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buffer_proxy)) ) {
 		drm_format = WL_DRM_FORMAT_NV12;
 	}
 

@@ -7,7 +7,6 @@
 #include "gstmfxdisplay_egl.h"
 #include "gstmfxdisplay_egl_priv.h"
 #include "gstmfxprimebufferproxy.h"
-#include "gstmfxprimebufferproxy_priv.h"
 #include "gstvaapiimage_priv.h"
 
 /* Additional DRM formats */

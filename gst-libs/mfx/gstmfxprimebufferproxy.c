@@ -1,20 +1,24 @@
+#include <gmodule.h>
+#include <va/va_drmcommon.h>
 #include "sysdeps.h"
-#include "gstmfxprimebufferproxy.h"
-#include "gstmfxprimebufferproxy_priv.h"
 #include "video-utils.h"
 #include "gstmfxsurfaceproxy.h"
 #include "gstvaapiimage_priv.h"
 #include "gstmfxcontext.h"
-#include <gmodule.h>
-#include <va/va_drmcommon.h>
+#include "gstmfxprimebufferproxy.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-/* Ensure those symbols are actually defined in the resulting libraries */
-#undef gst_mfx_prime_buffer_proxy_ref
-#undef gst_mfx_prime_buffer_proxy_unref
-#undef gst_mfx_prime_buffer_proxy_replace
+struct _GstMfxPrimeBufferProxy {
+    /*< private >*/
+    GstMfxMiniObject    parent_instance;
+    GstMfxSurfaceProxy  *parent;
+    GstVaapiImage       *image;
+    VABufferInfo        buf_info;
+    VAImage             *va_img;
+    guintptr            fd;
+};
 
 typedef VAStatus(*vaExtGetSurfaceHandle)(
 	VADisplay dpy,
@@ -130,7 +134,7 @@ gst_mfx_prime_buffer_proxy_new_from_surface(GstMfxSurfaceProxy * parent)
 	/* ERRORS */
 error_acquire_handle:
 	GST_ERROR("failed to acquire the underlying PRIME buffer handle");
-	gst_mfx_prime_buffer_proxy_unref_internal(proxy);
+	gst_mfx_prime_buffer_proxy_unref(proxy);
 	return NULL;
 }
 
@@ -146,8 +150,8 @@ GstMfxPrimeBufferProxy *
 gst_mfx_prime_buffer_proxy_ref(GstMfxPrimeBufferProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, NULL);
-
-	return gst_mfx_prime_buffer_proxy_ref_internal(proxy);
+	
+	return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT (proxy));
 }
 
 /**
@@ -157,12 +161,10 @@ gst_mfx_prime_buffer_proxy_ref(GstMfxPrimeBufferProxy * proxy)
 * Atomically decreases the reference count of the @proxy by one. If
 * the reference count reaches zero, the object will be free'd.
 */
-void
-gst_prime_buffer_buffer_proxy_unref(GstMfxPrimeBufferProxy * proxy)
+void 
+gst_mfx_prime_buffer_proxy_unref(GstMfxPrimeBufferProxy * proxy)
 {
-	g_return_if_fail(proxy != NULL);
-
-	gst_mfx_prime_buffer_proxy_unref_internal(proxy);
+    gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT (proxy));
 }
 
 /**
@@ -180,12 +182,13 @@ gst_mfx_prime_buffer_proxy_replace(GstMfxPrimeBufferProxy ** old_proxy_ptr,
 {
 	g_return_if_fail(old_proxy_ptr != NULL);
 
-	gst_mfx_prime_buffer_proxy_replace_internal(old_proxy_ptr, new_proxy);
+	gst_mfx_mini_object_replace((GstMfxMiniObject **)old_proxy_ptr,
+            GST_MFX_MINI_OBJECT(new_proxy));
 }
 
 /**
 * gst_mfx_prime_buffer_proxy_get_handle:
-* @proxy: a #GstVaapiBufferProxy
+* @proxy: a #GstMfxPrimeBufferProxy
 *
 * Returns the underlying VA buffer handle stored in the @proxy.
 *
@@ -196,5 +199,38 @@ gst_mfx_prime_buffer_proxy_get_handle(GstMfxPrimeBufferProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, 0);
 
-	return GST_MFX_PRIME_BUFFER_PROXY_HANDLE(proxy);
+	return proxy->fd;
 }
+
+/**
+ * gst_mfx_prime_buffer_proxy_get_vaapi_image:
+ * @proxy: a #GstMfxPrimeBufferProxy
+ *
+ * Returns the underlying GstVaapiImage object stored in the @proxy.
+ *
+ * Return value: #GstVaapiImage 
+ */
+GstVaapiImage *
+gst_mfx_prime_buffer_proxy_get_vaapi_image(GstMfxPrimeBufferProxy * proxy)
+{
+    g_return_val_if_fail(proxy != NULL, 0);
+    
+    return proxy->image;
+}
+
+/**
+ * gst_mfx_prime_buffer_proxy_get_vaimage:
+ * @proxy: a #GstMfxPrimeBufferProxy
+ *
+ * Returns the underlying VAImage stored in the @proxy
+ *
+ * Return value: VAImage
+ */
+VAImage *
+gst_mfx_prime_buffer_proxy_get_vaimage(GstMfxPrimeBufferProxy * proxy)
+{
+    g_return_val_if_fail(proxy != NULL, 0);
+
+    return proxy->va_img;
+}
+
