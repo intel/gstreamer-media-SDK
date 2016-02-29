@@ -135,7 +135,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxprimebufferproxy.h" />
-		<Unit filename="gst-libs/mfx/gstmfxprimebufferproxy_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxsurfacepool.c">
 			<Option compilerVar="CC" />
 		</Unit>

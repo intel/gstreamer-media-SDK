@@ -7,6 +7,24 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
+struct _GstMfxDecoder
+{
+	/*< private >*/
+	GstMfxMiniObject parent_instance;
+
+	GstMfxContext *context;
+	GstMfxSurfacePool *pool;
+	GAsyncQueue *surfaces;
+	GByteArray *bitstream;
+
+	mfxSession session;
+	mfxVideoParam param;
+	mfxBitstream bs;
+	mfxU32 codec;
+
+	gboolean decoder_inited;
+};
+
 mfxU32
 gst_mfx_decoder_get_codec(GstMfxDecoder * decoder)
 {

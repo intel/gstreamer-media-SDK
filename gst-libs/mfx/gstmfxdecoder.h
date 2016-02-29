@@ -2,7 +2,6 @@
 #define GST_MFX_DECODER_H
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurfacepool.h"
 #include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
@@ -11,24 +10,6 @@ G_BEGIN_DECLS
 	((GstMfxDecoder *)(obj))
 
 typedef struct _GstMfxDecoder GstMfxDecoder;
-
-struct _GstMfxDecoder
-{
-	/*< private >*/
-	GstMfxMiniObject parent_instance;
-
-	GstMfxContext *context;
-	GstMfxSurfacePool *pool;
-	GAsyncQueue *surfaces;
-	GByteArray *bitstream;
-
-	mfxSession session;
-	mfxVideoParam param;
-	mfxBitstream bs;
-	mfxU32 codec;
-
-	gboolean decoder_inited;
-};
 
 /**
 * GstMfxDecoderStatus:
@@ -65,6 +46,10 @@ typedef enum {
 } GstMfxDecoderStatus;
 
 GstMfxDecoder *
+gst_mfx_decoder_new(GstMfxContext * context,
+	mfxU32 codec, mfxU16 async_depth);
+
+GstMfxDecoder *
 gst_mfx_decoder_ref(GstMfxDecoder * decoder);
 
 void
@@ -84,10 +69,6 @@ gst_mfx_decoder_get_surface_proxy(GstMfxDecoder * decoder,
 GstMfxDecoderStatus
 gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	GstVideoCodecFrame * frame);
-
-GstMfxDecoder *
-gst_mfx_decoder_new(GstMfxContext * context,
-	mfxU32 codec, mfxU16 async_depth);
 
 G_END_DECLS
 
