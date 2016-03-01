@@ -5,7 +5,7 @@
 #include "gstmfxdisplay.h"
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxsurfacepool.h"
-#include "gstvaapiimage.h"
+#include "gstmfxutils_vaapi.h"
 
 G_BEGIN_DECLS
 

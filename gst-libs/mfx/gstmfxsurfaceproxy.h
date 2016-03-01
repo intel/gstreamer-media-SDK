@@ -3,7 +3,7 @@
 
 #include <gst/video/video.h>
 #include "gstmfxcontext.h"
-#include "gstvaapiimage.h"
+#include "gstmfxutils_vaapi.h"
 
 G_BEGIN_DECLS
 
@@ -72,7 +72,7 @@ gst_mfx_surface_proxy_get_allocator_context(GstMfxSurfaceProxy * proxy);
 const GstMfxRectangle *
 gst_mfx_surface_proxy_get_crop_rect(GstMfxSurfaceProxy * proxy);
 
-GstVaapiImage *
+VaapiImage *
 gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy);
 
 G_END_DECLS

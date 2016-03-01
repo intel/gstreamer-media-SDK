@@ -5,7 +5,7 @@
 #include <gst/gstallocator.h>
 #include <gst/video/video-info.h>
 #include "gstmfxsurfaceproxy.h"
-#include "gstvaapiimage.h"
+#include "gstmfxutils_vaapi.h"
 #include "gstmfxvideometa.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxdisplay.h"
@@ -71,7 +71,7 @@ struct _GstMfxVideoMemory
 	GstMfxSurfaceProxy *proxy;
 	const GstVideoInfo *surface_info;
 	const GstVideoInfo *image_info;
-	GstVaapiImage *image;
+	VaapiImage *image;
 	GstMfxVideoMeta *meta;
 	guint map_type;
 	gint map_count;

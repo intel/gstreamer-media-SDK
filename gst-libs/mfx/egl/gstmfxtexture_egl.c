@@ -7,7 +7,7 @@
 #include "gstmfxdisplay_egl.h"
 #include "gstmfxdisplay_egl_priv.h"
 #include "gstmfxprimebufferproxy.h"
-#include "gstvaapiimage_priv.h"
+#include "gstmfxutils_vaapi.h"
 
 /* Additional DRM formats */
 #ifndef DRM_FORMAT_R8
@@ -40,9 +40,9 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 
 	GLint attribs[23], *attrib;
 	GstMfxPrimeBufferProxy *buffer_proxy;
-	GstVaapiImage *image;
-	VAImage *va_image;
-	guint i;
+	VaapiImage *image;
+	VAImage va_image;
+	guint i, num_planes = 0;
 
 	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(proxy);
 	if (!buffer_proxy)
@@ -51,28 +51,29 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 	image = gst_mfx_surface_proxy_derive_image(proxy);
 	if (!image)
 		return FALSE;
-	//gst_vaapi_image_get_image(image, va_image);
-    va_image = &image->image;
+	vaapi_image_get_image(image, &va_image);
 
-    GST_MFX_TEXTURE_WIDTH(base_texture) = va_image->width;
-    GST_MFX_TEXTURE_HEIGHT(base_texture) = va_image->height;
+    num_planes = vaapi_image_get_plane_count(image);
 
-    for (i = 0; i < va_image->num_planes; i++) {
+    GST_MFX_TEXTURE_WIDTH(base_texture) = VAAPI_IMAGE_WIDTH(image);
+    GST_MFX_TEXTURE_HEIGHT(base_texture) = VAAPI_IMAGE_HEIGHT(image)
+
+    for (i = 0; i < num_planes; i++) {
         const uint32_t is_uv_plane = i > 0;
 
         attrib = attribs;
         *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
         *attrib++ = is_uv_plane ? DRM_FORMAT_GR88 : DRM_FORMAT_R8;
         *attrib++ = EGL_WIDTH;
-        *attrib++ = (va_image->width + is_uv_plane) >> is_uv_plane;
+        *attrib++ = (VAAPI_IMAGE_WIDTH(image) + is_uv_plane) >> is_uv_plane;
         *attrib++ = EGL_HEIGHT;
-        *attrib++ = (va_image->height + is_uv_plane) >> is_uv_plane;
+        *attrib++ = (VAAPI_IMAGE_HEIGHT(image) + is_uv_plane) >> is_uv_plane;
         *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
         *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
         *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-        *attrib++ = va_image->offsets[i];
+        *attrib++ = vaapi_image_get_offset(image, i)
         *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-        *attrib++ = va_image->pitches[i];
+        *attrib++ = vaapi_image_set_pitch(image, i);
         *attrib++ = EGL_NONE;
         texture->egl_images[i] = vtable->eglCreateImageKHR(
             ctx->display->base.handle.p, EGL_NO_CONTEXT,

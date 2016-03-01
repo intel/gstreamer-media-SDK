@@ -1,7 +1,7 @@
 #ifndef GST_MFX_PRIME_BUFFER_PROXY_H
 #define GST_MFX_PRIME_BUFFER_PROXY_H
 
-#include "gstvaapiimage.h"
+#include "gstmfxutils_vaapi.h"
 
 G_BEGIN_DECLS
 
@@ -19,9 +19,6 @@ G_BEGIN_DECLS
 
 #define GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buf) \
     gst_mfx_prime_buffer_proxy_get_vaapi_image (GST_MFX_PRIME_BUFFER_PROXY(buf))
-
-#define GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(buf) \
-    gst_mfx_prime_buffer_proxy_get_vaimage (GST_MFX_PRIME_BUFFER_PROXY(buf))
 
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 
@@ -41,11 +38,8 @@ gst_mfx_prime_buffer_proxy_replace(GstMfxPrimeBufferProxy ** old_proxy_ptr,
 guintptr
 gst_mfx_prime_buffer_proxy_get_handle(GstMfxPrimeBufferProxy * proxy);
 
-GstVaapiImage *
+VaapiImage *
 gst_mfx_prime_buffer_proxy_get_vaapi_image(GstMfxPrimeBufferProxy *proxy);
-
-VAImage *
-gst_mfx_prime_buffer_proxy_get_vaimage(GstMfxPrimeBufferProxy *proxy);
 
 G_END_DECLS
 

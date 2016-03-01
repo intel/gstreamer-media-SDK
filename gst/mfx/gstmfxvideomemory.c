@@ -6,25 +6,25 @@ GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxvideomemory);
 static void gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem);
 
 static guchar *
-get_image_data (GstVaapiImage * image)
+get_image_data (VaapiImage * image)
 {
     guchar *data;
     VAImage va_image;
 
-    data = gst_vaapi_image_get_plane (image, 0);
-    if (!data || !gst_vaapi_image_get_image (image, &va_image))
+    data = vaapi_image_get_plane (image, 0);
+    if (!data || !vaapi_image_get_image (image, &va_image))
         return NULL;
 
     data -= va_image.offsets[0];
     return data;
 }
 
-static GstVaapiImage *
+static VaapiImage *
 new_image(GstMfxDisplay * display, const GstVideoInfo * vip)
 {
     if (!GST_VIDEO_INFO_WIDTH (vip) || !GST_VIDEO_INFO_HEIGHT (vip))
         return NULL;
-    return gst_vaapi_image_new (display,
+    return vaapi_image_new (display,
         GST_VIDEO_INFO_WIDTH (vip), GST_VIDEO_INFO_HEIGHT (vip));
 }
 
@@ -94,13 +94,13 @@ gst_video_meta_map_mfx_surface (GstVideoMeta * meta, guint plane,
             goto error_ensure_image;
 
         // Load VA image from surface
-        if (!gst_vaapi_image_map (mem->image))
+        if (!vaapi_image_map (mem->image))
             goto error_map_image;
         mem->map_type = GST_MFX_VIDEO_MEMORY_MAP_TYPE_PLANAR;
     }
 
-    *data = gst_vaapi_image_get_plane (mem->image, plane);
-    *stride = gst_vaapi_image_get_pitch (mem->image, plane);
+    *data = vaapi_image_get_plane (mem->image, plane);
+    *stride = vaapi_image_get_pitch (mem->image, plane);
     info->flags = flags;
     return TRUE;
 
@@ -153,7 +153,7 @@ gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
 
         /* Unmap VA image used for read/writes */
         if (info->flags & GST_MAP_READWRITE) {
-            gst_vaapi_image_unmap (mem->image);
+            vaapi_image_unmap (mem->image);
         }
     }
     return TRUE;
@@ -243,7 +243,7 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
                 goto error_no_surface;
             if (!ensure_image (mem))
                 goto error_no_image;
-            if (!gst_vaapi_image_map (mem->image))
+            if (!vaapi_image_map (mem->image))
                 goto error_map_image;
             mem->map_type = GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR;
             break;
@@ -299,7 +299,7 @@ gst_mfx_video_memory_unmap (GstMfxVideoMemory * mem)
                 gst_mfx_surface_proxy_replace (&mem->proxy, NULL);
                 break;
             case GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR:
-                gst_vaapi_image_unmap (mem->image);
+                vaapi_image_unmap (mem->image);
                 break;
             default:
                 goto error_incompatible_map;
@@ -441,37 +441,37 @@ gst_mfx_video_allocator_init (GstMfxVideoAllocator * allocator)
 }
 
 static gboolean
-gst_video_info_update_from_image (GstVideoInfo * vip, GstVaapiImage * image)
+gst_video_info_update_from_image (GstVideoInfo * vip, VaapiImage * image)
 {
     GstVideoFormat format;
     const guchar *data;
     guint i, num_planes, data_size, width, height;
 
     /* Reset format from image */
-    format = gst_vaapi_image_get_format (image);
-    gst_vaapi_image_get_size (image, &width, &height);
+    format = vaapi_image_get_format (image);
+    vaapi_image_get_size (image, &width, &height);
     gst_video_info_set_format (vip, format, width, height);
 
-    num_planes = gst_vaapi_image_get_plane_count (image);
+    num_planes = vaapi_image_get_plane_count (image);
     g_return_val_if_fail (num_planes == GST_VIDEO_INFO_N_PLANES (vip), FALSE);
 
     /* Determine the base data pointer */
     data = get_image_data (image);
     g_return_val_if_fail (data != NULL, FALSE);
-    data_size = gst_vaapi_image_get_data_size (image);
+    data_size = vaapi_image_get_data_size (image);
 
     /* Check that we don't have disjoint planes */
     for (i = 0; i < num_planes; i++) {
-        const guchar *const plane = gst_vaapi_image_get_plane (image, i);
+        const guchar *const plane = vaapi_image_get_plane (image, i);
         if (plane - data > data_size)
             return FALSE;
     }
 
     /* Update GstVideoInfo structure */
     for (i = 0; i < num_planes; i++) {
-        const guchar *const plane = gst_vaapi_image_get_plane (image, i);
+        const guchar *const plane = vaapi_image_get_plane (image, i);
         GST_VIDEO_INFO_PLANE_OFFSET (vip, i) = plane - data;
-        GST_VIDEO_INFO_PLANE_STRIDE (vip, i) = gst_vaapi_image_get_pitch (image, i);
+        GST_VIDEO_INFO_PLANE_STRIDE (vip, i) = vaapi_image_get_pitch (image, i);
     }
     GST_VIDEO_INFO_SIZE (vip) = data_size;
     return TRUE;
@@ -481,7 +481,7 @@ static inline void
 allocator_configure_image_info(GstMfxDisplay * display,
     GstMfxVideoAllocator * allocator)
 {
-    GstVaapiImage *image = NULL;
+    VaapiImage *image = NULL;
     const GstVideoInfo *vinfo;
 
     vinfo = &allocator->video_info;
@@ -492,11 +492,11 @@ allocator_configure_image_info(GstMfxDisplay * display,
     image = new_image (display, &allocator->image_info);
     if (!image)
         goto bail;
-    if (!gst_vaapi_image_map (image))
+    if (!vaapi_image_map (image))
         goto bail;
 
     gst_video_info_update_from_image (&allocator->image_info, image);
-    gst_vaapi_image_unmap (image);
+    vaapi_image_unmap (image);
 
 bail:
     if (image)

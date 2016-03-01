@@ -243,7 +243,7 @@ gst_mfx_surface_proxy_get_allocator_context(GstMfxSurfaceProxy * proxy)
 	return proxy->ctx;
 }
 
-GstVaapiImage *
+VaapiImage *
 gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy)
 {
 	GstMfxDisplay *display;
@@ -266,6 +266,6 @@ gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy)
 	if (va_image.image_id == VA_INVALID_ID || va_image.buf == VA_INVALID_ID)
 		return NULL;
 
-	return gst_vaapi_image_new_with_image(display, &va_image);
+	return vaapi_image_new_with_image(display, &va_image);
 }
 

@@ -8,7 +8,7 @@
 #include "gstmfxdisplay_wayland_priv.h"
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxprimebufferproxy.h"
-#include "gstvaapiimage_priv.h"
+#include "gstmfxutils_vaapi.h"
 #include "wayland-drm-client-protocol.h"
 
 #define DEBUG 1
@@ -205,17 +205,19 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	GstMfxPrimeBufferProxy *buffer_proxy;
 	struct wl_buffer *buffer;
 	FrameState *frame;
-	guintptr fd;
-	guint32 drm_format;
-	gint offsets[3], pitches[3];
-	VAImage *va_image;
+	guintptr fd = 0;
+	guint32 drm_format = 0;
+	gint offsets[3] = {0},  pitches[3] = {0}, \
+                      num_planes = 0, i = 0;
+	VaapiImage *vaapi_image;
 
 	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(surface);
 	if(!buffer_proxy)
 		return FALSE;
 
 	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
-	va_image = GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(buffer_proxy);
+	vaapi_image = GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buffer_proxy);
+    num_planes = vaapi_image_get_plane_count(vaapi_image);
 
 	/* Using compositor scaling. Correct way is to use VPP scaling */
 	if(src_rect->width > window->width && src_rect->height > window->height)
@@ -223,16 +225,13 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 		if(priv->viewport)
 			wl_viewport_set_destination(priv->viewport, dst_rect->width, dst_rect->height);
 	}
-
-	offsets[0] = va_image->offsets[0];
-	offsets[1] = va_image->offsets[1];
-	offsets[2] = va_image->offsets[2];
-	pitches[0] = va_image->pitches[0];
-	pitches[1] = va_image->pitches[1];
-	pitches[2] = va_image->pitches[2];
-
+    for(i=0; i<num_planes; i++)
+    {
+        offsets[i] = vaapi_image_get_offset(vaapi_image, i);
+        pitches[i] = vaapi_image_get_pitch(vaapi_image, i);
+    }
 	//only support NV12 for now
-	if ( GST_VIDEO_FORMAT_NV12 == GST_VAAPI_IMAGE_FORMAT(
+	if ( GST_VIDEO_FORMAT_NV12 == VAAPI_IMAGE_FORMAT(
                 GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buffer_proxy)) ) {
 		drm_format = WL_DRM_FORMAT_NV12;
 	}
