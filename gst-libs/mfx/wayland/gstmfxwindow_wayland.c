@@ -231,7 +231,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
         pitches[i] = vaapi_image_get_pitch(vaapi_image, i);
     }
 	//only support NV12 for now
-	if ( GST_VIDEO_FORMAT_NV12 == VAAPI_IMAGE_FORMAT(
+	if ( GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format(
                 GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buffer_proxy)) ) {
 		drm_format = WL_DRM_FORMAT_NV12;
 	}

@@ -11,32 +11,7 @@ G_BEGIN_DECLS
 #define VAAPI_IMAGE(obj) \
     ((VaapiImage *)(obj))
 
-/**
- * VAAPI_IMAGE_FORMAT:
- * @image: a #VaapiImage
- *
- * Macro that evaluates to the #GstVideoFormat of @image.
- */
-#define VAAPI_IMAGE_FORMAT(image)   vaapi_image_get_format(image)
-
-/**
- * VAAPI_IMAGE_WIDTH:
- * @image: a #VaapiImage
- *
- * Macro that evaluates to the width of @image.
- */
-#define VAAPI_IMAGE_WIDTH(image)    vaapi_image_get_width(image)
-
-/**
- * VAAPI_IMAGE_HEIGHT:
- * @image: a #VaapiImage
- *
- * Macro that evaluates to the height of @image.
- */
-#define VAAPI_IMAGE_HEIGHT(image)   vaapi_image_get_height(image)
-
 typedef struct _VaapiImage      VaapiImage;
-typedef struct _VaapiImageClass VaapiImageClass;
 
 VaapiImage *
 vaapi_image_new(
@@ -90,6 +65,15 @@ vaapi_image_get_offset(VaapiImage *image, guint plane);
 guint
 vaapi_image_get_data_size(VaapiImage *image);
 
+VaapiImage *
+vaapi_image_ref(VaapiImage * image);
+
+void 
+vaapi_image_unref(VaapiImage * image);
+
+void 
+vaapi_image_replace(VaapiImage ** old_image_ptr,
+        VaapiImage * new_image);
 
 G_END_DECLS
 

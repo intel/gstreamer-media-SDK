@@ -204,7 +204,7 @@ void
 gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem)
 {
     if (mem->image) {
-        gst_mfx_object_unref (mem->image);
+        vaapi_image_unref (mem->image);
         mem->image = NULL;
     }
 }
@@ -500,7 +500,7 @@ allocator_configure_image_info(GstMfxDisplay * display,
 
 bail:
     if (image)
-        gst_mfx_object_unref (image);
+        vaapi_image_unref (image);
 }
 
 GstAllocator *

@@ -55,8 +55,8 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 
     num_planes = vaapi_image_get_plane_count(image);
 
-    GST_MFX_TEXTURE_WIDTH(base_texture) = VAAPI_IMAGE_WIDTH(image);
-    GST_MFX_TEXTURE_HEIGHT(base_texture) = VAAPI_IMAGE_HEIGHT(image);
+    GST_MFX_TEXTURE_WIDTH(base_texture) = vaapi_image_get_width(image);
+    GST_MFX_TEXTURE_HEIGHT(base_texture) = vaapi_image_get_height(image);
 
     for (i = 0; i < num_planes; i++) {
         const uint32_t is_uv_plane = i > 0;
@@ -65,9 +65,9 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
         *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
         *attrib++ = is_uv_plane ? DRM_FORMAT_GR88 : DRM_FORMAT_R8;
         *attrib++ = EGL_WIDTH;
-        *attrib++ = (VAAPI_IMAGE_WIDTH(image) + is_uv_plane) >> is_uv_plane;
+        *attrib++ = (vaapi_image_get_width(image) + is_uv_plane) >> is_uv_plane;
         *attrib++ = EGL_HEIGHT;
-        *attrib++ = (VAAPI_IMAGE_HEIGHT(image) + is_uv_plane) >> is_uv_plane;
+        *attrib++ = (vaapi_image_get_height(image) + is_uv_plane) >> is_uv_plane;
         *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
         *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
         *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
