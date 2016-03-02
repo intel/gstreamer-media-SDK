@@ -22,6 +22,13 @@ G_BEGIN_DECLS
     gst_mfx_context_get_session(context)
 
 typedef struct _GstMfxContext GstMfxContext;
+typedef struct _GstMfxContextCurrent GstMfxContextCurrent;
+
+typedef enum {
+    GST_MFX_CONTEXT_DECODER = 0,
+    GST_MFX_CONTEXT_VPP,
+    GST_MFX_CONTEXT_ENCODER,
+} GstMfxContextType;
 
 GstMfxContext *
 gst_mfx_context_new(void);
@@ -36,6 +43,9 @@ void
 gst_mfx_context_replace(GstMfxContext ** old_context_ptr,
 	GstMfxContext * new_context);
 
+GstMfxContextCurrent *
+gst_mfx_context_get_current(GstMfxContext * context);
+
 GstMfxDisplay *
 gst_mfx_context_get_display(GstMfxContext * context);
 
@@ -47,6 +57,24 @@ gst_mfx_context_get_session(GstMfxContext * context);
 
 mfxFrameInfo *
 gst_mfx_context_get_frame_info(GstMfxContext * context);
+
+gboolean
+gst_mfx_context_initialize(GstMfxContext * context,
+    GstMfxContextType type, mfxSession * session);
+
+mfxStatus
+gst_mfx_context_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
+    mfxFrameAllocResponse *resp);
+
+mfxStatus
+gst_mfx_context_frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp);
+
+mfxStatus
+gst_mfx_context_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr);
+
+mfxStatus
+gst_mfx_context_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr);
+
 
 G_END_DECLS
 

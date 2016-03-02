@@ -401,7 +401,12 @@ gst_mfxdec_finalize(GObject * object)
 static gboolean
 gst_mfxdec_open(GstVideoDecoder * vdec)
 {
-	return gst_mfx_plugin_base_ensure_context(GST_MFX_PLUGIN_BASE(vdec));
+	if (!gst_mfx_plugin_base_ensure_context(GST_MFX_PLUGIN_BASE(vdec)))
+        return FALSE;
+	if (!gst_mfx_context_initialize(GST_MFX_PLUGIN_BASE(vdec)->context, GST_MFX_CONTEXT_DECODER, NULL))
+        return FALSE;
+
+    return TRUE;
 }
 
 static gboolean

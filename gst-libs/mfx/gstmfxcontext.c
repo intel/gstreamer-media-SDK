@@ -6,19 +6,21 @@
 #define GST_MFX_CONTEXT_CAST(obj) \
 	((GstMfxContext *)(obj))
 
-#define GST_MFX_CONTEXT_GET_PRIVATE(obj) \
-	(&GST_MFX_CONTEXT_CAST(obj)->priv)
+#define GST_MFX_CONTEXT_GET_CURRENT(obj) \
+	(GST_MFX_CONTEXT_CAST(obj)->cur)
 
-typedef struct _GstMfxContextPrivate GstMfxContextPrivate;
-
-struct _GstMfxContextPrivate {
-	GstMfxDisplay   *display;
-	VASurfaceID     *surfaces;
-    mfxMemId        *surface_ids;
-	mfxFrameInfo     frame_info;
-	int              num_surfaces;
-	GAsyncQueue     *surface_queue;
-	mfxSession       session;
+struct _GstMfxContextCurrent {
+	GstMfxDisplay          *display;
+	VASurfaceID            *surfaces;
+    mfxMemId               *surface_ids;
+	mfxFrameInfo            frame_info;
+	int                     num_surfaces;
+	GAsyncQueue            *surface_queue;
+	mfxSession              session;
+	GstMfxContextType       context_type;
+	mfxFrameAllocResponse   response;
+	gboolean                cached_response;
+	gboolean                shared;
 };
 
 /**
@@ -28,19 +30,28 @@ struct _GstMfxContextPrivate {
 */
 struct _GstMfxContext
 {
-	/*< private >*/
-	GstMfxMiniObject parent_instance;
+	/*< curate >*/
+	GstMfxMiniObject		 parent_instance;
 
-    GstMfxContextPrivate priv;
+	GList					*cache;
+	GstMfxDisplay			*display;
+    GstMfxContextCurrent	*cur;
 };
 
-static mfxStatus
-frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
+mfxStatus
+gst_mfx_context_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     mfxFrameAllocResponse *resp)
 {
-    GstMfxContextPrivate *ctx = pthis;
+    GstMfxContextCurrent *ctx = pthis;
     VAStatus sts;
     guint i;
+
+    if (ctx->cached_response) {
+        *resp = ctx->response;
+        return MFX_ERR_NONE;
+    }
+
+    memset(resp, 0, sizeof (mfxFrameAllocResponse));
 
 	if (ctx->surfaces) {
         GST_ERROR("Multiple allocation requests.\n");
@@ -58,7 +69,8 @@ frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
         return MFX_ERR_UNSUPPORTED;
     }
 
-	ctx->num_surfaces = req->NumFrameSuggested;
+    if (!ctx->num_surfaces)
+        ctx->num_surfaces = req->NumFrameSuggested;
 	ctx->frame_info = req->Info;
 
 	ctx->surfaces = g_slice_alloc(ctx->num_surfaces * sizeof(*ctx->surfaces));
@@ -87,6 +99,8 @@ frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
     resp->mids           = ctx->surface_ids;
 	resp->NumFrameActual = ctx->num_surfaces;
+	ctx->response        = *resp;
+	ctx->cached_response = TRUE;
 
     return MFX_ERR_NONE;
 fail:
@@ -97,11 +111,10 @@ fail:
     return MFX_ERR_MEMORY_ALLOC;
 }
 
-static mfxStatus
-frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
+mfxStatus
+gst_mfx_context_frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
 {
-	GstMfxContextPrivate *ctx = pthis;
-	gpointer surface;
+	GstMfxContextCurrent *ctx = pthis;
 
 	GST_MFX_DISPLAY_LOCK(ctx->display);
 	if (ctx->surfaces)
@@ -117,20 +130,20 @@ frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
     return MFX_ERR_NONE;
 }
 
-static mfxStatus
-frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
+mfxStatus
+gst_mfx_context_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
+{
+    return MFX_ERR_UNSUPPORTED;
+}
+
+mfxStatus
+gst_mfx_context_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
 {
     return MFX_ERR_UNSUPPORTED;
 }
 
 static mfxStatus
-frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
-{
-    return MFX_ERR_UNSUPPORTED;
-}
-
-static mfxStatus
-frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL *hdl)
+gst_mfx_context_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL *hdl)
 {
     *hdl = mid;
     return MFX_ERR_NONE;
@@ -139,8 +152,10 @@ frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL *hdl)
 static void
 gst_mfx_context_finalize(GstMfxContext * context)
 {
-	MFXClose(context->priv.session);
-	gst_mfx_display_unref(context->priv.display);
+    GstMfxContextCurrent *const cur = GST_MFX_CONTEXT_GET_CURRENT(context);
+
+	MFXClose(cur->session);
+	gst_mfx_display_unref(cur->display);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -156,20 +171,20 @@ gst_mfx_context_class(void)
 static gboolean
 gst_mfx_context_init_session(GstMfxContext * context)
 {
-    GstMfxContextPrivate *const priv = GST_MFX_CONTEXT_GET_PRIVATE(context);
+    GstMfxContextCurrent *ctx = GST_MFX_CONTEXT_GET_CURRENT(context);
 	mfxIMPL impl = MFX_IMPL_AUTO_ANY;
 	mfxVersion ver = { { 1, 1 } };
 
 	const char *desc;
 	int ret;
 
-	ret = MFXInit(impl, &ver, &priv->session);
+	ret = MFXInit(impl, &ver, &(ctx->session));
 	if (ret < 0) {
 		GST_ERROR("Error initializing internal MFX session");
 		return FALSE;
 	}
 
-	MFXQueryIMPL(priv->session, &impl);
+	MFXQueryIMPL(ctx->session, &impl);
 
 	switch (MFX_IMPL_BASETYPE(impl)) {
 	case MFX_IMPL_SOFTWARE:
@@ -195,29 +210,12 @@ context_create(GstMfxContext * context)
 {
 	g_return_val_if_fail(context != NULL, FALSE);
 
-	GstMfxContextPrivate *const priv = GST_MFX_CONTEXT_GET_PRIVATE(context);
-
-    memset(priv, 0, sizeof (GstMfxContextPrivate));
-
-    priv->display = gst_mfx_display_drm_new(NULL);
-    if (!priv->display)
+	context->cache = NULL;
+    context->display = gst_mfx_display_drm_new(NULL);
+    if (!context->display)
         return FALSE;
 
-	if (!gst_mfx_context_init_session(context))
-		return FALSE;
-
-    mfxFrameAllocator frame_allocator = {
-        .pthis = priv,
-        .Alloc = frame_alloc,
-        .Lock = frame_lock,
-        .Unlock = frame_unlock,
-        .GetHDL = frame_get_hdl,
-        .Free = frame_free,
-    };
-
-    MFXVideoCORE_SetFrameAllocator(priv->session, &frame_allocator);
-
-	return TRUE;
+    return TRUE;
 }
 
 GstMfxContext *
@@ -263,12 +261,18 @@ gst_mfx_context_replace(GstMfxContext ** old_context_ptr,
 		GST_MFX_MINI_OBJECT(new_context));
 }
 
+GstMfxContextCurrent *
+gst_mfx_context_get_current(GstMfxContext * context)
+{
+	return GST_MFX_CONTEXT_GET_CURRENT(context);
+}
+
 mfxSession
 gst_mfx_context_get_session(GstMfxContext * context)
 {
 	g_return_val_if_fail(context != NULL, 0);
 
-	return GST_MFX_CONTEXT_GET_PRIVATE(context)->session;
+	return GST_MFX_CONTEXT_GET_CURRENT(context)->session;
 }
 
 GstMfxDisplay *
@@ -276,7 +280,7 @@ gst_mfx_context_get_display(GstMfxContext * context)
 {
 	g_return_val_if_fail(context != NULL, 0);
 
-	return GST_MFX_CONTEXT_GET_PRIVATE(context)->display;
+	return context->display;
 }
 
 GAsyncQueue *
@@ -284,7 +288,7 @@ gst_mfx_context_get_surfaces(GstMfxContext * context)
 {
 	g_return_val_if_fail(context != NULL, 0);
 
-	return GST_MFX_CONTEXT_GET_PRIVATE(context)->surface_queue;
+	return GST_MFX_CONTEXT_GET_CURRENT(context)->surface_queue;
 }
 
 mfxFrameInfo *
@@ -292,5 +296,67 @@ gst_mfx_context_get_frame_info(GstMfxContext * context)
 {
 	g_return_val_if_fail(context != NULL, 0);
 
-	return &GST_MFX_CONTEXT_GET_PRIVATE(context)->frame_info;
+	return &GST_MFX_CONTEXT_GET_CURRENT(context)->frame_info;
+}
+
+static gint
+find_context(gconstpointer cur, gconstpointer ctx)
+{
+	GstMfxContextCurrent *_cur = (GstMfxContextCurrent *)cur;
+	GstMfxContextCurrent *_ctx = (GstMfxContextCurrent *) ctx;
+
+	return ((_cur->context_type != _ctx->context_type) ||
+		(_cur->session != _ctx->session));
+}
+
+
+static gboolean
+gst_mfx_context_make_current(GstMfxContext * context,
+	GstMfxContextType type, mfxSession * session)
+{
+    g_return_val_if_fail(session != NULL, NULL);
+	g_return_val_if_fail(context != NULL, NULL);
+
+	GstMfxContextCurrent ctx;
+	ctx.context_type = type;
+	ctx.session = *session;
+
+	GList *l = g_list_find_custom(context->cache, &ctx,
+		find_context);
+
+    if (!l)
+        return FALSE;
+
+    context->cur = (GstMfxContextCurrent *)(l->data);
+    return TRUE;
+}
+
+gboolean
+gst_mfx_context_initialize(GstMfxContext * context,
+    GstMfxContextType type, mfxSession * session)
+{
+	if (!gst_mfx_context_make_current(context, type, session)) {
+		context->cur = g_slice_new0(GstMfxContextCurrent);
+		context->cache = g_list_prepend(context->cache, context->cur);
+		context->cur->context_type = type;
+		context->cur->display = context->display;
+
+		if (!gst_mfx_context_init_session(context))
+			return FALSE;
+	}
+
+	mfxFrameAllocator frame_allocator = {
+        .pthis = context->cur,
+        .Alloc = gst_mfx_context_frame_alloc,
+        .Lock = gst_mfx_context_frame_lock,
+        .Unlock = gst_mfx_context_frame_unlock,
+        .GetHDL = gst_mfx_context_frame_get_hdl,
+        .Free = gst_mfx_context_frame_free,
+    };
+
+    MFXVideoCORE_SetFrameAllocator(context->cur->session, &frame_allocator);
+    MFXVideoCORE_SetHandle(context->cur->session, MFX_HANDLE_VA_DISPLAY,
+        GST_MFX_DISPLAY_VADISPLAY(context->display));
+
+	return TRUE;
 }

@@ -61,7 +61,7 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 }
 
 
-static void
+static gboolean
 gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	GstMfxContext * context, mfxU32 codec, mfxU16 async_depth)
 {
@@ -80,8 +80,7 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
     decoder->session = gst_mfx_context_get_session(decoder->context);
 
-    MFXVideoCORE_SetHandle(decoder->session, MFX_HANDLE_VA_DISPLAY,
-            GST_MFX_DISPLAY_VADISPLAY(GST_MFX_CONTEXT_DISPLAY(decoder->context)));
+    return TRUE;
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -106,7 +105,8 @@ gst_mfx_decoder_new(GstMfxContext * context,
 	if (!decoder)
 		goto error;
 
-	gst_mfx_decoder_init(decoder, context, codec, async_depth);
+	if (!gst_mfx_decoder_init(decoder, context, codec, async_depth))
+        goto error;
 
 	return decoder;
 
@@ -186,6 +186,19 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 		GST_ERROR_OBJECT(decoder, "Decode header error %d\n", sts);
 		return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
 	}
+
+	/*mfxFrameAllocRequest req;
+	mfxFrameAllocResponse resp;
+
+
+    memset(&req, 0, sizeof (mfxFrameAllocRequest));
+
+
+	sts = MFXVideoDECODE_QueryIOSurf(decoder->session, &decoder->param, &req);
+
+	sts = gst_mfx_context_frame_alloc(
+            gst_mfx_context_get_current(decoder->context),
+            &req, &resp);*/
 
 	sts = MFXVideoDECODE_Init(decoder->session, &decoder->param);
 	if (sts < 0) {

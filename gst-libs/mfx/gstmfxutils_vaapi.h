@@ -84,7 +84,7 @@ vaapi_image_get_plane(VaapiImage *image, guint plane);
 guint
 vaapi_image_get_pitch(VaapiImage *image, guint plane);
 
-guint 
+guint
 vaapi_image_get_offset(VaapiImage *image, guint plane);
 
 guint

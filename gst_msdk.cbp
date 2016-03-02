@@ -149,16 +149,15 @@
 		<Unit filename="gst-libs/mfx/gstmfxtexture.h" />
 		<Unit filename="gst-libs/mfx/gstmfxtexture_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxtypes.h" />
+		<Unit filename="gst-libs/mfx/gstmfxutils_vaapi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxutils_vaapi.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxwindow.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_priv.h" />
-		<Unit filename="gst-libs/mfx/gstvaapiimage.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstvaapiimage.h" />
-		<Unit filename="gst-libs/mfx/gstvaapiimage_priv.h" />
 		<Unit filename="gst-libs/mfx/sysdeps.h" />
 		<Unit filename="gst-libs/mfx/video-utils.c">
 			<Option compilerVar="CC" />

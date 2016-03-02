@@ -56,7 +56,7 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
     num_planes = vaapi_image_get_plane_count(image);
 
     GST_MFX_TEXTURE_WIDTH(base_texture) = VAAPI_IMAGE_WIDTH(image);
-    GST_MFX_TEXTURE_HEIGHT(base_texture) = VAAPI_IMAGE_HEIGHT(image)
+    GST_MFX_TEXTURE_HEIGHT(base_texture) = VAAPI_IMAGE_HEIGHT(image);
 
     for (i = 0; i < num_planes; i++) {
         const uint32_t is_uv_plane = i > 0;
@@ -71,9 +71,9 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
         *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
         *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
         *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-        *attrib++ = vaapi_image_get_offset(image, i)
+        *attrib++ = vaapi_image_get_offset(image, i);
         *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-        *attrib++ = vaapi_image_set_pitch(image, i);
+        *attrib++ = vaapi_image_get_pitch(image, i);
         *attrib++ = EGL_NONE;
         texture->egl_images[i] = vtable->eglCreateImageKHR(
             ctx->display->base.handle.p, EGL_NO_CONTEXT,
