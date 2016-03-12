@@ -211,7 +211,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder, GstVideoInfo * info)
 	if (gst_mfx_task_has_type(decoder->decode_task, GST_MFX_TASK_VPP_IN)) {
         mfxFrameAllocRequest dec_request;
 
-        decoder->filter = gst_mfx_filter_new(decoder->context,
+        decoder->filter = gst_mfx_filter_new_with_session(decoder->context,
                                 &decoder->session);
 
 		memset(&dec_request, 0, sizeof (mfxFrameAllocRequest));
@@ -234,7 +234,6 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder, GstVideoInfo * info)
 
         gst_mfx_filter_set_format(decoder->filter,
             gst_video_format_to_mfx_fourcc(GST_VIDEO_INFO_FORMAT(info)));
-        //gst_mfx_filter_set_size(decoder->filter, 720, 480);
 
         if(!gst_mfx_filter_initialize(decoder->filter))
             return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
@@ -267,7 +266,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
 
 	GstMfxSurfaceProxy *proxy, *out_proxy;
-	mfxFrameSurface1 *insurf, *outsurf = NULL, *vppsurf;
+	mfxFrameSurface1 *insurf, *outsurf = NULL;
 	mfxSyncPoint syncp;
 	mfxStatus sts = MFX_ERR_NONE;
 

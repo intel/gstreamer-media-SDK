@@ -30,7 +30,10 @@ typedef enum {
 } GstMfxFilterStatus;
 
 GstMfxFilter *
-gst_mfx_filter_new(GstMfxTaskAggregator * aggregator, mfxSession * session);
+gst_mfx_filter_new(GstMfxTaskAggregator * aggregator);
+
+GstMfxFilter *
+gst_mfx_filter_new_with_session(GstMfxTaskAggregator * aggregator, mfxSession * session);
 
 GstMfxFilter *
 gst_mfx_filter_ref(GstMfxFilter * filter);

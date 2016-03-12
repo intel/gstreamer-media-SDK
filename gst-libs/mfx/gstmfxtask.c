@@ -101,6 +101,8 @@ gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
 	g_slice_free1(task->num_surfaces * sizeof(*task->surfaces), task->surfaces);
 	g_slice_free1(task->num_surfaces * sizeof(*task->surface_ids), task->surface_ids);
 	g_async_queue_unref(task->surface_queue);
+	if (task->response)
+        g_slice_free1(sizeof(mfxFrameAllocResponse), task->response);
 
 	task->num_surfaces = 0;
 

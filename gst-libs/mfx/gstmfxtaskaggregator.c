@@ -128,7 +128,7 @@ gst_mfx_task_aggregator_find_task(GstMfxTaskAggregator * aggregator,
 
 	gst_mfx_task_unref(task);
 
-	return (l != NULL ? (GstMfxTask *)(l->data) : NULL);
+	return (l != NULL ? gst_mfx_task_ref((GstMfxTask *)(l->data)) : NULL);
 }
 
 GstMfxTask *

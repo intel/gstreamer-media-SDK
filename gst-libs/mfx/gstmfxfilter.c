@@ -22,8 +22,6 @@ struct _GstMfxFilter
 	GstMfxMiniObject parent_instance;
 
 	GstMfxTaskAggregator *aggregator;
-	GList *vpp_ext_params;
-
 	GstMfxTask *vpp[2];
 	GstMfxSurfacePool *vpp_pool[2];
 
@@ -32,10 +30,17 @@ struct _GstMfxFilter
 	mfxFrameInfo *frame_info[2];
 	mfxFrameAllocRequest *vpp_request[2];
 
+	gboolean internal_session;
+
 	/* VPP output parameters */
 	mfxU32 fourcc;
 	mfxU16 width;
 	mfxU16 height;
+
+	/* VPP filters */
+	mfxExtVPPDoNotUse vpp_not_used;
+	mfxExtVPPDeinterlacing  vpp_deinterlacing;
+	mfxExtBuffer *ext_buffer[2];
 };
 
 void
@@ -71,11 +76,45 @@ gst_mfx_filter_set_request(GstMfxFilter * filter,
         filter->vpp_request[1]->Type |= MFX_MEMTYPE_FROM_VPPOUT;
 }
 
+static void
+init_filters(GstMfxFilter * filter)
+{
+    /* Hardcoded for now */
+	memset(&filter->vpp_not_used, 0, sizeof(mfxExtVPPDoNotUse));
+	memset(&filter->vpp_deinterlacing, 0, sizeof(mfxExtVPPDeinterlacing));
+
+    filter->vpp_not_used.Header.BufferId = MFX_EXTBUFF_VPP_DONOTUSE;
+    filter->vpp_not_used.Header.BufferSz = sizeof(mfxExtVPPDoNotUse);
+    filter->vpp_not_used.NumAlg = 4;
+	filter->vpp_not_used.AlgList = g_slice_alloc(
+        filter->vpp_not_used.NumAlg * sizeof(mfxU32));
+	if (!filter->vpp_not_used.AlgList)
+		return FALSE;
+
+	filter->vpp_not_used.AlgList[0] = MFX_EXTBUFF_VPP_DENOISE;
+	filter->vpp_not_used.AlgList[1] = MFX_EXTBUFF_VPP_SCENE_ANALYSIS;
+	filter->vpp_not_used.AlgList[2] = MFX_EXTBUFF_VPP_DETAIL;
+	filter->vpp_not_used.AlgList[3] = MFX_EXTBUFF_VPP_PROCAMP;
+
+    filter->ext_buffer[0] = (mfxExtBuffer *)&filter->vpp_not_used;
+
+	filter->vpp_deinterlacing.Header.BufferId = MFX_EXTBUFF_VPP_DEINTERLACING;
+	filter->vpp_deinterlacing.Header.BufferSz = sizeof(mfxExtVPPDeinterlacing);
+	filter->vpp_deinterlacing.Mode = MFX_DEINTERLACING_ADVANCED;
+
+	filter->ext_buffer[1] = (mfxExtBuffer *)&filter->vpp_deinterlacing;
+
+    filter->params.NumExtParam = 2;
+	filter->params.ExtParam = (mfxExtBuffer **) &filter->ext_buffer[0];
+}
+
 static gboolean
 init_params(GstMfxFilter * filter)
 {
     if (!filter->frame_info[0])
         return FALSE;
+
+    init_filters(filter);
 
     memcpy(&filter->params.vpp.In, filter->frame_info[0],
             sizeof(mfxFrameInfo));
@@ -83,8 +122,6 @@ init_params(GstMfxFilter * filter)
     memcpy(&filter->params.vpp.Out,
         filter->frame_info[1] ? filter->frame_info[1] : &filter->params.vpp.In,
         sizeof(mfxFrameInfo));
-
-    //init_filters(filter);
 
     if (filter->fourcc) {
         filter->params.vpp.Out.FourCC = filter->fourcc;
@@ -123,13 +160,16 @@ gst_mfx_filter_initialize(GstMfxFilter * filter)
         if (!filter->vpp_request[0])
             continue;
 
+        GstMfxTaskType type = i == 0 ? GST_MFX_TASK_VPP_IN : GST_MFX_TASK_VPP_OUT;
+
         filter->vpp[i] = gst_mfx_task_aggregator_find_task(filter->aggregator,
-            &filter->session,
-            i == 0 ? GST_MFX_TASK_VPP_IN : GST_MFX_TASK_VPP_OUT);
+            &filter->session, type);
         if (!filter->vpp[i]) {
-            filter->vpp[i] = gst_mfx_task_new_with_session(filter->aggregator,
-                &filter->session,
-                i == 0 ? GST_MFX_TASK_VPP_IN : GST_MFX_TASK_VPP_OUT);
+            if (!filter->internal_session)
+                filter->vpp[i] = gst_mfx_task_new_with_session(
+                    filter->aggregator, &filter->session, type);
+            else
+                filter->vpp[i] = gst_mfx_task_new(filter->aggregator, type);
         }
 
         if (!filter->vpp_request[i]) {
@@ -165,29 +205,6 @@ gst_mfx_filter_initialize(GstMfxFilter * filter)
 }
 
 static gboolean
-init_filters(GstMfxFilter * filter)
-{
-    mfxExtVPPDoNotUse vpp_not_used;
-	//mfxExtVPPDeinterlacing  vpp_deinterlacing;
-
-    vpp_not_used.NumAlg = 4;
-	vpp_not_used.AlgList = g_slice_alloc(vpp_not_used.NumAlg * sizeof(*vpp_not_used.AlgList));
-	if (!vpp_not_used.AlgList)
-		return FALSE;
-
-	vpp_not_used.AlgList[0] = MFX_EXTBUFF_VPP_DENOISE;
-	vpp_not_used.AlgList[1] = MFX_EXTBUFF_VPP_SCENE_ANALYSIS;
-	vpp_not_used.AlgList[2] = MFX_EXTBUFF_VPP_DETAIL;
-	vpp_not_used.AlgList[3] = MFX_EXTBUFF_VPP_PROCAMP;
-
-	filter->vpp_ext_params = g_list_prepend(filter->vpp_ext_params, &vpp_not_used);
-
-	filter->params.ExtParam = (mfxExtBuffer **) filter->vpp_ext_params->data;
-	filter->params.NumExtParam = (mfxU16) g_list_length (filter->vpp_ext_params);
-}
-
-
-static gboolean
 gst_mfx_filter_init(GstMfxFilter * filter,
 	GstMfxTaskAggregator * aggregator, mfxSession * session)
 {
@@ -199,7 +216,9 @@ gst_mfx_filter_init(GstMfxFilter * filter,
 	filter->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY |
         MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	filter->aggregator = gst_mfx_task_aggregator_ref(aggregator);
-	filter->session = *session;
+	filter->internal_session = session ? FALSE : TRUE;
+	if (!filter->internal_session)
+        filter->session = *session;
 
 	return TRUE;
 }
@@ -212,10 +231,13 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
 	for (i = 0; i < 2; i++) {
         if (!filter->vpp_request[0])
             continue;
+
+        gst_mfx_task_unref(filter->vpp[i]);
         gst_mfx_surface_pool_unref(filter->vpp_pool[i]);
 	}
 
-	//MFXVideoVPP_Close(filter->session);
+    if (filter->internal_session)
+        MFXVideoVPP_Close(filter->session);
 	gst_mfx_task_aggregator_unref(filter->aggregator);
 }
 
@@ -230,11 +252,33 @@ gst_mfx_filter_class(void)
 }
 
 GstMfxFilter *
-gst_mfx_filter_new(GstMfxTaskAggregator * aggregator, mfxSession * session)
+gst_mfx_filter_new(GstMfxTaskAggregator * aggregator)
 {
 	GstMfxFilter *filter;
 
 	g_return_val_if_fail(aggregator != NULL, NULL);
+
+	filter = (GstMfxFilter *)
+		gst_mfx_mini_object_new0(gst_mfx_filter_class());
+	if (!filter)
+		return NULL;
+
+	if (!gst_mfx_filter_init(filter, aggregator, NULL))
+		goto error;
+	return filter;
+
+error:
+	gst_mfx_filter_unref(filter);
+	return NULL;
+}
+
+GstMfxFilter *
+gst_mfx_filter_new_with_session(GstMfxTaskAggregator * aggregator, mfxSession * session)
+{
+	GstMfxFilter *filter;
+
+	g_return_val_if_fail(aggregator != NULL, NULL);
+	g_return_val_if_fail(session != NULL, NULL);
 
 	filter = (GstMfxFilter *)
 		gst_mfx_mini_object_new0(gst_mfx_filter_class());
@@ -270,7 +314,7 @@ gst_mfx_filter_unref(GstMfxFilter * filter)
 
 void
 gst_mfx_filter_replace(GstMfxFilter ** old_filter_ptr,
-GstMfxFilter * new_filter)
+    GstMfxFilter * new_filter)
 {
 	g_return_if_fail(old_filter_ptr != NULL);
 
