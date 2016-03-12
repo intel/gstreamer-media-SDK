@@ -29,31 +29,29 @@ _vaapi_image_set_image(VaapiImage *image, const VAImage *va_image);
 static void
 vaapi_image_finalize(VaapiImage *image)
 {
-	GstMfxDisplay * const display = image->display;
 	VAImageID image_id;
 	VAStatus status;
 
     _vaapi_image_unmap(image);
 
-	image_id = vaapi_image_get_id(image); 
+	image_id = vaapi_image_get_id(image);
 	GST_DEBUG("image %" GST_MFX_ID_FORMAT, GST_MFX_ID_ARGS(image_id));
 
     if (image_id != VA_INVALID_ID) {
-		GST_MFX_DISPLAY_LOCK(display);
-		status = vaDestroyImage(GST_MFX_DISPLAY_VADISPLAY(display), image_id);
-		GST_MFX_DISPLAY_UNLOCK(display);
+		GST_MFX_DISPLAY_LOCK(image->display);
+		status = vaDestroyImage(GST_MFX_DISPLAY_VADISPLAY(image->display), image_id);
+		GST_MFX_DISPLAY_UNLOCK(image->display);
         if (!vaapi_check_status(status, "vaDestroyImage()"))
 			g_warning("failed to destroy image %" GST_MFX_ID_FORMAT,
 				GST_MFX_ID_ARGS(image_id));
-	    }
-    gst_mfx_display_unref(display);
+    }
+    gst_mfx_display_unref(image->display);
 }
 
 static gboolean
 vaapi_image_create(VaapiImage *image,
     guint width, guint height)
 {
-	GstMfxDisplay * const display = image->display;
     VAStatus status;
     VAImageFormat va_format = {
         .fourcc         = VA_FOURCC_NV12,
@@ -62,15 +60,15 @@ vaapi_image_create(VaapiImage *image,
         .depth          = 8,
     };
 
-	GST_MFX_DISPLAY_LOCK(display);
+	GST_MFX_DISPLAY_LOCK(image->display);
     status = vaCreateImage(
-		GST_MFX_DISPLAY_VADISPLAY(display),
+		GST_MFX_DISPLAY_VADISPLAY(image->display),
         &va_format,
         width,
         height,
         &image->image
     );
-	GST_MFX_DISPLAY_UNLOCK(display);
+	GST_MFX_DISPLAY_UNLOCK(image->display);
 
     if (status != VA_STATUS_SUCCESS)
         return FALSE;
@@ -117,7 +115,7 @@ vaapi_image_new(
     g_return_val_if_fail(width > 0, NULL);
     g_return_val_if_fail(height > 0, NULL);
     g_return_val_if_fail(display != NULL, NULL);
-    
+
     image = (VaapiImage *)
         gst_mfx_mini_object_new0(vaapi_image_class());
 
@@ -127,11 +125,10 @@ vaapi_image_new(
     image->display = gst_mfx_display_ref(display);
     image->image.image_id = VA_INVALID_ID;
     image->image.buf = VA_INVALID_ID;
-
     if (!vaapi_image_create(image, width, height))
         goto error;
     return image;
-    
+
 error:
     vaapi_image_unref(image);
     return NULL;
@@ -161,10 +158,10 @@ vaapi_image_new_with_image(GstMfxDisplay *display, VAImage *va_image)
 	image = (VaapiImage *)
         gst_mfx_mini_object_new0(vaapi_image_class());
 
-    image->display = gst_mfx_display_ref(display);
     if(!image)
         return NULL;
 
+    image->display = gst_mfx_display_ref(display);
     if (!_vaapi_image_set_image(image, va_image))
         goto error;
     return image;
@@ -347,23 +344,18 @@ vaapi_image_map(VaapiImage *image)
 gboolean
 _vaapi_image_map(VaapiImage *image)
 {
-	GstMfxDisplay *display;
 	VAStatus status;
 
     if (_vaapi_image_is_mapped(image))
         goto map_success;
 
-	display = image->display;
-	if (!display)
-		return FALSE;
-
-	GST_MFX_DISPLAY_LOCK(display);
+	GST_MFX_DISPLAY_LOCK(image->display);
     status = vaMapBuffer(
-		GST_MFX_DISPLAY_VADISPLAY(display),
+		GST_MFX_DISPLAY_VADISPLAY(image->display),
         image->image.buf,
         (void **)&image->image_data
     );
-	GST_MFX_DISPLAY_UNLOCK(display);
+	GST_MFX_DISPLAY_UNLOCK(image->display);
     if (!vaapi_check_status(status, "vaMapBuffer()"))
         return FALSE;
 
@@ -391,22 +383,17 @@ vaapi_image_unmap(VaapiImage *image)
 gboolean
 _vaapi_image_unmap(VaapiImage *image)
 {
-	GstMfxDisplay *display;
 	VAStatus status;
 
     if (!_vaapi_image_is_mapped(image))
         return TRUE;
 
-	display = image->display;
-    if (!display)
-		return FALSE;
-
-	GST_MFX_DISPLAY_LOCK(display);
+	GST_MFX_DISPLAY_LOCK(image->display);
     status = vaUnmapBuffer(
-		GST_MFX_DISPLAY_VADISPLAY(display),
+		GST_MFX_DISPLAY_VADISPLAY(image->display),
         image->image.buf
     );
-	GST_MFX_DISPLAY_UNLOCK(display);
+	GST_MFX_DISPLAY_UNLOCK(image->display);
     if (!vaapi_check_status(status, "vaUnmapBuffer()"))
         return FALSE;
 
@@ -517,7 +504,7 @@ VaapiImage *
 vaapi_image_ref(VaapiImage * image)
 {
     g_return_val_if_fail(image != NULL, NULL);
-    
+
     return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT (image));
 }
 
@@ -528,7 +515,7 @@ vaapi_image_ref(VaapiImage * image)
  * Atomically decreases the reference count of the given @image by one.
  * If the reference count reaches zero, the object will be free'd.
  */
-void 
+void
 vaapi_image_unref(VaapiImage * image)
 {
     gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT (image));
@@ -539,12 +526,12 @@ vaapi_image_unref(VaapiImage * image)
  * @old_image_ptr: a pointer to a #VaapiImage
  * @new_image: a #VaapiImage
  *
- * Atomically replaces the image object held in @old_image_ptr with 
+ * Atomically replaces the image object held in @old_image_ptr with
  * @new_image. This means the @old_image_ptr shall reference a valid
  * object. However, @new_image can be NULL.
  */
 void
-vaapi_image_replace(VaapiImage ** old_image_ptr, 
+vaapi_image_replace(VaapiImage ** old_image_ptr,
         VaapiImage * new_image)
 {
     g_return_if_fail(old_image_ptr != NULL);

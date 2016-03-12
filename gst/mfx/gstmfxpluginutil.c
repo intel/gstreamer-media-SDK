@@ -189,8 +189,7 @@ gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
 }
 
 GstMfxCapsFeature
-gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
-	GstVideoFormat * out_format_ptr)
+gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_ptr)
 {
 	GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
 	guint i, num_structures;
@@ -199,6 +198,8 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
 	GstCaps *mfx_caps = NULL;
 	GstCaps *out_caps, *templ;
 	GstVideoFormat out_format;
+	GstStructure *structure;
+	gchar *format_string;
 
 	templ = gst_pad_get_pad_template_caps(pad);
 	out_caps = gst_pad_peer_query_caps(pad, templ);
@@ -208,8 +209,10 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
 		goto cleanup;
 	}
 
-	out_format = format == GST_VIDEO_FORMAT_ENCODED ?
-		GST_VIDEO_FORMAT_NV12 : format;
+    structure = gst_caps_get_structure(out_caps, 0);
+    format_string = gst_structure_get_string(structure, "format");
+    out_format = format_string ? gst_video_format_from_string(format_string) :
+                    GST_VIDEO_FORMAT_NV12;
 
 	mfx_caps =
 		gst_mfx_video_format_new_template_caps_with_features(out_format,
@@ -250,6 +253,8 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
 		if (feature != GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY)
 			break;
 	}
+
+	*out_format_ptr = out_format;
 
 cleanup:
 	gst_caps_replace(&sysmem_caps, NULL);

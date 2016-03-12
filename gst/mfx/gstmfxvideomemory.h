@@ -138,7 +138,7 @@ GType
 gst_mfx_video_allocator_get_type(void);
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxContext * ctx,
+gst_mfx_video_allocator_new(GstMfxTask * alloc,
 	const GstVideoInfo * vip);
 
 const GstVideoInfo *

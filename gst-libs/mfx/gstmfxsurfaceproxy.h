@@ -2,7 +2,7 @@
 #define GST_MFX_SURFACE_PROXY_H
 
 #include <gst/video/video.h>
-#include "gstmfxcontext.h"
+#include "gstmfxtask.h"
 #include "gstmfxutils_vaapi.h"
 
 G_BEGIN_DECLS
@@ -29,7 +29,7 @@ typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new(GstMfxContext * ctx);
+gst_mfx_surface_proxy_new(GstMfxTask * ctx);
 
 GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool);
@@ -66,8 +66,8 @@ void
 gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy, guint * width_ptr,
 	guint * height_ptr);
 
-GstMfxContext *
-gst_mfx_surface_proxy_get_allocator_context(GstMfxSurfaceProxy * proxy);
+GstMfxTask *
+gst_mfx_surface_proxy_get_task_context(GstMfxSurfaceProxy * proxy);
 
 const GstMfxRectangle *
 gst_mfx_surface_proxy_get_crop_rect(GstMfxSurfaceProxy * proxy);

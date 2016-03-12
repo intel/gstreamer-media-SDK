@@ -59,7 +59,12 @@ enum
 	N_PROPERTIES
 };
 
-#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_ANY
+#if USE_EGL
+# define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_EGL
+#else
+# define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_WAYLAND
+#endif
+
 #define DEFAULT_SIGNAL_HANDOFFS         FALSE
 
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
@@ -468,26 +473,18 @@ gst_mfxsink_set_display_name(GstMfxSink * sink,
 static void
 gst_mfxsink_set_render_backend(GstMfxSink * sink)
 {
-    gboolean autoselect = FALSE;
-
     GstMfxDisplay *display = NULL;
 
     switch (sink->display_type_req) {
-    case GST_MFX_DISPLAY_TYPE_ANY:
-        autoselect = TRUE;
 #if USE_WAYLAND
     case GST_MFX_DISPLAY_TYPE_WAYLAND:
         display = gst_mfx_display_wayland_new(NULL);
         if (!display)
-            if (autoselect)
-                goto egl;
-            else
-                goto display_unsupported;
+            goto display_unsupported;
         sink->backend = gst_mfxsink_backend_wayland();
         sink->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
         break;
 #endif
-egl:
 #if USE_EGL
     case GST_MFX_DISPLAY_TYPE_EGL:
         display = gst_mfx_display_egl_new (NULL, 2);
@@ -649,8 +646,19 @@ gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 {
 	GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
 	GstCaps *out_caps, *raw_caps;
+	GstVideoFormat out_format;
 
-	out_caps = gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
+	//out_caps = gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
+
+	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
+        out_format = GST_VIDEO_FORMAT_RGBA;
+    else
+        out_format = GST_VIDEO_FORMAT_NV12;
+
+    out_caps =
+            gst_mfx_video_format_new_template_caps_with_features(out_format,
+                GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
+
 	if (!out_caps)
 		return NULL;
 
@@ -676,6 +684,7 @@ gst_mfxsink_get_caps(GstBaseSink * base_sink, GstCaps * filter)
 	}
 	else
 		out_caps = caps;
+
 	return out_caps;
 }
 

@@ -59,8 +59,8 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 	    return FALSE;
 
 	surf = GST_MFX_SURFACE_PROXY_MEMID(proxy->parent);
-	display = GST_MFX_CONTEXT_DISPLAY(
-        gst_mfx_surface_proxy_get_allocator_context(proxy->parent));
+	display = GST_MFX_TASK_DISPLAY(
+        gst_mfx_surface_proxy_get_task_context(proxy->parent));
     proxy->image = gst_mfx_surface_proxy_derive_image(proxy->parent);
     vaapi_image_get_image(proxy->image, &va_img);
 
@@ -94,8 +94,8 @@ gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
 	if(g_va_get_surface_handle)
 		close(proxy->fd);
 	else {
-	    GstMfxDisplay *display = GST_MFX_CONTEXT_DISPLAY(
-            gst_mfx_surface_proxy_get_allocator_context(proxy->parent));
+	    GstMfxDisplay *display = GST_MFX_TASK_DISPLAY(
+            gst_mfx_surface_proxy_get_task_context(proxy->parent));
         GST_MFX_DISPLAY_LOCK(display);
 	    vaReleaseBufferHandle(GST_MFX_DISPLAY_VADISPLAY(display),
             va_img.buf);
@@ -152,7 +152,7 @@ GstMfxPrimeBufferProxy *
 gst_mfx_prime_buffer_proxy_ref(GstMfxPrimeBufferProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, NULL);
-	
+
 	return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT (proxy));
 }
 
@@ -163,7 +163,7 @@ gst_mfx_prime_buffer_proxy_ref(GstMfxPrimeBufferProxy * proxy)
 * Atomically decreases the reference count of the @proxy by one. If
 * the reference count reaches zero, the object will be free'd.
 */
-void 
+void
 gst_mfx_prime_buffer_proxy_unref(GstMfxPrimeBufferProxy * proxy)
 {
     gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT (proxy));
@@ -210,12 +210,12 @@ gst_mfx_prime_buffer_proxy_get_handle(GstMfxPrimeBufferProxy * proxy)
  *
  * Returns the underlying VaapiImage object stored in the @proxy.
  *
- * Return value: #VaapiImage 
+ * Return value: #VaapiImage
  */
 VaapiImage *
 gst_mfx_prime_buffer_proxy_get_vaapi_image(GstMfxPrimeBufferProxy * proxy)
 {
     g_return_val_if_fail(proxy != NULL, 0);
-    
+
     return proxy->image;
 }

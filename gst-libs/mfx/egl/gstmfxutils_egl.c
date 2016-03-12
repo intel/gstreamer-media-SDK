@@ -718,8 +718,8 @@ egl_config_new(EglDisplay * display, guint gles_version, GstVideoFormat format)
 	if (!vinfo)
 		return NULL;
 
-	//*attrib++ = EGL_COLOR_BUFFER_TYPE;
-	//*attrib++ = EGL_RGB_BUFFER;
+	*attrib++ = EGL_COLOR_BUFFER_TYPE;
+	*attrib++ = EGL_RGB_BUFFER;
 	*attrib++ = EGL_RED_SIZE;
 	*attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_R);
 	*attrib++ = EGL_GREEN_SIZE;
@@ -727,10 +727,10 @@ egl_config_new(EglDisplay * display, guint gles_version, GstVideoFormat format)
 	*attrib++ = EGL_BLUE_SIZE;
 	*attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_B);
 	*attrib++ = EGL_ALPHA_SIZE;
-	//*attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_A);
-	*attrib++ = 0;
-	*attrib++ = EGL_DEPTH_SIZE;
-	*attrib++ = 24;
+	*attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_A);
+	//*attrib++ = 0;
+	//*attrib++ = EGL_DEPTH_SIZE;
+	//*attrib++ = 24;
 	*attrib++ = EGL_RENDERABLE_TYPE;
 	*attrib++ = vinfo->gl_api_bit;
 	*attrib++ = EGL_NONE;

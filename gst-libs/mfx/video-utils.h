@@ -17,6 +17,9 @@ gst_mfx_video_format_to_string(GstVideoFormat format);
 GstVideoFormat
 gst_video_format_from_mfx_fourcc(mfxU32 fourcc);
 
+mfxU32
+gst_video_format_to_mfx_fourcc(GstVideoFormat format);
+
 guint
 gst_mfx_video_format_get_chroma_type(GstVideoFormat format);
 

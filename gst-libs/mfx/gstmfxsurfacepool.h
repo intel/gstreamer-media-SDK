@@ -2,7 +2,7 @@
 #define GST_MFX_SURFACE_POOL_H
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtask.h"
 #include <glib.h>
 
 G_BEGIN_DECLS
@@ -11,7 +11,7 @@ G_BEGIN_DECLS
   ((GstMfxSurfacePool *)(obj))
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new(GstMfxContext * ctx);
+gst_mfx_surface_pool_new(GstMfxTask * task);
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_ref (GstMfxSurfacePool * pool);

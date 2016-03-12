@@ -204,7 +204,7 @@ void
 gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem)
 {
     if (mem->image) {
-        vaapi_image_unref (mem->image);
+        gst_mfx_object_unref (mem->image);
         mem->image = NULL;
     }
 }
@@ -500,16 +500,16 @@ allocator_configure_image_info(GstMfxDisplay * display,
 
 bail:
     if (image)
-        vaapi_image_unref (image);
+        gst_mfx_object_unref (image);
 }
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxContext * ctx,
+gst_mfx_video_allocator_new(GstMfxTask * task,
 	const GstVideoInfo * vip)
 {
 	GstMfxVideoAllocator *allocator;
 
-    g_return_val_if_fail(ctx != NULL, NULL);
+    g_return_val_if_fail(task != NULL, NULL);
 	g_return_val_if_fail(vip != NULL, NULL);
 
 	allocator = g_object_new(GST_MFX_TYPE_VIDEO_ALLOCATOR, NULL);
@@ -518,12 +518,12 @@ gst_mfx_video_allocator_new(GstMfxContext * ctx,
 
 	allocator->video_info = *vip;
 
-	allocator->surface_pool = gst_mfx_surface_pool_new(ctx);
+	allocator->surface_pool = gst_mfx_surface_pool_new(task);
 
 	if (!allocator->surface_pool)
 		goto error_create_surface_pool;
 
-    allocator_configure_image_info (GST_MFX_CONTEXT_DISPLAY(ctx), allocator);
+    allocator_configure_image_info (GST_MFX_TASK_DISPLAY(task), allocator);
 
 	gst_allocator_set_mfx_video_info(GST_ALLOCATOR_CAST(allocator),
 		&allocator->image_info, 0);

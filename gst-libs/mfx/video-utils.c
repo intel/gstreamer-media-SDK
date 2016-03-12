@@ -27,3 +27,20 @@ gst_video_format_from_mfx_fourcc(mfxU32 fourcc)
 		return GST_VIDEO_FORMAT_UNKNOWN;
 	};
 }
+
+mfxU32
+gst_video_format_to_mfx_fourcc(GstVideoFormat format)
+{
+	switch (format) {
+	case GST_VIDEO_FORMAT_YUY2:
+		return MFX_FOURCC_YUY2;
+	case GST_VIDEO_FORMAT_RGBA:
+		return MFX_FOURCC_RGB4;
+	case GST_VIDEO_FORMAT_YV12:
+		return MFX_FOURCC_YV12;
+	case GST_VIDEO_FORMAT_NV12:
+		return MFX_FOURCC_NV12;
+	default:
+		return 0;
+	};
+}

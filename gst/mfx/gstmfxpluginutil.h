@@ -46,7 +46,7 @@ gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
 	const gchar * features_string);
 
 GstMfxCapsFeature
-gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
+gst_mfx_find_preferred_caps_feature(GstPad * pad,
 	GstVideoFormat * out_format_ptr);
 
 const gchar *
@@ -58,11 +58,7 @@ gst_mfx_caps_feature_contains(const GstCaps * caps,
 
 #define GST_MFX_MAKE_SURFACE_CAPS					\
 	GST_VIDEO_CAPS_MAKE_WITH_FEATURES(					\
-	GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12 }")
-
-#define GST_MFX_MAKE_ENC_SURFACE_CAPS				\
-	GST_VIDEO_CAPS_MAKE_WITH_FEATURES(					\
-	GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, NV12, I420, YV12 }")
+	GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, YV12, RGBA }")
 
 gboolean
 gst_caps_has_mfx_surface(GstCaps * caps);

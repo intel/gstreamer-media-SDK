@@ -9,17 +9,6 @@
 #include "gstmfxprimebufferproxy.h"
 #include "gstmfxutils_vaapi.h"
 
-/* Additional DRM formats */
-#ifndef DRM_FORMAT_R8
-#define DRM_FORMAT_R8   fourcc_code('R', '8', ' ', ' ')
-#endif
-#ifndef DRM_FORMAT_RG88
-#define DRM_FORMAT_RG88 fourcc_code('R', 'G', '8', '8')
-#endif
-#ifndef DRM_FORMAT_GR88
-#define DRM_FORMAT_GR88 fourcc_code('G', 'R', '8', '8')
-#endif
-
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
@@ -42,7 +31,6 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 	GstMfxPrimeBufferProxy *buffer_proxy;
 	VaapiImage *image;
 	VAImage va_image;
-	guint i, num_planes = 0;
 
 	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(proxy);
 	if (!buffer_proxy)
@@ -53,44 +41,36 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 		return FALSE;
 	vaapi_image_get_image(image, &va_image);
 
-    num_planes = vaapi_image_get_plane_count(image);
-
     GST_MFX_TEXTURE_WIDTH(base_texture) = vaapi_image_get_width(image);
     GST_MFX_TEXTURE_HEIGHT(base_texture) = vaapi_image_get_height(image);
 
-    for (i = 0; i < num_planes; i++) {
-        const uint32_t is_uv_plane = i > 0;
+    attrib = attribs;
+    *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
+    *attrib++ = DRM_FORMAT_ARGB8888;
+    *attrib++ = EGL_WIDTH;
+    *attrib++ = vaapi_image_get_width(image);
+    *attrib++ = EGL_HEIGHT;
+    *attrib++ = vaapi_image_get_height(image);
+    *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
+    *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
+    *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
+    *attrib++ = vaapi_image_get_offset(image, 0);
+    *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
+    *attrib++ = vaapi_image_get_pitch(image, 0);
+    *attrib++ = EGL_NONE;
 
-        attrib = attribs;
-        *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
-        *attrib++ = is_uv_plane ? DRM_FORMAT_GR88 : DRM_FORMAT_R8;
-        *attrib++ = EGL_WIDTH;
-        *attrib++ = (vaapi_image_get_width(image) + is_uv_plane) >> is_uv_plane;
-        *attrib++ = EGL_HEIGHT;
-        *attrib++ = (vaapi_image_get_height(image) + is_uv_plane) >> is_uv_plane;
-        *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
-        *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
-        *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-        *attrib++ = vaapi_image_get_offset(image, i);
-        *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-        *attrib++ = vaapi_image_get_pitch(image, i);
-        *attrib++ = EGL_NONE;
-        texture->egl_images[i] = vtable->eglCreateImageKHR(
-            ctx->display->base.handle.p, EGL_NO_CONTEXT,
-            EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer)NULL, attribs);
-        if (!texture->egl_images[i]) {
-            GST_ERROR(
-                "failed to import VA buffer (NV12:%s) into EGL image\n",
-                is_uv_plane ? "UV" : "Y");
-            return FALSE;
-        }
-        texture->textures[i] = egl_create_texture_from_egl_image(texture->egl_context,
-            base_texture->gl_target, texture->egl_images[i]);
-        if (!texture->textures[i]) {
-            return FALSE;
-        }
+    texture->egl_image = vtable->eglCreateImageKHR(
+        ctx->display->base.handle.p, EGL_NO_CONTEXT,
+        EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer)NULL, attribs);
+    if (!texture->egl_image) {
+        GST_ERROR("failed to import VA buffer (RGBA) into EGL image\n");
+        return FALSE;
+    }
 
-        texture->num_textures++;
+    GST_MFX_TEXTURE_ID(texture) = egl_create_texture_from_egl_image(
+        texture->egl_context, base_texture->gl_target, texture->egl_image);
+    if (!GST_MFX_OBJECT_ID(base_texture)) {
+        return FALSE;
     }
 
     gst_mfx_prime_buffer_proxy_unref(buffer_proxy);
@@ -120,34 +100,27 @@ destroy_objects(GstMfxTextureEGL * texture)
 {
 	EglContext *const ctx = texture->egl_context;
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
-	int i;
 
-    for (i = 0; i < texture->num_textures; i++) {
-        if (texture->egl_images[i] != EGL_NO_IMAGE_KHR) {
-            vtable->eglDestroyImageKHR(ctx->display->base.handle.p,
-                texture->egl_images[i]);
-            texture->egl_images[i] = EGL_NO_IMAGE_KHR;
-        }
-	}
+    if (texture->egl_image != EGL_NO_IMAGE_KHR) {
+        vtable->eglDestroyImageKHR(ctx->display->base.handle.p,
+            texture->egl_image);
+        texture->egl_image = EGL_NO_IMAGE_KHR;
+    }
 }
 
 static void
 do_destroy_texture_unlocked(GstMfxTextureEGL * texture)
 {
 	//GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
-	//const GLuint texture_id = GST_MFX_TEXTURE_ID(texture);
-	guint i;
+	const GLuint texture_id = GST_MFX_TEXTURE_ID(texture);
 
 	destroy_objects(texture);
 
-	for(i = 0; i < texture->num_textures; i++)
-        egl_destroy_texture(texture->egl_context, texture->textures[i]);
-
-	//if (texture_id) {
+	if (texture_id) {
 		//if (!base_texture->is_wrapped)
-			//egl_destroy_texture(texture->egl_context, texture_id);
-		//GST_MFX_TEXTURE_ID(texture) = 0;
-	//}
+			egl_destroy_texture(texture->egl_context, texture_id);
+		GST_MFX_TEXTURE_ID(texture) = 0;
+	}
 }
 
 static void

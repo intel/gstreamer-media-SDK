@@ -1,15 +1,11 @@
 #ifndef GST_MFX_UTILS_VAAPI_H
 #define GST_MFX_UTILS_VAAPI_H
 
-//#include <gst/gstbuffer.h>
 #include "gstmfxobject.h"
 #include "gstmfxdisplay.h"
 #include "video-utils.h"
 
 G_BEGIN_DECLS
-
-#define VAAPI_IMAGE(obj) \
-    ((VaapiImage *)(obj))
 
 typedef struct _VaapiImage      VaapiImage;
 
@@ -22,6 +18,16 @@ vaapi_image_new(
 
 VaapiImage *
 vaapi_image_new_with_image(GstMfxDisplay *display, VAImage *va_image);
+
+VaapiImage *
+vaapi_image_ref(VaapiImage * image);
+
+void
+vaapi_image_unref(VaapiImage * image);
+
+void
+vaapi_image_replace(VaapiImage ** old_image_ptr,
+        VaapiImage * new_image);
 
 VAImageID
 vaapi_image_get_id(VaapiImage *image);
@@ -64,16 +70,6 @@ vaapi_image_get_offset(VaapiImage *image, guint plane);
 
 guint
 vaapi_image_get_data_size(VaapiImage *image);
-
-VaapiImage *
-vaapi_image_ref(VaapiImage * image);
-
-void 
-vaapi_image_unref(VaapiImage * image);
-
-void 
-vaapi_image_replace(VaapiImage ** old_image_ptr,
-        VaapiImage * new_image);
 
 G_END_DECLS
 

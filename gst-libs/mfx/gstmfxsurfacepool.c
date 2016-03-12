@@ -11,7 +11,7 @@ struct _GstMfxSurfacePool
 	/*< private >*/
 	GstMfxMiniObject parent_instance;
 
-	GstMfxContext *ctx;
+	GstMfxTask *task;
 	GQueue free_objects;
 	GList *used_objects;
 	guint used_count;
@@ -30,9 +30,9 @@ sync_output_surface(gconstpointer proxy, gconstpointer surf)
 }
 
 void
-gst_mfx_surface_pool_init (GstMfxSurfacePool * pool, GstMfxContext * ctx)
+gst_mfx_surface_pool_init (GstMfxSurfacePool * pool, GstMfxTask * task)
 {
-	pool->ctx = gst_mfx_context_ref(ctx);
+	pool->task = gst_mfx_task_ref(task);
 
     pool->used_objects = NULL;
     pool->used_count = 0;
@@ -45,7 +45,7 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool, GstMfxContext * ctx)
 void
 gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
 {
-	gst_mfx_context_unref(pool->ctx);
+	gst_mfx_task_unref(pool->task);
     g_list_free_full (pool->used_objects, gst_mfx_mini_object_unref);
     g_queue_foreach (&pool->free_objects, (GFunc) gst_mfx_mini_object_unref, NULL);
     g_queue_clear (&pool->free_objects);
@@ -63,7 +63,7 @@ gst_mfx_surface_pool_class(void)
 }
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new(GstMfxContext * ctx)
+gst_mfx_surface_pool_new(GstMfxTask * ctx)
 {
 	GstMfxSurfacePool *pool;
 
@@ -126,7 +126,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
 
     if (!surface) {
         g_mutex_unlock (&pool->mutex);
-        surface = gst_mfx_surface_proxy_new(pool->ctx);
+        surface = gst_mfx_surface_proxy_new(pool->task);
         g_mutex_lock (&pool->mutex);
     if (!surface)
         return NULL;

@@ -68,7 +68,7 @@ gst_mfx_decoder_get_surface_proxy(GstMfxDecoder * decoder,
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode(GstMfxDecoder * decoder,
-	GstVideoCodecFrame * frame);
+	GstVideoCodecFrame * frame, GstVideoInfo * info);
 
 G_END_DECLS
 
