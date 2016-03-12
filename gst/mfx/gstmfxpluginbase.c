@@ -12,14 +12,14 @@
 static gpointer plugin_parent_class = NULL;
 
 static void
-plugin_set_context(GstElement * element, GstContext * context)
+plugin_set_aggregator(GstElement * element, GstContext * context)
 {
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(element);
 	GstElementClass *element_class = GST_ELEMENT_CLASS(plugin_parent_class);
-	GstMfxContext *mfx_ctx = NULL;
+	GstMfxTaskAggregator *aggregator = NULL;
 
-	if (gst_mfx_video_context_get_context(context, &mfx_ctx))
-        gst_mfx_context_replace(&plugin->context, mfx_ctx);
+	if (gst_mfx_video_context_get_aggregator(context, &aggregator))
+        gst_mfx_task_aggregator_replace(&plugin->aggregator, aggregator);
 
 	if (element_class->set_context)
 		element_class->set_context(element, context);
@@ -71,7 +71,7 @@ gst_mfx_plugin_base_class_init(GstMfxPluginBaseClass * klass)
 	plugin_parent_class = g_type_class_peek_parent(klass);
 
 	GstElementClass *const element_class = GST_ELEMENT_CLASS(klass);
-	element_class->set_context = GST_DEBUG_FUNCPTR(plugin_set_context);
+	element_class->set_context = GST_DEBUG_FUNCPTR(plugin_set_aggregator);
 }
 
 void
@@ -128,7 +128,7 @@ gst_mfx_plugin_base_open(GstMfxPluginBase * plugin)
 void
 gst_mfx_plugin_base_close(GstMfxPluginBase * plugin)
 {
-	gst_mfx_context_replace(&plugin->context, NULL);
+	gst_mfx_task_aggregator_replace(&plugin->aggregator, NULL);
 	//gst_object_replace(&plugin->gl_context, NULL);
 
 	gst_caps_replace(&plugin->sinkpad_caps, NULL);
@@ -157,11 +157,11 @@ gst_mfx_plugin_base_close(GstMfxPluginBase * plugin)
 *   type, %FALSE otherwise.
 */
 gboolean
-gst_mfx_plugin_base_ensure_context(GstMfxPluginBase * plugin)
+gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin)
 {
-	gst_mfx_context_replace(&plugin->context, NULL);
+	gst_mfx_task_aggregator_replace(&plugin->aggregator, NULL);
 
-	if (!gst_mfx_ensure_context(GST_ELEMENT(plugin)))
+	if (!gst_mfx_ensure_aggregator(GST_ELEMENT(plugin)))
 		return FALSE;
 
 	return TRUE;
@@ -186,7 +186,7 @@ ensure_sinkpad_buffer_pool(GstMfxPluginBase * plugin, GstCaps * caps)
 	GstVideoInfo vi;
 	gboolean need_pool;
 
-	if (!gst_mfx_plugin_base_ensure_context(plugin))
+	if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
 		return FALSE;
 
 	if (plugin->sinkpad_buffer_pool) {
@@ -200,7 +200,7 @@ ensure_sinkpad_buffer_pool(GstMfxPluginBase * plugin, GstCaps * caps)
 		plugin->sinkpad_buffer_size = 0;
 	}
 
-	pool = gst_mfx_video_buffer_pool_new(plugin->context);
+	pool = gst_mfx_video_buffer_pool_new(plugin->aggregator);
 	if (!pool)
 		goto error_create_pool;
 
@@ -357,7 +357,7 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	gboolean has_video_meta = FALSE;
 	gboolean has_video_alignment = FALSE;
 
-	g_return_val_if_fail(plugin->context != NULL, FALSE);
+	g_return_val_if_fail(plugin->aggregator != NULL, FALSE);
 
 	gst_query_parse_allocation(query, &caps, NULL);
 
@@ -370,8 +370,8 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	/* Make sure the display we pass down to the buffer pool is actually
 	the expected one, especially when the downstream element requires
 	a GLX or EGL display */
-	if (!gst_mfx_plugin_base_ensure_context(plugin))
-		goto error_ensure_context;
+	if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
+		goto error_ensure_aggregator;
 
 	gst_video_info_init(&vi);
 	gst_video_info_from_caps(&vi, caps);
@@ -403,7 +403,7 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 			"Pool hasn't GstMfxVideoMeta");
 		if (pool)
 			gst_object_unref(pool);
-		pool = gst_mfx_video_buffer_pool_new(plugin->context);
+		pool = gst_mfx_video_buffer_pool_new(plugin->aggregator);
 		if (!pool)
 			goto error_create_pool;
 
@@ -442,9 +442,9 @@ error_no_caps:
 		GST_ERROR_OBJECT(plugin, "no caps specified");
 		return FALSE;
 	}
-error_ensure_context:
+error_ensure_aggregator:
 	{
-		GST_ERROR_OBJECT(plugin, "failed to ensure context");
+		GST_ERROR_OBJECT(plugin, "failed to ensure aggregator");
 		return FALSE;
 	}
 error_create_pool:

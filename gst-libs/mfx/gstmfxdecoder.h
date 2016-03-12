@@ -2,7 +2,7 @@
 #define GST_MFX_DECODER_H
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 
 G_BEGIN_DECLS
 
@@ -46,7 +46,7 @@ typedef enum {
 } GstMfxDecoderStatus;
 
 GstMfxDecoder *
-gst_mfx_decoder_new(GstMfxContext * context,
+gst_mfx_decoder_new(GstMfxTaskAggregator * context,
 	mfxU32 codec, mfxU16 async_depth);
 
 GstMfxDecoder *

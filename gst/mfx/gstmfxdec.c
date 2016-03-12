@@ -318,7 +318,7 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 {
 	GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
 
-	gst_mfx_context_set_current(GST_MFX_PLUGIN_BASE(mfxdec)->context,
+	gst_mfx_task_aggregator_set_current_task(GST_MFX_PLUGIN_BASE(mfxdec)->aggregator,
 		mfxdec->task);
 
 	return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(vdec),
@@ -334,9 +334,9 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 	if (!codec)
 		return FALSE;
 
-    gst_mfx_context_set_current(plugin->context, mfxdec->task);
+    gst_mfx_task_aggregator_set_current_task(plugin->aggregator, mfxdec->task);
 
-	mfxdec->decoder = gst_mfx_decoder_new(plugin->context,
+	mfxdec->decoder = gst_mfx_decoder_new(plugin->aggregator,
 		codec, mfxdec->async_depth);
 	if (!mfxdec->decoder)
 		return FALSE;
@@ -396,10 +396,10 @@ gst_mfxdec_open(GstVideoDecoder * vdec)
     GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(vdec);
     GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
 
-	if (!gst_mfx_plugin_base_ensure_context(plugin))
+	if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
         return FALSE;
 
-    mfxdec->task = gst_mfx_task_new(plugin->context, GST_MFX_TASK_DECODER);
+    mfxdec->task = gst_mfx_task_new(plugin->aggregator, GST_MFX_TASK_DECODER);
     if (!mfxdec->task)
         return FALSE;
 

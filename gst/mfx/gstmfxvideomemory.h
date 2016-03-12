@@ -9,7 +9,7 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxdisplay.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 #include <gst/allocators/allocators.h>
 
 G_BEGIN_DECLS
@@ -138,7 +138,7 @@ GType
 gst_mfx_video_allocator_get_type(void);
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxTask * alloc,
+gst_mfx_video_allocator_new(GstMfxTask * task,
 	const GstVideoInfo * vip);
 
 const GstVideoInfo *

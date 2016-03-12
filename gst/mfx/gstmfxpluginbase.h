@@ -5,7 +5,7 @@
 #include <gst/video/gstvideodecoder.h>
 #include <gst/video/gstvideoencoder.h>
 #include <gst/video/gstvideosink.h>
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 
 
 G_BEGIN_DECLS
@@ -96,7 +96,7 @@ struct _GstMfxPluginBase
 	GstPadQueryFunction srcpad_query;
 	GstPadQueryFunction sinkpad_query;
 
-	GstMfxContext *context;
+	GstMfxTaskAggregator *aggregator;
 
 	GstCaps *allowed_raw_caps;
 };
@@ -136,7 +136,7 @@ void
 gst_mfx_plugin_base_close(GstMfxPluginBase * plugin);
 
 gboolean
-gst_mfx_plugin_base_ensure_context(GstMfxPluginBase * plugin);
+gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin);
 
 gboolean
 gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,

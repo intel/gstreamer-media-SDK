@@ -1843,7 +1843,7 @@
 	<mfxvideo.h>
 	<mfxjpeg.h>
 
-1457693469 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdecoder.c
+1457765662 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdecoder.c
 	<mfxplugin.h>
 	"gstmfxdecoder.h"
 	"gstmfxfilter.h"
@@ -1853,9 +1853,9 @@
 	"gstmfxtask.h"
 	"gstmfxdebug.h"
 
-1457575897 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdecoder.h
+1457764384 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxdecoder.h
 	"gstmfxsurfaceproxy.h"
-	"gstmfxcontext.h"
+	"gstmfxtaskaggregator.h"
 
 1457496466 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfaceproxy.h
 	<gst/video/video.h>
@@ -1895,7 +1895,7 @@
 	<mfxvideo.h>
 	<va/va.h>
 
-1457493350 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.h
+1457764297 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.h
 	"gstmfxminiobject.h"
 	"gstmfxdisplay.h"
 	"gstmfxtask.h"
@@ -2064,12 +2064,12 @@
 	"gstmfxdecoder.h"
 	"gstmfxpluginbase.h"
 
-1456338684 /home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.h
+1457765181 /home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.h
 	<gst/base/gstbasetransform.h>
 	<gst/video/gstvideodecoder.h>
 	<gst/video/gstvideoencoder.h>
 	<gst/video/gstvideosink.h>
-	"gstmfxcontext.h"
+	"gstmfxtaskaggregator.h"
 
 1456241378 /home/nuc/work/gst_msdk/gst/mfx/gstmfxsink.h
 	"gstmfxpluginbase.h"
@@ -2077,12 +2077,12 @@
 	"gstmfxpluginutil.h"
 	"gstmfxdisplay.h"
 
-1457681377 /home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginutil.h
-	"gstmfxcontext.h"
+1457764437 /home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginutil.h
+	"gstmfxtaskaggregator.h"
 	"gstmfxsurfaceproxy.h"
 	"gstmfxvideomemory.h"
 
-1457493099 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideomemory.h
+1457765701 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideomemory.h
 	"sysdeps.h"
 	<gst/gstallocator.h>
 	<gst/video/video-info.h>
@@ -2091,10 +2091,10 @@
 	"gstmfxvideometa.h"
 	"gstmfxsurfacepool.h"
 	"gstmfxdisplay.h"
-	"gstmfxcontext.h"
+	"gstmfxtaskaggregator.h"
 	<gst/allocators/allocators.h>
 
-1457739115 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxdec.c
+1457765181 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxdec.c
 	"gstmfxcompat.h"
 	"gstmfxdec.h"
 	<string.h>
@@ -2109,16 +2109,16 @@
 	"gstmfxsurfaceproxy.h"
 	"gstmfxminiobject.h"
 
-1457493099 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideobufferpool.h
+1457764383 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideobufferpool.h
 	<gst/video/gstvideopool.h>
 	"gstmfxdisplay.h"
-	"gstmfxcontext.h"
+	"gstmfxtaskaggregator.h"
 
-1456237514 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideocontext.c
+1457764297 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideocontext.c
 	"gstmfxvideocontext.h"
 
-1456235290 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideocontext.h
-	"gstmfxcontext.h"
+1457764469 /home/nuc/work/gst_msdk/gst/mfx/gstmfxvideocontext.h
+	"gstmfxtaskaggregator.h"
 
 1457739074 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideomemory.c
 	"gstmfxvideomemory.h"
@@ -2138,7 +2138,7 @@
 	<X11/extensions/Xrandr.h>
 	"gstmfxdebug.h"
 
-1457740154 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxsink.c
+1457765249 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxsink.c
 	<gst/gst.h>
 	<gst/video/video.h>
 	<gst/video/navigation.h>
@@ -2307,8 +2307,8 @@
 	"gstmfxdisplay_priv.h"
 	"gstmfxdebug.h"
 
-1457503094 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.c
-	"gstmfxcontext.h"
+1457764384 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxcontext.c
+	"gstmfxtaskaggregator.h"
 	"gstmfxdebug.h"
 
 1457669293 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxsurfaceproxy.c
@@ -2316,7 +2316,7 @@
 	"gstmfxsurfacepool.h"
 	"gstmfxdebug.h"
 
-1456309182 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.c
+1457766016 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginbase.c
 	<gst/base/gstpushsrc.h>
 	"gstmfxpluginbase.h"
 	"gstmfxpluginutil.h"
@@ -2325,13 +2325,13 @@
 	"gstmfxvideobufferpool.h"
 	<gst/allocators/allocators.h>
 
-1457739085 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginutil.c
+1457765235 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxpluginutil.c
 	"sysdeps.h"
 	"gstmfxvideocontext.h"
 	"gstmfxpluginutil.h"
 	"gstmfxpluginbase.h"
 
-1457495496 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideobufferpool.c
+1457756030 source:/home/nuc/work/gst_msdk/gst/mfx/gstmfxvideobufferpool.c
 	"gstmfxvideobufferpool.h"
 	"gstmfxvideomemory.h"
 	"gstmfxdisplay.h"
@@ -3496,13 +3496,13 @@
 	"gstmfxsurfacepool.h"
 	"gstmfxvideomemory.h"
 
-1457496466 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxprimebufferproxy.c
+1457764633 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxprimebufferproxy.c
 	<gmodule.h>
 	<va/va_drmcommon.h>
 	"sysdeps.h"
 	"video-utils.h"
 	"gstmfxsurfaceproxy.h"
-	"gstmfxcontext.h"
+	"gstmfxtaskaggregator.h"
 	"gstmfxprimebufferproxy.h"
 	"gstmfxdebug.h"
 
@@ -4493,7 +4493,7 @@
 	"egl_vtable.h"
 	"egl_vtable.h"
 
-1457740471 source:/home/nuc/work/gst_msdk/gst-libs/mfx/egl/gstmfxwindow_egl.c
+1457765010 source:/home/nuc/work/gst_msdk/gst-libs/mfx/egl/gstmfxwindow_egl.c
 	"sysdeps.h"
 	"gstmfxwindow_egl.h"
 	"gstmfxwindow_priv.h"
@@ -5377,29 +5377,40 @@
 	"gstmfxcontext.h"
 	"gstmfxdebug.h"
 
-1457493457 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtask.h
+1457765430 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtask.h
 	"gstmfxminiobject.h"
 	"gstmfxdisplay.h"
 	<mfxvideo.h>
 	<va/va.h>
 
-1457669246 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxfilter.c
+1457765568 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxfilter.c
 	"sysdeps.h"
 	"gstmfxfilter.h"
-	"gstmfxcontext.h"
+	"gstmfxtaskaggregator.h"
 	"gstmfxtask.h"
 	"gstmfxsurfacepool.h"
 	"gstmfxsurfaceproxy.h"
 	<mfxvideo.h>
 	"gstmfxdebug.h"
 
-1457603565 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxfilter.h
+1457765568 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxfilter.h
 	"gstmfxsurfaceproxy.h"
-	"gstmfxcontext.h"
+	"gstmfxtaskaggregator.h"
 	"video-utils.h"
 
-1457669136 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtask.c
+1457765461 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtask.c
 	"gstmfxtask.h"
-	"gstmfxcontext.h"
+	"gstmfxtaskaggregator.h"
+	"gstmfxdebug.h"
+
+1457764722 /home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtaskaggregator.h
+	"gstmfxminiobject.h"
+	"gstmfxdisplay.h"
+	"gstmfxtask.h"
+	<mfxvideo.h>
+	<va/va.h>
+
+1457765622 source:/home/nuc/work/gst_msdk/gst-libs/mfx/gstmfxtaskaggregator.c
+	"gstmfxtaskaggregator.h"
 	"gstmfxdebug.h"
 

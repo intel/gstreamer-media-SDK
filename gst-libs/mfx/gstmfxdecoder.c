@@ -14,7 +14,7 @@ struct _GstMfxDecoder
 	/*< private >*/
 	GstMfxMiniObject parent_instance;
 
-	GstMfxContext *context;
+	GstMfxTaskAggregator *context;
 	GstMfxTask *decode_task;
 	GstMfxSurfacePool *pool;
 	GstMfxFilter *filter;
@@ -58,7 +58,7 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
     g_async_queue_unref(decoder->surfaces);
 	g_byte_array_unref(decoder->bitstream);
-	gst_mfx_context_unref(decoder->context);
+	gst_mfx_task_aggregator_unref(decoder->context);
 	gst_mfx_surface_pool_unref(decoder->pool);
 
 	MFXVideoDECODE_Close(decoder->session);
@@ -67,17 +67,17 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 
 static gboolean
 gst_mfx_decoder_init(GstMfxDecoder * decoder,
-	GstMfxContext * context, mfxU32 codec, mfxU16 async_depth)
+	GstMfxTaskAggregator * context, mfxU32 codec, mfxU16 async_depth)
 {
     memset(&(decoder->bs), 0, sizeof (mfxBitstream));
 	memset(&(decoder->param), 0, sizeof (mfxVideoParam));
 
 	decoder->codec = codec;
-	decoder->context = gst_mfx_context_ref(context);
+	decoder->context = gst_mfx_task_aggregator_ref(context);
 	decoder->param.mfx.CodecId = codec;
 	decoder->param.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	decoder->param.AsyncDepth = async_depth;
-	decoder->decode_task = gst_mfx_context_get_current(context);
+	decoder->decode_task = gst_mfx_task_aggregator_get_current_task(context);
 	decoder->surfaces = g_async_queue_new();
 	decoder->pool = NULL;
 	decoder->decoder_inited = FALSE;
@@ -100,7 +100,7 @@ gst_mfx_decoder_class(void)
 }
 
 GstMfxDecoder *
-gst_mfx_decoder_new(GstMfxContext * context,
+gst_mfx_decoder_new(GstMfxTaskAggregator * context,
 	mfxU32 codec, mfxU16 async_depth)
 {
 	GstMfxDecoder *decoder;
@@ -206,7 +206,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder, GstVideoInfo * info)
         frame_info->AspectRatioH = info->par_d;
 
     if (GST_VIDEO_INFO_FORMAT(info) != GST_VIDEO_FORMAT_NV12)
-        gst_mfx_task_set_type_flags(decoder->decode_task, GST_MFX_TASK_VPP_IN);
+        gst_mfx_task_set_task_type(decoder->decode_task, GST_MFX_TASK_VPP_IN);
 
 	if (gst_mfx_task_has_type(decoder->decode_task, GST_MFX_TASK_VPP_IN)) {
         mfxFrameAllocRequest dec_request;

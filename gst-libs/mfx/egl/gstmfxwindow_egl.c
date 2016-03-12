@@ -357,7 +357,6 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 	GLfloat texcoords[4][2];
 	GLfloat positions[4][2];
 	guint tex_width, tex_height, win_width, win_height;
-	uint32_t i;
 
 	if (!ensure_shaders(window))
 		return FALSE;

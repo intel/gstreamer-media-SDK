@@ -3,7 +3,7 @@
 #include "sysdeps.h"
 #include "video-utils.h"
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 #include "gstmfxprimebufferproxy.h"
 
 #define DEBUG 1
@@ -11,11 +11,11 @@
 
 struct _GstMfxPrimeBufferProxy {
     /*< private >*/
-    GstMfxMiniObject    parent_instance;
+    GstMfxMiniObject     parent_instance;
     GstMfxSurfaceProxy  *parent;
-    VaapiImage       *image;
-    VABufferInfo        buf_info;
-    guintptr            fd;
+    VaapiImage          *image;
+    VABufferInfo         buf_info;
+    guintptr             fd;
 };
 
 typedef VAStatus(*vaExtGetSurfaceHandle)(

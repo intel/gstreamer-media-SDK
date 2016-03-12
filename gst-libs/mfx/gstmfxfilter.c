@@ -1,6 +1,6 @@
 #include "sysdeps.h"
 #include "gstmfxfilter.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 #include "gstmfxtask.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurfaceproxy.h"
@@ -21,7 +21,7 @@ struct _GstMfxFilter
 	/*< private >*/
 	GstMfxMiniObject parent_instance;
 
-	GstMfxContext *context;
+	GstMfxTaskAggregator *aggregator;
 	GList *vpp_ext_params;
 
 	GstMfxTask *vpp[2];
@@ -123,11 +123,11 @@ gst_mfx_filter_initialize(GstMfxFilter * filter)
         if (!filter->vpp_request[0])
             continue;
 
-        filter->vpp[i] = gst_mfx_context_find_task(filter->context,
+        filter->vpp[i] = gst_mfx_task_aggregator_find_task(filter->aggregator,
             &filter->session,
             i == 0 ? GST_MFX_TASK_VPP_IN : GST_MFX_TASK_VPP_OUT);
         if (!filter->vpp[i]) {
-            filter->vpp[i] = gst_mfx_task_new_with_session(filter->context,
+            filter->vpp[i] = gst_mfx_task_new_with_session(filter->aggregator,
                 &filter->session,
                 i == 0 ? GST_MFX_TASK_VPP_IN : GST_MFX_TASK_VPP_OUT);
         }
@@ -189,7 +189,7 @@ init_filters(GstMfxFilter * filter)
 
 static gboolean
 gst_mfx_filter_init(GstMfxFilter * filter,
-	GstMfxContext * context, mfxSession * session)
+	GstMfxTaskAggregator * aggregator, mfxSession * session)
 {
 	mfxFrameAllocResponse response;
 	mfxStatus sts;
@@ -198,7 +198,7 @@ gst_mfx_filter_init(GstMfxFilter * filter,
 
 	filter->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY |
         MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-	filter->context = gst_mfx_context_ref(context);
+	filter->aggregator = gst_mfx_task_aggregator_ref(aggregator);
 	filter->session = *session;
 
 	return TRUE;
@@ -216,7 +216,7 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
 	}
 
 	//MFXVideoVPP_Close(filter->session);
-	gst_mfx_context_unref(filter->context);
+	gst_mfx_task_aggregator_unref(filter->aggregator);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -230,18 +230,18 @@ gst_mfx_filter_class(void)
 }
 
 GstMfxFilter *
-gst_mfx_filter_new(GstMfxContext * context, mfxSession * session)
+gst_mfx_filter_new(GstMfxTaskAggregator * aggregator, mfxSession * session)
 {
 	GstMfxFilter *filter;
 
-	g_return_val_if_fail(context != NULL, NULL);
+	g_return_val_if_fail(aggregator != NULL, NULL);
 
 	filter = (GstMfxFilter *)
 		gst_mfx_mini_object_new0(gst_mfx_filter_class());
 	if (!filter)
 		return NULL;
 
-	if (!gst_mfx_filter_init(filter, context, session))
+	if (!gst_mfx_filter_init(filter, aggregator, session))
 		goto error;
 	return filter;
 

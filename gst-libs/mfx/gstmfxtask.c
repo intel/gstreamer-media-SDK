@@ -1,5 +1,5 @@
 #include "gstmfxtask.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -160,7 +160,7 @@ gst_mfx_task_get_frame_info(GstMfxTask * task)
 
 
 gboolean
-gst_mfx_task_set_type_flags(GstMfxTask * task, guint flags)
+gst_mfx_task_set_task_type (GstMfxTask * task, guint flags)
 {
 	g_return_val_if_fail(task != NULL, FALSE);
 
@@ -170,7 +170,7 @@ gst_mfx_task_set_type_flags(GstMfxTask * task, guint flags)
 }
 
 guint
-gst_mfx_task_get_type_flags(GstMfxTask * alloc)
+gst_mfx_task_get_task_type (GstMfxTask * alloc)
 {
 	g_return_val_if_fail(alloc != NULL, GST_MFX_TASK_INVALID);
 
@@ -238,7 +238,7 @@ gst_mfx_task_class(void)
 }
 
 GstMfxTask *
-gst_mfx_task_new(GstMfxContext * context,
+gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
 	guint type_flags)
 {
 	GstMfxTask *task;
@@ -248,7 +248,7 @@ gst_mfx_task_new(GstMfxContext * context,
 		return NULL;
 	task->task_type = type_flags;
 	task->display = gst_mfx_display_ref(
-		gst_mfx_context_get_display(context));
+		gst_mfx_task_aggregator_get_display(aggregator));
 
 	if (!gst_mfx_task_init_session(task))
 		goto error;
@@ -260,7 +260,7 @@ error:
 }
 
 GstMfxTask *
-gst_mfx_task_new_with_session(GstMfxContext * context,
+gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
 	mfxSession * session, guint type_flags)
 {
 	GstMfxTask *task;
@@ -271,7 +271,7 @@ gst_mfx_task_new_with_session(GstMfxContext * context,
 
 	task->task_type = type_flags;
 	task->display = gst_mfx_display_ref(
-		gst_mfx_context_get_display(context));
+		gst_mfx_task_aggregator_get_display(aggregator));
 	task->session = *session;
 
 	return task;

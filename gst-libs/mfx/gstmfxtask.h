@@ -20,7 +20,7 @@ G_BEGIN_DECLS
 
 
 typedef struct _GstMfxTask GstMfxTask;
-typedef struct _GstMfxContext GstMfxContext;
+typedef struct _GstMfxTaskAggregator GstMfxTaskAggregator;
 
 typedef enum {
 	GST_MFX_TASK_INVALID = 0,
@@ -31,11 +31,11 @@ typedef enum {
 } GstMfxTaskType;
 
 GstMfxTask *
-gst_mfx_task_new (GstMfxContext * context,
+gst_mfx_task_new (GstMfxTaskAggregator * aggregator,
 	guint type_flags);
 
 GstMfxTask *
-gst_mfx_task_new_with_session (GstMfxContext * context,
+gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
 	mfxSession * session, guint type_flags);
 
 GstMfxTask *
@@ -49,13 +49,13 @@ gst_mfx_task_replace (GstMfxTask ** old_task_ptr,
 	GstMfxTask * new_task);
 
 gboolean
-gst_mfx_task_set_type_flags (GstMfxTask * task, guint flags);
+gst_mfx_task_set_task_type (GstMfxTask * task, guint flags);
 
 gboolean
 gst_mfx_task_has_type (GstMfxTask * task, guint flags);
 
 guint
-gst_mfx_task_get_type_flags (GstMfxTask * alloc);
+gst_mfx_task_get_task_type (GstMfxTask * task);
 
 GstMfxDisplay *
 gst_mfx_task_get_display(GstMfxTask * task);
@@ -68,6 +68,10 @@ gst_mfx_task_get_session (GstMfxTask * task);
 
 mfxFrameInfo *
 gst_mfx_task_get_frame_info (GstMfxTask * task);
+
+/* ------------------------------------------------------------------------ */
+/* --- MFX Frame Allocator                                              --- */
+/* ------------------------------------------------------------------------ */
 
 mfxStatus
 gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest *req,

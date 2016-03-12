@@ -3,7 +3,7 @@
 
 #include <gst/video/gstvideopool.h>
 #include "gstmfxdisplay.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 
 G_BEGIN_DECLS
 
@@ -43,7 +43,7 @@ struct _GstMfxVideoBufferPoolClass
 GType gst_mfx_video_buffer_pool_get_type(void);
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new(GstMfxTask * alloc);
+gst_mfx_video_buffer_pool_new(GstMfxTask * task);
 
 G_END_DECLS
 

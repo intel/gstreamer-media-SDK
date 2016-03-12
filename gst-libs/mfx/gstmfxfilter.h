@@ -2,7 +2,7 @@
 #define GST_MFX_FILTER_H
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 #include "video-utils.h"
 
 G_BEGIN_DECLS
@@ -30,7 +30,7 @@ typedef enum {
 } GstMfxFilterStatus;
 
 GstMfxFilter *
-gst_mfx_filter_new(GstMfxContext * context, mfxSession * session);
+gst_mfx_filter_new(GstMfxTaskAggregator * aggregator, mfxSession * session);
 
 GstMfxFilter *
 gst_mfx_filter_ref(GstMfxFilter * filter);

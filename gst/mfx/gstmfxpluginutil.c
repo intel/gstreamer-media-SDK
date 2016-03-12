@@ -5,48 +5,48 @@
 
 
 gboolean
-gst_mfx_ensure_context(GstElement * element)
+gst_mfx_ensure_aggregator(GstElement * element)
 {
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(element);
-	GstMfxContext *context;
+	GstMfxTaskAggregator *aggregator;
 
 	g_return_val_if_fail(GST_IS_ELEMENT(element), FALSE);
 
-	if (gst_mfx_video_context_prepare(element, &plugin->context))
+	if (gst_mfx_video_context_prepare(element, &plugin->aggregator))
 		return TRUE;
 
-	context = gst_mfx_context_new();
-    if (!context)
+	aggregator = gst_mfx_task_aggregator_new();
+    if (!aggregator)
         return FALSE;
 
-	gst_mfx_video_context_propagate(element, context);
-	gst_mfx_context_unref(context);
+	gst_mfx_video_context_propagate(element, aggregator);
+	gst_mfx_task_aggregator_unref(aggregator);
 	return TRUE;
 }
 
 gboolean
-gst_mfx_handle_context_query (GstQuery * query, GstMfxContext * mfx_ctx)
+gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * task)
 {
     const gchar *type = NULL;
     GstContext *context, *old_context;
 
     g_return_val_if_fail (query != NULL, FALSE);
 
-    if (!mfx_ctx)
+    if (!task)
         return FALSE;
 
     if (!gst_query_parse_context_type (query, &type))
         return FALSE;
 
-    if (g_strcmp0 (type, GST_MFX_CONTEXT_TYPE_NAME))
+    if (g_strcmp0 (type, GST_MFX_AGGREGATOR_CONTEXT_TYPE_NAME))
         return FALSE;
 
     gst_query_parse_context (query, &old_context);
     if (old_context) {
         context = gst_context_copy (old_context);
-        gst_mfx_video_context_set_context (context, mfx_ctx);
+        gst_mfx_video_context_set_aggregator (context, task);
     } else {
-        context = gst_mfx_video_context_new_with_context (mfx_ctx, FALSE);
+        context = gst_mfx_video_context_new_with_aggregator (task, FALSE);
     }
 
     gst_query_set_context (query, context);

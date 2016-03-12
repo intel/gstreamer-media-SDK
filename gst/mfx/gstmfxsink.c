@@ -86,7 +86,7 @@ gst_mfxsink_ensure_render_rect(GstMfxSink * sink, guint width,
 static inline gboolean
 gst_mfxsink_ensure_context(GstMfxSink * sink)
 {
-	return gst_mfx_plugin_base_ensure_context(GST_MFX_PLUGIN_BASE(sink));
+	return gst_mfx_plugin_base_ensure_aggregator(GST_MFX_PLUGIN_BASE(sink));
 }
 
 static inline gboolean
@@ -835,7 +835,7 @@ gst_mfxsink_query(GstBaseSink * base_sink, GstQuery * query)
 
 	switch (GST_QUERY_TYPE(query)) {
 	case GST_QUERY_CONTEXT:
-		ret = gst_mfx_handle_context_query(query, plugin->context);
+		ret = gst_mfx_handle_context_query(query, plugin->aggregator);
 		break;
 	default:
 		ret = GST_BASE_SINK_CLASS(gst_mfxsink_parent_class)->query(base_sink,

@@ -15,8 +15,8 @@ option (HAVE_MFX_VPP "Build MSDK VPP plugin." OFF)
 option (HAVE_MFX_SINK "Build MSDK SINK plugin." ON)
 
 option (HAVE_WAYLAND_RENDERER "Build MSDK SINK plugin with Wayland renderer." ON)
-option (HAVE_X11_RENDERER "Build MSDK SINK plugin with X11 renderer." OFF)
-option (HAVE_EGL_RENDERER "Build MSDK SINK plugin with EGL renderer." OFF)
+option (HAVE_X11_RENDERER "Build MSDK SINK plugin with X11 renderer." ON)
+option (HAVE_EGL_RENDERER "Build MSDK SINK plugin with EGL renderer." ON)
 
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
 

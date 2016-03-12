@@ -270,14 +270,14 @@ gst_mfx_video_buffer_pool_init(GstMfxVideoBufferPool * pool)
 }
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new(GstMfxTask * alloc)
+gst_mfx_video_buffer_pool_new(GstMfxTask * task)
 {
     GstMfxVideoBufferPool *pool =
         g_object_new(GST_MFX_TYPE_VIDEO_BUFFER_POOL, NULL);
     GstMfxVideoBufferPoolPrivate *const priv =
 		GST_MFX_VIDEO_BUFFER_POOL(pool)->priv;
 
-    priv->task = gst_mfx_task_ref(alloc);
+    priv->task = gst_mfx_task_ref(task);
 
 	return GST_BUFFER_POOL_CAST(pool);
 }
