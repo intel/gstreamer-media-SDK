@@ -284,6 +284,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	wl_callback_add_listener (frame->callback, &frame_callback_listener, frame);
 
 	wl_surface_commit (priv->surface);
+    wl_display_dispatch_queue (display, priv->event_queue);
 	wl_display_flush (display);
 
 	GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
