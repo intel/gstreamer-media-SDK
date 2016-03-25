@@ -205,7 +205,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder, GstVideoInfo * info)
     if (!frame_info->AspectRatioH)
         frame_info->AspectRatioH = info->par_d;
 
-    if (GST_VIDEO_INFO_FORMAT(info) != GST_VIDEO_FORMAT_NV12)
+    //if (GST_VIDEO_INFO_FORMAT(info) != GST_VIDEO_FORMAT_NV12)
         gst_mfx_task_set_task_type(decoder->decode_task, GST_MFX_TASK_VPP_IN);
 
 	if (gst_mfx_task_has_type(decoder->decode_task, GST_MFX_TASK_VPP_IN)) {
@@ -235,7 +235,10 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder, GstVideoInfo * info)
         gst_mfx_filter_set_format(decoder->filter,
             gst_video_format_to_mfx_fourcc(GST_VIDEO_INFO_FORMAT(info)));
 
-        if(!gst_mfx_filter_initialize(decoder->filter))
+        if(!gst_mfx_filter_set_saturation(decoder->filter, 3.0))
+            return FALSE;
+
+        if(!gst_mfx_filter_start(decoder->filter))
             return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 
         decoder->pool = gst_mfx_filter_get_pool(decoder->filter,

@@ -7,7 +7,7 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GstMfxFilter                  GstMfxFilter;
+typedef struct _GstMfxFilter                    GstMfxFilter;
 
 /**
 * GstMfxFilterStatus:
@@ -29,6 +29,68 @@ typedef enum {
 	GST_MFX_FILTER_STATUS_ERROR_UNSUPPORTED_FORMAT,
 } GstMfxFilterStatus;
 
+/**
+ * GstMfxFilterOp:
+ * GST_MFX_FILTER_OP_NONE: No operation.
+ * GST_MFX_FILTER_OP_PIXEL_CONVERSION: Pixel conversion operation.
+ * GST_MFX_FILTER_OP_SCALE: Scaling operation.
+ * GST_MFX_FILTER_OP_CROP: Cropping operation.
+ * GST_MFX_FILTER_OP_DEINTERLACING: Deinterlacing operation.
+ * GST_MFX_FILTER_OP_DENOISE: Denoise operation.
+ * GST_MFX_FILTER_OP_DETAIL: Detail operation.
+ * GST_MFX_FILTER_OP_FRAMERATE_CONVERSION: Frame rate conversion operation.
+ * GST_MFX_FILTER_OP_BRIGHTNESS: Brightness operation.
+ * GST_MFX_FILTER_OP_SATURATION: Saturation operation.
+ * GST_MFX_FILTER_OP_HUE: Hue operation.
+ * GST_MFX_FILTER_OP_CONTRAST: Contrast operation.
+ * GST_MFX_FILTER_OP_FIELD_PROCESSING: Field processing operation.
+ * GST_MFX_FILTER_OP_IMAGE_STABILIZATION: Image stabilization operation.
+ * GST_MFX_FILTER_OP_ROTATION: Rotation operation.
+ */
+
+typedef enum {
+    GST_MFX_FILTER_OP_NONE = 0,
+    GST_MFX_FILTER_OP_PIXEL_CONVERSION,
+    GST_MFX_FILTER_OP_SCALE,
+    GST_MFX_FILTER_OP_CROP,
+    GST_MFX_FILTER_OP_DEINTERLACING,
+    GST_MFX_FILTER_OP_DENOISE,
+    GST_MFX_FILTER_OP_DETAIL,
+    GST_MFX_FILTER_OP_FRAMERATE_CONVERSION,
+    GST_MFX_FILTER_OP_BRIGHTNESS,
+    GSt_MFX_FILTER_OP_SATURATION,
+    GST_MFX_FILTER_OP_HUE,
+    GST_MFX_FILTER_OP_CONTRAST,
+    GST_MFX_FILTER_OP_FIELD_PROCESSING,
+    GST_MFX_FILTER_OP_IMAGE_STABILIZATION,
+    GST_MFX_FILTER_OP_ROTATION,
+} GstMfxFilterOp;
+
+/*
+ * GstMfxFilterType:
+ * GST_MFX_FILTER_NONE: No filter.
+ * GST_MFX_FILTER_DEINTERLACING: Deinterlacing filter.
+ * GST_MFX_FILTER_DENOISE: Denoise filter.
+ * GST_MFX_FILTER_DETAIL: Detail filter.
+ * GST_MFX_FILTER_FRAMERATE_CONVERSION: Framerate conversion filter.
+ * GST_MFX_FILTER_PROCAMP: ProcAmp filter.
+ * GST_MFX_FILTER_FIELD_PROCESSING: Field processing filter.
+ * GST_MFX_FILTER_IMAGE_STABILIZATION: Image stabilization filter.
+ * GST_MFX_FILTER_ROTATION: Rotation filter.
+ */
+
+typedef enum {
+    GST_MFX_FILTER_NONE = 0,
+    GST_MFX_FILTER_DEINTERLACING = (1 << GST_MFX_FILTER_OP_DEINTERLACING),
+    GST_MFX_FILTER_DENOISE = (1 << GST_MFX_FILTER_OP_DENOISE),
+    GST_MFX_FILTER_DETAIL = (1 << GST_MFX_FILTER_OP_DETAIL),
+    GST_MFX_FILTER_FRAMERATE_CONVERSION = (1 << GST_MFX_FILTER_OP_FRAMERATE_CONVERSION),
+    GST_MFX_FILTER_PROCAMP = (1 << GST_MFX_FILTER_OP_BRIGHTNESS),
+    GST_MFX_FILTER_FIELD_PROCESSING = (1 << GST_MFX_FILTER_OP_FIELD_PROCESSING),
+    GST_MFX_FILTER_IMAGE_STABILIZATION = (1 << GST_MFX_FILTER_OP_IMAGE_STABILIZATION),
+    GST_MFX_FILTER_ROTATION = (1 << GST_MFX_FILTER_OP_ROTATION),
+} GstMfxFilterType;
+
 GstMfxFilter *
 gst_mfx_filter_new(GstMfxTaskAggregator * aggregator);
 
@@ -46,11 +108,14 @@ gst_mfx_filter_replace(GstMfxFilter ** old_filter_ptr,
 	GstMfxFilter * new_filter);
 
 gboolean
-gst_mfx_filter_initialize(GstMfxFilter * filter);
+gst_mfx_filter_start(GstMfxFilter * filter);
 
 GstMfxFilterStatus
 gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 	GstMfxSurfaceProxy ** out_proxy);
+
+gboolean
+gst_mfx_filter_has_filter(GstMfxFilter * filter, guint flags);
 
 void
 gst_mfx_filter_set_request(GstMfxFilter * filter,
@@ -70,10 +135,10 @@ gst_mfx_filter_set_cropping_rectangle(GstMfxFilter * filter,
 	const GstMfxRectangle * rect);
 
 gboolean
-gst_mfx_filter_set_denoising_level(GstMfxFilter * filter, gfloat level);
+gst_mfx_filter_set_denoising_level(GstMfxFilter * filter, guint level);
 
 gboolean
-gst_mfx_filter_set_sharpening_level(GstMfxFilter * filter, gfloat level);
+gst_mfx_filter_set_detail_level(GstMfxFilter * filter, guint level);
 
 gboolean
 gst_mfx_filter_set_hue(GstMfxFilter * filter, gfloat value);
@@ -87,5 +152,7 @@ gst_mfx_filter_set_brightness(GstMfxFilter * filter, gfloat value);
 gboolean
 gst_mfx_filter_set_contrast(GstMfxFilter * filter, gfloat value);
 
+gboolean
+gst_mfx_filter_set_rotation(GstMfxFilter * filter, guint angle);
 
 #endif /* GST_MFX_FILTER_H */
