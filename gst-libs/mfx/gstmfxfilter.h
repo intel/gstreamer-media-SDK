@@ -50,7 +50,7 @@ typedef enum {
 
 typedef enum {
     GST_MFX_FILTER_OP_NONE = 0,
-    GST_MFX_FILTER_OP_PIXEL_CONVERSION,
+    GST_MFX_FILTER_OP_FORMAT,
     GST_MFX_FILTER_OP_SCALE,
     GST_MFX_FILTER_OP_CROP,
     GST_MFX_FILTER_OP_DEINTERLACING,
@@ -58,7 +58,7 @@ typedef enum {
     GST_MFX_FILTER_OP_DETAIL,
     GST_MFX_FILTER_OP_FRAMERATE_CONVERSION,
     GST_MFX_FILTER_OP_BRIGHTNESS,
-    GSt_MFX_FILTER_OP_SATURATION,
+    GST_MFX_FILTER_OP_SATURATION,
     GST_MFX_FILTER_OP_HUE,
     GST_MFX_FILTER_OP_CONTRAST,
     GST_MFX_FILTER_OP_FIELD_PROCESSING,
@@ -91,6 +91,14 @@ typedef enum {
     GST_MFX_FILTER_ROTATION = (1 << GST_MFX_FILTER_OP_ROTATION),
 } GstMfxFilterType;
 
+typedef enum {
+	GST_MFX_DEINTERLACE_MODE_NONE,
+	GST_MFX_DEINTERLACE_MODE_BOB,
+	GST_MFX_DEINTERLACE_MODE_ADVANCED,
+	GST_MFX_DEINTERLACE_MODE_ADVANCED_NO_REF,
+} GstMfxDeinterlaceMode;
+
+
 GstMfxFilter *
 gst_mfx_filter_new(GstMfxTaskAggregator * aggregator);
 
@@ -117,22 +125,18 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 gboolean
 gst_mfx_filter_has_filter(GstMfxFilter * filter, guint flags);
 
-void
-gst_mfx_filter_set_request(GstMfxFilter * filter,
-    mfxFrameAllocRequest * request, guint flags);
-
 GstMfxSurfacePool *
 gst_mfx_filter_get_pool(GstMfxFilter * filter, guint flags);
 
 void
-gst_mfx_filter_set_format(GstMfxFilter * filter, mfxU32 fourcc);
+gst_mfx_filter_set_request(GstMfxFilter * filter,
+    mfxFrameAllocRequest * request, guint flags);
 
 void
-gst_mfx_filter_set_size(GstMfxFilter * filter, mfxU16 width, mfxU16 height);
+gst_mfx_filter_set_frame_info(GstMfxFilter * filter, GstVideoInfo * info);
 
 gboolean
-gst_mfx_filter_set_cropping_rectangle(GstMfxFilter * filter,
-	const GstMfxRectangle * rect);
+gst_mfx_filter_set_format(GstMfxFilter * filter, GstVideoFormat fmt);
 
 gboolean
 gst_mfx_filter_set_denoising_level(GstMfxFilter * filter, guint level);

@@ -61,11 +61,11 @@ G_DEFINE_TYPE_WITH_CODE(
     GST_MFX_PLUGIN_BASE_INIT_INTERFACES);
 
 static gboolean
-gst_mfxdec_update_sink_caps(GstMfxDec * decode, GstCaps * caps);
-static gboolean gst_mfxdec_update_src_caps(GstMfxDec * decode);
+gst_mfxdec_update_sink_caps(GstMfxDec * mfxdec, GstCaps * caps);
+static gboolean gst_mfxdec_update_src_caps(GstMfxDec * mfxdec);
 
 static gboolean
-gst_mfxdec_input_state_replace(GstMfxDec * decode,
+gst_mfxdec_input_state_replace(GstMfxDec * mfxdec,
 	const GstVideoCodecState * new_state);
 
 static void gst_mfx_dec_set_property(GObject * object, guint prop_id,
@@ -102,12 +102,12 @@ copy_video_codec_state(const GstVideoCodecState * in_state)
 }
 
 static gboolean
-gst_mfxdec_input_state_replace(GstMfxDec * decode,
+gst_mfxdec_input_state_replace(GstMfxDec * mfxdec,
 	const GstVideoCodecState * new_state)
 {
-	if (decode->input_state) {
+	if (mfxdec->input_state) {
 		if (new_state) {
-			const GstCaps *curcaps = decode->input_state->caps;
+			const GstCaps *curcaps = mfxdec->input_state->caps;
 			/* If existing caps are equal of the new state, keep the
 			* existing state without renegotiating. */
 			if (gst_caps_is_strictly_equal(curcaps, new_state->caps)) {
@@ -116,37 +116,37 @@ gst_mfxdec_input_state_replace(GstMfxDec * decode,
 				return FALSE;
 			}
 		}
-		gst_video_codec_state_unref(decode->input_state);
+		gst_video_codec_state_unref(mfxdec->input_state);
 	}
 
 	if (new_state)
-		decode->input_state = copy_video_codec_state(new_state);
+		mfxdec->input_state = copy_video_codec_state(new_state);
 	else
-		decode->input_state = NULL;
+		mfxdec->input_state = NULL;
 
 	return TRUE;
 }
 
 static inline gboolean
-gst_mfxdec_update_sink_caps(GstMfxDec * decode, GstCaps * caps)
+gst_mfxdec_update_sink_caps(GstMfxDec * mfxdec, GstCaps * caps)
 {
-	GST_INFO_OBJECT(decode, "new sink caps = %" GST_PTR_FORMAT, caps);
-	gst_caps_replace(&decode->sinkpad_caps, caps);
+	GST_INFO_OBJECT(mfxdec, "new sink caps = %" GST_PTR_FORMAT, caps);
+	gst_caps_replace(&mfxdec->sinkpad_caps, caps);
 	return TRUE;
 }
 
 static gboolean
-gst_mfxdec_update_src_caps(GstMfxDec * decode)
+gst_mfxdec_update_src_caps(GstMfxDec * mfxdec)
 {
-	GstVideoDecoder *const vdec = GST_VIDEO_DECODER(decode);
+	GstVideoDecoder *const vdec = GST_VIDEO_DECODER(mfxdec);
 	GstVideoCodecState *state, *ref_state;
 	GstVideoInfo *vi;
 	GstVideoFormat format;
 
-	if (!decode->input_state)
+	if (!mfxdec->input_state)
 		return FALSE;
 
-	ref_state = decode->input_state;
+	ref_state = mfxdec->input_state;
 
 	GstCapsFeatures *features = NULL;
 	GstMfxCapsFeature feature;
@@ -177,21 +177,21 @@ gst_mfxdec_update_src_caps(GstMfxDec * decode)
 	state->caps = gst_video_info_to_caps(vi);
 	if (features)
 		gst_caps_set_features(state->caps, 0, features);
-	GST_INFO_OBJECT(decode, "new src caps = %" GST_PTR_FORMAT, state->caps);
-	gst_caps_replace(&decode->srcpad_caps, state->caps);
+	GST_INFO_OBJECT(mfxdec, "new src caps = %" GST_PTR_FORMAT, state->caps);
+	gst_caps_replace(&mfxdec->srcpad_caps, state->caps);
 	gst_video_codec_state_unref(state);
 
 	return TRUE;
 }
 
 static void
-gst_mfxdec_release(GstMfxDec * decode)
+gst_mfxdec_release(GstMfxDec * mfxdec)
 {
-	gst_object_unref(decode);
+	gst_object_unref(mfxdec);
 }
 
 static GstFlowReturn
-gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
+gst_mfxdec_push_decoded_frame(GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
 {
 	GstFlowReturn ret;
 	GstMfxDecoderStatus sts;
@@ -199,9 +199,9 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 	GstMfxVideoMeta *meta;
 	const GstMfxRectangle *crop_rect;
 
-	sts = gst_mfx_decoder_get_surface_proxy(decode->decoder, &proxy);
+	sts = gst_mfx_decoder_get_surface_proxy(mfxdec->decoder, &proxy);
 
-	ret = gst_video_decoder_allocate_output_frame(GST_VIDEO_DECODER(decode), frame);
+	ret = gst_video_decoder_allocate_output_frame(GST_VIDEO_DECODER(mfxdec), frame);
 	if (ret != GST_FLOW_OK)
 		goto error_create_buffer;
 
@@ -221,7 +221,7 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 		}
 	}
 
-	ret = gst_video_decoder_finish_frame(GST_VIDEO_DECODER(decode), frame);
+	ret = gst_video_decoder_finish_frame(GST_VIDEO_DECODER(mfxdec), frame);
 	if (ret != GST_FLOW_OK)
 		goto error_commit_buffer;
 
@@ -230,19 +230,19 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *decode, GstVideoCodecFrame * frame)
 	/* ERRORS */
 error_create_buffer:
 	{
-		gst_video_decoder_drop_frame(GST_VIDEO_DECODER(decode), frame);
+		gst_video_decoder_drop_frame(GST_VIDEO_DECODER(mfxdec), frame);
 		gst_video_codec_frame_unref(frame);
 		return GST_FLOW_ERROR;
 	}
 error_get_meta:
 	{
-		gst_video_decoder_drop_frame(GST_VIDEO_DECODER(decode), frame);
+		gst_video_decoder_drop_frame(GST_VIDEO_DECODER(mfxdec), frame);
 		gst_video_codec_frame_unref(frame);
 		return GST_FLOW_ERROR;
 	}
 error_commit_buffer:
 	{
-		GST_INFO_OBJECT(decode, "downstream element rejected the frame (%s [%d])",
+		GST_INFO_OBJECT(mfxdec, "downstream element rejected the frame (%s [%d])",
 			gst_flow_get_name(ret), ret);
 		gst_video_codec_frame_unref(frame);
 		return GST_FLOW_ERROR;
@@ -250,26 +250,26 @@ error_commit_buffer:
 }
 
 static gboolean
-gst_mfxdec_negotiate(GstMfxDec * decode)
+gst_mfxdec_negotiate(GstMfxDec * mfxdec)
 {
-	GstVideoDecoder *const vdec = GST_VIDEO_DECODER(decode);
+	GstVideoDecoder *const vdec = GST_VIDEO_DECODER(mfxdec);
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(vdec);
 
-	if (!decode->do_renego)
+	if (!mfxdec->do_renego)
 		return TRUE;
 
-	GST_DEBUG_OBJECT(decode, "Input codec state changed, doing renegotiation");
+	GST_DEBUG_OBJECT(mfxdec, "Input codec state changed, doing renegotiation");
 
-	if (!gst_mfx_plugin_base_set_caps(plugin, decode->sinkpad_caps, NULL))
+	if (!gst_mfx_plugin_base_set_caps(plugin, mfxdec->sinkpad_caps, NULL))
 		return FALSE;
-	if (!gst_mfxdec_update_src_caps(decode))
+	if (!gst_mfxdec_update_src_caps(mfxdec))
 		return FALSE;
 	if (!gst_video_decoder_negotiate(vdec))
 		return FALSE;
-	if (!gst_mfx_plugin_base_set_caps(plugin, NULL, decode->srcpad_caps))
+	if (!gst_mfx_plugin_base_set_caps(plugin, NULL, mfxdec->srcpad_caps))
 		return FALSE;
 
-	decode->do_renego = FALSE;
+	mfxdec->do_renego = FALSE;
 
 	return TRUE;
 }
@@ -318,8 +318,8 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 {
 	GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
 
-	gst_mfx_task_aggregator_set_current_task(GST_MFX_PLUGIN_BASE(mfxdec)->aggregator,
-		mfxdec->task);
+	//gst_mfx_task_aggregator_set_current_task(GST_MFX_PLUGIN_BASE(mfxdec)->aggregator,
+		//mfxdec->task);
 
 	return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(vdec),
 		query);
@@ -348,43 +348,43 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 
 
 static void
-gst_mfxdec_destroy(GstMfxDec * decode)
+gst_mfxdec_destroy(GstMfxDec * mfxdec)
 {
-	gst_mfx_decoder_replace(&decode->decoder, NULL);
-	gst_caps_replace(&decode->decoder_caps, NULL);
+	gst_mfx_decoder_replace(&mfxdec->decoder, NULL);
+	gst_caps_replace(&mfxdec->decoder_caps, NULL);
 
-	decode->active = FALSE;
+	mfxdec->active = FALSE;
 
-	gst_mfxdec_release(gst_object_ref(decode));
+	gst_mfxdec_release(gst_object_ref(mfxdec));
 }
 
 static gboolean
-gst_mfxdec_reset_full(GstMfxDec * decode, GstCaps * caps,
+gst_mfxdec_reset_full(GstMfxDec * mfxdec, GstCaps * caps,
 	gboolean hard)
 {
 	mfxU32 codec;
 
-	if (!hard && decode->decoder && decode->decoder_caps) {
-		if (gst_caps_is_always_compatible(caps, decode->decoder_caps))
+	if (!hard && mfxdec->decoder && mfxdec->decoder_caps) {
+		if (gst_caps_is_always_compatible(caps, mfxdec->decoder_caps))
 			return TRUE;
 		codec = gst_get_mfx_codec_from_caps(caps);
-		if (codec == gst_mfx_decoder_get_codec(decode->decoder))
+		if (codec == gst_mfx_decoder_get_codec(mfxdec->decoder))
 			return TRUE;
 	}
 
-	gst_mfxdec_destroy(decode);
-	return gst_mfxdec_create(decode, caps);
+	gst_mfxdec_destroy(mfxdec);
+	return gst_mfxdec_create(mfxdec, caps);
 }
 
 static void
 gst_mfxdec_finalize(GObject * object)
 {
-	GstMfxDec *const decode = GST_MFXDEC(object);
+	GstMfxDec *const mfxdec = GST_MFXDEC(object);
 
-	gst_caps_replace(&decode->sinkpad_caps, NULL);
-	gst_caps_replace(&decode->srcpad_caps, NULL);
-	//gst_caps_replace(&decode->allowed_caps, NULL);
-	gst_mfx_task_replace(&decode->task, NULL);
+	gst_caps_replace(&mfxdec->sinkpad_caps, NULL);
+	gst_caps_replace(&mfxdec->srcpad_caps, NULL);
+	//gst_caps_replace(&mfxdec->allowed_caps, NULL);
+	gst_mfx_task_replace(&mfxdec->task, NULL);
 
 	gst_mfx_plugin_base_finalize(GST_MFX_PLUGIN_BASE(object));
 	G_OBJECT_CLASS(gst_mfxdec_parent_class)->finalize(object);
@@ -409,40 +409,40 @@ gst_mfxdec_open(GstVideoDecoder * vdec)
 static gboolean
 gst_mfxdec_close(GstVideoDecoder * vdec)
 {
-	GstMfxDec *const decode = GST_MFXDEC(vdec);
+	GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
 
-	gst_mfxdec_input_state_replace(decode, NULL);
-	gst_mfxdec_destroy(decode);
-	gst_mfx_plugin_base_close(GST_MFX_PLUGIN_BASE(decode));
+	gst_mfxdec_input_state_replace(mfxdec, NULL);
+	gst_mfxdec_destroy(mfxdec);
+	gst_mfx_plugin_base_close(GST_MFX_PLUGIN_BASE(mfxdec));
 	return TRUE;
 }
 
 static gboolean
 gst_mfxdec_flush(GstVideoDecoder * vdec)
 {
-	GstMfxDec *const decode = GST_MFXDEC(vdec);
+	GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
 
-	//if (decode->decoder && !gst_mfxdec_internal_flush(vdec))
+	//if (mfxdec->decoder && !gst_mfxdec_internal_flush(vdec))
 		//return FALSE;
 
 	/* There could be issues if we avoid the reset_full() while doing
 	* seeking: we have to reset the internal state */
-	return gst_mfxdec_reset_full(decode, decode->sinkpad_caps, TRUE);
+	return gst_mfxdec_reset_full(mfxdec, mfxdec->sinkpad_caps, TRUE);
 }
 
 static gboolean
 gst_mfxdec_set_format(GstVideoDecoder * vdec, GstVideoCodecState * state)
 {
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(vdec);
-	GstMfxDec *const decode = GST_MFXDEC(vdec);
+	GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
 
-	if (!gst_mfxdec_input_state_replace(decode, state))
+	if (!gst_mfxdec_input_state_replace(mfxdec, state))
 		return TRUE;
-	if (!gst_mfxdec_update_sink_caps(decode, state->caps))
+	if (!gst_mfxdec_update_sink_caps(mfxdec, state->caps))
 		return FALSE;
-	if (!gst_mfx_plugin_base_set_caps(plugin, decode->sinkpad_caps, NULL))
+	if (!gst_mfx_plugin_base_set_caps(plugin, mfxdec->sinkpad_caps, NULL))
 		return FALSE;
-	if (!gst_mfxdec_reset_full(decode, decode->sinkpad_caps, FALSE))
+	if (!gst_mfxdec_reset_full(mfxdec, mfxdec->sinkpad_caps, FALSE))
 		return FALSE;
 
 	return TRUE;

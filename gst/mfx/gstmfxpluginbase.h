@@ -65,6 +65,9 @@ typedef struct _GstMfxPluginBaseClass GstMfxPluginBaseClass;
 #define GST_MFX_PLUGIN_BASE_SRC_PAD_QUERYFYNC(plugin) \
 	(GST_MFX_PLUGIN_BASE(plugin)->srcpad_query)
 
+#define GST_MFX_PLUGIN_BASE_AGGREGATOR(plugin) \
+	(GST_MFX_PLUGIN_BASE(plugin)->aggregator)
+
 struct _GstMfxPluginBase
 {
 	/*< private >*/

@@ -175,10 +175,8 @@ gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
 	GstCapsFeatures *const features =
 		gst_caps_features_new(features_string, NULL);
 
-	if (!features) {
-		//gst_caps_unref(caps);
+	if (!features)
 		return NULL;
-	}
 
 	caps = gst_mfx_video_format_new_template_caps(format);
 	if (!caps)

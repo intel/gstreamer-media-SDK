@@ -15,7 +15,8 @@ struct _GstMfxTaskAggregator
 
     GstMfxDisplay			*display;
 	GList					*cache;
-	GstMfxTask			    *current;
+	GstMfxTask			    *current_task;
+	mfxSession				*current_session;
 };
 
 static void
@@ -53,7 +54,7 @@ gst_mfx_task_aggregator_new(void)
 {
 	GstMfxTaskAggregator *aggregator;
 
-	aggregator = gst_mfx_mini_object_new(gst_mfx_task_aggregator_class());
+	aggregator = gst_mfx_mini_object_new0(gst_mfx_task_aggregator_class());
 	if (!aggregator)
 		return NULL;
 
@@ -98,6 +99,51 @@ gst_mfx_task_aggregator_get_display(GstMfxTaskAggregator * aggregator)
 	return aggregator->display;
 }
 
+mfxSession *
+gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
+{
+	mfxIMPL impl = MFX_IMPL_AUTO_ANY;
+	mfxVersion ver = { { 1, 1 } };
+	mfxSession session;
+	mfxStatus sts;
+
+	const char *desc;
+
+	sts = MFXInit(impl, &ver, &session);
+	if (sts < 0) {
+		GST_ERROR("Error initializing internal MFX session");
+		return FALSE;
+	}
+
+	sts = MFXQueryIMPL(session, &impl);
+
+	switch (MFX_IMPL_BASETYPE(impl)) {
+	case MFX_IMPL_SOFTWARE:
+		desc = "software";
+		break;
+	case MFX_IMPL_HARDWARE:
+	case MFX_IMPL_HARDWARE2:
+	case MFX_IMPL_HARDWARE3:
+	case MFX_IMPL_HARDWARE4:
+		desc = "hardware accelerated";
+		break;
+	default:
+		desc = "unknown";
+	}
+
+	GST_INFO("Initialized internal MFX session using %s implementation", desc);
+
+	if (!aggregator->current_session) {
+		aggregator->current_session = (mfxSession *)
+			g_slice_copy(sizeof(mfxSession), &session);
+	}
+	else {
+		sts = MFXJoinSession(*aggregator->current_session, session);
+	}
+
+	return aggregator->current_session;
+}
+
 static gint
 find_task(gconstpointer cur, gconstpointer task)
 {
@@ -134,7 +180,18 @@ gst_mfx_task_aggregator_find_task(GstMfxTaskAggregator * aggregator,
 GstMfxTask *
 gst_mfx_task_aggregator_get_current_task(GstMfxTaskAggregator * aggregator)
 {
-	return aggregator->current;
+	return aggregator->current_task;
+}
+
+void
+gst_mfx_task_aggregator_add_task(GstMfxTaskAggregator * aggregator,
+    GstMfxTask * task)
+{
+    g_return_if_fail(aggregator != NULL);
+	g_return_if_fail(task != NULL);
+
+	aggregator->cache = g_list_prepend(aggregator->cache, task);
+
 }
 
 gboolean
@@ -164,7 +221,7 @@ gst_mfx_task_aggregator_set_current_task(GstMfxTaskAggregator * aggregator, GstM
 	MFXVideoCORE_SetHandle(session, MFX_HANDLE_VA_DISPLAY,
 		GST_MFX_DISPLAY_VADISPLAY(aggregator->display));
 
-	aggregator->current = task;
+	aggregator->current_task = task;
 
 	return TRUE;
 }

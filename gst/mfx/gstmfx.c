@@ -1,6 +1,7 @@
 #include <gst/gst.h>
 
 #include "gstmfxdec.h"
+#include "gstmfxpostproc.h"
 #include "gstmfxsink.h"
 
 #define PACKAGE "gstmfx"
@@ -9,9 +10,11 @@
 static gboolean
 plugin_init(GstPlugin * plugin)
 {
-	gst_element_register(plugin, "mfxdecode", GST_RANK_PRIMARY,
+	gst_element_register(plugin, "mfxdecode", GST_RANK_NONE,
 		GST_TYPE_MFXDEC);
-	gst_element_register(plugin, "mfxsink", GST_RANK_PRIMARY,
+    gst_element_register(plugin, "mfxvpp", GST_RANK_NONE,
+		GST_TYPE_MFXPOSTPROC);
+	gst_element_register(plugin, "mfxsink", GST_RANK_NONE,
 		GST_TYPE_MFXSINK);
 
 	return TRUE;
@@ -26,5 +29,5 @@ GST_PLUGIN_DEFINE(
 	VERSION,        /* version */
 	"LGPL",          /* license */
 	PACKAGE,        /* package-name, usually the file archive name */
-	"http://www.intel.com.my" /* origin */
+	"http://www.intel.com" /* origin */
 	)

@@ -84,7 +84,7 @@ gst_mfxsink_ensure_render_rect(GstMfxSink * sink, guint width,
 	guint height);
 
 static inline gboolean
-gst_mfxsink_ensure_context(GstMfxSink * sink)
+gst_mfxsink_ensure_aggregator(GstMfxSink * sink)
 {
 	return gst_mfx_plugin_base_ensure_aggregator(GST_MFX_PLUGIN_BASE(sink));
 }
@@ -696,7 +696,7 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 	GstVideoInfo *const vip = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
 	guint win_width, win_height;
 
-	if (!gst_mfxsink_ensure_context(sink))
+	if (!gst_mfxsink_ensure_aggregator(sink))
 		return FALSE;
 
     gst_mfxsink_set_render_backend(sink);

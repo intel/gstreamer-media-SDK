@@ -172,53 +172,17 @@ gst_mfx_task_set_task_type (GstMfxTask * task, guint flags)
 }
 
 guint
-gst_mfx_task_get_task_type (GstMfxTask * alloc)
+gst_mfx_task_get_task_type (GstMfxTask * task)
 {
-	g_return_val_if_fail(alloc != NULL, GST_MFX_TASK_INVALID);
+	g_return_val_if_fail(task != NULL, GST_MFX_TASK_INVALID);
 
-	return alloc->task_type;
+	return task->task_type;
 }
 
 gboolean
 gst_mfx_task_has_type(GstMfxTask * task, guint flags)
 {
 	return (task->task_type & flags);
-}
-
-static gboolean
-gst_mfx_task_init_session(GstMfxTask * task)
-{
-	mfxIMPL impl = MFX_IMPL_AUTO_ANY;
-	mfxVersion ver = { { 1, 1 } };
-
-	const char *desc;
-	int ret;
-
-	ret = MFXInit(impl, &ver, &task->session);
-	if (ret < 0) {
-		GST_ERROR("Error initializing internal MFX session");
-		return FALSE;
-	}
-
-	MFXQueryIMPL(task->session, &impl);
-
-	switch (MFX_IMPL_BASETYPE(impl)) {
-	case MFX_IMPL_SOFTWARE:
-		desc = "software";
-		break;
-	case MFX_IMPL_HARDWARE:
-	case MFX_IMPL_HARDWARE2:
-	case MFX_IMPL_HARDWARE3:
-	case MFX_IMPL_HARDWARE4:
-		desc = "hardware accelerated";
-		break;
-	default:
-		desc = "unknown";
-	}
-
-	GST_INFO("Initialized internal MFX session using %s implementation", desc);
-
-	return TRUE;
 }
 
 static void
@@ -243,22 +207,13 @@ GstMfxTask *
 gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
 	guint type_flags)
 {
-	GstMfxTask *task;
+	mfxSession *session;
 
-	task = gst_mfx_mini_object_new0(gst_mfx_task_class());
-	if (!task)
-		return NULL;
-	task->task_type = type_flags;
-	task->display = gst_mfx_display_ref(
-		gst_mfx_task_aggregator_get_display(aggregator));
+	g_return_val_if_fail(aggregator != NULL, NULL);
 
-	if (!gst_mfx_task_init_session(task))
-		goto error;
+	session = gst_mfx_task_aggregator_create_session(aggregator);
 
-	return task;
-error:
-	gst_mfx_task_unref(task);
-	return NULL;
+	return gst_mfx_task_new_with_session(aggregator, session, type_flags);
 }
 
 GstMfxTask *
@@ -266,6 +221,9 @@ gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
 	mfxSession * session, guint type_flags)
 {
 	GstMfxTask *task;
+
+	g_return_val_if_fail(aggregator != NULL, NULL);
+	g_return_val_if_fail(session != NULL, NULL);
 
 	task = gst_mfx_mini_object_new0(gst_mfx_task_class());
 	if (!task)
