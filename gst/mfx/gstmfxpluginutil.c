@@ -197,7 +197,7 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_pt
 	GstCaps *out_caps, *templ;
 	GstVideoFormat out_format;
 	GstStructure *structure;
-	gchar *format_string;
+	GstVideoInfo vi;
 
 	templ = gst_pad_get_pad_template_caps(pad);
 	out_caps = gst_pad_peer_query_caps(pad, templ);
@@ -207,10 +207,10 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_pt
 		goto cleanup;
 	}
 
-    structure = gst_caps_get_structure(out_caps, 0);
-    format_string = gst_structure_get_string(structure, "format");
-    out_format = format_string ? gst_video_format_from_string(format_string) :
-                    GST_VIDEO_FORMAT_NV12;
+	if (!gst_caps_is_fixed(out_caps))
+        out_caps = gst_caps_fixate(out_caps);
+    gst_video_info_from_caps(&vi, out_caps);
+    out_format = GST_VIDEO_INFO_FORMAT(&vi);
 
 	mfx_caps =
 		gst_mfx_video_format_new_template_caps_with_features(out_format,

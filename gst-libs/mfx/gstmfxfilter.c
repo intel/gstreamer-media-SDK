@@ -94,12 +94,12 @@ gst_mfx_filter_set_frame_info(GstMfxFilter * filter, GstVideoInfo * info)
     filter->frame_info[0] = g_slice_new0(mfxFrameInfo);
 
 	/* Hardcoded for now */
+	filter->frame_info[0]->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+
 	filter->frame_info[0]->FourCC = gst_video_format_to_mfx_fourcc(
         GST_VIDEO_INFO_FORMAT(info));
-	filter->frame_info[0]->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-	filter->frame_info[0]->PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
-	filter->frame_info[0]->BitDepthChroma = 8;
-	filter->frame_info[0]->BitDepthLuma = 8;
+	filter->frame_info[0]->PicStruct = GST_VIDEO_INFO_IS_INTERLACED(info) ?
+	    MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_PROGRESSIVE;
 
 	filter->frame_info[0]->CropX = 0;
 	filter->frame_info[0]->CropY = 0;
@@ -136,7 +136,6 @@ static void check_supported_filters(GstMfxFilter *filter)
     extbuf[0] = (mfxExtBuffer *)&vpp_use;
     param.ExtParam = (mfxExtBuffer **)&extbuf[0];
 
-
     /* check filters */
     for(m = filter_map; m->type; m++) {
         vpp_use.AlgList[0] = m->filter;
@@ -154,9 +153,10 @@ static void check_supported_filters(GstMfxFilter *filter)
 static gboolean
 init_filters(GstMfxFilter * filter)
 {
-    guint i;
     GstMfxFilterOpData *op;
     mfxExtBuffer *ext_buf;
+    guint i;
+
     memset(&filter->vpp_use, 0, sizeof(mfxExtVPPDoUse));
 
     filter->vpp_use.Header.BufferId = MFX_EXTBUFF_VPP_DOUSE;
@@ -167,11 +167,12 @@ init_filters(GstMfxFilter * filter)
 	if (!filter->vpp_use.AlgList)
 		return FALSE;
 
-    filter->ext_buffer = g_slice_alloc((filter->vpp_use.NumAlg + 1)*sizeof(mfxExtBuffer*));
+    filter->ext_buffer = g_slice_alloc(
+        (filter->vpp_use.NumAlg + 1) * sizeof(mfxExtBuffer*));
     if (!filter->ext_buffer)
         return FALSE;
 
-    for(i = 0; i<filter->filter_op_data->len; i++)
+    for(i = 0; i < filter->filter_op_data->len; i++)
     {
         op = (GstMfxFilterOpData *)g_ptr_array_index(filter->filter_op_data, i);
         ext_buf = (mfxExtBuffer *)op->filter;
@@ -227,9 +228,10 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         return FALSE;
 
     if (filter->internal_session) {
-        filter->vpp[0] = gst_mfx_task_new(filter->aggregator, GST_MFX_TASK_VPP_IN);
-        filter->session = gst_mfx_task_get_session(filter->vpp[0]);
-        gst_mfx_task_aggregator_add_task(filter->aggregator, filter->vpp[0]);
+        filter->vpp[1] = gst_mfx_task_new(filter->aggregator, GST_MFX_TASK_VPP_OUT);
+        filter->session = gst_mfx_task_get_session(filter->vpp[1]);
+
+        gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp[1]);
     }
 
     sts = MFXVideoVPP_QueryIOSurf(filter->session, &filter->params, &vpp_request);
@@ -243,7 +245,7 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         GstMfxTaskType type = i == 0 ? GST_MFX_TASK_VPP_IN : GST_MFX_TASK_VPP_OUT;
 
         /* No need for input VPP pool when shared alloc request is not set */
-        if (type == GST_MFX_TASK_VPP_IN && !filter->vpp_request[0])
+        if (GST_MFX_TASK_VPP_IN == type && !filter->vpp_request[0])
             continue;
 
         filter->vpp[i] = gst_mfx_task_aggregator_find_task(filter->aggregator,
@@ -251,7 +253,6 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         if (!filter->vpp[i]) {
             filter->vpp[i] = gst_mfx_task_new_with_session(filter->aggregator,
                 &filter->session, type);
-            gst_mfx_task_aggregator_add_task(filter->aggregator, filter->vpp[i]);
         }
 
         if (!filter->vpp_request[i]) {
@@ -358,6 +359,9 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
         gst_mfx_surface_pool_unref(filter->vpp_pool[i]);
 	}
 
+	if (!filter->vpp_request[0])
+        g_slice_free(mfxFrameInfo, filter->frame_info[0]);
+
     /* Free allocated memory for filters */
     g_slice_free1((sizeof(mfxU32) * filter->vpp_use.NumAlg),
             filter->vpp_use.AlgList);
@@ -396,8 +400,8 @@ gst_mfx_filter_new(GstMfxTaskAggregator * aggregator)
 
 	if (!gst_mfx_filter_init(filter, aggregator, NULL))
 		goto error;
-	return filter;
 
+	return filter;
 error:
 	gst_mfx_filter_unref(filter);
 	return NULL;
@@ -418,8 +422,8 @@ gst_mfx_filter_new_with_session(GstMfxTaskAggregator * aggregator, mfxSession * 
 
 	if (!gst_mfx_filter_init(filter, aggregator, session))
 		goto error;
-	return filter;
 
+	return filter;
 error:
 	gst_mfx_filter_unref(filter);
 	return NULL;
@@ -480,7 +484,6 @@ gst_mfx_filter_set_size(GstMfxFilter * filter, mfxU16 width, mfxU16 height)
 	return TRUE;
 }
 
-
 static gpointer init_procamp_default()
 {
     mfxExtVPPProcAmp *ext_procamp;
@@ -493,6 +496,7 @@ static gpointer init_procamp_default()
     ext_procamp->Contrast = 1.0;
     ext_procamp->Hue = 0.0;
     ext_procamp->Saturation = 1.0;
+
     return ext_procamp;
 }
 
@@ -518,6 +522,7 @@ static gpointer init_detail_default()
     ext_detail->Header.BufferId = MFX_EXTBUFF_VPP_DETAIL;
     ext_detail->Header.BufferSz = sizeof(mfxExtVPPDetail);
     ext_detail->DetailFactor = 0;
+
     return ext_detail;
 }
 
@@ -530,6 +535,7 @@ static gpointer init_rotation_default()
     ext_rotation->Header.BufferId = MFX_EXTBUFF_VPP_ROTATION;
     ext_rotation->Header.BufferSz = sizeof(mfxExtVPPRotation);
     ext_rotation->Angle = MFX_ANGLE_0;
+
     return ext_rotation;
 }
 

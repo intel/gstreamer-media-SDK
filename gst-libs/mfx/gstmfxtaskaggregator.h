@@ -29,10 +29,6 @@ gboolean
 gst_mfx_task_aggregator_set_current_task(GstMfxTaskAggregator * aggregator,
 	GstMfxTask * task);
 
-void
-gst_mfx_task_aggregator_add_task(GstMfxTaskAggregator * aggregator,
-    GstMfxTask * task);
-
 GstMfxTaskAggregator *
 gst_mfx_task_aggregator_ref(GstMfxTaskAggregator * aggregator);
 

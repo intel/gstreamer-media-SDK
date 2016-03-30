@@ -234,38 +234,6 @@ gst_mfxpostproc_update_sink_caps(GstMfxPostproc * vpp, GstCaps * caps,
 	return TRUE;
 }
 
-
-static gboolean
-gst_mfxpostproc_start(GstBaseTransform * trans)
-{
-	GstMfxPostproc *const vpp = GST_MFXPOSTPROC(trans);
-
-	if (!gst_mfx_plugin_base_open(GST_MFX_PLUGIN_BASE(vpp)))
-		return FALSE;
-	if (!gst_mfxpostproc_ensure_filter(vpp))
-		return FALSE;
-
-
-	/*if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) &&
-		!gst_mfx_filter_set_deinterlacing(vpp->filter, vpp->deinterlace_mode))
-		return FALSE;*/
-
-	return TRUE;
-}
-
-static gboolean
-gst_mfxpostproc_stop(GstBaseTransform * trans)
-{
-	GstMfxPostproc *const vpp = GST_MFXPOSTPROC(trans);
-
-	gst_mfx_plugin_base_close(GST_MFX_PLUGIN_BASE(vpp));
-
-	gst_video_info_init(&vpp->sinkpad_info);
-	gst_video_info_init(&vpp->srcpad_info);
-
-	return TRUE;
-}
-
 static GstFlowReturn
 gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 	GstBuffer * outbuf)
@@ -294,15 +262,6 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 	if (!proxy)
 		goto error_create_proxy;
 
-	/*GstVideoCropMeta *const crop_meta = gst_buffer_get_video_crop_meta(inbuf);
-	if (crop_meta) {
-		crop_rect = &tmp_rect;
-		crop_rect->x = crop_meta->x;
-		crop_rect->y = crop_meta->y;
-		crop_rect->width = crop_meta->width;
-		crop_rect->height = crop_meta->height;
-	}*/
-
 	outbuf_meta = gst_buffer_get_mfx_video_meta(outbuf);
 	if (!outbuf_meta)
 		goto error_create_meta;
@@ -315,17 +274,17 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 		goto error_process_vpp;
 
 	gst_mfx_video_meta_set_surface_proxy(outbuf_meta, out_proxy);
-	/*crop_rect = gst_mfx_surface_proxy_get_crop_rect(out_proxy);
+	crop_rect = gst_mfx_surface_proxy_get_crop_rect(out_proxy);
 	if (crop_rect) {
 		GstVideoCropMeta *const crop_meta =
-			gst_buffer_add_video_crop_meta(outbuf_meta);
+			gst_buffer_add_video_crop_meta(outbuf);
 		if (crop_meta) {
 			crop_meta->x = crop_rect->x;
 			crop_meta->y = crop_rect->y;
 			crop_meta->width = crop_rect->width;
 			crop_meta->height = crop_rect->height;
 		}
-	}*/
+	}
 
 	return GST_FLOW_OK;
 
@@ -386,7 +345,6 @@ ensure_allowed_sinkpad_caps(GstMfxPostproc * vpp)
 	//out_caps = gst_caps_from_string(GST_MFX_MAKE_SURFACE_CAPS ", "
 		//GST_CAPS_INTERLACED_MODES);
 
-
     out_caps =
             gst_mfx_video_format_new_template_caps_with_features(GST_VIDEO_FORMAT_NV12,
                 GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
@@ -411,7 +369,6 @@ ensure_allowed_sinkpad_caps(GstMfxPostproc * vpp)
 	}*/
 	vpp->allowed_sinkpad_caps = out_caps;
 
-	/* XXX: append VA/VPP filters */
 	return TRUE;
 }
 
@@ -465,11 +422,9 @@ ensure_allowed_srcpad_caps(GstMfxPostproc * vpp)
 
 	vpp->allowed_srcpad_caps =
 		expand_allowed_srcpad_caps(vpp, out_caps);
+
 	return vpp->allowed_srcpad_caps != NULL;
 }
-
-
-
 
 static GstCaps *
 gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
@@ -572,8 +527,6 @@ gst_mfxpostproc_transform_caps(GstBaseTransform * trans,
 		return out_caps;
 	}
 
-
-
 	return caps;
 }
 
@@ -599,7 +552,6 @@ gst_mfxpostproc_create(GstMfxPostproc * vpp)
 
 	gst_mfx_filter_set_frame_info(vpp->filter, &vpp->sinkpad_info);
 
-	/* Validate filters */
 	if (!gst_mfx_filter_set_size(vpp->filter, GST_VIDEO_INFO_WIDTH(&vpp->srcpad_info),
         GST_VIDEO_INFO_HEIGHT(&vpp->srcpad_info)))
 		return FALSE;
@@ -608,7 +560,7 @@ gst_mfxpostproc_create(GstMfxPostproc * vpp)
 		!gst_mfx_filter_set_format(vpp->filter, vpp->format))
 		return FALSE;
 
-	if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE) &&
+    if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE) &&
 		!gst_mfx_filter_set_denoising_level(vpp->filter,
 		vpp->denoise_level))
 		return FALSE;
@@ -634,13 +586,17 @@ gst_mfxpostproc_create(GstMfxPostproc * vpp)
 		!gst_mfx_filter_set_contrast(vpp->filter, vpp->contrast))
 		return FALSE;
 
+	/*if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) &&
+		!gst_mfx_filter_set_deinterlacing(vpp->filter, vpp->deinterlace_mode))
+		return FALSE;*/
+
 	return gst_mfx_filter_start(vpp->filter);
 }
 
 static void
 gst_mfxpostproc_destroy(GstMfxPostproc * vpp)
 {
-	gst_mfx_task_replace(&vpp->task, NULL);
+	gst_mfx_filter_replace(&vpp->filter, NULL);
 	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
 	gst_mfx_plugin_base_close(GST_MFX_PLUGIN_BASE(vpp));
@@ -820,8 +776,6 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
 	object_class->finalize = gst_mfxpostproc_finalize;
 	object_class->set_property = gst_mfxpostproc_set_property;
 	object_class->get_property = gst_mfxpostproc_get_property;
-	trans_class->start = gst_mfxpostproc_start;
-	trans_class->stop = gst_mfxpostproc_stop;
 	trans_class->transform_caps = gst_mfxpostproc_transform_caps;
 	trans_class->transform_size = gst_mfxpostproc_transform_size;
 	trans_class->transform = gst_mfxpostproc_transform;
