@@ -157,6 +157,6 @@ gboolean
 gst_mfx_filter_set_contrast(GstMfxFilter * filter, gfloat value);
 
 gboolean
-gst_mfx_filter_set_rotation(GstMfxFilter * filter, guint angle);
+gst_mfx_filter_set_rotation(GstMfxFilter * filter, GstMfxRotation angle);
 
 #endif /* GST_MFX_FILTER_H */

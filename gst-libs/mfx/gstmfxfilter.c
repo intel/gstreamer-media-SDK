@@ -730,16 +730,16 @@ gst_mfx_filter_set_detail_level(GstMfxFilter * filter, guint level)
 }
 
 gboolean
-gst_mfx_filter_set_rotation(GstMfxFilter * filter, guint angle)
+gst_mfx_filter_set_rotation(GstMfxFilter * filter, GstMfxRotation angle)
 {
     GstMfxFilterOpData *op;
     mfxExtVPPRotation *ext_rotation;
 
     g_return_val_if_fail(filter != NULL, FALSE);
-    g_return_val_if_fail((angle == MFX_ANGLE_0 ||
-                angle == MFX_ANGLE_90 ||
-                angle == MFX_ANGLE_180 ||
-                angle == MFX_ANGLE_270), FALSE);
+    g_return_val_if_fail((angle == 0 ||
+                angle == 90 ||
+                angle == 180 ||
+                angle == 270), FALSE);
 
     op = find_filter_op_data(filter, GST_MFX_FILTER_ROTATION);
     if ( NULL == op ) {

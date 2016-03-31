@@ -37,6 +37,7 @@ typedef struct _GstMfxPostprocClass GstMfxPostprocClass;
 * @GST_MFX_POSTPROC_FLAG_BRIGHTNESS: Change brightness.
 * @GST_MFX_POSTPROC_FLAG_CONTRAST: Change contrast.
 * @GST_MFX_POSTPROC_FLAG_DEINTERLACE: Deinterlacing.
+* @GST_MFX_POSTPROC_FLAG_ROTATION: Rotation.
 * @GST_MFX_POSTPROC_FLAG_SIZE: Video scaling.
 *
 * The set of operations that are to be performed for each frame.
@@ -51,7 +52,7 @@ typedef enum
 	GST_MFX_POSTPROC_FLAG_BRIGHTNESS = 1 << GST_MFX_FILTER_OP_BRIGHTNESS,
 	GST_MFX_POSTPROC_FLAG_CONTRAST = 1 << GST_MFX_FILTER_OP_CONTRAST,
 	GST_MFX_POSTPROC_FLAG_DEINTERLACING = 1 << GST_MFX_FILTER_OP_DEINTERLACING,
-
+    GST_MFX_POSTPROC_FLAG_ROTATION = 1 << GST_MFX_FILTER_OP_ROTATION,
 	/* Additional custom flags */
 	GST_MFX_POSTPROC_FLAG_CUSTOM = 1 << 20,
 	GST_MFX_POSTPROC_FLAG_SIZE = GST_MFX_POSTPROC_FLAG_CUSTOM,
@@ -89,6 +90,9 @@ struct _GstMfxPostproc
 	gfloat saturation;
 	gfloat brightness;
 	gfloat contrast;
+
+    /* Rotation angle */
+    GstMfxRotation angle;
 
 	guint get_va_surfaces : 1;
 	guint use_vpp : 1;

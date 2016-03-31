@@ -67,13 +67,17 @@ enum
 	PROP_SATURATION,
 	PROP_BRIGHTNESS,
 	PROP_CONTRAST,
+    PROP_ROTATION,
 };
 
 #define DEFAULT_FORMAT                  GST_VIDEO_FORMAT_NV12
 #define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_NONE
+#define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 
 #define GST_MFX_TYPE_DEINTERLACE_MODE \
 	gst_mfx_deinterlace_mode_get_type()
+#define GST_MFX_ROTATION_MODE \
+    gst_mfx_rotation_get_type()
 
 static GType
 gst_mfx_deinterlace_mode_get_type(void)
@@ -99,6 +103,27 @@ gst_mfx_deinterlace_mode_get_type(void)
 	return deinterlace_mode_type;
 }
 
+static GType
+gst_mfx_rotation_get_type(void)
+{
+    static GType rotation_value = 0;
+
+    static const GEnumValue rotation_modes[] = {
+        { GST_MFX_ROTATION_0,
+            "No rotation", "0"},
+        /*{ GST_MFX_ROTATION_90,
+            "Rotate by 90", "clockwise", "90"},*/
+        { GST_MFX_ROTATION_180,
+            "Rotate by 180", "clockwise", "180"},
+        /*{ GST_MFX_ROTATION_270,
+            "Rotate by 270", "clockwise", "270"},*/
+        {0, NULL, NULL},
+    };
+    if (!rotation_value)
+        rotation_value =
+            g_enum_register_static("GstMfxRotation", rotation_modes);
+    return rotation_value;
+}
 
 static void
 find_best_size(GstMfxPostproc * postproc, GstVideoInfo * vip,
@@ -127,7 +152,12 @@ find_best_size(GstMfxPostproc * postproc, GstVideoInfo * vip,
 		width = postproc->width;
 	else if (postproc->height)
 		height = postproc->height;
-
+    else if (GST_MFX_ROTATION_90 == postproc->angle ||
+            GST_MFX_ROTATION_270 == postproc->angle) {
+        width = width ^ height;
+        height = width ^ height;
+        width = width ^ height;
+    }
 	*width_ptr = width;
 	*height_ptr = height;
 }
@@ -586,6 +616,10 @@ gst_mfxpostproc_create(GstMfxPostproc * vpp)
 		!gst_mfx_filter_set_contrast(vpp->filter, vpp->contrast))
 		return FALSE;
 
+    if((vpp->flags & GST_MFX_POSTPROC_FLAG_ROTATION) &&
+        !gst_mfx_filter_set_rotation(vpp->filter, vpp->angle))
+        return FALSE;
+
 	/*if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) &&
 		!gst_mfx_filter_set_deinterlacing(vpp->filter, vpp->deinterlace_mode))
 		return FALSE;*/
@@ -706,7 +740,11 @@ gst_mfxpostproc_set_property(GObject * object,
 		vpp->contrast = g_value_get_float(value);
 		vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
 		break;
-	default:
+    case PROP_ROTATION:
+        vpp->angle = g_value_get_enum(value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_ROTATION;
+        break;
+    default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
 		break;
 	}
@@ -753,6 +791,9 @@ gst_mfxpostproc_get_property(GObject * object,
 	case PROP_CONTRAST:
 		g_value_set_float(value, postproc->contrast);
 		break;
+    case PROP_ROTATION:
+        g_value_set_enum(value, postproc->angle);
+        break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
 		break;
@@ -949,6 +990,18 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
 		"The color contrast value",
 		0.0, 10.0, 1.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+    /**
+    * GstMfxPostproc:rotation:
+    *
+    * The rotation angle  for the surface, expressed in GstMfxRotation.
+    */
+    g_object_class_install_property(object_class,
+            PROP_ROTATION,
+            g_param_spec_enum("rotation",
+                "Rotation",
+                "The rotation angle",
+                GST_MFX_ROTATION_MODE,
+                DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 
