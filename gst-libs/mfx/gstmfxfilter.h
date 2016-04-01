@@ -3,7 +3,7 @@
 
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxtaskaggregator.h"
-#include "video-utils.h"
+#include "video-format.h"
 
 G_BEGIN_DECLS
 
@@ -95,7 +95,7 @@ typedef enum {
 	GST_MFX_DEINTERLACE_MODE_NONE,
 	GST_MFX_DEINTERLACE_MODE_BOB,
 	GST_MFX_DEINTERLACE_MODE_ADVANCED,
-	GST_MFX_DEINTERLACE_MODE_ADVANCED_NO_REF,
+	GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF,
 } GstMfxDeinterlaceMode;
 
 
@@ -158,5 +158,10 @@ gst_mfx_filter_set_contrast(GstMfxFilter * filter, gfloat value);
 
 gboolean
 gst_mfx_filter_set_rotation(GstMfxFilter * filter, GstMfxRotation angle);
+
+gboolean
+gst_mfx_filter_set_deinterlace_mode(GstMfxFilter *filter,
+        GstMfxDeinterlaceMode mode);
+
 
 #endif /* GST_MFX_FILTER_H */

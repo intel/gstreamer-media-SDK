@@ -99,7 +99,9 @@ gst_mfx_filter_set_frame_info(GstMfxFilter * filter, GstVideoInfo * info)
 	filter->frame_info[0]->FourCC = gst_video_format_to_mfx_fourcc(
         GST_VIDEO_INFO_FORMAT(info));
 	filter->frame_info[0]->PicStruct = GST_VIDEO_INFO_IS_INTERLACED(info) ?
-	    MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_PROGRESSIVE;
+        (GST_VIDEO_INFO_FLAG_IS_SET(info, GST_VIDEO_FRAME_FLAG_TFF) ?
+            MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF)
+        : MFX_PICSTRUCT_PROGRESSIVE;
 
 	filter->frame_info[0]->CropX = 0;
 	filter->frame_info[0]->CropY = 0;
@@ -157,6 +159,8 @@ init_filters(GstMfxFilter * filter)
     mfxExtBuffer *ext_buf;
     guint i;
 
+    check_supported_filters(filter);
+
     memset(&filter->vpp_use, 0, sizeof(mfxExtVPPDoUse));
 
     filter->vpp_use.Header.BufferId = MFX_EXTBUFF_VPP_DOUSE;
@@ -212,7 +216,10 @@ init_params(GstMfxFilter * filter)
         filter->params.vpp.Out.CropH = filter->height;
         filter->params.vpp.Out.Height = MSDK_ALIGN16(filter->height);
     }
-
+    if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
+        filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+        filter->params.vpp.Out.Height = MSDK_ALIGN16(filter->height);
+    }
     return TRUE;
 }
 
@@ -277,9 +284,6 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         if (!filter->vpp_pool[i])
             return FALSE;
     }
-
-    //Check supported filters
-    check_supported_filters(filter);
 
     init_filters(filter);
 
@@ -482,6 +486,19 @@ gst_mfx_filter_set_size(GstMfxFilter * filter, mfxU16 width, mfxU16 height)
 	filter->height = height;
 
 	return TRUE;
+}
+
+static gpointer init_deinterlacing_default()
+{
+    mfxExtVPPDeinterlacing *ext_deinterlacing;
+    ext_deinterlacing = g_slice_alloc0(sizeof(mfxExtVPPDeinterlacing));
+    if (!ext_deinterlacing)
+        return NULL;
+    ext_deinterlacing->Header.BufferId = MFX_EXTBUFF_VPP_DEINTERLACING;
+    ext_deinterlacing->Header.BufferSz = sizeof(mfxExtVPPDeinterlacing);
+    ext_deinterlacing->Mode = MFX_DEINTERLACING_ADVANCED; //Set as default
+
+    return ext_deinterlacing;
 }
 
 static gpointer init_procamp_default()
@@ -759,6 +776,58 @@ gst_mfx_filter_set_rotation(GstMfxFilter * filter, GstMfxRotation angle)
 
     ext_rotation = (mfxExtVPPRotation *)op->filter;
     ext_rotation->Angle = angle;
+
+    return TRUE;
+}
+
+gboolean
+gst_mfx_filter_set_deinterlace_mode(GstMfxFilter *filter,
+        GstMfxDeinterlaceMode mode)
+{
+    GstMfxFilterOpData *op;
+    mfxExtVPPDeinterlacing *ext_deinterlacing;
+    guint16 alg;
+
+    g_return_val_if_fail(filter != NULL, FALSE);
+    g_return_val_if_fail((GST_MFX_DEINTERLACE_MODE_NONE != mode ||
+            GST_MFX_DEINTERLACE_MODE_BOB != mode ||
+            GST_MFX_DEINTERLACE_MODE_ADVANCED != mode ||
+            GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF), FALSE);
+
+    switch(mode) {
+        case GST_MFX_DEINTERLACE_MODE_NONE:
+            alg = 0;
+            break;
+        case GST_MFX_DEINTERLACE_MODE_BOB:
+            alg = MFX_DEINTERLACING_BOB;
+            break;
+        case GST_MFX_DEINTERLACE_MODE_ADVANCED:
+            alg = MFX_DEINTERLACING_ADVANCED;
+            break;
+        case GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF:
+            alg = MFX_DEINTERLACING_ADVANCED_NOREF;
+            break;
+        default:
+            alg =0;
+    }
+    op = find_filter_op_data(filter, GST_MFX_FILTER_DEINTERLACING);
+    if (NULL == op) {
+        op = g_slice_alloc(sizeof(GstMfxFilterOpData));
+        if ( NULL == op )
+            return FALSE;
+        op->type = GST_MFX_FILTER_DEINTERLACING;
+        filter->filter_op |= GST_MFX_FILTER_DEINTERLACING;
+        op->size = sizeof(mfxExtVPPDeinterlacing);
+        op->filter = init_deinterlacing_default();
+        if ( NULL == op->filter ) {
+            g_slice_free(GstMfxFilterOpData, op);
+            return FALSE;
+        }
+        g_ptr_array_add(filter->filter_op_data, op);
+    }
+
+    ext_deinterlacing = (mfxExtVPPDeinterlacing *)op->filter;
+    ext_deinterlacing->Mode = alg;
 
     return TRUE;
 }

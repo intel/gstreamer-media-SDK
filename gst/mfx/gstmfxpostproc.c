@@ -91,7 +91,7 @@ gst_mfx_deinterlace_mode_get_type(void)
 		"Bob deinterlacing", "bob" },
 		{ GST_MFX_DEINTERLACE_MODE_ADVANCED,
 		"Advanced deinterlacing", "adi" },
-		{ GST_MFX_DEINTERLACE_MODE_ADVANCED_NO_REF,
+		{ GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF,
 		"Advanced deinterlacing with no reference", "adi-noref" },
 		{ 0, NULL, NULL },
 	};
@@ -488,8 +488,9 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 	if (!gst_video_info_from_caps(&vi, caps))
 		return NULL;
 
-	// Signal the other pad that we only generate progressive frames
-	//GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+	// Signal the other pad that we only generate progressive frame
+    if(GST_VIDEO_INFO_IS_INTERLACED(&vi))
+        GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
 
 	// Update size from user-specified parameters
 	find_best_size(vpp, &vi, &width, &height);
@@ -620,9 +621,9 @@ gst_mfxpostproc_create(GstMfxPostproc * vpp)
         !gst_mfx_filter_set_rotation(vpp->filter, vpp->angle))
         return FALSE;
 
-	/*if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) &&
-		!gst_mfx_filter_set_deinterlacing(vpp->filter, vpp->deinterlace_mode))
-		return FALSE;*/
+	if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) &&
+      !gst_mfx_filter_set_deinterlace_mode(vpp->filter, vpp->deinterlace_mode))
+		return FALSE;
 
 	return gst_mfx_filter_start(vpp->filter);
 }

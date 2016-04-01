@@ -4,6 +4,7 @@
 #include <gst/video/video.h>
 #include "gstmfxtask.h"
 #include "gstmfxutils_vaapi.h"
+#include "video-format.h"
 
 G_BEGIN_DECLS
 
