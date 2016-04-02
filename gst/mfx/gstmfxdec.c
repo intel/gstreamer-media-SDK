@@ -276,7 +276,7 @@ gst_mfxdec_negotiate(GstMfxDec * mfxdec)
 
 static void
 gst_mfx_dec_set_property(GObject * object, guint prop_id,
-const GValue * value, GParamSpec * pspec)
+	const GValue * value, GParamSpec * pspec)
 {
 	GstMfxDec *dec;
 
@@ -316,11 +316,6 @@ gst_mfx_dec_get_property(GObject * object, guint prop_id, GValue * value,
 static gboolean
 gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 {
-	GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
-
-	//gst_mfx_task_aggregator_set_current_task(GST_MFX_PLUGIN_BASE(mfxdec)->aggregator,
-		//mfxdec->task);
-
 	return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(vdec),
 		query);
 }
@@ -333,8 +328,6 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 
 	if (!codec)
 		return FALSE;
-
-    gst_mfx_task_aggregator_set_current_task(plugin->aggregator, mfxdec->task);
 
 	mfxdec->decoder = gst_mfx_decoder_new(plugin->aggregator,
 		codec, mfxdec->async_depth);
@@ -384,7 +377,6 @@ gst_mfxdec_finalize(GObject * object)
 	gst_caps_replace(&mfxdec->sinkpad_caps, NULL);
 	gst_caps_replace(&mfxdec->srcpad_caps, NULL);
 	//gst_caps_replace(&mfxdec->allowed_caps, NULL);
-	gst_mfx_task_replace(&mfxdec->task, NULL);
 
 	gst_mfx_plugin_base_finalize(GST_MFX_PLUGIN_BASE(object));
 	G_OBJECT_CLASS(gst_mfxdec_parent_class)->finalize(object);
@@ -393,17 +385,7 @@ gst_mfxdec_finalize(GObject * object)
 static gboolean
 gst_mfxdec_open(GstVideoDecoder * vdec)
 {
-    GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(vdec);
-    GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
-
-	if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
-        return FALSE;
-
-    mfxdec->task = gst_mfx_task_new(plugin->aggregator, GST_MFX_TASK_DECODER);
-    if (!mfxdec->task)
-        return FALSE;
-
-    return TRUE;
+	return gst_mfx_plugin_base_ensure_aggregator(GST_MFX_PLUGIN_BASE(vdec));
 }
 
 static gboolean
