@@ -7,7 +7,6 @@
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxvideometa.h"
-#include "gstmfxsurfacepool.h"
 #include "gstmfxdisplay.h"
 #include "gstmfxtaskaggregator.h"
 #include <gst/allocators/allocators.h>
@@ -120,7 +119,6 @@ struct _GstMfxVideoAllocator
 
 	/*< private >*/
 	GstVideoInfo video_info;
-	GstMfxSurfacePool *surface_pool;
 	GstVideoInfo image_info;
 };
 

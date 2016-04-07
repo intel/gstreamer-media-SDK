@@ -11,8 +11,8 @@ G_BEGIN_DECLS
 gboolean
 vaapi_check_status (VAStatus status, const gchar *msg);
 
-guint
-gst_mfx_video_format_get_chroma_type(GstVideoFormat format);
+mfxStatus
+vaapi_to_mfx_status(VAStatus va_sts);
 
 G_END_DECLS
 

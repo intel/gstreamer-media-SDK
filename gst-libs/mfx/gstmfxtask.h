@@ -6,6 +6,7 @@
 
 #include <mfxvideo.h>
 #include <va/va.h>
+#include <gst/video/video.h>
 
 G_BEGIN_DECLS
 
@@ -31,11 +32,11 @@ typedef enum {
 } GstMfxTaskType;
 
 GstMfxTask *
-gst_mfx_task_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
 	guint type_flags);
 
 GstMfxTask *
-gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
 	mfxSession * session, guint type_flags);
 
 GstMfxTask *
@@ -48,8 +49,8 @@ void
 gst_mfx_task_replace (GstMfxTask ** old_task_ptr,
 	GstMfxTask * new_task);
 
-gboolean
-gst_mfx_task_set_task_type (GstMfxTask * task, guint flags);
+void
+gst_mfx_task_set_task_type(GstMfxTask * task, guint flags);
 
 gboolean
 gst_mfx_task_has_type (GstMfxTask * task, guint flags);
@@ -57,10 +58,16 @@ gst_mfx_task_has_type (GstMfxTask * task, guint flags);
 guint
 gst_mfx_task_get_task_type (GstMfxTask * task);
 
+void
+gst_mfx_task_use_system_memory(GstMfxTask * task);
+
+gboolean
+gst_mfx_task_has_system_memory(GstMfxTask * task);
+
 GstMfxDisplay *
 gst_mfx_task_get_display(GstMfxTask * task);
 
-GAsyncQueue *
+GQueue *
 gst_mfx_task_get_surfaces (GstMfxTask * task);
 
 mfxSession

@@ -45,8 +45,8 @@ typedef enum {
 } GstMfxDecoderStatus;
 
 GstMfxDecoder *
-gst_mfx_decoder_new(GstMfxTaskAggregator * context,
-	mfxU32 codec, mfxU16 async_depth);
+gst_mfx_decoder_new(GstMfxTaskAggregator * aggregator,
+	mfxU32 codec, mfxU16 async_depth, gboolean mapped);
 
 GstMfxDecoder *
 gst_mfx_decoder_ref(GstMfxDecoder * decoder);
@@ -67,7 +67,7 @@ gst_mfx_decoder_get_surface_proxy(GstMfxDecoder * decoder,
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode(GstMfxDecoder * decoder,
-	GstVideoCodecFrame * frame, GstVideoInfo * info);
+	GstVideoCodecFrame * frame, GstVideoInfo *info);
 
 G_END_DECLS
 

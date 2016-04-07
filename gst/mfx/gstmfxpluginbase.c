@@ -206,11 +206,7 @@ ensure_sinkpad_buffer_pool(GstMfxPluginBase * plugin, GstCaps * caps)
 
 	gst_video_info_init(&vi);
 	gst_video_info_from_caps(&vi, caps);
-	if (GST_VIDEO_INFO_FORMAT(&vi) == GST_VIDEO_FORMAT_ENCODED) {
-		GST_DEBUG("assume video buffer pool format is NV12");
-		gst_video_info_set_format(&vi, GST_VIDEO_FORMAT_NV12,
-			GST_VIDEO_INFO_WIDTH(&vi), GST_VIDEO_INFO_HEIGHT(&vi));
-	}
+
 	plugin->sinkpad_buffer_size = vi.size;
 
 	config = gst_buffer_pool_get_config(pool);
@@ -375,9 +371,6 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 
 	gst_video_info_init(&vi);
 	gst_video_info_from_caps(&vi, caps);
-	if (GST_VIDEO_INFO_FORMAT(&vi) == GST_VIDEO_FORMAT_ENCODED)
-		gst_video_info_set_format(&vi, GST_VIDEO_FORMAT_I420,
-		GST_VIDEO_INFO_WIDTH(&vi), GST_VIDEO_INFO_HEIGHT(&vi));
 
 	if (gst_query_get_n_allocation_pools(query) > 0) {
 		gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &min, &max);
@@ -400,7 +393,7 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	if (!pool || !gst_buffer_pool_has_option(pool,
 		GST_BUFFER_POOL_OPTION_MFX_VIDEO_META)) {
 		GST_INFO_OBJECT(plugin, "%s. Making a new pool", pool == NULL ? "No pool" :
-			"Pool hasn't GstMfxVideoMeta");
+			"Pool not configured with GstMfxVideoMeta option");
 		if (pool)
 			gst_object_unref(pool);
 		pool = gst_mfx_video_buffer_pool_new(plugin->aggregator);

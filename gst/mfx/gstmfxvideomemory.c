@@ -43,28 +43,12 @@ ensure_image (GstMfxVideoMemory * mem)
     return TRUE;
 }
 
-static GstMfxSurfaceProxy *
-new_surface_proxy (GstMfxVideoMemory * mem)
-{
-    GstMfxVideoAllocator *const allocator =
-        GST_MFX_VIDEO_ALLOCATOR_CAST (GST_MEMORY_CAST (mem)->allocator);
-
-    return gst_mfx_surface_proxy_new_from_pool (allocator->surface_pool);
-}
-
 static gboolean
 ensure_surface (GstMfxVideoMemory * mem)
 {
     if (!mem->proxy) {
         gst_mfx_surface_proxy_replace (&mem->proxy,
             gst_mfx_video_meta_get_surface_proxy (mem->meta));
-
-        if (!mem->proxy) {
-            mem->proxy = new_surface_proxy (mem);
-            if (!mem->proxy)
-                return FALSE;
-            gst_mfx_video_meta_set_surface_proxy (mem->meta, mem->proxy);
-        }
     }
 
     return GST_MFX_SURFACE_PROXY_SURFACE (mem->proxy) != NULL;
@@ -93,13 +77,10 @@ gst_video_meta_map_mfx_surface (GstVideoMeta * meta, guint plane,
         if (!ensure_image (mem))
             goto error_ensure_image;
 
-        // Load VA image from surface
-        if (!vaapi_image_map (mem->image))
-            goto error_map_image;
         mem->map_type = GST_MFX_VIDEO_MEMORY_MAP_TYPE_PLANAR;
     }
 
-    *data = vaapi_image_get_plane (mem->image, plane);
+    *data = gst_mfx_surface_proxy_get_plane (mem->proxy, plane);
     *stride = vaapi_image_get_pitch (mem->image, plane);
     info->flags = flags;
     return TRUE;
@@ -150,11 +131,6 @@ gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
 
     if (--mem->map_count == 0) {
         mem->map_type = 0;
-
-        /* Unmap VA image used for read/writes */
-        if (info->flags & GST_MAP_READWRITE) {
-            vaapi_image_unmap (mem->image);
-        }
     }
     return TRUE;
 }
@@ -403,8 +379,6 @@ gst_mfx_video_allocator_finalize (GObject * object)
     GstMfxVideoAllocator *const allocator =
         GST_MFX_VIDEO_ALLOCATOR_CAST (object);
 
-    gst_mfx_surface_pool_replace (&allocator->surface_pool, NULL);
-
     G_OBJECT_CLASS (gst_mfx_video_allocator_parent_class)->finalize (object);
 }
 
@@ -500,7 +474,7 @@ allocator_configure_image_info(GstMfxDisplay * display,
 
 bail:
     if (image)
-        gst_mfx_object_unref (image);
+        gst_mfx_mini_object_unref (image);
 }
 
 GstAllocator *
@@ -518,24 +492,12 @@ gst_mfx_video_allocator_new(GstMfxTask * task,
 
 	allocator->video_info = *vip;
 
-	allocator->surface_pool = gst_mfx_surface_pool_new(task);
-
-	if (!allocator->surface_pool)
-		goto error_create_surface_pool;
-
     allocator_configure_image_info (GST_MFX_TASK_DISPLAY(task), allocator);
 
 	gst_allocator_set_mfx_video_info(GST_ALLOCATOR_CAST(allocator),
 		&allocator->image_info, 0);
-	return GST_ALLOCATOR_CAST(allocator);
 
-	/* ERRORS */
-error_create_surface_pool:
-	{
-		GST_ERROR("failed to allocate MFX surface pool");
-		gst_object_unref(allocator);
-		return NULL;
-	}
+	return GST_ALLOCATOR_CAST(allocator);
 }
 
 

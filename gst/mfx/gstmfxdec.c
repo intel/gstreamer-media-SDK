@@ -329,8 +329,11 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 	if (!codec)
 		return FALSE;
 
+    if(!gst_mfxdec_update_src_caps(mfxdec))
+        return FALSE;
+
 	mfxdec->decoder = gst_mfx_decoder_new(plugin->aggregator,
-		codec, mfxdec->async_depth);
+		codec, mfxdec->async_depth, !gst_caps_has_mfx_surface(mfxdec->srcpad_caps));
 	if (!mfxdec->decoder)
 		return FALSE;
 

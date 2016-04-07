@@ -29,7 +29,46 @@ sync_output_surface(gconstpointer proxy, gconstpointer surf)
             GST_MFX_SURFACE_PROXY_MEMID(_proxy));
 }
 
-void
+static gboolean
+gst_mfx_surface_pool_add_surface_unlocked(GstMfxSurfacePool * pool)
+{
+	GstMfxSurfaceProxy *surface = gst_mfx_surface_proxy_new(pool->task);
+	if (!surface)
+		return NULL;
+
+	g_queue_push_tail(&pool->free_objects, gst_mfx_mini_object_ref(surface));
+
+	return TRUE;
+}
+
+static gboolean
+gst_mfx_surface_pool_add_surfaces_unlocked(GstMfxSurfacePool * pool)
+{
+	guint i, len = g_queue_get_length(gst_mfx_task_get_surfaces(pool->task));
+
+	for (i = 0; i < len; i++) {
+		if (!gst_mfx_surface_pool_add_surface_unlocked(pool))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
+{
+	gboolean success;
+
+	g_return_val_if_fail(pool != NULL, FALSE);
+
+	g_mutex_lock(&pool->mutex);
+	success = gst_mfx_surface_pool_add_surfaces_unlocked(pool);
+	g_mutex_unlock(&pool->mutex);
+
+	return success;
+}
+
+static gboolean
 gst_mfx_surface_pool_init (GstMfxSurfacePool * pool, GstMfxTask * task)
 {
 	pool->task = gst_mfx_task_ref(task);
@@ -39,7 +78,9 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool, GstMfxTask * task)
     pool->capacity = 0;
 
     g_queue_init (&pool->free_objects);
-    g_mutex_init (&pool->mutex);
+	g_mutex_init(&pool->mutex);
+
+	return gst_mfx_surface_pool_add_surfaces(pool);
 }
 
 void
@@ -47,7 +88,8 @@ gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
 {
 	gst_mfx_task_unref(pool->task);
     g_list_free_full (pool->used_objects, gst_mfx_mini_object_unref);
-    g_queue_foreach (&pool->free_objects, (GFunc) gst_mfx_mini_object_unref, NULL);
+    g_queue_foreach (&pool->free_objects,
+		(GFunc) gst_mfx_mini_object_unref, NULL);
     g_queue_clear (&pool->free_objects);
     g_mutex_clear (&pool->mutex);
 }
@@ -63,20 +105,24 @@ gst_mfx_surface_pool_class(void)
 }
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new(GstMfxTask * ctx)
+gst_mfx_surface_pool_new(GstMfxTask * task)
 {
 	GstMfxSurfacePool *pool;
 
-	g_return_val_if_fail(ctx != NULL, NULL);
+	g_return_val_if_fail(task != NULL, NULL);
 
 	pool = (GstMfxSurfacePool *)
-		gst_mfx_mini_object_new(gst_mfx_surface_pool_class());
+		gst_mfx_mini_object_new0(gst_mfx_surface_pool_class());
 	if (!pool)
 		return NULL;
 
-	gst_mfx_surface_pool_init(pool, ctx);
+	if (!gst_mfx_surface_pool_init(pool, task))
+        goto error;
 
 	return pool;
+error:
+	gst_mfx_surface_pool_unref(pool);
+	return NULL;
 }
 
 GstMfxSurfacePool *
@@ -124,16 +170,9 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
 
     surface = g_queue_pop_head (&pool->free_objects);
 
-    if (!surface) {
-        g_mutex_unlock (&pool->mutex);
-        surface = gst_mfx_surface_proxy_new(pool->task);
-        g_mutex_lock (&pool->mutex);
-    if (!surface)
-        return NULL;
-    }
-
     ++pool->used_count;
     pool->used_objects = g_list_prepend (pool->used_objects, surface);
+
     return gst_mfx_surface_proxy_ref (surface);
 }
 
@@ -149,6 +188,7 @@ gst_mfx_surface_pool_get_surface (GstMfxSurfacePool * pool)
     g_mutex_lock (&pool->mutex);
     surface = gst_mfx_surface_pool_get_surface_unlocked (pool);
     g_mutex_unlock (&pool->mutex);
+
     return surface;
 }
 

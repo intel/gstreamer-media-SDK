@@ -67,6 +67,9 @@ void
 gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy, guint * width_ptr,
 	guint * height_ptr);
 
+guchar *
+gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane);
+
 GstMfxTask *
 gst_mfx_surface_proxy_get_task_context(GstMfxSurfaceProxy * proxy);
 

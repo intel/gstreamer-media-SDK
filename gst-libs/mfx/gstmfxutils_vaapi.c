@@ -9,9 +9,9 @@
 struct _VaapiImage {
     /*< private >*/
     GstMfxMiniObject    parent_instance;
-    GstMfxDisplay       *display;
+    GstMfxDisplay      *display;
     GstVideoFormat      internal_format;
-    guchar              *image_data;
+    guchar             *image_data;
     guint               width;
     guint               height;
     VAImage             image;
