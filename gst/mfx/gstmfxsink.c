@@ -651,7 +651,7 @@ gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 	//out_caps = gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
 
 	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
-        out_format = GST_VIDEO_FORMAT_RGBA;
+        out_format = GST_VIDEO_FORMAT_BGRA;
     else
         out_format = GST_VIDEO_FORMAT_NV12;
 

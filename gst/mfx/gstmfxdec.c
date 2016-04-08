@@ -32,7 +32,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
 	GST_MFX_MAKE_SURFACE_CAPS ";"
-	GST_VIDEO_CAPS_MAKE("{ NV12 }");
+	GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }");
 
 enum
 {
@@ -195,7 +195,6 @@ gst_mfxdec_push_decoded_frame(GstMfxDec *mfxdec, GstVideoCodecFrame * frame,
     GstMfxSurfaceProxy * proxy)
 {
 	GstFlowReturn ret;
-	GstMfxDecoderStatus sts;
 	GstMfxVideoMeta *meta;
 	const GstMfxRectangle *crop_rect;
 
@@ -323,6 +322,7 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 {
     GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(mfxdec);
 	mfxU32 codec = gst_get_mfx_codec_from_caps(caps);
+	GstVideoInfo info;
 
 	if (!codec)
 		return FALSE;
@@ -330,8 +330,12 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
     if(!gst_mfxdec_update_src_caps(mfxdec))
         return FALSE;
 
+    if (!gst_video_info_from_caps(&info, mfxdec->srcpad_caps))
+        return FALSE;
+
 	mfxdec->decoder = gst_mfx_decoder_new(plugin->aggregator,
-		codec, mfxdec->async_depth, !gst_caps_has_mfx_surface(mfxdec->srcpad_caps));
+		codec, mfxdec->async_depth, &info,
+        !gst_caps_has_mfx_surface(mfxdec->srcpad_caps));
 	if (!mfxdec->decoder)
 		return FALSE;
 
@@ -403,9 +407,6 @@ gst_mfxdec_flush(GstVideoDecoder * vdec)
 {
 	GstMfxDec *const mfxdec = GST_MFXDEC(vdec);
 
-	//if (mfxdec->decoder && !gst_mfxdec_internal_flush(vdec))
-		//return FALSE;
-
 	/* There could be issues if we avoid the reset_full() while doing
 	* seeking: we have to reset the internal state */
 	return gst_mfxdec_reset_full(mfxdec, mfxdec->sinkpad_caps, TRUE);
@@ -441,10 +442,7 @@ gst_mfxdec_handle_frame(GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
     if (!gst_mfxdec_negotiate(mfxdec))
         goto not_negotiated;
 
-    if (!gst_video_info_from_caps(&info, mfxdec->srcpad_caps))
-        goto not_negotiated;
-
-	sts = gst_mfx_decoder_decode(mfxdec->decoder, frame, &info, &out_proxy);
+	sts = gst_mfx_decoder_decode(mfxdec->decoder, frame, &out_proxy);
 
 	switch (sts) {
 	case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:

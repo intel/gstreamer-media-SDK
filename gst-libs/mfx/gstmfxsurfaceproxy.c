@@ -70,10 +70,11 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
     case MFX_FOURCC_RGB4:
         ptr->Pitch = proxy->pitches[0] = (mfxU16)vaapi_image_get_pitch(image, 0);
 
-        ptr->B = proxy->planes[0] = g_slice_alloc(proxy->data_size);
-        ptr->G = proxy->planes[1] = ptr->B + 1;
-        ptr->R = proxy->planes[2] = ptr->B + 2;
-        ptr->A = proxy->planes[3] = ptr->B + 3;
+        ptr->A = g_slice_alloc(proxy->data_size);
+        ptr->R = proxy->planes[0] = ptr->A + 1;
+        ptr->G = proxy->planes[1] = ptr->A + 2;
+        ptr->B = proxy->planes[2] = ptr->A + 3;
+
 
         break;
     default:

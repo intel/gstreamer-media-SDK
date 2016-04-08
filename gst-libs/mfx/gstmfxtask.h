@@ -59,7 +59,7 @@ guint
 gst_mfx_task_get_task_type (GstMfxTask * task);
 
 void
-gst_mfx_task_use_system_memory(GstMfxTask * task);
+gst_mfx_task_use_video_memory(GstMfxTask * task);
 
 gboolean
 gst_mfx_task_has_system_memory(GstMfxTask * task);

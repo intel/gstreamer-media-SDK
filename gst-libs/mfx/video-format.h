@@ -32,8 +32,8 @@ gst_mfx_video_format_to_va_fourcc(mfxU32 fourcc);
 guint
 gst_mfx_video_format_to_va_format(mfxU32 fourcc);
 
-guint
-gst_mfx_video_format_get_chroma_type(GstVideoFormat format);
+guint16
+gst_mfx_chroma_type_from_video_format(GstVideoFormat format);
 
 G_END_DECLS
 

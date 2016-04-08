@@ -20,7 +20,7 @@ struct _GstMfxTask {
 	VAImage					image;
 
 	mfxSession              session;
-	gboolean                use_system_memory;
+	gboolean                use_video_memory;
 };
 
 mfxStatus
@@ -183,15 +183,26 @@ gst_mfx_task_has_type(GstMfxTask * task, guint flags)
 }
 
 void
-gst_mfx_task_use_system_memory(GstMfxTask * task)
+gst_mfx_task_use_video_memory(GstMfxTask * task)
 {
-    task->use_system_memory = TRUE;
+    mfxFrameAllocator frame_allocator = {
+        .pthis = task,
+        .Alloc = gst_mfx_task_frame_alloc,
+        .Free = gst_mfx_task_frame_free,
+        .Lock = gst_mfx_task_frame_lock,
+        .Unlock = gst_mfx_task_frame_unlock,
+        .GetHDL = gst_mfx_task_frame_get_hdl,
+    };
+
+    MFXVideoCORE_SetFrameAllocator(task->session, &frame_allocator);
+
+    task->use_video_memory = TRUE;
 }
 
 gboolean
 gst_mfx_task_has_system_memory(GstMfxTask * task)
 {
-    return task->use_system_memory;
+    return !task->use_video_memory;
 }
 
 static void

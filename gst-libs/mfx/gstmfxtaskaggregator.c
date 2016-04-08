@@ -200,19 +200,6 @@ gst_mfx_task_aggregator_set_current_task(GstMfxTaskAggregator * aggregator, GstM
 		&session, gst_mfx_task_get_task_type(task)))
 		aggregator->cache = g_list_prepend(aggregator->cache, task);
 
-    if (!gst_mfx_task_has_system_memory(task)) {
-        mfxFrameAllocator frame_allocator = {
-            .pthis = task,
-            .Alloc = gst_mfx_task_frame_alloc,
-            .Free = gst_mfx_task_frame_free,
-            .Lock = gst_mfx_task_frame_lock,
-            .Unlock = gst_mfx_task_frame_unlock,
-            .GetHDL = gst_mfx_task_frame_get_hdl,
-        };
-
-        MFXVideoCORE_SetFrameAllocator(session, &frame_allocator);
-    }
-
 	aggregator->current_task = task;
 
 	return TRUE;

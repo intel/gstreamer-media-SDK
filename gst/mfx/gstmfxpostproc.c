@@ -183,7 +183,7 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
 	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 
-	vpp->filter = gst_mfx_filter_new(plugin->aggregator);
+	vpp->filter = gst_mfx_filter_new(plugin->aggregator, FALSE, FALSE);
 	if (!vpp->filter)
 		return FALSE;
 	return TRUE;
