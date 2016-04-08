@@ -3,7 +3,7 @@
 
 #include "gstmfxobject.h"
 #include "gstmfxdisplay.h"
-#include "video-utils.h"
+#include <gst/video/video.h>
 
 G_BEGIN_DECLS
 
@@ -13,7 +13,8 @@ VaapiImage *
 vaapi_image_new(
 	GstMfxDisplay   *display,
     guint           width,
-    guint           height
+    guint           height,
+    GstVideoFormat  format
 );
 
 VaapiImage *
@@ -70,6 +71,9 @@ vaapi_image_get_offset(VaapiImage *image, guint plane);
 
 guint
 vaapi_image_get_data_size(VaapiImage *image);
+
+gboolean
+vaapi_check_status (VAStatus status, const gchar *msg);
 
 G_END_DECLS
 

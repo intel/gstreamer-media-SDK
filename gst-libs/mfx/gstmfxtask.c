@@ -1,7 +1,7 @@
 #include "gstmfxtask.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxutils_vaapi.h"
-#include "video-utils.h"
+#include "video-format.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -38,12 +38,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
 	memset(resp, 0, sizeof (mfxFrameAllocResponse));
 
-	/*if (!(req->Type & MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET)) {
-		GST_ERROR("Unsupported surface type: %d\n", req->Type);
-		return MFX_ERR_UNSUPPORTED;
-	}
-
-	if (req->Info.FourCC != MFX_FOURCC_NV12 ||
+	/*if (req->Info.FourCC != MFX_FOURCC_NV12 ||
 		req->Info.ChromaFormat != MFX_CHROMAFORMAT_YUV420) {
 		GST_ERROR("Unsupported surface properties.\n");
 		return MFX_ERR_UNSUPPORTED;
@@ -61,7 +56,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
     GST_MFX_DISPLAY_LOCK(task->display);
     sts = vaCreateSurfaces(GST_MFX_DISPLAY_VADISPLAY(task->display),
-        task->frame_info.FourCC == MFX_FOURCC_RGB4 ? VA_RT_FORMAT_RGB32 : VA_RT_FORMAT_YUV420,
+        gst_mfx_video_format_to_va_format(task->frame_info.FourCC),
         req->Info.Width, req->Info.Height,
         task->surfaces, task->num_surfaces,
         NULL, 0);

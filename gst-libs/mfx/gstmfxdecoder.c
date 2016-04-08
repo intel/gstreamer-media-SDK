@@ -18,7 +18,6 @@ struct _GstMfxDecoder
 	GstMfxTask             *decode_task;
 	GstMfxSurfacePool      *pool;
 	GstMfxFilter           *filter;
-	GAsyncQueue            *surfaces;
 	GByteArray             *bitstream;
 
 	mfxSession              session;
@@ -37,26 +36,9 @@ gst_mfx_decoder_get_codec(GstMfxDecoder * decoder)
 	return decoder->codec;
 }
 
-GstMfxDecoderStatus
-gst_mfx_decoder_get_surface_proxy(GstMfxDecoder * decoder,
-	GstMfxSurfaceProxy ** out_proxy_ptr)
-{
-	g_return_val_if_fail(decoder != NULL,
-		GST_MFX_DECODER_STATUS_ERROR_INVALID_PARAMETER);
-	g_return_val_if_fail(out_proxy_ptr != NULL,
-		GST_MFX_DECODER_STATUS_ERROR_INVALID_PARAMETER);
-
-	*out_proxy_ptr = g_async_queue_try_pop(decoder->surfaces);
-	if (!*out_proxy_ptr)
-        return GST_MFX_DECODER_STATUS_ERROR_NO_SURFACE;
-
-	return GST_MFX_DECODER_STATUS_SUCCESS;
-}
-
 static void
 gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
-    g_async_queue_unref(decoder->surfaces);
 	g_byte_array_unref(decoder->bitstream);
 	gst_mfx_task_aggregator_unref(decoder->aggregator);
 	gst_mfx_task_replace(&decoder->decode_task, NULL);
@@ -83,7 +65,6 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	decoder->param.IOPattern = mapped ?
         MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	decoder->param.AsyncDepth = async_depth;
-	decoder->surfaces = g_async_queue_new();
 	decoder->pool = NULL;
 	decoder->decoder_inited = FALSE;
 	decoder->bs.MaxLength = 1024 * 16;
@@ -221,7 +202,6 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder, GstVideoInfo * info)
     }
 
 	if (GST_VIDEO_INFO_FORMAT(info) != GST_VIDEO_FORMAT_NV12) {
-
         decoder->filter = gst_mfx_filter_new_with_session(decoder->aggregator,
                                 &decoder->session);
 		dec_request.NumFrameSuggested =
@@ -263,12 +243,12 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder, GstVideoInfo * info)
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode(GstMfxDecoder * decoder,
-	GstVideoCodecFrame * frame, GstVideoInfo *info)
+	GstVideoCodecFrame * frame, GstVideoInfo * info,
+	GstMfxSurfaceProxy ** out_proxy)
 {
 	GstMapInfo minfo;
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
-
-	GstMfxSurfaceProxy *proxy, *out_proxy;
+	GstMfxSurfaceProxy *proxy, *filter_proxy;
 	mfxFrameSurface1 *insurf, *outsurf = NULL;
 	mfxSyncPoint syncp;
 	mfxStatus sts = MFX_ERR_NONE;
@@ -335,12 +315,12 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 		} while (MFX_WRN_IN_EXECUTION == sts);
 
 		if (gst_mfx_task_has_type(decoder->decode_task, GST_MFX_TASK_VPP_IN)) {
-			gst_mfx_filter_process(decoder->filter, proxy, &out_proxy);
+			gst_mfx_filter_process(decoder->filter, proxy, &filter_proxy);
 
-			proxy = out_proxy;
+			proxy = filter_proxy;
 		}
 
-        g_async_queue_push(decoder->surfaces, proxy);
+		*out_proxy = proxy;
 	}
 
 end:

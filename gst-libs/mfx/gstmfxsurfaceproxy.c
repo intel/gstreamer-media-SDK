@@ -8,18 +8,19 @@
 struct _GstMfxSurfaceProxy
 {
 	/*< private >*/
-	GstMfxMiniObject parent_instance;
+	GstMfxMiniObject    parent_instance;
 
-	GstMfxTask *task;
-	GstMfxSurfacePool *pool;
+	GstMfxTask         *task;
+	GstMfxSurfacePool  *pool;
 
-	mfxFrameSurface1 surface;
-	GstVideoFormat format;
-	GstMfxRectangle crop_rect;
-    guint width;
-	guint height;
-	guint data_size;
-	guchar *planes[4];
+	mfxFrameSurface1    surface;
+	GstVideoFormat      format;
+	GstMfxRectangle     crop_rect;
+    guint               width;
+	guint               height;
+	guint               data_size;
+	guchar             *planes[4];
+	guint16             pitches[4];
 };
 
 static gboolean
@@ -38,14 +39,19 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
 
     switch (info->FourCC) {
     case MFX_FOURCC_NV12:
-        ptr->Pitch = (mfxU16)vaapi_image_get_pitch(image, 0);
+        ptr->Pitch = proxy->pitches[0] = (mfxU16)vaapi_image_get_pitch(image, 0);
+        proxy->pitches[1] = (guint16)vaapi_image_get_pitch(image, 1);
+
         ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size);
         ptr->U = proxy->planes[1] = ptr->Y +
             vaapi_image_get_offset(image, 1) + 1;
 
         break;
     case MFX_FOURCC_YV12:
-        ptr->Pitch = (mfxU16)vaapi_image_get_pitch(image, 0);
+        ptr->Pitch = proxy->pitches[0] = (mfxU16)vaapi_image_get_pitch(image, 0);
+        proxy->pitches[1] = (guint16)vaapi_image_get_pitch(image, 1);
+        proxy->pitches[2] = (guint16)vaapi_image_get_pitch(image, 2);
+
         ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size);
         ptr->U = proxy->planes[1] = ptr->Y +
             vaapi_image_get_offset(image, 1);
@@ -54,14 +60,16 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
 
         break;
     case MFX_FOURCC_YUY2:
-        ptr->Pitch = (mfxU16)vaapi_image_get_pitch(image, 0);
+        ptr->Pitch = proxy->pitches[0] = (mfxU16)vaapi_image_get_pitch(image, 0);
+
         ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size);
         ptr->U = proxy->planes[1] = ptr->Y + 1;
         ptr->V = proxy->planes[2] = ptr->Y + 3;
 
         break;
     case MFX_FOURCC_RGB4:
-        ptr->Pitch = (mfxU16)vaapi_image_get_pitch(image, 0);
+        ptr->Pitch = proxy->pitches[0] = (mfxU16)vaapi_image_get_pitch(image, 0);
+
         ptr->B = proxy->planes[0] = g_slice_alloc(proxy->data_size);
         ptr->G = proxy->planes[1] = ptr->B + 1;
         ptr->R = proxy->planes[2] = ptr->B + 2;
@@ -319,6 +327,15 @@ gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane)
     g_return_val_if_fail(plane <= 4, NULL);
 
     return proxy->planes[plane];
+}
+
+guint16
+gst_mfx_surface_proxy_get_pitch(GstMfxSurfaceProxy * proxy, guint plane)
+{
+    g_return_val_if_fail(proxy != NULL, NULL);
+    g_return_val_if_fail(plane <= 4, NULL);
+
+    return proxy->pitches[plane];
 }
 
 GstMfxTask *

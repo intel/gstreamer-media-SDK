@@ -10,7 +10,7 @@ struct _VaapiImage {
     /*< private >*/
     GstMfxMiniObject    parent_instance;
     GstMfxDisplay      *display;
-    GstVideoFormat      internal_format;
+    GstVideoFormat      format;
     guchar             *image_data;
     guint               width;
     guint               height;
@@ -50,11 +50,11 @@ vaapi_image_finalize(VaapiImage *image)
 
 static gboolean
 vaapi_image_create(VaapiImage *image,
-    guint width, guint height)
+    guint width, guint height, GstVideoFormat format)
 {
     VAStatus status;
     VAImageFormat va_format = {
-        .fourcc         = VA_FOURCC_NV12,
+        .fourcc         = gst_video_format_to_va_fourcc(format),
         .byte_order     = VA_LSB_FIRST,
         .bits_per_pixel = 8,
         .depth          = 8,
@@ -73,7 +73,7 @@ vaapi_image_create(VaapiImage *image,
     if (status != VA_STATUS_SUCCESS)
         return FALSE;
 
-    image->internal_format = GST_VIDEO_FORMAT_NV12;
+    image->format = format;
     image->width = width;
     image->height = height;
 
@@ -107,7 +107,8 @@ VaapiImage *
 vaapi_image_new(
 	GstMfxDisplay	*display,
     guint           width,
-    guint           height
+    guint           height,
+    GstVideoFormat  format
 )
 {
     VaapiImage *image;
@@ -125,7 +126,7 @@ vaapi_image_new(
     image->display = gst_mfx_display_ref(display);
     image->image.image_id = VA_INVALID_ID;
     image->image.buf = VA_INVALID_ID;
-    if (!vaapi_image_create(image, width, height))
+    if (!vaapi_image_create(image, width, height, format))
         goto error;
     return image;
 
@@ -226,10 +227,10 @@ vaapi_image_get_image(VaapiImage *image, VAImage *va_image)
 gboolean
 _vaapi_image_set_image(VaapiImage *image, const VAImage *va_image)
 {
-    image->internal_format = GST_VIDEO_FORMAT_NV12;
-    image->image           = *va_image;
-    image->width           = va_image->width;
-    image->height          = va_image->height;
+    image->format = gst_mfx_video_format_from_va_fourcc(va_image->format.fourcc);
+    image->image  = *va_image;
+    image->width  = va_image->width;
+    image->height = va_image->height;
 
     return TRUE;
 }
@@ -247,7 +248,7 @@ vaapi_image_get_format(VaapiImage *image)
 {
     g_return_val_if_fail(image != NULL, 0);
 
-    return image->internal_format;
+    return image->format;
 }
 
 /**
@@ -538,4 +539,15 @@ vaapi_image_replace(VaapiImage ** old_image_ptr,
 
     gst_mfx_mini_object_replace((GstMfxMiniObject **)old_image_ptr,
             GST_MFX_MINI_OBJECT(new_image));
+}
+
+/* Check VA status for success or print out an error */
+gboolean
+vaapi_check_status (VAStatus status, const gchar * msg)
+{
+    if (status != VA_STATUS_SUCCESS) {
+        GST_DEBUG ("%s: %s", msg, vaErrorStr (status));
+        return FALSE;
+    }
+    return TRUE;
 }

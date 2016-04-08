@@ -62,12 +62,9 @@ mfxU32
 gst_mfx_decoder_get_codec(GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus
-gst_mfx_decoder_get_surface_proxy(GstMfxDecoder * decoder,
-	GstMfxSurfaceProxy ** out_proxy_ptr);
-
-GstMfxDecoderStatus
 gst_mfx_decoder_decode(GstMfxDecoder * decoder,
-	GstVideoCodecFrame * frame, GstVideoInfo *info);
+	GstVideoCodecFrame * frame, GstVideoInfo * info,
+	GstMfxSurfaceProxy ** out_proxy);
 
 G_END_DECLS
 

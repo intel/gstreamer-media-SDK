@@ -40,7 +40,6 @@ struct _GstMfxDec {
 	GstCaps				*sinkpad_caps;
 	GstCaps				*srcpad_caps;
 	GstMfxDecoder		*decoder;
-	GstCaps				*decoder_caps;
 	GstCaps				*allowed_caps;
 	guint8               async_depth;
 

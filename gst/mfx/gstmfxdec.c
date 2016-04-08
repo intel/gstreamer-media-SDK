@@ -191,15 +191,13 @@ gst_mfxdec_release(GstMfxDec * mfxdec)
 }
 
 static GstFlowReturn
-gst_mfxdec_push_decoded_frame(GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
+gst_mfxdec_push_decoded_frame(GstMfxDec *mfxdec, GstVideoCodecFrame * frame,
+    GstMfxSurfaceProxy * proxy)
 {
 	GstFlowReturn ret;
 	GstMfxDecoderStatus sts;
-	GstMfxSurfaceProxy *proxy;
 	GstMfxVideoMeta *meta;
 	const GstMfxRectangle *crop_rect;
-
-	sts = gst_mfx_decoder_get_surface_proxy(mfxdec->decoder, &proxy);
 
 	ret = gst_video_decoder_allocate_output_frame(GST_VIDEO_DECODER(mfxdec), frame);
 	if (ret != GST_FLOW_OK)
@@ -347,7 +345,6 @@ static void
 gst_mfxdec_destroy(GstMfxDec * mfxdec)
 {
 	gst_mfx_decoder_replace(&mfxdec->decoder, NULL);
-	gst_caps_replace(&mfxdec->decoder_caps, NULL);
 
 	mfxdec->active = FALSE;
 
@@ -360,9 +357,7 @@ gst_mfxdec_reset_full(GstMfxDec * mfxdec, GstCaps * caps,
 {
 	mfxU32 codec;
 
-	if (!hard && mfxdec->decoder && mfxdec->decoder_caps) {
-		if (gst_caps_is_always_compatible(caps, mfxdec->decoder_caps))
-			return TRUE;
+	if (!hard && mfxdec->decoder) {
 		codec = gst_get_mfx_codec_from_caps(caps);
 		if (codec == gst_mfx_decoder_get_codec(mfxdec->decoder))
 			return TRUE;
@@ -399,6 +394,7 @@ gst_mfxdec_close(GstVideoDecoder * vdec)
 	gst_mfxdec_input_state_replace(mfxdec, NULL);
 	gst_mfxdec_destroy(mfxdec);
 	gst_mfx_plugin_base_close(GST_MFX_PLUGIN_BASE(mfxdec));
+
 	return TRUE;
 }
 
@@ -440,6 +436,7 @@ gst_mfxdec_handle_frame(GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 	GstMfxDecoderStatus sts;
 	GstFlowReturn ret = GST_FLOW_OK;
 	GstVideoInfo info;
+	GstMfxSurfaceProxy *out_proxy = NULL;
 
     if (!gst_mfxdec_negotiate(mfxdec))
         goto not_negotiated;
@@ -447,7 +444,7 @@ gst_mfxdec_handle_frame(GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
     if (!gst_video_info_from_caps(&info, mfxdec->srcpad_caps))
         goto not_negotiated;
 
-	sts = gst_mfx_decoder_decode(mfxdec->decoder, frame, &info);
+	sts = gst_mfx_decoder_decode(mfxdec->decoder, frame, &info, &out_proxy);
 
 	switch (sts) {
 	case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
@@ -456,7 +453,7 @@ gst_mfxdec_handle_frame(GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 		ret = GST_FLOW_OK;
 		break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
-		ret = gst_mfxdec_push_decoded_frame(mfxdec, frame);
+		ret = gst_mfxdec_push_decoded_frame(mfxdec, frame, out_proxy);
 		break;
 	case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:
 	case GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER:

@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! glimagesink sync=false" />
+				<Option parameters='--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/HD.Club-4K-Chimei-inn-60mbps.mp4&quot; ! qtdemux ! h264parse ! mfxdecode ! glimagesink sync=false' />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -44,7 +44,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=/home/nuc/Videos/MPEG2_MP@HL_1920x1080_28.0Mbps_29.97fps_16-9_Interlaced_NoSound_stockholm.mpeg ! mpegpsdemux ! mpegvideoparse ! mfxdecode ! mfxvpp width=1280 deinterlace-mode=3 ! mfxsink sync=false display=egl" />
+				<Option parameters="--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=/home/nuc/Videos/MPEG2_MP@HL_1920x1080_28.0Mbps_29.97fps_16-9_Interlaced_NoSound_stockholm.mpeg ! mpegpsdemux ! mpegvideoparse ! mfxdecode ! mfxvpp deinterlace-mode=3 ! mfxsink" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -171,10 +171,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/video-format.h" />
-		<Unit filename="gst-libs/mfx/video-utils.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/video-utils.h" />
 		<Unit filename="gst-libs/mfx/wayland/gstmfxdisplay_wayland.c">
 			<Option compilerVar="CC" />
 		</Unit>

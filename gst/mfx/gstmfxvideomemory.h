@@ -42,8 +42,6 @@ typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
  * GstMfxVideoMemoryMapType:
  * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE: map with gst_buffer_map()
  *   and flags = 0x00 to return a #GstMfxSurfaceProxy
- * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_PLANAR: map individual plane with
- *   gst_video_frame_map()
  * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR: map with gst_buffer_map()
  *   and flags = GST_MAP_READ to return the raw pixels of the whole image
  *
@@ -52,7 +50,6 @@ typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
 typedef enum
 {
     GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE = 1,
-    GST_MFX_VIDEO_MEMORY_MAP_TYPE_PLANAR,
     GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR
 } GstMfxVideoMemoryMapType;
 

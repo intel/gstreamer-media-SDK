@@ -5,7 +5,7 @@
 #include "gstmfxwindow_x11_priv.h"
 #include "gstmfxdisplay_x11.h"
 #include "gstmfxdisplay_x11_priv.h"
-#include "video-utils.h"
+#include "gstmfxutils_vaapi.h"
 #include "gstmfxutils_x11.h"
 
 #define DEBUG 1

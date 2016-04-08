@@ -1,7 +1,7 @@
 #include <gmodule.h>
 #include <va/va_drmcommon.h>
 #include "sysdeps.h"
-#include "video-utils.h"
+#include "gstmfxutils_vaapi.h"
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxprimebufferproxy.h"
