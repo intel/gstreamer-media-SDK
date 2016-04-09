@@ -229,17 +229,16 @@ gst_mfx_filter_start(GstMfxFilter * filter)
     mfxFrameAllocRequest vpp_request[2];
     mfxFrameAllocResponse response;
     mfxStatus sts;
+    gboolean mapped;
     guint i;
 
     if (!init_params(filter))
         return FALSE;
 
     if (filter->internal_session) {
-        filter->vpp[1] = gst_mfx_task_new(filter->aggregator, GST_MFX_TASK_VPP_OUT);
+        mapped = filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+        filter->vpp[1] = gst_mfx_task_new(filter->aggregator, GST_MFX_TASK_VPP_OUT, mapped);
         filter->session = gst_mfx_task_get_session(filter->vpp[1]);
-
-		if (filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY)
-			gst_mfx_task_use_video_memory(filter->vpp[1]);
         gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp[1]);
     }
 
@@ -262,10 +261,9 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         filter->vpp[i] = gst_mfx_task_aggregator_find_task(filter->aggregator,
             &filter->session, type);
         if (!filter->vpp[i]) {
+            mapped = filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
             filter->vpp[i] = gst_mfx_task_new_with_session(filter->aggregator,
-                &filter->session, type);
-			if (filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY)
-				gst_mfx_task_use_video_memory(filter->vpp[i]);
+                &filter->session, type, mapped);
         }
 
         if (!filter->vpp_request[i]) {
@@ -859,7 +857,8 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 			sts = MFXVideoCORE_SyncOperation(filter->session, syncp, 1000);
 		} while (MFX_WRN_IN_EXECUTION == sts);
 
-		*out_proxy = gst_mfx_surface_pool_find_proxy(filter->vpp_pool[1], outsurf);
+        if (!gst_mfx_task_has_mapped_surface(filter->vpp[1]))
+            *out_proxy = gst_mfx_surface_pool_find_proxy(filter->vpp_pool[1], outsurf);
 	}
 
 	return GST_MFX_FILTER_STATUS_SUCCESS;

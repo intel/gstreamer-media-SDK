@@ -19,8 +19,8 @@ struct _GstMfxSurfaceProxy
     guint               width;
 	guint               height;
 	guint               data_size;
-	guchar             *planes[4];
-	guint16             pitches[4];
+	guchar             *planes[3];
+	guint16             pitches[3];
 };
 
 static gboolean
@@ -42,9 +42,10 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         ptr->Pitch = proxy->pitches[0] = (mfxU16)vaapi_image_get_pitch(image, 0);
         proxy->pitches[1] = (guint16)vaapi_image_get_pitch(image, 1);
 
-        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size);
+        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 1;
         ptr->U = proxy->planes[1] = ptr->Y +
-            vaapi_image_get_offset(image, 1) + 1;
+            vaapi_image_get_offset(image, 1);
+        ptr->V = ptr->U + 1;
 
         break;
     case MFX_FOURCC_YV12:
@@ -52,7 +53,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         proxy->pitches[1] = (guint16)vaapi_image_get_pitch(image, 1);
         proxy->pitches[2] = (guint16)vaapi_image_get_pitch(image, 2);
 
-        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size);
+        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 1;
         ptr->U = proxy->planes[1] = ptr->Y +
             vaapi_image_get_offset(image, 1);
         ptr->V = proxy->planes[2] = ptr->Y +
@@ -62,18 +63,18 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
     case MFX_FOURCC_YUY2:
         ptr->Pitch = proxy->pitches[0] = (mfxU16)vaapi_image_get_pitch(image, 0);
 
-        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size);
-        ptr->U = proxy->planes[1] = ptr->Y + 1;
-        ptr->V = proxy->planes[2] = ptr->Y + 3;
+        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 1;
+        ptr->U = ptr->Y + 1;
+        ptr->V = ptr->Y + 3;
 
         break;
     case MFX_FOURCC_RGB4:
         ptr->Pitch = proxy->pitches[0] = (mfxU16)vaapi_image_get_pitch(image, 0);
 
-        ptr->A = g_slice_alloc(proxy->data_size);
-        ptr->R = proxy->planes[0] = ptr->A + 1;
-        ptr->G = proxy->planes[1] = ptr->A + 2;
-        ptr->B = proxy->planes[2] = ptr->A + 3;
+        ptr->B = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 1;
+        ptr->G = ptr->B + 1;
+        ptr->R = ptr->B + 2;
+        ptr->A = ptr->B + 3;
 
 
         break;
@@ -94,8 +95,8 @@ gst_mfx_surface_proxy_unmap(GstMfxSurfaceProxy * proxy)
 
 	if (NULL != ptr) {
 		ptr->Pitch = 0;
-		if (ptr->Y)
-            g_slice_free1(proxy->data_size, ptr->Y);
+		if (proxy->planes[0])
+            g_slice_free1(proxy->data_size, proxy->planes[0]);
 		ptr->Y = NULL;
 		ptr->U = NULL;
 		ptr->V = NULL;
@@ -109,8 +110,6 @@ mfx_surface_create(GstMfxSurfaceProxy * proxy)
 {
 	mfxMemId mem_id;
 
-	guint num = g_queue_get_length(gst_mfx_task_get_surfaces(proxy->task));
-
 	mem_id = g_queue_pop_head(
 		gst_mfx_task_get_surfaces(proxy->task));
 	if (!mem_id)
@@ -119,7 +118,7 @@ mfx_surface_create(GstMfxSurfaceProxy * proxy)
 	proxy->surface.Data.MemId = mem_id;
 	proxy->surface.Info = *gst_mfx_task_get_frame_info(proxy->task);
 
-	if (gst_mfx_task_has_system_memory(proxy->task))
+	if (gst_mfx_task_has_mapped_surface(proxy->task))
 		gst_mfx_surface_proxy_map(proxy);
 
 	return TRUE;
@@ -133,7 +132,7 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
         gst_mfx_surface_pool_replace(&proxy->pool, NULL);
     }
 
-    if (gst_mfx_task_has_system_memory(proxy->task))
+    if (gst_mfx_task_has_mapped_surface(proxy->task))
         gst_mfx_surface_proxy_unmap(proxy);
 
     g_queue_push_tail(gst_mfx_task_get_surfaces(proxy->task),

@@ -10,12 +10,8 @@ G_BEGIN_DECLS
 typedef struct _VaapiImage      VaapiImage;
 
 VaapiImage *
-vaapi_image_new(
-	GstMfxDisplay   *display,
-    guint           width,
-    guint           height,
-    GstVideoFormat  format
-);
+vaapi_image_new(GstMfxDisplay * display, guint width, guint height,
+    GstVideoFormat format);
 
 VaapiImage *
 vaapi_image_new_with_image(GstMfxDisplay *display, VAImage *va_image);

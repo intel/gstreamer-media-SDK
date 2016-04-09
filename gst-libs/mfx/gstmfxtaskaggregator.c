@@ -168,7 +168,7 @@ gst_mfx_task_aggregator_find_task(GstMfxTaskAggregator * aggregator,
     g_return_val_if_fail(session != NULL, NULL);
 	g_return_val_if_fail(aggregator != NULL, NULL);
 
-	task = gst_mfx_task_new_with_session(aggregator, session, type_flags);
+	task = gst_mfx_task_new_with_session(aggregator, session, type_flags, TRUE);
 	if (!task)
 		return NULL;
 

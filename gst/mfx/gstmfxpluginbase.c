@@ -200,7 +200,8 @@ ensure_sinkpad_buffer_pool(GstMfxPluginBase * plugin, GstCaps * caps)
 		plugin->sinkpad_buffer_size = 0;
 	}
 
-	pool = gst_mfx_video_buffer_pool_new(plugin->aggregator);
+	pool = gst_mfx_video_buffer_pool_new(
+                GST_MFX_TASK_AGGREGATOR_DISPLAY(plugin->aggregator));
 	if (!pool)
 		goto error_create_pool;
 
@@ -396,7 +397,8 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 			"Pool not configured with GstMfxVideoMeta option");
 		if (pool)
 			gst_object_unref(pool);
-		pool = gst_mfx_video_buffer_pool_new(plugin->aggregator);
+		pool = gst_mfx_video_buffer_pool_new(
+                    GST_MFX_TASK_AGGREGATOR_DISPLAY(plugin->aggregator));
 		if (!pool)
 			goto error_create_pool;
 

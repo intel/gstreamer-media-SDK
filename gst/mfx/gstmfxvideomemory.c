@@ -439,12 +439,12 @@ bail:
 }
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxTask * task,
+gst_mfx_video_allocator_new(GstMfxDisplay * display,
 	const GstVideoInfo * vip)
 {
 	GstMfxVideoAllocator *allocator;
 
-    g_return_val_if_fail(task != NULL, NULL);
+    g_return_val_if_fail(display != NULL, NULL);
 	g_return_val_if_fail(vip != NULL, NULL);
 
 	allocator = g_object_new(GST_MFX_TYPE_VIDEO_ALLOCATOR, NULL);
@@ -453,7 +453,7 @@ gst_mfx_video_allocator_new(GstMfxTask * task,
 
 	allocator->video_info = *vip;
 
-    allocator_configure_image_info (GST_MFX_TASK_DISPLAY(task), allocator);
+    allocator_configure_image_info (display, allocator);
 
 	gst_allocator_set_mfx_video_info(GST_ALLOCATOR_CAST(allocator),
 		&allocator->image_info, 0);

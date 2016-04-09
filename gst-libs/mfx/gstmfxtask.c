@@ -182,7 +182,7 @@ gst_mfx_task_has_type(GstMfxTask * task, guint flags)
 	return (task->task_type & flags);
 }
 
-void
+static void
 gst_mfx_task_use_video_memory(GstMfxTask * task)
 {
     mfxFrameAllocator frame_allocator = {
@@ -200,7 +200,7 @@ gst_mfx_task_use_video_memory(GstMfxTask * task)
 }
 
 gboolean
-gst_mfx_task_has_system_memory(GstMfxTask * task)
+gst_mfx_task_has_mapped_surface(GstMfxTask * task)
 {
     return !task->use_video_memory;
 }
@@ -225,7 +225,7 @@ gst_mfx_task_class(void)
 
 static void
 gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
-	mfxSession * session, guint type_flags)
+	mfxSession * session, guint type_flags, gboolean mapped)
 {
     task->task_type = type_flags;
 	task->display = gst_mfx_display_ref(
@@ -234,10 +234,14 @@ gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 
     MFXVideoCORE_SetHandle(task->session, MFX_HANDLE_VA_DISPLAY,
 		GST_MFX_DISPLAY_VADISPLAY(task->display));
+
+    if (!mapped)
+        gst_mfx_task_use_video_memory(task);
 }
 
 GstMfxTask *
-gst_mfx_task_new(GstMfxTaskAggregator * aggregator, guint type_flags)
+gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
+    guint type_flags, gboolean mapped)
 {
 	mfxSession *session;
 
@@ -245,12 +249,12 @@ gst_mfx_task_new(GstMfxTaskAggregator * aggregator, guint type_flags)
 
 	session = gst_mfx_task_aggregator_create_session(aggregator);
 
-	return gst_mfx_task_new_with_session(aggregator, session, type_flags);
+	return gst_mfx_task_new_with_session(aggregator, session, type_flags, mapped);
 }
 
 GstMfxTask *
 gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
-	mfxSession * session, guint type_flags)
+	mfxSession * session, guint type_flags, gboolean mapped)
 {
 	GstMfxTask *task;
 
@@ -261,7 +265,7 @@ gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
 	if (!task)
 		return NULL;
 
-	gst_mfx_task_init(task, aggregator, session, type_flags);
+	gst_mfx_task_init(task, aggregator, session, type_flags, mapped);
 
 	return task;
 }

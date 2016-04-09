@@ -104,12 +104,8 @@ vaapi_image_class(void)
  * Return value: the newly allocated #VaapiImage object
  */
 VaapiImage *
-vaapi_image_new(
-	GstMfxDisplay	*display,
-    guint           width,
-    guint           height,
-    GstVideoFormat  format
-)
+vaapi_image_new(GstMfxDisplay * display, guint width, guint height,
+    GstVideoFormat format)
 {
     VaapiImage *image;
 
