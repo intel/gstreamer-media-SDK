@@ -1,4 +1,5 @@
 #include "gstmfxtaskaggregator.h"
+#include "gstmfxdisplay_drm.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -102,13 +103,21 @@ gst_mfx_task_aggregator_get_display(GstMfxTaskAggregator * aggregator)
 mfxSession *
 gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 {
-	mfxIMPL impl = MFX_IMPL_AUTO_ANY;
-	mfxVersion ver = { { 1, 1 } };
+	mfxIMPL impl;
 	mfxSession session;
 	mfxStatus sts;
 	const char *desc;
 
-	sts = MFXInit(impl, &ver, &session);
+	mfxInitParam init_params;
+
+	memset(&init_params, 0, sizeof(init_params));
+
+	init_params.GPUCopy = MFX_GPUCOPY_ON;
+	init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
+	init_params.Version.Major = 1;
+	init_params.Version.Minor = 0;
+
+	sts = MFXInitEx(init_params, &session);
 	if (sts < 0) {
 		GST_ERROR("Error initializing internal MFX session");
 		return NULL;

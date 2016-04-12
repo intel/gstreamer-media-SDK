@@ -1,10 +1,11 @@
 #include <gst/base/gstpushsrc.h>
+#include <gst/allocators/allocators.h>
+
 #include "gstmfxpluginbase.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideocontext.h"
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
-#include <gst/allocators/allocators.h>
 
 /* Default debug category is from the subclass */
 #define GST_CAT_DEFAULT (plugin->debug_category)
@@ -476,6 +477,8 @@ gst_mfx_plugin_base_get_input_buffer(GstMfxPluginBase * plugin,
 	GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
 {
 	GstMfxVideoMeta *meta;
+	GstMfxSurfaceProxy *proxy;
+	GstMfxRectangle *crop_rect = NULL;
 	GstBuffer *outbuf;
 	GstVideoFrame src_frame, out_frame;
 	gboolean success;
@@ -512,6 +515,7 @@ gst_mfx_plugin_base_get_input_buffer(GstMfxPluginBase * plugin,
 		goto error_map_dst_buffer;
 
 	success = gst_video_frame_copy(&out_frame, &src_frame);
+
 	gst_video_frame_unmap(&out_frame);
 	gst_video_frame_unmap(&src_frame);
 	if (!success)

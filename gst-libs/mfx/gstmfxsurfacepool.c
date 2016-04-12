@@ -25,16 +25,15 @@ sync_output_surface(gconstpointer proxy, gconstpointer surf)
     GstMfxSurfaceProxy *_proxy = (GstMfxSurfaceProxy *)proxy;
     mfxFrameSurface1 *_surf = (mfxFrameSurface1 *)surf;
 
-    return (*(GstMfxID *)(_surf->Data.MemId) !=
-            GST_MFX_SURFACE_PROXY_MEMID(_proxy));
+    return (_surf != gst_mfx_surface_proxy_get_frame_surface(_proxy));
 }
 
 static gboolean
-gst_mfx_surface_pool_add_surface_unlocked(GstMfxSurfacePool * pool)
+gst_mfx_surface_pool_add_surface(GstMfxSurfacePool * pool)
 {
 	GstMfxSurfaceProxy *surface = gst_mfx_surface_proxy_new(pool->task);
 	if (!surface)
-		return NULL;
+		return FALSE;
 
 	g_queue_push_tail(&pool->free_objects, gst_mfx_mini_object_ref(surface));
 
@@ -44,10 +43,15 @@ gst_mfx_surface_pool_add_surface_unlocked(GstMfxSurfacePool * pool)
 static gboolean
 gst_mfx_surface_pool_add_surfaces_unlocked(GstMfxSurfacePool * pool)
 {
-	guint i, len = g_queue_get_length(gst_mfx_task_get_surfaces(pool->task));
+	guint i, len;
+
+	if (gst_mfx_task_has_mapped_surface(pool->task))
+        len = gst_mfx_task_get_request(pool->task)->NumFrameSuggested;
+    else
+        len = g_queue_get_length(gst_mfx_task_get_surfaces(pool->task));
 
 	for (i = 0; i < len; i++) {
-		if (!gst_mfx_surface_pool_add_surface_unlocked(pool))
+		if (!gst_mfx_surface_pool_add_surface(pool))
 			return FALSE;
 	}
 

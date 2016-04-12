@@ -49,11 +49,17 @@ void
 gst_mfx_task_replace (GstMfxTask ** old_task_ptr,
 	GstMfxTask * new_task);
 
+mfxFrameAllocRequest *
+gst_mfx_task_get_request(GstMfxTask * task);
+
 void
-gst_mfx_task_set_task_type(GstMfxTask * task, guint flags);
+gst_mfx_task_set_request(GstMfxTask * task, mfxFrameAllocRequest * req);
 
 gboolean
 gst_mfx_task_has_type (GstMfxTask * task, guint flags);
+
+void
+gst_mfx_task_set_task_type(GstMfxTask * task, guint flags);
 
 guint
 gst_mfx_task_get_task_type (GstMfxTask * task);

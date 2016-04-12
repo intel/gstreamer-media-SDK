@@ -16,8 +16,9 @@ struct _GstMfxTask {
 	mfxU16                  num_surfaces;
 	GQueue				   *surface_queue;
 	guint					task_type;
+
 	mfxFrameAllocResponse  *response;
-	VAImage					image;
+	mfxFrameAllocRequest    request;
 
 	mfxSession              session;
 	gboolean                use_video_memory;
@@ -160,6 +161,28 @@ gst_mfx_task_get_frame_info(GstMfxTask * task)
 	return &task->frame_info;
 }
 
+mfxFrameAllocRequest *
+gst_mfx_task_get_request(GstMfxTask * task)
+{
+    g_return_if_fail(task != NULL);
+
+    return &task->request;
+}
+
+void
+gst_mfx_task_set_request(GstMfxTask * task, mfxFrameAllocRequest * request)
+{
+    g_return_if_fail(task != NULL);
+
+    task->request = *request;
+}
+
+gboolean
+gst_mfx_task_has_type(GstMfxTask * task, guint flags)
+{
+	return (task->task_type & flags);
+}
+
 void
 gst_mfx_task_set_task_type (GstMfxTask * task, guint flags)
 {
@@ -176,13 +199,7 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
 	return task->task_type;
 }
 
-gboolean
-gst_mfx_task_has_type(GstMfxTask * task, guint flags)
-{
-	return (task->task_type & flags);
-}
-
-static void
+static inline void
 gst_mfx_task_use_video_memory(GstMfxTask * task)
 {
     mfxFrameAllocator frame_allocator = {
@@ -229,7 +246,7 @@ gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 {
     task->task_type = type_flags;
 	task->display = gst_mfx_display_ref(
-		gst_mfx_task_aggregator_get_display(aggregator));
+		GST_MFX_TASK_AGGREGATOR_DISPLAY(aggregator));
 	task->session = *session;
 
     MFXVideoCORE_SetHandle(task->session, MFX_HANDLE_VA_DISPLAY,

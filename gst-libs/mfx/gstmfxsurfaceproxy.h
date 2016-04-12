@@ -33,6 +33,9 @@ GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_new(GstMfxTask * ctx);
 
 GstMfxSurfaceProxy *
+gst_mfx_surface_proxy_new_from_video_data(GstVideoInfo * info, gpointer data);
+
+GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool);
 
 GstMfxSurfaceProxy *

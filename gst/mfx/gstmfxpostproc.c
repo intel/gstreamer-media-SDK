@@ -12,19 +12,20 @@
 GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxpostproc);
 #define GST_CAT_DEFAULT gst_debug_mfxpostproc
 
-
 /* Default templates */
 /* *INDENT-OFF* */
 static const char gst_mfxpostproc_sink_caps_str[] =
 	GST_MFX_MAKE_SURFACE_CAPS ", "
-	GST_CAPS_INTERLACED_MODES "; ";
+	GST_CAPS_INTERLACED_MODES "; "
+	GST_VIDEO_CAPS_MAKE("{ NV12, YV12, UYVY, YUY2, BGRA }") ", "
+	GST_CAPS_INTERLACED_MODES;
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
 static const char gst_mfxpostproc_src_caps_str[] =
 	GST_MFX_MAKE_SURFACE_CAPS ", "
 	GST_CAPS_INTERLACED_MODES "; "
-	GST_VIDEO_CAPS_MAKE("{ NV12 }") ", "
+	GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }") ", "
 	GST_CAPS_INTERLACED_MODES;
 /* *INDENT-ON* */
 
@@ -180,10 +181,12 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 	if (!gst_mfxpostproc_ensure_aggregator(plugin))
 		return FALSE;
 
-	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
-	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
+	//gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
+	//gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 
-	vpp->filter = gst_mfx_filter_new(plugin->aggregator, FALSE, FALSE);
+	vpp->filter = gst_mfx_filter_new(plugin->aggregator,
+                        !gst_caps_has_mfx_surface(plugin->sinkpad_caps),
+                        !gst_caps_has_mfx_surface(plugin->srcpad_caps));
 	if (!vpp->filter)
 		return FALSE;
 	return TRUE;
@@ -289,8 +292,21 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 	inbuf_meta = gst_buffer_get_mfx_video_meta(buffer);
 
 	proxy = gst_mfx_video_meta_get_surface_proxy(inbuf_meta);
-	if (!proxy)
+	if (!proxy) {
 		goto error_create_proxy;
+		/*GstMapInfo minfo;
+
+		if (!gst_buffer_map(inbuf, &minfo, GST_MAP_READ)) {
+            GST_ERROR("Failed to map input buffer");
+            goto error_invalid_buffer;
+        }
+
+        proxy = gst_mfx_surface_proxy_new_from_video_data(&vpp->sinkpad_info, minfo.data);
+        if (!proxy)
+            goto error_create_proxy;
+
+        gst_buffer_unmap(buffer, &minfo);*/
+	}
 
 	outbuf_meta = gst_buffer_get_mfx_video_meta(outbuf);
 	if (!outbuf_meta)
@@ -345,21 +361,14 @@ static gboolean
 gst_mfxpostproc_propose_allocation(GstBaseTransform * trans,
 GstQuery * decide_query, GstQuery * query)
 {
-	GstMfxPostproc *const vpp = GST_MFXPOSTPROC(trans);
-
-	return gst_mfx_plugin_base_propose_allocation(GST_MFX_PLUGIN_BASE(vpp),
+	return gst_mfx_plugin_base_propose_allocation(GST_MFX_PLUGIN_BASE(trans),
         query);
 }
 
 static gboolean
 gst_mfxpostproc_decide_allocation(GstBaseTransform * trans, GstQuery * query)
 {
-	GstMfxPostproc *const vpp = GST_MFXPOSTPROC(trans);
-
-	//gst_mfx_task_aggregator_set_current_task(GST_MFX_PLUGIN_BASE(vpp)->aggregator,
-		//vpp->task);
-
-	return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(vpp),
+	return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(trans),
 		query);
 }
 
@@ -379,24 +388,13 @@ ensure_allowed_sinkpad_caps(GstMfxPostproc * vpp)
             gst_mfx_video_format_new_template_caps_with_features(GST_VIDEO_FORMAT_NV12,
                 GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 
+    //out_caps = gst_static_pad_template_get_caps(&gst_mfxpostproc_sink_factory);
+
 	if (!out_caps) {
 		GST_ERROR_OBJECT(vpp, "failed to create MFX sink caps");
 		return FALSE;
 	}
 
-	/* Append raw video caps */
-	/*if (gst_mfxpostproc_ensure_aggregator(vpp)) {
-		raw_caps =
-			gst_mfx_plugin_base_get_allowed_raw_caps(GST_MFX_PLUGIN_BASE
-			(vpp));
-		if (raw_caps) {
-			out_caps = gst_caps_make_writable(out_caps);
-			gst_caps_append(out_caps, gst_caps_copy(raw_caps));
-		}
-		else {
-			GST_WARNING_OBJECT(vpp, "failed to create YUV sink caps");
-		}
-	}*/
 	vpp->allowed_sinkpad_caps = out_caps;
 
 	return TRUE;
@@ -537,7 +535,6 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 			gst_caps_features_new(feature_str, NULL));
 	}
 
-
 	if (vpp->format != out_format)
 		vpp->format = out_format;
 
@@ -653,10 +650,11 @@ gst_mfxpostproc_set_caps(GstBaseTransform * trans, GstCaps * caps,
 
 	if (caps_changed) {
 		gst_mfxpostproc_destroy(vpp);
-		if (!gst_mfxpostproc_create(vpp))
-			return FALSE;
-		if (!gst_mfx_plugin_base_set_caps(GST_MFX_PLUGIN_BASE(trans),
+
+		if (!gst_mfx_plugin_base_set_caps(GST_MFX_PLUGIN_BASE(vpp),
 			caps, out_caps))
+			return FALSE;
+		if (!gst_mfxpostproc_create(vpp))
 			return FALSE;
 	}
 
