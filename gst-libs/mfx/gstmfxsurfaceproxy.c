@@ -51,8 +51,8 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         proxy->pitches[1] = proxy->pitches[2] = proxy->pitches[0] / 2;
 
         ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 1;
-        ptr->U = proxy->planes[1] = ptr->Y + frame_size;
-        ptr->V = proxy->planes[2] = ptr->U + (frame_size / 2);
+        ptr->V = proxy->planes[1] = ptr->Y + frame_size;
+        ptr->U = proxy->planes[2] = ptr->V + (frame_size / 2);
 
         break;
     case MFX_FOURCC_YUY2:
@@ -143,6 +143,8 @@ gst_mfx_surface_proxy_derive_mfx_frame_info(GstMfxSurfaceProxy * proxy, GstVideo
 	frame_info->FrameRateExtD = info->fps_d;
 	frame_info->AspectRatioW = info->par_n;
 	frame_info->AspectRatioH = info->par_d;
+	frame_info->BitDepthChroma = 8;
+	frame_info->BitDepthLuma = 8;
 
 	frame_info->Width = GST_ROUND_UP_16(info->width);
 	frame_info->Height =
@@ -156,35 +158,37 @@ mfx_surface_proxy_create_from_video_data(GstMfxSurfaceProxy * proxy,
     GstVideoInfo * info, gpointer data)
 {
     mfxFrameData *ptr = &proxy->surface.Data;
-    guint frame_size;
     gboolean success = TRUE;
 
-    frame_size = GST_ROUND_UP_16(info->width) *
-            GST_ROUND_UP_16(info->height);
-
-    ptr->Pitch = GST_ROUND_UP_16(info->width);
+    ptr->Pitch = GST_VIDEO_INFO_PLANE_STRIDE(info, 0);
 
     switch (GST_VIDEO_INFO_FORMAT(info)) {
     case GST_VIDEO_FORMAT_NV12:
-        ptr->Y = (mfxU8 *)data;
-        ptr->U = ptr->Y + frame_size;
+        ptr->Y = (mfxU8 *)data + GST_VIDEO_INFO_PLANE_OFFSET(info, 0) + 1;
+        ptr->U = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 1) + 1;
         ptr->V = ptr->U + 1;
 
         break;
     case GST_VIDEO_FORMAT_YV12:
-        ptr->Y = (mfxU8 *)data;
-        ptr->U = ptr->Y + frame_size;
-        ptr->V = ptr->U + frame_size / 2;
+        ptr->Y = (mfxU8 *)data + GST_VIDEO_INFO_PLANE_OFFSET(info, 0) + 1;
+        ptr->V = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 1) + 1;
+        ptr->U = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 2) + 1;
 
         break;
     case GST_VIDEO_FORMAT_YUY2:
-        ptr->Y = (mfxU8 *)data;
+        ptr->Y = (mfxU8 *)data + 1;
         ptr->U = ptr->Y + 1;
         ptr->V = ptr->Y + 3;
 
         break;
+    case GST_VIDEO_FORMAT_UYVY:
+        ptr->U = (mfxU8 *)data + 1;
+        ptr->Y = ptr->U + 1;
+        ptr->V = ptr->U + 3;
+
+        break;
     case GST_VIDEO_FORMAT_BGRA:
-        ptr->B = (mfxU8 *)data;
+        ptr->B = (mfxU8 *)data + 1;
         ptr->G = ptr->B + 1;
         ptr->R = ptr->B + 2;
         ptr->A = ptr->B + 3;

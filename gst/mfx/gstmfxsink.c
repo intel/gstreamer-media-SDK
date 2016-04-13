@@ -648,8 +648,6 @@ gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 	GstCaps *out_caps, *raw_caps;
 	GstVideoFormat out_format;
 
-	//out_caps = gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
-
 	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
         out_format = GST_VIDEO_FORMAT_BGRA;
     else
@@ -659,16 +657,6 @@ gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
             gst_mfx_video_format_new_template_caps_with_features(out_format,
                 GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 
-	if (!out_caps)
-		return NULL;
-
-	/*if (GST_MFX_PLUGIN_BASE_DISPLAY(sink)) {
-		raw_caps = gst_mfx_plugin_base_get_allowed_raw_caps(GST_MFX_PLUGIN_BASE(sink));
-		if (raw_caps) {
-			out_caps = gst_caps_make_writable(out_caps);
-			gst_caps_append(out_caps, gst_caps_copy(raw_caps));
-		}
-	}*/
 	return out_caps;
 }
 
@@ -744,7 +732,6 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
     GstMfxSink *const sink = GST_MFXSINK_CAST(video_sink);
 	GstMfxVideoMeta *meta;
 	GstMfxSurfaceProxy *proxy;
-	GstBuffer *buffer;
 	guint flags;
 	GstMfxRectangle *surface_rect = NULL;
 	GstMfxRectangle tmp_rect;
@@ -760,12 +747,7 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 		surface_rect->height = crop_meta->height;
 	}
 
-	ret = gst_mfx_plugin_base_get_input_buffer(GST_MFX_PLUGIN_BASE(sink),
-		src_buffer, &buffer);
-	if (ret != GST_FLOW_OK && ret != GST_FLOW_NOT_SUPPORTED)
-		return ret;
-
-	meta = gst_buffer_get_mfx_video_meta(buffer);
+	meta = gst_buffer_get_mfx_video_meta(src_buffer);
 
 	proxy = gst_mfx_video_meta_get_surface_proxy(meta);
 	if (!proxy)
@@ -787,7 +769,7 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 		goto error;
 
 	if (sink->signal_handoffs)
-		g_signal_emit(sink, gst_mfxsink_signals[HANDOFF_SIGNAL], 0, buffer);
+        g_signal_emit(sink, gst_mfxsink_signals[HANDOFF_SIGNAL], 0, src_buffer);
 
 	/* Retain VA surface until the next one is displayed */
 	/* Need to release the lock for the duration, otherwise a deadlock is possible */
@@ -798,7 +780,6 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 	ret = GST_FLOW_OK;
 
 done:
-	gst_buffer_unref(buffer);
 	return ret;
 
 error:
@@ -812,18 +793,6 @@ no_surface:
 	GST_WARNING_OBJECT(sink, "could not get surface");
 	ret = GST_FLOW_ERROR;
 	goto done;
-}
-
-static gboolean
-gst_mfxsink_propose_allocation(GstBaseSink * base_sink, GstQuery * query)
-{
-	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(base_sink);
-
-	if (!gst_mfx_plugin_base_propose_allocation(plugin, query))
-		return FALSE;
-
-	gst_query_add_allocation_meta(query, GST_VIDEO_CROP_META_API_TYPE, NULL);
-	return TRUE;
 }
 
 static gboolean
@@ -969,7 +938,6 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 	basesink_class->get_caps = gst_mfxsink_get_caps;
 	basesink_class->set_caps = gst_mfxsink_set_caps;
 	basesink_class->query = GST_DEBUG_FUNCPTR(gst_mfxsink_query);
-	basesink_class->propose_allocation = gst_mfxsink_propose_allocation;
 	basesink_class->unlock = gst_mfxsink_unlock;
 	basesink_class->unlock_stop = gst_mfxsink_unlock_stop;
 

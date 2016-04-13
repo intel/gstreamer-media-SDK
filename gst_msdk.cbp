@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters='--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/trailer_1080p.mov&quot; ! qtdemux ! h264parse ! mfxdecode ! glimagesink sync=false' />
+				<Option parameters='--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/Wonder of Nature.mp4&quot; ! qtdemux ! avdec_h264 ! videoconvert ! video/x-raw,format=NV12 ! mfxvpp width=1280 contrast=4 ! video/x-raw,format=BGRA ! glimagesink sync=false' />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -44,7 +44,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=/home/nuc/Videos/MPEG2_MP@HL_1920x1080_28.0Mbps_29.97fps_16-9_Interlaced_NoSound_stockholm.mpeg ! mpegpsdemux ! mpegvideoparse ! mfxdecode ! mfxvpp deinterlace-mode=3 ! mfxsink" />
+				<Option parameters="--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=/home/nuc/Videos/Fireworks_1280x720_8mbps_30fps_Main_at_High.wmv ! asfdemux ! vc1parse ! mfxdecode ! mfxvpp contrast=4 ! mfxsink sync=false" />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>

@@ -207,6 +207,10 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_pt
 		goto cleanup;
 	}
 
+    /* Hack to get neighboring negotiated caps format*/
+	for (i = 0; i < gst_caps_get_size(out_caps) - 1; i++)
+        gst_caps_remove_structure(out_caps, i);
+
 	if (!gst_caps_is_fixed(out_caps))
         out_caps = gst_caps_fixate(out_caps);
     gst_video_info_from_caps(&vi, out_caps);

@@ -181,8 +181,8 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 	if (!gst_mfxpostproc_ensure_aggregator(plugin))
 		return FALSE;
 
-	//gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
-	//gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
+	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
+	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 
 	vpp->filter = gst_mfx_filter_new(plugin->aggregator,
                         !gst_caps_has_mfx_surface(plugin->sinkpad_caps),
@@ -275,7 +275,6 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 	GstMfxVideoMeta *inbuf_meta, *outbuf_meta;
 	GstMfxSurfaceProxy *proxy, *out_proxy;
 	GstMfxFilterStatus status;
-	GstBuffer *buffer;
 	guint flags;
 	GstFlowReturn ret;
 	GstMfxRectangle *crop_rect = NULL;
@@ -283,18 +282,9 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 
 	gst_buffer_copy_into(outbuf, inbuf, GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
 
-	ret =
-		gst_mfx_plugin_base_get_input_buffer(GST_MFX_PLUGIN_BASE(vpp),
-		inbuf, &buffer);
-	if (ret != GST_FLOW_OK)
-		return GST_FLOW_ERROR;
-
-	inbuf_meta = gst_buffer_get_mfx_video_meta(buffer);
-
-	proxy = gst_mfx_video_meta_get_surface_proxy(inbuf_meta);
-	if (!proxy) {
-		goto error_create_proxy;
-		/*GstMapInfo minfo;
+	inbuf_meta = gst_buffer_get_mfx_video_meta(inbuf);
+	if (!inbuf_meta) {
+		GstMapInfo minfo;
 
 		if (!gst_buffer_map(inbuf, &minfo, GST_MAP_READ)) {
             GST_ERROR("Failed to map input buffer");
@@ -305,7 +295,12 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
         if (!proxy)
             goto error_create_proxy;
 
-        gst_buffer_unmap(buffer, &minfo);*/
+        gst_buffer_unmap(inbuf, &minfo);
+	}
+	else {
+        proxy = gst_mfx_video_meta_get_surface_proxy(inbuf_meta);
+        if (!proxy)
+            goto error_create_proxy;
 	}
 
 	outbuf_meta = gst_buffer_get_mfx_video_meta(outbuf);
@@ -358,14 +353,6 @@ error_process_vpp:
 }
 
 static gboolean
-gst_mfxpostproc_propose_allocation(GstBaseTransform * trans,
-GstQuery * decide_query, GstQuery * query)
-{
-	return gst_mfx_plugin_base_propose_allocation(GST_MFX_PLUGIN_BASE(trans),
-        query);
-}
-
-static gboolean
 gst_mfxpostproc_decide_allocation(GstBaseTransform * trans, GstQuery * query)
 {
 	return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(trans),
@@ -380,15 +367,7 @@ ensure_allowed_sinkpad_caps(GstMfxPostproc * vpp)
 	if (vpp->allowed_sinkpad_caps)
 		return TRUE;
 
-	/* Create MFX caps */
-	//out_caps = gst_caps_from_string(GST_MFX_MAKE_SURFACE_CAPS ", "
-		//GST_CAPS_INTERLACED_MODES);
-
-    out_caps =
-            gst_mfx_video_format_new_template_caps_with_features(GST_VIDEO_FORMAT_NV12,
-                GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
-
-    //out_caps = gst_static_pad_template_get_caps(&gst_mfxpostproc_sink_factory);
+    out_caps = gst_static_pad_template_get_caps(&gst_mfxpostproc_sink_factory);
 
 	if (!out_caps) {
 		GST_ERROR_OBJECT(vpp, "failed to create MFX sink caps");
@@ -398,39 +377,6 @@ ensure_allowed_sinkpad_caps(GstMfxPostproc * vpp)
 	vpp->allowed_sinkpad_caps = out_caps;
 
 	return TRUE;
-}
-
-/* Fixup output caps so that to reflect the supported set of pixel formats */
-static GstCaps *
-expand_allowed_srcpad_caps(GstMfxPostproc * vpp, GstCaps * caps)
-{
-	GValue value = G_VALUE_INIT, v_format = G_VALUE_INIT;
-	guint i, num_structures;
-
-	if (vpp->filter == NULL)
-		goto cleanup;
-
-	/* Reset "format" field for each structure */
-	/*if (!gst_mfx_value_set_format_list(&value, vpp->filter_formats))
-		goto cleanup;
-	if (gst_mfx_value_set_format(&v_format, GST_VIDEO_FORMAT_NV12)) {
-		gst_value_list_prepend_value(&value, &v_format);
-		g_value_unset(&v_format);
-	}
-
-	num_structures = gst_caps_get_size(caps);
-	for (i = 0; i < num_structures; i++) {
-		GstCapsFeatures *const features = gst_caps_get_features(caps, i);
-
-		GstStructure *const structure = gst_caps_get_structure(caps, i);
-		if (!structure)
-			continue;
-		gst_structure_set_value(structure, "format", &value);
-	}
-	g_value_unset(&value);*/
-
-cleanup:
-	return caps;
 }
 
 static gboolean
@@ -448,8 +394,7 @@ ensure_allowed_srcpad_caps(GstMfxPostproc * vpp)
 		return FALSE;
 	}
 
-	vpp->allowed_srcpad_caps =
-		expand_allowed_srcpad_caps(vpp, out_caps);
+	vpp->allowed_srcpad_caps = out_caps;
 
 	return vpp->allowed_srcpad_caps != NULL;
 }
@@ -821,7 +766,6 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
 	trans_class->transform = gst_mfxpostproc_transform;
 	trans_class->set_caps = gst_mfxpostproc_set_caps;
 	trans_class->query = gst_mfxpostproc_query;
-	trans_class->propose_allocation = gst_mfxpostproc_propose_allocation;
 	trans_class->decide_allocation = gst_mfxpostproc_decide_allocation;
 
 	gst_element_class_set_static_metadata(element_class,
@@ -854,20 +798,6 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
 		GST_MFX_TYPE_DEINTERLACE_MODE,
 		DEFAULT_DEINTERLACE_MODE,
 		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-
-	/**
-	* GstMfxPostproc:format:
-	*
-	* The forced output pixel format, expressed as a #GstVideoFormat.
-	*/
-	g_object_class_install_property(object_class,
-		PROP_FORMAT,
-		g_param_spec_enum("format",
-		"Format",
-		"The forced output pixel format",
-		GST_TYPE_VIDEO_FORMAT,
-		DEFAULT_FORMAT, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
 	* GstMfxPostproc:width:
