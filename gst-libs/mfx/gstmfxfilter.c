@@ -90,8 +90,7 @@ gst_mfx_filter_set_frame_info(GstMfxFilter * filter, GstVideoInfo * info)
 {
     filter->frame_info[0] = g_slice_new0(mfxFrameInfo);
 
-	filter->frame_info[0]->ChromaFormat =
-        gst_mfx_chroma_type_from_video_format(GST_VIDEO_INFO_FORMAT(info));
+	filter->frame_info[0]->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
 	filter->frame_info[0]->FourCC = gst_video_format_to_mfx_fourcc(
         GST_VIDEO_INFO_FORMAT(info));
 	filter->frame_info[0]->PicStruct = GST_VIDEO_INFO_IS_INTERLACED(info) ?
@@ -107,6 +106,8 @@ gst_mfx_filter_set_frame_info(GstMfxFilter * filter, GstVideoInfo * info)
 	filter->frame_info[0]->FrameRateExtD = info->fps_d;
 	filter->frame_info[0]->AspectRatioW = info->par_n;
 	filter->frame_info[0]->AspectRatioH = info->par_d;
+	filter->frame_info[0]->BitDepthChroma = 8;
+	filter->frame_info[0]->BitDepthLuma = 8;
 
 	filter->frame_info[0]->Width = GST_ROUND_UP_16(info->width);
 	filter->frame_info[0]->Height =
@@ -203,6 +204,8 @@ init_params(GstMfxFilter * filter)
 
     if (filter->fourcc) {
         filter->params.vpp.Out.FourCC = filter->fourcc;
+        //filter->params.vpp.Out.ChromaFormat =
+            //gst_mfx_chroma_type_from_video_format(GST_VIDEO_INFO_FORMAT(info));
     }
     if (filter->width) {
         filter->params.vpp.Out.CropW = filter->width;
@@ -229,15 +232,15 @@ gst_mfx_filter_start(GstMfxFilter * filter)
     gboolean mapped;
     guint i;
 
-    if (!init_params(filter))
-        return FALSE;
-
     if (filter->internal_session) {
         mapped = filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
         filter->vpp[1] = gst_mfx_task_new(filter->aggregator, GST_MFX_TASK_VPP_OUT, mapped);
         filter->session = gst_mfx_task_get_session(filter->vpp[1]);
         gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp[1]);
     }
+
+    if (!init_params(filter))
+        return FALSE;
 
     sts = MFXVideoVPP_QueryIOSurf(filter->session, &filter->params, &vpp_request);
     if (sts < 0) {

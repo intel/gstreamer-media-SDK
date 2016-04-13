@@ -487,7 +487,7 @@ gst_mfxsink_set_render_backend(GstMfxSink * sink)
 #endif
 #if USE_EGL
     case GST_MFX_DISPLAY_TYPE_EGL:
-        display = gst_mfx_display_egl_new (NULL, 2);
+        display = gst_mfx_display_egl_new (NULL, 0);
         if (!display)
             goto display_unsupported;
         sink->backend = gst_mfxsink_backend_egl();

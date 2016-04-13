@@ -26,55 +26,67 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 	EglContext *const ctx = texture->egl_context;
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
 	GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
+	gpointer mem_id = gst_mfx_surface_proxy_get_frame_surface(proxy)->Data.MemId;
 
-	GLint attribs[23], *attrib;
-	GstMfxPrimeBufferProxy *buffer_proxy;
-	VaapiImage *image;
-	VAImage va_image;
+    if (mem_id) {
+        GLint attribs[23], *attrib;
+        GstMfxPrimeBufferProxy *buffer_proxy;
+        VaapiImage *image;
+        VAImage va_image;
 
-	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(proxy);
-	if (!buffer_proxy)
-		return FALSE;
+        buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(proxy);
+        if (!buffer_proxy)
+            return FALSE;
 
-	image = gst_mfx_surface_proxy_derive_image(proxy);
-	if (!image)
-		return FALSE;
-	vaapi_image_get_image(image, &va_image);
+        image = gst_mfx_surface_proxy_derive_image(proxy);
+        if (!image)
+            return FALSE;
+        vaapi_image_get_image(image, &va_image);
 
-    GST_MFX_TEXTURE_WIDTH(base_texture) = vaapi_image_get_width(image);
-    GST_MFX_TEXTURE_HEIGHT(base_texture) = vaapi_image_get_height(image);
+        GST_MFX_TEXTURE_WIDTH(base_texture) = vaapi_image_get_width(image);
+        GST_MFX_TEXTURE_HEIGHT(base_texture) = vaapi_image_get_height(image);
 
-    attrib = attribs;
-    *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
-    *attrib++ = DRM_FORMAT_ARGB8888;
-    *attrib++ = EGL_WIDTH;
-    *attrib++ = vaapi_image_get_width(image);
-    *attrib++ = EGL_HEIGHT;
-    *attrib++ = vaapi_image_get_height(image);
-    *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
-    *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
-    *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-    *attrib++ = vaapi_image_get_offset(image, 0);
-    *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-    *attrib++ = vaapi_image_get_pitch(image, 0);
-    *attrib++ = EGL_NONE;
+        attrib = attribs;
+        *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
+        *attrib++ = DRM_FORMAT_ARGB8888;
+        *attrib++ = EGL_WIDTH;
+        *attrib++ = vaapi_image_get_width(image);
+        *attrib++ = EGL_HEIGHT;
+        *attrib++ = vaapi_image_get_height(image);
+        *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
+        *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
+        *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
+        *attrib++ = vaapi_image_get_offset(image, 0);
+        *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
+        *attrib++ = vaapi_image_get_pitch(image, 0);
+        *attrib++ = EGL_NONE;
 
-    texture->egl_image = vtable->eglCreateImageKHR(
-        ctx->display->base.handle.p, EGL_NO_CONTEXT,
-        EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer)NULL, attribs);
-    if (!texture->egl_image) {
-        GST_ERROR("failed to import VA buffer (RGBA) into EGL image\n");
-        return FALSE;
+        texture->egl_image = vtable->eglCreateImageKHR(
+            ctx->display->base.handle.p, EGL_NO_CONTEXT,
+            EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer)NULL, attribs);
+        if (!texture->egl_image) {
+            GST_ERROR("failed to import VA buffer (RGBA) into EGL image\n");
+            return FALSE;
+        }
+
+        GST_MFX_TEXTURE_ID(texture) = egl_create_texture_from_egl_image(
+            texture->egl_context, base_texture->gl_target, texture->egl_image);
+        if (!GST_MFX_OBJECT_ID(base_texture)) {
+            return FALSE;
+        }
+
+        gst_mfx_prime_buffer_proxy_unref(buffer_proxy);
+        vaapi_image_unref(image);
     }
-
-    GST_MFX_TEXTURE_ID(texture) = egl_create_texture_from_egl_image(
-        texture->egl_context, base_texture->gl_target, texture->egl_image);
-    if (!GST_MFX_OBJECT_ID(base_texture)) {
-        return FALSE;
+    else {
+        GST_MFX_TEXTURE_ID(texture) = egl_create_texture(texture->egl_context,
+            GL_TEXTURE_2D, GL_BGRA_EXT,
+            base_texture->width, base_texture->height,
+            gst_mfx_surface_proxy_get_plane(proxy, 0));
+        if (!GST_MFX_OBJECT_ID(base_texture)) {
+            return FALSE;
+        }
     }
-
-    gst_mfx_prime_buffer_proxy_unref(buffer_proxy);
-    gst_mfx_object_unref(image);
 
 	return TRUE;
 }

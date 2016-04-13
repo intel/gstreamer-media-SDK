@@ -68,6 +68,8 @@ gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder)
             if (MFX_ERR_NONE == sts)
                 break;
         }
+        if (i == 1)
+            sts = MFX_WRN_PARTIAL_ACCELERATION;
     }
         break;
     default:
@@ -85,26 +87,32 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
     mfxStatus sts = MFX_ERR_NONE;
 
     decoder->info = *info;
-    decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
-	decoder->decode_task = gst_mfx_task_new(decoder->aggregator,
-                                GST_MFX_TASK_DECODER, mapped);
-    gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
-        decoder->decode_task);
 
 	decoder->codec = decoder->param.mfx.CodecId = codec;
-	decoder->param.IOPattern = mapped ?
-        MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+
+    decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
 	decoder->param.AsyncDepth = async_depth;
 	decoder->pool = NULL;
 	decoder->decoder_inited = FALSE;
 	decoder->bs.MaxLength = 1024 * 16;
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
-    decoder->session = gst_mfx_task_get_session(decoder->decode_task);
+    decoder->session = *gst_mfx_task_aggregator_create_session(aggregator);
     decoder->filter = NULL;
 
     sts = gst_mfx_decoder_load_decoder_plugins(decoder);
     if (sts < 0)
         return FALSE;
+    else if (sts > 0)
+        mapped = TRUE;
+
+    decoder->param.IOPattern = mapped ?
+        MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+
+    decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
+	decoder->decode_task = gst_mfx_task_new_with_session(decoder->aggregator,
+                                &decoder->session, GST_MFX_TASK_DECODER, mapped);
+    gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
+        decoder->decode_task);
 
     return TRUE;
 }

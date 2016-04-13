@@ -204,7 +204,7 @@ egl_window_new(EglContext * ctx, gpointer native_window);
 
 guint
 egl_create_texture(EglContext * ctx, guint target, guint format,
-	guint width, guint height);
+	guint width, guint height, gpointer data);
 
 guint
 egl_create_texture_from_egl_image(EglContext * ctx, guint target,

@@ -208,13 +208,17 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_pt
 	}
 
     /* Hack to get neighboring negotiated caps format*/
-	for (i = 0; i < gst_caps_get_size(out_caps) - 1; i++)
-        gst_caps_remove_structure(out_caps, i);
-
-	if (!gst_caps_is_fixed(out_caps))
-        out_caps = gst_caps_fixate(out_caps);
-    gst_video_info_from_caps(&vi, out_caps);
-    out_format = GST_VIDEO_INFO_FORMAT(&vi);
+    if (gst_caps_is_any(out_caps) || gst_caps_is_empty(out_caps))
+        out_format = GST_VIDEO_FORMAT_NV12;
+    else {
+        num_structures = gst_caps_get_size(out_caps);
+        for (i = 0; i < num_structures - 1; i++)
+            gst_caps_remove_structure(out_caps, i);
+        if (!gst_caps_is_fixed(out_caps))
+            out_caps = gst_caps_fixate(out_caps);
+        gst_video_info_from_caps(&vi, out_caps);
+        out_format = GST_VIDEO_INFO_FORMAT(&vi);
+    }
 
 	mfx_caps =
 		gst_mfx_video_format_new_template_caps_with_features(out_format,

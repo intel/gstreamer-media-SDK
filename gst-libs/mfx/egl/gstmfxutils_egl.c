@@ -1344,7 +1344,7 @@ egl_matrix_set_identity(gfloat m[16])
 */
 guint
 egl_create_texture(EglContext * ctx, guint target, guint format,
-	guint width, guint height)
+	guint width, guint height, gpointer data)
 {
 	EglVTable *const vtable = egl_context_get_vtable(ctx, TRUE);
 	guint internal_format, texture, bytes_per_component;
@@ -1373,7 +1373,7 @@ egl_create_texture(EglContext * ctx, guint target, guint format,
 
 	if (width > 0 && height > 0)
 		vtable->glTexImage2D(target, 0, internal_format, width, height, 0,
-            format, GL_UNSIGNED_BYTE, NULL);
+            format, GL_UNSIGNED_BYTE, data);
 
 	vtable->glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	vtable->glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
