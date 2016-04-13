@@ -935,6 +935,7 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 	mfxFrameSurface1 *insurf, *outsurf = NULL;
 	mfxSyncPoint syncp;
 	mfxStatus sts = MFX_ERR_NONE;
+    gboolean more_surface = FALSE;
 
 	do {
 		*out_proxy = gst_mfx_surface_proxy_new_from_pool(filter->vpp_pool[1]);
@@ -947,6 +948,17 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 		if (MFX_WRN_DEVICE_BUSY == sts)
 			g_usleep(500);
 	} while (MFX_WRN_DEVICE_BUSY == sts);
+
+    if (MFX_ERR_MORE_DATA == sts)
+        return GST_MFX_FILTER_STATUS_ERROR_MORE_DATA;
+
+    /* The current frame is ready. Hence treat it
+     * as MFX_ERR_NONE and request for more surface
+     */
+    if (MFX_ERR_MORE_SURFACE == sts) {
+         sts = MFX_ERR_NONE;
+         more_surface = TRUE;
+    }
 
 	if (MFX_ERR_NONE != sts) {
 		GST_ERROR("Error during MFX filter process.");
@@ -961,5 +973,7 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
         *out_proxy = gst_mfx_surface_pool_find_proxy(filter->vpp_pool[1], outsurf);
 	}
 
+    if(more_surface)
+        return GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE;
 	return GST_MFX_FILTER_STATUS_SUCCESS;
 }
