@@ -98,6 +98,14 @@ typedef enum {
 	GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF,
 } GstMfxDeinterlaceMode;
 
+typedef enum {
+    GST_MFX_FRC_NONE,
+    GST_MFX_FRC_PRESERVE_TIMESTAMP,
+    GST_MFX_FRC_DISTRIBUTED_TIMESTAMP,
+    GST_MFX_FRC_FRAME_INTERPOLATION,
+    GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
+    GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
+} GstMfxFrcAlgorithm;
 
 GstMfxFilter *
 gst_mfx_filter_new(GstMfxTaskAggregator * aggregator,
@@ -165,5 +173,12 @@ gboolean
 gst_mfx_filter_set_deinterlace_mode(GstMfxFilter *filter,
         GstMfxDeinterlaceMode mode);
 
+gboolean
+gst_mfx_filter_set_framerate(GstMfxFilter *filter,
+        guint16 fps_n, guint16 fps_d);
+
+gboolean
+gst_mfx_filter_set_frc_algorithm(GstMfxFilter *filter,
+        GstMfxFrcAlgorithm alg);
 
 #endif /* GST_MFX_FILTER_H */

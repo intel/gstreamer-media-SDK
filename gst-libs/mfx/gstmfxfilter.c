@@ -47,6 +47,8 @@ struct _GstMfxFilter
 	mfxU32                  fourcc;
 	mfxU16                  width;
 	mfxU16                  height;
+    mfxU16                  fps_n;
+    mfxU16                  fps_d;
 
     /* FilterType */
     guint                   supported_filters;
@@ -218,6 +220,11 @@ init_params(GstMfxFilter * filter)
     if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
         filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
         filter->params.vpp.Out.Height = GST_ROUND_UP_16(filter->height);
+    }
+    if(filter->filter_op & GST_MFX_FILTER_FRAMERATE_CONVERSION &&
+            (filter->fps_n && filter->fps_d)) {
+        filter->params.vpp.Out.FrameRateExtN = filter->fps_n;
+        filter->params.vpp.Out.FrameRateExtD = filter->fps_d;
     }
 
     return TRUE;
@@ -553,6 +560,20 @@ static gpointer init_rotation_default()
     return ext_rotation;
 }
 
+static gpointer init_frc_default()
+{
+    mfxExtVPPFrameRateConversion *ext_frc;
+    ext_frc = g_slice_alloc0(sizeof(mfxExtVPPFrameRateConversion));
+    if (!ext_frc)
+        return NULL;
+    ext_frc->Header.BufferId = MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION;
+    ext_frc->Header.BufferSz = sizeof(mfxExtVPPFrameRateConversion);
+    ext_frc->Algorithm = 0;
+
+    return ext_frc;
+
+}
+
 gboolean
 gst_mfx_filter_set_saturation(GstMfxFilter * filter, gfloat value)
 {
@@ -786,10 +807,10 @@ gst_mfx_filter_set_deinterlace_mode(GstMfxFilter *filter,
     guint16 alg;
 
     g_return_val_if_fail(filter != NULL, FALSE);
-    g_return_val_if_fail((GST_MFX_DEINTERLACE_MODE_NONE != mode ||
-            GST_MFX_DEINTERLACE_MODE_BOB != mode ||
-            GST_MFX_DEINTERLACE_MODE_ADVANCED != mode ||
-            GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF), FALSE);
+    g_return_val_if_fail((GST_MFX_DEINTERLACE_MODE_NONE == mode ||
+            GST_MFX_DEINTERLACE_MODE_BOB == mode ||
+            GST_MFX_DEINTERLACE_MODE_ADVANCED == mode ||
+            GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF == mode), FALSE);
 
     switch(mode) {
         case GST_MFX_DEINTERLACE_MODE_NONE:
@@ -806,7 +827,9 @@ gst_mfx_filter_set_deinterlace_mode(GstMfxFilter *filter,
             break;
         default:
             alg =0;
+            break;
     }
+
     op = find_filter_op_data(filter, GST_MFX_FILTER_DEINTERLACING);
     if (NULL == op) {
         op = g_slice_alloc(sizeof(GstMfxFilterOpData));
@@ -826,6 +849,82 @@ gst_mfx_filter_set_deinterlace_mode(GstMfxFilter *filter,
     ext_deinterlacing = (mfxExtVPPDeinterlacing *)op->filter;
     ext_deinterlacing->Mode = alg;
 
+    return TRUE;
+}
+
+gboolean
+gst_mfx_filter_set_framerate(GstMfxFilter *filter,
+        guint16 fps_n, guint16 fps_d)
+{
+    g_return_val_if_fail(filter != NULL, FALSE);
+    g_return_val_if_fail((0 != fps_n && 0 != fps_d), FALSE);
+
+    filter->fps_n = fps_n;
+    filter->fps_d = fps_d;
+
+    return TRUE;
+}
+
+gboolean
+gst_mfx_filter_set_frc_algorithm(GstMfxFilter *filter,
+        GstMfxFrcAlgorithm alg)
+{
+    GstMfxFilterOpData *op;
+    mfxExtVPPFrameRateConversion *ext_frc;
+    guint16 mode;
+
+    g_return_val_if_fail(filter != NULL, FALSE);
+    g_return_val_if_fail((GST_MFX_FRC_NONE == alg||
+                GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
+                GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg ||
+                GST_MFX_FRC_FRAME_INTERPOLATION == alg ||
+                GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg ||
+                GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg),
+            FALSE);
+
+    switch(alg) {
+        case GST_MFX_FRC_NONE:
+            mode = 0;
+            break;
+        case GST_MFX_FRC_PRESERVE_TIMESTAMP:
+            mode = MFX_FRCALGM_PRESERVE_TIMESTAMP;
+            break;
+        case GST_MFX_FRC_DISTRIBUTED_TIMESTAMP:
+            mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP;
+            break;
+        case GST_MFX_FRC_FRAME_INTERPOLATION:
+            mode = MFX_FRCALGM_FRAME_INTERPOLATION;
+            break;
+        case GST_MFX_FRC_FI_PRESERVE_TIMESTAMP:
+            mode = MFX_FRCALGM_PRESERVE_TIMESTAMP ||
+                MFX_FRCALGM_FRAME_INTERPOLATION;
+            break;
+        case GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP:
+            mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP ||
+                MFX_FRCALGM_FRAME_INTERPOLATION;
+            break;
+        default:
+            mode = 0;
+            break;
+    }
+    op = find_filter_op_data(filter, GST_MFX_FILTER_FRAMERATE_CONVERSION);
+    if (NULL == op) {
+        op = g_slice_alloc(sizeof(GstMfxFilterOpData));
+        if ( NULL == op  )
+            return FALSE;
+        op->type = GST_MFX_FILTER_FRAMERATE_CONVERSION;
+        filter->filter_op = GST_MFX_FILTER_FRAMERATE_CONVERSION;
+        op->size = sizeof(mfxExtVPPFrameRateConversion);
+        op->filter = init_frc_default();
+        if ( NULL == op->filter  ) {
+            g_slice_free(GstMfxFilterOpData, op);
+            return FALSE;
+        }
+        g_ptr_array_add(filter->filter_op_data, op);
+    }
+
+    ext_frc = (mfxExtVPPFrameRateConversion *)op->filter;
+    ext_frc->Algorithm = mode;
     return TRUE;
 }
 
