@@ -174,19 +174,28 @@ static gboolean
 gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 {
 	GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(vpp);
+	GstMfxTask *task;
+	gboolean mapped;
 
 	if (vpp->filter)
 		return TRUE;
 
+    mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps) ||
+                !gst_caps_has_mfx_surface(plugin->srcpad_caps);
+
 	if (!gst_mfxpostproc_ensure_aggregator(plugin))
 		return FALSE;
+
+    if (!mapped) {
+        task = gst_mfx_task_aggregator_get_current_task(plugin->aggregator);
+        if (task && gst_mfx_task_has_mapped_surface(task))
+            mapped = TRUE;
+    }
 
 	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
 	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 
-	vpp->filter = gst_mfx_filter_new(plugin->aggregator,
-                        !gst_caps_has_mfx_surface(plugin->sinkpad_caps),
-                        !gst_caps_has_mfx_surface(plugin->srcpad_caps));
+	vpp->filter = gst_mfx_filter_new(plugin->aggregator, mapped);
 	if (!vpp->filter)
 		return FALSE;
 	return TRUE;
@@ -201,8 +210,8 @@ gst_mfxpostproc_update_src_caps(GstMfxPostproc * vpp, GstCaps * caps,
 	if (!video_info_update(caps, &vpp->srcpad_info, caps_changed_ptr))
 		return FALSE;
 
-	if (vpp->format != GST_VIDEO_INFO_FORMAT(&vpp->sinkpad_info) &&
-		vpp->format != DEFAULT_FORMAT)
+	if (GST_VIDEO_INFO_FORMAT(&vpp->sinkpad_info) !=
+        GST_VIDEO_INFO_FORMAT(&vpp->srcpad_info))
 		vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
 
 	if ((vpp->width || vpp->height) &&
@@ -483,6 +492,8 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 	if (vpp->format != out_format)
 		vpp->format = out_format;
 
+
+
 	return out_caps;
 }
 
@@ -529,7 +540,7 @@ gst_mfxpostproc_create(GstMfxPostproc * vpp)
         GST_VIDEO_INFO_HEIGHT(&vpp->srcpad_info)))
 		return FALSE;
 
-	if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FORMAT) &&
+    if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FORMAT) &&
 		!gst_mfx_filter_set_format(vpp->filter, vpp->format))
 		return FALSE;
 

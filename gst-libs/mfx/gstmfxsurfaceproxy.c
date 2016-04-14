@@ -45,25 +45,6 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         ptr->V = ptr->U + 1;
 
         break;
-    /*case MFX_FOURCC_YV12:
-        proxy->data_size = frame_size * 3 / 2;
-        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width);
-        proxy->pitches[1] = proxy->pitches[2] = proxy->pitches[0] / 2;
-
-        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 1;
-        ptr->V = proxy->planes[1] = ptr->Y + frame_size;
-        ptr->U = proxy->planes[2] = ptr->V + (frame_size / 2);
-
-        break;
-    case MFX_FOURCC_YUY2:
-        proxy->data_size = frame_size * 2;
-        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width);
-
-        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 4;
-        ptr->U = ptr->Y + 1;
-        ptr->V = ptr->Y + 3;
-
-        break;*/
     case MFX_FOURCC_RGB4:
         proxy->data_size = frame_size * 4;
         ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 4;
@@ -188,7 +169,7 @@ mfx_surface_proxy_create_from_video_data(GstMfxSurfaceProxy * proxy,
 
         break;
     case GST_VIDEO_FORMAT_BGRA:
-        ptr->B = (mfxU8 *)data + 1;
+        ptr->B = (mfxU8 *)data + 4;
         ptr->G = ptr->B + 1;
         ptr->R = ptr->B + 2;
         ptr->A = ptr->B + 3;

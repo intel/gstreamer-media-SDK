@@ -26,9 +26,9 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 	EglContext *const ctx = texture->egl_context;
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
 	GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
-	gpointer mem_id = gst_mfx_surface_proxy_get_frame_surface(proxy)->Data.MemId;
+	GstMfxID id = gst_mfx_surface_proxy_get_frame_surface(proxy)->Data.MemId;
 
-    if (mem_id) {
+    if (id) {
         GLint attribs[23], *attrib;
         GstMfxPrimeBufferProxy *buffer_proxy;
         VaapiImage *image;

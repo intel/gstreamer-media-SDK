@@ -38,7 +38,7 @@ struct _GstMfxFilter
 	GstMfxSurfacePool      *vpp_pool[2];
 	mfxSession              session;
 	mfxVideoParam           params;
-	mfxFrameInfo           *frame_info[2];
+	mfxFrameInfo           *frame_info;
     mfxFrameAllocRequest   *vpp_request[2];
 
 	gboolean                internal_session;
@@ -78,7 +78,7 @@ gst_mfx_filter_set_request(GstMfxFilter * filter,
     filter->vpp_request[flags & GST_MFX_TASK_VPP_OUT] = (mfxFrameAllocRequest *)
         g_slice_copy(sizeof(mfxFrameAllocRequest), request);
 
-    filter->frame_info[flags & GST_MFX_TASK_VPP_OUT] =
+    filter->frame_info =
         &filter->vpp_request[flags & GST_MFX_TASK_VPP_OUT]->Info;
 
     if (flags & GST_MFX_TASK_VPP_IN)
@@ -90,30 +90,30 @@ gst_mfx_filter_set_request(GstMfxFilter * filter,
 void
 gst_mfx_filter_set_frame_info(GstMfxFilter * filter, GstVideoInfo * info)
 {
-    filter->frame_info[0] = g_slice_new0(mfxFrameInfo);
+    filter->frame_info = g_slice_new0(mfxFrameInfo);
 
-	filter->frame_info[0]->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-	filter->frame_info[0]->FourCC = gst_video_format_to_mfx_fourcc(
+	filter->frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+	filter->frame_info->FourCC = gst_video_format_to_mfx_fourcc(
         GST_VIDEO_INFO_FORMAT(info));
-	filter->frame_info[0]->PicStruct = GST_VIDEO_INFO_IS_INTERLACED(info) ?
+	filter->frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED(info) ?
         (GST_VIDEO_INFO_FLAG_IS_SET(info, GST_VIDEO_FRAME_FLAG_TFF) ?
             MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF)
         : MFX_PICSTRUCT_PROGRESSIVE;
 
-	filter->frame_info[0]->CropX = 0;
-	filter->frame_info[0]->CropY = 0;
-	filter->frame_info[0]->CropW = info->width;
-	filter->frame_info[0]->CropH = info->height;
-	filter->frame_info[0]->FrameRateExtN = info->fps_n;
-	filter->frame_info[0]->FrameRateExtD = info->fps_d;
-	filter->frame_info[0]->AspectRatioW = info->par_n;
-	filter->frame_info[0]->AspectRatioH = info->par_d;
-	filter->frame_info[0]->BitDepthChroma = 8;
-	filter->frame_info[0]->BitDepthLuma = 8;
+	filter->frame_info->CropX = 0;
+	filter->frame_info->CropY = 0;
+	filter->frame_info->CropW = info->width;
+	filter->frame_info->CropH = info->height;
+	filter->frame_info->FrameRateExtN = info->fps_n;
+	filter->frame_info->FrameRateExtD = info->fps_d;
+	filter->frame_info->AspectRatioW = info->par_n;
+	filter->frame_info->AspectRatioH = info->par_d;
+	filter->frame_info->BitDepthChroma = 8;
+	filter->frame_info->BitDepthLuma = 8;
 
-	filter->frame_info[0]->Width = GST_ROUND_UP_16(info->width);
-	filter->frame_info[0]->Height =
-		(MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info[0]->PicStruct) ?
+	filter->frame_info->Width = GST_ROUND_UP_16(info->width);
+	filter->frame_info->Height =
+		(MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info->PicStruct) ?
 		GST_ROUND_UP_16(info->height) :
 		GST_ROUND_UP_32(info->height);
 }
@@ -194,21 +194,18 @@ init_filters(GstMfxFilter * filter)
 static gboolean
 init_params(GstMfxFilter * filter)
 {
-    if (!filter->frame_info[0])
+    if (!filter->frame_info)
         return FALSE;
 
-    memcpy(&filter->params.vpp.In, filter->frame_info[0],
+    memcpy(&filter->params.vpp.In, filter->frame_info,
             sizeof(mfxFrameInfo));
 
-    memcpy(&filter->params.vpp.Out,
-        filter->frame_info[1] ? filter->frame_info[1] : &filter->params.vpp.In,
+    memcpy(&filter->params.vpp.Out, &filter->params.vpp.In,
         sizeof(mfxFrameInfo));
 
-    if (filter->fourcc) {
+    if (filter->fourcc)
         filter->params.vpp.Out.FourCC = filter->fourcc;
-        //filter->params.vpp.Out.ChromaFormat =
-            //gst_mfx_chroma_type_from_video_format(GST_VIDEO_INFO_FORMAT(info));
-    }
+
     if (filter->width) {
         filter->params.vpp.Out.CropW = filter->width;
         filter->params.vpp.Out.Width = GST_ROUND_UP_16(filter->width);
@@ -337,12 +334,11 @@ free_filter_op_data(gpointer data)
 static gboolean
 gst_mfx_filter_init(GstMfxFilter * filter,
 	GstMfxTaskAggregator * aggregator, mfxSession * session,
-	gboolean mapped_in, gboolean mapped_out)
+	gboolean mapped)
 {
-	filter->params.IOPattern |= mapped_in ? MFX_IOPATTERN_IN_SYSTEM_MEMORY :
-	    MFX_IOPATTERN_IN_VIDEO_MEMORY;
-	filter->params.IOPattern |= mapped_out ? MFX_IOPATTERN_OUT_SYSTEM_MEMORY :
-	    MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+	filter->params.IOPattern = mapped ?
+        MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY :
+	    MFX_IOPATTERN_IN_VIDEO_MEMORY | MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	filter->aggregator = gst_mfx_task_aggregator_ref(aggregator);
 	filter->internal_session = session ? FALSE : TRUE;
 	if (!filter->internal_session)
@@ -379,8 +375,8 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
         gst_mfx_surface_pool_unref(filter->vpp_pool[i]);
 	}
 
-	if (!filter->vpp_request[0])
-        g_slice_free(mfxFrameInfo, filter->frame_info[0]);
+	if (!filter->frame_info)
+        g_slice_free(mfxFrameInfo, filter->frame_info);
 
     /* Free allocated memory for filters */
     g_slice_free1((sizeof(mfxU32) * filter->vpp_use.NumAlg),
@@ -408,15 +404,14 @@ gst_mfx_filter_class(void)
 
 GstMfxFilter *
 gst_mfx_filter_new(GstMfxTaskAggregator * aggregator,
-	gboolean mapped_in, gboolean mapped_out)
+	gboolean mapped)
 {
-	return gst_mfx_filter_new_with_session(aggregator, NULL,
-		mapped_in, mapped_out);
+	return gst_mfx_filter_new_with_session(aggregator, NULL, mapped);
 }
 
 GstMfxFilter *
 gst_mfx_filter_new_with_session(GstMfxTaskAggregator * aggregator,
-	mfxSession * session, gboolean mapped_in, gboolean mapped_out)
+	mfxSession * session, gboolean mapped)
 {
 	GstMfxFilter *filter;
 
@@ -427,8 +422,7 @@ gst_mfx_filter_new_with_session(GstMfxTaskAggregator * aggregator,
 	if (!filter)
 		return NULL;
 
-	if (!gst_mfx_filter_init(filter, aggregator, session,
-			mapped_in, mapped_out))
+	if (!gst_mfx_filter_init(filter, aggregator, session, mapped))
 		goto error;
 
 	return filter;

@@ -335,7 +335,7 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 
 	mfxdec->decoder = gst_mfx_decoder_new(plugin->aggregator,
 		codec, mfxdec->async_depth, &info,
-        !gst_caps_has_mfx_surface(mfxdec->srcpad_caps));
+        !gst_mfx_query_peer_has_mfx_surface(GST_VIDEO_DECODER_SRC_PAD(mfxdec)));
 	if (!mfxdec->decoder)
 		return FALSE;
 
@@ -378,7 +378,6 @@ gst_mfxdec_finalize(GObject * object)
 
 	gst_caps_replace(&mfxdec->sinkpad_caps, NULL);
 	gst_caps_replace(&mfxdec->srcpad_caps, NULL);
-	//gst_caps_replace(&mfxdec->allowed_caps, NULL);
 
 	gst_mfx_plugin_base_finalize(GST_MFX_PLUGIN_BASE(object));
 	G_OBJECT_CLASS(gst_mfxdec_parent_class)->finalize(object);

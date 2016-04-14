@@ -49,7 +49,7 @@ gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 }
 
 static mfxStatus
-gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder)
+gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder, gchar ** out_uid)
 {
     mfxPluginUID uid;
     mfxStatus sts;
@@ -65,8 +65,10 @@ gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder)
             for (c = 0; c < sizeof(uid.Data); c++)
                 sscanf(plugin_uids[i] + 2 * c, "%2hhx", uid.Data + c);
             sts = MFXVideoUSER_Load(decoder->session, &uid, 1);
-            if (MFX_ERR_NONE == sts)
+            if (MFX_ERR_NONE == sts) {
+                *out_uid = plugin_uids[i];
                 break;
+            }
         }
         if (i == 1)
             sts = MFX_WRN_PARTIAL_ACCELERATION;
@@ -85,29 +87,27 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	GstVideoInfo * info, gboolean mapped)
 {
     mfxStatus sts = MFX_ERR_NONE;
+    gchar *uid = NULL;
 
     decoder->info = *info;
-
 	decoder->codec = decoder->param.mfx.CodecId = codec;
-
-    decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
 	decoder->param.AsyncDepth = async_depth;
 	decoder->pool = NULL;
 	decoder->decoder_inited = FALSE;
 	decoder->bs.MaxLength = 1024 * 16;
-    decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
     decoder->session = *gst_mfx_task_aggregator_create_session(aggregator);
     decoder->filter = NULL;
 
-    sts = gst_mfx_decoder_load_decoder_plugins(decoder);
+    sts = gst_mfx_decoder_load_decoder_plugins(decoder, &uid);
     if (sts < 0)
         return FALSE;
-    else if (sts > 0)
+
+    if (uid != NULL && uid == "15dd936825ad475ea34e35f3f54217a6")
         mapped = TRUE;
 
+    decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
     decoder->param.IOPattern = mapped ?
         MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-
     decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
 	decoder->decode_task = gst_mfx_task_new_with_session(decoder->aggregator,
                                 &decoder->session, GST_MFX_TASK_DECODER, mapped);
@@ -216,7 +216,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 	if (GST_VIDEO_INFO_FORMAT(&decoder->info) != GST_VIDEO_FORMAT_NV12) {
         gboolean mapped = gst_mfx_task_has_mapped_surface(decoder->decode_task);
         decoder->filter = gst_mfx_filter_new_with_session(decoder->aggregator,
-                                &decoder->session, mapped, mapped);
+                                &decoder->session, mapped);
 
 		dec_request.NumFrameSuggested =
             (dec_request.NumFrameSuggested - decoder->param.AsyncDepth) + 1;
@@ -278,7 +278,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 		decoder->bitstream = g_byte_array_append(decoder->bitstream,
                                 minfo.data, minfo.size);
 		decoder->bs.Data = decoder->bitstream->data;
-		decoder->bs.TimeStamp = GST_BUFFER_PTS(frame->input_buffer);
+		//decoder->bs.TimeStamp = GST_BUFFER_PTS(frame->input_buffer);
 	}
 
 	/* Initialize the MFX decoder session */

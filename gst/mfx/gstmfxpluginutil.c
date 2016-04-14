@@ -320,13 +320,42 @@ gst_mfx_caps_feature_contains(const GstCaps * caps, GstMfxCapsFeature feature)
 	return _gst_caps_has_feature(caps, feature_str);
 }
 
-/* Checks whether the supplied caps contain VA surfaces */
+/* Checks whether the supplied caps contain MFX surfaces */
 gboolean
 gst_caps_has_mfx_surface(GstCaps * caps)
 {
 	g_return_val_if_fail(caps != NULL, FALSE);
 
 	return _gst_caps_has_feature(caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
+}
+
+gboolean
+gst_mfx_query_peer_has_mfx_surface(GstPad * pad)
+{
+    guint i, num_structures;
+	GstCaps *caps = NULL;
+	GstCaps *out_caps, *templ;
+	GstStructure *structure;
+	gboolean mapped = FALSE;
+
+	templ = gst_pad_get_pad_template_caps(pad);
+	out_caps = gst_pad_peer_query_caps(pad, templ);
+	gst_caps_unref(templ);
+	if (!out_caps) {
+		return FALSE;
+	}
+
+	num_structures = gst_caps_get_size(out_caps);
+    for (i = 0; i < num_structures; i++) {
+        structure = gst_caps_get_structure(out_caps, i);
+        caps = gst_caps_new_full(gst_structure_copy(structure), NULL);
+        if (!gst_caps_has_mfx_surface(caps))
+            mapped = TRUE;
+
+        gst_caps_replace(&caps, NULL);
+    }
+
+	return !mapped;
 }
 
 void
