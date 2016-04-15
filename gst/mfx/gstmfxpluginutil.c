@@ -194,31 +194,24 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_pt
 	GstCaps *caps = NULL;
 	GstCaps *sysmem_caps = NULL;
 	GstCaps *mfx_caps = NULL;
-	GstCaps *out_caps, *templ;
+	GstCaps *out_caps;
 	GstVideoFormat out_format;
 	GstStructure *structure;
-	GstVideoInfo vi;
+	gchar *format = NULL;
 
-	templ = gst_pad_get_pad_template_caps(pad);
-	out_caps = gst_pad_peer_query_caps(pad, templ);
-	gst_caps_unref(templ);
+	out_caps = gst_pad_get_allowed_caps(pad);
 	if (!out_caps) {
 		feature = GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED;
 		goto cleanup;
 	}
 
-    /* Hack to get neighboring negotiated caps format*/
-    if (gst_caps_is_any(out_caps) || gst_caps_is_empty(out_caps))
-        out_format = GST_VIDEO_FORMAT_NV12;
-    else {
-        num_structures = gst_caps_get_size(out_caps);
-        for (i = 0; i < num_structures - 1; i++)
-            gst_caps_remove_structure(out_caps, i);
-        if (!gst_caps_is_fixed(out_caps))
-            out_caps = gst_caps_fixate(out_caps);
-        gst_video_info_from_caps(&vi, out_caps);
-        out_format = GST_VIDEO_INFO_FORMAT(&vi);
-    }
+    num_structures = gst_caps_get_size(out_caps);
+    structure = gst_caps_get_structure(out_caps, num_structures - 1);
+    if (gst_structure_has_field(structure, "format"))
+        gst_structure_fixate_field(structure, "format");
+    format = gst_structure_get_string(structure, "format");
+    out_format = format ? gst_video_format_from_string(format) :
+        GST_VIDEO_FORMAT_NV12;
 
 	mfx_caps =
 		gst_mfx_video_format_new_template_caps_with_features(out_format,
@@ -232,10 +225,9 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_pt
 	if (!sysmem_caps)
 		goto cleanup;
 
-	num_structures = gst_caps_get_size(out_caps);
 	for (i = 0; i < num_structures; i++) {
 		GstCapsFeatures *const features = gst_caps_get_features(out_caps, i);
-		GstStructure *const structure = gst_caps_get_structure(out_caps, i);
+		structure = gst_caps_get_structure(out_caps, i);
 
 		/* Skip ANY features, we need an exact match for correct evaluation */
 		if (gst_caps_features_is_any(features))
@@ -330,32 +322,56 @@ gst_caps_has_mfx_surface(GstCaps * caps)
 }
 
 gboolean
-gst_mfx_query_peer_has_mfx_surface(GstPad * pad)
+gst_mfx_query_peer_has_raw_caps(GstPad * pad)
 {
-    guint i, num_structures;
-	GstCaps *caps = NULL;
-	GstCaps *out_caps, *templ;
-	GstStructure *structure;
-	gboolean mapped = FALSE;
+    GstPad *other_pad = NULL;
+    GstElement *element = NULL;
+    //gchar *element_name = NULL;
+    GstCaps *caps = NULL;
+    gboolean mapped = FALSE;
 
-	templ = gst_pad_get_pad_template_caps(pad);
-	out_caps = gst_pad_peer_query_caps(pad, templ);
-	gst_caps_unref(templ);
-	if (!out_caps) {
-		return FALSE;
-	}
+    gst_object_ref (pad);
 
-	num_structures = gst_caps_get_size(out_caps);
-    for (i = 0; i < num_structures; i++) {
-        structure = gst_caps_get_structure(out_caps, i);
-        caps = gst_caps_new_full(gst_structure_copy(structure), NULL);
-        if (!gst_caps_has_mfx_surface(caps))
+    for (;;) {
+        other_pad = gst_pad_get_peer (pad);
+        gst_object_unref (pad);
+        if (!other_pad)
+            break;
+
+        element = gst_pad_get_parent_element (other_pad);
+        if (!element)
+            break;
+
+        caps = gst_pad_get_allowed_caps(other_pad);
+        gst_object_unref (other_pad);
+
+        //g_print("%s\n\n", gst_caps_to_string(caps));
+
+        if (!gst_caps_has_mfx_surface(caps)) {
             mapped = TRUE;
-
+            goto cleanup;
+        }
         gst_caps_replace(&caps, NULL);
+
+        //element_name = gst_element_get_name (element);
+        //g_print("%s\n", element_name);
+
+        pad = gst_element_get_static_pad (element, "src");
+        if (!pad)
+            break;
+
+
+        //g_free (element_name);
+        //element_name = NULL;
+        g_clear_object (&element);
     }
 
-	return !mapped;
+cleanup:
+    gst_caps_replace(&caps, NULL);
+    //g_free (element_name);
+    g_clear_object (&element);
+
+    return mapped;
 }
 
 void
