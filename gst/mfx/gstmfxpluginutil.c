@@ -97,24 +97,6 @@ gst_mfx_value_set_format(GValue * value, GstVideoFormat format)
 	return TRUE;
 }
 
-gboolean
-gst_mfx_value_set_format_list(GValue * value, GArray * formats)
-{
-	GValue v_format = G_VALUE_INIT;
-	guint i;
-
-	g_value_init(value, GST_TYPE_LIST);
-	for (i = 0; i < formats->len; i++) {
-		GstVideoFormat const format = g_array_index(formats, GstVideoFormat, i);
-
-		if (!gst_mfx_value_set_format(&v_format, format))
-			continue;
-		gst_value_list_append_value(value, &v_format);
-		g_value_unset(&v_format);
-	}
-	return TRUE;
-}
-
 void
 set_video_template_caps(GstCaps * caps)
 {
@@ -185,12 +167,15 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_pt
 	}
 
     num_structures = gst_caps_get_size(out_caps);
-    structure = gst_caps_get_structure(out_caps, num_structures - 1);
+    structure = gst_structure_copy(
+        gst_caps_get_structure(out_caps, num_structures - 1));
     if (gst_structure_has_field(structure, "format"))
         gst_structure_fixate_field(structure, "format");
     format = gst_structure_get_string(structure, "format");
     out_format = format ? gst_video_format_from_string(format) :
         GST_VIDEO_FORMAT_NV12;
+    if (structure)
+        gst_structure_free(structure);
 
 	mfx_caps =
 		gst_mfx_video_format_new_template_caps_with_features(out_format,

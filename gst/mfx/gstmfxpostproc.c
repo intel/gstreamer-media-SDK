@@ -318,8 +318,6 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 	if (!outbuf_meta)
 		goto error_create_meta;
 
-
-	//out_proxy = gst_mfx_video_meta_get_surface_proxy(outbuf_meta);
 	//gst_mfx_filter_set_cropping_rectangle(vpp->filter, crop_rect);
 	status = gst_mfx_filter_process(vpp->filter, proxy, &out_proxy);
 	if (status != GST_MFX_FILTER_STATUS_SUCCESS)
@@ -337,6 +335,9 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 			crop_meta->height = crop_rect->height;
 		}
 	}
+
+	if (!inbuf_meta)
+        gst_mfx_surface_proxy_unref(proxy);
 
 	return GST_FLOW_OK;
 
@@ -450,12 +451,6 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 	find_best_size(vpp, &vi, &width, &height);
 
 	// Update format from user-specified parameters
-	/* XXX: this is a workaround until auto-plugging is fixed when
-	* format=ENCODED + memory:MFXSurface caps feature are provided.
-	* use the downstream negotiated video format as the output format
-	* if the user didn't explicitly ask for colorspace conversion.
-	* Use a filter caps which contain all raw video formats, (excluding
-	* GST_VIDEO_FORMAT_NV12) */
 	if (vpp->format != DEFAULT_FORMAT)
 		out_format = vpp->format;
 	else {
@@ -493,8 +488,6 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 
 	if (vpp->format != out_format)
 		vpp->format = out_format;
-
-
 
 	return out_caps;
 }

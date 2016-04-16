@@ -40,7 +40,6 @@ struct _GstMfxDec {
 	GstCaps				*sinkpad_caps;
 	GstCaps				*srcpad_caps;
 	GstMfxDecoder		*decoder;
-	GstCaps				*allowed_caps;
 	guint8               async_depth;
 
 	GstVideoCodecState	*input_state;

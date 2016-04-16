@@ -50,7 +50,8 @@ typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
 typedef enum
 {
     GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE = 1,
-    GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR
+    GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR,
+    GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR
 } GstMfxVideoMemoryMapType;
 
 /**

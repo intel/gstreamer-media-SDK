@@ -84,18 +84,6 @@ error_ensure_surface:
 			GST_VIDEO_INFO_WIDTH(vip), GST_VIDEO_INFO_HEIGHT(vip));
 		return FALSE;
 	}
-error_ensure_image:
-	{
-		const GstVideoInfo *const vip = mem->image_info;
-		GST_ERROR("failed to create NV12 image of size %ux%u",
-			GST_VIDEO_INFO_WIDTH(vip), GST_VIDEO_INFO_HEIGHT(vip));
-		return FALSE;
-	}
-error_map_image:
-	{
-		GST_ERROR("failed to map image");
-		return FALSE;
-	}
 
 	return TRUE;
 }
@@ -196,11 +184,15 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
             // Only read flag set: return raw pixels
             if (!ensure_surface (mem))
                 goto error_no_surface;
-            if (!ensure_image (mem))
-                goto error_no_image;
-            if (!vaapi_image_map (mem->image))
-                goto error_map_image;
-            mem->map_type = GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR;
+            if (gst_mfx_surface_proxy_get_frame_surface(mem->proxy)->Data.MemId) {
+                if (!ensure_image (mem))
+                    goto error_no_image;
+                if (!vaapi_image_map (mem->image))
+                    goto error_map_image;
+                mem->map_type = GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR;
+            }
+            else
+                mem->map_type = GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR;
             break;
         default:
             goto error_unsupported_map;
@@ -217,6 +209,9 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
             if (!mem->image)
                 goto error_no_image;
             data = get_image_data (mem->image);
+            break;
+        case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
+            data = gst_mfx_surface_proxy_get_plane(mem->proxy, 0);
             break;
         default:
             goto error_unsupported_map_type;
@@ -255,6 +250,8 @@ gst_mfx_video_memory_unmap (GstMfxVideoMemory * mem)
                 break;
             case GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR:
                 vaapi_image_unmap (mem->image);
+                break;
+            case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
                 break;
             default:
                 goto error_incompatible_map;

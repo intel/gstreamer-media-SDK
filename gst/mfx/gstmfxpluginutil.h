@@ -24,9 +24,6 @@ gst_mfx_append_surface_caps(GstCaps * out_caps, GstCaps * in_caps);
 gboolean
 gst_mfx_value_set_format(GValue * value, GstVideoFormat format);
 
-gboolean
-gst_mfx_value_set_format_list(GValue * value, GArray * formats);
-
 /* Helpers to build video caps */
 typedef enum
 {
