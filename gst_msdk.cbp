@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters='--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/Wonder of Nature.mp4&quot; ! qtdemux ! avdec_h264 ! videoconvert ! video/x-raw,format=YUY2 ! mfxvpp ! video/x-raw,format=NV12 ! fpsdisplaysink video-sink=glimagesink text-overlay=false signal-fps-measurements=true sync=false' />
+				<Option parameters='--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/trailer_1080p.mov&quot; ! qtdemux ! avdec_h264 ! videoconvert ! video/x-raw,format=YUY2 ! mfxvpp contrast=3 ! video/x-raw,format=BGRA ! glimagesink sync=false' />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>

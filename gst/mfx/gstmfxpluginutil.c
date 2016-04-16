@@ -146,27 +146,6 @@ gst_mfx_video_format_new_template_caps(GstVideoFormat format)
 }
 
 GstCaps *
-gst_mfx_video_format_new_template_caps_from_list(GArray * formats)
-{
-	GValue v_formats = G_VALUE_INIT;
-	GstCaps *caps;
-
-	caps = gst_caps_new_empty_simple("video/x-raw");
-	if (!caps)
-		return NULL;
-
-	if (!gst_mfx_value_set_format_list(&v_formats, formats)) {
-		gst_caps_unref(caps);
-		return NULL;
-	}
-
-	gst_caps_set_value(caps, "format", &v_formats);
-	set_video_template_caps(caps);
-	g_value_unset(&v_formats);
-	return caps;
-}
-
-GstCaps *
 gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
 	const gchar * features_string)
 {

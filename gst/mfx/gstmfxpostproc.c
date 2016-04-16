@@ -183,6 +183,8 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
     mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps) ||
                 !gst_caps_has_mfx_surface(plugin->srcpad_caps);
 
+    //mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps);
+
 	if (!gst_mfxpostproc_ensure_aggregator(plugin))
 		return FALSE;
 
@@ -195,7 +197,7 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
 	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 
-	vpp->filter = gst_mfx_filter_new(plugin->aggregator, mapped);
+	vpp->filter = gst_mfx_filter_new(plugin->aggregator, mapped, mapped);
 	if (!vpp->filter)
 		return FALSE;
 	return TRUE;

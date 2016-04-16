@@ -334,11 +334,16 @@ free_filter_op_data(gpointer data)
 static gboolean
 gst_mfx_filter_init(GstMfxFilter * filter,
 	GstMfxTaskAggregator * aggregator, mfxSession * session,
-	gboolean mapped)
+	gboolean mapped_in, gboolean mapped_out)
 {
-	filter->params.IOPattern = mapped ?
-        MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY :
-	    MFX_IOPATTERN_IN_VIDEO_MEMORY | MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+	//filter->params.IOPattern = mapped ?
+      //  MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY :
+	    //MFX_IOPATTERN_IN_VIDEO_MEMORY | MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+
+    filter->params.IOPattern |= mapped_in ?
+        MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
+    filter->params.IOPattern |= mapped_out ?
+        MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	filter->aggregator = gst_mfx_task_aggregator_ref(aggregator);
 	filter->internal_session = session ? FALSE : TRUE;
 	if (!filter->internal_session)
@@ -404,14 +409,14 @@ gst_mfx_filter_class(void)
 
 GstMfxFilter *
 gst_mfx_filter_new(GstMfxTaskAggregator * aggregator,
-	gboolean mapped)
+	gboolean mapped_in, gboolean mapped_out)
 {
-	return gst_mfx_filter_new_with_session(aggregator, NULL, mapped);
+	return gst_mfx_filter_new_with_session(aggregator, NULL, mapped_in, mapped_out);
 }
 
 GstMfxFilter *
 gst_mfx_filter_new_with_session(GstMfxTaskAggregator * aggregator,
-	mfxSession * session, gboolean mapped)
+	mfxSession * session, gboolean mapped_in, gboolean mapped_out)
 {
 	GstMfxFilter *filter;
 
@@ -422,7 +427,7 @@ gst_mfx_filter_new_with_session(GstMfxTaskAggregator * aggregator,
 	if (!filter)
 		return NULL;
 
-	if (!gst_mfx_filter_init(filter, aggregator, session, mapped))
+	if (!gst_mfx_filter_init(filter, aggregator, session, mapped_in, mapped_out))
 		goto error;
 
 	return filter;

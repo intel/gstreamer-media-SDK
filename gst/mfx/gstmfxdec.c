@@ -335,6 +335,7 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 
 	mfxdec->decoder = gst_mfx_decoder_new(plugin->aggregator,
 		codec, mfxdec->async_depth, &info,
+		//!gst_caps_has_mfx_surface(mfxdec->srcpad_caps));
         gst_mfx_query_peer_has_raw_caps(GST_VIDEO_DECODER_SRC_PAD(mfxdec)));
 	if (!mfxdec->decoder)
 		return FALSE;

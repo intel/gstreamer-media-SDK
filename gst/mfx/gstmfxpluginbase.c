@@ -247,9 +247,6 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	has_video_meta = gst_query_find_allocation_meta(query,
 		GST_VIDEO_META_API_TYPE, NULL);
 
-	/* Make sure the display we pass down to the buffer pool is actually
-	the expected one, especially when the downstream element requires
-	a GLX or EGL display */
 	if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
 		goto error_ensure_aggregator;
 
@@ -297,11 +294,6 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	if (has_video_meta) {
 		if (!gst_mfx_plugin_base_set_pool_config(pool,
 			GST_BUFFER_POOL_OPTION_VIDEO_META))
-			goto config_failed;
-	}
-	else if (has_video_alignment) {
-		if (!gst_mfx_plugin_base_set_pool_config(pool,
-			GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT))
 			goto config_failed;
 	}
 

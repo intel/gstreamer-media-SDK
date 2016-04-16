@@ -40,16 +40,44 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         ptr->Pitch = proxy->pitches[0] = proxy->pitches[1] =
             GST_ROUND_UP_16(info->Width);
 
-        ptr->Y = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 1;
-        ptr->U = proxy->planes[1] = ptr->Y + frame_size;
+		ptr->Y = proxy->planes[0] = (mfxU8 *)g_slice_alloc(proxy->data_size) + 1;
+        ptr->U = proxy->planes[1] = ptr->Y + frame_size + 1;
         ptr->V = ptr->U + 1;
+
+        break;
+    case MFX_FOURCC_YV12:
+        proxy->data_size = frame_size * 3 / 2;
+        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width);
+        proxy->pitches[1] = proxy->pitches[2] = ptr->Pitch / 2;
+
+        ptr->Y = proxy->planes[0] = (mfxU8 *)g_slice_alloc(proxy->data_size) + 1;
+        ptr->V = proxy->planes[1] = ptr->Y + frame_size + 1;
+        ptr->U = proxy->planes[2] = ptr->V + (frame_size / 4) + 1;
+
+        break;
+    case MFX_FOURCC_YUY2:
+        proxy->data_size = frame_size * 2;
+        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 2;
+
+        ptr->Y = proxy->planes[0] = (mfxU8 *)g_slice_alloc(proxy->data_size) + 4;
+        ptr->U = ptr->Y + 1;
+        ptr->V = ptr->Y + 3;
+
+        break;
+    case MFX_FOURCC_UYVY:
+        proxy->data_size = frame_size * 2;
+        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 2;
+
+        ptr->U = proxy->planes[0] = (mfxU8 *)g_slice_alloc(proxy->data_size) + 4;
+        ptr->Y = ptr->U + 1;
+        ptr->V = ptr->U + 2;
 
         break;
     case MFX_FOURCC_RGB4:
         proxy->data_size = frame_size * 4;
         ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 4;
 
-        ptr->B = proxy->planes[0] = g_slice_alloc(proxy->data_size) + 1;
+        ptr->B = proxy->planes[0] = (mfxU8 *)g_slice_alloc(proxy->data_size) + 4;
         ptr->G = ptr->B + 1;
         ptr->R = ptr->B + 2;
         ptr->A = ptr->B + 3;
@@ -64,13 +92,45 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
 }
 
 static void
+gst_mfx_surface_proxy_copy_aligned(GstMfxSurfaceProxy * proxy,
+	GstVideoInfo * info, gpointer data)
+{
+	guint plane, row;
+	mfxFrameInfo *frame_info = &proxy->surface.Info;
+	guint srcstride, deststride, width, height;
+	guchar *dest;
+
+	for (plane = 0; plane < GST_VIDEO_INFO_N_PLANES(info); plane++) {
+		dest = proxy->planes[plane];
+		width = GST_VIDEO_INFO_COMP_WIDTH(info, plane);
+		height = GST_VIDEO_INFO_COMP_HEIGHT(info, plane);
+		deststride = GST_ROUND_UP_16(GST_VIDEO_INFO_COMP_STRIDE(info, plane));
+		srcstride = GST_VIDEO_INFO_PLANE_STRIDE(info, plane);
+
+		if (srcstride == deststride) {
+            memcpy(dest, data + GST_VIDEO_INFO_PLANE_OFFSET(info, plane),
+                srcstride * height);
+		}
+		else {
+			for (row = 0; row < height; row++) {
+				memcpy(dest,
+                    data + GST_VIDEO_INFO_PLANE_OFFSET(info, plane) +
+                        row * srcstride,
+                    srcstride);
+				dest += deststride;
+			}
+		}
+	}
+}
+
+static void
 gst_mfx_surface_proxy_unmap(GstMfxSurfaceProxy * proxy)
 {
 	mfxFrameData *ptr = &proxy->surface.Data;
 
 	if (NULL != ptr) {
 		ptr->Pitch = 0;
-		if (proxy->planes[0])
+		if (proxy->data_size)
             g_slice_free1(proxy->data_size, proxy->planes[0]);
 		ptr->Y = NULL;
 		ptr->U = NULL;
@@ -78,7 +138,6 @@ gst_mfx_surface_proxy_unmap(GstMfxSurfaceProxy * proxy)
 		ptr->A = NULL;
 	}
 }
-
 
 static gboolean
 mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy)
@@ -107,8 +166,7 @@ gst_mfx_surface_proxy_derive_mfx_frame_info(GstMfxSurfaceProxy * proxy, GstVideo
 {
     mfxFrameInfo *frame_info = &proxy->surface.Info;
 
-	frame_info->ChromaFormat =
-        gst_mfx_chroma_type_from_video_format(GST_VIDEO_INFO_FORMAT(info));
+	frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
 	frame_info->FourCC = gst_video_format_to_mfx_fourcc(
         GST_VIDEO_INFO_FORMAT(info));
 	frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED(info) ?
@@ -139,48 +197,56 @@ mfx_surface_proxy_create_from_video_data(GstMfxSurfaceProxy * proxy,
     GstVideoInfo * info, gpointer data)
 {
     mfxFrameData *ptr = &proxy->surface.Data;
+	mfxFrameInfo *frame_info = &proxy->surface.Info;
     gboolean success = TRUE;
 
-    ptr->Pitch = GST_VIDEO_INFO_PLANE_STRIDE(info, 0);
+	gst_mfx_surface_proxy_derive_mfx_frame_info(proxy, info);
 
-    switch (GST_VIDEO_INFO_FORMAT(info)) {
-    case GST_VIDEO_FORMAT_NV12:
-        ptr->Y = (mfxU8 *)data + GST_VIDEO_INFO_PLANE_OFFSET(info, 0) + 1;
-        ptr->U = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 1) + 1;
-        ptr->V = ptr->U + 1;
+	if (GST_VIDEO_INFO_WIDTH(info) != frame_info->Width ||
+		GST_VIDEO_INFO_HEIGHT(info) != frame_info->Height) {
+		gst_mfx_surface_proxy_map(proxy);
+		gst_mfx_surface_proxy_copy_aligned(proxy, info, data);
+	}
+	else {
+		ptr->Pitch = GST_ROUND_UP_16(GST_VIDEO_INFO_PLANE_STRIDE(info, 0));
 
-        break;
-    case GST_VIDEO_FORMAT_YV12:
-        ptr->Y = (mfxU8 *)data + GST_VIDEO_INFO_PLANE_OFFSET(info, 0) + 1;
-        ptr->V = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 1) + 1;
-        ptr->U = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 2) + 1;
+		switch (GST_VIDEO_INFO_FORMAT(info)) {
+		case GST_VIDEO_FORMAT_NV12:
+			ptr->Y = (mfxU8 *)data + GST_VIDEO_INFO_PLANE_OFFSET(info, 0) + 1;
+			ptr->U = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 1) + 1;
+			ptr->V = ptr->U + 1;
 
-        break;
-    case GST_VIDEO_FORMAT_YUY2:
-        ptr->Y = (mfxU8 *)data + 4;
-        ptr->U = ptr->Y + 1;
-        ptr->V = ptr->Y + 3;
+			break;
+		case GST_VIDEO_FORMAT_YV12:
+			ptr->Y = (mfxU8 *)data + GST_VIDEO_INFO_PLANE_OFFSET(info, 0) + 1;
+			ptr->V = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 1) + 1;
+			ptr->U = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 2) + 1;
 
-        break;
-    case GST_VIDEO_FORMAT_UYVY:
-        ptr->U = (mfxU8 *)data + 4;
-        ptr->Y = ptr->U + 1;
-        ptr->V = ptr->U + 2;
+			break;
+		case GST_VIDEO_FORMAT_YUY2:
+			ptr->Y = (mfxU8 *)data + 4;
+			ptr->U = ptr->Y + 1;
+			ptr->V = ptr->Y + 3;
 
-        break;
-    case GST_VIDEO_FORMAT_BGRA:
-        ptr->B = (mfxU8 *)data + 4;
-        ptr->G = ptr->B + 1;
-        ptr->R = ptr->B + 2;
-        ptr->A = ptr->B + 3;
+			break;
+		case GST_VIDEO_FORMAT_UYVY:
+			ptr->U = (mfxU8 *)data + 4;
+			ptr->Y = ptr->U + 1;
+			ptr->V = ptr->U + 2;
 
-        break;
-    default:
-        success = FALSE;
-        break;
-    }
+			break;
+		case GST_VIDEO_FORMAT_BGRA:
+			ptr->B = (mfxU8 *)data + 4;
+			ptr->G = ptr->B + 1;
+			ptr->R = ptr->B + 2;
+			ptr->A = ptr->B + 3;
 
-    gst_mfx_surface_proxy_derive_mfx_frame_info(proxy, info);
+			break;
+		default:
+			success = FALSE;
+			break;
+		}
+	}
 
 	return success;
 }
@@ -193,7 +259,7 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
         gst_mfx_surface_pool_replace(&proxy->pool, NULL);
     }
 
-    if (gst_mfx_task_has_mapped_surface(proxy->task))
+    if (proxy->data_size)
         gst_mfx_surface_proxy_unmap(proxy);
     else
         g_queue_push_tail(gst_mfx_task_get_surfaces(proxy->task),

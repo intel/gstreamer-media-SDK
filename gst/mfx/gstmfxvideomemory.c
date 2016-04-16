@@ -56,52 +56,64 @@ ensure_surface (GstMfxVideoMemory * mem)
 }
 
 gboolean
-gst_video_meta_map_mfx_surface (GstVideoMeta * meta, guint plane,
-    GstMapInfo * info, gpointer * data, gint * stride, GstMapFlags flags)
+gst_video_meta_map_mfx_surface(GstVideoMeta * meta, guint plane,
+GstMapInfo * info, gpointer * data, gint * stride, GstMapFlags flags)
 {
-    GstMfxVideoMemory *const mem =
-      GST_MFX_VIDEO_MEMORY_CAST (gst_buffer_peek_memory (meta->buffer, 0));
+	GstMfxVideoMemory *const mem =
+		GST_MFX_VIDEO_MEMORY_CAST(gst_buffer_peek_memory(meta->buffer, 0));
 
-    g_return_val_if_fail (mem, FALSE);
-    g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->parent_instance.
-        allocator), FALSE);
-    g_return_val_if_fail (mem->meta, FALSE);
+	g_return_val_if_fail(mem, FALSE);
+	g_return_val_if_fail(GST_MFX_IS_VIDEO_ALLOCATOR(mem->parent_instance.
+		allocator), FALSE);
+	g_return_val_if_fail(mem->meta, FALSE);
 
-    /* Map for writing */
-    if (!ensure_surface (mem))
+    if (!ensure_surface(mem))
         goto error_ensure_surface;
 
-    *data = gst_mfx_surface_proxy_get_plane (mem->proxy, plane);
-    *stride = gst_mfx_surface_proxy_get_pitch (mem->proxy, plane);
-    info->flags = flags;
+    *data = gst_mfx_surface_proxy_get_plane(mem->proxy, plane);
+    *stride = gst_mfx_surface_proxy_get_pitch(mem->proxy, plane);
 
-    return TRUE;
+	info->flags = flags;
+	return TRUE;
 
-  /* ERRORS */
+	/* ERRORS */
 error_ensure_surface:
-    {
-        const GstVideoInfo *const vip = mem->image_info;
-        GST_ERROR ("failed to create surface of size %ux%u",
-            GST_VIDEO_INFO_WIDTH (vip), GST_VIDEO_INFO_HEIGHT (vip));
-        return FALSE;
-    }
+	{
+		const GstVideoInfo *const vip = mem->image_info;
+		GST_ERROR("failed to create NV12 surface of size %ux%u",
+			GST_VIDEO_INFO_WIDTH(vip), GST_VIDEO_INFO_HEIGHT(vip));
+		return FALSE;
+	}
+error_ensure_image:
+	{
+		const GstVideoInfo *const vip = mem->image_info;
+		GST_ERROR("failed to create NV12 image of size %ux%u",
+			GST_VIDEO_INFO_WIDTH(vip), GST_VIDEO_INFO_HEIGHT(vip));
+		return FALSE;
+	}
+error_map_image:
+	{
+		GST_ERROR("failed to map image");
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 gboolean
-gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
-    GstMapInfo * info)
+gst_video_meta_unmap_mfx_surface(GstVideoMeta * meta, guint plane,
+GstMapInfo * info)
 {
+	GstMfxVideoMemory *const mem =
+		GST_MFX_VIDEO_MEMORY_CAST(gst_buffer_peek_memory(meta->buffer, 0));
 
-    GstMfxVideoMemory *const mem =
-        GST_MFX_VIDEO_MEMORY_CAST (gst_buffer_peek_memory (meta->buffer, 0));
+	g_return_val_if_fail(mem, FALSE);
+	g_return_val_if_fail(GST_MFX_IS_VIDEO_ALLOCATOR(mem->parent_instance.
+		allocator), FALSE);
+	g_return_val_if_fail(mem->meta, FALSE);
+	g_return_val_if_fail(mem->proxy, FALSE);
 
-    g_return_val_if_fail (mem, FALSE);
-    g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->parent_instance.
-        allocator), FALSE);
-    g_return_val_if_fail (mem->meta, FALSE);
-    g_return_val_if_fail (mem->proxy, FALSE);
-
-    return TRUE;
+	return TRUE;
 }
 
 GstMemory *
