@@ -11,14 +11,12 @@ option (DEBUG "Turn on debug build." OFF)
 
 option (HAVE_MFX_DECODER "Build MSDK Decoder plugin." ON)
 option (HAVE_MFX_ENCODER "Build MSDK Encoder plugin." OFF)
-option (HAVE_MFX_VPP "Build MSDK VPP plugin." OFF)
+option (HAVE_MFX_VPP "Build MSDK VPP plugin." ON)
 option (HAVE_MFX_SINK "Build MSDK SINK plugin." ON)
 
 option (HAVE_WAYLAND_RENDERER "Build MSDK SINK plugin with Wayland renderer." ON)
 option (HAVE_X11_RENDERER "Build MSDK SINK plugin with X11 renderer." ON)
 option (HAVE_EGL_RENDERER "Build MSDK SINK plugin with EGL renderer." ON)
-
-set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib")
 
 if (UNIX)
 	INCLUDE(FindPkgConfig)
@@ -54,6 +52,13 @@ else()
 	set(MFX_VPP 0)
 endif()
 
+if (DEBUG)
+    set(CMAKE_BUILD_TYPE debug)
+else()
+    set(CMAKE_BUILD_TYPE release)
+endif()
+
+set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}")
 
 include(cmake/FindSinkDependencies.cmake)
 include(cmake/FindMediaSDK.cmake)
@@ -66,7 +71,7 @@ configure_file (
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fPIC -lstdc++")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++")
 
 include_directories(
 	gst/mfx
@@ -92,7 +97,7 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #Add gst and gst-libs as subdirectory
 add_subdirectory (gst-libs)
 add_subdirectory (gst)
-				        
+
 LIST(APPEND SOURCE ${GST_SOURCE})
 
 add_library(gstmfx SHARED ${SOURCE})
@@ -111,3 +116,5 @@ install (TARGETS gstmfx
     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
     RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}
     )
+
+message("Build: " ${CMAKE_BUILD_TYPE})
