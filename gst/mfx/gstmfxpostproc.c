@@ -69,16 +69,20 @@ enum
 	PROP_BRIGHTNESS,
 	PROP_CONTRAST,
     PROP_ROTATION,
+    PROP_FRAMERATE_CONVERSION,
 };
 
 #define DEFAULT_FORMAT                  GST_VIDEO_FORMAT_NV12
 #define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_NONE
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
+#define DEFAULT_FRC_ALG                 GST_MFX_FRC_NONE
 
 #define GST_MFX_TYPE_DEINTERLACE_MODE \
 	gst_mfx_deinterlace_mode_get_type()
 #define GST_MFX_ROTATION_MODE \
     gst_mfx_rotation_get_type()
+#define GST_MFX_FRC_ALGORITHM \
+    gst_mfx_frc_alg_get_type()
 
 static GType
 gst_mfx_deinterlace_mode_get_type(void)
@@ -124,6 +128,31 @@ gst_mfx_rotation_get_type(void)
         rotation_value =
             g_enum_register_static("GstMfxRotation", rotation_modes);
     return rotation_value;
+}
+
+
+static GType
+gst_mfx_frc_alg_get_type(void)
+{
+    static GType alg = 0;
+    static const GEnumValue frc_alg[] = {
+        { GST_MFX_FRC_NONE,
+            "No framerate conversion algorithm", "0"},
+        { GST_MFX_FRC_PRESERVE_TIMESTAMP,
+            "Frame dropping/repetition based FRC with preserved original timestamps.", "frc-preserve-ts"},
+        { GST_MFX_FRC_DISTRIBUTED_TIMESTAMP,
+            "Frame dropping/repetition based FRC with distributed timestamps.", "frc-distributed-ts"},
+        { GST_MFX_FRC_FRAME_INTERPOLATION,
+            "Frame interpolation FRC.", "fi"},
+        { GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
+            "Frame dropping/repetition and frame interpolation FRC with preserved original timestamps.", "fi-preserve-ts"},
+        { GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
+            "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"},
+        {0, NULL, NULL},
+    };
+    if (!alg)
+        alg = g_enum_register_static("GstMfxFrcAlgorithm", frc_alg);
+    return alg;
 }
 
 static void
@@ -278,6 +307,41 @@ gst_mfxpostproc_update_sink_caps(GstMfxPostproc * vpp, GstCaps * caps,
 	return TRUE;
 }
 
+static GstBuffer *
+create_output_buffer(GstMfxPostproc * postproc)
+{
+    GstBuffer *outbuf;
+    GstFlowReturn ret;
+
+    GstBufferPool *const pool =
+        GST_MFX_PLUGIN_BASE (postproc)->srcpad_buffer_pool;
+
+    g_return_val_if_fail(pool != NULL, NULL);
+
+    if(!gst_buffer_pool_set_active( pool, TRUE ))
+        goto error_activate_pool;
+
+    outbuf = NULL;
+
+    ret = gst_buffer_pool_acquire_buffer (pool, &outbuf, NULL);
+
+    if ( GST_FLOW_OK != ret || !outbuf)
+        goto error_create_buffer;
+    return outbuf;
+
+    /* Errors */
+error_activate_pool:
+    {
+        GST_ERROR ("failed to activate output video buffer pool");
+        return NULL;
+    }
+error_create_buffer:
+    {
+        GST_ERROR ("failed to create output video buffer");
+        return NULL;
+    }
+}
+
 static GstFlowReturn
 gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 	GstBuffer * outbuf)
@@ -290,18 +354,19 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 	GstFlowReturn ret;
 	GstMfxRectangle *crop_rect = NULL;
 	GstMfxRectangle tmp_rect;
+    GstBuffer *buf;
+    GstClockTime timestamp;
 
-	gst_buffer_copy_into(outbuf, inbuf, GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+	timestamp = GST_BUFFER_TIMESTAMP(inbuf);
 
-	inbuf_meta = gst_buffer_get_mfx_video_meta(inbuf);
+    inbuf_meta = gst_buffer_get_mfx_video_meta(inbuf);
 	if (!inbuf_meta) {
 		GstMapInfo minfo;
 
-		if (!gst_buffer_map(inbuf, &minfo, GST_MAP_READ)) {
+        if (!gst_buffer_map(inbuf, &minfo, GST_MAP_READ)) {
             GST_ERROR("Failed to map input buffer");
             goto error_invalid_buffer;
         }
-
         proxy = gst_mfx_surface_proxy_new_from_video_data(&vpp->sinkpad_info, minfo.data);
         if (!proxy)
             goto error_create_proxy;
@@ -314,34 +379,68 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
             goto error_create_proxy;
 	}
 
-	outbuf_meta = gst_buffer_get_mfx_video_meta(outbuf);
-	if (!outbuf_meta)
-		goto error_create_meta;
+    do {
+        if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
+            buf = create_output_buffer(vpp);
+            if (!buf)
+                goto error_create_buffer;
+        }
 
-	//gst_mfx_filter_set_cropping_rectangle(vpp->filter, crop_rect);
-	status = gst_mfx_filter_process(vpp->filter, proxy, &out_proxy);
-	if (status != GST_MFX_FILTER_STATUS_SUCCESS)
-		goto error_process_vpp;
+        status = gst_mfx_filter_process(vpp->filter, proxy, &out_proxy);
+        if ( GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status )
+            outbuf_meta = gst_buffer_get_mfx_video_meta(buf);
+        else
+            outbuf_meta = gst_buffer_get_mfx_video_meta(outbuf);
 
-	gst_mfx_video_meta_set_surface_proxy(outbuf_meta, out_proxy);
-	crop_rect = gst_mfx_surface_proxy_get_crop_rect(out_proxy);
-	if (crop_rect) {
-		GstVideoCropMeta *const crop_meta =
-			gst_buffer_add_video_crop_meta(outbuf);
-		if (crop_meta) {
-			crop_meta->x = crop_rect->x;
-			crop_meta->y = crop_rect->y;
-			crop_meta->width = crop_rect->width;
-			crop_meta->height = crop_rect->height;
-		}
-	}
+        if (!outbuf_meta)
+                goto error_create_meta;
 
-	if (!inbuf_meta)
+        gst_mfx_video_meta_set_surface_proxy(outbuf_meta, out_proxy);
+        crop_rect = gst_mfx_surface_proxy_get_crop_rect(out_proxy);
+        if(crop_rect) {
+             GstVideoCropMeta *const crop_meta =
+                 gst_buffer_add_video_crop_meta(outbuf);
+             if(crop_meta) {
+                 crop_meta->x = crop_rect->x;
+                 crop_meta->y = crop_rect->y;
+                 crop_meta->width = crop_rect->width;
+                 crop_meta->height = crop_rect->height;
+            }
+        }
+
+        if( GST_MFX_FILTER_STATUS_ERROR_MORE_DATA == status )
+            return GST_BASE_TRANSFORM_FLOW_DROPPED;
+
+        if( GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status ) {
+            GST_BUFFER_TIMESTAMP(buf) = timestamp;
+            GST_BUFFER_DURATION(buf) = vpp->field_duration;
+            timestamp += vpp->field_duration;
+            ret = gst_pad_push(trans->srcpad, buf);
+        } else {
+            if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
+                GST_BUFFER_TIMESTAMP(outbuf) = timestamp;
+                GST_BUFFER_DURATION(outbuf) = vpp->field_duration;
+            } else
+                gst_buffer_copy_into(outbuf, inbuf, GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+        }
+
+        if( GST_MFX_FILTER_STATUS_SUCCESS != status &&
+                GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status)
+            goto error_process_vpp;
+
+    } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
+
+    if (!inbuf_meta)
         gst_mfx_surface_proxy_unref(proxy);
 
 	return GST_FLOW_OK;
 
 	/* ERRORS */
+error_create_buffer:
+    {
+        GST_ERROR("failed to output buffer");
+        return GST_FLOW_ERROR;
+    }
 error_invalid_buffer:
 	{
 		GST_ERROR("failed to validate source buffer");
@@ -416,12 +515,12 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 	GstPadDirection direction, GstCaps * caps)
 {
 	GstMfxPostproc *const vpp = GST_MFXPOSTPROC(trans);
-	GstVideoInfo vi;
+	GstVideoInfo vi, peer_vi;
 	GstVideoFormat out_format;
-	GstCaps *out_caps;
+	GstCaps *out_caps, *peer_caps;
 	GstMfxCapsFeature feature;
 	const gchar *feature_str;
-	guint width, height;
+    guint width, height, fps_n, fps_d;
 
 	/* Generate the sink pad caps, that could be fixated afterwards */
 	if (direction == GST_PAD_SRC) {
@@ -451,23 +550,39 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 	find_best_size(vpp, &vi, &width, &height);
 
 	// Update format from user-specified parameters
-	if (vpp->format != DEFAULT_FORMAT)
-		out_format = vpp->format;
-	else {
-		GstCaps *peer_caps;
-		GstVideoInfo peer_vi;
-		peer_caps =
-			gst_pad_peer_query_caps(GST_BASE_TRANSFORM_SRC_PAD(trans),
-                vpp->allowed_srcpad_caps);
-		if (gst_caps_is_any(peer_caps) || gst_caps_is_empty(peer_caps))
-			return peer_caps;
-		if (!gst_caps_is_fixed(peer_caps))
-			peer_caps = gst_caps_fixate(peer_caps);
-		gst_video_info_from_caps(&peer_vi, peer_caps);
-		out_format = GST_VIDEO_INFO_FORMAT(&peer_vi);
-		if (peer_caps)
-			gst_caps_unref(peer_caps);
-	}
+    peer_caps = gst_pad_peer_query_caps(
+        GST_BASE_TRANSFORM_SRC_PAD(trans),
+        vpp->allowed_srcpad_caps
+        );
+
+    if(gst_caps_is_any(peer_caps) || gst_caps_is_empty(peer_caps))
+        return peer_caps;
+    if(!gst_caps_is_fixed(peer_caps))
+        peer_caps = gst_caps_fixate(peer_caps);
+
+    gst_video_info_from_caps(&peer_vi, peer_caps);
+    out_format = GST_VIDEO_INFO_FPS_N(&peer_vi);
+    fps_n = GST_VIDEO_INFO_FPS_N(&peer_vi);
+    fps_d = GST_VIDEO_INFO_FPS_D(&peer_vi);
+
+    if (vpp->format != DEFAULT_FORMAT)
+        out_format = vpp->format;
+
+    if(vpp->alg != DEFAULT_FRC_ALG)
+    {
+         vpp->fps_n = fps_n;
+         vpp->fps_d = fps_d;
+         GST_VIDEO_INFO_FPS_N(&vi) = fps_n;
+         GST_VIDEO_INFO_FPS_D(&vi) = fps_d;
+         vpp->field_duration = gst_util_uint64_scale(
+                 GST_SECOND,
+                 vpp->fps_d,
+                 vpp->fps_n
+                 );
+    }
+
+    if(peer_caps)
+        gst_caps_unref(peer_caps);
 
 	feature =
 		gst_mfx_find_preferred_caps_feature(GST_BASE_TRANSFORM_SRC_PAD(trans),
@@ -572,6 +687,11 @@ gst_mfxpostproc_create(GstMfxPostproc * vpp)
 	if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) &&
       !gst_mfx_filter_set_deinterlace_mode(vpp->filter, vpp->deinterlace_mode))
 		return FALSE;
+
+    if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) &&
+            !(gst_mfx_filter_set_frc_algorithm(vpp->filter, vpp->alg) &&
+                gst_mfx_filter_set_framerate(vpp->filter, vpp->fps_n, vpp->fps_d)))
+        return FALSE;
 
 	return gst_mfx_filter_start(vpp->filter);
 }
@@ -694,6 +814,10 @@ gst_mfxpostproc_set_property(GObject * object,
         vpp->angle = g_value_get_enum(value);
         vpp->flags |= GST_MFX_POSTPROC_FLAG_ROTATION;
         break;
+    case PROP_FRAMERATE_CONVERSION:
+        vpp->alg = g_value_get_enum(value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+        break;
     default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
 		break;
@@ -743,6 +867,9 @@ gst_mfxpostproc_get_property(GObject * object,
 		break;
     case PROP_ROTATION:
         g_value_set_enum(value, postproc->angle);
+        break;
+    case PROP_FRAMERATE_CONVERSION:
+        g_value_set_enum(value, postproc->alg);
         break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -937,8 +1064,20 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
                 "The rotation angle",
                 GST_MFX_ROTATION_MODE,
                 DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-}
 
+    /**
+     * GstMfxPostproc: framerate conversion:
+     * The framerate conversion algorithm to convert framerate of the video,
+     * expressed in GstMfxFrcAlgorithm.
+     */
+    g_object_class_install_property(object_class,
+            PROP_FRAMERATE_CONVERSION,
+            g_param_spec_enum("frc-algorithm",
+                "Algorithm",
+                "The algorithm type",
+                GST_MFX_FRC_ALGORITHM,
+                DEFAULT_FRC_ALG, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+}
 
 static void
 gst_mfxpostproc_init(GstMfxPostproc * vpp)
@@ -949,6 +1088,7 @@ gst_mfxpostproc_init(GstMfxPostproc * vpp)
 	vpp->format = DEFAULT_FORMAT;
 	vpp->deinterlace_mode = DEFAULT_DEINTERLACE_MODE;
 	vpp->keep_aspect = TRUE;
+    vpp->alg = DEFAULT_FRC_ALG;
 
 	gst_video_info_init(&vpp->sinkpad_info);
 	gst_video_info_init(&vpp->srcpad_info);

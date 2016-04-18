@@ -53,6 +53,7 @@ typedef enum
 	GST_MFX_POSTPROC_FLAG_CONTRAST = 1 << GST_MFX_FILTER_OP_CONTRAST,
 	GST_MFX_POSTPROC_FLAG_DEINTERLACING = 1 << GST_MFX_FILTER_OP_DEINTERLACING,
     GST_MFX_POSTPROC_FLAG_ROTATION = 1 << GST_MFX_FILTER_OP_ROTATION,
+    GST_MFX_POSTPROC_FLAG_FRC = 1 << GST_MFX_FILTER_OP_FRAMERATE_CONVERSION,
 	/* Additional custom flags */
 	GST_MFX_POSTPROC_FLAG_CUSTOM = 1 << 20,
 	GST_MFX_POSTPROC_FLAG_SIZE = GST_MFX_POSTPROC_FLAG_CUSTOM,
@@ -90,6 +91,12 @@ struct _GstMfxPostproc
 	gfloat saturation;
 	gfloat brightness;
 	gfloat contrast;
+
+    /* FRC */
+    GstMfxFrcAlgorithm alg;
+    guint16 fps_n;
+    guint16 fps_d;
+    GstClockTime field_duration;
 
     /* Rotation angle */
     GstMfxRotation angle;
