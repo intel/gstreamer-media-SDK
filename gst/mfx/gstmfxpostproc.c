@@ -116,12 +116,12 @@ gst_mfx_rotation_get_type(void)
     static const GEnumValue rotation_modes[] = {
         { GST_MFX_ROTATION_0,
             "No rotation", "0"},
-        /*{ GST_MFX_ROTATION_90,
-            "Rotate by 90", "clockwise", "90"},*/
+        { GST_MFX_ROTATION_90,
+            "Rotate by 90", "clockwise", "90"},
         { GST_MFX_ROTATION_180,
             "Rotate by 180", "clockwise", "180"},
-        /*{ GST_MFX_ROTATION_270,
-            "Rotate by 270", "clockwise", "270"},*/
+        { GST_MFX_ROTATION_270,
+            "Rotate by 270", "clockwise", "270"},
         {0, NULL, NULL},
     };
     if (!rotation_value)
@@ -182,7 +182,8 @@ find_best_size(GstMfxPostproc * postproc, GstVideoInfo * vip,
 		width = postproc->width;
 	else if (postproc->height)
 		height = postproc->height;
-    else if (GST_MFX_ROTATION_90 == postproc->angle ||
+
+    if (GST_MFX_ROTATION_90 == postproc->angle ||
             GST_MFX_ROTATION_270 == postproc->angle) {
         width = width ^ height;
         height = width ^ height;
