@@ -116,12 +116,12 @@ gst_mfx_rotation_get_type(void)
     static const GEnumValue rotation_modes[] = {
         { GST_MFX_ROTATION_0,
             "No rotation", "0"},
-        { GST_MFX_ROTATION_90,
-            "Rotate by 90", "clockwise", "90"},
+        /*{ GST_MFX_ROTATION_90,
+            "Rotate by 90", "clockwise", "90"},*/
         { GST_MFX_ROTATION_180,
             "Rotate by 180", "clockwise", "180"},
-        { GST_MFX_ROTATION_270,
-            "Rotate by 270", "clockwise", "270"},
+        /*{ GST_MFX_ROTATION_270,
+            "Rotate by 270", "clockwise", "270"},*/
         {0, NULL, NULL},
     };
     if (!rotation_value)
@@ -568,7 +568,7 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
     if (vpp->format != DEFAULT_FORMAT)
         out_format = vpp->format;
 
-    if(vpp->alg != DEFAULT_FRC_ALG)
+    if(fps_n != GST_VIDEO_INFO_FPS_N(&vpp->sinkpad_info) && 0 != fps_n)
     {
          vpp->fps_n = fps_n;
          vpp->fps_d = fps_d;
@@ -579,6 +579,9 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
                  vpp->fps_d,
                  vpp->fps_n
                  );
+         vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+         if ( DEFAULT_FRC_ALG == vpp->alg )
+             vpp->alg = GST_MFX_FRC_FRAME_INTERPOLATION;
     }
 
     if(peer_caps)
