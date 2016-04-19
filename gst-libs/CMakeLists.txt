@@ -1,8 +1,8 @@
 file(GLOB SOURCE  "mfx/*.c")
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	    set (CMAKE_INSTALL_PREFIX "/usr/lib64/gstreamer-1.0")
-    endif()
+    set (CMAKE_INSTALL_PREFIX "${GSTREAMER_LIBDIR}/gstreamer-1.0")
+endif()
 
 
 if(HAVE_WAYLAND_RENDERER)
