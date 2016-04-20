@@ -223,7 +223,7 @@ vaapi_image_get_image(VaapiImage *image, VAImage *va_image)
 gboolean
 _vaapi_image_set_image(VaapiImage *image, const VAImage *va_image)
 {
-    image->format = gst_mfx_video_format_from_va_fourcc(va_image->format.fourcc);
+    image->format = gst_video_format_from_va_fourcc(va_image->format.fourcc);
     image->image  = *va_image;
     image->width  = va_image->width;
     image->height = va_image->height;

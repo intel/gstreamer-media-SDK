@@ -230,12 +230,15 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
         offsets[i] = vaapi_image_get_offset(vaapi_image, i);
         pitches[i] = vaapi_image_get_pitch(vaapi_image, i);
     }
-	//only support NV12 for now
-    if ( GST_VIDEO_FORMAT_NV12 == gst_video_format_from_va_fourcc(
-                vaapi_image_get_format(
-                    GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buffer_proxy))) ) {
+
+    if ( GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format(vaapi_image) ) {
 		drm_format = WL_DRM_FORMAT_NV12;
-	}
+    } else if ( GST_VIDEO_FORMAT_BGRA == vaapi_image_get_format(vaapi_image) ) {
+        drm_format = WL_DRM_FORMAT_ARGB8888;
+    }
+
+    if(!drm_format)
+        return FALSE;
 
 	if(!display_priv->drm)
 		return FALSE;
