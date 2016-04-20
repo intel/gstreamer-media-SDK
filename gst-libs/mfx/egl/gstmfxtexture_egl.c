@@ -7,19 +7,7 @@
 #include "gstmfxdisplay_egl.h"
 #include "gstmfxdisplay_egl_priv.h"
 #include "gstmfxprimebufferproxy.h"
-#include "gstmfxprimebufferproxy_priv.h"
-#include "gstvaapiimage_priv.h"
-
-/* Additional DRM formats */
-#ifndef DRM_FORMAT_R8
-#define DRM_FORMAT_R8   fourcc_code('R', '8', ' ', ' ')
-#endif
-#ifndef DRM_FORMAT_RG88
-#define DRM_FORMAT_RG88 fourcc_code('R', 'G', '8', '8')
-#endif
-#ifndef DRM_FORMAT_GR88
-#define DRM_FORMAT_GR88 fourcc_code('G', 'R', '8', '8')
-#endif
+#include "gstmfxutils_vaapi.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -27,75 +15,77 @@
 typedef struct
 {
 	GstMfxTextureEGL *texture;
-	GstMfxSurface *surface;
+	GstMfxSurfaceProxy *proxy;
 	const GstMfxRectangle *crop_rect;
 	gboolean success;             /* result */
 } UploadSurfaceArgs;
 
 static gboolean
-do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurface * surface)
+do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 {
 	EglContext *const ctx = texture->egl_context;
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
 	GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
-	GLuint texture_id;
 
-	GLint attribs[23], *attrib;
-	GstMfxPrimeBufferProxy *buffer_proxy;
-	GstVaapiImage *image;
-	VAImage *va_image;
-	guint i;
+    if (GST_MFX_SURFACE_PROXY_MEMID(proxy) != GST_MFX_ID_INVALID) {
+        GLint attribs[23], *attrib;
+        GstMfxPrimeBufferProxy *buffer_proxy;
+        VaapiImage *image;
+        VAImage va_image;
 
-	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
-	if (!buffer_proxy)
-		return FALSE;
+        buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(proxy);
+        if (!buffer_proxy)
+            return FALSE;
 
-	image = gst_mfx_surface_derive_image(surface);
-	if (!image)
-		return FALSE;
-	//gst_vaapi_image_get_image(image, va_image);
-    va_image = &image->image;
+        image = gst_mfx_surface_proxy_derive_image(proxy);
+        if (!image)
+            return FALSE;
+        vaapi_image_get_image(image, &va_image);
 
-    GST_MFX_TEXTURE_WIDTH(base_texture) = va_image->width;
-    GST_MFX_TEXTURE_HEIGHT(base_texture) = va_image->height;
-
-    for (i = 0; i < va_image->num_planes; i++) {
-        const uint32_t is_uv_plane = i > 0;
+        GST_MFX_TEXTURE_WIDTH(base_texture) = vaapi_image_get_width(image);
+        GST_MFX_TEXTURE_HEIGHT(base_texture) = vaapi_image_get_height(image);
 
         attrib = attribs;
         *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
-        *attrib++ = is_uv_plane ? DRM_FORMAT_GR88 : DRM_FORMAT_R8;
+        *attrib++ = DRM_FORMAT_ARGB8888;
         *attrib++ = EGL_WIDTH;
-        *attrib++ = (va_image->width + is_uv_plane) >> is_uv_plane;
+        *attrib++ = vaapi_image_get_width(image);
         *attrib++ = EGL_HEIGHT;
-        *attrib++ = (va_image->height + is_uv_plane) >> is_uv_plane;
+        *attrib++ = vaapi_image_get_height(image);
         *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
         *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
         *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-        *attrib++ = va_image->offsets[i];
+        *attrib++ = vaapi_image_get_offset(image, 0);
         *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-        *attrib++ = va_image->pitches[i];
+        *attrib++ = vaapi_image_get_pitch(image, 0);
         *attrib++ = EGL_NONE;
-        texture->egl_images[i] = vtable->eglCreateImageKHR(
+
+        texture->egl_image = vtable->eglCreateImageKHR(
             ctx->display->base.handle.p, EGL_NO_CONTEXT,
             EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer)NULL, attribs);
-        if (!texture->egl_images[i]) {
-            GST_ERROR(
-                "failed to import VA buffer (NV12:%s) into EGL image\n",
-                is_uv_plane ? "UV" : "Y");
-            return FALSE;
-        }
-        texture->textures[i] = egl_create_texture_from_egl_image(texture->egl_context,
-            base_texture->gl_target, texture->egl_images[i]);
-        if (!texture->textures[i]) {
+        if (!texture->egl_image) {
+            GST_ERROR("failed to import VA buffer (RGBA) into EGL image\n");
             return FALSE;
         }
 
-        texture->num_textures++;
+        GST_MFX_TEXTURE_ID(texture) = egl_create_texture_from_egl_image(
+            texture->egl_context, base_texture->gl_target, texture->egl_image);
+        if (!GST_MFX_OBJECT_ID(base_texture)) {
+            return FALSE;
+        }
+
+        gst_mfx_prime_buffer_proxy_unref(buffer_proxy);
+        vaapi_image_unref(image);
     }
-
-    gst_mfx_prime_buffer_proxy_unref(buffer_proxy);
-    gst_mfx_object_unref(image);
+    else {
+        GST_MFX_TEXTURE_ID(texture) = egl_create_texture_from_data(
+            texture->egl_context, GL_TEXTURE_2D, GL_BGRA_EXT,
+            base_texture->width, base_texture->height,
+            gst_mfx_surface_proxy_get_plane(proxy, 0));
+        if (!GST_MFX_OBJECT_ID(base_texture)) {
+            return FALSE;
+        }
+    }
 
 	return TRUE;
 }
@@ -110,7 +100,7 @@ do_bind_texture(UploadSurfaceArgs * args)
 
 	GST_MFX_OBJECT_LOCK_DISPLAY(texture);
 	if (egl_context_set_current(texture->egl_context, TRUE, &old_cs)) {
-		args->success = do_bind_texture_unlocked(texture, args->surface);
+		args->success = do_bind_texture_unlocked(texture, args->proxy);
 		egl_context_set_current(texture->egl_context, FALSE, &old_cs);
 	}
 	GST_MFX_OBJECT_UNLOCK_DISPLAY(texture);
@@ -121,34 +111,27 @@ destroy_objects(GstMfxTextureEGL * texture)
 {
 	EglContext *const ctx = texture->egl_context;
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
-	int i;
 
-    for (i = 0; i < texture->num_textures; i++) {
-        if (texture->egl_images[i] != EGL_NO_IMAGE_KHR) {
-            vtable->eglDestroyImageKHR(ctx->display->base.handle.p,
-                texture->egl_images[i]);
-            texture->egl_images[i] = EGL_NO_IMAGE_KHR;
-        }
-	}
+    if (texture->egl_image != EGL_NO_IMAGE_KHR) {
+        vtable->eglDestroyImageKHR(ctx->display->base.handle.p,
+            texture->egl_image);
+        texture->egl_image = EGL_NO_IMAGE_KHR;
+    }
 }
 
 static void
 do_destroy_texture_unlocked(GstMfxTextureEGL * texture)
 {
 	//GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
-	//const GLuint texture_id = GST_MFX_TEXTURE_ID(texture);
-	guint i;
+	const GLuint texture_id = GST_MFX_TEXTURE_ID(texture);
 
 	destroy_objects(texture);
 
-	for(i = 0; i < texture->num_textures; i++)
-        egl_destroy_texture(texture->egl_context, texture->textures[i]);
-
-	//if (texture_id) {
+	if (texture_id) {
 		//if (!base_texture->is_wrapped)
-			//egl_destroy_texture(texture->egl_context, texture_id);
-		//GST_MFX_TEXTURE_ID(texture) = 0;
-	//}
+			egl_destroy_texture(texture->egl_context, texture_id);
+		GST_MFX_TEXTURE_ID(texture) = 0;
+	}
 }
 
 static void
@@ -174,9 +157,9 @@ gst_mfx_texture_egl_destroy(GstMfxTextureEGL * texture)
 
 static gboolean
 gst_mfx_texture_egl_put_surface(GstMfxTextureEGL * texture,
-	GstMfxSurface * surface)
+	GstMfxSurfaceProxy * proxy)
 {
-	UploadSurfaceArgs args = { texture, surface };
+	UploadSurfaceArgs args = { texture, proxy };
 
 	return egl_context_run(texture->egl_context,
 		(EglContextRunFunc)do_bind_texture, &args) && args.success;

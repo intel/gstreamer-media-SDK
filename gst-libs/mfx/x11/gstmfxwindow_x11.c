@@ -5,7 +5,7 @@
 #include "gstmfxwindow_x11_priv.h"
 #include "gstmfxdisplay_x11.h"
 #include "gstmfxdisplay_x11_priv.h"
-#include "video-utils.h"
+#include "gstmfxutils_vaapi.h"
 #include "gstmfxutils_x11.h"
 
 #define DEBUG 1
@@ -161,9 +161,7 @@ gst_mfx_window_x11_create(GstMfxWindow * window, guint * width,
 	Colormap cmap = None;
 	const GstMfxDisplayClass *display_class;
 	const GstMfxWindowClass *window_class;
-	XWindowAttributes wattr;
 	Atom atoms[2];
-	gboolean ok;
 
 	static const char *atom_names[2] = {
 		"_NET_WM_STATE",
@@ -317,38 +315,16 @@ gst_mfx_window_x11_resize(GstMfxWindow * window, guint width, guint height)
 	return !has_errors;
 }
 
-/*static gboolean
+static gboolean
 gst_mfx_window_x11_render(GstMfxWindow * window,
-	GstMfxSurface * surface,
+	GstMfxSurfaceProxy * proxy,
 	const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
-	VASurfaceID surface_id;
-	VAStatus status;
 
-	surface_id = GST_MFX_OBJECT_ID(surface);
-	if (surface_id == VA_INVALID_ID)
-		return FALSE;
 
-	GST_MFX_OBJECT_LOCK_DISPLAY(window);
-	status = vaPutSurface(GST_MFX_OBJECT_VADISPLAY(window),
-		surface_id,
-		GST_MFX_OBJECT_ID(window),
-		src_rect->x,
-		src_rect->y,
-		src_rect->width,
-		src_rect->height,
-		dst_rect->x,
-		dst_rect->y,
-		dst_rect->width,
-		dst_rect->height, NULL, 0, VA_FRAME_PICTURE
-		);
-	GST_MFX_OBJECT_UNLOCK_DISPLAY(window);
-	if (!vaapi_check_status(status, "vaPutSurface()"))
-		return FALSE;
-
-	return TRUE;
-}*/
+	return FALSE;
+}
 
 void
 gst_mfx_window_x11_class_init(GstMfxWindowX11Class * klass)
@@ -365,7 +341,7 @@ gst_mfx_window_x11_class_init(GstMfxWindowX11Class * klass)
 	window_class->get_geometry = gst_mfx_window_x11_get_geometry;
 	window_class->set_fullscreen = gst_mfx_window_x11_set_fullscreen;
 	window_class->resize = gst_mfx_window_x11_resize;
-	//window_class->render = gst_mfx_window_x11_render;
+	window_class->render = gst_mfx_window_x11_render;
 }
 
 #define gst_mfx_window_x11_finalize \

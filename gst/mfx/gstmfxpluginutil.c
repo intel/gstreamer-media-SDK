@@ -2,57 +2,51 @@
 #include "gstmfxvideocontext.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxpluginbase.h"
-#if USE_DRM
-# include "gstmfxdisplay_drm.h"
-#endif
+
 
 gboolean
-gst_mfx_ensure_display(GstElement * element, GstMfxDisplayType type)
+gst_mfx_ensure_aggregator(GstElement * element)
 {
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(element);
-	GstMfxDisplay *display;
+	GstMfxTaskAggregator *aggregator;
 
 	g_return_val_if_fail(GST_IS_ELEMENT(element), FALSE);
 
-	if (gst_mfx_video_context_prepare(element, &plugin->display)) {
-		/* Neighbour found and it updated the display */
-		if (gst_mfx_plugin_base_has_display_type(plugin, type))
-			return TRUE;
-	}
+	if (gst_mfx_video_context_prepare(element, &plugin->aggregator))
+		return TRUE;
 
-	/* If no neighboor, or application not interested, use system default */
-	display = gst_mfx_display_drm_new(NULL);
-	if (!display)
-		return FALSE;
+	aggregator = gst_mfx_task_aggregator_new();
+    if (!aggregator)
+        return FALSE;
 
-	gst_mfx_video_context_propagate(element, display);
-	gst_mfx_display_unref(display);
+	gst_mfx_video_context_propagate(element, aggregator);
+	gst_mfx_task_aggregator_unref(aggregator);
 	return TRUE;
 }
 
 gboolean
-gst_mfx_handle_context_query (GstQuery * query, GstMfxDisplay * display)
+gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * task)
 {
     const gchar *type = NULL;
     GstContext *context, *old_context;
 
     g_return_val_if_fail (query != NULL, FALSE);
 
-    if (!display)
+    if (!task)
         return FALSE;
 
     if (!gst_query_parse_context_type (query, &type))
         return FALSE;
 
-    if (g_strcmp0 (type, GST_MFX_DISPLAY_CONTEXT_TYPE_NAME))
+    if (g_strcmp0 (type, GST_MFX_AGGREGATOR_CONTEXT_TYPE_NAME))
         return FALSE;
 
     gst_query_parse_context (query, &old_context);
     if (old_context) {
         context = gst_context_copy (old_context);
-        gst_mfx_video_context_set_display (context, display);
+        gst_mfx_video_context_set_aggregator (context, task);
     } else {
-        context = gst_mfx_video_context_new_with_display (display, FALSE);
+        context = gst_mfx_video_context_new_with_aggregator (task, FALSE);
     }
 
     gst_query_set_context (query, context);
@@ -103,24 +97,6 @@ gst_mfx_value_set_format(GValue * value, GstVideoFormat format)
 	return TRUE;
 }
 
-gboolean
-gst_mfx_value_set_format_list(GValue * value, GArray * formats)
-{
-	GValue v_format = G_VALUE_INIT;
-	guint i;
-
-	g_value_init(value, GST_TYPE_LIST);
-	for (i = 0; i < formats->len; i++) {
-		GstVideoFormat const format = g_array_index(formats, GstVideoFormat, i);
-
-		if (!gst_mfx_value_set_format(&v_format, format))
-			continue;
-		gst_value_list_append_value(value, &v_format);
-		g_value_unset(&v_format);
-	}
-	return TRUE;
-}
-
 void
 set_video_template_caps(GstCaps * caps)
 {
@@ -152,27 +128,6 @@ gst_mfx_video_format_new_template_caps(GstVideoFormat format)
 }
 
 GstCaps *
-gst_mfx_video_format_new_template_caps_from_list(GArray * formats)
-{
-	GValue v_formats = G_VALUE_INIT;
-	GstCaps *caps;
-
-	caps = gst_caps_new_empty_simple("video/x-raw");
-	if (!caps)
-		return NULL;
-
-	if (!gst_mfx_value_set_format_list(&v_formats, formats)) {
-		gst_caps_unref(caps);
-		return NULL;
-	}
-
-	gst_caps_set_value(caps, "format", &v_formats);
-	set_video_template_caps(caps);
-	g_value_unset(&v_formats);
-	return caps;
-}
-
-GstCaps *
 gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
 	const gchar * features_string)
 {
@@ -181,10 +136,8 @@ gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
 	GstCapsFeatures *const features =
 		gst_caps_features_new(features_string, NULL);
 
-	if (!features) {
-		//gst_caps_unref(caps);
+	if (!features)
 		return NULL;
-	}
 
 	caps = gst_mfx_video_format_new_template_caps(format);
 	if (!caps)
@@ -195,27 +148,34 @@ gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
 }
 
 GstMfxCapsFeature
-gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
-	GstVideoFormat * out_format_ptr)
+gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_ptr)
 {
 	GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
 	guint i, num_structures;
 	GstCaps *caps = NULL;
 	GstCaps *sysmem_caps = NULL;
 	GstCaps *mfx_caps = NULL;
-	GstCaps *out_caps, *templ;
+	GstCaps *out_caps;
 	GstVideoFormat out_format;
+	GstStructure *structure;
+	gchar *format = NULL;
 
-	templ = gst_pad_get_pad_template_caps(pad);
-	out_caps = gst_pad_peer_query_caps(pad, templ);
-	gst_caps_unref(templ);
+	out_caps = gst_pad_get_allowed_caps(pad);
 	if (!out_caps) {
 		feature = GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED;
 		goto cleanup;
 	}
 
-	out_format = format == GST_VIDEO_FORMAT_ENCODED ?
-		GST_VIDEO_FORMAT_NV12 : format;
+    num_structures = gst_caps_get_size(out_caps);
+    structure = gst_structure_copy(
+        gst_caps_get_structure(out_caps, num_structures - 1));
+    if (gst_structure_has_field(structure, "format"))
+        gst_structure_fixate_field(structure, "format");
+    format = gst_structure_get_string(structure, "format");
+    out_format = format ? gst_video_format_from_string(format) :
+        GST_VIDEO_FORMAT_NV12;
+    if (structure)
+        gst_structure_free(structure);
 
 	mfx_caps =
 		gst_mfx_video_format_new_template_caps_with_features(out_format,
@@ -229,10 +189,9 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
 	if (!sysmem_caps)
 		goto cleanup;
 
-	num_structures = gst_caps_get_size(out_caps);
 	for (i = 0; i < num_structures; i++) {
 		GstCapsFeatures *const features = gst_caps_get_features(out_caps, i);
-		GstStructure *const structure = gst_caps_get_structure(out_caps, i);
+		structure = gst_caps_get_structure(out_caps, i);
 
 		/* Skip ANY features, we need an exact match for correct evaluation */
 		if (gst_caps_features_is_any(features))
@@ -256,6 +215,8 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
 		if (feature != GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY)
 			break;
 	}
+
+	*out_format_ptr = out_format;
 
 cleanup:
 	gst_caps_replace(&sysmem_caps, NULL);
@@ -315,13 +276,66 @@ gst_mfx_caps_feature_contains(const GstCaps * caps, GstMfxCapsFeature feature)
 	return _gst_caps_has_feature(caps, feature_str);
 }
 
-/* Checks whether the supplied caps contain VA surfaces */
+/* Checks whether the supplied caps contain MFX surfaces */
 gboolean
 gst_caps_has_mfx_surface(GstCaps * caps)
 {
 	g_return_val_if_fail(caps != NULL, FALSE);
 
 	return _gst_caps_has_feature(caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
+}
+
+gboolean
+gst_mfx_query_peer_has_raw_caps(GstPad * pad)
+{
+    GstPad *other_pad = NULL;
+    GstElement *element = NULL;
+    //gchar *element_name = NULL;
+    GstCaps *caps = NULL;
+    gboolean mapped = FALSE;
+
+    gst_object_ref (pad);
+
+    for (;;) {
+        other_pad = gst_pad_get_peer (pad);
+        gst_object_unref (pad);
+        if (!other_pad)
+            break;
+
+        element = gst_pad_get_parent_element (other_pad);
+        if (!element)
+            break;
+
+        caps = gst_pad_get_allowed_caps(other_pad);
+        gst_object_unref (other_pad);
+
+        //g_print("%s\n\n", gst_caps_to_string(caps));
+
+        if (!gst_caps_has_mfx_surface(caps)) {
+            mapped = TRUE;
+            goto cleanup;
+        }
+        gst_caps_replace(&caps, NULL);
+
+        //element_name = gst_element_get_name (element);
+        //g_print("%s\n", element_name);
+
+        pad = gst_element_get_static_pad (element, "src");
+        if (!pad)
+            break;
+
+
+        //g_free (element_name);
+        //element_name = NULL;
+        g_clear_object (&element);
+    }
+
+cleanup:
+    gst_caps_replace(&caps, NULL);
+    //g_free (element_name);
+    g_clear_object (&element);
+
+    return mapped;
 }
 
 void

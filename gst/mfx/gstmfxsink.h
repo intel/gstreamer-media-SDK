@@ -4,6 +4,7 @@
 #include "gstmfxpluginbase.h"
 #include "gstmfxwindow.h"
 #include "gstmfxpluginutil.h"
+#include "gstmfxdisplay.h"
 
 G_BEGIN_DECLS
 
@@ -63,6 +64,10 @@ struct _GstMfxSink
 	GThread *event_thread;
 	volatile gboolean event_thread_cancel;
 
+    GstMfxDisplay *display;
+	GstMfxDisplayType display_type;
+	GstMfxDisplayType display_type_req;
+	gchar *display_name;
 
 	guint handle_events : 1;
 	guint fullscreen : 1;

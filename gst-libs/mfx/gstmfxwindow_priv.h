@@ -23,7 +23,7 @@ typedef gboolean(*GstMfxWindowSetFullscreenFunc) (GstMfxWindow * window,
 typedef gboolean(*GstMfxWindowResizeFunc) (GstMfxWindow * window,
 	guint width, guint height);
 typedef gboolean(*GstMfxWindowRenderFunc) (GstMfxWindow * window,
-	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
+	GstMfxSurfaceProxy * proxy, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect);
 typedef guintptr(*GstMfxWindowGetVisualIdFunc) (GstMfxWindow * window);
 typedef guintptr(*GstMfxWindowGetColormapFunc) (GstMfxWindow * window);
@@ -57,7 +57,7 @@ struct _GstMfxWindow
 * @get_geometry: virtual function to get the current window geometry
 * @set_fullscreen: virtual function to change window fullscreen state
 * @resize: virtual function to resize a window
-* @render: virtual function to render a #GstMfxSurface into a window
+* @render: virtual function to render a #GstMfxSurfaceProxy into a window
 * @get_visual_id: virtual function to get the desired visual id used to
 *   create the window
 * @get_colormap: virtual function to get the desired colormap used to

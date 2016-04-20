@@ -2,7 +2,7 @@
 #include "gstmfxwindow.h"
 #include "gstmfxwindow_priv.h"
 #include "gstmfxdisplay_priv.h"
-#include "gstmfxsurface_priv.h"
+#include "gstmfxsurfaceproxy.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -344,12 +344,12 @@ gst_mfx_window_set_size(GstMfxWindow * window, guint width, guint height)
 }
 
 static inline void
-get_surface_rect(GstMfxSurface * surface, GstMfxRectangle * rect)
+get_surface_rect(GstMfxSurfaceProxy * proxy, GstMfxRectangle * rect)
 {
 	rect->x = 0;
 	rect->y = 0;
-	rect->width = GST_MFX_SURFACE_WIDTH(surface);
-	rect->height = GST_MFX_SURFACE_HEIGHT(surface);
+	rect->width = GST_MFX_SURFACE_PROXY_WIDTH(proxy);
+	rect->height = GST_MFX_SURFACE_PROXY_HEIGHT(proxy);
 }
 
 static inline void
@@ -367,7 +367,7 @@ get_window_rect(GstMfxWindow * window, GstMfxRectangle * rect)
 /**
 * gst_mfx_window_put_surface:
 * @window: a #GstMfxWindow
-* @surface: a #GstMfxSurface
+* @surface: a #GstMfxSurfaceProxy
 * @src_rect: the sub-rectangle of the source surface to
 *   extract and process. If %NULL, the entire surface will be used.
 * @dst_rect: the sub-rectangle of the destination
@@ -384,7 +384,7 @@ get_window_rect(GstMfxWindow * window, GstMfxRectangle * rect)
 */
 gboolean
 gst_mfx_window_put_surface(GstMfxWindow * window,
-	GstMfxSurface * surface,
+	GstMfxSurfaceProxy * proxy,
 	const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
@@ -392,7 +392,7 @@ gst_mfx_window_put_surface(GstMfxWindow * window,
 	GstMfxRectangle src_rect_default, dst_rect_default;
 
 	g_return_val_if_fail(window != NULL, FALSE);
-	g_return_val_if_fail(surface != NULL, FALSE);
+	g_return_val_if_fail(proxy != NULL, FALSE);
 
 	klass = GST_MFX_WINDOW_GET_CLASS(window);
 	if (!klass->render)
@@ -400,7 +400,7 @@ gst_mfx_window_put_surface(GstMfxWindow * window,
 
 	if (!src_rect) {
 		src_rect = &src_rect_default;
-		get_surface_rect(surface, &src_rect_default);
+		get_surface_rect(proxy, &src_rect_default);
 	}
 
 	if (!dst_rect) {
@@ -408,7 +408,7 @@ gst_mfx_window_put_surface(GstMfxWindow * window,
 		get_window_rect(window, &dst_rect_default);
 	}
 
-	return klass->render(window, surface, src_rect, dst_rect);
+	return klass->render(window, proxy, src_rect, dst_rect);
 }
 
 /**

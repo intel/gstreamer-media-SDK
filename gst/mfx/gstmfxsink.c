@@ -10,6 +10,7 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
+#include "gstmfxsurfaceproxy.h"
 
 #define GST_PLUGIN_NAME "mfxsink"
 #define GST_PLUGIN_DESC "A MFX-based videosink"
@@ -58,7 +59,12 @@ enum
 	N_PROPERTIES
 };
 
-#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_ANY
+#if USE_EGL
+# define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_EGL
+#else
+# define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_WAYLAND
+#endif
+
 #define DEFAULT_SIGNAL_HANDOFFS         FALSE
 
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
@@ -78,16 +84,16 @@ gst_mfxsink_ensure_render_rect(GstMfxSink * sink, guint width,
 	guint height);
 
 static inline gboolean
-gst_mfxsink_ensure_display(GstMfxSink * sink)
+gst_mfxsink_ensure_aggregator(GstMfxSink * sink)
 {
-	return gst_mfx_plugin_base_ensure_display(GST_MFX_PLUGIN_BASE(sink));
+	return gst_mfx_plugin_base_ensure_aggregator(GST_MFX_PLUGIN_BASE(sink));
 }
 
 static inline gboolean
-gst_mfxsink_render_surface(GstMfxSink * sink, GstMfxSurface * surface,
+gst_mfxsink_render_surface(GstMfxSink * sink, GstMfxSurfaceProxy * proxy,
 	const GstMfxRectangle * surface_rect)
 {
-	return sink->window && gst_mfx_window_put_surface(sink->window, surface,
+	return sink->window && gst_mfx_window_put_surface(sink->window, proxy,
 		surface_rect, &sink->display_rect);
 }
 
@@ -97,12 +103,12 @@ gst_mfxsink_render_surface(GstMfxSink * sink, GstMfxSurface * surface,
 /* ------------------------------------------------------------------------ */
 
 #if USE_EGL
-# include "egl/gstmfxdisplay_egl.h"
-# include "egl/gstmfxwindow_egl.h"
+# include <egl/gstmfxdisplay_egl.h>
+# include <egl/gstmfxwindow_egl.h>
 
 #if USE_X11
-# include "x11/gstmfxdisplay_x11.h"
-# include "x11/gstmfxwindow_x11.h"
+# include <x11/gstmfxdisplay_x11.h>
+# include <x11/gstmfxwindow_x11.h>
 
 #if HAVE_XKBLIB
 # include <X11/XKBlib.h>
@@ -266,10 +272,8 @@ static gboolean
 gst_mfxsink_egl_create_window(GstMfxSink * sink, guint width,
 	guint height)
 {
-	GstMfxDisplay *display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
-
 	g_return_val_if_fail(sink->window == NULL, FALSE);
-	sink->window = gst_mfx_window_egl_new(display, width, height);
+	sink->window = gst_mfx_window_egl_new(sink->display, width, height);
 	if (!sink->window)
 		return FALSE;
 	return TRUE;
@@ -294,17 +298,15 @@ gst_mfxsink_backend_egl(void)
 /* --- Wayland Backend                                                  --- */
 /* -------------------------------------------------------------------------*/
 #if USE_WAYLAND
-#include "wayland/gstmfxdisplay_wayland.h"
-#include "wayland/gstmfxwindow_wayland.h"
+#include <wayland/gstmfxdisplay_wayland.h>
+#include <wayland/gstmfxwindow_wayland.h>
 
 static gboolean
 gst_mfxsink_wayland_create_window(GstMfxSink * sink, guint width,
 		guint height)
 {
-	GstMfxDisplay *display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
-
 	g_return_val_if_fail(sink->window == NULL, FALSE);
-	sink->window = gst_mfx_window_wayland_new(display, width, height);
+	sink->window = gst_mfx_window_wayland_new(sink->display, width, height);
 	if (!sink->window)
 		return FALSE;
 	return TRUE;
@@ -414,7 +416,7 @@ gst_mfxsink_set_event_handling(GstMfxSink * sink, gboolean handle_events)
 {
 	GThread *thread = NULL;
 
-	if ((GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != GST_MFX_DISPLAY_TYPE_X11) ||
+	if ((sink->display_type != GST_MFX_DISPLAY_TYPE_X11) ||
         !sink->backend)
 		return;
 
@@ -461,54 +463,51 @@ get_display_type_name(GstMfxDisplayType display_type)
 }
 
 static void
+gst_mfxsink_set_display_name(GstMfxSink * sink,
+	const gchar * display_name)
+{
+	g_free(sink->display_name);
+	sink->display_name = g_strdup(display_name);
+}
+
+static void
 gst_mfxsink_set_render_backend(GstMfxSink * sink)
 {
-    GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(sink);
-    gboolean autoselect = FALSE;
+    GstMfxDisplay *display = NULL;
 
-    if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) != plugin->display_type_req) {
-        GstMfxDisplay *display = NULL;
-
-        switch (plugin->display_type_req) {
-        case GST_MFX_DISPLAY_TYPE_ANY:
-            autoselect = TRUE;
+    switch (sink->display_type_req) {
 #if USE_WAYLAND
-        case GST_MFX_DISPLAY_TYPE_WAYLAND:
-            display = gst_mfx_display_wayland_new(NULL);
-            if (!display)
-                if (autoselect)
-                    goto egl;
-                else
-                    goto display_unsupported;
-            sink->backend = gst_mfxsink_backend_wayland();
-            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) = GST_MFX_DISPLAY_TYPE_WAYLAND;
-            break;
+    case GST_MFX_DISPLAY_TYPE_WAYLAND:
+        display = gst_mfx_display_wayland_new(NULL);
+        if (!display)
+            goto display_unsupported;
+        sink->backend = gst_mfxsink_backend_wayland();
+        sink->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
+        break;
 #endif
-egl:
 #if USE_EGL
-        case GST_MFX_DISPLAY_TYPE_EGL:
-            display = gst_mfx_display_egl_new (NULL, 2);
-            if (!display)
-                goto display_unsupported;
-            sink->backend = gst_mfxsink_backend_egl();
-            GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) =
-                GST_MFX_DISPLAY_VADISPLAY_TYPE(display);
-            break;
+    case GST_MFX_DISPLAY_TYPE_EGL:
+        display = gst_mfx_display_egl_new (NULL, 2);
+        if (!display)
+            goto display_unsupported;
+        sink->backend = gst_mfxsink_backend_egl();
+        sink->display_type = GST_MFX_DISPLAY_VADISPLAY_TYPE(display);
+        break;
 #endif
-        case GST_MFX_DISPLAY_TYPE_DRM:
-            break;
+    case GST_MFX_DISPLAY_TYPE_DRM:
+        sink->display_type = GST_MFX_DISPLAY_TYPE_DRM;
+        break;
 display_unsupported:
-        default:
-            GST_ERROR("display type %s not supported",
-                get_display_type_name(plugin->display_type_req));
-            g_assert_not_reached();
-            break;
-        }
+    default:
+        GST_ERROR("display type %s not supported",
+            get_display_type_name(sink->display_type_req));
+        g_assert_not_reached();
+        break;
+    }
 
-        if (display) {
-            gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(sink), display);
-            gst_mfx_display_unref(display);
-        }
+    if (display) {
+        gst_mfx_display_replace(&sink->display, display);
+        gst_mfx_display_unref(display);
     }
 }
 
@@ -539,8 +538,8 @@ gst_mfxsink_ensure_render_rect(GstMfxSink * sink, guint width,
 
 	GST_DEBUG("ensure render rect within %ux%u bounds", width, height);
 
-	gst_mfx_display_get_pixel_aspect_ratio(GST_MFX_PLUGIN_BASE_DISPLAY
-		(sink), &display_par_n, &display_par_d);
+	gst_mfx_display_get_pixel_aspect_ratio(sink->display,
+        &display_par_n, &display_par_d);
 	GST_DEBUG("display pixel-aspect-ratio %d/%d", display_par_n, display_par_d);
 
 	success = gst_video_calculate_display_ratio(&num, &den,
@@ -586,19 +585,18 @@ static void
 gst_mfxsink_ensure_window_size(GstMfxSink * sink, guint * width_ptr,
     guint * height_ptr)
 {
-	GstMfxDisplay *const display = GST_MFX_PLUGIN_BASE_DISPLAY(sink);
 	GstVideoRectangle src_rect, dst_rect, out_rect;
 	guint num, den, display_width, display_height, display_par_n, display_par_d;
 	gboolean success, scale;
 
-	gst_mfx_display_get_size(display, &display_width, &display_height);
+	gst_mfx_display_get_size(sink->display, &display_width, &display_height);
 	if (sink->fullscreen) {
 		*width_ptr = display_width;
 		*height_ptr = display_height;
 		return;
 	}
 
-	gst_mfx_display_get_pixel_aspect_ratio(display,
+	gst_mfx_display_get_pixel_aspect_ratio(sink->display,
 		&display_par_n, &display_par_d);
 
 	success = gst_video_calculate_display_ratio(&num, &den,
@@ -622,18 +620,6 @@ gst_mfxsink_ensure_window_size(GstMfxSink * sink, guint * width_ptr,
 	*width_ptr = out_rect.w;
 	*height_ptr = out_rect.h;
 }
-
-/*static void
-gst_mfxsink_display_changed(GstMfxPluginBase * plugin)
-{
-	GstMfxSink *const sink = GST_MFXSINK_CAST(plugin);
-
-    gst_mfxsink_set_display_type(sink);
-	GST_INFO("created %s %p", get_display_type_name(plugin->display_type),
-		plugin->display);
-
-	gst_mfxsink_ensure_backend(sink);
-}*/
 
 static gboolean
 gst_mfxsink_start(GstBaseSink * base_sink)
@@ -661,17 +647,13 @@ gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 	GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
 	GstCaps *out_caps, *raw_caps;
 
-	out_caps = gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
-	if (!out_caps)
-		return NULL;
+	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
+        out_caps =
+            gst_mfx_video_format_new_template_caps_with_features(
+                GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
+    else
+        out_caps = gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
 
-	/*if (GST_MFX_PLUGIN_BASE_DISPLAY(sink)) {
-		raw_caps = gst_mfx_plugin_base_get_allowed_raw_caps(GST_MFX_PLUGIN_BASE(sink));
-		if (raw_caps) {
-			out_caps = gst_caps_make_writable(out_caps);
-			gst_caps_append(out_caps, gst_caps_copy(raw_caps));
-		}
-	}*/
 	return out_caps;
 }
 
@@ -687,6 +669,7 @@ gst_mfxsink_get_caps(GstBaseSink * base_sink, GstCaps * filter)
 	}
 	else
 		out_caps = caps;
+
 	return out_caps;
 }
 
@@ -698,12 +681,12 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 	GstVideoInfo *const vip = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
 	guint win_width, win_height;
 
-    gst_mfxsink_set_render_backend(sink);
-
-	if (!gst_mfxsink_ensure_display(sink))
+	if (!gst_mfxsink_ensure_aggregator(sink))
 		return FALSE;
 
-	if (GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink) == GST_MFX_DISPLAY_TYPE_DRM)
+    gst_mfxsink_set_render_backend(sink);
+
+    if (sink->display_type == GST_MFX_DISPLAY_TYPE_DRM)
 		return TRUE;
 
 	if (!gst_mfx_plugin_base_set_caps(plugin, caps, NULL))
@@ -746,8 +729,6 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
     GstMfxSink *const sink = GST_MFXSINK_CAST(video_sink);
 	GstMfxVideoMeta *meta;
 	GstMfxSurfaceProxy *proxy;
-	GstMfxSurface *surface;
-	GstBuffer *buffer;
 	guint flags;
 	GstMfxRectangle *surface_rect = NULL;
 	GstMfxRectangle tmp_rect;
@@ -763,52 +744,39 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 		surface_rect->height = crop_meta->height;
 	}
 
-	ret = gst_mfx_plugin_base_get_input_buffer(GST_MFX_PLUGIN_BASE(sink),
-		src_buffer, &buffer);
-	if (ret != GST_FLOW_OK && ret != GST_FLOW_NOT_SUPPORTED)
-		return ret;
-
-	meta = gst_buffer_get_mfx_video_meta(buffer);
-	GST_MFX_PLUGIN_BASE_DISPLAY_REPLACE(sink,
-		gst_mfx_video_meta_get_display(meta));
+	meta = gst_buffer_get_mfx_video_meta(src_buffer);
 
 	proxy = gst_mfx_video_meta_get_surface_proxy(meta);
 	if (!proxy)
 		goto no_surface;
 
-	surface = gst_mfx_video_meta_get_surface(meta);
-	if (!surface)
-		goto no_surface;
-
-
 	GST_DEBUG("render surface %" GST_MFX_ID_FORMAT,
-		GST_MFX_ID_ARGS(gst_mfx_surface_get_id(surface)));
+		GST_MFX_SURFACE_PROXY_MEMID(proxy));
 
 	if (!surface_rect)
 		surface_rect = (GstMfxRectangle *)
-            gst_mfx_video_meta_get_render_rect(meta);
+            gst_mfx_surface_proxy_get_crop_rect(proxy);
 
 	if (surface_rect)
 		GST_DEBUG("render rect (%d,%d), size %ux%u",
             surface_rect->x, surface_rect->y,
             surface_rect->width, surface_rect->height);
 
-	if (!gst_mfxsink_render_surface(sink, surface, surface_rect))
+	if (!gst_mfxsink_render_surface(sink, proxy, surface_rect))
 		goto error;
 
 	if (sink->signal_handoffs)
-		g_signal_emit(sink, gst_mfxsink_signals[HANDOFF_SIGNAL], 0, buffer);
+        g_signal_emit(sink, gst_mfxsink_signals[HANDOFF_SIGNAL], 0, src_buffer);
 
 	/* Retain VA surface until the next one is displayed */
 	/* Need to release the lock for the duration, otherwise a deadlock is possible */
-	//gst_mfx_display_unlock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
+	//gst_mfx_display_unlock(sink->display);
 	//gst_buffer_replace(&sink->video_buffer, buffer);
-	//gst_mfx_display_lock(GST_MFX_PLUGIN_BASE_DISPLAY(sink));
+	//gst_mfx_display_lock(sink->display);
 
 	ret = GST_FLOW_OK;
 
 done:
-	gst_buffer_unref(buffer);
 	return ret;
 
 error:
@@ -825,18 +793,6 @@ no_surface:
 }
 
 static gboolean
-gst_mfxsink_propose_allocation(GstBaseSink * base_sink, GstQuery * query)
-{
-	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(base_sink);
-
-	if (!gst_mfx_plugin_base_propose_allocation(plugin, query))
-		return FALSE;
-
-	gst_query_add_allocation_meta(query, GST_VIDEO_CROP_META_API_TYPE, NULL);
-	return TRUE;
-}
-
-static gboolean
 gst_mfxsink_query(GstBaseSink * base_sink, GstQuery * query)
 {
 	GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
@@ -845,7 +801,7 @@ gst_mfxsink_query(GstBaseSink * base_sink, GstQuery * query)
 
 	switch (GST_QUERY_TYPE(query)) {
 	case GST_QUERY_CONTEXT:
-		ret = gst_mfx_handle_context_query(query, plugin->display);
+		ret = gst_mfx_handle_context_query(query, plugin->aggregator);
 		break;
 	default:
 		ret = GST_BASE_SINK_CLASS(gst_mfxsink_parent_class)->query(base_sink,
@@ -863,6 +819,7 @@ gst_mfxsink_destroy(GstMfxSink * sink)
 
 	gst_buffer_replace(&sink->video_buffer, NULL);
 	gst_caps_replace(&sink->caps, NULL);
+	g_free(sink->display_name);
 }
 
 static void
@@ -882,11 +839,10 @@ gst_mfxsink_set_property(GObject * object,
 
 	switch (prop_id) {
 	case PROP_DISPLAY_TYPE:
-		gst_mfx_plugin_base_set_display_type(GST_MFX_PLUGIN_BASE(sink),
-			g_value_get_enum(value));
+	    sink->display_type_req = g_value_get_enum(value);
 		break;
 	case PROP_DISPLAY_NAME:
-		gst_mfx_plugin_base_set_display_name(GST_MFX_PLUGIN_BASE(sink),
+		gst_mfxsink_set_display_name(GST_MFX_PLUGIN_BASE(sink),
 			g_value_get_string(value));
 		break;
 	case PROP_FULLSCREEN:
@@ -912,10 +868,10 @@ gst_mfxsink_get_property(GObject * object,
 
 	switch (prop_id) {
 	case PROP_DISPLAY_TYPE:
-		g_value_set_enum(value, GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(sink));
+		g_value_set_enum(value, sink->display_type);
 		break;
 	case PROP_DISPLAY_NAME:
-		g_value_set_string(value, GST_MFX_PLUGIN_BASE_DISPLAY_NAME(sink));
+		g_value_set_string(value, sink->display_name);
 		break;
 	case PROP_FULLSCREEN:
 		g_value_set_boolean(value, sink->fullscreen);
@@ -955,19 +911,6 @@ gst_mfxsink_unlock_stop(GstBaseSink * base_sink)
 }
 
 static void
-gst_mfxsink_set_bus(GstElement * element, GstBus * bus)
-{
-	/* Make sure to allocate a VA display in the sink element first,
-	so that upstream elements could query a display that was
-	allocated here, and that exactly matches what the user
-	requested through the "display" property */
-	if (!GST_ELEMENT_BUS(element) && bus)
-		gst_mfxsink_ensure_display(GST_MFXSINK_CAST(element));
-
-	GST_ELEMENT_CLASS(gst_mfxsink_parent_class)->set_bus(element, bus);
-}
-
-static void
 gst_mfxsink_class_init(GstMfxSinkClass * klass)
 {
 	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
@@ -982,7 +925,6 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		GST_PLUGIN_NAME, 0, GST_PLUGIN_DESC);
 
 	gst_mfx_plugin_base_class_init(base_plugin_class);
-	//base_plugin_class->display_changed = gst_mfxsink_display_changed;
 
 	object_class->finalize = gst_mfxsink_finalize;
 	object_class->set_property = gst_mfxsink_set_property;
@@ -993,13 +935,11 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 	basesink_class->get_caps = gst_mfxsink_get_caps;
 	basesink_class->set_caps = gst_mfxsink_set_caps;
 	basesink_class->query = GST_DEBUG_FUNCPTR(gst_mfxsink_query);
-	basesink_class->propose_allocation = gst_mfxsink_propose_allocation;
 	basesink_class->unlock = gst_mfxsink_unlock;
 	basesink_class->unlock_stop = gst_mfxsink_unlock_stop;
 
 	videosink_class->show_frame = GST_DEBUG_FUNCPTR(gst_mfxsink_show_frame);
 
-	element_class->set_bus = gst_mfxsink_set_bus;
 	gst_element_class_set_static_metadata(element_class,
 		"MFX sink", "Sink/Video", GST_PLUGIN_DESC,
 		"Ishmael Sameen <ishmael.visayana.sameen@intel.com>");
@@ -1083,7 +1023,7 @@ gst_mfxsink_init(GstMfxSink * sink)
 	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(sink);
 
 	gst_mfx_plugin_base_init(plugin, GST_CAT_DEFAULT);
-	gst_mfx_plugin_base_set_display_type(plugin, DEFAULT_DISPLAY_TYPE);
+	sink->display_type_req = DEFAULT_DISPLAY_TYPE;
 
 	sink->video_par_n = 1;
 	sink->video_par_d = 1;

@@ -5,8 +5,7 @@
 #include <gst/video/gstvideodecoder.h>
 #include <gst/video/gstvideoencoder.h>
 #include <gst/video/gstvideosink.h>
-#include "gstmfxdisplay.h"
-#include "gstmfxcontext.h"
+#include "gstmfxtaskaggregator.h"
 
 
 G_BEGIN_DECLS
@@ -66,15 +65,8 @@ typedef struct _GstMfxPluginBaseClass GstMfxPluginBaseClass;
 #define GST_MFX_PLUGIN_BASE_SRC_PAD_QUERYFYNC(plugin) \
 	(GST_MFX_PLUGIN_BASE(plugin)->srcpad_query)
 
-#define GST_MFX_PLUGIN_BASE_DISPLAY(plugin) \
-	(GST_MFX_PLUGIN_BASE(plugin)->display)
-#define GST_MFX_PLUGIN_BASE_DISPLAY_TYPE(plugin) \
-	(GST_MFX_PLUGIN_BASE(plugin)->display_type)
-#define GST_MFX_PLUGIN_BASE_DISPLAY_NAME(plugin) \
-	(GST_MFX_PLUGIN_BASE(plugin)->display_name)
-#define GST_MFX_PLUGIN_BASE_DISPLAY_REPLACE(plugin, new_display) \
-	(gst_mfx_display_replace(&GST_MFX_PLUGIN_BASE_DISPLAY(plugin), \
-	(new_display)))
+#define GST_MFX_PLUGIN_BASE_AGGREGATOR(plugin) \
+	(GST_MFX_PLUGIN_BASE(plugin)->aggregator)
 
 struct _GstMfxPluginBase
 {
@@ -95,7 +87,6 @@ struct _GstMfxPluginBase
 	gboolean sinkpad_caps_changed;
 	gboolean sinkpad_caps_is_raw;
 	GstVideoInfo sinkpad_info;
-	GstBufferPool *sinkpad_buffer_pool;
 	guint sinkpad_buffer_size;
 
 	GstPad *srcpad;
@@ -107,12 +98,7 @@ struct _GstMfxPluginBase
 	GstPadQueryFunction srcpad_query;
 	GstPadQueryFunction sinkpad_query;
 
-	GstMfxContextAllocatorVaapi alloc_ctx;
-
-	GstMfxDisplay *display;
-	GstMfxDisplayType display_type;
-	GstMfxDisplayType display_type_req;
-	gchar *display_name;
+	GstMfxTaskAggregator *aggregator;
 
 	GstCaps *allowed_raw_caps;
 };
@@ -130,7 +116,6 @@ struct _GstMfxPluginBaseClass
 	} parent_class;
 
 	gboolean(*has_interface) (GstMfxPluginBase * plugin, GType type);
-	void(*display_changed) (GstMfxPluginBase * plugin);
 };
 
 void
@@ -153,38 +138,16 @@ void
 gst_mfx_plugin_base_close(GstMfxPluginBase * plugin);
 
 gboolean
-gst_mfx_plugin_base_has_display_type(GstMfxPluginBase * plugin,
-	GstMfxDisplayType display_type_req);
-
-void
-gst_mfx_plugin_base_set_display_type(GstMfxPluginBase * plugin,
-	GstMfxDisplayType display_type);
-
-void
-gst_mfx_plugin_base_set_display_name(GstMfxPluginBase * plugin,
-	const gchar * display_name);
-
-gboolean
-gst_mfx_plugin_base_ensure_display(GstMfxPluginBase * plugin);
+gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin);
 
 gboolean
 gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
 	GstCaps * outcaps);
 
 gboolean
-gst_mfx_plugin_base_propose_allocation(GstMfxPluginBase * plugin,
-	GstQuery * query);
-
-gboolean
 gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	GstQuery * query);
 
-GstFlowReturn
-gst_mfx_plugin_base_get_input_buffer(GstMfxPluginBase * plugin,
-	GstBuffer * inbuf, GstBuffer ** outbuf_ptr);
-
-GstCaps *
-gst_mfx_plugin_base_get_allowed_raw_caps(GstMfxPluginBase * plugin);
 
 G_END_DECLS
 

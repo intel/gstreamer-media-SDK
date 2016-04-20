@@ -28,9 +28,7 @@ struct gl_version_info_s
 
 static const GlVersionInfo gl_version_info[] = {
 	{ 0, EGL_OPENGL_BIT, EGL_OPENGL_API, "OpenGL" },
-	{ 1, EGL_OPENGL_ES_BIT, EGL_OPENGL_ES_API, "OpenGL_ES" },
 	{ 2, EGL_OPENGL_ES2_BIT, EGL_OPENGL_ES_API, "OpenGL_ES2" },
-	{ 3, EGL_OPENGL_ES3_BIT_KHR, EGL_OPENGL_ES_API, "OpenGL_ES3" },
 	{ 0, }
 };
 
@@ -171,14 +169,6 @@ static const gchar *gl_library_names[] = {
 };
 #endif
 
-#if (USE_GLES_VERSION_MASK & (1U << 1))
-static const gchar *gles1_library_names[] = {
-	"libGLESv1_CM.la",
-	"libGLESv1_CM.so.1",
-	NULL
-};
-#endif
-
 #if (USE_GLES_VERSION_MASK & (1U << 2))
 static const gchar *gles2_library_names[] = {
 	"libGLESv2.la",
@@ -194,22 +184,8 @@ static const gchar **gl_library_names_group[] = {
 	NULL
 };
 
-static const gchar **gles1_library_names_group[] = {
-#if (USE_GLES_VERSION_MASK & (1U << 1))
-	gles1_library_names,
-#endif
-	NULL
-};
-
 static const gchar **gles2_library_names_group[] = {
 #if (USE_GLES_VERSION_MASK & (1U << 2))
-	gles2_library_names,
-#endif
-	NULL
-};
-
-static const gchar **gles3_library_names_group[] = {
-#if (USE_GLES_VERSION_MASK & (1U << 3))
 	gles2_library_names,
 #endif
 	NULL
@@ -224,14 +200,8 @@ egl_vtable_get_library_names_group(guint gles_version)
 	case 0:
 		library_names_group = gl_library_names_group;
 		break;
-	case 1:
-		library_names_group = gles1_library_names_group;
-		break;
 	case 2:
 		library_names_group = gles2_library_names_group;
-		break;
-	case 3:
-		library_names_group = gles3_library_names_group;
 		break;
 	default:
 		library_names_group = NULL;
@@ -718,8 +688,8 @@ egl_config_new(EglDisplay * display, guint gles_version, GstVideoFormat format)
 	if (!vinfo)
 		return NULL;
 
-	//*attrib++ = EGL_COLOR_BUFFER_TYPE;
-	//*attrib++ = EGL_RGB_BUFFER;
+	*attrib++ = EGL_COLOR_BUFFER_TYPE;
+	*attrib++ = EGL_RGB_BUFFER;
 	*attrib++ = EGL_RED_SIZE;
 	*attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_R);
 	*attrib++ = EGL_GREEN_SIZE;
@@ -727,10 +697,10 @@ egl_config_new(EglDisplay * display, guint gles_version, GstVideoFormat format)
 	*attrib++ = EGL_BLUE_SIZE;
 	*attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_B);
 	*attrib++ = EGL_ALPHA_SIZE;
-	//*attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_A);
-	*attrib++ = 0;
-	*attrib++ = EGL_DEPTH_SIZE;
-	*attrib++ = 24;
+	*attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_A);
+	//*attrib++ = 0;
+	//*attrib++ = EGL_DEPTH_SIZE;
+	//*attrib++ = 24;
 	*attrib++ = EGL_RENDERABLE_TYPE;
 	*attrib++ = vinfo->gl_api_bit;
 	*attrib++ = EGL_NONE;
@@ -1343,37 +1313,18 @@ egl_matrix_set_identity(gfloat m[16])
 * Return value: the newly created texture name
 */
 guint
-egl_create_texture(EglContext * ctx, guint target, guint format,
-	guint width, guint height)
+egl_create_texture_from_data(EglContext * ctx, guint target, guint format,
+	guint width, guint height, gpointer data)
 {
 	EglVTable *const vtable = egl_context_get_vtable(ctx, TRUE);
-	guint internal_format, texture, bytes_per_component;
-
-	internal_format = format;
-	switch (format) {
-	case GL_LUMINANCE:
-		bytes_per_component = 1;
-		break;
-	case GL_LUMINANCE_ALPHA:
-		bytes_per_component = 2;
-		break;
-	case GL_RGBA:
-	case GL_BGRA_EXT:
-		internal_format = GL_RGBA;
-		bytes_per_component = 4;
-		break;
-	default:
-		bytes_per_component = 0;
-		break;
-	}
-	g_assert(bytes_per_component > 0);
+	guint texture, bytes_per_component = 4;
 
 	vtable->glGenTextures(1, &texture);
 	vtable->glBindTexture(target, texture);
 
 	if (width > 0 && height > 0)
-		vtable->glTexImage2D(target, 0, internal_format, width, height, 0,
-            format, GL_UNSIGNED_BYTE, NULL);
+		vtable->glTexImage2D(target, 0, GL_RGBA, width, height, 0,
+            format, GL_UNSIGNED_BYTE, data);
 
 	vtable->glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	vtable->glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

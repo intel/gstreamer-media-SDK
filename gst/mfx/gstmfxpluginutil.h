@@ -1,15 +1,15 @@
 #ifndef GST_MFX_PLUGIN_UTIL_H
 #define GST_MFX_PLUGIN_UTIL_H
 
-#include "gstmfxdisplay.h"
-#include "gstmfxsurface.h"
+#include "gstmfxtaskaggregator.h"
+#include "gstmfxsurfaceproxy.h"
 #include "gstmfxvideomemory.h"
 
 gboolean
-gst_mfx_ensure_display(GstElement * element, GstMfxDisplayType type);
+gst_mfx_ensure_aggregator(GstElement * element);
 
 gboolean
-gst_mfx_handle_context_query (GstQuery * query, GstMfxDisplay * display);
+gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * context);
 
 gboolean
 gst_mfx_append_surface_caps(GstCaps * out_caps, GstCaps * in_caps);
@@ -23,9 +23,6 @@ gst_mfx_append_surface_caps(GstCaps * out_caps, GstCaps * in_caps);
 /* Helpers for GValue construction for video formats */
 gboolean
 gst_mfx_value_set_format(GValue * value, GstVideoFormat format);
-
-gboolean
-gst_mfx_value_set_format_list(GValue * value, GArray * formats);
 
 /* Helpers to build video caps */
 typedef enum
@@ -46,7 +43,7 @@ gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
 	const gchar * features_string);
 
 GstMfxCapsFeature
-gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat format,
+gst_mfx_find_preferred_caps_feature(GstPad * pad,
 	GstVideoFormat * out_format_ptr);
 
 const gchar *
@@ -56,19 +53,22 @@ gboolean
 gst_mfx_caps_feature_contains(const GstCaps * caps,
 	GstMfxCapsFeature feature);
 
+/* Helpers to handle interlaced contents */
+# define GST_CAPS_INTERLACED_MODES \
+    "interlace-mode = (string){ progressive, interleaved, mixed }"
+
 #define GST_MFX_MAKE_SURFACE_CAPS					\
 	GST_VIDEO_CAPS_MAKE_WITH_FEATURES(					\
-	GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12 }")
-
-#define GST_MFX_MAKE_ENC_SURFACE_CAPS				\
-	GST_VIDEO_CAPS_MAKE_WITH_FEATURES(					\
-	GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, NV12, I420, YV12 }")
+	GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
 
 gboolean
 gst_caps_has_mfx_surface(GstCaps * caps);
 
+gboolean
+gst_mfx_query_peer_has_raw_caps(GstPad * pad);
+
 void
 gst_video_info_change_format(GstVideoInfo * vip, GstVideoFormat format,
-guint width, guint height);
+    guint width, guint height);
 
 #endif /* GST_MFX_PLUGIN_UTIL_H */

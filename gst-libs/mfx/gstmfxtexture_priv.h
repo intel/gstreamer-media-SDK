@@ -70,7 +70,7 @@ G_BEGIN_DECLS
 /* GstMfxTextureClass hooks */
 typedef gboolean(*GstMfxTextureAllocateFunc) (GstMfxTexture * texture);
 typedef gboolean(*GstMfxTexturePutSurfaceFunc) (GstMfxTexture * texture,
-	GstMfxSurface * surface);
+	GstMfxSurfaceProxy * proxy);
 
 typedef struct _GstMfxTextureClass GstMfxTextureClass;
 
@@ -93,7 +93,7 @@ struct _GstMfxTexture {
 
 /**
 * GstMfxTextureClass:
-* @put_surface: virtual function to render a #GstMfxSurface into a texture
+* @put_surface: virtual function to render a #GstMfxSurfaceProxy into a texture
 *
 * Base class for API-dependent textures.
 */

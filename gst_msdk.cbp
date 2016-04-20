@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=/home/nuc/Videos/trailer_1080p.mov ! qtdemux ! h264parse ! mfxdecode ! mfxsink sync=false display=egl" />
+				<Option parameters='--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/trailer_1080p.mov&quot; ! qtdemux ! avdec_h264 ! videoconvert ! video/x-raw,format=YV12 ! mfxvpp width=1280 ! video/x-raw,format=NV12 ! glimagesink sync=false' />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -44,7 +44,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters="--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=/home/nuc/Videos/HD.Club-4K-Chimei-inn-60mbps.mp4 ! qtdemux ! h264parse ! mfxdecode ! mfxsink sync=false display=egl" />
+				<Option parameters='--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/HD.Club-4K-Chimei-inn-60mbps.mp4&quot; ! qtdemux ! h264parse ! mfxdecode ! mfxvpp width=1280 brightness=-90 ! mfxsink sync=false' />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -103,10 +103,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxcodecmap.h" />
-		<Unit filename="gst-libs/mfx/gstmfxcontext.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxcontext.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdebug.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdecoder.c">
 			<Option compilerVar="CC" />
@@ -122,6 +118,10 @@
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_drm.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_drm_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxdisplay_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxfilter.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxfilter.h" />
 		<Unit filename="gst-libs/mfx/gstmfxminiobject.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -131,21 +131,10 @@
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxobject.h" />
 		<Unit filename="gst-libs/mfx/gstmfxobject_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxobjectpool.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxobjectpool.h" />
-		<Unit filename="gst-libs/mfx/gstmfxobjectpool_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxprimebufferproxy.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxprimebufferproxy.h" />
-		<Unit filename="gst-libs/mfx/gstmfxprimebufferproxy_priv.h" />
-		<Unit filename="gst-libs/mfx/gstmfxsurface.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstmfxsurface.h" />
-		<Unit filename="gst-libs/mfx/gstmfxsurface_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxsurfacepool.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -154,28 +143,34 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxsurfaceproxy.h" />
-		<Unit filename="gst-libs/mfx/gstmfxsurfaceproxy_priv.h" />
+		<Unit filename="gst-libs/mfx/gstmfxtask.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxtask.h" />
+		<Unit filename="gst-libs/mfx/gstmfxtaskaggregator.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxtaskaggregator.h" />
 		<Unit filename="gst-libs/mfx/gstmfxtexture.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxtexture.h" />
 		<Unit filename="gst-libs/mfx/gstmfxtexture_priv.h" />
 		<Unit filename="gst-libs/mfx/gstmfxtypes.h" />
+		<Unit filename="gst-libs/mfx/gstmfxutils_vaapi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst-libs/mfx/gstmfxutils_vaapi.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst-libs/mfx/gstmfxwindow.h" />
 		<Unit filename="gst-libs/mfx/gstmfxwindow_priv.h" />
-		<Unit filename="gst-libs/mfx/gstvaapiimage.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="gst-libs/mfx/gstvaapiimage.h" />
-		<Unit filename="gst-libs/mfx/gstvaapiimage_priv.h" />
 		<Unit filename="gst-libs/mfx/sysdeps.h" />
-		<Unit filename="gst-libs/mfx/video-utils.c">
+		<Unit filename="gst-libs/mfx/video-format.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="gst-libs/mfx/video-utils.h" />
+		<Unit filename="gst-libs/mfx/video-format.h" />
 		<Unit filename="gst-libs/mfx/wayland/gstmfxdisplay_wayland.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -222,6 +217,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="gst/mfx/gstmfxpluginutil.h" />
+		<Unit filename="gst/mfx/gstmfxpostproc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gst/mfx/gstmfxpostproc.h" />
 		<Unit filename="gst/mfx/gstmfxsink.c">
 			<Option compilerVar="CC" />
 		</Unit>

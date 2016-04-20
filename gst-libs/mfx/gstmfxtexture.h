@@ -2,7 +2,7 @@
 #define GST_VAAPI_TEXTURE_H
 
 #include "gstmfxtypes.h"
-#include "gstmfxsurface.h"
+#include "gstmfxsurfaceproxy.h"
 
 G_BEGIN_DECLS
 
@@ -87,7 +87,7 @@ gst_mfx_texture_set_orientation_flags(GstMfxTexture * texture,
 
 gboolean
 gst_mfx_texture_put_surface(GstMfxTexture * texture,
-	GstMfxSurface * surface);
+	GstMfxSurfaceProxy * proxy);
 
 G_END_DECLS
 

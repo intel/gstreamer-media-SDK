@@ -5,10 +5,10 @@
 #include <gst/gstallocator.h>
 #include <gst/video/video-info.h>
 #include "gstmfxsurfaceproxy.h"
-#include "gstvaapiimage.h"
+#include "gstmfxutils_vaapi.h"
 #include "gstmfxvideometa.h"
-#include "gstmfxobjectpool.h"
 #include "gstmfxdisplay.h"
+#include "gstmfxtaskaggregator.h"
 #include <gst/allocators/allocators.h>
 
 G_BEGIN_DECLS
@@ -42,8 +42,6 @@ typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
  * GstMfxVideoMemoryMapType:
  * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE: map with gst_buffer_map()
  *   and flags = 0x00 to return a #GstMfxSurfaceProxy
- * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_PLANAR: map individual plane with
- *   gst_video_frame_map()
  * @GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR: map with gst_buffer_map()
  *   and flags = GST_MAP_READ to return the raw pixels of the whole image
  *
@@ -52,8 +50,8 @@ typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
 typedef enum
 {
     GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE = 1,
-    GST_MFX_VIDEO_MEMORY_MAP_TYPE_PLANAR,
-    GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR
+    GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR,
+    GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR
 } GstMfxVideoMemoryMapType;
 
 /**
@@ -69,9 +67,8 @@ struct _GstMfxVideoMemory
 	/*< private >*/
 	GstMfxSurfaceProxy *proxy;
 	const GstVideoInfo *surface_info;
-	GstMfxSurface *surface;
 	const GstVideoInfo *image_info;
-	GstVaapiImage *image;
+	VaapiImage *image;
 	GstMfxVideoMeta *meta;
 	guint map_type;
 	gint map_count;
@@ -120,7 +117,6 @@ struct _GstMfxVideoAllocator
 
 	/*< private >*/
 	GstVideoInfo video_info;
-	GstMfxObjectPool *surface_pool;
 	GstVideoInfo image_info;
 };
 
@@ -139,7 +135,7 @@ gst_mfx_video_allocator_get_type(void);
 
 GstAllocator *
 gst_mfx_video_allocator_new(GstMfxDisplay * display,
-	GstMfxContextAllocatorVaapi * ctx, const GstVideoInfo * vip);
+	const GstVideoInfo * vip);
 
 const GstVideoInfo *
 gst_allocator_get_mfx_video_info(GstAllocator * allocator,

@@ -1,0 +1,63 @@
+set (BASE_LIBRARIES "")
+
+pkg_check_modules (GLIB-2.0 REQUIRED glib-2.0)
+pkg_check_modules (GOBJECT-2.0 REQUIRED gobject-2.0)
+pkg_check_modules (GIO-2.0 REQUIRED gio-2.0)
+pkg_check_modules (GSTREAMER REQUIRED gstreamer-1.0>=1.4)
+pkg_check_modules (GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0>=1.4)
+pkg_check_modules (LIBVA REQUIRED libva)
+pkg_check_modules (LIBDRM REQUIRED libdrm)
+pkg_check_modules (LIBDRM_INTEL REQUIRED libdrm_intel)
+pkg_check_modules (LIBVA_DRM REQUIRED libva-drm)
+pkg_check_modules (LIBUDEV REQUIRED libudev)
+
+if(GLIB-2.0_FOUND)
+    include_directories (${GLIB-2.0_INCLUDE_DIRS})
+    list (APPEND BASE_LIBRARIES ${GLIB-2.0_LIBRARIES})
+endif()
+
+if(GOBJECT-2.0_FOUND)
+    include_directories (${GOBJECT-2.0_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${GOBJECT-2.0_LIBRARIES})
+endif()
+
+if(GIO-2.0_FOUND)
+    include_directories (${GIO-2.0_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${GIO-2.0_LIBRARIES})
+endif()
+
+if(GSTREAMER_FOUND)
+    include_directories (${GSTREAMER_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${GSTEAMER_LIBRARIES})
+endif()
+
+if(GSTREAMER_VIDEO_FOUND)
+    include_directories (${GSTREAMER_VIDEO_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${GSTREAMER_VIDEO_LIBRARIES})
+    set(GST_API_VERSION ${GSTREAMER_VERSION})
+endif()
+
+if(LIBVA_FOUND)
+    include_directories (${LIBVA_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${LIBVA_LIBRARIES})
+endif()
+
+if(LIBDRM_FOUND)
+    include_directories (${LIBDRM_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${LIBDRM_LIBRARIES})
+endif()
+
+if(LIBDRM_INTEL_FOUND)
+    include_directories (${LIBDRM_INTEL_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${LIBDRM_INTEL_LIBRARIES})
+endif()
+
+if(LIBVA_DRM_FOUND)
+    include_directories (${LIBVA_DRM_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${LIBVA_DRM_LIBRARIES})
+endif()
+
+if(LIBUDEV_FOUND)
+    include_directories (${LIBUDEV_INCLUDE_DIRS})
+    list(APPEND BASE_LIBRARIES ${LIBUDEV_DRM_LIBRARIES})
+endif()

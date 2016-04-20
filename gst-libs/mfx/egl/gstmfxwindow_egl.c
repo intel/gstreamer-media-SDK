@@ -62,7 +62,7 @@ typedef struct
 typedef struct
 {
 	GstMfxWindowEGL *window;
-	GstMfxSurface *surface;
+	GstMfxSurfaceProxy *proxy;
 	const GstMfxRectangle *src_rect;
 	const GstMfxRectangle *dst_rect;
 	gboolean success;             /* result */
@@ -86,99 +86,15 @@ static const gchar *vert_shader_text =
 
 static const gchar *frag_shader_text_rgba =
 	"#ifdef GL_ES\n"
-	"precision mediump float;\n"
-	"#endif\n"
-	"\n"
-	"uniform sampler2D tex0;\n"
-	"\n"
+    "precision mediump float;\n"
+    "#endif\n"
+    "uniform sampler2D tex0;\n"
+    "\n"
 	"varying vec2 v_texcoord;\n"
 	"\n"
 	"void main () {\n"
 	"  gl_FragColor = texture2D (tex0, v_texcoord);\n"
 	"}\n";
-
-/*
- * For 8-bit per sample, and RGB limited range [16, 235]:
- *
- *             219                219                       219
- *   Y =  16 + --- * Kr     * R + --- * (1 - Kr - Kb) * G + --- * Kb     * B
- *             255                255                       255
- *
- *             112     Kr         112   1 - (Kr + Kb)       112
- *   U = 128 - --- * ------ * R - --- * ------------- * G + ---          * B
- *             255   1 - Kb       255      1 - Kb           255
- *
- *             112                112   1 - (Kr + Kb)       112     Kb
- *   V = 128 + ---          * R - --- * ------------- * G - --- * ------ * B
- *             255                255      1 - Kr           255   1 - Kr
- *
- * Constants for ITU-R BT.601 (SDTV):
- *   Kb = 0.114
- *   Kr = 0.299
- *
- * Constants for ITU-R BT.709 (HDTV):
- *   Kb = 0.0722
- *   Kr = 0.2126
- *
- * Constants for SMPTE 240M:
- *   Kb = 0.087
- *   Kr = 0.212
- *
- * Matrix generation with xcas:
- *   inverse([
- *   [  Kr         ,  1-(Kr+Kb)          ,  Kb        ]*219/255,
- *   [ -Kr/(1-Kb)  , -(1-(Kr+Kb))/(1-Kb) ,  1         ]*112/255,
- *   [  1          , -(1-(Kr+Kb))/(1-Kr) , -Kb/(1-Kr) ]*112/255])
- *
- * As a reminder:
- * - Kb + Kr + Kg = 1.0
- * - Y range is [0.0, 1.0], U/V range is [-1.0, 1.0]
- */
-#define YUV2RGB_COLOR_BT601_LIMITED                     \
-    "const vec3 yuv2rgb_ofs = vec3(0.0625, 0.5, 0.5);"  \
-    "const mat3 yuv2rgb_mat = "                         \
-    "    mat3(1.16438356,  0         ,  1.61651785, "   \
-    "         1.16438356, -0.38584641, -0.78656070, "   \
-    "         1.16438356,  2.01723214, 0          );\n"
-
-#define YUV2RGB_COLOR_BT709_LIMITED                     \
-    "const vec3 yuv2rgb_ofs = vec3(0.0625, 0.5, 0.5);"  \
-    "const mat3 yuv2rgb_mat = "                         \
-    "    mat3(1.16438356,  0         ,  1.79274107, "   \
-    "         1.16438356, -0.21324861, -0.53290932, "   \
-    "         1.16438356,  2.11240178, 0          );\n"
-
-#define YUV2RGB_COLOR_SMPTE240M_LIMITED                 \
-    "const vec3 yuv2rgb_ofs = vec3(0.0625, 0.5, 0.5);"  \
-    "const mat3 yuv2rgb_mat = "                         \
-    "    mat3(1.16438356,  0         ,  1.79410714, "   \
-    "         1.16438356, -0.25798483, -0.54258304, "   \
-    "         1.16438356,  2.07870535,  0         );\n"
-
-#define YUV2RGB_COLOR(CONV)                             \
-    G_PASTE(YUV2RGB_COLOR_,CONV)                   \
-    "vec3 rgb = (yuv - yuv2rgb_ofs) * yuv2rgb_mat;\n"   \
-    "gl_FragColor = vec4(rgb, 1);\n"
-
-static const char *frag_shader_text_nv12 =
-    "#ifdef GL_ES\n"
-    "#extension GL_OES_EGL_image_external : require\n"
-    "precision mediump float;\n"
-    "uniform samplerExternalOES tex0;\n"
-    "uniform samplerExternalOES tex1;\n"
-    "#else\n"
-    "uniform sampler2D tex0;\n"
-    "uniform sampler2D tex1;\n"
-    "#endif\n"
-    "\n"
-    "varying vec2 v_texcoord;\n"
-    "\n"
-    "void main() {\n"
-    "    vec4 p_y  = texture2D(tex0, v_texcoord);\n"
-    "    vec4 p_uv = texture2D(tex1, v_texcoord);\n"
-    "    vec3 yuv  = vec3(p_y.r, p_uv.r, p_uv.g);\n"
-    YUV2RGB_COLOR(BT709_LIMITED)
-    "}\n";
 
 static gboolean
 ensure_texture(GstMfxWindowEGL * window, guint width, guint height)
@@ -192,9 +108,7 @@ ensure_texture(GstMfxWindowEGL * window, guint width, guint height)
 		return TRUE;*/
 
 	texture = gst_mfx_texture_egl_new(display,
-		GST_MFX_DISPLAY_EGL(display)->gles_version == 0 ?
-        GL_TEXTURE_2D : GL_TEXTURE_EXTERNAL_OES,
-        GL_RGBA, width, height);
+        GL_TEXTURE_2D, GL_RGBA, width, height);
 
 	gst_mfx_texture_replace(&window->texture, texture);
 	gst_mfx_texture_replace(&texture, NULL);
@@ -216,10 +130,8 @@ ensure_shaders(GstMfxWindowEGL * window)
 	if (window->render_program)
 		return TRUE;
 
-	//program = egl_program_new(window->egl_window->context,
-		//frag_shader_text_rgba, vert_shader_text);
-    program = egl_program_new(window->egl_window->context,
-		frag_shader_text_nv12, vert_shader_text);
+	program = egl_program_new(window->egl_window->context,
+		frag_shader_text_rgba, vert_shader_text);
 	if (!program)
 		return FALSE;
 
@@ -434,14 +346,13 @@ static gboolean
 do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
     const GstMfxRectangle * dst_rect)
 {
-	//const GLuint tex_id = GST_MFX_OBJECT_ID(window->texture);
-	GstMfxTextureEGL *const texture = GST_MFX_TEXTURE_EGL(window->texture);
+	const GLuint tex_id = GST_MFX_OBJECT_ID(window->texture);
 	EglVTable *const vtable = window->egl_vtable;
+	EglProgram *program;
 	GLfloat x0, y0, x1, y1;
 	GLfloat texcoords[4][2];
 	GLfloat positions[4][2];
 	guint tex_width, tex_height, win_width, win_height;
-	uint32_t i;
 
 	if (!ensure_shaders(window))
 		return FALSE;
@@ -450,6 +361,7 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 	tex_height = GST_MFX_TEXTURE_HEIGHT(window->texture);
 	win_width = dst_rect->width + dst_rect->x * 2;
 	win_height = dst_rect->height + dst_rect->y * 2;
+	program = window->render_program;
 
 	// Source coords in VA surface
 	x0 = (GLfloat)src_rect->x / tex_width;
@@ -481,46 +393,22 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 
 	vtable->glClear(GL_COLOR_BUFFER_BIT);
 
-	/*if (G_UNLIKELY(window->egl_window->context->config->gles_version == 1)) {
-		vtable->glBindTexture(GST_MFX_TEXTURE_TARGET(window->texture), tex_id);
-		vtable->glEnableClientState(GL_VERTEX_ARRAY);
-		vtable->glVertexPointer(2, GL_FLOAT, 0, positions);
-		vtable->glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		vtable->glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+    vtable->glUseProgram(program->base.handle.u);
+    vtable->glUniformMatrix4fv(program->uniforms[RENDER_PROGRAM_VAR_PROJ],
+        1, GL_FALSE, window->render_projection);
+    vtable->glEnableVertexAttribArray(0);
+    vtable->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, positions);
+    vtable->glEnableVertexAttribArray(1);
+    vtable->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
 
-		vtable->glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    vtable->glBindTexture(GST_MFX_TEXTURE_TARGET(window->texture), tex_id);
+    vtable->glUniform1i(program->uniforms[RENDER_PROGRAM_VAR_TEX0], 0);
 
-		vtable->glDisableClientState(GL_VERTEX_ARRAY);
-		vtable->glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
-	else {*/
-		EglProgram *const program = window->render_program;
+    vtable->glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-		vtable->glUseProgram(program->base.handle.u);
-		vtable->glUniformMatrix4fv(program->uniforms[RENDER_PROGRAM_VAR_PROJ],
-			1, GL_FALSE, window->render_projection);
-		vtable->glEnableVertexAttribArray(0);
-		vtable->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, positions);
-		vtable->glEnableVertexAttribArray(1);
-		vtable->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
-
-		for (i = 0; i < texture->num_textures; i++) {
-            vtable->glActiveTexture(GL_TEXTURE0 + i);
-            vtable->glBindTexture(GST_MFX_TEXTURE_TARGET(window->texture),
-                texture->textures[i]);
-            vtable->glUniform1i(program->uniforms[i+1], i);
-        }
-
-		//vtable->glBindTexture(GST_MFX_TEXTURE_TARGET(window->texture), tex_id);
-		//vtable->glUniform1i(program->uniforms[RENDER_PROGRAM_VAR_TEX0], 0);
-
-		vtable->glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-		vtable->glDisableVertexAttribArray(1);
-		vtable->glDisableVertexAttribArray(0);
-		vtable->glUseProgram(0);
-
-	//}
+    vtable->glDisableVertexAttribArray(1);
+    vtable->glDisableVertexAttribArray(0);
+    vtable->glUseProgram(0);
 
 	eglSwapBuffers(window->egl_window->context->display->base.handle.p,
 		window->egl_window->base.handle.p);
@@ -530,12 +418,12 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 
 static gboolean
 do_upload_surface_unlocked(GstMfxWindowEGL * window,
-	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
+	GstMfxSurfaceProxy * proxy, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
 	if (!ensure_texture(window, src_rect->width, src_rect->height))
 		return FALSE;
-	if (!gst_mfx_texture_put_surface(window->texture, surface))
+	if (!gst_mfx_texture_put_surface(window->texture, proxy))
 		return FALSE;
 	if (!do_render_texture(window, src_rect, dst_rect))
 		return FALSE;
@@ -553,7 +441,7 @@ do_upload_surface(UploadSurfaceArgs * args)
 
 	GST_MFX_OBJECT_LOCK_DISPLAY(window);
 	if (egl_context_set_current(window->egl_window->context, TRUE, &old_cs)) {
-		args->success = do_upload_surface_unlocked(window, args->surface,
+		args->success = do_upload_surface_unlocked(window, args->proxy,
 			args->src_rect, args->dst_rect);
 		egl_context_set_current(window->egl_window->context, FALSE, &old_cs);
 	}
@@ -562,10 +450,10 @@ do_upload_surface(UploadSurfaceArgs * args)
 
 static gboolean
 gst_mfx_window_egl_render(GstMfxWindowEGL * window,
-	GstMfxSurface * surface, const GstMfxRectangle * src_rect,
+	GstMfxSurfaceProxy * proxy, const GstMfxRectangle * src_rect,
 	const GstMfxRectangle * dst_rect)
 {
-	UploadSurfaceArgs args = { window, surface, src_rect, dst_rect };
+	UploadSurfaceArgs args = { window, proxy, src_rect, dst_rect };
 
 	return egl_context_run(window->egl_window->context,
 		(EglContextRunFunc)do_upload_surface, &args) && args.success;

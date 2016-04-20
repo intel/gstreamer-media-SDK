@@ -11,45 +11,27 @@ struct _GstMfxVideoMeta
 {
 	GstBuffer *buffer;
 	gint ref_count;
-	GstMfxDisplay *display;
 	GstMfxSurfaceProxy *proxy;
-	GstMfxRectangle render_rect;
-	guint has_render_rect : 1;
 };
 
 static inline void
-set_display (GstMfxVideoMeta * meta, GstMfxDisplay * display)
-{
-    gst_mfx_display_replace (&meta->display, display);
-}
-
-static gboolean
 set_surface_proxy(GstMfxVideoMeta * meta, GstMfxSurfaceProxy * proxy)
 {
-	GstMfxSurface *surface;
-
-	surface = GST_MFX_SURFACE_PROXY_SURFACE(proxy);
-	if (!surface)
-		return FALSE;
-
 	meta->proxy = gst_mfx_surface_proxy_ref(proxy);
-	set_display(meta, gst_mfx_object_get_display(GST_MFX_OBJECT(surface)));
-	return TRUE;
 }
 
 static gboolean
 set_surface_proxy_from_pool(GstMfxVideoMeta * meta, GstMfxSurfacePool * pool)
 {
 	GstMfxSurfaceProxy *proxy;
-	gboolean success;
 
-	proxy = gst_mfx_surface_proxy_new_from_pool(GST_MFX_SURFACE_POOL(pool));
+	proxy = gst_mfx_surface_proxy_new_from_pool(pool);
 	if (!proxy)
 		return FALSE;
 
-	success = set_surface_proxy(meta, proxy);
+	set_surface_proxy(meta, proxy);
 	gst_mfx_surface_proxy_unref(proxy);
-	return success;
+	return TRUE;
 }
 
 static inline void
@@ -62,7 +44,6 @@ static void
 gst_mfx_video_meta_finalize(GstMfxVideoMeta * meta)
 {
 	gst_mfx_video_meta_destroy_proxy(meta);
-	gst_mfx_display_replace(&meta->display, NULL);
 }
 
 static void
@@ -70,9 +51,7 @@ gst_mfx_video_meta_init(GstMfxVideoMeta * meta)
 {
     meta->buffer = NULL;
     meta->ref_count = 1;
-    meta->display = NULL;
     meta->proxy = NULL;
-    meta->has_render_rect = FALSE;
 }
 
 static inline GstMfxVideoMeta *
@@ -99,7 +78,6 @@ _gst_mfx_video_meta_new(void)
 	return meta;
 }
 
-
 static inline void
 _gst_mfx_video_meta_free(GstMfxVideoMeta * meta)
 {
@@ -124,12 +102,8 @@ gst_mfx_video_meta_copy(GstMfxVideoMeta * meta)
 
     copy->buffer = NULL;
     copy->ref_count = 1;
-    copy->display = gst_mfx_display_ref (meta->display);
     copy->proxy = meta->proxy ? gst_mfx_surface_proxy_copy (meta->proxy) : NULL;
 
-	copy->has_render_rect = meta->has_render_rect;
-	if (copy->has_render_rect)
-		copy->render_rect = meta->render_rect;
 	return copy;
 }
 
@@ -159,7 +133,6 @@ gst_mfx_video_meta_new_from_pool(GstMfxSurfacePool * pool)
 	if (!set_surface_proxy_from_pool(meta, pool))
 		goto error;
 
-	set_display(meta, gst_mfx_object_pool_get_display(pool));
 	return meta;
 
 error:
@@ -225,14 +198,6 @@ gst_mfx_video_meta_replace (GstMfxVideoMeta ** old_meta_ptr,
         gst_mfx_video_meta_unref (old_meta);
 }
 
-GstMfxDisplay *
-gst_mfx_video_meta_get_display (GstMfxVideoMeta * meta)
-{
-    g_return_val_if_fail (GST_MFX_IS_VIDEO_META (meta), NULL);
-
-    return meta->display;
-}
-
 GstMfxSurfaceProxy *
 gst_mfx_video_meta_get_surface_proxy(GstMfxVideoMeta * meta)
 {
@@ -241,53 +206,16 @@ gst_mfx_video_meta_get_surface_proxy(GstMfxVideoMeta * meta)
 	return meta->proxy;
 }
 
-GstMfxSurface *
-gst_mfx_video_meta_get_surface(GstMfxVideoMeta * meta)
-{
-	g_return_val_if_fail(GST_MFX_IS_VIDEO_META(meta), NULL);
-
-	return GST_MFX_SURFACE_PROXY_SURFACE(meta->proxy);
-}
-
 void
 gst_mfx_video_meta_set_surface_proxy(GstMfxVideoMeta * meta,
 	GstMfxSurfaceProxy * proxy)
 {
-	const GstMfxRectangle *crop_rect;
-
 	g_return_if_fail(GST_MFX_IS_VIDEO_META(meta));
 
 	gst_mfx_video_meta_destroy_proxy(meta);
 
-	if (proxy) {
-		if (!set_surface_proxy(meta, proxy))
-			return;
-
-		crop_rect = gst_mfx_surface_proxy_get_crop_rect(proxy);
-		if (crop_rect)
-			gst_mfx_video_meta_set_render_rect(meta, crop_rect);
-	}
-}
-
-const GstMfxRectangle *
-gst_mfx_video_meta_get_render_rect(GstMfxVideoMeta * meta)
-{
-	g_return_val_if_fail(GST_MFX_IS_VIDEO_META(meta), NULL);
-
-	if (!meta->has_render_rect)
-		return NULL;
-	return &meta->render_rect;
-}
-
-void
-gst_mfx_video_meta_set_render_rect(GstMfxVideoMeta * meta,
-	const GstMfxRectangle * rect)
-{
-	g_return_if_fail(GST_MFX_IS_VIDEO_META(meta));
-
-	meta->has_render_rect = rect != NULL;
-	if (meta->has_render_rect)
-		meta->render_rect = *rect;
+	if (proxy)
+		set_surface_proxy(meta, proxy);
 }
 
 #define GST_MFX_VIDEO_META_HOLDER(meta) \

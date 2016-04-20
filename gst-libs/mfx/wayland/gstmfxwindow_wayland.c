@@ -6,9 +6,9 @@
 #include "gstmfxwindow_priv.h"
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_wayland_priv.h"
+#include "gstmfxsurfaceproxy.h"
 #include "gstmfxprimebufferproxy.h"
-#include "gstmfxprimebufferproxy_priv.h"
-#include "gstvaapiimage_priv.h"
+#include "gstmfxutils_vaapi.h"
 #include "wayland-drm-client-protocol.h"
 
 #define DEBUG 1
@@ -27,7 +27,7 @@ typedef struct _FrameState FrameState;
 struct _FrameState
 {
     GstMfxWindow *window;
-    GstMfxSurface *surface;
+    GstMfxSurfaceProxy *surface;
     struct wl_callback *callback;
 };
 
@@ -194,7 +194,7 @@ error:
 
 static gboolean
 gst_mfx_window_wayland_render (GstMfxWindow * window,
-		GstMfxSurface * surface,
+		GstMfxSurfaceProxy * surface,
 		const GstMfxRectangle * src_rect,
 		const GstMfxRectangle * dst_rect)
 {
@@ -205,17 +205,19 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	GstMfxPrimeBufferProxy *buffer_proxy;
 	struct wl_buffer *buffer;
 	FrameState *frame;
-	guintptr fd;
-	guint32 drm_format;
-	gint offsets[3], pitches[3];
-	VAImage *va_image;
+	guintptr fd = 0;
+	guint32 drm_format = 0;
+	gint offsets[3] = {0},  pitches[3] = {0}, \
+                      num_planes = 0, i = 0;
+	VaapiImage *vaapi_image;
 
-	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_object(GST_MFX_OBJECT(surface));
+	buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(surface);
 	if(!buffer_proxy)
 		return FALSE;
 
 	fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buffer_proxy);
-	va_image = &(GST_MFX_PRIME_BUFFER_PROXY_VAIMAGE(buffer_proxy));
+	vaapi_image = GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buffer_proxy);
+    num_planes = vaapi_image_get_plane_count(vaapi_image);
 
 	/* Using compositor scaling. Correct way is to use VPP scaling */
 	if(src_rect->width > window->width && src_rect->height > window->height)
@@ -223,18 +225,20 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 		if(priv->viewport)
 			wl_viewport_set_destination(priv->viewport, dst_rect->width, dst_rect->height);
 	}
+    for(i=0; i<num_planes; i++)
+    {
+        offsets[i] = vaapi_image_get_offset(vaapi_image, i);
+        pitches[i] = vaapi_image_get_pitch(vaapi_image, i);
+    }
 
-	offsets[0] = va_image->offsets[0];
-	offsets[1] = va_image->offsets[1];
-	offsets[2] = va_image->offsets[2];
-	pitches[0] = va_image->pitches[0];
-	pitches[1] = va_image->pitches[1];
-	pitches[2] = va_image->pitches[2];
-
-	//only support NV12 for now
-	if ( GST_VIDEO_FORMAT_NV12 == GST_VAAPI_IMAGE_FORMAT(buffer_proxy->image) ) {
+    if ( GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format(vaapi_image) ) {
 		drm_format = WL_DRM_FORMAT_NV12;
-	}
+    } else if ( GST_VIDEO_FORMAT_BGRA == vaapi_image_get_format(vaapi_image) ) {
+        drm_format = WL_DRM_FORMAT_ARGB8888;
+    }
+
+    if(!drm_format)
+        return FALSE;
 
 	if(!display_priv->drm)
 		return FALSE;
@@ -284,6 +288,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 	wl_callback_add_listener (frame->callback, &frame_callback_listener, frame);
 
 	wl_surface_commit (priv->surface);
+    wl_display_dispatch_queue (display, priv->event_queue);
 	wl_display_flush (display);
 
 	GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
@@ -430,7 +435,7 @@ gst_mfx_window_wayland_destroy(GstMfxWindow * window)
 		wl_event_queue_destroy(priv->event_queue);
 		priv->event_queue = NULL;
 	}
-#if HAVE_EGL
+#if USE_EGL
 	if (priv->egl_window) {
 		wl_egl_window_destroy(priv->egl_window);
 		priv->egl_window = NULL;

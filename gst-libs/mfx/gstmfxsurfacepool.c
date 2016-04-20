@@ -1,79 +1,274 @@
 #include "sysdeps.h"
 #include "gstmfxsurfacepool.h"
-#include "gstmfxobjectpool_priv.h"
+#include "gstmfxsurfaceproxy.h"
+#include "gstmfxminiobject.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-/**
-* GstMfxSurfacePool:
-*
-* A pool of lazily allocated #GstMfxSurface objects.
-*/
-
 struct _GstMfxSurfacePool
 {
-    GstMfxObjectPool parent_instance;
+	/*< private >*/
+	GstMfxMiniObject parent_instance;
 
-	//GstVideoInfo video_info;
-	GstMfxContextAllocatorVaapi *ctx;
+	GstMfxTask *task;
+	GQueue free_objects;
+	GList *used_objects;
+	guint used_count;
+	guint capacity;
+	GMutex mutex;
 };
 
-static gboolean
-surface_pool_init(GstMfxSurfacePool * pool, GstMfxContextAllocatorVaapi * ctx)
+static gint
+sync_output_surface(gconstpointer proxy, gconstpointer surf)
 {
-	/*GstVideoFormat format = gst_mfx_video_format_from_mfx_fourcc(ctx->frame_info.FourCC);
+    GstMfxSurfaceProxy *_proxy = (GstMfxSurfaceProxy *)proxy;
+    mfxFrameSurface1 *_surf = (mfxFrameSurface1 *)surf;
 
-	if (format == GST_VIDEO_FORMAT_UNKNOWN)
+    return (_surf != gst_mfx_surface_proxy_get_frame_surface(_proxy));
+}
+
+static gboolean
+gst_mfx_surface_pool_add_surface(GstMfxSurfacePool * pool)
+{
+	GstMfxSurfaceProxy *surface = gst_mfx_surface_proxy_new(pool->task);
+	if (!surface)
 		return FALSE;
 
-	gst_video_info_set_format(&(pool->video_info), format,
-        ctx->frame_info.Width, ctx->frame_info.Height);*/
-
-	pool->ctx = ctx;
+	g_queue_push_tail(&pool->free_objects, gst_mfx_mini_object_ref(surface));
 
 	return TRUE;
 }
 
-static gpointer
-gst_mfx_surface_pool_alloc_object(GstMfxObjectPool * base_pool)
+static gboolean
+gst_mfx_surface_pool_add_surfaces_unlocked(GstMfxSurfacePool * pool)
 {
-    GstMfxSurfacePool *const pool = GST_MFX_SURFACE_POOL (base_pool);
+	guint i, len;
 
-	return gst_mfx_surface_new(base_pool->display, pool->ctx);
+	if (gst_mfx_task_has_mapped_surface(pool->task))
+        len = gst_mfx_task_get_request(pool->task)->NumFrameSuggested;
+    else
+        len = g_queue_get_length(gst_mfx_task_get_surfaces(pool->task));
+
+	for (i = 0; i < len; i++) {
+		if (!gst_mfx_surface_pool_add_surface(pool))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
+{
+	gboolean success;
+
+	g_return_val_if_fail(pool != NULL, FALSE);
+
+	g_mutex_lock(&pool->mutex);
+	success = gst_mfx_surface_pool_add_surfaces_unlocked(pool);
+	g_mutex_unlock(&pool->mutex);
+
+	return success;
+}
+
+static gboolean
+gst_mfx_surface_pool_init (GstMfxSurfacePool * pool, GstMfxTask * task)
+{
+	pool->task = gst_mfx_task_ref(task);
+
+    pool->used_objects = NULL;
+    pool->used_count = 0;
+    pool->capacity = 0;
+
+    g_queue_init (&pool->free_objects);
+	g_mutex_init(&pool->mutex);
+
+	return gst_mfx_surface_pool_add_surfaces(pool);
+}
+
+void
+gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
+{
+	gst_mfx_task_unref(pool->task);
+    g_list_free_full (pool->used_objects, gst_mfx_mini_object_unref);
+    g_queue_foreach (&pool->free_objects,
+		(GFunc) gst_mfx_mini_object_unref, NULL);
+    g_queue_clear (&pool->free_objects);
+    g_mutex_clear (&pool->mutex);
 }
 
 static inline const GstMfxMiniObjectClass *
-gst_mfx_surface_pool_class (void)
+gst_mfx_surface_pool_class(void)
 {
-    static const GstMfxObjectPoolClass GstMfxSurfacePoolClass = {
-        {sizeof (GstMfxSurfacePool),
-        (GDestroyNotify) gst_mfx_object_pool_finalize},
-        .alloc_object = gst_mfx_surface_pool_alloc_object
-    };
-    return GST_MFX_MINI_OBJECT_CLASS (&GstMfxSurfacePoolClass);
+	static const GstMfxMiniObjectClass GstMfxSurfacePoolClass = {
+		sizeof(GstMfxSurfacePool),
+		(GDestroyNotify)gst_mfx_surface_pool_finalize
+	};
+	return &GstMfxSurfacePoolClass;
 }
 
-GstMfxObjectPool *
-gst_mfx_surface_pool_new(GstMfxDisplay * display,
-	GstMfxContextAllocatorVaapi * ctx)
+GstMfxSurfacePool *
+gst_mfx_surface_pool_new(GstMfxTask * task)
 {
-	GstMfxObjectPool *pool;
+	GstMfxSurfacePool *pool;
 
-	g_return_val_if_fail(ctx != NULL, NULL);
+	g_return_val_if_fail(task != NULL, NULL);
 
-	pool = (GstMfxObjectPool *)
-		gst_mfx_mini_object_new(gst_mfx_surface_pool_class());
+	pool = (GstMfxSurfacePool *)
+		gst_mfx_mini_object_new0(gst_mfx_surface_pool_class());
 	if (!pool)
 		return NULL;
 
-    gst_mfx_object_pool_init (pool, display,
-        GST_MFX_POOL_OBJECT_TYPE_SURFACE);
-	if (!surface_pool_init(GST_MFX_SURFACE_POOL(pool), ctx))
-		goto error;
-	return pool;
+	if (!gst_mfx_surface_pool_init(pool, task))
+        goto error;
 
+	return pool;
 error:
-	gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(pool));
+	gst_mfx_surface_pool_unref(pool);
 	return NULL;
+}
+
+GstMfxSurfacePool *
+gst_mfx_surface_pool_ref (GstMfxSurfacePool * pool)
+{
+	g_return_val_if_fail(pool != NULL, NULL);
+
+	return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(pool));
+}
+
+void
+gst_mfx_surface_pool_unref (GstMfxSurfacePool * pool)
+{
+	gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(pool));
+}
+
+void
+gst_mfx_surface_pool_replace (GstMfxSurfacePool ** old_pool_ptr,
+    GstMfxSurfacePool * new_pool)
+{
+	g_return_if_fail(old_pool_ptr != NULL);
+
+	gst_mfx_mini_object_replace((GstMfxMiniObject **)old_pool_ptr,
+		GST_MFX_MINI_OBJECT(new_pool));
+}
+
+static void
+release_surfaces(gpointer proxy, gpointer pool)
+{
+	GstMfxSurfaceProxy *_proxy = (GstMfxSurfaceProxy *)proxy;
+	GstMfxSurfacePool *_pool = (GstMfxSurfacePool *)pool;
+
+	mfxFrameSurface1 *surface = gst_mfx_surface_proxy_get_frame_surface(_proxy);
+	if (surface && !surface->Data.Locked)
+		gst_mfx_surface_pool_put_surface(_pool, _proxy);
+}
+
+static GstMfxSurfaceProxy *
+gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
+{
+	GstMfxSurfaceProxy *surface;
+
+    if (pool->capacity && pool->used_count >= pool->capacity)
+        return NULL;
+
+    surface = g_queue_pop_head (&pool->free_objects);
+
+    ++pool->used_count;
+    pool->used_objects = g_list_prepend (pool->used_objects, surface);
+
+    return gst_mfx_surface_proxy_ref (surface);
+}
+
+GstMfxSurfaceProxy *
+gst_mfx_surface_pool_get_surface (GstMfxSurfacePool * pool)
+{
+	GstMfxSurfaceProxy *surface;
+
+    g_return_val_if_fail (pool != NULL, NULL);
+
+    g_list_foreach(pool->used_objects, release_surfaces, pool);
+
+    g_mutex_lock (&pool->mutex);
+    surface = gst_mfx_surface_pool_get_surface_unlocked (pool);
+    g_mutex_unlock (&pool->mutex);
+
+    return surface;
+}
+
+static void
+gst_mfx_surface_pool_put_surface_unlocked (GstMfxSurfacePool * pool,
+    GstMfxSurfaceProxy * surface)
+{
+    GList *elem;
+
+    elem = g_list_find (pool->used_objects, surface);
+    if (!elem)
+        return;
+
+    gst_mfx_surface_proxy_unref (surface);
+    --pool->used_count;
+    pool->used_objects = g_list_delete_link (pool->used_objects, elem);
+    g_queue_push_tail (&pool->free_objects, surface);
+}
+
+void
+gst_mfx_surface_pool_put_surface (GstMfxSurfacePool * pool,
+	GstMfxSurfaceProxy * surface)
+{
+    g_return_if_fail (pool != NULL);
+    g_return_if_fail (surface != NULL);
+
+    g_mutex_lock (&pool->mutex);
+    gst_mfx_surface_pool_put_surface_unlocked (pool, surface);
+    g_mutex_unlock (&pool->mutex);
+}
+
+guint
+gst_mfx_surface_pool_get_size (GstMfxSurfacePool * pool)
+{
+    guint size;
+
+    g_return_val_if_fail (pool != NULL, 0);
+
+    g_mutex_lock (&pool->mutex);
+    size = g_queue_get_length (&pool->free_objects);
+    g_mutex_unlock (&pool->mutex);
+    return size;
+}
+
+guint
+gst_mfx_surface_pool_get_capacity (GstMfxSurfacePool * pool)
+{
+    guint capacity;
+
+    g_return_val_if_fail (pool != NULL, 0);
+
+    g_mutex_lock (&pool->mutex);
+    capacity = pool->capacity;
+    g_mutex_unlock (&pool->mutex);
+
+    return capacity;
+}
+
+void
+gst_mfx_surface_pool_set_capacity (GstMfxSurfacePool * pool, guint capacity)
+{
+    g_return_if_fail (pool != NULL);
+
+    g_mutex_lock (&pool->mutex);
+    pool->capacity = capacity;
+    g_mutex_unlock (&pool->mutex);
+}
+
+GstMfxSurfaceProxy *
+gst_mfx_surface_pool_find_proxy(GstMfxSurfacePool * pool,
+    mfxFrameSurface1 * surface)
+{
+    g_return_val_if_fail(pool != NULL, NULL);
+
+    GList *l = g_list_find_custom(pool->used_objects, surface,
+                    sync_output_surface);
+
+    return GST_MFX_SURFACE_PROXY(l->data);
 }

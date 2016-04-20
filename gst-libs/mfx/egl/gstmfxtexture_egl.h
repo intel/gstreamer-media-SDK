@@ -24,9 +24,7 @@ struct _GstMfxTextureEGL
 	GstMfxTexture parent_instance;
 
 	EglContext *egl_context;
-	EGLImageKHR egl_images[3];
-	GLuint textures[3];
-	int num_textures;
+	EGLImageKHR egl_image;
 };
 
 /**

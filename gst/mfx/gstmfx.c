@@ -1,14 +1,20 @@
 #include <gst/gst.h>
 
 #include "gstmfxdec.h"
+#include "gstmfxpostproc.h"
 #include "gstmfxsink.h"
+
+#define PACKAGE "gstmfx"
+#define VERSION "0.0.1"
 
 static gboolean
 plugin_init(GstPlugin * plugin)
 {
-	gst_element_register(plugin, "mfxdecode", GST_RANK_PRIMARY,
+	gst_element_register(plugin, "mfxdecode", GST_RANK_NONE,
 		GST_TYPE_MFXDEC);
-	gst_element_register(plugin, "mfxsink", GST_RANK_PRIMARY,
+    gst_element_register(plugin, "mfxvpp", GST_RANK_NONE,
+		GST_TYPE_MFXPOSTPROC);
+	gst_element_register(plugin, "mfxsink", GST_RANK_NONE,
 		GST_TYPE_MFXSINK);
 
 	return TRUE;

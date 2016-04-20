@@ -1,42 +1,39 @@
 #ifndef GST_MFX_SURFACE_PROXY_H
 #define GST_MFX_SURFACE_PROXY_H
 
-#include "gstmfxsurface.h"
-#include "gstmfxsurfacepool.h"
+#include <gst/video/video.h>
+#include "gstmfxtask.h"
+#include "gstmfxutils_vaapi.h"
+#include "video-format.h"
 
 G_BEGIN_DECLS
 
-/**
-* GST_MFX_SURFACE_PROXY_SURFACE:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Macro that evaluates to the #GstMfxSurface of @proxy.
-*/
+#define GST_MFX_SURFACE_PROXY(obj) \
+	((GstMfxSurfaceProxy *) (obj))
+
 #define GST_MFX_SURFACE_PROXY_SURFACE(proxy) \
-	gst_mfx_surface_proxy_get_surface (proxy)
+	gst_mfx_surface_proxy_get_frame_surface(proxy)
 
-/**
-* GST_MFX_SURFACE_PROXY_TIMESTAMP:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Macro that evaluates to the presentation timestamp of the
-* underlying @proxy surface.
-*/
-#define GST_MFX_SURFACE_PROXY_TIMESTAMP(proxy) \
-	gst_mfx_surface_proxy_get_timestamp (proxy)
+#define GST_MFX_SURFACE_PROXY_MEMID(proxy) \
+	gst_mfx_surface_proxy_get_id(proxy)
 
-/**
-* GST_MFX_SURFACE_PROXY_DURATION:
-* @proxy: a #GstMfxSurfaceProxy
-*
-* Macro that evaluates to the presentation duration of the
-* underlying @proxy surface.
-*/
-#define GST_MFX_SURFACE_PROXY_DURATION(proxy) \
-	gst_mfx_surface_proxy_get_duration (proxy)
+#define GST_MFX_SURFACE_PROXY_FORMAT(proxy) \
+	gst_mfx_surface_proxy_get_format(proxy)
+
+#define GST_MFX_SURFACE_PROXY_WIDTH(proxy) \
+	gst_mfx_surface_proxy_get_width(proxy)
+
+#define GST_MFX_SURFACE_PROXY_HEIGHT(proxy) \
+	gst_mfx_surface_proxy_get_height(proxy)
+
+typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
+typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new(GstMfxSurface * surface);
+gst_mfx_surface_proxy_new(GstMfxTask * ctx);
+
+GstMfxSurfaceProxy *
+gst_mfx_surface_proxy_new_from_video_data(GstVideoInfo * info, gpointer data);
 
 GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool);
@@ -54,27 +51,42 @@ void
 gst_mfx_surface_proxy_replace(GstMfxSurfaceProxy ** old_proxy_ptr,
 	GstMfxSurfaceProxy * new_proxy);
 
-GstMfxSurface *
-gst_mfx_surface_proxy_get_surface(GstMfxSurfaceProxy * proxy);
+mfxFrameSurface1 *
+gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy);
 
 GstMfxID
-gst_mfx_surface_proxy_get_surface_id(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy);
 
-mfxFrameSurface1 *
-gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * surface);
+GstVideoFormat
+gst_mfx_surface_proxy_get_format(GstMfxSurfaceProxy * proxy);
 
-GstClockTime
-gst_mfx_surface_proxy_get_timestamp(GstMfxSurfaceProxy * proxy);
+guint
+gst_mfx_surface_proxy_get_width(GstMfxSurfaceProxy * proxy);
 
-GstClockTime
-gst_mfx_surface_proxy_get_duration(GstMfxSurfaceProxy * proxy);
+guint
+gst_mfx_surface_proxy_get_height(GstMfxSurfaceProxy * proxy);
+
+void
+gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy, guint * width_ptr,
+	guint * height_ptr);
+
+guchar *
+gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane);
+
+guchar *
+gst_mfx_surface_proxy_get_data(GstMfxSurfaceProxy * proxy);
+
+guint16
+gst_mfx_surface_proxy_get_pitch(GstMfxSurfaceProxy * proxy, guint plane);
+
+GstMfxTask *
+gst_mfx_surface_proxy_get_task_context(GstMfxSurfaceProxy * proxy);
 
 const GstMfxRectangle *
 gst_mfx_surface_proxy_get_crop_rect(GstMfxSurfaceProxy * proxy);
 
-void
-gst_mfx_surface_proxy_set_crop_rect(GstMfxSurfaceProxy * proxy,
-	const GstMfxRectangle * crop_rect);
+VaapiImage *
+gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy);
 
 G_END_DECLS
 
