@@ -1,4 +1,5 @@
 #include <mfxplugin.h>
+#include <mfxvp8.h>
 #include "gstmfxdecoder.h"
 #include "gstmfxfilter.h"
 #include "gstmfxsurfacepool.h"
@@ -53,6 +54,7 @@ gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder, gchar ** out_uid)
 {
     mfxPluginUID uid;
     mfxStatus sts;
+    guint i, c;
 
     switch (decoder->codec) {
     case MFX_CODEC_HEVC:
@@ -60,7 +62,6 @@ gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder, gchar ** out_uid)
         gchar *plugin_uids[] = { "33a61c0b4c27454ca8d85dde757c6f8e",
                                  "15dd936825ad475ea34e35f3f54217a6",
                                  NULL };
-        guint i, c;
         for (i = 0; plugin_uids[i]; i++) {
             for (c = 0; c < sizeof(uid.Data); c++)
                 sscanf(plugin_uids[i] + 2 * c, "%2hhx", uid.Data + c);
@@ -70,9 +71,13 @@ gst_mfx_decoder_load_decoder_plugins(GstMfxDecoder *decoder, gchar ** out_uid)
                 break;
             }
         }
-        if (i == 1)
-            sts = MFX_WRN_PARTIAL_ACCELERATION;
     }
+        break;
+    case MFX_CODEC_VP8:
+        *out_uid = "f622394d8d87452f878c51f2fc9b4131";
+        for (c = 0; c < sizeof(uid.Data); c++)
+            sscanf(*out_uid + 2 * c, "%2hhx", uid.Data + c);
+        sts = MFXVideoUSER_Load(decoder->session, &uid, 1);
         break;
     default:
         sts = MFX_ERR_NONE;
@@ -92,17 +97,15 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
     decoder->info = *info;
 	decoder->codec = decoder->param.mfx.CodecId = codec;
 	decoder->param.AsyncDepth = async_depth;
-	decoder->pool = NULL;
 	decoder->decoder_inited = FALSE;
 	decoder->bs.MaxLength = 1024 * 16;
     decoder->session = *gst_mfx_task_aggregator_create_session(aggregator);
-    decoder->filter = NULL;
 
     sts = gst_mfx_decoder_load_decoder_plugins(decoder, &uid);
     if (sts < 0)
         return FALSE;
 
-    if (uid != NULL && uid == "15dd936825ad475ea34e35f3f54217a6")
+    if (uid == "15dd936825ad475ea34e35f3f54217a6")
         mapped = TRUE;
 
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
@@ -195,6 +198,20 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 	}
 
     /* Fill in missing required frame info, if any */
+    /*if (decoder->codec == MFX_CODEC_VC1) {
+        frame_info->CropW = decoder->info.width;
+        frame_info->CropH = decoder->info.height;
+        frame_info->Width = GST_ROUND_UP_16(decoder->info.width);
+        frame_info->Height = GST_ROUND_UP_16(decoder->info.height);
+        frame_info->FrameRateExtN = decoder->info.fps_n;
+        frame_info->FrameRateExtD = decoder->info.fps_d;
+        frame_info->AspectRatioW = decoder->info.par_n;
+        frame_info->AspectRatioH = decoder->info.par_d;
+        frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+        frame_info->BitDepthChroma = 8;
+        frame_info->BitDepthLuma = 8;
+    }*/
+
     if (!frame_info->FrameRateExtN)
         frame_info->FrameRateExtN = decoder->info.fps_n;
     if (!frame_info->FrameRateExtD)
@@ -203,6 +220,9 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         frame_info->AspectRatioW = decoder->info.par_n;
     if (!frame_info->AspectRatioH)
         frame_info->AspectRatioH = decoder->info.par_d;
+
+    //if (decoder->codec == MFX_CODEC_VP8)
+        //frame_info->FourCC = MFX_FOURCC_NV12;
 
     sts = MFXVideoDECODE_QueryIOSurf(decoder->session, &decoder->param,
                 &dec_request);

@@ -86,12 +86,9 @@ static const gchar *vert_shader_text =
 
 static const gchar *frag_shader_text_rgba =
 	"#ifdef GL_ES\n"
-    "#extension GL_OES_EGL_image_external : require\n"
     "precision mediump float;\n"
-    "uniform samplerExternalOES tex0;\n"
-    "#else\n"
-    "uniform sampler2D tex0;\n"
     "#endif\n"
+    "uniform sampler2D tex0;\n"
     "\n"
 	"varying vec2 v_texcoord;\n"
 	"\n"
@@ -111,9 +108,7 @@ ensure_texture(GstMfxWindowEGL * window, guint width, guint height)
 		return TRUE;*/
 
 	texture = gst_mfx_texture_egl_new(display,
-		GST_MFX_DISPLAY_EGL(display)->gles_version == 0 ?
-        GL_TEXTURE_2D : GL_TEXTURE_EXTERNAL_OES,
-        GL_RGBA, width, height);
+        GL_TEXTURE_2D, GL_RGBA, width, height);
 
 	gst_mfx_texture_replace(&window->texture, texture);
 	gst_mfx_texture_replace(&texture, NULL);
@@ -396,39 +391,25 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 
 	vtable->glClear(GL_COLOR_BUFFER_BIT);
 
-	/*if (G_UNLIKELY(window->egl_window->context->config->gles_version == 1)) {
-		vtable->glBindTexture(GST_MFX_TEXTURE_TARGET(window->texture), tex_id);
-		vtable->glEnableClientState(GL_VERTEX_ARRAY);
-		vtable->glVertexPointer(2, GL_FLOAT, 0, positions);
-		vtable->glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		vtable->glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
 
-		vtable->glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    EglProgram *const program = window->render_program;
 
-		vtable->glDisableClientState(GL_VERTEX_ARRAY);
-		vtable->glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
-	else {*/
-		EglProgram *const program = window->render_program;
+    vtable->glUseProgram(program->base.handle.u);
+    vtable->glUniformMatrix4fv(program->uniforms[RENDER_PROGRAM_VAR_PROJ],
+        1, GL_FALSE, window->render_projection);
+    vtable->glEnableVertexAttribArray(0);
+    vtable->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, positions);
+    vtable->glEnableVertexAttribArray(1);
+    vtable->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
 
-		vtable->glUseProgram(program->base.handle.u);
-		vtable->glUniformMatrix4fv(program->uniforms[RENDER_PROGRAM_VAR_PROJ],
-			1, GL_FALSE, window->render_projection);
-		vtable->glEnableVertexAttribArray(0);
-		vtable->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, positions);
-		vtable->glEnableVertexAttribArray(1);
-		vtable->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
+    vtable->glBindTexture(GST_MFX_TEXTURE_TARGET(window->texture), tex_id);
+    vtable->glUniform1i(program->uniforms[RENDER_PROGRAM_VAR_TEX0], 0);
 
-		vtable->glBindTexture(GST_MFX_TEXTURE_TARGET(window->texture), tex_id);
-		vtable->glUniform1i(program->uniforms[RENDER_PROGRAM_VAR_TEX0], 0);
+    vtable->glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-		vtable->glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-		vtable->glDisableVertexAttribArray(1);
-		vtable->glDisableVertexAttribArray(0);
-		vtable->glUseProgram(0);
-
-	//}
+    vtable->glDisableVertexAttribArray(1);
+    vtable->glDisableVertexAttribArray(0);
+    vtable->glUseProgram(0);
 
 	eglSwapBuffers(window->egl_window->context->display->base.handle.p,
 		window->egl_window->base.handle.p);

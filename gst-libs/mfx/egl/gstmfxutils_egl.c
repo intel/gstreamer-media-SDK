@@ -1343,36 +1343,17 @@ egl_matrix_set_identity(gfloat m[16])
 * Return value: the newly created texture name
 */
 guint
-egl_create_texture(EglContext * ctx, guint target, guint format,
+egl_create_texture_from_data(EglContext * ctx, guint target, guint format,
 	guint width, guint height, gpointer data)
 {
 	EglVTable *const vtable = egl_context_get_vtable(ctx, TRUE);
-	guint internal_format, texture, bytes_per_component;
-
-	internal_format = format;
-	switch (format) {
-	case GL_LUMINANCE:
-		bytes_per_component = 1;
-		break;
-	case GL_LUMINANCE_ALPHA:
-		bytes_per_component = 2;
-		break;
-	case GL_RGBA:
-	case GL_BGRA_EXT:
-		internal_format = GL_RGBA;
-		bytes_per_component = 4;
-		break;
-	default:
-		bytes_per_component = 0;
-		break;
-	}
-	g_assert(bytes_per_component > 0);
+	guint texture, bytes_per_component = 4;
 
 	vtable->glGenTextures(1, &texture);
 	vtable->glBindTexture(target, texture);
 
 	if (width > 0 && height > 0)
-		vtable->glTexImage2D(target, 0, internal_format, width, height, 0,
+		vtable->glTexImage2D(target, 0, GL_RGBA, width, height, 0,
             format, GL_UNSIGNED_BYTE, data);
 
 	vtable->glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

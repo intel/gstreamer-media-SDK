@@ -26,9 +26,8 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 	EglContext *const ctx = texture->egl_context;
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
 	GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
-	GstMfxID id = gst_mfx_surface_proxy_get_frame_surface(proxy)->Data.MemId;
 
-    if (id) {
+    if (GST_MFX_SURFACE_PROXY_SURFACE(proxy)->Data.MemId) {
         GLint attribs[23], *attrib;
         GstMfxPrimeBufferProxy *buffer_proxy;
         VaapiImage *image;
@@ -79,8 +78,8 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
         vaapi_image_unref(image);
     }
     else {
-        GST_MFX_TEXTURE_ID(texture) = egl_create_texture(texture->egl_context,
-            GL_TEXTURE_2D, GL_BGRA_EXT,
+        GST_MFX_TEXTURE_ID(texture) = egl_create_texture_from_data(
+            texture->egl_context, GL_TEXTURE_2D, GL_BGRA_EXT,
             base_texture->width, base_texture->height,
             gst_mfx_surface_proxy_get_plane(proxy, 0));
         if (!GST_MFX_OBJECT_ID(base_texture)) {

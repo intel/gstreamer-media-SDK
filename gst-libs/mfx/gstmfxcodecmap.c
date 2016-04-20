@@ -71,6 +71,9 @@ gst_get_mfx_codec_from_caps(GstCaps * caps)
     else if (!strcmp(mimetype, "image/jpeg")) {
 		return MFX_CODEC_JPEG;
 	}
+	else if (!strcmp(mimetype, "video/x-vp8")) {
+		return MFX_CODEC_VP8;
+	}
 
 	return 0;
 }
