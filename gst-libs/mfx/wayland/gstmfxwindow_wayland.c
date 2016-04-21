@@ -220,7 +220,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     num_planes = vaapi_image_get_plane_count(vaapi_image);
 
 	/* Using compositor scaling. Correct way is to use VPP scaling */
-	if(src_rect->width > window->width && src_rect->height > window->height)
+    if(src_rect->width != dst_rect->width || src_rect->height != dst_rect->height)
 	{
 		if(priv->viewport)
 			wl_viewport_set_destination(priv->viewport, dst_rect->width, dst_rect->height);
