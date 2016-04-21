@@ -233,7 +233,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
     if ( GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format(vaapi_image) ) {
 		drm_format = WL_DRM_FORMAT_NV12;
-    } else if ( GST_VIDEO_FORMAT_BGRA == vaapi_image_get_format(vaapi_image) ) {
+    } else if ( GST_VIDEO_FORMAT_ARGB == vaapi_image_get_format(vaapi_image) ) {
         drm_format = WL_DRM_FORMAT_ARGB8888;
     }
 
