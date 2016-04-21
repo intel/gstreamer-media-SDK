@@ -12,10 +12,9 @@ get_image_data (VaapiImage * image)
     VAImage va_image;
 
     data = vaapi_image_get_plane (image, 0);
-    if (!data || !vaapi_image_get_image (image, &va_image))
+    if (!data)
         return NULL;
 
-    data -= va_image.offsets[0];
     return data;
 }
 
@@ -57,7 +56,7 @@ ensure_surface (GstMfxVideoMemory * mem)
 
 gboolean
 gst_video_meta_map_mfx_surface(GstVideoMeta * meta, guint plane,
-GstMapInfo * info, gpointer * data, gint * stride, GstMapFlags flags)
+    GstMapInfo * info, gpointer * data, gint * stride, GstMapFlags flags)
 {
 	GstMfxVideoMemory *const mem =
 		GST_MFX_VIDEO_MEMORY_CAST(gst_buffer_peek_memory(meta->buffer, 0));
@@ -67,11 +66,30 @@ GstMapInfo * info, gpointer * data, gint * stride, GstMapFlags flags)
 		allocator), FALSE);
 	g_return_val_if_fail(mem->meta, FALSE);
 
-    if (!ensure_surface(mem))
-        goto error_ensure_surface;
+    /* Map for writing */
+	if (++mem->map_count == 1) {
+		if (!ensure_surface(mem))
+			goto error_ensure_surface;
 
-    *data = gst_mfx_surface_proxy_get_plane(mem->proxy, plane);
-    *stride = gst_mfx_surface_proxy_get_pitch(mem->proxy, plane);
+		if (G_UNLIKELY(GST_MFX_SURFACE_PROXY_MEMID(mem->proxy) != GST_MFX_ID_INVALID)) {
+			if (!ensure_image(mem))
+				goto error_ensure_image;
+
+			// Load VA image from surface
+			if (!vaapi_image_map(mem->image))
+				goto error_map_image;
+		}
+	}
+
+	if (!mem->image) {
+		*data = gst_mfx_surface_proxy_get_plane(mem->proxy, plane);
+		*stride = gst_mfx_surface_proxy_get_pitch(mem->proxy, plane);
+	}
+	else {
+		*data = vaapi_image_get_plane(mem->image, plane);
+		*stride = vaapi_image_get_pitch(mem->image, plane);
+	}
+
 
 	info->flags = flags;
 	return TRUE;
@@ -80,8 +98,20 @@ GstMapInfo * info, gpointer * data, gint * stride, GstMapFlags flags)
 error_ensure_surface:
 	{
 		const GstVideoInfo *const vip = mem->image_info;
-		GST_ERROR("failed to create NV12 surface of size %ux%u",
+		GST_ERROR("failed to create surface of size %ux%u",
 			GST_VIDEO_INFO_WIDTH(vip), GST_VIDEO_INFO_HEIGHT(vip));
+		return FALSE;
+	}
+error_ensure_image:
+	{
+		const GstVideoInfo *const vip = mem->image_info;
+		GST_ERROR("failed to create image of size %ux%u",
+			GST_VIDEO_INFO_WIDTH(vip), GST_VIDEO_INFO_HEIGHT(vip));
+		return FALSE;
+	}
+error_map_image:
+	{
+		GST_ERROR("failed to map image");
 		return FALSE;
 	}
 
@@ -90,7 +120,7 @@ error_ensure_surface:
 
 gboolean
 gst_video_meta_unmap_mfx_surface(GstVideoMeta * meta, guint plane,
-GstMapInfo * info)
+    GstMapInfo * info)
 {
 	GstMfxVideoMemory *const mem =
 		GST_MFX_VIDEO_MEMORY_CAST(gst_buffer_peek_memory(meta->buffer, 0));
@@ -100,6 +130,13 @@ GstMapInfo * info)
 		allocator), FALSE);
 	g_return_val_if_fail(mem->meta, FALSE);
 	g_return_val_if_fail(mem->proxy, FALSE);
+
+	if (--mem->map_count == 0) {
+		/* Unmap VA image used for read/writes */
+		if (mem->image && info->flags & GST_MAP_READWRITE) {
+			vaapi_image_unmap(mem->image);
+		}
+	}
 
 	return TRUE;
 }
@@ -184,7 +221,7 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
             // Only read flag set: return raw pixels
             if (!ensure_surface (mem))
                 goto error_no_surface;
-            if (gst_mfx_surface_proxy_get_frame_surface(mem->proxy)->Data.MemId) {
+            if ((GST_MFX_SURFACE_PROXY_MEMID(mem->proxy) != GST_MFX_ID_INVALID)) {
                 if (!ensure_image (mem))
                     goto error_no_image;
                 if (!vaapi_image_map (mem->image))
@@ -211,7 +248,7 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
             data = get_image_data (mem->image);
             break;
         case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
-            data = gst_mfx_surface_proxy_get_plane(mem->proxy, 0);
+            data = gst_mfx_surface_proxy_get_data(mem->proxy);
             break;
         default:
             goto error_unsupported_map_type;

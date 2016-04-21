@@ -348,6 +348,7 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 {
 	const GLuint tex_id = GST_MFX_OBJECT_ID(window->texture);
 	EglVTable *const vtable = window->egl_vtable;
+	EglProgram *program;
 	GLfloat x0, y0, x1, y1;
 	GLfloat texcoords[4][2];
 	GLfloat positions[4][2];
@@ -360,6 +361,7 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 	tex_height = GST_MFX_TEXTURE_HEIGHT(window->texture);
 	win_width = dst_rect->width + dst_rect->x * 2;
 	win_height = dst_rect->height + dst_rect->y * 2;
+	program = window->render_program;
 
 	// Source coords in VA surface
 	x0 = (GLfloat)src_rect->x / tex_width;
@@ -390,9 +392,6 @@ do_render_texture(GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
 	positions[3][1] = y1;
 
 	vtable->glClear(GL_COLOR_BUFFER_BIT);
-
-
-    EglProgram *const program = window->render_program;
 
     vtable->glUseProgram(program->base.handle.u);
     vtable->glUniformMatrix4fv(program->uniforms[RENDER_PROGRAM_VAR_PROJ],

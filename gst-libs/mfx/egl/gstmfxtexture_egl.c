@@ -27,7 +27,7 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
 	GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
 
-    if (GST_MFX_SURFACE_PROXY_SURFACE(proxy)->Data.MemId) {
+    if (GST_MFX_SURFACE_PROXY_MEMID(proxy) != GST_MFX_ID_INVALID) {
         GLint attribs[23], *attrib;
         GstMfxPrimeBufferProxy *buffer_proxy;
         VaapiImage *image;

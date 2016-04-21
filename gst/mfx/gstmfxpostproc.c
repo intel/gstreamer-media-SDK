@@ -569,8 +569,7 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
     if (vpp->format != DEFAULT_FORMAT)
         out_format = vpp->format;
 
-    if(fps_n != GST_VIDEO_INFO_FPS_N(&vpp->sinkpad_info) && 0 != fps_n)
-    {
+    if(fps_n != GST_VIDEO_INFO_FPS_N(&vpp->sinkpad_info) && 0 != fps_n) {
          vpp->fps_n = fps_n;
          vpp->fps_d = fps_d;
          GST_VIDEO_INFO_FPS_N(&vi) = fps_n;

@@ -73,6 +73,9 @@ gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy, guint * width_ptr,
 guchar *
 gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane);
 
+guchar *
+gst_mfx_surface_proxy_get_data(GstMfxSurfaceProxy * proxy);
+
 guint16
 gst_mfx_surface_proxy_get_pitch(GstMfxSurfaceProxy * proxy, guint plane);
 

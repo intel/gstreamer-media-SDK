@@ -392,8 +392,7 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
 
     g_ptr_array_free(filter->filter_op_data, TRUE);
 
-    if (filter->internal_session)
-        MFXVideoVPP_Close(filter->session);
+    MFXVideoVPP_Close(filter->session);
 	gst_mfx_task_aggregator_unref(filter->aggregator);
 }
 
@@ -473,9 +472,12 @@ gst_mfx_filter_get_pool(GstMfxFilter * filter, guint flags)
 gboolean
 gst_mfx_filter_set_format(GstMfxFilter * filter, GstVideoFormat fmt)
 {
-    g_return_if_fail (filter != NULL);
+    g_return_val_if_fail (filter != NULL, FALSE);
 
-	filter->fourcc = gst_video_format_to_mfx_fourcc(fmt);
+    if (GST_VIDEO_FORMAT_NV12 == fmt || GST_VIDEO_FORMAT_BGRA == fmt)
+        filter->fourcc = gst_video_format_to_mfx_fourcc(fmt);
+    else
+        return FALSE;
 
 	return TRUE;
 }
@@ -483,7 +485,7 @@ gst_mfx_filter_set_format(GstMfxFilter * filter, GstVideoFormat fmt)
 gboolean
 gst_mfx_filter_set_size(GstMfxFilter * filter, mfxU16 width, mfxU16 height)
 {
-    g_return_if_fail (filter != NULL);
+    g_return_val_if_fail (filter != NULL, FALSE);
 
 	filter->width = width;
 	filter->height = height;

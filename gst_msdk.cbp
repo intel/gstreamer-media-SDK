@@ -44,7 +44,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters='--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/HD.Club-4K-Chimei-inn-60mbps.mp4&quot; ! qtdemux ! h264parse ! mfxdecode ! mfxvpp width=1280 brightness=-90 ! mfxsink' />
+				<Option parameters='--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/HD.Club-4K-Chimei-inn-60mbps.mp4&quot; ! qtdemux ! h264parse ! mfxdecode ! mfxvpp width=1280 brightness=-90 ! mfxsink sync=false' />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>

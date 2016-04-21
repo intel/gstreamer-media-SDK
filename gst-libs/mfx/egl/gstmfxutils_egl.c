@@ -28,9 +28,7 @@ struct gl_version_info_s
 
 static const GlVersionInfo gl_version_info[] = {
 	{ 0, EGL_OPENGL_BIT, EGL_OPENGL_API, "OpenGL" },
-	{ 1, EGL_OPENGL_ES_BIT, EGL_OPENGL_ES_API, "OpenGL_ES" },
 	{ 2, EGL_OPENGL_ES2_BIT, EGL_OPENGL_ES_API, "OpenGL_ES2" },
-	{ 3, EGL_OPENGL_ES3_BIT_KHR, EGL_OPENGL_ES_API, "OpenGL_ES3" },
 	{ 0, }
 };
 
@@ -171,14 +169,6 @@ static const gchar *gl_library_names[] = {
 };
 #endif
 
-#if (USE_GLES_VERSION_MASK & (1U << 1))
-static const gchar *gles1_library_names[] = {
-	"libGLESv1_CM.la",
-	"libGLESv1_CM.so.1",
-	NULL
-};
-#endif
-
 #if (USE_GLES_VERSION_MASK & (1U << 2))
 static const gchar *gles2_library_names[] = {
 	"libGLESv2.la",
@@ -194,22 +184,8 @@ static const gchar **gl_library_names_group[] = {
 	NULL
 };
 
-static const gchar **gles1_library_names_group[] = {
-#if (USE_GLES_VERSION_MASK & (1U << 1))
-	gles1_library_names,
-#endif
-	NULL
-};
-
 static const gchar **gles2_library_names_group[] = {
 #if (USE_GLES_VERSION_MASK & (1U << 2))
-	gles2_library_names,
-#endif
-	NULL
-};
-
-static const gchar **gles3_library_names_group[] = {
-#if (USE_GLES_VERSION_MASK & (1U << 3))
 	gles2_library_names,
 #endif
 	NULL
@@ -224,14 +200,8 @@ egl_vtable_get_library_names_group(guint gles_version)
 	case 0:
 		library_names_group = gl_library_names_group;
 		break;
-	case 1:
-		library_names_group = gles1_library_names_group;
-		break;
 	case 2:
 		library_names_group = gles2_library_names_group;
-		break;
-	case 3:
-		library_names_group = gles3_library_names_group;
 		break;
 	default:
 		library_names_group = NULL;

@@ -432,7 +432,8 @@ gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, GST_MFX_ID_INVALID);
 
-	return *(GstMfxID *)proxy->surface.Data.MemId;
+	return proxy->surface.Data.MemId ? *(GstMfxID *)proxy->surface.Data.MemId :
+	    GST_MFX_ID_INVALID;
 }
 
 const GstMfxRectangle *
@@ -478,6 +479,14 @@ gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy,
 
 	if (height_ptr)
 		*height_ptr = proxy->height;
+}
+
+guchar *
+gst_mfx_surface_proxy_get_data(GstMfxSurfaceProxy * proxy)
+{
+    g_return_val_if_fail(proxy != NULL, NULL);
+
+    return proxy->data;
 }
 
 guchar *

@@ -143,14 +143,13 @@ gst_mfxdec_update_src_caps(GstMfxDec * mfxdec)
 	GstVideoCodecState *state, *ref_state;
 	GstVideoInfo *vi;
 	GstVideoFormat format;
+	GstCapsFeatures *features = NULL;
+	GstMfxCapsFeature feature;
 
 	if (!mfxdec->input_state)
 		return FALSE;
 
 	ref_state = mfxdec->input_state;
-
-	GstCapsFeatures *features = NULL;
-	GstMfxCapsFeature feature;
 
 	feature =
 		gst_mfx_find_preferred_caps_feature(GST_VIDEO_DECODER_SRC_PAD(vdec),
