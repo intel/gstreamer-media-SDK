@@ -21,6 +21,8 @@ GstMfxFormatMap format_map[] = {
     { GST_VIDEO_FORMAT_UYVY, MFX_FOURCC_UYVY, MFX_CHROMAFORMAT_YUV422,
         VA_FOURCC_UYVY, VA_RT_FORMAT_YUV422 },
     { GST_VIDEO_FORMAT_BGRA, MFX_FOURCC_RGB4, MFX_CHROMAFORMAT_YUV444,
+        VA_FOURCC_BGRA, VA_RT_FORMAT_RGB32  },
+    { GST_VIDEO_FORMAT_ARGB, MFX_FOURCC_RGB4, MFX_CHROMAFORMAT_YUV444,
         VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32  },
     {0,}
 };
@@ -29,8 +31,7 @@ GstVideoFormat
 gst_video_format_from_mfx_fourcc(mfxU32 fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++)
-    {
+    for(m = format_map; m->format; m++) {
         if(fourcc == m->mfx_fourcc)
             return m->format;
     }
@@ -41,8 +42,7 @@ mfxU32
 gst_video_format_to_mfx_fourcc(GstVideoFormat format)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++)
-    {
+    for(m = format_map; m->format; m++) {
         if(format == m->format)
             return m->mfx_fourcc;
     }
@@ -53,8 +53,7 @@ GstVideoFormat
 gst_video_format_from_va_fourcc(guint fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++)
-    {
+    for(m = format_map; m->format; m++) {
          if(fourcc == m->va_fourcc)
              return m->format;
     }
@@ -65,8 +64,7 @@ guint
 gst_video_format_to_va_fourcc(GstVideoFormat format)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++)
-    {
+    for(m = format_map; m->format; m++) {
         if(format == m->format)
             return m->va_fourcc;
     }
@@ -77,8 +75,7 @@ mfxU32
 gst_mfx_video_format_from_va_fourcc(guint fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++)
-    {
+    for(m = format_map; m->format; m++) {
         if(fourcc == m->va_fourcc)
             return m->mfx_fourcc;
     }
@@ -89,8 +86,7 @@ guint
 gst_mfx_video_format_to_va_fourcc(mfxU32 fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++)
-    {
+    for(m = format_map; m->format; m++) {
         if(fourcc == m->mfx_fourcc)
             return m->va_fourcc;
     }
@@ -101,8 +97,7 @@ guint
 gst_mfx_video_format_to_va_format(mfxU32 fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++)
-    {
+    for(m = format_map; m->format; m++) {
         if(fourcc == m->mfx_fourcc)
             return m->va_format;
     }
@@ -113,8 +108,7 @@ guint16
 gst_mfx_chroma_type_from_video_format(GstVideoFormat format)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++)
-    {
+    for(m = format_map; m->format; m++) {
         if(format == m->format)
             return m->mfx_chroma;
     }
