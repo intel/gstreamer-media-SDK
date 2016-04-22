@@ -12,6 +12,7 @@ struct _GstMfxSurfaceProxy
 
 	GstMfxTask         *task;
 	GstMfxSurfacePool  *pool;
+	GstMfxDisplay      *display;
 
 	mfxFrameSurface1    surface;
 	GstVideoFormat      format;
@@ -113,46 +114,14 @@ gst_mfx_surface_proxy_unmap(GstMfxSurfaceProxy * proxy)
 	}
 }
 
-static void
-gst_mfx_surface_proxy_copy_aligned(GstMfxSurfaceProxy * proxy,
-	GstVideoInfo * info, gpointer data)
-{
-	guint plane, row;
-	mfxFrameInfo *frame_info = &proxy->surface.Info;
-	guint srcstride, deststride, width, height;
-	guchar *dest;
-
-	for (plane = 0; plane < GST_VIDEO_INFO_N_PLANES(info); plane++) {
-		dest = proxy->planes[plane];
-		width = GST_VIDEO_INFO_COMP_WIDTH(info, plane);
-		height = GST_VIDEO_INFO_COMP_HEIGHT(info, plane);
-		deststride = GST_ROUND_UP_16(GST_VIDEO_INFO_COMP_STRIDE(info, plane));
-		srcstride = GST_VIDEO_INFO_PLANE_STRIDE(info, plane);
-
-		if (srcstride == deststride) {
-            memcpy(dest, data + GST_VIDEO_INFO_PLANE_OFFSET(info, plane),
-                srcstride * height);
-		}
-		else {
-			for (row = 0; row < height; row++) {
-				memcpy(dest,
-                    data + GST_VIDEO_INFO_PLANE_OFFSET(info, plane) +
-                        row * srcstride,
-                    srcstride);
-				dest += deststride;
-			}
-		}
-	}
-}
-
 static gboolean
-mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy)
+mfx_surface_proxy_create_from_task(GstMfxSurfaceProxy * proxy)
 {
     proxy->surface.Info = gst_mfx_task_get_request(proxy->task)->Info;
 
-	if (gst_mfx_task_has_mapped_surface(proxy->task)) {
-		gst_mfx_surface_proxy_map(proxy);
-	}
+    if (gst_mfx_task_has_mapped_surface(proxy->task)) {
+        gst_mfx_surface_proxy_map(proxy);
+    }
     else {
         mfxMemId mem_id;
 
@@ -199,63 +168,18 @@ gst_mfx_surface_proxy_derive_mfx_frame_info(GstMfxSurfaceProxy * proxy, GstVideo
 }
 
 static gboolean
-mfx_surface_proxy_create_from_video_data(GstMfxSurfaceProxy * proxy,
-    GstVideoInfo * info, gpointer data)
+mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy,
+    GstVideoInfo * info)
 {
-    mfxFrameData *ptr = &proxy->surface.Data;
-	mfxFrameInfo *frame_info = &proxy->surface.Info;
-    gboolean success = TRUE;
-
 	gst_mfx_surface_proxy_derive_mfx_frame_info(proxy, info);
 
-	if (GST_VIDEO_INFO_WIDTH(info) != frame_info->Width ||
-		GST_VIDEO_INFO_HEIGHT(info) != frame_info->Height) {
-		gst_mfx_surface_proxy_map(proxy);
-		gst_mfx_surface_proxy_copy_aligned(proxy, info, data);
-	}
-	else {
-        proxy->data_size = GST_VIDEO_INFO_SIZE(info);
-		ptr->Pitch = GST_ROUND_UP_16(GST_VIDEO_INFO_PLANE_STRIDE(info, 0));
+    if (!proxy->display)
+        gst_mfx_surface_proxy_map(proxy);
+    else {
 
-		switch (GST_VIDEO_INFO_FORMAT(info)) {
-		case GST_VIDEO_FORMAT_NV12:
-			ptr->Y = (mfxU8 *)data + GST_VIDEO_INFO_PLANE_OFFSET(info, 0) + 1;
-			ptr->U = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 1) + 1;
-			ptr->V = ptr->U + 1;
+    }
 
-			break;
-		case GST_VIDEO_FORMAT_YV12:
-			ptr->Y = (mfxU8 *)data + GST_VIDEO_INFO_PLANE_OFFSET(info, 0) + 1;
-			ptr->V = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 1) + 1;
-			ptr->U = ptr->Y + GST_VIDEO_INFO_PLANE_OFFSET(info, 2) + 1;
-
-			break;
-		case GST_VIDEO_FORMAT_YUY2:
-			ptr->Y = (mfxU8 *)data + 4;
-			ptr->U = ptr->Y + 1;
-			ptr->V = ptr->Y + 3;
-
-			break;
-		case GST_VIDEO_FORMAT_UYVY:
-			ptr->U = (mfxU8 *)data + 4;
-			ptr->Y = ptr->U + 1;
-			ptr->V = ptr->U + 2;
-
-			break;
-		case GST_VIDEO_FORMAT_BGRA:
-			ptr->B = (mfxU8 *)data + 4;
-			ptr->G = ptr->B + 1;
-			ptr->R = ptr->B + 2;
-			ptr->A = ptr->B + 3;
-
-			break;
-		default:
-			success = FALSE;
-			break;
-		}
-	}
-
-	return success;
+	return TRUE;
 }
 
 static void
@@ -291,18 +215,45 @@ gst_mfx_surface_proxy_class(void)
 static void
 gst_mfx_surface_proxy_init_properties(GstMfxSurfaceProxy * proxy)
 {
-	proxy->format = gst_video_format_from_mfx_fourcc(proxy->surface.Info.FourCC);
-	proxy->width = proxy->surface.Info.Width;
-	proxy->height = proxy->surface.Info.Height;
+    mfxFrameInfo *info = &proxy->surface.Info;
 
-	proxy->crop_rect.x = proxy->surface.Info.CropX;
-	proxy->crop_rect.y = proxy->surface.Info.CropY;
-	proxy->crop_rect.width = proxy->surface.Info.CropW;
-	proxy->crop_rect.height = proxy->surface.Info.CropH;
+	proxy->format = gst_video_format_from_mfx_fourcc(info->FourCC);
+	proxy->width = info->Width;
+	proxy->height = info->Height;
+
+	proxy->crop_rect.x = info->CropX;
+	proxy->crop_rect.y = info->CropY;
+	proxy->crop_rect.width = info->CropW;
+	proxy->crop_rect.height = info->CropH;
 }
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new(GstMfxTask * task)
+gst_mfx_surface_proxy_new (GstMfxDisplay * display, GstVideoInfo * info)
+{
+    GstMfxSurfaceProxy *proxy;
+
+	g_return_val_if_fail(info != NULL, NULL);
+
+	proxy = (GstMfxSurfaceProxy *)
+		gst_mfx_mini_object_new0(gst_mfx_surface_proxy_class());
+	if (!proxy)
+		return NULL;
+
+    if (display)
+        proxy->display = gst_mfx_display_ref(display);
+
+    if (!mfx_surface_proxy_create(proxy, info))
+		goto error;
+    gst_mfx_surface_proxy_init_properties(proxy);
+
+    return proxy;
+error:
+	gst_mfx_surface_proxy_unref(proxy);
+	return NULL;
+}
+
+GstMfxSurfaceProxy *
+gst_mfx_surface_proxy_new_from_task (GstMfxTask * task)
 {
 	GstMfxSurfaceProxy *proxy;
 
@@ -315,34 +266,11 @@ gst_mfx_surface_proxy_new(GstMfxTask * task)
 
 	proxy->pool = NULL;
 	proxy->task = gst_mfx_task_ref(task);
-	if (!mfx_surface_proxy_create(proxy))
+	if (!mfx_surface_proxy_create_from_task(proxy))
 		goto error;
 	gst_mfx_surface_proxy_init_properties(proxy);
 
 	return proxy;
-error:
-	gst_mfx_surface_proxy_unref(proxy);
-	return NULL;
-}
-
-GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new_from_video_data(GstVideoInfo * info, gpointer data)
-{
-    GstMfxSurfaceProxy *proxy;
-
-	g_return_val_if_fail(info != NULL, NULL);
-	g_return_val_if_fail(data != NULL, NULL);
-
-	proxy = (GstMfxSurfaceProxy *)
-		gst_mfx_mini_object_new0(gst_mfx_surface_proxy_class());
-	if (!proxy)
-		return NULL;
-
-	if (!mfx_surface_proxy_create_from_video_data(proxy, info, data))
-		goto error;
-	gst_mfx_surface_proxy_init_properties(proxy);
-
-    return proxy;
 error:
 	gst_mfx_surface_proxy_unref(proxy);
 	return NULL;

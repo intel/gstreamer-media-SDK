@@ -9,7 +9,6 @@ static guchar *
 get_image_data (VaapiImage * image)
 {
     guchar *data;
-    VAImage va_image;
 
     data = vaapi_image_get_plane (image, 0);
     if (!data)
@@ -24,7 +23,8 @@ new_image(GstMfxDisplay * display, const GstVideoInfo * vip)
     if (!GST_VIDEO_INFO_WIDTH (vip) || !GST_VIDEO_INFO_HEIGHT (vip))
         return NULL;
     return vaapi_image_new (display,
-        GST_VIDEO_INFO_WIDTH (vip), GST_VIDEO_INFO_HEIGHT (vip),
+        GST_VIDEO_INFO_WIDTH (vip),
+        GST_VIDEO_INFO_HEIGHT (vip),
         GST_VIDEO_INFO_FORMAT(vip));
 }
 
@@ -43,12 +43,30 @@ ensure_image (GstMfxVideoMemory * mem)
     return TRUE;
 }
 
+
+static GstMfxSurfaceProxy *
+new_surface_proxy (GstMfxVideoMemory * mem)
+{
+    GstMfxVideoAllocator *const allocator =
+        GST_MFX_VIDEO_ALLOCATOR_CAST (GST_MEMORY_CAST (mem)->allocator);
+
+    return gst_mfx_surface_proxy_new_from_pool (
+        GST_MFX_SURFACE_POOL (allocator->surface_pool));
+}
+
 static gboolean
 ensure_surface (GstMfxVideoMemory * mem)
 {
     if (!mem->proxy) {
         gst_mfx_surface_proxy_replace (&mem->proxy,
             gst_mfx_video_meta_get_surface_proxy (mem->meta));
+    }
+
+    if (!mem->proxy) {
+        mem->proxy = new_surface_proxy (mem);
+        if (!mem->proxy)
+            return FALSE;
+        gst_mfx_video_meta_set_surface_proxy (mem->meta, mem->proxy);
     }
 
     return GST_MFX_SURFACE_PROXY_SURFACE (mem->proxy) != NULL;
@@ -71,7 +89,7 @@ gst_video_meta_map_mfx_surface(GstVideoMeta * meta, guint plane,
 		if (!ensure_surface(mem))
 			goto error_ensure_surface;
 
-		if (G_UNLIKELY(GST_MFX_SURFACE_PROXY_MEMID(mem->proxy) != GST_MFX_ID_INVALID)) {
+		if (GST_MFX_SURFACE_PROXY_MEMID(mem->proxy) != GST_MFX_ID_INVALID) {
 			if (!ensure_image(mem))
 				goto error_ensure_image;
 
@@ -392,6 +410,8 @@ gst_mfx_video_allocator_finalize (GObject * object)
     GstMfxVideoAllocator *const allocator =
         GST_MFX_VIDEO_ALLOCATOR_CAST (object);
 
+    gst_mfx_surface_pool_replace (&allocator->surface_pool, NULL);
+
     G_OBJECT_CLASS (gst_mfx_video_allocator_parent_class)->finalize (object);
 }
 
@@ -486,7 +506,7 @@ bail:
 
 GstAllocator *
 gst_mfx_video_allocator_new(GstMfxDisplay * display,
-	const GstVideoInfo * vip)
+	const GstVideoInfo * vip, gboolean mapped)
 {
 	GstMfxVideoAllocator *allocator;
 
@@ -500,11 +520,22 @@ gst_mfx_video_allocator_new(GstMfxDisplay * display,
 	allocator->video_info = *vip;
 
     allocator_configure_image_info (display, allocator);
+    allocator->surface_pool = gst_mfx_surface_pool_new (display,
+        &allocator->image_info, mapped);
+    if (!allocator->surface_pool)
+        goto error_create_surface_pool;
 
 	gst_allocator_set_mfx_video_info(GST_ALLOCATOR_CAST(allocator),
 		&allocator->image_info, 0);
 
 	return GST_ALLOCATOR_CAST(allocator);
+  /* ERRORS */
+error_create_surface_pool:
+    {
+        GST_ERROR ("failed to allocate MFX surface pool");
+        gst_object_unref (allocator);
+        return NULL;
+    }
 }
 
 

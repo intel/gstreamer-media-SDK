@@ -30,10 +30,10 @@ typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new(GstMfxTask * ctx);
+gst_mfx_surface_proxy_new(GstMfxDisplay * display, GstVideoInfo * info);
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new_from_video_data(GstVideoInfo * info, gpointer data);
+gst_mfx_surface_proxy_new_from_task(GstMfxTask * task);
 
 GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool);

@@ -17,6 +17,7 @@ struct _GstMfxVideoBufferPoolPrivate
 	GstMfxDisplay *display;
 	guint has_video_meta : 1;
 	guint has_video_alignment : 1;
+	gboolean mapped;
 };
 
 #define GST_MFX_VIDEO_BUFFER_POOL_GET_PRIVATE(obj) \
@@ -86,7 +87,8 @@ gst_mfx_video_buffer_pool_set_config(GstBufferPool * pool,
 	if (changed_caps) {
 		const GstVideoInfo *alloc_vip;
 
-		allocator = gst_mfx_video_allocator_new(priv->display, new_vip);
+		allocator = gst_mfx_video_allocator_new(priv->display, new_vip,
+                        priv->mapped);
 		if (!allocator)
 			goto error_create_allocator;
 		gst_object_replace((GstObject **)& priv->allocator,
@@ -187,8 +189,10 @@ gst_mfx_video_buffer_pool_alloc_buffer(GstBufferPool * pool,
 			&GST_VIDEO_INFO_PLANE_OFFSET(vip, 0),
 			&GST_VIDEO_INFO_PLANE_STRIDE(vip, 0));
 
-        vmeta->map = gst_video_meta_map_mfx_surface;
-        vmeta->unmap = gst_video_meta_unmap_mfx_surface;
+        if (GST_MFX_IS_VIDEO_MEMORY (mem)) {
+            vmeta->map = gst_video_meta_map_mfx_surface;
+            vmeta->unmap = gst_video_meta_unmap_mfx_surface;
+        }
 	}
 
 	*out_buffer_ptr = buffer;
@@ -275,6 +279,7 @@ gst_mfx_video_buffer_pool_new(GstMfxDisplay * display)
 		GST_MFX_VIDEO_BUFFER_POOL(pool)->priv;
 
     priv->display = gst_mfx_display_ref(display);
+    priv->mapped = TRUE;
 
 	return GST_BUFFER_POOL_CAST(pool);
 }

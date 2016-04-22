@@ -87,6 +87,7 @@ struct _GstMfxPluginBase
 	gboolean sinkpad_caps_changed;
 	gboolean sinkpad_caps_is_raw;
 	GstVideoInfo sinkpad_info;
+	GstBufferPool *sinkpad_buffer_pool;
 	guint sinkpad_buffer_size;
 
 	GstPad *srcpad;
@@ -145,8 +146,16 @@ gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
 	GstCaps * outcaps);
 
 gboolean
+gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
+    GstQuery * query);
+
+gboolean
 gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	GstQuery * query);
+
+GstFlowReturn
+gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
+    GstBuffer * inbuf, GstBuffer ** outbuf_ptr);
 
 
 G_END_DECLS

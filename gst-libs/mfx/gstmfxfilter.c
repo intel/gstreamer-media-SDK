@@ -292,7 +292,7 @@ gst_mfx_filter_start(GstMfxFilter * filter)
                 return FALSE;
         }
 
-        filter->vpp_pool[i] = gst_mfx_surface_pool_new(filter->vpp[i]);
+        filter->vpp_pool[i] = gst_mfx_surface_pool_new_with_task(filter->vpp[i]);
         if (!filter->vpp_pool[i])
             return FALSE;
     }
@@ -376,8 +376,8 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
         if (!filter->vpp_request[0])
             continue;
 
-        gst_mfx_task_unref(filter->vpp[i]);
-        gst_mfx_surface_pool_unref(filter->vpp_pool[i]);
+        gst_mfx_task_replace(&filter->vpp[i], NULL);
+        gst_mfx_surface_pool_replace(&filter->vpp_pool[i], NULL);
 	}
 
 	if (!filter->frame_info)
