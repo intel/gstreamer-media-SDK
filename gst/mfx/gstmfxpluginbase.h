@@ -100,8 +100,7 @@ struct _GstMfxPluginBase
 	GstPadQueryFunction sinkpad_query;
 
 	GstMfxTaskAggregator *aggregator;
-
-	GstCaps *allowed_raw_caps;
+	gboolean mapped;
 };
 
 struct _GstMfxPluginBaseClass

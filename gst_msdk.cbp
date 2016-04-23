@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters='--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/trailer_1080p.mov&quot; ! qtdemux ! avdec_h264 ! videoconvert ! video/x-raw,format=YV12 ! mfxvpp width=1280 ! video/x-raw,format=NV12 ! glimagesink sync=false' />
+				<Option parameters='--gst-plugin-load=./bin/Debug/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/trailer_1080p.mov&quot; ! qtdemux ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! mfxvpp width=1280 ! mfxsink sync=false' />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -32,7 +32,7 @@
 				</Compiler>
 				<Linker>
 					<Add option="-lgstreamer-1.0 -lgobject-2.0 -lglib-2.0" />
-					<Add option="-lgthread-2.0 -lgio-2.0 -lgstbase-1.0" />
+					<Add option="-lgstallocators-1.0 -lgio-2.0 -lgstbase-1.0" />
 					<Add option="-lgstvideo-1.0 -lva -lva-x11 -lX11 -lEGL" />
 					<Add option="-ldrm -ldrm_intel -lva-drm -ludev" />
 					<Add option="-lwayland-client -lwayland-egl" />
@@ -44,7 +44,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
-				<Option parameters='--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/HD.Club-4K-Chimei-inn-60mbps.mp4&quot; ! qtdemux ! h264parse ! mfxdecode ! mfxvpp width=1280 brightness=-90 ! mfxsink sync=false' />
+				<Option parameters='--gst-plugin-load=./bin/Release/libgstmfx.so filesrc location=&quot;/home/nuc/Videos/HD.Club-4K-Chimei-inn-60mbps.mp4&quot; ! qtdemux ! h264parse ! mfxdecode ! mfxvpp brightness=-90 width=1280 ! mfxsink sync=false' />
 				<Option host_application="gst-launch-1.0" />
 				<Option run_host_application_in_terminal="1" />
 				<Compiler>
@@ -66,7 +66,7 @@
 				<Linker>
 					<Add option="-s" />
 					<Add option="-lgstreamer-1.0 -lgobject-2.0 -lglib-2.0" />
-					<Add option="-lgthread-2.0 -lgio-2.0 -lgstbase-1.0" />
+					<Add option="-lgstallocators-1.0 -lgio-2.0 -lgstbase-1.0" />
 					<Add option="-lgstvideo-1.0 -lva -lva-x11 -lX11 -lEGL" />
 					<Add option="-ldrm -ldrm_intel -lva-drm -ludev" />
 					<Add option="-lwayland-client -lwayland-egl" />

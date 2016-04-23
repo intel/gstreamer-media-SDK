@@ -210,24 +210,24 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 	if (vpp->filter)
 		return TRUE;
 
-    mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps) ||
-                !gst_caps_has_mfx_surface(plugin->srcpad_caps);
-
-    //mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps);
+    plugin->mapped = !(gst_caps_has_mfx_surface(plugin->srcpad_caps) &&
+        (GST_VIDEO_INFO_FORMAT(&vpp->sinkpad_info) == GST_VIDEO_FORMAT_BGRA ||
+         GST_VIDEO_INFO_FORMAT(&vpp->sinkpad_info) == GST_VIDEO_FORMAT_NV12));
 
 	if (!gst_mfxpostproc_ensure_aggregator(plugin))
 		return FALSE;
 
-    if (!mapped) {
+    if (!plugin->mapped) {
         task = gst_mfx_task_aggregator_get_current_task(plugin->aggregator);
         if (task && gst_mfx_task_has_mapped_surface(task))
-            mapped = TRUE;
+            plugin->mapped = TRUE;
     }
 
 	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
 	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 
-	vpp->filter = gst_mfx_filter_new(plugin->aggregator, mapped, mapped);
+	vpp->filter = gst_mfx_filter_new(plugin->aggregator,
+                        plugin->mapped, plugin->mapped);
 	if (!vpp->filter)
 		return FALSE;
 	return TRUE;
@@ -385,7 +385,7 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
             outbuf_meta = gst_buffer_get_mfx_video_meta(outbuf);
 
         if (!outbuf_meta)
-                goto error_create_meta;
+            goto error_create_meta;
 
         gst_mfx_video_meta_set_surface_proxy(outbuf_meta, out_proxy);
         crop_rect = gst_mfx_surface_proxy_get_crop_rect(out_proxy);
@@ -544,14 +544,14 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 	if (!gst_video_info_from_caps(&vi, caps))
 		return NULL;
 
-	// Signal the other pad that we only generate progressive frame
-    if(GST_VIDEO_INFO_IS_INTERLACED(&vi))
-        GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+	/* Signal the other pad that we only generate progressive frame */
+    //if(GST_VIDEO_INFO_IS_INTERLACED(&vi))
+        //GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
 
-	// Update size from user-specified parameters
+	/* Update size from user-specified parameters */
 	find_best_size(vpp, &vi, &width, &height);
 
-	// Update format from user-specified parameters
+	/* Update format from user-specified parameters */
     peer_caps = gst_pad_peer_query_caps(
         GST_BASE_TRANSFORM_SRC_PAD(trans),
         vpp->allowed_srcpad_caps

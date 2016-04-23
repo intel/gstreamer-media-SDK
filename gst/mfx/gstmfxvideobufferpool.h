@@ -43,7 +43,7 @@ struct _GstMfxVideoBufferPoolClass
 GType gst_mfx_video_buffer_pool_get_type(void);
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new(GstMfxDisplay * display);
+gst_mfx_video_buffer_pool_new(GstMfxDisplay * display, gboolean mapped);
 
 G_END_DECLS
 

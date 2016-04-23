@@ -31,7 +31,6 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
         GLint attribs[23], *attrib;
         GstMfxPrimeBufferProxy *buffer_proxy;
         VaapiImage *image;
-        VAImage va_image;
 
         buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(proxy);
         if (!buffer_proxy)
@@ -40,7 +39,6 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
         image = gst_mfx_surface_proxy_derive_image(proxy);
         if (!image)
             return FALSE;
-        vaapi_image_get_image(image, &va_image);
 
         GST_MFX_TEXTURE_WIDTH(base_texture) = vaapi_image_get_width(image);
         GST_MFX_TEXTURE_HEIGHT(base_texture) = vaapi_image_get_height(image);

@@ -333,10 +333,11 @@ gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
     if (!gst_video_info_from_caps(&info, mfxdec->srcpad_caps))
         return FALSE;
 
+    plugin->mapped =
+        gst_mfx_query_peer_has_raw_caps(GST_VIDEO_DECODER_SRC_PAD(mfxdec));
+
 	mfxdec->decoder = gst_mfx_decoder_new(plugin->aggregator,
-		codec, mfxdec->async_depth, &info,
-		//!gst_caps_has_mfx_surface(mfxdec->srcpad_caps));
-        gst_mfx_query_peer_has_raw_caps(GST_VIDEO_DECODER_SRC_PAD(mfxdec)));
+		codec, mfxdec->async_depth, &info, plugin->mapped);
 	if (!mfxdec->decoder)
 		return FALSE;
 
@@ -514,7 +515,6 @@ gst_mfxdec_class_init(GstMfxDecClass *klass)
 		GST_DEBUG_FUNCPTR(gst_mfxdec_handle_frame);
 	video_decoder_class->decide_allocation =
 		GST_DEBUG_FUNCPTR(gst_mfxdec_decide_allocation);
-
 }
 
 static void

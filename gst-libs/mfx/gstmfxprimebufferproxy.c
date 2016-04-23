@@ -123,7 +123,7 @@ gst_mfx_prime_buffer_proxy_new_from_surface(GstMfxSurfaceProxy * parent)
 	g_return_val_if_fail(parent != NULL, NULL);
 
 	proxy = (GstMfxPrimeBufferProxy *)
-		gst_mfx_mini_object_new(gst_mfx_prime_buffer_proxy_class());
+		gst_mfx_mini_object_new0(gst_mfx_prime_buffer_proxy_class());
 	if (!proxy)
 		return NULL;
 

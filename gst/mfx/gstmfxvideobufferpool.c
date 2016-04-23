@@ -271,7 +271,7 @@ gst_mfx_video_buffer_pool_init(GstMfxVideoBufferPool * pool)
 }
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new(GstMfxDisplay * display)
+gst_mfx_video_buffer_pool_new(GstMfxDisplay * display, gboolean mapped)
 {
     GstMfxVideoBufferPool *pool =
         g_object_new(GST_MFX_TYPE_VIDEO_BUFFER_POOL, NULL);
@@ -279,7 +279,7 @@ gst_mfx_video_buffer_pool_new(GstMfxDisplay * display)
 		GST_MFX_VIDEO_BUFFER_POOL(pool)->priv;
 
     priv->display = gst_mfx_display_ref(display);
-    priv->mapped = TRUE;
+    priv->mapped = mapped;
 
 	return GST_BUFFER_POOL_CAST(pool);
 }

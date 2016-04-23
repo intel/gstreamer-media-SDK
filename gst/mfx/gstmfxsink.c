@@ -21,8 +21,8 @@ GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxsink);
 /* Default template */
 /* *INDENT-OFF* */
 static const char gst_mfxsink_sink_caps_str[] =
-	GST_MFX_MAKE_SURFACE_CAPS ";"
-	GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }");
+	GST_MFX_MAKE_SURFACE_CAPS ";";
+	//GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }");
 /* *INDENT-ON* */
 
 static GstStaticPadTemplate gst_mfxsink_sink_factory =
@@ -805,6 +805,8 @@ static gboolean
 gst_mfxsink_propose_allocation (GstBaseSink * base_sink, GstQuery * query)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (base_sink);
+
+  plugin->mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps);
 
   if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
     return FALSE;

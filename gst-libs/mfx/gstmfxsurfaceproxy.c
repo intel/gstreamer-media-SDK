@@ -13,6 +13,7 @@ struct _GstMfxSurfaceProxy
 	GstMfxTask         *task;
 	GstMfxSurfacePool  *pool;
 	GstMfxDisplay      *display;
+	GstMfxID            surface_id;
 
 	mfxFrameSurface1    surface;
 	GstVideoFormat      format;
@@ -123,14 +124,12 @@ mfx_surface_proxy_create_from_task(GstMfxSurfaceProxy * proxy)
         gst_mfx_surface_proxy_map(proxy);
     }
     else {
-        mfxMemId mem_id;
-
-        mem_id = g_queue_pop_head(
+        proxy->surface_id = g_queue_pop_head(
             gst_mfx_task_get_surfaces(proxy->task));
-        if (!mem_id)
+        if (!proxy->surface_id)
             return FALSE;
 
-        proxy->surface.Data.MemId = mem_id;
+        proxy->surface.Data.MemId = proxy->surface_id;
     }
 
 	return TRUE;
@@ -176,7 +175,20 @@ mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy,
     if (!proxy->display)
         gst_mfx_surface_proxy_map(proxy);
     else {
+        mfxFrameInfo *frame_info = &proxy->surface.Info;
+        VAStatus sts;
 
+        GST_MFX_DISPLAY_LOCK(proxy->display);
+        sts = vaCreateSurfaces(GST_MFX_DISPLAY_VADISPLAY(proxy->display),
+            gst_mfx_video_format_to_va_format(frame_info->FourCC),
+            frame_info->Width, frame_info->Height,
+            &proxy->surface_id, 1,
+            NULL, 0);
+        GST_MFX_DISPLAY_UNLOCK(proxy->display);
+        if (!vaapi_check_status(sts, "vaCreateSurfaces()"))
+            return FALSE;
+
+        proxy->surface.Data.MemId = &proxy->surface_id;
     }
 
 	return TRUE;
@@ -196,10 +208,18 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
     if (proxy->task) {
         if (!gst_mfx_task_has_mapped_surface(proxy->task))
             g_queue_push_tail(gst_mfx_task_get_surfaces(proxy->task),
-                GST_MFX_SURFACE_PROXY_MEMID(proxy));
+                proxy->surface.Data.MemId);
 
         gst_mfx_task_replace(proxy->task, NULL);
     }
+
+    if (proxy->display && !proxy->task) {
+        GST_MFX_DISPLAY_LOCK(proxy->display);
+        vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(proxy->display), proxy->surface.Data.MemId, 1);
+        GST_MFX_DISPLAY_UNLOCK(proxy->display);
+    }
+
+    gst_mfx_display_replace(&proxy->display, NULL);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -266,6 +286,7 @@ gst_mfx_surface_proxy_new_from_task (GstMfxTask * task)
 
 	proxy->pool = NULL;
 	proxy->task = gst_mfx_task_ref(task);
+	proxy->display = gst_mfx_display_ref(GST_MFX_TASK_DISPLAY(task));
 	if (!mfx_surface_proxy_create_from_task(proxy))
 		goto error;
 	gst_mfx_surface_proxy_init_properties(proxy);
@@ -446,26 +467,24 @@ gst_mfx_surface_proxy_get_task_context(GstMfxSurfaceProxy * proxy)
 VaapiImage *
 gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy)
 {
-	GstMfxDisplay *display;
 	VAImage va_image;
 	VAStatus status;
 
 	g_return_val_if_fail(proxy != NULL, NULL);
 
-	display = GST_MFX_TASK_DISPLAY(proxy->task);
 	va_image.image_id = VA_INVALID_ID;
 	va_image.buf = VA_INVALID_ID;
 
-	GST_MFX_DISPLAY_LOCK(display);
-	status = vaDeriveImage(GST_MFX_DISPLAY_VADISPLAY(display),
+	GST_MFX_DISPLAY_LOCK(proxy->display);
+	status = vaDeriveImage(GST_MFX_DISPLAY_VADISPLAY(proxy->display),
 		GST_MFX_SURFACE_PROXY_MEMID(proxy), &va_image);
-	GST_MFX_DISPLAY_UNLOCK(display);
-	if (!vaapi_check_status(status, "vaDeriveImage()")) {
+	GST_MFX_DISPLAY_UNLOCK(proxy->display);
+	if (!vaapi_check_status(status, "vaDeriveImage()"))
 		return NULL;
-	}
+
 	if (va_image.image_id == VA_INVALID_ID || va_image.buf == VA_INVALID_ID)
 		return NULL;
 
-	return vaapi_image_new_with_image(display, &va_image);
+	return vaapi_image_new_with_image(proxy->display, &va_image);
 }
 
