@@ -877,11 +877,15 @@ gst_mfx_filter_set_frc_algorithm(GstMfxFilter *filter,
     g_return_val_if_fail(filter != NULL, FALSE);
     g_return_val_if_fail((GST_MFX_FRC_NONE == alg||
                 GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
+                GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg),
+            FALSE);
+    /*g_return_val_if_fail((GST_MFX_FRC_NONE == alg||
+                GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
                 GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg ||
                 GST_MFX_FRC_FRAME_INTERPOLATION == alg ||
                 GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg ||
                 GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg),
-            FALSE);
+            FALSE);*/
 
     switch(alg) {
         case GST_MFX_FRC_NONE:
@@ -893,7 +897,7 @@ gst_mfx_filter_set_frc_algorithm(GstMfxFilter *filter,
         case GST_MFX_FRC_DISTRIBUTED_TIMESTAMP:
             mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP;
             break;
-        case GST_MFX_FRC_FRAME_INTERPOLATION:
+        /*case GST_MFX_FRC_FRAME_INTERPOLATION:
             mode = MFX_FRCALGM_FRAME_INTERPOLATION;
             break;
         case GST_MFX_FRC_FI_PRESERVE_TIMESTAMP:
@@ -903,7 +907,7 @@ gst_mfx_filter_set_frc_algorithm(GstMfxFilter *filter,
         case GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP:
             mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP ||
                 MFX_FRCALGM_FRAME_INTERPOLATION;
-            break;
+            break;*/
         default:
             mode = 0;
             break;

@@ -142,12 +142,12 @@ gst_mfx_frc_alg_get_type(void)
             "Frame dropping/repetition based FRC with preserved original timestamps.", "frc-preserve-ts"},
         { GST_MFX_FRC_DISTRIBUTED_TIMESTAMP,
             "Frame dropping/repetition based FRC with distributed timestamps.", "frc-distributed-ts"},
-        { GST_MFX_FRC_FRAME_INTERPOLATION,
+        /*{ GST_MFX_FRC_FRAME_INTERPOLATION,
             "Frame interpolation FRC.", "fi"},
         { GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
             "Frame dropping/repetition and frame interpolation FRC with preserved original timestamps.", "fi-preserve-ts"},
         { GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
-            "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"},
+            "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"},*/
         {0, NULL, NULL},
     };
     if (!alg)
@@ -580,7 +580,7 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
                  );
          vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
          if ( DEFAULT_FRC_ALG == vpp->alg )
-             vpp->alg = GST_MFX_FRC_FRAME_INTERPOLATION;
+             vpp->alg = GST_MFX_FRC_PRESERVE_TIMESTAMP;
     }
 
     if(peer_caps)
