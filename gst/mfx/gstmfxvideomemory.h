@@ -5,6 +5,7 @@
 #include <gst/gstallocator.h>
 #include <gst/video/video-info.h>
 #include "gstmfxsurfaceproxy.h"
+#include "gstmfxprimebufferproxy.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxvideometa.h"
@@ -117,7 +118,6 @@ struct _GstMfxVideoAllocator
 	GstAllocator parent_instance;
 
 	/*< private >*/
-	GstVideoInfo video_info;
 	GstVideoInfo image_info;
 	GstMfxSurfacePool *surface_pool;
 };
@@ -139,13 +139,13 @@ GstAllocator *
 gst_mfx_video_allocator_new(GstMfxDisplay * display,
 	const GstVideoInfo * vip, gboolean mapped);
 
-const GstVideoInfo *
-gst_allocator_get_mfx_video_info(GstAllocator * allocator,
-	guint * out_flags_ptr);
+/* ------------------------------------------------------------------------ */
+/* --- GstMfxDmaBufMemory                                             --- */
+/* ------------------------------------------------------------------------ */
 
-gboolean
-gst_allocator_set_mfx_video_info(GstAllocator * allocator,
-	const GstVideoInfo * vip, guint flags);
+GstMemory *
+gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxDisplay * display,
+	const GstVideoInfo *vip, GstMfxVideoMeta * meta);
 
 G_END_DECLS
 

@@ -220,20 +220,19 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     num_planes = vaapi_image_get_plane_count(vaapi_image);
 
 	/* Using compositor scaling. Correct way is to use VPP scaling */
-    if(src_rect->width != dst_rect->width || src_rect->height != dst_rect->height)
-	{
+    if(src_rect->width != dst_rect->width || src_rect->height != dst_rect->height) {
 		if(priv->viewport)
 			wl_viewport_set_destination(priv->viewport, dst_rect->width, dst_rect->height);
 	}
-    for(i=0; i<num_planes; i++)
-    {
+
+    for(i=0; i<num_planes; i++) {
         offsets[i] = vaapi_image_get_offset(vaapi_image, i);
         pitches[i] = vaapi_image_get_pitch(vaapi_image, i);
     }
 
     if ( GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format(vaapi_image) ) {
 		drm_format = WL_DRM_FORMAT_NV12;
-    } else if ( GST_VIDEO_FORMAT_ARGB == vaapi_image_get_format(vaapi_image) ) {
+    } else if ( GST_VIDEO_FORMAT_BGRA == vaapi_image_get_format(vaapi_image) ) {
         drm_format = WL_DRM_FORMAT_ARGB8888;
     }
 

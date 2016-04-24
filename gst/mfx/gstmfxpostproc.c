@@ -210,10 +210,6 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 	if (vpp->filter)
 		return TRUE;
 
-    plugin->mapped = !(gst_caps_has_mfx_surface(plugin->srcpad_caps) &&
-        (GST_VIDEO_INFO_FORMAT(&vpp->sinkpad_info) == GST_VIDEO_FORMAT_BGRA ||
-         GST_VIDEO_INFO_FORMAT(&vpp->sinkpad_info) == GST_VIDEO_FORMAT_NV12));
-
 	if (!gst_mfxpostproc_ensure_aggregator(plugin))
 		return FALSE;
 
@@ -421,6 +417,8 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
             goto error_process_vpp;
 
     } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
+
+    gst_mfx_surface_proxy_unref(proxy);
 
 	return GST_FLOW_OK;
 

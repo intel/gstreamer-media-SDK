@@ -37,33 +37,6 @@ default_has_interface(GstMfxPluginBase * plugin, GType type)
 	return FALSE;
 }
 
-static gboolean
-plugin_update_sinkpad_info_from_buffer(GstMfxPluginBase * plugin,
-    GstBuffer * buf)
-{
-	GstVideoInfo *const vip = &plugin->sinkpad_info;
-	GstVideoMeta *vmeta;
-	guint i;
-
-	vmeta = gst_buffer_get_video_meta(buf);
-	if (!vmeta)
-		return TRUE;
-
-	if (GST_VIDEO_INFO_FORMAT(vip) != vmeta->format ||
-		GST_VIDEO_INFO_WIDTH(vip) != vmeta->width ||
-		GST_VIDEO_INFO_HEIGHT(vip) != vmeta->height ||
-		GST_VIDEO_INFO_N_PLANES(vip) != vmeta->n_planes)
-		return FALSE;
-
-	for (i = 0; i < GST_VIDEO_INFO_N_PLANES(vip); ++i) {
-		GST_VIDEO_INFO_PLANE_OFFSET(vip, i) = vmeta->offset[i];
-		GST_VIDEO_INFO_PLANE_STRIDE(vip, i) = vmeta->stride[i];
-	}
-	GST_VIDEO_INFO_SIZE(vip) = gst_buffer_get_size(buf);
-	return TRUE;
-}
-
-
 void
 gst_mfx_plugin_base_class_init(GstMfxPluginBaseClass * klass)
 {
@@ -153,6 +126,70 @@ gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin)
 	return TRUE;
 }
 
+/* Checks whether the supplied pad peer element supports DMABUF sharing */
+/* XXX: this is a workaround to the absence of any proposer way to
+specify DMABUF memory capsfeatures or bufferpool option to downstream */
+static gboolean
+has_dmabuf_capable_peer(GstMfxPluginBase * plugin, GstPad * pad)
+{
+	GstPad *other_pad = NULL;
+	GstElement *element = NULL;
+	gchar *element_name = NULL;
+	gboolean is_dmabuf_capable = FALSE;
+	gint v;
+
+	gst_object_ref(pad);
+
+	for (;;) {
+		other_pad = gst_pad_get_peer(pad);
+		gst_object_unref(pad);
+		if (!other_pad)
+			break;
+
+		element = gst_pad_get_parent_element(other_pad);
+		gst_object_unref(other_pad);
+		if (!element)
+			break;
+
+		if (GST_IS_PUSH_SRC(element)) {
+			element_name = gst_element_get_name(element);
+			if (!element_name)
+				break;
+
+			if ((sscanf(element_name, "v4l2src%d", &v) != 1)
+				&& (sscanf(element_name, "camerasrc%d", &v) != 1))
+				break;
+
+			v = 0;
+			g_object_get(element, "io-mode", &v, NULL);
+			if (strncmp(element_name, "camerasrc", 9) == 0)
+				is_dmabuf_capable = v == 3;
+			else
+				is_dmabuf_capable = v == 5;     /* "dmabuf-import" enum value */
+			break;
+		}
+		else if (GST_IS_BASE_TRANSFORM(element)) {
+			element_name = gst_element_get_name(element);
+			if (!element_name || sscanf(element_name, "capsfilter%d", &v) != 1)
+				break;
+
+			pad = gst_element_get_static_pad(element, "sink");
+			if (!pad)
+				break;
+		}
+		else
+			break;
+
+		g_free(element_name);
+		element_name = NULL;
+		g_clear_object(&element);
+	}
+
+	g_free(element_name);
+	g_clear_object(&element);
+	return is_dmabuf_capable;
+}
+
 /**
  * ensure_sinkpad_buffer_pool:
  * @plugin: a #GstMfxPluginBase
@@ -171,6 +208,12 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
     GstStructure *config;
     GstVideoInfo vi;
     gboolean need_pool;
+
+    if (!plugin->use_dmabuf)
+        plugin->use_dmabuf = has_dmabuf_capable_peer(plugin, plugin->sinkpad);
+
+    if (GST_IS_BASE_TRANSFORM(plugin) && !plugin->use_dmabuf)
+        plugin->mapped = !gst_caps_has_mfx_surface(plugin->srcpad_caps);
 
     if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
         return FALSE;
@@ -237,6 +280,13 @@ gboolean
 gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
     GstCaps * outcaps)
 {
+    if (outcaps && outcaps != plugin->srcpad_caps) {
+		gst_caps_replace(&plugin->srcpad_caps, outcaps);
+		if (!gst_video_info_from_caps(&plugin->srcpad_info, outcaps))
+			return FALSE;
+		plugin->srcpad_caps_changed = TRUE;
+	}
+
 	if (incaps && incaps != plugin->sinkpad_caps) {
 		gst_caps_replace(&plugin->sinkpad_caps, incaps);
 		if (!gst_video_info_from_caps(&plugin->sinkpad_info, incaps))
@@ -245,15 +295,9 @@ gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
 		plugin->sinkpad_caps_is_raw = !gst_caps_has_mfx_surface(incaps);
 	}
 
-	if (outcaps && outcaps != plugin->srcpad_caps) {
-		gst_caps_replace(&plugin->srcpad_caps, outcaps);
-		if (!gst_video_info_from_caps(&plugin->srcpad_info, outcaps))
-			return FALSE;
-		plugin->srcpad_caps_changed = TRUE;
-	}
-
-	//if (!ensure_sinkpad_buffer_pool (plugin, plugin->sinkpad_caps))
-        //return FALSE;
+    if (!GST_IS_VIDEO_DECODER(plugin))
+        if (!ensure_sinkpad_buffer_pool (plugin, plugin->sinkpad_caps))
+            return FALSE;
 
 	return TRUE;
 }
@@ -283,6 +327,16 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
             return FALSE;
         gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
             plugin->sinkpad_buffer_size, 0, 0);
+
+		if (plugin->use_dmabuf) {
+			GstStructure *const config =
+				gst_buffer_pool_get_config(plugin->sinkpad_buffer_pool);
+
+			gst_buffer_pool_config_add_option(config,
+				GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
+			if (!gst_buffer_pool_set_config(plugin->sinkpad_buffer_pool, config))
+				goto error_pool_config;
+		}
     }
 
     gst_query_add_allocation_meta (query, GST_MFX_VIDEO_META_API_TYPE, NULL);
@@ -302,11 +356,9 @@ error_pool_config:
     }
 }
 
-/* XXXX: GStreamer 1.2 doesn't check, in gst_buffer_pool_set_config()
-if the config option is already set */
 static inline gboolean
 gst_mfx_plugin_base_set_pool_config(GstBufferPool * pool,
-const gchar * option)
+	const gchar * option)
 {
 	GstStructure *config;
 
@@ -457,8 +509,6 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
     GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
 {
     GstMfxVideoMeta *meta;
-    GstVideoMeta *vmeta;
-    GstMfxSurfaceProxy *proxy;
     GstBuffer *outbuf;
     GstVideoFrame src_frame, out_frame;
     gboolean success;

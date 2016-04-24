@@ -24,6 +24,7 @@ struct _GstMfxSurfaceProxy
 	guchar             *data;
 	guchar             *planes[3];
 	guint16             pitches[3];
+	gboolean            mapped;
 };
 
 static gboolean
@@ -121,9 +122,11 @@ mfx_surface_proxy_create_from_task(GstMfxSurfaceProxy * proxy)
     proxy->surface.Info = gst_mfx_task_get_request(proxy->task)->Info;
 
     if (gst_mfx_task_has_mapped_surface(proxy->task)) {
+        proxy->mapped = TRUE;
         gst_mfx_surface_proxy_map(proxy);
     }
     else {
+        proxy->mapped = FALSE;
         proxy->surface_id = g_queue_pop_head(
             gst_mfx_task_get_surfaces(proxy->task));
         if (!proxy->surface_id)
@@ -172,18 +175,25 @@ mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy,
 {
 	gst_mfx_surface_proxy_derive_mfx_frame_info(proxy, info);
 
-    if (!proxy->display)
+    if (proxy->mapped)
         gst_mfx_surface_proxy_map(proxy);
     else {
         mfxFrameInfo *frame_info = &proxy->surface.Info;
+        guint fourcc = gst_mfx_video_format_to_va_fourcc(frame_info->FourCC);
+        VASurfaceAttrib attrib;
         VAStatus sts;
+
+        attrib.type = VASurfaceAttribPixelFormat;
+        attrib.flags = VA_SURFACE_ATTRIB_SETTABLE;
+        attrib.value.type = VAGenericValueTypeInteger;
+        attrib.value.value.i = fourcc;
 
         GST_MFX_DISPLAY_LOCK(proxy->display);
         sts = vaCreateSurfaces(GST_MFX_DISPLAY_VADISPLAY(proxy->display),
             gst_mfx_video_format_to_va_format(frame_info->FourCC),
             frame_info->Width, frame_info->Height,
             &proxy->surface_id, 1,
-            NULL, 0);
+            &attrib, 1);
         GST_MFX_DISPLAY_UNLOCK(proxy->display);
         if (!vaapi_check_status(sts, "vaCreateSurfaces()"))
             return FALSE;
@@ -202,21 +212,22 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
         gst_mfx_surface_pool_replace(&proxy->pool, NULL);
     }
 
-    if (proxy->data_size)
+    if (proxy->mapped)
         gst_mfx_surface_proxy_unmap(proxy);
 
-    if (proxy->task) {
-        if (!gst_mfx_task_has_mapped_surface(proxy->task))
+    if (!proxy->mapped) {
+        if (proxy->task) {
             g_queue_push_tail(gst_mfx_task_get_surfaces(proxy->task),
                 proxy->surface.Data.MemId);
 
-        gst_mfx_task_replace(proxy->task, NULL);
-    }
-
-    if (proxy->display && !proxy->task) {
-        GST_MFX_DISPLAY_LOCK(proxy->display);
-        vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(proxy->display), proxy->surface.Data.MemId, 1);
-        GST_MFX_DISPLAY_UNLOCK(proxy->display);
+            gst_mfx_task_replace(proxy->task, NULL);
+        }
+        else {
+            GST_MFX_DISPLAY_LOCK(proxy->display);
+            vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(proxy->display),
+                proxy->surface.Data.MemId, 1);
+            GST_MFX_DISPLAY_UNLOCK(proxy->display);
+        }
     }
 
     gst_mfx_display_replace(&proxy->display, NULL);
@@ -248,7 +259,8 @@ gst_mfx_surface_proxy_init_properties(GstMfxSurfaceProxy * proxy)
 }
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new (GstMfxDisplay * display, GstVideoInfo * info)
+gst_mfx_surface_proxy_new (GstMfxDisplay * display, GstVideoInfo * info,
+    gboolean mapped)
 {
     GstMfxSurfaceProxy *proxy;
 
@@ -259,8 +271,8 @@ gst_mfx_surface_proxy_new (GstMfxDisplay * display, GstVideoInfo * info)
 	if (!proxy)
 		return NULL;
 
-    if (display)
-        proxy->display = gst_mfx_display_ref(display);
+    proxy->display = gst_mfx_display_ref(display);
+    proxy->mapped = mapped;
 
     if (!mfx_surface_proxy_create(proxy, info))
 		goto error;
@@ -376,6 +388,14 @@ gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy)
 	return &proxy->surface;
 }
 
+gboolean
+gst_mfx_surface_proxy_is_mapped(GstMfxSurfaceProxy * proxy)
+{
+    g_return_val_if_fail(proxy != NULL, NULL);
+
+	return proxy->mapped;
+}
+
 GstMfxID
 gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy)
 {
@@ -383,6 +403,14 @@ gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy)
 
 	return proxy->surface.Data.MemId ? *(GstMfxID *)proxy->surface.Data.MemId :
 	    GST_MFX_ID_INVALID;
+}
+
+GstMfxDisplay *
+gst_mfx_surface_proxy_get_display(GstMfxSurfaceProxy * proxy)
+{
+	g_return_val_if_fail(proxy != NULL, GST_MFX_ID_INVALID);
+
+	return proxy->display;
 }
 
 const GstMfxRectangle *

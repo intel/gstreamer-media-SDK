@@ -60,11 +60,7 @@ enum
 	N_PROPERTIES
 };
 
-#if USE_EGL
-# define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_EGL
-#else
-# define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_WAYLAND
-#endif
+#define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_ANY
 
 #define DEFAULT_SIGNAL_HANDOFFS         FALSE
 
@@ -488,12 +484,24 @@ gst_mfxsink_set_render_backend(GstMfxSink * sink)
 #endif
 #if USE_EGL
     case GST_MFX_DISPLAY_TYPE_EGL:
-        display = gst_mfx_display_egl_new (NULL, 2);
+    {
+        GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(sink);
+        GstMfxTask *task;
+        guint gl_api = 2; /* GLES2 by default */
+
+        /* Use desktop OpenGL when output surfaces are stored in system memory
+         * since glTexImage2D() doesn't quite work with OpenGLES2 using UFO */
+        task = gst_mfx_task_aggregator_get_current_task(plugin->aggregator);
+        if (task && gst_mfx_task_has_mapped_surface(task))
+            gl_api = 0;
+
+        display = gst_mfx_display_egl_new (NULL, gl_api);
         if (!display)
             goto display_unsupported;
         sink->backend = gst_mfxsink_backend_egl();
         sink->display_type = GST_MFX_DISPLAY_VADISPLAY_TYPE(display);
         break;
+    }
 #endif
     case GST_MFX_DISPLAY_TYPE_DRM:
         sink->display_type = GST_MFX_DISPLAY_TYPE_DRM;
@@ -648,6 +656,10 @@ gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 	GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
 	GstCaps *out_caps, *raw_caps;
 
+	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY)
+        sink->display_type_req = getenv("WAYLAND_DISPLAY") ?
+            GST_MFX_DISPLAY_TYPE_WAYLAND : GST_MFX_DISPLAY_TYPE_EGL;
+
 	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
         out_caps =
             gst_mfx_video_format_new_template_caps_with_features(
@@ -749,7 +761,7 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 	ret = gst_mfx_plugin_base_get_input_buffer (GST_MFX_PLUGIN_BASE (sink),
                 src_buffer, &buffer);
     if (ret == GST_FLOW_NOT_SUPPORTED)
-        return GST_FLOW_OK; /* ignore the frame if it couldn't be uploaded */
+        return GST_FLOW_OK;
     if (ret != GST_FLOW_OK)
         return ret;
 
@@ -775,7 +787,7 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 		goto error;
 
 	if (sink->signal_handoffs)
-        g_signal_emit(sink, gst_mfxsink_signals[HANDOFF_SIGNAL], 0, src_buffer);
+        g_signal_emit(sink, gst_mfxsink_signals[HANDOFF_SIGNAL], 0, buffer);
 
 	/* Retain VA surface until the next one is displayed */
 	/* Need to release the lock for the duration, otherwise a deadlock is possible */
@@ -804,16 +816,14 @@ no_surface:
 static gboolean
 gst_mfxsink_propose_allocation (GstBaseSink * base_sink, GstQuery * query)
 {
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (base_sink);
+    GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (base_sink);
 
-  plugin->mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps);
+    if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
+        return FALSE;
 
-  if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
-    return FALSE;
+    gst_query_add_allocation_meta (query, GST_VIDEO_CROP_META_API_TYPE, NULL);
 
-  gst_query_add_allocation_meta (query, GST_VIDEO_CROP_META_API_TYPE, NULL);
-
-  return TRUE;
+    return TRUE;
 }
 
 static gboolean

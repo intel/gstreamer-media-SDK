@@ -30,7 +30,8 @@ typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new(GstMfxDisplay * display, GstVideoInfo * info);
+gst_mfx_surface_proxy_new (GstMfxDisplay * display, GstVideoInfo * info,
+    gboolean mapped);
 
 GstMfxSurfaceProxy *
 gst_mfx_surface_proxy_new_from_task(GstMfxTask * task);
@@ -56,6 +57,12 @@ gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy);
 
 GstMfxID
 gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy);
+
+GstMfxDisplay *
+gst_mfx_surface_proxy_get_display(GstMfxSurfaceProxy * proxy);
+
+gboolean
+gst_mfx_surface_proxy_is_mapped(GstMfxSurfaceProxy * proxy);
 
 GstVideoFormat
 gst_mfx_surface_proxy_get_format(GstMfxSurfaceProxy * proxy);

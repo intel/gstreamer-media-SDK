@@ -101,6 +101,7 @@ struct _GstMfxPluginBase
 
 	GstMfxTaskAggregator *aggregator;
 	gboolean mapped;
+	gboolean use_dmabuf;
 };
 
 struct _GstMfxPluginBaseClass

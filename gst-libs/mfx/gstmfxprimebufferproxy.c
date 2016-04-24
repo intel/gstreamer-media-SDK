@@ -16,6 +16,7 @@ struct _GstMfxPrimeBufferProxy {
     VaapiImage          *image;
     VABufferInfo         buf_info;
     guintptr             fd;
+    guint                data_size;
 };
 
 typedef VAStatus(*vaExtGetSurfaceHandle)(
@@ -59,8 +60,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 	    return FALSE;
 
 	surf = GST_MFX_SURFACE_PROXY_MEMID(proxy->parent);
-	display = GST_MFX_TASK_DISPLAY(
-        gst_mfx_surface_proxy_get_task_context(proxy->parent));
+	display = gst_mfx_surface_proxy_get_display(proxy->parent);
     proxy->image = gst_mfx_surface_proxy_derive_image(proxy->parent);
     vaapi_image_get_image(proxy->image, &va_img);
 
@@ -82,27 +82,32 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
 	        return FALSE;
         proxy->fd = proxy->buf_info.handle;
     }
+
+    proxy->data_size = va_img.data_size;
+
     return TRUE;
 }
 
 static void
 gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
 {
-    VAImage va_img;
-    vaapi_image_get_image(proxy->image, &va_img);
-
 	if(g_va_get_surface_handle)
 		close(proxy->fd);
 	else {
 	    GstMfxDisplay *display = GST_MFX_TASK_DISPLAY(
-            gst_mfx_surface_proxy_get_task_context(proxy->parent));
+            gst_mfx_surface_proxy_get_display(proxy->parent));
+        VAImage va_img;
+
+        vaapi_image_get_image(proxy->image, &va_img);
+
         GST_MFX_DISPLAY_LOCK(display);
 	    vaReleaseBufferHandle(GST_MFX_DISPLAY_VADISPLAY(display),
             va_img.buf);
         GST_MFX_DISPLAY_UNLOCK(display);
-        gst_mfx_object_unref(proxy->image);
 	}
+
 	gst_mfx_surface_proxy_replace(&proxy->parent, NULL);
+	vaapi_image_replace(&proxy->image, NULL);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -131,8 +136,8 @@ gst_mfx_prime_buffer_proxy_new_from_surface(GstMfxSurfaceProxy * parent)
 
 	if (!gst_mfx_prime_buffer_proxy_acquire_handle(proxy))
 		goto error_acquire_handle;
-	return proxy;
 
+	return proxy;
 	/* ERRORS */
 error_acquire_handle:
 	GST_ERROR("failed to acquire the underlying PRIME buffer handle");
@@ -202,6 +207,14 @@ gst_mfx_prime_buffer_proxy_get_handle(GstMfxPrimeBufferProxy * proxy)
 	g_return_val_if_fail(proxy != NULL, 0);
 
 	return proxy->fd;
+}
+
+guint
+gst_mfx_prime_buffer_proxy_get_size(GstMfxPrimeBufferProxy * proxy)
+{
+	g_return_val_if_fail(proxy != NULL, 0);
+
+	return proxy->data_size;
 }
 
 /**

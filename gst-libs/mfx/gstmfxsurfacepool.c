@@ -79,9 +79,10 @@ gst_mfx_surface_pool_new(GstMfxDisplay * display, GstVideoInfo * info,
 	if (!pool)
 		return NULL;
 
-    if (!mapped)
-        pool->display = gst_mfx_display_ref(display);
+    pool->display = gst_mfx_display_ref(display);
 	pool->info = *info;
+	pool->mapped = mapped;
+
 	gst_mfx_surface_pool_init(pool);
 
 	return pool;
@@ -155,7 +156,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
     if (!surface) {
         g_mutex_unlock (&pool->mutex);
         if (!pool->task)
-            surface = gst_mfx_surface_proxy_new (pool->display, &pool->info);
+            surface = gst_mfx_surface_proxy_new (pool->display, &pool->info, pool->mapped);
         else
             surface = gst_mfx_surface_proxy_new_from_task (pool->task);
         g_mutex_lock (&pool->mutex);

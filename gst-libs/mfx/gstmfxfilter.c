@@ -144,7 +144,7 @@ static void check_supported_filters(GstMfxFilter *filter)
         if (MFX_ERR_NONE == sts)
             filter->supported_filters |= m->type;
         else
-            g_printf("%s is not supported in this platform!\n", m->desc);
+            g_print("%s is not supported in this platform!\n", m->desc);
     }
 
     /* Release the resource */

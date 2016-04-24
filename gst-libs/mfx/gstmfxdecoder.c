@@ -298,7 +298,6 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 		decoder->bitstream = g_byte_array_append(decoder->bitstream,
                                 minfo.data, minfo.size);
 		decoder->bs.Data = decoder->bitstream->data;
-		//decoder->bs.TimeStamp = GST_BUFFER_PTS(frame->input_buffer);
 	}
 
 	/* Initialize the MFX decoder session */
