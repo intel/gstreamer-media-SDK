@@ -104,7 +104,7 @@ gst_mfx_filter_set_frame_info(GstMfxFilter * filter, GstVideoInfo * info)
 	filter->frame_info->CropY = 0;
 	filter->frame_info->CropW = info->width;
 	filter->frame_info->CropH = info->height;
-	filter->frame_info->FrameRateExtN = info->fps_n;
+	filter->frame_info->FrameRateExtN = info->fps_n ? info->fps_n : 30;
 	filter->frame_info->FrameRateExtD = info->fps_d;
 	filter->frame_info->AspectRatioW = info->par_n;
 	filter->frame_info->AspectRatioH = info->par_d;
