@@ -94,8 +94,8 @@ gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
 	if(g_va_get_surface_handle)
 		close(proxy->fd);
 	else {
-	    GstMfxDisplay *display = GST_MFX_TASK_DISPLAY(
-            gst_mfx_surface_proxy_get_display(proxy->parent));
+	    GstMfxDisplay *display =
+            gst_mfx_surface_proxy_get_display(proxy->parent);
         VAImage va_img;
 
         vaapi_image_get_image(proxy->image, &va_img);
@@ -106,8 +106,8 @@ gst_mfx_prime_buffer_proxy_finalize(GstMfxPrimeBufferProxy * proxy)
         GST_MFX_DISPLAY_UNLOCK(display);
 	}
 
+    vaapi_image_replace(&proxy->image, NULL);
 	gst_mfx_surface_proxy_replace(&proxy->parent, NULL);
-	vaapi_image_replace(&proxy->image, NULL);
 }
 
 static inline const GstMfxMiniObjectClass *

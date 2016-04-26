@@ -656,9 +656,14 @@ gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 	GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
 	GstCaps *out_caps, *raw_caps;
 
-	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY)
-        sink->display_type_req = getenv("WAYLAND_DISPLAY") ?
+	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
+        GstMfxDisplay *display = NULL;
+
+        display = gst_mfx_display_wayland_new(NULL);
+        sink->display_type_req = display ?
             GST_MFX_DISPLAY_TYPE_WAYLAND : GST_MFX_DISPLAY_TYPE_EGL;
+        gst_mfx_display_replace(&display, NULL);
+	}
 
 	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
         out_caps =
