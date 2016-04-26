@@ -475,9 +475,11 @@ gst_mfxsink_set_render_backend(GstMfxSink * sink)
     switch (sink->display_type_req) {
 #if USE_WAYLAND
     case GST_MFX_DISPLAY_TYPE_WAYLAND:
-        display = gst_mfx_display_wayland_new(NULL);
-        if (!display)
-            goto display_unsupported;
+        if (!sink->display) {
+            display = gst_mfx_display_wayland_new(NULL);
+            if (!display)
+                goto display_unsupported;
+        }
         sink->backend = gst_mfxsink_backend_wayland();
         sink->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
         break;
@@ -657,12 +659,14 @@ gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 	GstCaps *out_caps, *raw_caps;
 
 	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
-        GstMfxDisplay *display = NULL;
-
-        display = gst_mfx_display_wayland_new(NULL);
+        GstMfxDisplay *display = gst_mfx_display_wayland_new(NULL);
         sink->display_type_req = display ?
             GST_MFX_DISPLAY_TYPE_WAYLAND : GST_MFX_DISPLAY_TYPE_EGL;
-        gst_mfx_display_replace(&display, NULL);
+
+        if (display) {
+            gst_mfx_display_replace(&sink->display, display);
+            gst_mfx_display_unref(display);
+        }
 	}
 
 	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
