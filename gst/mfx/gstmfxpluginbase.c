@@ -209,7 +209,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
     GstVideoInfo vi;
     gboolean need_pool;
 
-    if (!plugin->use_dmabuf)
+    if (!plugin->sinkpad_buffer_pool)
         plugin->use_dmabuf = has_dmabuf_capable_peer(plugin, plugin->sinkpad);
 
     if (GST_IS_BASE_TRANSFORM(plugin) && !plugin->use_dmabuf)
@@ -519,7 +519,7 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
 
     meta = gst_buffer_get_mfx_video_meta (inbuf);
     if (meta) {
-        *outbuf_ptr = gst_buffer_ref (inbuf);
+        *outbuf_ptr = plugin->use_dmabuf ? inbuf : gst_buffer_ref (inbuf);
         return GST_FLOW_OK;
     }
 

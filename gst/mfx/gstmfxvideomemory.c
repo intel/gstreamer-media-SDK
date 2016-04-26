@@ -457,7 +457,7 @@ error_create_surface_pool:
 /* --- GstMfxDmaBufMemory                                             --- */
 /* ------------------------------------------------------------------------ */
 
-/*#define GST_MFX_PRIME_BUFFER_PROXY_QUARK gst_mfx_prime_buffer_proxy_quark_get ()
+#define GST_MFX_PRIME_BUFFER_PROXY_QUARK gst_mfx_prime_buffer_proxy_quark_get ()
 static GQuark
 gst_mfx_prime_buffer_proxy_quark_get(void)
 {
@@ -468,7 +468,7 @@ gst_mfx_prime_buffer_proxy_quark_get(void)
 		g_once_init_leave(&g_quark, quark);
 	}
 	return g_quark;
-}*/
+}
 
 GstMemory *
 gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxDisplay * display,
@@ -503,11 +503,11 @@ gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxDisplay * display,
 	if (!mem)
 		goto error_create_dmabuf_memory;
 
-    gst_mfx_prime_buffer_proxy_unref(dmabuf_proxy);
+    //gst_mfx_prime_buffer_proxy_unref(dmabuf_proxy);
 
-	/*gst_mini_object_set_qdata(GST_MINI_OBJECT_CAST(mem),
+	gst_mini_object_set_qdata(GST_MINI_OBJECT_CAST(mem),
 		GST_MFX_PRIME_BUFFER_PROXY_QUARK, dmabuf_proxy,
-		(GDestroyNotify)gst_mfx_prime_buffer_proxy_unref);*/
+		(GDestroyNotify)gst_mfx_prime_buffer_proxy_unref);
 
 	return mem;
 	/* ERRORS */

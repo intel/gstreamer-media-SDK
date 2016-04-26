@@ -201,8 +201,10 @@ gst_mfx_video_buffer_pool_alloc_buffer(GstBufferPool * pool,
 			&GST_VIDEO_INFO_PLANE_OFFSET(vip, 0),
 			&GST_VIDEO_INFO_PLANE_STRIDE(vip, 0));
 
-        vmeta->map = gst_video_meta_map_mfx_surface;
-        vmeta->unmap = gst_video_meta_unmap_mfx_surface;
+        if (GST_MFX_IS_VIDEO_MEMORY (mem)) {
+            vmeta->map = gst_video_meta_map_mfx_surface;
+            vmeta->unmap = gst_video_meta_unmap_mfx_surface;
+        }
 	}
 
 	*out_buffer_ptr = buffer;

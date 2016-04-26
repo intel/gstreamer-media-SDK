@@ -418,8 +418,6 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 
     } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
 
-    gst_mfx_surface_proxy_unref(proxy);
-
 	return GST_FLOW_OK;
 
 	/* ERRORS */
