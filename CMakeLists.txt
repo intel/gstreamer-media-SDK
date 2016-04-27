@@ -72,7 +72,7 @@ configure_file (
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++ -DHAVE_CONFIG_H")
 
 include_directories(
 	gst/mfx
