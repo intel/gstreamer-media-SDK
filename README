@@ -13,15 +13,16 @@ GStreamer.
 
   * `mfxsink' is used to render the decoded frame to a Wayland / X11
     display.
-  
+
+  * 'mfxvpp' is used to do video processing on RAW surfaces.
 
 Features
 --------
 
-  * Decode H264 AVC, MPEG-2, JPEG, VC-1 and HEVC Videos
-  * Support for the Wayland display server
+  * Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC, and VP8 Videos
+  * Support for the Wayland and X11(with EGL backend)display server
   * Support for headless decode pipelines
-
+  * Support MediaSDK video processing capabilities
 
 Requirements
 ------------
@@ -77,7 +78,3 @@ Known Issues
 -----------
 
   * Decode for VC-1 Advance Profile bitstream is not working.
-  * EGL-based renderer for X11 / Wayland does not work with the Intel UFO driver,
-    only the MESA  OTC driver. Hence, EGL options are turned off in the default
-    cmake configuration. You may turn on those options during the cmake configuration
-    to enable the EGL renderer.

@@ -29,8 +29,9 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 	mfxFrameAllocResponse *resp)
 {
 	GstMfxTask *task = pthis;
-	VAStatus sts;
-	guint i;
+    VASurfaceAttrib attrib;
+    VAStatus sts;
+	guint fourcc, i;
 
 	if (task->response) {
         *resp = *task->response;
@@ -38,6 +39,12 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 	}
 
 	memset(resp, 0, sizeof (mfxFrameAllocResponse));
+
+	if (!(req->Type & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET |
+            MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
+        GST_ERROR("Unsupported surface type: %d\n", req->Type);
+		return MFX_ERR_UNSUPPORTED;
+	}
 
 	/*if (req->Info.FourCC != MFX_FOURCC_NV12 ||
 		req->Info.ChromaFormat != MFX_CHROMAFORMAT_YUV420) {
@@ -49,18 +56,25 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 	task->frame_info = req->Info;
 
     task->surfaces = g_slice_alloc(task->num_surfaces * sizeof(*task->surfaces));
-    task->surface_ids = g_slice_alloc(task->num_surfaces * sizeof(*task->surface_ids));
+    task->surface_ids =
+        g_slice_alloc(task->num_surfaces * sizeof(*task->surface_ids));
     task->surface_queue = g_queue_new();
 
     if (!task->surfaces || !task->surface_ids || !task->surface_queue)
         goto fail;
+
+    fourcc = gst_mfx_video_format_to_va_fourcc(task->frame_info.FourCC);
+    attrib.type = VASurfaceAttribPixelFormat;
+    attrib.flags = VA_SURFACE_ATTRIB_SETTABLE;
+    attrib.value.type = VAGenericValueTypeInteger;
+    attrib.value.value.i = fourcc;
 
     GST_MFX_DISPLAY_LOCK(task->display);
     sts = vaCreateSurfaces(GST_MFX_DISPLAY_VADISPLAY(task->display),
         gst_mfx_video_format_to_va_format(task->frame_info.FourCC),
         req->Info.Width, req->Info.Height,
         task->surfaces, task->num_surfaces,
-        NULL, 0);
+        &attrib, 1);
     GST_MFX_DISPLAY_UNLOCK(task->display);
     if (!vaapi_check_status(sts, "vaCreateSurfaces()")) {
         GST_ERROR("Error allocating VA surfaces\n");

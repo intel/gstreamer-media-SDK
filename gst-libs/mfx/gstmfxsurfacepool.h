@@ -11,7 +11,11 @@ G_BEGIN_DECLS
   ((GstMfxSurfacePool *)(obj))
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new(GstMfxTask * task);
+gst_mfx_surface_pool_new (GstMfxDisplay * display, GstVideoInfo * info,
+    gboolean mapped);
+
+GstMfxSurfacePool *
+gst_mfx_surface_pool_new_with_task (GstMfxTask * task);
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_ref (GstMfxSurfacePool * pool);

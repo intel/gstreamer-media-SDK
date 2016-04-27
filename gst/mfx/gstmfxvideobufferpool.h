@@ -27,6 +27,11 @@ typedef struct _GstMfxVideoBufferPoolPrivate GstMfxVideoBufferPoolPrivate;
 
 #define GST_BUFFER_POOL_OPTION_MFX_VIDEO_META \
 	"GstBufferPoolOptionMfxVideoMeta"
+		
+#ifndef GST_BUFFER_POOL_OPTION_DMABUF_MEMORY
+#define GST_BUFFER_POOL_OPTION_DMABUF_MEMORY \
+	"GstBufferPoolOptionDMABUFMemory"
+#endif
 
 struct _GstMfxVideoBufferPool
 {
@@ -43,7 +48,7 @@ struct _GstMfxVideoBufferPoolClass
 GType gst_mfx_video_buffer_pool_get_type(void);
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new(GstMfxDisplay * display);
+gst_mfx_video_buffer_pool_new(GstMfxDisplay * display, gboolean mapped);
 
 G_END_DECLS
 

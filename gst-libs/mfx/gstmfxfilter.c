@@ -104,7 +104,7 @@ gst_mfx_filter_set_frame_info(GstMfxFilter * filter, GstVideoInfo * info)
 	filter->frame_info->CropY = 0;
 	filter->frame_info->CropW = info->width;
 	filter->frame_info->CropH = info->height;
-	filter->frame_info->FrameRateExtN = info->fps_n;
+	filter->frame_info->FrameRateExtN = info->fps_n ? info->fps_n : 30;
 	filter->frame_info->FrameRateExtD = info->fps_d;
 	filter->frame_info->AspectRatioW = info->par_n;
 	filter->frame_info->AspectRatioH = info->par_d;
@@ -144,7 +144,7 @@ static void check_supported_filters(GstMfxFilter *filter)
         if (MFX_ERR_NONE == sts)
             filter->supported_filters |= m->type;
         else
-            g_printf("%s is not supported in this platform!\n", m->desc);
+            g_print("%s is not supported in this platform!\n", m->desc);
     }
 
     /* Release the resource */
@@ -292,7 +292,7 @@ gst_mfx_filter_start(GstMfxFilter * filter)
                 return FALSE;
         }
 
-        filter->vpp_pool[i] = gst_mfx_surface_pool_new(filter->vpp[i]);
+        filter->vpp_pool[i] = gst_mfx_surface_pool_new_with_task(filter->vpp[i]);
         if (!filter->vpp_pool[i])
             return FALSE;
     }
@@ -376,8 +376,8 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
         if (!filter->vpp_request[0])
             continue;
 
-        gst_mfx_task_unref(filter->vpp[i]);
-        gst_mfx_surface_pool_unref(filter->vpp_pool[i]);
+        gst_mfx_task_replace(&filter->vpp[i], NULL);
+        gst_mfx_surface_pool_replace(&filter->vpp_pool[i], NULL);
 	}
 
 	if (!filter->frame_info)
@@ -877,11 +877,15 @@ gst_mfx_filter_set_frc_algorithm(GstMfxFilter *filter,
     g_return_val_if_fail(filter != NULL, FALSE);
     g_return_val_if_fail((GST_MFX_FRC_NONE == alg||
                 GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
+                GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg),
+            FALSE);
+    /*g_return_val_if_fail((GST_MFX_FRC_NONE == alg||
+                GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
                 GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg ||
                 GST_MFX_FRC_FRAME_INTERPOLATION == alg ||
                 GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg ||
                 GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg),
-            FALSE);
+            FALSE);*/
 
     switch(alg) {
         case GST_MFX_FRC_NONE:
@@ -893,7 +897,7 @@ gst_mfx_filter_set_frc_algorithm(GstMfxFilter *filter,
         case GST_MFX_FRC_DISTRIBUTED_TIMESTAMP:
             mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP;
             break;
-        case GST_MFX_FRC_FRAME_INTERPOLATION:
+        /*case GST_MFX_FRC_FRAME_INTERPOLATION:
             mode = MFX_FRCALGM_FRAME_INTERPOLATION;
             break;
         case GST_MFX_FRC_FI_PRESERVE_TIMESTAMP:
@@ -903,7 +907,7 @@ gst_mfx_filter_set_frc_algorithm(GstMfxFilter *filter,
         case GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP:
             mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP ||
                 MFX_FRCALGM_FRAME_INTERPOLATION;
-            break;
+            break;*/
         default:
             mode = 0;
             break;

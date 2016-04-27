@@ -155,12 +155,14 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad, GstVideoFormat * out_format_pt
 	GstCaps *caps = NULL;
 	GstCaps *sysmem_caps = NULL;
 	GstCaps *mfx_caps = NULL;
-	GstCaps *out_caps;
+	GstCaps *out_caps, *temp1;
 	GstVideoFormat out_format;
 	GstStructure *structure;
 	gchar *format = NULL;
 
-	out_caps = gst_pad_get_allowed_caps(pad);
+    temp1 = gst_pad_get_pad_template_caps(pad);
+    out_caps = gst_pad_peer_query_caps(pad, temp1);
+    gst_caps_unref(temp1);
 	if (!out_caps) {
 		feature = GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED;
 		goto cleanup;

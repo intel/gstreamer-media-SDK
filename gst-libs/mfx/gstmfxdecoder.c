@@ -267,7 +267,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 	}
 
 	if (!decoder->pool) {
-        decoder->pool = gst_mfx_surface_pool_new(decoder->decode_task);
+        decoder->pool = gst_mfx_surface_pool_new_with_task(decoder->decode_task);
         if (!decoder->pool)
             return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 	}
@@ -298,7 +298,6 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 		decoder->bitstream = g_byte_array_append(decoder->bitstream,
                                 minfo.data, minfo.size);
 		decoder->bs.Data = decoder->bitstream->data;
-		//decoder->bs.TimeStamp = GST_BUFFER_PTS(frame->input_buffer);
 	}
 
 	/* Initialize the MFX decoder session */

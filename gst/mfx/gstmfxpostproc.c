@@ -142,12 +142,12 @@ gst_mfx_frc_alg_get_type(void)
             "Frame dropping/repetition based FRC with preserved original timestamps.", "frc-preserve-ts"},
         { GST_MFX_FRC_DISTRIBUTED_TIMESTAMP,
             "Frame dropping/repetition based FRC with distributed timestamps.", "frc-distributed-ts"},
-        { GST_MFX_FRC_FRAME_INTERPOLATION,
+        /*{ GST_MFX_FRC_FRAME_INTERPOLATION,
             "Frame interpolation FRC.", "fi"},
         { GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
             "Frame dropping/repetition and frame interpolation FRC with preserved original timestamps.", "fi-preserve-ts"},
         { GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
-            "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"},
+            "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"},*/
         {0, NULL, NULL},
     };
     if (!alg)
@@ -210,24 +210,20 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 	if (vpp->filter)
 		return TRUE;
 
-    mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps) ||
-                !gst_caps_has_mfx_surface(plugin->srcpad_caps);
-
-    //mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps);
-
 	if (!gst_mfxpostproc_ensure_aggregator(plugin))
 		return FALSE;
 
-    if (!mapped) {
+    if (!plugin->mapped) {
         task = gst_mfx_task_aggregator_get_current_task(plugin->aggregator);
         if (task && gst_mfx_task_has_mapped_surface(task))
-            mapped = TRUE;
+            plugin->mapped = TRUE;
     }
 
 	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
 	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 
-	vpp->filter = gst_mfx_filter_new(plugin->aggregator, mapped, mapped);
+	vpp->filter = gst_mfx_filter_new(plugin->aggregator,
+                        plugin->mapped, plugin->mapped);
 	if (!vpp->filter)
 		return FALSE;
 	return TRUE;
@@ -360,25 +356,16 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 
 	timestamp = GST_BUFFER_TIMESTAMP(inbuf);
 
-    inbuf_meta = gst_buffer_get_mfx_video_meta(inbuf);
-	if (!inbuf_meta) {
-		GstMapInfo minfo;
+	ret =
+      gst_mfx_plugin_base_get_input_buffer (GST_MFX_PLUGIN_BASE (vpp),
+      inbuf, &buf);
+    if (ret != GST_FLOW_OK)
+        return GST_FLOW_ERROR;
 
-        if (!gst_buffer_map(inbuf, &minfo, GST_MAP_READ)) {
-            GST_ERROR("Failed to map input buffer");
-            goto error_invalid_buffer;
-        }
-        proxy = gst_mfx_surface_proxy_new_from_video_data(&vpp->sinkpad_info, minfo.data);
-        if (!proxy)
-            goto error_create_proxy;
-
-        gst_buffer_unmap(inbuf, &minfo);
-	}
-	else {
-        proxy = gst_mfx_video_meta_get_surface_proxy(inbuf_meta);
-        if (!proxy)
-            goto error_create_proxy;
-	}
+    inbuf_meta = gst_buffer_get_mfx_video_meta(buf);
+    proxy = gst_mfx_video_meta_get_surface_proxy(inbuf_meta);
+    if (!proxy)
+        goto error_create_proxy;
 
     do {
         if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
@@ -394,7 +381,7 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
             outbuf_meta = gst_buffer_get_mfx_video_meta(outbuf);
 
         if (!outbuf_meta)
-                goto error_create_meta;
+            goto error_create_meta;
 
         gst_mfx_video_meta_set_surface_proxy(outbuf_meta, out_proxy);
         crop_rect = gst_mfx_surface_proxy_get_crop_rect(out_proxy);
@@ -431,9 +418,6 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 
     } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
 
-    if (!inbuf_meta)
-        gst_mfx_surface_proxy_unref(proxy);
-
 	return GST_FLOW_OK;
 
 	/* ERRORS */
@@ -463,6 +447,19 @@ error_process_vpp:
 		return GST_FLOW_ERROR;
 	}
 }
+
+static gboolean
+gst_mfxpostproc_propose_allocation (GstBaseTransform * trans,
+    GstQuery * decide_query, GstQuery * query)
+{
+    GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+    GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (trans);
+
+    if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
+        return FALSE;
+    return TRUE;
+}
+
 
 static gboolean
 gst_mfxpostproc_decide_allocation(GstBaseTransform * trans, GstQuery * query)
@@ -543,14 +540,14 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 	if (!gst_video_info_from_caps(&vi, caps))
 		return NULL;
 
-	// Signal the other pad that we only generate progressive frame
-    if(GST_VIDEO_INFO_IS_INTERLACED(&vi))
-        GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+	/* Signal the other pad that we only generate progressive frame */
+    //if(GST_VIDEO_INFO_IS_INTERLACED(&vi))
+        //GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
 
-	// Update size from user-specified parameters
+	/* Update size from user-specified parameters */
 	find_best_size(vpp, &vi, &width, &height);
 
-	// Update format from user-specified parameters
+	/* Update format from user-specified parameters */
     peer_caps = gst_pad_peer_query_caps(
         GST_BASE_TRANSFORM_SRC_PAD(trans),
         vpp->allowed_srcpad_caps
@@ -581,7 +578,7 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
                  );
          vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
          if ( DEFAULT_FRC_ALG == vpp->alg )
-             vpp->alg = GST_MFX_FRC_FRAME_INTERPOLATION;
+             vpp->alg = GST_MFX_FRC_PRESERVE_TIMESTAMP;
     }
 
     if(peer_caps)
@@ -902,6 +899,7 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
 	trans_class->transform = gst_mfxpostproc_transform;
 	trans_class->set_caps = gst_mfxpostproc_set_caps;
 	trans_class->query = gst_mfxpostproc_query;
+	trans_class->propose_allocation = gst_mfxpostproc_propose_allocation;
 	trans_class->decide_allocation = gst_mfxpostproc_decide_allocation;
 
 	gst_element_class_set_static_metadata(element_class,

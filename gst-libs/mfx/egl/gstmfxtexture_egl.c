@@ -27,11 +27,10 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
 	EglVTable *const vtable = egl_context_get_vtable(ctx, FALSE);
 	GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
 
-    if (GST_MFX_SURFACE_PROXY_MEMID(proxy) != GST_MFX_ID_INVALID) {
+    if (!gst_mfx_surface_proxy_is_mapped(proxy)) {
         GLint attribs[23], *attrib;
         GstMfxPrimeBufferProxy *buffer_proxy;
         VaapiImage *image;
-        VAImage va_image;
 
         buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface(proxy);
         if (!buffer_proxy)
@@ -40,7 +39,6 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
         image = gst_mfx_surface_proxy_derive_image(proxy);
         if (!image)
             return FALSE;
-        vaapi_image_get_image(image, &va_image);
 
         GST_MFX_TEXTURE_WIDTH(base_texture) = vaapi_image_get_width(image);
         GST_MFX_TEXTURE_HEIGHT(base_texture) = vaapi_image_get_height(image);
@@ -81,7 +79,7 @@ do_bind_texture_unlocked(GstMfxTextureEGL * texture, GstMfxSurfaceProxy * proxy)
         GST_MFX_TEXTURE_ID(texture) = egl_create_texture_from_data(
             texture->egl_context, GL_TEXTURE_2D, GL_BGRA_EXT,
             base_texture->width, base_texture->height,
-            gst_mfx_surface_proxy_get_plane(proxy, 0));
+            gst_mfx_surface_proxy_get_data(proxy));
         if (!GST_MFX_OBJECT_ID(base_texture)) {
             return FALSE;
         }

@@ -37,33 +37,6 @@ default_has_interface(GstMfxPluginBase * plugin, GType type)
 	return FALSE;
 }
 
-static gboolean
-plugin_update_sinkpad_info_from_buffer(GstMfxPluginBase * plugin,
-    GstBuffer * buf)
-{
-	GstVideoInfo *const vip = &plugin->sinkpad_info;
-	GstVideoMeta *vmeta;
-	guint i;
-
-	vmeta = gst_buffer_get_video_meta(buf);
-	if (!vmeta)
-		return TRUE;
-
-	if (GST_VIDEO_INFO_FORMAT(vip) != vmeta->format ||
-		GST_VIDEO_INFO_WIDTH(vip) != vmeta->width ||
-		GST_VIDEO_INFO_HEIGHT(vip) != vmeta->height ||
-		GST_VIDEO_INFO_N_PLANES(vip) != vmeta->n_planes)
-		return FALSE;
-
-	for (i = 0; i < GST_VIDEO_INFO_N_PLANES(vip); ++i) {
-		GST_VIDEO_INFO_PLANE_OFFSET(vip, i) = vmeta->offset[i];
-		GST_VIDEO_INFO_PLANE_STRIDE(vip, i) = vmeta->stride[i];
-	}
-	GST_VIDEO_INFO_SIZE(vip) = gst_buffer_get_size(buf);
-	return TRUE;
-}
-
-
 void
 gst_mfx_plugin_base_class_init(GstMfxPluginBaseClass * klass)
 {
@@ -140,19 +113,8 @@ gst_mfx_plugin_base_close(GstMfxPluginBase * plugin)
 	gst_caps_replace(&plugin->srcpad_caps, NULL);
 	plugin->srcpad_caps_changed = FALSE;
 	gst_video_info_init(&plugin->srcpad_info);
-	gst_caps_replace(&plugin->allowed_raw_caps, NULL);
 }
 
-/**
-* gst_mfx_plugin_base_ensure_display:
-* @plugin: a #GstMfxPluginBase
-*
-* Ensures the display stored in @plugin complies with the requested
-* display type constraints.
-*
-* Returns: %TRUE if the display was created to match the requested
-*   type, %FALSE otherwise.
-*/
 gboolean
 gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin)
 {
@@ -162,6 +124,145 @@ gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin)
 		return FALSE;
 
 	return TRUE;
+}
+
+/* Checks whether the supplied pad peer element supports DMABUF sharing */
+/* XXX: this is a workaround to the absence of any proposer way to
+specify DMABUF memory capsfeatures or bufferpool option to downstream */
+static gboolean
+has_dmabuf_capable_peer(GstMfxPluginBase * plugin, GstPad * pad)
+{
+	GstPad *other_pad = NULL;
+	GstElement *element = NULL;
+	gchar *element_name = NULL;
+	gboolean is_dmabuf_capable = FALSE;
+	gint v;
+
+	gst_object_ref(pad);
+
+	for (;;) {
+		other_pad = gst_pad_get_peer(pad);
+		gst_object_unref(pad);
+		if (!other_pad)
+			break;
+
+		element = gst_pad_get_parent_element(other_pad);
+		gst_object_unref(other_pad);
+		if (!element)
+			break;
+
+		if (GST_IS_PUSH_SRC(element)) {
+			element_name = gst_element_get_name(element);
+			if (!element_name)
+				break;
+
+			if ((sscanf(element_name, "v4l2src%d", &v) != 1)
+				&& (sscanf(element_name, "camerasrc%d", &v) != 1))
+				break;
+
+			v = 0;
+			g_object_get(element, "io-mode", &v, NULL);
+			if (strncmp(element_name, "camerasrc", 9) == 0)
+				is_dmabuf_capable = v == 3;
+			else
+				is_dmabuf_capable = v == 5;     /* "dmabuf-import" enum value */
+			break;
+		}
+		else if (GST_IS_BASE_TRANSFORM(element)) {
+			element_name = gst_element_get_name(element);
+			if (!element_name || sscanf(element_name, "capsfilter%d", &v) != 1)
+				break;
+
+			pad = gst_element_get_static_pad(element, "sink");
+			if (!pad)
+				break;
+		}
+		else
+			break;
+
+		g_free(element_name);
+		element_name = NULL;
+		g_clear_object(&element);
+	}
+
+	g_free(element_name);
+	g_clear_object(&element);
+	return is_dmabuf_capable;
+}
+
+/**
+ * ensure_sinkpad_buffer_pool:
+ * @plugin: a #GstMfxPluginBase
+ * @caps: the initial #GstCaps for the resulting buffer pool
+ *
+ * Makes sure the sink pad video buffer pool is created with the
+ * appropriate @caps.
+ *
+ * Returns: %TRUE if successful, %FALSE otherwise.
+ */
+static gboolean
+ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
+{
+    GstBufferPool *pool;
+    GstCaps *pool_caps;
+    GstStructure *config;
+    GstVideoInfo vi;
+    gboolean need_pool;
+
+    if (!plugin->sinkpad_buffer_pool)
+        plugin->use_dmabuf = has_dmabuf_capable_peer(plugin, plugin->sinkpad);
+
+    if (GST_IS_BASE_TRANSFORM(plugin) && !plugin->use_dmabuf)
+        plugin->mapped = !gst_caps_has_mfx_surface(plugin->srcpad_caps);
+
+    if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
+        return FALSE;
+
+    if (plugin->sinkpad_buffer_pool) {
+        config = gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
+        gst_buffer_pool_config_get_params (config, &pool_caps, NULL, NULL, NULL);
+        need_pool = !gst_caps_is_equal (caps, pool_caps);
+        gst_structure_free (config);
+        if (!need_pool)
+            return TRUE;
+        g_clear_object (&plugin->sinkpad_buffer_pool);
+        plugin->sinkpad_buffer_size = 0;
+    }
+
+    pool = gst_mfx_video_buffer_pool_new (
+                GST_MFX_TASK_AGGREGATOR_DISPLAY(plugin->aggregator),
+                plugin->mapped);
+    if (!pool)
+        goto error_create_pool;
+
+    gst_video_info_init (&vi);
+    gst_video_info_from_caps (&vi, caps);
+    plugin->sinkpad_buffer_size = vi.size;
+
+    config = gst_buffer_pool_get_config (pool);
+    gst_buffer_pool_config_set_params (config, caps,
+        plugin->sinkpad_buffer_size, 0, 0);
+    gst_buffer_pool_config_add_option (config,
+        GST_BUFFER_POOL_OPTION_MFX_VIDEO_META);
+    gst_buffer_pool_config_add_option (config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+    if (!gst_buffer_pool_set_config (pool, config))
+        goto error_pool_config;
+    plugin->sinkpad_buffer_pool = pool;
+
+    return TRUE;
+
+    /* ERRORS */
+error_create_pool:
+    {
+        GST_ERROR ("failed to create buffer pool");
+        return FALSE;
+    }
+error_pool_config:
+    {
+        GST_ERROR ("failed to reset buffer pool config");
+        gst_object_unref (pool);
+        return FALSE;
+    }
 }
 
 /**
@@ -179,6 +280,13 @@ gboolean
 gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
     GstCaps * outcaps)
 {
+    if (outcaps && outcaps != plugin->srcpad_caps) {
+		gst_caps_replace(&plugin->srcpad_caps, outcaps);
+		if (!gst_video_info_from_caps(&plugin->srcpad_info, outcaps))
+			return FALSE;
+		plugin->srcpad_caps_changed = TRUE;
+	}
+
 	if (incaps && incaps != plugin->sinkpad_caps) {
 		gst_caps_replace(&plugin->sinkpad_caps, incaps);
 		if (!gst_video_info_from_caps(&plugin->sinkpad_info, incaps))
@@ -187,21 +295,70 @@ gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
 		plugin->sinkpad_caps_is_raw = !gst_caps_has_mfx_surface(incaps);
 	}
 
-	if (outcaps && outcaps != plugin->srcpad_caps) {
-		gst_caps_replace(&plugin->srcpad_caps, outcaps);
-		if (!gst_video_info_from_caps(&plugin->srcpad_info, outcaps))
-			return FALSE;
-		plugin->srcpad_caps_changed = TRUE;
-	}
+    if (!GST_IS_VIDEO_DECODER(plugin))
+        if (!ensure_sinkpad_buffer_pool (plugin, plugin->sinkpad_caps))
+            return FALSE;
 
 	return TRUE;
 }
 
-/* XXXX: GStreamer 1.2 doesn't check, in gst_buffer_pool_set_config()
-if the config option is already set */
+/**
+ * gst_mfx_plugin_base_propose_allocation:
+ * @plugin: a #GstMfxPluginBase
+ * @query: the allocation query to configure
+ *
+ * Proposes allocation parameters to the upstream elements.
+ *
+ * Returns: %TRUE if successful, %FALSE otherwise.
+ */
+gboolean
+gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
+    GstQuery * query)
+{
+    GstCaps *caps = NULL;
+    gboolean need_pool;
+
+    gst_query_parse_allocation (query, &caps, &need_pool);
+
+    if (need_pool) {
+        if (!caps)
+            goto error_no_caps;
+        if (!ensure_sinkpad_buffer_pool (plugin, caps))
+            return FALSE;
+        gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
+            plugin->sinkpad_buffer_size, 0, 0);
+
+		if (plugin->use_dmabuf) {
+			GstStructure *const config =
+				gst_buffer_pool_get_config(plugin->sinkpad_buffer_pool);
+
+			gst_buffer_pool_config_add_option(config,
+				GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
+			if (!gst_buffer_pool_set_config(plugin->sinkpad_buffer_pool, config))
+				goto error_pool_config;
+		}
+    }
+
+    gst_query_add_allocation_meta (query, GST_MFX_VIDEO_META_API_TYPE, NULL);
+    gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL);
+
+    return TRUE;
+  /* ERRORS */
+error_no_caps:
+    {
+        GST_INFO_OBJECT (plugin, "no caps specified");
+        return FALSE;
+    }
+error_pool_config:
+    {
+        GST_ERROR_OBJECT (plugin, "failed to reset buffer pool config");
+        return FALSE;
+    }
+}
+
 static inline gboolean
 gst_mfx_plugin_base_set_pool_config(GstBufferPool * pool,
-const gchar * option)
+	const gchar * option)
 {
 	GstStructure *config;
 
@@ -278,7 +435,8 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 		if (pool)
 			gst_object_unref(pool);
 		pool = gst_mfx_video_buffer_pool_new(
-                    GST_MFX_TASK_AGGREGATOR_DISPLAY(plugin->aggregator));
+                    GST_MFX_TASK_AGGREGATOR_DISPLAY(plugin->aggregator),
+                    plugin->mapped);
 		if (!pool)
 			goto error_create_pool;
 
@@ -332,3 +490,117 @@ config_failed:
 		return FALSE;
 	}
 }
+
+/**
+ * gst_mfx_plugin_base_get_input_buffer:
+ * @plugin: a #GstMfxPluginBase
+ * @incaps: the sink pad (input) buffer
+ * @outbuf_ptr: the pointer to location to the VA surface backed buffer
+ *
+ * Acquires the sink pad (input) buffer as a VA surface backed
+ * buffer. This is mostly useful for raw YUV buffers, as source
+ * buffers that are already backed as a VA surface are passed
+ * verbatim.
+ *
+ * Returns: #GST_FLOW_OK if the buffer could be acquired
+ */
+GstFlowReturn
+gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
+    GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
+{
+    GstMfxVideoMeta *meta;
+    GstBuffer *outbuf;
+    GstVideoFrame src_frame, out_frame;
+    gboolean success;
+    GstMapInfo minfo;
+
+    g_return_val_if_fail (inbuf != NULL, GST_FLOW_ERROR);
+    g_return_val_if_fail (outbuf_ptr != NULL, GST_FLOW_ERROR);
+
+    meta = gst_buffer_get_mfx_video_meta (inbuf);
+    if (meta) {
+        *outbuf_ptr = plugin->use_dmabuf ? inbuf : gst_buffer_ref (inbuf);
+        return GST_FLOW_OK;
+    }
+
+    if (!plugin->sinkpad_caps_is_raw)
+        goto error_invalid_buffer;
+
+    if (!plugin->sinkpad_buffer_pool)
+        goto error_no_pool;
+
+    if (!gst_buffer_pool_set_active (plugin->sinkpad_buffer_pool, TRUE))
+        goto error_active_pool;
+
+    outbuf = NULL;
+    if (gst_buffer_pool_acquire_buffer (plugin->sinkpad_buffer_pool,
+            &outbuf, NULL) != GST_FLOW_OK)
+        goto error_create_buffer;
+
+    if (!gst_video_frame_map (&src_frame, &plugin->sinkpad_info, inbuf,
+          GST_MAP_READ))
+        goto error_map_src_buffer;
+
+    if (!gst_video_frame_map (&out_frame, &plugin->sinkpad_info, outbuf,
+          GST_MAP_WRITE))
+        goto error_map_dst_buffer;
+
+    success = gst_video_frame_copy (&out_frame, &src_frame);
+    gst_video_frame_unmap (&out_frame);
+    gst_video_frame_unmap (&src_frame);
+    if (!success)
+        goto error_copy_buffer;
+
+done:
+    gst_buffer_copy_into (outbuf, inbuf, GST_BUFFER_COPY_FLAGS |
+      GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+    *outbuf_ptr = outbuf;
+    return GST_FLOW_OK;
+
+    /* ERRORS */
+error_no_pool:
+    {
+        GST_ELEMENT_ERROR (plugin, STREAM, FAILED,
+            ("no buffer pool was negotiated"), ("no buffer pool was negotiated"));
+        return GST_FLOW_ERROR;
+    }
+error_active_pool:
+    {
+        GST_ELEMENT_ERROR (plugin, STREAM, FAILED,
+            ("failed to activate buffer pool"), ("failed to activate buffer pool"));
+        return GST_FLOW_ERROR;
+    }
+error_map_dst_buffer:
+    {
+        gst_video_frame_unmap (&src_frame);
+    // fall-through
+    }
+error_map_src_buffer:
+    {
+        GST_WARNING ("failed to map buffer");
+        gst_buffer_unref (outbuf);
+        return GST_FLOW_NOT_SUPPORTED;
+    }
+
+    /* ERRORS */
+error_invalid_buffer:
+    {
+        GST_ELEMENT_ERROR (plugin, STREAM, FAILED,
+            ("failed to validate source buffer"),
+            ("failed to validate source buffer"));
+        return GST_FLOW_ERROR;
+    }
+error_create_buffer:
+    {
+        GST_ELEMENT_ERROR (plugin, STREAM, FAILED, ("Allocation failed"),
+            ("failed to create buffer"));
+        return GST_FLOW_ERROR;
+    }
+error_copy_buffer:
+    {
+        GST_WARNING ("failed to upload buffer to VA surface");
+        gst_buffer_unref (outbuf);
+        return GST_FLOW_NOT_SUPPORTED;
+    }
+}
+

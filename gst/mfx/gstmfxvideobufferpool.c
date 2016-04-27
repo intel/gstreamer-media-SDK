@@ -17,6 +17,8 @@ struct _GstMfxVideoBufferPoolPrivate
 	GstMfxDisplay *display;
 	guint has_video_meta : 1;
 	guint has_video_alignment : 1;
+	guint use_dmabuf_memory : 1;
+	gboolean mapped;
 };
 
 #define GST_MFX_VIDEO_BUFFER_POOL_GET_PRIVATE(obj) \
@@ -71,12 +73,19 @@ gst_mfx_video_buffer_pool_set_config(GstBufferPool * pool,
 	GstVideoInfo *const new_vip = &priv->video_info[!priv->video_info_index];
 	GstVideoAlignment align;
 	GstAllocator *allocator;
-	gboolean changed_caps;
+	gboolean changed_caps, use_dmabuf_memory;
 
 	if (!gst_buffer_pool_config_get_params(config, &caps, NULL, NULL, NULL))
 		goto error_invalid_config;
 	if (!caps || !gst_video_info_from_caps(new_vip, caps))
 		goto error_no_caps;
+
+	use_dmabuf_memory = gst_buffer_pool_config_has_option(config,
+		GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
+	if (priv->use_dmabuf_memory != use_dmabuf_memory) {
+		priv->use_dmabuf_memory = use_dmabuf_memory;
+		g_clear_object(&priv->allocator);
+	}
 
 	changed_caps = !priv->allocator ||
 		GST_VIDEO_INFO_FORMAT(cur_vip) != GST_VIDEO_INFO_FORMAT(new_vip) ||
@@ -84,9 +93,12 @@ gst_mfx_video_buffer_pool_set_config(GstBufferPool * pool,
 		GST_VIDEO_INFO_HEIGHT(cur_vip) != GST_VIDEO_INFO_HEIGHT(new_vip);
 
 	if (changed_caps) {
-		const GstVideoInfo *alloc_vip;
+		if (use_dmabuf_memory)
+			allocator = gst_dmabuf_allocator_new();
+		else
+			allocator = gst_mfx_video_allocator_new(priv->display, new_vip,
+							priv->mapped);
 
-		allocator = gst_mfx_video_allocator_new(priv->display, new_vip);
 		if (!allocator)
 			goto error_create_allocator;
 		gst_object_replace((GstObject **)& priv->allocator,
@@ -94,10 +106,7 @@ gst_mfx_video_buffer_pool_set_config(GstBufferPool * pool,
 		gst_object_unref(allocator);
 		priv->video_info_index ^= 1;
 
-		alloc_vip = gst_allocator_get_mfx_video_info(allocator, NULL);
-		if (!alloc_vip)
-			goto error_create_allocator_info;
-		priv->alloc_info = *alloc_vip;
+		priv->alloc_info = *new_vip;
 	}
 
 	if (!gst_buffer_pool_config_has_option(config,
@@ -170,7 +179,12 @@ gst_mfx_video_buffer_pool_alloc_buffer(GstBufferPool * pool,
 	if (!buffer)
 		goto error_create_buffer;
 
-	mem = gst_mfx_video_memory_new(priv->allocator, meta);
+	if (priv->use_dmabuf_memory)
+		mem = gst_mfx_dmabuf_memory_new(priv->allocator, priv->display,
+                &priv->alloc_info, meta);
+	else
+		mem = gst_mfx_video_memory_new(priv->allocator, meta);
+
 	if (!mem)
 		goto error_create_memory;
 
@@ -187,8 +201,10 @@ gst_mfx_video_buffer_pool_alloc_buffer(GstBufferPool * pool,
 			&GST_VIDEO_INFO_PLANE_OFFSET(vip, 0),
 			&GST_VIDEO_INFO_PLANE_STRIDE(vip, 0));
 
-        vmeta->map = gst_video_meta_map_mfx_surface;
-        vmeta->unmap = gst_video_meta_unmap_mfx_surface;
+        if (GST_MFX_IS_VIDEO_MEMORY (mem)) {
+            vmeta->map = gst_video_meta_map_mfx_surface;
+            vmeta->unmap = gst_video_meta_unmap_mfx_surface;
+        }
 	}
 
 	*out_buffer_ptr = buffer;
@@ -267,7 +283,7 @@ gst_mfx_video_buffer_pool_init(GstMfxVideoBufferPool * pool)
 }
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new(GstMfxDisplay * display)
+gst_mfx_video_buffer_pool_new(GstMfxDisplay * display, gboolean mapped)
 {
     GstMfxVideoBufferPool *pool =
         g_object_new(GST_MFX_TYPE_VIDEO_BUFFER_POOL, NULL);
@@ -275,6 +291,7 @@ gst_mfx_video_buffer_pool_new(GstMfxDisplay * display)
 		GST_MFX_VIDEO_BUFFER_POOL(pool)->priv;
 
     priv->display = gst_mfx_display_ref(display);
+    priv->mapped = mapped;
 
 	return GST_BUFFER_POOL_CAST(pool);
 }

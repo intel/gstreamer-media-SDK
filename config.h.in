@@ -69,6 +69,3 @@
 
 /* Defined to 1 if X11 is enabled */
 #define USE_X11 @HAVE_X11@
-
-/* Version number of package */
-#define VERSION "@GST_MFX_VERSION@"

@@ -180,7 +180,9 @@ VAImageID
 vaapi_image_get_id(VaapiImage *image)
 {
     VAImage *va_image;
+
     g_return_val_if_fail(image != NULL, VA_INVALID_ID);
+
     va_image = &image->image;
 
 	return va_image->image_id;

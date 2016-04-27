@@ -17,6 +17,9 @@ G_BEGIN_DECLS
 #define GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buf) \
 	gst_mfx_prime_buffer_proxy_get_handle (GST_MFX_PRIME_BUFFER_PROXY (buf))
 
+#define GST_MFX_PRIME_BUFFER_PROXY_SIZE(buf) \
+	gst_mfx_prime_buffer_proxy_get_size (GST_MFX_PRIME_BUFFER_PROXY (buf))
+
 #define GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buf) \
     gst_mfx_prime_buffer_proxy_get_vaapi_image (GST_MFX_PRIME_BUFFER_PROXY(buf))
 
@@ -37,6 +40,9 @@ gst_mfx_prime_buffer_proxy_replace(GstMfxPrimeBufferProxy ** old_proxy_ptr,
 
 guintptr
 gst_mfx_prime_buffer_proxy_get_handle(GstMfxPrimeBufferProxy * proxy);
+
+guint
+gst_mfx_prime_buffer_proxy_get_size(GstMfxPrimeBufferProxy * proxy);
 
 VaapiImage *
 gst_mfx_prime_buffer_proxy_get_vaapi_image(GstMfxPrimeBufferProxy *proxy);
