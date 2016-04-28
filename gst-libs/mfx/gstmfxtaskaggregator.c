@@ -17,7 +17,7 @@ struct _GstMfxTaskAggregator
     GstMfxDisplay			*display;
 	GList					*cache;
 	GstMfxTask			    *current_task;
-	mfxSession				*parent_session;
+	mfxSession				 parent_session;
 };
 
 static void
@@ -104,7 +104,6 @@ mfxSession *
 gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 {
 	mfxIMPL impl;
-	mfxSession session;
 	mfxStatus sts;
 	const char *desc;
 
@@ -117,13 +116,13 @@ gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 	init_params.Version.Major = 1;
 	init_params.Version.Minor = 0;
 
-	sts = MFXInitEx(init_params, &session);
+	sts = MFXInitEx(init_params, &aggregator->parent_session);
 	if (sts < 0) {
 		GST_ERROR("Error initializing internal MFX session");
 		return NULL;
 	}
 
-	sts = MFXQueryIMPL(session, &impl);
+	sts = MFXQueryIMPL(aggregator->parent_session, &impl);
 
 	switch (MFX_IMPL_BASETYPE(impl)) {
 	case MFX_IMPL_SOFTWARE:
@@ -141,19 +140,7 @@ gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 
 	GST_INFO("Initialized internal MFX session using %s implementation", desc);
 
-	if (!aggregator->parent_session) {
-		aggregator->parent_session = (mfxSession *)
-			g_slice_copy(sizeof(mfxSession), &session);
-	}
-	else {
-		sts = MFXJoinSession(*aggregator->parent_session, session);
-		if (sts < 0) {
-            GST_ERROR("Could not join new session with parent session.");
-            return NULL;
-        }
-	}
-
-	return aggregator->parent_session;
+	return &aggregator->parent_session;
 }
 
 static gint
@@ -162,54 +149,48 @@ find_task(gconstpointer cur, gconstpointer task)
 	GstMfxTask *_cur = (GstMfxTask *) cur;
 	GstMfxTask *_task = (GstMfxTask *) task;
 
-	return ( (gst_mfx_task_get_session(_cur) !=
-			  gst_mfx_task_get_session(_task)) ||
-		    !(gst_mfx_task_has_type(_cur,
-			  gst_mfx_task_get_task_type(_task))) );
+	return _cur != _task;
 }
 
-GstMfxTask *
+
+gboolean
 gst_mfx_task_aggregator_find_task(GstMfxTaskAggregator * aggregator,
-	mfxSession * session, guint type_flags)
+	GstMfxTask * task)
 {
-	GstMfxTask *task;
-
-    g_return_val_if_fail(session != NULL, NULL);
 	g_return_val_if_fail(aggregator != NULL, NULL);
-
-	task = gst_mfx_task_new_with_session(aggregator, session, type_flags, TRUE);
-	if (!task)
-		return NULL;
 
 	GList *l = g_list_find_custom(aggregator->cache, task,
 		find_task);
 
-	gst_mfx_task_unref(task);
-
-	return (l != NULL ? gst_mfx_task_ref((GstMfxTask *)(l->data)) : NULL);
+	return l != NULL;
 }
 
 GstMfxTask *
 gst_mfx_task_aggregator_get_current_task(GstMfxTaskAggregator * aggregator)
 {
+    g_return_val_if_fail(aggregator != NULL, FALSE);
+
 	return aggregator->current_task;
 }
 
 gboolean
-gst_mfx_task_aggregator_set_current_task(GstMfxTaskAggregator * aggregator, GstMfxTask * task)
+gst_mfx_task_aggregator_set_current_task(GstMfxTaskAggregator * aggregator,
+    GstMfxTask * task)
 {
-	mfxSession session;
-
 	g_return_val_if_fail(aggregator != NULL, FALSE);
 	g_return_val_if_fail(task != NULL, FALSE);
-
-	session = gst_mfx_task_get_session(task);
-
-	if (!gst_mfx_task_aggregator_find_task(aggregator,
-		&session, gst_mfx_task_get_task_type(task)))
-		aggregator->cache = g_list_prepend(aggregator->cache, task);
 
 	aggregator->current_task = task;
 
 	return TRUE;
+}
+
+void
+gst_mfx_task_aggregator_add_task(GstMfxTaskAggregator * aggregator,
+    GstMfxTask * task)
+{
+    g_return_val_if_fail(aggregator != NULL, FALSE);
+	g_return_val_if_fail(task != NULL, FALSE);
+
+    aggregator->cache = g_list_prepend(aggregator->cache, task);
 }

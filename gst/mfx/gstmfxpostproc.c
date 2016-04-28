@@ -455,6 +455,9 @@ gst_mfxpostproc_propose_allocation (GstBaseTransform * trans,
     GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
     GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (trans);
 
+    if (vpp->get_va_surfaces)
+        return FALSE;
+
     if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
         return FALSE;
     return TRUE;
@@ -505,7 +508,7 @@ ensure_allowed_srcpad_caps(GstMfxPostproc * vpp)
 
 	vpp->allowed_srcpad_caps = out_caps;
 
-	return vpp->allowed_srcpad_caps != NULL;
+	return TRUE;
 }
 
 static GstCaps *
@@ -540,9 +543,8 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 	if (!gst_video_info_from_caps(&vi, caps))
 		return NULL;
 
-	/* Signal the other pad that we only generate progressive frame */
-    //if(GST_VIDEO_INFO_IS_INTERLACED(&vi))
-        //GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+    if (vpp->deinterlace_mode)
+        GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
 
 	/* Update size from user-specified parameters */
 	find_best_size(vpp, &vi, &width, &height);
@@ -598,7 +600,7 @@ gst_mfxpostproc_transform_caps_impl(GstBaseTransform * trans,
 		feature_str = gst_mfx_caps_feature_to_string(feature);
 		if (feature_str)
 			gst_caps_set_features(out_caps, 0,
-			gst_caps_features_new(feature_str, NULL));
+                gst_caps_features_new(feature_str, NULL));
 	}
 
 	if (vpp->format != out_format)
@@ -685,12 +687,12 @@ gst_mfxpostproc_create(GstMfxPostproc * vpp)
         return FALSE;
 
 	if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) &&
-      !gst_mfx_filter_set_deinterlace_mode(vpp->filter, vpp->deinterlace_mode))
+        !gst_mfx_filter_set_deinterlace_mode(vpp->filter, vpp->deinterlace_mode))
 		return FALSE;
 
     if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) &&
             !(gst_mfx_filter_set_frc_algorithm(vpp->filter, vpp->alg) &&
-                gst_mfx_filter_set_framerate(vpp->filter, vpp->fps_n, vpp->fps_d)))
+            gst_mfx_filter_set_framerate(vpp->filter, vpp->fps_n, vpp->fps_d)))
         return FALSE;
 
 	return gst_mfx_filter_start(vpp->filter);

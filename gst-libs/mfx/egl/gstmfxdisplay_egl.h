@@ -12,11 +12,7 @@ typedef struct _GstMfxDisplayEGL GstMfxDisplayEGL;
 	((GstMfxDisplayEGL *)(obj))
 
 GstMfxDisplay *
-gst_mfx_display_egl_new(GstMfxDisplay * display, guint gles_version);
-
-GstMfxDisplay *
-gst_mfx_display_egl_new_with_native_display(gpointer native_display,
-	GstMfxDisplayType display_type, guint gles_version);
+gst_mfx_display_egl_new(guint gles_version);
 
 EGLDisplay
 gst_mfx_display_egl_get_gl_display(GstMfxDisplayEGL * display);

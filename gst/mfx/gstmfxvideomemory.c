@@ -503,8 +503,6 @@ gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxDisplay * display,
 	if (!mem)
 		goto error_create_dmabuf_memory;
 
-    //gst_mfx_prime_buffer_proxy_unref(dmabuf_proxy);
-
 	gst_mini_object_set_qdata(GST_MINI_OBJECT_CAST(mem),
 		GST_MFX_PRIME_BUFFER_PROXY_QUARK, dmabuf_proxy,
 		(GDestroyNotify)gst_mfx_prime_buffer_proxy_unref);

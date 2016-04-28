@@ -292,64 +292,15 @@ gst_mfx_display_egl_class(void)
 	return GST_MFX_DISPLAY_CLASS(&g_class);
 }
 
-/**
-* gst_mfx_display_egl_new:
-* @display: a #GstMfxDisplay, or %NULL to pick any one
-* @gles_version: the OpenGL ES version API to use
-*
-* Creates a new #GstMfxDisplay object suitable in EGL context. If
-* the native @display is %NULL, then any type of display is picked,
-* i.e. one that can be successfully opened. The @gles_version will
-* further ensure the OpenGL ES API to use, or zero to indicate
-* "desktop" OpenGL.
-*
-* Return value: a newly allocated #GstMfxDisplay object
-*/
 GstMfxDisplay *
-gst_mfx_display_egl_new(GstMfxDisplay * display, guint gles_version)
+gst_mfx_display_egl_new(guint gles_version)
 {
 	InitParams params;
 
-	if (display) {
-		params.display = GST_MFX_DISPLAY_NATIVE(display);
-		params.display_type = GST_MFX_DISPLAY_VADISPLAY_TYPE(display);
-	}
-	else {
-		params.display = NULL;
-		params.display_type = GST_MFX_DISPLAY_TYPE_ANY;
-	}
+    params.display = NULL;
+    params.display_type = GST_MFX_DISPLAY_TYPE_ANY;
 	params.gles_version = gles_version;
-	return gst_mfx_display_new(gst_mfx_display_egl_class(),
-		GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY, &params);
-}
 
-/**
-* gst_mfx_display_egl_new_with_native_display:
-* @native_display: an EGLDisplay object
-* @display_type: the display type of @native_display
-* @gles_version: the OpenGL ES version API to use
-*
-* Creates a #GstMfxDisplay based on the native display supplied in
-* as @native_display. The caller still owns the display and must call
-* native display close function when all #GstMfxDisplay references
-* are released. Doing so too early can yield undefined behaviour.
-*
-* The @gles_version will further ensure the OpenGL ES API to use, or
-* zero to indicate "desktop" OpenGL.
-*
-* Return value: a newly allocated #GstMfxDisplay object
-*/
-GstMfxDisplay *
-gst_mfx_display_egl_new_with_native_display(gpointer native_display,
-	GstMfxDisplayType display_type, guint gles_version)
-{
-	InitParams params;
-
-	g_return_val_if_fail(native_display != NULL, NULL);
-
-	params.display = native_display;
-	params.display_type = display_type;
-	params.gles_version = gles_version;
 	return gst_mfx_display_new(gst_mfx_display_egl_class(),
 		GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY, &params);
 }

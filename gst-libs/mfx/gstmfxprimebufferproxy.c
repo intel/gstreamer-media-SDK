@@ -64,8 +64,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle(GstMfxPrimeBufferProxy * proxy)
     proxy->image = gst_mfx_surface_proxy_derive_image(proxy->parent);
     vaapi_image_get_image(proxy->image, &va_img);
 
-    if(vpg_load_symbol("vpgExtGetSurfaceHandle"))
-    {
+    if(vpg_load_symbol("vpgExtGetSurfaceHandle")) {
         GST_MFX_DISPLAY_LOCK(display);
         va_status = g_va_get_surface_handle(GST_MFX_DISPLAY_VADISPLAY(display),
                         &surf, &proxy->fd);
@@ -230,5 +229,5 @@ gst_mfx_prime_buffer_proxy_get_vaapi_image(GstMfxPrimeBufferProxy * proxy)
 {
     g_return_val_if_fail(proxy != NULL, 0);
 
-    return proxy->image;
+    return vaapi_image_ref(proxy->image);
 }

@@ -94,7 +94,7 @@ typedef enum {
 } GstMfxFilterType;
 
 typedef enum {
-	GST_MFX_DEINTERLACE_MODE_NONE,
+	GST_MFX_DEINTERLACE_MODE_NONE = 0,
 	GST_MFX_DEINTERLACE_MODE_BOB,
 	GST_MFX_DEINTERLACE_MODE_ADVANCED,
 	GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF,
@@ -114,8 +114,9 @@ gst_mfx_filter_new(GstMfxTaskAggregator * aggregator,
     gboolean mapped_in, gboolean mapped_out);
 
 GstMfxFilter *
-gst_mfx_filter_new_with_session(GstMfxTaskAggregator * aggregator,
-	mfxSession * session, gboolean mapped_in, gboolean mapped_out);
+gst_mfx_filter_new_with_task(GstMfxTaskAggregator * aggregator,
+	GstMfxTask * task, GstMfxTaskType type,
+	gboolean mapped_in, gboolean mapped_out);
 
 GstMfxFilter *
 gst_mfx_filter_ref(GstMfxFilter * filter);

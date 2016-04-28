@@ -155,7 +155,7 @@ gst_mfx_surface_proxy_derive_mfx_frame_info(GstMfxSurfaceProxy * proxy, GstVideo
 	frame_info->CropY = 0;
 	frame_info->CropW = info->width;
 	frame_info->CropH = info->height;
-	frame_info->FrameRateExtN = info->fps_n;
+	frame_info->FrameRateExtN = info->fps_n ? info->fps_n : 30;
 	frame_info->FrameRateExtD = info->fps_d;
 	frame_info->AspectRatioW = info->par_n;
 	frame_info->AspectRatioH = info->par_d;
