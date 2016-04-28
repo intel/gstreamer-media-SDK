@@ -235,8 +235,8 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 
 	if (GST_VIDEO_INFO_FORMAT(&decoder->info) != GST_VIDEO_FORMAT_NV12) {
         gboolean mapped = gst_mfx_task_has_mapped_surface(decoder->decode_task);
-        decoder->filter = gst_mfx_filter_new_with_session(decoder->aggregator,
-                                &decoder->session, mapped, mapped);
+        decoder->filter = gst_mfx_filter_new_with_task(decoder->aggregator,
+            decoder->decode_task, GST_MFX_TASK_VPP_IN, mapped, mapped);
 
 		dec_request.NumFrameSuggested =
             (dec_request.NumFrameSuggested - decoder->param.AsyncDepth) + 1;
@@ -247,7 +247,6 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         gst_mfx_filter_set_request(decoder->filter, &dec_request,
             GST_MFX_TASK_VPP_IN);
 
-        gst_mfx_task_set_task_type(decoder->decode_task, GST_MFX_TASK_VPP_IN);
         gst_mfx_filter_set_format(decoder->filter,
             GST_VIDEO_INFO_FORMAT(&decoder->info));
 

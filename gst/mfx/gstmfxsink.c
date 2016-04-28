@@ -497,7 +497,7 @@ gst_mfxsink_set_render_backend(GstMfxSink * sink)
         if (task && gst_mfx_task_has_mapped_surface(task))
             gl_api = 0;
 
-        display = gst_mfx_display_egl_new (NULL, gl_api);
+        display = gst_mfx_display_egl_new (gl_api);
         if (!display)
             goto display_unsupported;
         sink->backend = gst_mfxsink_backend_egl();

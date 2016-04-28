@@ -46,12 +46,6 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 		return MFX_ERR_UNSUPPORTED;
 	}
 
-	/*if (req->Info.FourCC != MFX_FOURCC_NV12 ||
-		req->Info.ChromaFormat != MFX_CHROMAFORMAT_YUV420) {
-		GST_ERROR("Unsupported surface properties.\n");
-		return MFX_ERR_UNSUPPORTED;
-	}*/
-
 	task->num_surfaces = req->NumFrameSuggested;
 	task->frame_info = req->Info;
 
@@ -89,10 +83,8 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     resp->mids = task->surface_ids;
 	resp->NumFrameActual = task->num_surfaces;
 
-	if (task->task_type & GST_MFX_TASK_DECODER) {
-		task->response = (mfxFrameAllocResponse *)
-			g_slice_copy(sizeof(mfxFrameAllocResponse), resp);
-	}
+	if (task->task_type & GST_MFX_TASK_DECODER)
+		task->response = g_slice_dup(mfxFrameAllocResponse, resp);
 
 	return MFX_ERR_NONE;
 fail:
@@ -239,7 +231,7 @@ gst_mfx_task_has_mapped_surface(GstMfxTask * task)
 static void
 gst_mfx_task_finalize(GstMfxTask * task)
 {
-	//MFXClose(task->session);
+	MFXClose(task->session);
 	gst_mfx_display_unref(task->display);
 }
 
@@ -262,6 +254,8 @@ gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 	task->display = gst_mfx_display_ref(
 		GST_MFX_TASK_AGGREGATOR_DISPLAY(aggregator));
 	task->session = *session;
+
+	gst_mfx_task_aggregator_add_task(aggregator, task);
 
     MFXVideoCORE_SetHandle(task->session, MFX_HANDLE_VA_DISPLAY,
 		GST_MFX_DISPLAY_VADISPLAY(task->display));

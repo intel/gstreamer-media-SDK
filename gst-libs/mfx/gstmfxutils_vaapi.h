@@ -45,9 +45,6 @@ void
 vaapi_image_get_size(VaapiImage *image, guint *pwidth, guint *pheight);
 
 gboolean
-vaapi_image_is_mapped(VaapiImage *image);
-
-gboolean
 vaapi_image_map(VaapiImage *image);
 
 gboolean
