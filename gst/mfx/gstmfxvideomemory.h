@@ -68,7 +68,6 @@ struct _GstMfxVideoMemory
 
 	/*< private >*/
 	GstMfxSurfaceProxy *proxy;
-	const GstVideoInfo *surface_info;
 	const GstVideoInfo *image_info;
 	VaapiImage *image;
 	GstMfxVideoMeta *meta;

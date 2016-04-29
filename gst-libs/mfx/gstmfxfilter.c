@@ -268,11 +268,11 @@ gst_mfx_filter_start(GstMfxFilter * filter)
                 filter->vpp_request[i]->NumFrameSuggested;
         }
 
-        filter->vpp_request[i]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
-
         gst_mfx_task_set_request(filter->vpp[i], filter->vpp_request[i]);
 
         if (!gst_mfx_task_has_mapped_surface(filter->vpp[i])) {
+            filter->vpp_request[i]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+
             sts = gst_mfx_task_frame_alloc(filter->vpp[i], filter->vpp_request[i],
                     &response);
             if (MFX_ERR_NONE != sts)

@@ -46,7 +46,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
             GST_ROUND_UP_16(info->Width);
 
 		ptr->Y = proxy->planes[0] = proxy->data + 1;
-        ptr->U = proxy->planes[1] = ptr->Y + frame_size + 1;
+        ptr->U = proxy->planes[1] = ptr->Y + frame_size;
         ptr->V = ptr->U + 1;
 
         break;
@@ -56,9 +56,9 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width);
         proxy->pitches[1] = proxy->pitches[2] = ptr->Pitch / 2;
 
-        ptr->Y = proxy->planes[0] = proxy->data + 1;
-        ptr->V = proxy->planes[1] = ptr->Y + frame_size + 1;
-        ptr->U = proxy->planes[2] = ptr->V + (frame_size / 4) + 1;
+        ptr->Y = proxy->planes[0] = proxy->data;
+        ptr->V = proxy->planes[1] = ptr->Y + frame_size;
+        ptr->U = proxy->planes[2] = ptr->V + (frame_size / 4);
 
         break;
     case MFX_FOURCC_YUY2:
@@ -66,7 +66,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
         ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 2;
 
-        ptr->Y = proxy->planes[0] = proxy->data + 4;
+        ptr->Y = proxy->planes[0] = proxy->data + 1;
         ptr->U = ptr->Y + 1;
         ptr->V = ptr->Y + 3;
 
@@ -76,7 +76,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
         ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 2;
 
-        ptr->U = proxy->planes[0] = proxy->data + 4;
+        ptr->U = proxy->planes[0] = proxy->data;
         ptr->Y = ptr->U + 1;
         ptr->V = ptr->U + 2;
 

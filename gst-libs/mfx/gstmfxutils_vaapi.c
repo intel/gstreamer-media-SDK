@@ -18,12 +18,6 @@ struct _VaapiImage {
 };
 
 static gboolean
-_vaapi_image_map(VaapiImage *image);
-
-static gboolean
-_vaapi_image_unmap(VaapiImage *image);
-
-static gboolean
 _vaapi_image_set_image(VaapiImage *image, const VAImage *va_image);
 
 static void
@@ -32,7 +26,7 @@ vaapi_image_finalize(VaapiImage *image)
 	VAImageID image_id;
 	VAStatus status;
 
-    _vaapi_image_unmap(image);
+    vaapi_image_unmap(image);
 
 	image_id = vaapi_image_get_id(image);
 	GST_DEBUG("image %" GST_MFX_ID_FORMAT, GST_MFX_ID_ARGS(image_id));
@@ -213,10 +207,7 @@ vaapi_image_get_image(VaapiImage *image, VAImage *va_image)
  * @image: a #VaapiImage
  * @va_image: a VA image
  *
- * Initializes #VaapiImage with a foreign VA image. This function
- * will try to "linearize" the VA image. i.e. making sure that the VA
- * image offsets into the data buffer are in increasing order with the
- * number of planes available in the image.
+ * Initializes #VaapiImage with a foreign VA image.
  *
  * This is an internal function used by vaapi_image_new_with_image().
  *
@@ -301,26 +292,10 @@ vaapi_image_get_size(VaapiImage *image, guint *pwidth, guint *pheight)
         *pheight = image->height;
 }
 
-/**
- * vaapi_image_is_mapped:
- * @image: a #VaapiImage
- *
- * Checks whether the @image is currently mapped or not.
- *
- * Return value: %TRUE if the @image is mapped
- */
 static inline gboolean
 _vaapi_image_is_mapped(VaapiImage *image)
 {
     return image->image_data != NULL;
-}
-
-gboolean
-vaapi_image_is_mapped(VaapiImage *image)
-{
-    g_return_val_if_fail(image != NULL, FALSE);
-
-    return _vaapi_image_is_mapped(image);
 }
 
 /**
@@ -335,15 +310,9 @@ vaapi_image_is_mapped(VaapiImage *image)
 gboolean
 vaapi_image_map(VaapiImage *image)
 {
-    g_return_val_if_fail(image != NULL, FALSE);
-
-    return _vaapi_image_map(image);
-}
-
-gboolean
-_vaapi_image_map(VaapiImage *image)
-{
 	VAStatus status;
+
+	g_return_val_if_fail(image != NULL, FALSE);
 
     if (_vaapi_image_is_mapped(image))
         goto map_success;
@@ -374,15 +343,9 @@ map_success:
 gboolean
 vaapi_image_unmap(VaapiImage *image)
 {
-    g_return_val_if_fail(image != NULL, FALSE);
-
-    return _vaapi_image_unmap(image);
-}
-
-gboolean
-_vaapi_image_unmap(VaapiImage *image)
-{
 	VAStatus status;
+
+	g_return_val_if_fail(image != NULL, FALSE);
 
     if (!_vaapi_image_is_mapped(image))
         return TRUE;
