@@ -214,8 +214,7 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 
     if (proxy->mapped)
         gst_mfx_surface_proxy_unmap(proxy);
-
-    if (!proxy->mapped) {
+    else {
         if (proxy->task) {
             g_queue_push_tail(gst_mfx_task_get_surfaces(proxy->task),
                 proxy->surface.Data.MemId);
@@ -470,7 +469,7 @@ guchar *
 gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane)
 {
     g_return_val_if_fail(proxy != NULL, NULL);
-    g_return_val_if_fail(plane <= 4, NULL);
+    g_return_val_if_fail(plane < 4, NULL);
 
     return proxy->planes[plane];
 }
@@ -479,7 +478,7 @@ guint16
 gst_mfx_surface_proxy_get_pitch(GstMfxSurfaceProxy * proxy, guint plane)
 {
     g_return_val_if_fail(proxy != NULL, NULL);
-    g_return_val_if_fail(plane <= 4, NULL);
+    g_return_val_if_fail(plane < 4, NULL);
 
     return proxy->pitches[plane];
 }

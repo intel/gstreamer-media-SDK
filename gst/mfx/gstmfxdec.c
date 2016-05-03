@@ -61,29 +61,6 @@ G_DEFINE_TYPE_WITH_CODE(
     GST_TYPE_VIDEO_DECODER,
     GST_MFX_PLUGIN_BASE_INIT_INTERFACES);
 
-static gboolean
-gst_mfxdec_update_sink_caps(GstMfxDec * mfxdec, GstCaps * caps);
-static gboolean gst_mfxdec_update_src_caps(GstMfxDec * mfxdec);
-
-static gboolean
-gst_mfxdec_input_state_replace(GstMfxDec * mfxdec,
-	const GstVideoCodecState * new_state);
-
-static void gst_mfx_dec_set_property(GObject * object, guint prop_id,
-	const GValue * value, GParamSpec * pspec);
-static void gst_mfx_dec_get_property(GObject * object, guint prop_id,
-	GValue * value, GParamSpec * pspec);
-
-/* GstVideoDecoder base class method */
-static gboolean gst_mfxdec_open(GstVideoDecoder * decoder);
-static gboolean gst_mfxdec_close(GstVideoDecoder * decoder);
-static gboolean gst_mfxdec_set_format(GstVideoDecoder * decoder,
-	GstVideoCodecState * state);
-static gboolean gst_mfxdec_flush(GstVideoDecoder * decoder);
-static GstFlowReturn gst_mfxdec_handle_frame(GstVideoDecoder * decoder,
-	GstVideoCodecFrame * frame);
-static gboolean gst_mfxdec_decide_allocation(GstVideoDecoder * decoder,
-	GstQuery * query);
 
 static GstVideoCodecState *
 copy_video_codec_state(const GstVideoCodecState * in_state)

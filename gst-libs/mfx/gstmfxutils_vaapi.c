@@ -153,13 +153,8 @@ vaapi_image_new_with_image(GstMfxDisplay *display, VAImage *va_image)
         return NULL;
 
     image->display = gst_mfx_display_ref(display);
-    if (!_vaapi_image_set_image(image, va_image))
-        goto error;
+    _vaapi_image_set_image(image, va_image);
     return image;
-
-error:
-    vaapi_image_unref(image);
-    return NULL;
 }
 
 /**

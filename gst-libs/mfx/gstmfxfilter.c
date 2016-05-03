@@ -76,9 +76,6 @@ gst_mfx_filter_set_request(GstMfxFilter * filter,
     filter->vpp_request[flags & GST_MFX_TASK_VPP_OUT] =
         g_slice_dup(mfxFrameAllocRequest, request);
 
-    filter->frame_info =
-        filter->vpp_request[flags & GST_MFX_TASK_VPP_OUT]->Info;
-
     if (flags & GST_MFX_TASK_VPP_IN)
         filter->vpp_request[0]->Type |= MFX_MEMTYPE_FROM_VPPIN;
     else
@@ -709,7 +706,6 @@ gst_mfx_filter_set_denoising_level(GstMfxFilter * filter, guint level)
     mfxExtVPPDenoise *ext_denoise;
 
     g_return_val_if_fail(filter != NULL, FALSE);
-    g_return_val_if_fail(level >= 0, FALSE);
     g_return_val_if_fail(level <= 100, FALSE);
 
     op = find_filter_op_data(filter, GST_MFX_FILTER_DENOISE);
@@ -740,7 +736,6 @@ gst_mfx_filter_set_detail_level(GstMfxFilter * filter, guint level)
     GstMfxFilterOpData *op;
     mfxExtVPPDetail *ext_detail;
     g_return_val_if_fail(filter != NULL, FALSE);
-    g_return_val_if_fail(level >= 0, FALSE);
     g_return_val_if_fail(level <= 100, FALSE);
 
     op = find_filter_op_data(filter, GST_MFX_FILTER_DETAIL);
