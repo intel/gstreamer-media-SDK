@@ -469,7 +469,7 @@ guchar *
 gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane)
 {
     g_return_val_if_fail(proxy != NULL, NULL);
-    g_return_val_if_fail(plane <= 4, NULL);
+    g_return_val_if_fail(plane < 4, NULL);
 
     return proxy->planes[plane];
 }
@@ -478,7 +478,7 @@ guint16
 gst_mfx_surface_proxy_get_pitch(GstMfxSurfaceProxy * proxy, guint plane)
 {
     g_return_val_if_fail(proxy != NULL, NULL);
-    g_return_val_if_fail(plane <= 4, NULL);
+    g_return_val_if_fail(plane < 4, NULL);
 
     return proxy->pitches[plane];
 }

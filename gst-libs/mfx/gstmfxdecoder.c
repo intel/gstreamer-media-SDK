@@ -101,6 +101,9 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	decoder->bs.MaxLength = 1024 * 16;
     decoder->session = *gst_mfx_task_aggregator_create_session(aggregator);
 
+    if(!decoder->session)
+        return FALSE;
+
     sts = gst_mfx_decoder_load_decoder_plugins(decoder, &uid);
     if (sts < 0)
         return FALSE;
