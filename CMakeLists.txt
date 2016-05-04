@@ -5,7 +5,7 @@ project (GstMfx C)
 
 set(GstMfx_VERSION_MAJOR 0)
 set(GstMfx_VERSION_MINOR 3)
-set(GstMfx_BUILD_NUMBER 1)
+set(GstMfx_BUILD_NUMBER 2)
 string(CONCAT GST_MFX_VERSION ${GstMfx_VERSION_MAJOR} "." ${GstMfx_VERSION_MINOR} "." ${GstMfx_BUILD_NUMBER})
 
 option (DEBUG "Turn on debug build." OFF)
