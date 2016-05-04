@@ -223,6 +223,9 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         decoder->filter = gst_mfx_filter_new_with_task(decoder->aggregator,
             decoder->decode_task, GST_MFX_TASK_VPP_IN, mapped, mapped);
 
+        if(!decoder->filter)
+            return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+
 		dec_request.NumFrameSuggested =
             (dec_request.NumFrameSuggested - decoder->param.AsyncDepth) + 1;
 		dec_request.Type =

@@ -104,9 +104,6 @@ gst_mfx_surface_pool_new_with_task(GstMfxTask * task)
 	gst_mfx_surface_pool_init(pool);
 
 	return pool;
-error:
-	gst_mfx_surface_pool_unref(pool);
-	return NULL;
 }
 
 GstMfxSurfacePool *

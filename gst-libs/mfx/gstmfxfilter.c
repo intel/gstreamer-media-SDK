@@ -325,7 +325,7 @@ gst_mfx_filter_has_filter(GstMfxFilter * filter, guint flags)
     return (filter->supported_filters & flags) != 0;
 }
 
-static gboolean
+static void
 gst_mfx_filter_init(GstMfxFilter * filter,
 	GstMfxTaskAggregator * aggregator,
 	gboolean mapped_in, gboolean mapped_out)
@@ -342,8 +342,6 @@ gst_mfx_filter_init(GstMfxFilter * filter,
 
     /* Initialize the filter flag */
     filter->filter_op = GST_MFX_FILTER_NONE;
-
-	return TRUE;
 }
 
 static void
@@ -395,13 +393,8 @@ gst_mfx_filter_new(GstMfxTaskAggregator * aggregator,
 	if (!filter)
 		return NULL;
 
-	if (!gst_mfx_filter_init(filter, aggregator, mapped_in, mapped_out))
-		goto error;
-
+	gst_mfx_filter_init(filter, aggregator, mapped_in, mapped_out);
 	return filter;
-error:
-	gst_mfx_filter_unref(filter);
-	return NULL;
 }
 
 GstMfxFilter *
@@ -424,13 +417,8 @@ gst_mfx_filter_new_with_task(GstMfxTaskAggregator * aggregator,
 
     gst_mfx_task_set_task_type(task, type);
 
-	if (!gst_mfx_filter_init(filter, aggregator, mapped_in, mapped_out))
-		goto error;
-
+	gst_mfx_filter_init(filter, aggregator, mapped_in, mapped_out);
 	return filter;
-error:
-	gst_mfx_filter_unref(filter);
-	return NULL;
 }
 
 

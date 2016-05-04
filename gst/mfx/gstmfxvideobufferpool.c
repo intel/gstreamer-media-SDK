@@ -143,11 +143,6 @@ error_create_allocator:
 		GST_ERROR("failed to create GstMfxVideoAllocator object");
 		return FALSE;
 	}
-error_create_allocator_info:
-	{
-		GST_ERROR("failed to create GstMfxVideoAllocator `video-info'");
-		return FALSE;
-	}
 error_no_mfx_video_meta_option:
 	{
 		GST_ERROR("no GstMfxVideoMeta option");
