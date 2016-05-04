@@ -426,11 +426,6 @@ error_create_buffer:
         GST_ERROR("failed to output buffer");
         return GST_FLOW_ERROR;
     }
-error_invalid_buffer:
-	{
-		GST_ERROR("failed to validate source buffer");
-		return GST_FLOW_ERROR;
-	}
 error_create_meta:
 	{
 		GST_ERROR("failed to create new output buffer meta");

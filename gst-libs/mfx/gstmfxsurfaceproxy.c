@@ -119,7 +119,13 @@ gst_mfx_surface_proxy_unmap(GstMfxSurfaceProxy * proxy)
 static gboolean
 mfx_surface_proxy_create_from_task(GstMfxSurfaceProxy * proxy)
 {
-    proxy->surface.Info = gst_mfx_task_get_request(proxy->task)->Info;
+
+    mfxFrameAllocRequest *req;
+    req = gst_mfx_task_get_request(proxy->task);
+    if (!req)
+        return FALSE;
+
+    proxy->surface.Info = req->Info;
 
     if (gst_mfx_task_has_mapped_surface(proxy->task)) {
         proxy->mapped = TRUE;
@@ -469,7 +475,7 @@ guchar *
 gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane)
 {
     g_return_val_if_fail(proxy != NULL, NULL);
-    g_return_val_if_fail(plane < 4, NULL);
+    g_return_val_if_fail(plane < 3, NULL);
 
     return proxy->planes[plane];
 }
@@ -478,7 +484,7 @@ guint16
 gst_mfx_surface_proxy_get_pitch(GstMfxSurfaceProxy * proxy, guint plane)
 {
     g_return_val_if_fail(proxy != NULL, NULL);
-    g_return_val_if_fail(plane < 4, NULL);
+    g_return_val_if_fail(plane < 3, NULL);
 
     return proxy->pitches[plane];
 }

@@ -183,6 +183,7 @@ static GstMfxDecoderStatus
 gst_mfx_decoder_start(GstMfxDecoder *decoder)
 {
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
+	mfxFrameInfo *frame_info = &decoder->param.mfx.FrameInfo;
 	mfxStatus sts = MFX_ERR_NONE;
 	mfxFrameAllocRequest dec_request;
 	mfxFrameAllocResponse dec_response;
@@ -199,6 +200,15 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 		return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
 	}
 
+	if (!frame_info->FrameRateExtN)
+        frame_info->FrameRateExtN = decoder->info.fps_n;
+    if (!frame_info->FrameRateExtD)
+        frame_info->FrameRateExtD = decoder->info.fps_d;
+    if (!frame_info->AspectRatioW)
+        frame_info->AspectRatioW = decoder->info.par_n;
+    if (!frame_info->AspectRatioH)
+        frame_info->AspectRatioH = decoder->info.par_d;
+
     sts = MFXVideoDECODE_QueryIOSurf(decoder->session, &decoder->param,
                 &dec_request);
     if (sts < 0) {
@@ -213,6 +223,9 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         decoder->filter = gst_mfx_filter_new_with_task(decoder->aggregator,
             decoder->decode_task, GST_MFX_TASK_VPP_IN, mapped, mapped);
 
+        if(!decoder->filter)
+            return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+
 		dec_request.NumFrameSuggested =
             (dec_request.NumFrameSuggested - decoder->param.AsyncDepth) + 1;
 		dec_request.Type =
@@ -221,8 +234,6 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 
         gst_mfx_filter_set_request(decoder->filter, &dec_request,
             GST_MFX_TASK_VPP_IN);
-
-        gst_mfx_filter_set_frame_info(decoder->filter, &decoder->info);
 
         gst_mfx_filter_set_format(decoder->filter,
             GST_VIDEO_INFO_FORMAT(&decoder->info));

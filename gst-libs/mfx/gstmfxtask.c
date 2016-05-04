@@ -170,7 +170,7 @@ gst_mfx_task_get_frame_info(GstMfxTask * task)
 mfxFrameAllocRequest *
 gst_mfx_task_get_request(GstMfxTask * task)
 {
-    g_return_if_fail(task != NULL);
+    g_return_val_if_fail(task != NULL, NULL);
 
     return &task->request;
 }
