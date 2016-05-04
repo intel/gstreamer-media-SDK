@@ -76,9 +76,6 @@ gst_mfx_filter_set_request(GstMfxFilter * filter,
     filter->vpp_request[flags & GST_MFX_TASK_VPP_OUT] =
         g_slice_dup(mfxFrameAllocRequest, request);
 
-    filter->frame_info =
-        filter->vpp_request[flags & GST_MFX_TASK_VPP_OUT]->Info;
-
     if (flags & GST_MFX_TASK_VPP_IN)
         filter->vpp_request[0]->Type |= MFX_MEMTYPE_FROM_VPPIN;
     else

@@ -180,7 +180,6 @@ static GstMfxDecoderStatus
 gst_mfx_decoder_start(GstMfxDecoder *decoder)
 {
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
-	mfxFrameInfo *frame_info = &decoder->param.mfx.FrameInfo;
 	mfxStatus sts = MFX_ERR_NONE;
 	mfxFrameAllocRequest dec_request;
 	mfxFrameAllocResponse dec_response;
@@ -196,33 +195,6 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 		GST_ERROR("Decode header error %d\n", sts);
 		return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
 	}
-
-    /* Fill in missing required frame info, if any */
-    /*if (decoder->codec == MFX_CODEC_VC1) {
-        frame_info->CropW = decoder->info.width;
-        frame_info->CropH = decoder->info.height;
-        frame_info->Width = GST_ROUND_UP_16(decoder->info.width);
-        frame_info->Height = GST_ROUND_UP_16(decoder->info.height);
-        frame_info->FrameRateExtN = decoder->info.fps_n;
-        frame_info->FrameRateExtD = decoder->info.fps_d;
-        frame_info->AspectRatioW = decoder->info.par_n;
-        frame_info->AspectRatioH = decoder->info.par_d;
-        frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-        frame_info->BitDepthChroma = 8;
-        frame_info->BitDepthLuma = 8;
-    }*/
-
-    if (!frame_info->FrameRateExtN)
-        frame_info->FrameRateExtN = decoder->info.fps_n;
-    if (!frame_info->FrameRateExtD)
-        frame_info->FrameRateExtD = decoder->info.fps_d;
-    if (!frame_info->AspectRatioW)
-        frame_info->AspectRatioW = decoder->info.par_n;
-    if (!frame_info->AspectRatioH)
-        frame_info->AspectRatioH = decoder->info.par_d;
-
-    //if (decoder->codec == MFX_CODEC_VP8)
-        //frame_info->FourCC = MFX_FOURCC_NV12;
 
     sts = MFXVideoDECODE_QueryIOSurf(decoder->session, &decoder->param,
                 &dec_request);
@@ -246,6 +218,8 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 
         gst_mfx_filter_set_request(decoder->filter, &dec_request,
             GST_MFX_TASK_VPP_IN);
+
+        gst_mfx_filter_set_frame_info(decoder->filter, &decoder->info);
 
         gst_mfx_filter_set_format(decoder->filter,
             GST_VIDEO_INFO_FORMAT(&decoder->info));
