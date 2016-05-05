@@ -329,13 +329,9 @@ gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool)
 	proxy->pool = gst_mfx_surface_pool_ref(pool);
 	proxy = gst_mfx_surface_pool_get_surface(proxy->pool);
 	if (!proxy)
-		goto error;
+        return NULL;
 	gst_mfx_surface_proxy_init_properties(proxy);
 	return proxy;
-
-error:
-	gst_mfx_surface_proxy_unref(proxy);
-	return NULL;
 }
 
 GstMfxSurfaceProxy *

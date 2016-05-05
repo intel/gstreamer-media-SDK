@@ -93,16 +93,18 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 {
     mfxStatus sts = MFX_ERR_NONE;
     gchar *uid = NULL;
+    mfxSession *session = NULL;
 
     decoder->info = *info;
 	decoder->codec = decoder->param.mfx.CodecId = codec;
 	decoder->param.AsyncDepth = async_depth;
 	decoder->decoder_inited = FALSE;
 	decoder->bs.MaxLength = 1024 * 16;
-    decoder->session = *gst_mfx_task_aggregator_create_session(aggregator);
 
-    if(!decoder->session)
+    session = gst_mfx_task_aggregator_create_session(aggregator);
+    if(!session)
         return FALSE;
+    decoder->session = *session;
 
     sts = gst_mfx_decoder_load_decoder_plugins(decoder, &uid);
     if (sts < 0)
