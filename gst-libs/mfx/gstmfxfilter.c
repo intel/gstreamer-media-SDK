@@ -64,7 +64,7 @@ static const GstMfxFilterMap filter_map[] = {
     { GST_MFX_FILTER_DENOISE, MFX_EXTBUFF_VPP_DENOISE, "Denoise filter" },
     { GST_MFX_FILTER_FRAMERATE_CONVERSION, MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION, "Framerate conversion filter" },
     { GST_MFX_FILTER_FIELD_PROCESSING, MFX_EXTBUFF_VPP_FIELD_PROCESSING, "Field processing filter" },
-    { GST_MFX_FILTER_IMAGE_STABILIZATION, MFX_EXTBUFF_VPP_IMAGE_STABILIZATION, "Image stabilization filter" },
+    //{ GST_MFX_FILTER_IMAGE_STABILIZATION, MFX_EXTBUFF_VPP_IMAGE_STABILIZATION, "Image stabilization filter" },
     { GST_MFX_FILTER_ROTATION, MFX_EXTBUFF_VPP_ROTATION, "Rotation filter" },
     {0, }
 };
@@ -73,7 +73,7 @@ void
 gst_mfx_filter_set_request(GstMfxFilter * filter,
     mfxFrameAllocRequest * request, guint flags)
 {
-    filter->vpp_request[flags & GST_MFX_TASK_VPP_OUT] =
+    filter->vpp_request[!!(flags & GST_MFX_TASK_VPP_OUT)] =
         g_slice_dup(mfxFrameAllocRequest, request);
 
     filter->frame_info = request->Info;
@@ -413,7 +413,7 @@ gst_mfx_filter_new_with_task(GstMfxTaskAggregator * aggregator,
 		return NULL;
 
     filter->session = gst_mfx_task_get_session(task);
-    filter->vpp[type & GST_MFX_TASK_VPP_OUT] = gst_mfx_task_ref(task);
+    filter->vpp[!!(type & GST_MFX_TASK_VPP_OUT)] = gst_mfx_task_ref(task);
 
     gst_mfx_task_set_task_type(task, type);
 
