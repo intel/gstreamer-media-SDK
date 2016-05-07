@@ -203,7 +203,8 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 	}
 
 	if (!frame_info->FrameRateExtN)
-        frame_info->FrameRateExtN = decoder->info.fps_n;
+        frame_info->FrameRateExtN =
+            decoder->info.fps_n ? decoder->info.fps_n : 30;
     if (!frame_info->FrameRateExtD)
         frame_info->FrameRateExtD = decoder->info.fps_d;
     if (!frame_info->AspectRatioW)
@@ -217,6 +218,13 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         GST_ERROR("Unable to query decode allocation request %d", sts);
         return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
     }
+    else if (sts > 0) {
+        decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+        gst_mfx_task_use_video_memory(decoder->decode_task, FALSE);
+    }
+
+    if (!gst_mfx_task_has_mapped_surface(decoder->decode_task))
+        gst_mfx_task_use_video_memory(decoder->decode_task, TRUE);
 
     gst_mfx_task_set_request(decoder->decode_task, &dec_request);
 

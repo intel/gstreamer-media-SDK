@@ -239,6 +239,11 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         GST_ERROR("Unable to query VPP allocation request %d", sts);
         return FALSE;
     }
+    else if (sts > 0) {
+        filter->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY |
+                                        MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+        gst_mfx_task_use_video_memory(filter->vpp[1], FALSE);
+    }
 
     /* Initialize VPP surface pools */
     for (i = 0; i < 2; i++) {
@@ -255,6 +260,9 @@ gst_mfx_filter_start(GstMfxFilter * filter)
             filter->vpp[i] = gst_mfx_task_new_with_session(filter->aggregator,
                 &filter->session, type, mapped);
         }
+
+        if (!gst_mfx_task_has_mapped_surface(filter->vpp[i]))
+            gst_mfx_task_use_video_memory(filter->vpp[i], TRUE);
 
         if (!filter->vpp_request[i]) {
             filter->vpp_request[i] =

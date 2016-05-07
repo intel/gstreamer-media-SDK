@@ -40,8 +40,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
 	memset(resp, 0, sizeof (mfxFrameAllocResponse));
 
-	if (!(req->Type & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET |
-            MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
+	if (!(req->Type & MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET)) {
         GST_ERROR("Unsupported surface type: %d\n", req->Type);
 		return MFX_ERR_UNSUPPORTED;
 	}
@@ -49,7 +48,8 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 	task->num_surfaces = req->NumFrameSuggested;
 	task->frame_info = req->Info;
 
-    task->surfaces = g_slice_alloc(task->num_surfaces * sizeof(*task->surfaces));
+    task->surfaces =
+        g_slice_alloc(task->num_surfaces * sizeof(*task->surfaces));
     task->surface_ids =
         g_slice_alloc(task->num_surfaces * sizeof(*task->surface_ids));
     task->surface_queue = g_queue_new();
@@ -205,21 +205,23 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
 	return task->task_type;
 }
 
-static inline void
-gst_mfx_task_use_video_memory(GstMfxTask * task)
+void
+gst_mfx_task_use_video_memory(GstMfxTask * task, gboolean use_vmem)
 {
-    mfxFrameAllocator frame_allocator = {
-        .pthis = task,
-        .Alloc = gst_mfx_task_frame_alloc,
-        .Free = gst_mfx_task_frame_free,
-        .Lock = gst_mfx_task_frame_lock,
-        .Unlock = gst_mfx_task_frame_unlock,
-        .GetHDL = gst_mfx_task_frame_get_hdl,
-    };
+    if (use_vmem) {
+        mfxFrameAllocator frame_allocator = {
+            .pthis = task,
+            .Alloc = gst_mfx_task_frame_alloc,
+            .Free = gst_mfx_task_frame_free,
+            .Lock = gst_mfx_task_frame_lock,
+            .Unlock = gst_mfx_task_frame_unlock,
+            .GetHDL = gst_mfx_task_frame_get_hdl,
+        };
 
-    MFXVideoCORE_SetFrameAllocator(task->session, &frame_allocator);
+        MFXVideoCORE_SetFrameAllocator(task->session, &frame_allocator);
+    }
 
-    task->use_video_memory = TRUE;
+    task->use_video_memory = use_vmem;
 }
 
 gboolean
@@ -260,8 +262,7 @@ gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     MFXVideoCORE_SetHandle(task->session, MFX_HANDLE_VA_DISPLAY,
 		GST_MFX_DISPLAY_VADISPLAY(task->display));
 
-    if (!mapped)
-        gst_mfx_task_use_video_memory(task);
+    task->use_video_memory = !mapped;
 }
 
 GstMfxTask *
