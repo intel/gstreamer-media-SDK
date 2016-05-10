@@ -37,7 +37,7 @@ gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
 
 GstMfxTask *
 gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
-	mfxSession * session, guint type_flags, gboolean mapped);
+	mfxSession session, guint type_flags, gboolean mapped);
 
 GstMfxTask *
 gst_mfx_task_ref (GstMfxTask * task);

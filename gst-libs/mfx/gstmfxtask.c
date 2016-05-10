@@ -250,12 +250,12 @@ gst_mfx_task_class(void)
 
 static void
 gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
-	mfxSession * session, guint type_flags, gboolean mapped)
+	mfxSession session, guint type_flags, gboolean mapped)
 {
     task->task_type = type_flags;
 	task->display = gst_mfx_display_ref(
 		GST_MFX_TASK_AGGREGATOR_DISPLAY(aggregator));
-	task->session = *session;
+	task->session = session;
 
 	gst_mfx_task_aggregator_add_task(aggregator, task);
 
@@ -269,18 +269,20 @@ GstMfxTask *
 gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
     guint type_flags, gboolean mapped)
 {
-	mfxSession *session;
+	mfxSession session;
 
 	g_return_val_if_fail(aggregator != NULL, NULL);
 
 	session = gst_mfx_task_aggregator_create_session(aggregator);
+	if (!session)
+        return NULL;
 
 	return gst_mfx_task_new_with_session(aggregator, session, type_flags, mapped);
 }
 
 GstMfxTask *
 gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
-	mfxSession * session, guint type_flags, gboolean mapped)
+	mfxSession session, guint type_flags, gboolean mapped)
 {
 	GstMfxTask *task;
 

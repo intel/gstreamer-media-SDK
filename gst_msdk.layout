@@ -1,134 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
-	<ActiveTarget name="Debug" />
-	<File name="gst/mfx/gstmfxsink.c" open="1" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<ActiveTarget name="Release" />
+	<File name="gst/mfx/gstmfxpostproc.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="14706" topLine="485" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxvideocontext.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="20" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxsurfaceproxy.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="782" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxpluginutil.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2059" topLine="34" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxwindow_priv.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2181" topLine="75" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxvideobufferpool.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1263" topLine="7" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxcodecmap.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="150" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxtaskaggregator.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3175" topLine="78" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxminiobject.c" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="523" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxprimebufferproxy.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="521" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxminiobject.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4650" topLine="124" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxobject.c" open="0" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1277" topLine="23" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxprimebufferproxy.c" open="1" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3014" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxsink.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1551" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxpluginutil.c" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="9488" topLine="242" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxfilter.c" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2271" topLine="69" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxvideomemory.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="14187" topLine="28" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxsurfaceproxy.c" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="12560" topLine="447" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxdec.c" open="1" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1335" topLine="23" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxtaskaggregator.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="483" topLine="2" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxwindow.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="276" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxobject_priv.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2257" topLine="162" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/sysdeps.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="62" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/egl/gstmfxdisplay_egl.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="7772" topLine="274" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxtexture_priv.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="681" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxdisplay_drm.c" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="600" topLine="90" />
+			<Cursor1 position="12072" topLine="402" />
 		</Cursor>
 	</File>
 	<File name="gst/mfx/gstmfxvideocontext.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -136,49 +11,14 @@
 			<Cursor1 position="169" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="gst/mfx/gstmfxpluginbase.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst/mfx/gstmfxvideometa.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="15411" topLine="563" />
+			<Cursor1 position="358" topLine="18" />
 		</Cursor>
 	</File>
-	<File name="gst-libs/mfx/wayland/gstmfxwindow_wayland.c" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst/mfx/gstmfxpluginutil.c" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="9098" topLine="205" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxsurfacepool.c" open="1" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1244" topLine="42" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxobject.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="187" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxutils_vaapi.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="456" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxwindow.c" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="10865" topLine="429" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxdisplay_priv.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="83" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxpostproc.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="12072" topLine="402" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/egl/gstmfxtexture_egl.c" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4320" topLine="27" />
+			<Cursor1 position="9488" topLine="242" />
 		</Cursor>
 	</File>
 	<File name="gst-libs/mfx/gstmfxtypes.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -186,79 +26,9 @@
 			<Cursor1 position="476" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="gst-libs/mfx/gstmfxtask.c" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst-libs/mfx/gstmfxobject.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3871" topLine="108" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxcodecmap.c" open="1" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="36" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/video-format.c" open="1" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1750" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxtask.h" open="0" top="0" tabpos="19" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1223" topLine="31" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/video-format.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="322" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxpluginbase.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="4805" topLine="120" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxtexture.c" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="716" topLine="178" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxutils_vaapi.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2138" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxpostproc.h" open="0" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="2201" topLine="30" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/egl/gstmfxutils_egl.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="5187" topLine="176" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxvideometa.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="265" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxdisplay_drm_priv.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="920" topLine="24" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxdisplay.h" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="848" topLine="36" />
-		</Cursor>
-	</File>
-	<File name="gst/mfx/gstmfxvideometa.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="358" topLine="18" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxdebug.h" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="174" topLine="0" />
+			<Cursor1 position="187" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="gst-libs/mfx/egl/ogl_compat.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -266,14 +36,44 @@
 			<Cursor1 position="1204" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="gst/mfx/gstmfxdec.h" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst-libs/mfx/video-format.c" open="1" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1356" topLine="0" />
+			<Cursor1 position="1750" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="gst-libs/mfx/egl/gstmfxutils_egl.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst-libs/mfx/gstmfxcodecmap.c" open="1" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="36595" topLine="1291" />
+			<Cursor1 position="36" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxvideometa.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="265" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxutils_vaapi.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2138" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxvideobufferpool.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5006" topLine="147" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxpluginbase.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="15411" topLine="563" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxsurfaceproxy.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="782" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxutils_vaapi.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="456" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="gst/mfx/gstmfx.c" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -286,24 +86,9 @@
 			<Cursor1 position="12441" topLine="603" />
 		</Cursor>
 	</File>
-	<File name="gst-libs/mfx/gstmfxdisplay_drm.h" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst/mfx/gstmfxvideomemory.h" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="61" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/egl/gstmfxwindow_egl.c" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="10716" topLine="333" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/egl/gstmfxtexture_egl.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="572" topLine="8" />
-		</Cursor>
-	</File>
-	<File name="gst-libs/mfx/gstmfxsurfacepool.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="576" topLine="0" />
+			<Cursor1 position="4016" topLine="93" />
 		</Cursor>
 	</File>
 	<File name="gst-libs/mfx/wayland/gstmfxwindow_wayland.h" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -311,9 +96,184 @@
 			<Cursor1 position="0" topLine="0" />
 		</Cursor>
 	</File>
+	<File name="config.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5778" topLine="174" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxdisplay_drm.h" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="61" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxdebug.h" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="174" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/wayland/gstmfxwindow_wayland.c" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="9098" topLine="205" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/egl/gstmfxtexture_egl.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="572" topLine="8" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxsink.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1551" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxprimebufferproxy.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="521" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxtask.h" open="0" top="0" tabpos="19" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1223" topLine="31" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxtaskaggregator.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="483" topLine="2" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxwindow.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="276" topLine="0" />
+		</Cursor>
+	</File>
 	<File name="gst-libs/mfx/gstmfxdecoder.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="2404" topLine="27" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxtaskaggregator.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3175" topLine="78" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/sysdeps.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="62" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxobject.c" open="0" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1277" topLine="23" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/egl/gstmfxdisplay_egl.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="7772" topLine="274" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxminiobject.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4650" topLine="124" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/egl/gstmfxwindow_egl.c" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10716" topLine="333" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxwindow.c" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10865" topLine="429" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxsurfacepool.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="576" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxdecoder.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5087" topLine="152" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxdec.c" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1335" topLine="23" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxdisplay_drm_priv.h" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="920" topLine="24" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxpostproc.h" open="0" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2201" topLine="30" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxobject_priv.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2257" topLine="162" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxdisplay_drm.c" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="600" topLine="90" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxprimebufferproxy.c" open="1" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3014" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxsink.c" open="1" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="14706" topLine="485" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxcodecmap.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="150" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxdisplay.h" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="848" topLine="36" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxminiobject.c" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="523" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxpluginbase.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4805" topLine="120" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxsurfaceproxy.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="12560" topLine="447" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxfilter.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2271" topLine="69" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxpluginutil.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2059" topLine="34" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/x11/gstmfxwindow_x11.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="233" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxtask.c" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3871" topLine="108" />
 		</Cursor>
 	</File>
 	<File name="gst-libs/mfx/gstmfxfilter.h" open="0" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -321,29 +281,69 @@
 			<Cursor1 position="4268" topLine="143" />
 		</Cursor>
 	</File>
-	<File name="gst-libs/mfx/gstmfxdecoder.c" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst-libs/mfx/gstmfxwindow_priv.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="7548" topLine="236" />
+			<Cursor1 position="2181" topLine="75" />
 		</Cursor>
 	</File>
-	<File name="gst/mfx/gstmfxvideobufferpool.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst-libs/mfx/egl/gstmfxtexture_egl.c" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5006" topLine="147" />
+			<Cursor1 position="4320" topLine="27" />
 		</Cursor>
 	</File>
-	<File name="config.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst-libs/mfx/egl/gstmfxutils_egl.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5778" topLine="174" />
+			<Cursor1 position="5187" topLine="176" />
 		</Cursor>
 	</File>
-	<File name="gst/mfx/gstmfxvideomemory.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst-libs/mfx/gstmfxdisplay_priv.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="4016" topLine="93" />
+			<Cursor1 position="83" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="gst-libs/mfx/x11/gstmfxwindow_x11.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="gst/mfx/gstmfxvideobufferpool.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="233" topLine="0" />
+			<Cursor1 position="1263" topLine="7" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/video-format.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="322" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxtexture.c" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="716" topLine="178" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxdec.h" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1356" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxvideomemory.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="14187" topLine="28" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxsurfacepool.c" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1244" topLine="42" />
+		</Cursor>
+	</File>
+	<File name="gst/mfx/gstmfxvideocontext.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="20" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/gstmfxtexture_priv.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="681" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="gst-libs/mfx/egl/gstmfxutils_egl.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="36595" topLine="1291" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>

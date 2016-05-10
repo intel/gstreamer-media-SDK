@@ -19,7 +19,7 @@ G_BEGIN_DECLS
 GstMfxTaskAggregator *
 gst_mfx_task_aggregator_new(void);
 
-mfxSession *
+mfxSession
 gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator);
 
 GstMfxTask *

@@ -204,8 +204,8 @@ static gboolean
 gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 {
 	GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(vpp);
-	GstMfxTask *task;
-	gboolean mapped;
+	gboolean mapped = !plugin->use_dmabuf &&
+        !gst_caps_has_mfx_surface(plugin->srcpad_caps);
 
 	if (vpp->filter)
 		return TRUE;
@@ -213,17 +213,14 @@ gst_mfxpostproc_ensure_filter(GstMfxPostproc * vpp)
 	if (!gst_mfxpostproc_ensure_aggregator(plugin))
 		return FALSE;
 
-    if (!plugin->mapped) {
-        task = gst_mfx_task_aggregator_get_current_task(plugin->aggregator);
-        if (task && gst_mfx_task_has_mapped_surface(task))
-            plugin->mapped = TRUE;
-    }
+    if (mapped)
+        plugin->mapped = mapped;
 
 	gst_caps_replace(&vpp->allowed_srcpad_caps, NULL);
 	gst_caps_replace(&vpp->allowed_sinkpad_caps, NULL);
 
 	vpp->filter = gst_mfx_filter_new(plugin->aggregator,
-                        plugin->mapped, plugin->mapped);
+                        plugin->mapped, mapped);
 	if (!vpp->filter)
 		return FALSE;
 	return TRUE;

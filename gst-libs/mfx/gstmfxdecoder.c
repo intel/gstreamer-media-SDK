@@ -94,18 +94,18 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 {
     mfxStatus sts = MFX_ERR_NONE;
     gchar *uid = NULL;
-    mfxSession *session = NULL;
+    mfxSession session = NULL;
 
     decoder->info = *info;
 	decoder->codec = decoder->param.mfx.CodecId = codec;
 	decoder->param.AsyncDepth = async_depth;
 	decoder->decoder_inited = FALSE;
+	decoder->mapped = mapped;
 	decoder->bs.MaxLength = 1024 * 16;
 
-    session = gst_mfx_task_aggregator_create_session(aggregator);
-    if(!session)
+    decoder->session = gst_mfx_task_aggregator_create_session(aggregator);
+    if (!decoder->session)
         return FALSE;
-    decoder->session = *session;
 
     sts = gst_mfx_decoder_load_decoder_plugins(decoder, &uid);
     if (sts < 0)
@@ -115,12 +115,11 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
         mapped = TRUE;
 
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
-    decoder->mapped = mapped;
     decoder->param.IOPattern = mapped ?
         MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
     decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
 	decoder->decode_task = gst_mfx_task_new_with_session(decoder->aggregator,
-                                &decoder->session, GST_MFX_TASK_DECODER, mapped);
+                                decoder->session, GST_MFX_TASK_DECODER, mapped);
     gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
         decoder->decode_task);
 
@@ -187,12 +186,12 @@ static GstMfxDecoderStatus
 gst_mfx_decoder_start(GstMfxDecoder *decoder)
 {
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
+	GstVideoFormat vformat = GST_VIDEO_INFO_FORMAT(&decoder->info);
 	mfxFrameInfo *frame_info = &decoder->param.mfx.FrameInfo;
 	mfxStatus sts = MFX_ERR_NONE;
 	mfxFrameAllocRequest dec_request;
 	mfxFrameAllocResponse dec_response;
-	gboolean mapped = decoder->mapped;
-	GstVideoFormat vformat = GST_VIDEO_INFO_FORMAT(&decoder->info);
+	gboolean mapped;
 
 	memset(&dec_request, 0, sizeof (mfxFrameAllocRequest));
 
@@ -225,10 +224,10 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
     else if (sts > 0) {
         decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
         gst_mfx_task_use_video_memory(decoder->decode_task, FALSE);
-        mapped = TRUE;
     }
 
-    if (!gst_mfx_task_has_mapped_surface(decoder->decode_task))
+    mapped = decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+    if (!mapped)
         gst_mfx_task_use_video_memory(decoder->decode_task, TRUE);
 
     dec_request.NumFrameSuggested += 1 - decoder->param.AsyncDepth;
@@ -341,11 +340,11 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
             decoder->bs.DataOffset);
 		decoder->bs.DataOffset = 0;
 
-        proxy = gst_mfx_surface_pool_find_proxy(decoder->pool, outsurf);
-
 		do {
 			sts = MFXVideoCORE_SyncOperation(decoder->session, syncp, 1000);
 		} while (MFX_WRN_IN_EXECUTION == sts);
+
+		proxy = gst_mfx_surface_pool_find_proxy(decoder->pool, outsurf);
 
 		if (gst_mfx_task_has_type(decoder->decode_task, GST_MFX_TASK_VPP_IN)) {
 			gst_mfx_filter_process(decoder->filter, proxy, &filter_proxy);
