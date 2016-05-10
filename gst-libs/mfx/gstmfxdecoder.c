@@ -28,6 +28,7 @@ struct _GstMfxDecoder
 
     GstVideoInfo            info;
 	gboolean                decoder_inited;
+	gboolean                mapped;
 };
 
 mfxU32
@@ -114,6 +115,7 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
         mapped = TRUE;
 
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
+    decoder->mapped = mapped;
     decoder->param.IOPattern = mapped ?
         MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
     decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
@@ -189,6 +191,8 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
 	mfxStatus sts = MFX_ERR_NONE;
 	mfxFrameAllocRequest dec_request;
 	mfxFrameAllocResponse dec_response;
+	gboolean mapped = decoder->mapped;
+	GstVideoFormat vformat = GST_VIDEO_INFO_FORMAT(&decoder->info);
 
 	memset(&dec_request, 0, sizeof (mfxFrameAllocRequest));
 
@@ -221,23 +225,23 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
     else if (sts > 0) {
         decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
         gst_mfx_task_use_video_memory(decoder->decode_task, FALSE);
+        mapped = TRUE;
     }
 
     if (!gst_mfx_task_has_mapped_surface(decoder->decode_task))
         gst_mfx_task_use_video_memory(decoder->decode_task, TRUE);
 
+    dec_request.NumFrameSuggested += 1 - decoder->param.AsyncDepth;
+
     gst_mfx_task_set_request(decoder->decode_task, &dec_request);
 
-	if (GST_VIDEO_INFO_FORMAT(&decoder->info) != GST_VIDEO_FORMAT_NV12) {
-        gboolean mapped = gst_mfx_task_has_mapped_surface(decoder->decode_task);
+	if (vformat != GST_VIDEO_FORMAT_NV12 || mapped != decoder->mapped) {
         decoder->filter = gst_mfx_filter_new_with_task(decoder->aggregator,
-            decoder->decode_task, GST_MFX_TASK_VPP_IN, mapped, mapped);
+            decoder->decode_task, GST_MFX_TASK_VPP_IN, mapped, decoder->mapped);
 
         if(!decoder->filter)
             return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
 
-		dec_request.NumFrameSuggested =
-            (dec_request.NumFrameSuggested - decoder->param.AsyncDepth) + 1;
 		dec_request.Type =
             MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE |
             MFX_MEMTYPE_EXPORT_FRAME;
@@ -245,8 +249,8 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         gst_mfx_filter_set_request(decoder->filter, &dec_request,
             GST_MFX_TASK_VPP_IN);
 
-        gst_mfx_filter_set_format(decoder->filter,
-            GST_VIDEO_INFO_FORMAT(&decoder->info));
+        if (vformat != GST_VIDEO_FORMAT_NV12)
+            gst_mfx_filter_set_format(decoder->filter, vformat);
 
         if(!gst_mfx_filter_start(decoder->filter))
             return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
