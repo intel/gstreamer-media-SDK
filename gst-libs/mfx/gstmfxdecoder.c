@@ -94,7 +94,6 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 {
     mfxStatus sts = MFX_ERR_NONE;
     gchar *uid = NULL;
-    mfxSession session = NULL;
 
     decoder->info = *info;
 	decoder->codec = decoder->param.mfx.CodecId = codec;
