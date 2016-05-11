@@ -100,7 +100,7 @@ gst_mfx_task_aggregator_get_display(GstMfxTaskAggregator * aggregator)
 	return aggregator->display;
 }
 
-mfxSession *
+mfxSession
 gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 {
 	mfxIMPL impl;
@@ -140,7 +140,7 @@ gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 
 	GST_INFO("Initialized internal MFX session using %s implementation", desc);
 
-	return &aggregator->parent_session;
+	return aggregator->parent_session;
 }
 
 static gint

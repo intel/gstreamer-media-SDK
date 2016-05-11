@@ -212,8 +212,8 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
     if (!plugin->sinkpad_buffer_pool)
         plugin->use_dmabuf = has_dmabuf_capable_peer(plugin, plugin->sinkpad);
 
-    if (GST_IS_BASE_TRANSFORM(plugin) && !plugin->use_dmabuf)
-        plugin->mapped = !gst_caps_has_mfx_surface(plugin->srcpad_caps);
+    if (!plugin->use_dmabuf)
+        plugin->mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps);
 
     if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
         return FALSE;

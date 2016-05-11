@@ -227,6 +227,8 @@ gst_mfx_filter_start(GstMfxFilter * filter)
     if (!filter->session) {
         mapped = filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
         filter->vpp[1] = gst_mfx_task_new(filter->aggregator, GST_MFX_TASK_VPP_OUT, mapped);
+        if (!filter->vpp[1])
+            return FALSE;
         filter->session = gst_mfx_task_get_session(filter->vpp[1]);
         gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp[1]);
     }
@@ -238,6 +240,11 @@ gst_mfx_filter_start(GstMfxFilter * filter)
     if (sts < 0) {
         GST_ERROR("Unable to query VPP allocation request %d", sts);
         return FALSE;
+    }
+    else if (sts > 0) {
+        filter->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY |
+                                        MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+        gst_mfx_task_use_video_memory(filter->vpp[1], FALSE);
     }
 
     /* Initialize VPP surface pools */
@@ -253,8 +260,11 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         if (!gst_mfx_task_aggregator_find_task(filter->aggregator, filter->vpp[i])) {
             mapped = filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
             filter->vpp[i] = gst_mfx_task_new_with_session(filter->aggregator,
-                &filter->session, type, mapped);
+                filter->session, type, mapped);
         }
+
+        if (!gst_mfx_task_has_mapped_surface(filter->vpp[i]))
+            gst_mfx_task_use_video_memory(filter->vpp[i], TRUE);
 
         if (!filter->vpp_request[i]) {
             filter->vpp_request[i] =
