@@ -252,9 +252,6 @@ video_info_changed(GstVideoInfo * old_vip, GstVideoInfo * new_vip)
 {
 	if (GST_VIDEO_INFO_FORMAT(old_vip) != GST_VIDEO_INFO_FORMAT(new_vip))
 		return TRUE;
-	if (GST_VIDEO_INFO_INTERLACE_MODE(old_vip) !=
-		GST_VIDEO_INFO_INTERLACE_MODE(new_vip))
-		return TRUE;
 	if (GST_VIDEO_INFO_WIDTH(old_vip) != GST_VIDEO_INFO_WIDTH(new_vip))
 		return TRUE;
 	if (GST_VIDEO_INFO_HEIGHT(old_vip) != GST_VIDEO_INFO_HEIGHT(new_vip))
@@ -284,18 +281,10 @@ static gboolean
 gst_mfxpostproc_update_sink_caps(GstMfxPostproc * vpp, GstCaps * caps,
 	gboolean * caps_changed_ptr)
 {
-	GstVideoInfo vi;
-	gboolean deinterlace;
-
 	GST_INFO_OBJECT(vpp, "new sink caps = %" GST_PTR_FORMAT, caps);
 
 	if (!video_info_update(caps, &vpp->sinkpad_info, caps_changed_ptr))
 		return FALSE;
-
-	vi = vpp->sinkpad_info;
-	if (GST_VIDEO_INFO_IS_INTERLACED(&vi) &&
-		vpp->deinterlace_mode != GST_MFX_DEINTERLACE_MODE_NONE)
-		vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
 
 	vpp->get_va_surfaces = gst_caps_has_mfx_surface(caps);
 	return TRUE;
@@ -779,6 +768,7 @@ gst_mfxpostproc_set_property(GObject * object,
 		break;
 	case PROP_DEINTERLACE_MODE:
 		vpp->deinterlace_mode = g_value_get_enum(value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
 		break;
 	case PROP_DENOISE:
 		vpp->denoise_level = g_value_get_uint(value);
