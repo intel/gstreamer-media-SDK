@@ -102,25 +102,28 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	decoder->mapped = mapped;
 	decoder->bs.MaxLength = 1024 * 16;
 
-    decoder->session = gst_mfx_task_aggregator_create_session(aggregator);
-    if (!decoder->session)
+	decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
+	decoder->decode_task = gst_mfx_task_new(decoder->aggregator,
+                                GST_MFX_TASK_DECODER, mapped);
+    if (!decoder->decode_task)
         return FALSE;
+
+    gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
+        decoder->decode_task);
+    decoder->session = gst_mfx_task_get_session(decoder->decode_task);
 
     sts = gst_mfx_decoder_load_decoder_plugins(decoder, &uid);
     if (sts < 0)
         return FALSE;
 
-    if (uid == "15dd936825ad475ea34e35f3f54217a6")
+    if (uid == "15dd936825ad475ea34e35f3f54217a6") {
+        gst_mfx_task_use_video_memory(decoder->decode_task, FALSE);
         mapped = TRUE;
+    }
 
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
     decoder->param.IOPattern = mapped ?
         MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-    decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
-	decoder->decode_task = gst_mfx_task_new_with_session(decoder->aggregator,
-                                decoder->session, GST_MFX_TASK_DECODER, mapped);
-    gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
-        decoder->decode_task);
 
     return TRUE;
 }

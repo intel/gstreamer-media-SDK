@@ -15,18 +15,14 @@ GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxpostproc);
 /* Default templates */
 /* *INDENT-OFF* */
 static const char gst_mfxpostproc_sink_caps_str[] =
-	GST_MFX_MAKE_SURFACE_CAPS ", "
-	GST_CAPS_INTERLACED_MODES "; "
-	GST_VIDEO_CAPS_MAKE("{ NV12, YV12, UYVY, YUY2, BGRA, BGRx }") ", "
-	GST_CAPS_INTERLACED_MODES;
+	GST_MFX_MAKE_SURFACE_CAPS "; "
+	GST_VIDEO_CAPS_MAKE("{ NV12, YV12, UYVY, YUY2, BGRA, BGRx }");
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
 static const char gst_mfxpostproc_src_caps_str[] =
-	GST_MFX_MAKE_SURFACE_CAPS ", "
-	GST_CAPS_INTERLACED_MODES "; "
-	GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }") ", "
-	GST_CAPS_INTERLACED_MODES;
+	GST_MFX_MAKE_SURFACE_CAPS "; "
+	GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }");
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
