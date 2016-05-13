@@ -12,7 +12,7 @@ typedef struct _GstMfxDisplayEGL GstMfxDisplayEGL;
 	((GstMfxDisplayEGL *)(obj))
 
 GstMfxDisplay *
-gst_mfx_display_egl_new(guint gles_version);
+gst_mfx_display_egl_new(const gchar * display_name, guint gles_version);
 
 EGLDisplay
 gst_mfx_display_egl_get_gl_display(GstMfxDisplayEGL * display);

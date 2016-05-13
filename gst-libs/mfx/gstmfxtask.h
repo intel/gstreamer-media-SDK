@@ -33,11 +33,11 @@ typedef enum {
 
 GstMfxTask *
 gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
-	guint type_flags, gboolean mapped);
+	guint type_flags);
 
 GstMfxTask *
 gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
-	mfxSession session, guint type_flags, gboolean mapped);
+	mfxSession session, guint type_flags);
 
 GstMfxTask *
 gst_mfx_task_ref (GstMfxTask * task);
@@ -65,7 +65,7 @@ guint
 gst_mfx_task_get_task_type (GstMfxTask * task);
 
 void
-gst_mfx_task_use_video_memory(GstMfxTask * task, gboolean use_vmem);
+gst_mfx_task_use_video_memory(GstMfxTask * task);
 
 gboolean
 gst_mfx_task_has_mapped_surface(GstMfxTask * task);

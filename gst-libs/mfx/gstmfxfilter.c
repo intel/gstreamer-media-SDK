@@ -220,13 +220,12 @@ gst_mfx_filter_start(GstMfxFilter * filter)
 {
     mfxFrameAllocRequest vpp_request[2];
     mfxFrameAllocResponse response;
-    mfxStatus sts;
+    mfxStatus sts = MFX_ERR_NONE;
     gboolean mapped;
     guint i;
 
     if (!filter->session) {
-        mapped = filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-        filter->vpp[1] = gst_mfx_task_new(filter->aggregator, GST_MFX_TASK_VPP_OUT, mapped);
+        filter->vpp[1] = gst_mfx_task_new(filter->aggregator, GST_MFX_TASK_VPP_OUT);
         if (!filter->vpp[1])
             return FALSE;
         filter->session = gst_mfx_task_get_session(filter->vpp[1]);
@@ -242,29 +241,28 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         return FALSE;
     }
     else if (sts > 0) {
-        filter->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY |
-                                        MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-        gst_mfx_task_use_video_memory(filter->vpp[1], FALSE);
+        filter->params.IOPattern =
+            MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
     }
 
     /* Initialize VPP surface pools */
     for (i = 0; i < 2; i++) {
         GstMfxTaskType type = i == 0 ? GST_MFX_TASK_VPP_IN : GST_MFX_TASK_VPP_OUT;
-		guint io_pattern = i == 0 ? MFX_IOPATTERN_IN_VIDEO_MEMORY :
+		guint vmem_type = i == 0 ? MFX_IOPATTERN_IN_VIDEO_MEMORY :
 			MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+        mapped = !(filter->params.IOPattern & vmem_type);
 
         /* No need for input VPP pool when shared alloc request is not set */
         if (GST_MFX_TASK_VPP_IN == type && !filter->vpp_request[0])
             continue;
 
         if (!gst_mfx_task_aggregator_find_task(filter->aggregator, filter->vpp[i])) {
-            mapped = filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
             filter->vpp[i] = gst_mfx_task_new_with_session(filter->aggregator,
-                filter->session, type, mapped);
+                filter->session, type);
         }
 
-        if (!gst_mfx_task_has_mapped_surface(filter->vpp[i]))
-            gst_mfx_task_use_video_memory(filter->vpp[i], TRUE);
+        if (!mapped)
+            gst_mfx_task_use_video_memory(filter->vpp[i]);
 
         if (!filter->vpp_request[i]) {
             filter->vpp_request[i] =
@@ -279,7 +277,7 @@ gst_mfx_filter_start(GstMfxFilter * filter)
 
         gst_mfx_task_set_request(filter->vpp[i], filter->vpp_request[i]);
 
-        if (!gst_mfx_task_has_mapped_surface(filter->vpp[i])) {
+        if (!mapped) {
             filter->vpp_request[i]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
             sts = gst_mfx_task_frame_alloc(filter->vpp[i], filter->vpp_request[i],

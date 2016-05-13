@@ -104,7 +104,7 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 
 	decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
 	decoder->decode_task = gst_mfx_task_new(decoder->aggregator,
-                                GST_MFX_TASK_DECODER, mapped);
+                                GST_MFX_TASK_DECODER);
     if (!decoder->decode_task)
         return FALSE;
 
@@ -116,10 +116,8 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
     if (sts < 0)
         return FALSE;
 
-    if (uid == "15dd936825ad475ea34e35f3f54217a6") {
-        gst_mfx_task_use_video_memory(decoder->decode_task, FALSE);
+    if (uid == "15dd936825ad475ea34e35f3f54217a6")
         mapped = TRUE;
-    }
 
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
     decoder->param.IOPattern = mapped ?
@@ -225,12 +223,11 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
     }
     else if (sts > 0) {
         decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-        gst_mfx_task_use_video_memory(decoder->decode_task, FALSE);
     }
 
     mapped = decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
     if (!mapped)
-        gst_mfx_task_use_video_memory(decoder->decode_task, TRUE);
+        gst_mfx_task_use_video_memory(decoder->decode_task);
 
     dec_request.NumFrameSuggested += 1 - decoder->param.AsyncDepth;
 

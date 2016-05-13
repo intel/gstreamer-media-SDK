@@ -46,6 +46,7 @@ static const DisplayMap g_display_map[] = {
 typedef struct
 {
 	gpointer display;
+	gchar *display_name;
 	guint display_type;
 	guint gles_version;
 } InitParams;
@@ -100,7 +101,7 @@ gst_mfx_display_egl_bind_display(GstMfxDisplayEGL * display,
 	const DisplayMap *m;
 
 	for (m = g_display_map; m->type_str != NULL; m++) {
-        native_display = m->create_display(NULL);
+        native_display = m->create_display(params->display_name);
 
 		if (native_display) {
 			GST_INFO("selected backend: %s", m->type_str);
@@ -293,11 +294,12 @@ gst_mfx_display_egl_class(void)
 }
 
 GstMfxDisplay *
-gst_mfx_display_egl_new(guint gles_version)
+gst_mfx_display_egl_new(const gchar * display_name, guint gles_version)
 {
 	InitParams params;
 
     params.display = NULL;
+    params.display_name = display_name;
     params.display_type = GST_MFX_DISPLAY_TYPE_ANY;
 	params.gles_version = gles_version;
 
