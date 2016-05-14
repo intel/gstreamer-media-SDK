@@ -250,7 +250,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         if (vformat != GST_VIDEO_FORMAT_NV12)
             gst_mfx_filter_set_format(decoder->filter, vformat);
 
-        if(!gst_mfx_filter_start(decoder->filter))
+        if (!gst_mfx_filter_start(decoder->filter))
             return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 
         decoder->pool = gst_mfx_filter_get_pool(decoder->filter,

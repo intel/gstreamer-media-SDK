@@ -204,7 +204,8 @@ init_params(GstMfxFilter * filter)
     }
     if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
         filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
-        filter->params.vpp.Out.Height = GST_ROUND_UP_16(filter->height);
+        filter->params.vpp.Out.Height =
+            GST_ROUND_UP_16(filter->frame_info.CropH);
     }
     if(filter->filter_op & GST_MFX_FILTER_FRAMERATE_CONVERSION &&
             (filter->fps_n && filter->fps_d)) {
@@ -935,17 +936,22 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 	mfxStatus sts = MFX_ERR_NONE;
     gboolean more_surface = FALSE;
 
+    insurf = gst_mfx_surface_proxy_get_frame_surface(proxy);
+
 	do {
 		*out_proxy = gst_mfx_surface_proxy_new_from_pool(filter->vpp_pool[1]);
 		if (!*out_proxy)
 			return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 
-		insurf = gst_mfx_surface_proxy_get_frame_surface(proxy);
 		outsurf = gst_mfx_surface_proxy_get_frame_surface(*out_proxy);
 		sts = MFXVideoVPP_RunFrameVPPAsync(filter->session, insurf, outsurf, NULL, &syncp);
+
+		if (MFX_WRN_INCOMPATIBLE_VIDEO_PARAM == sts)
+            insurf->Info = filter->frame_info;
+
 		if (MFX_WRN_DEVICE_BUSY == sts)
 			g_usleep(500);
-	} while (MFX_WRN_DEVICE_BUSY == sts);
+	} while (sts > 0);
 
     if (MFX_ERR_MORE_DATA == sts)
         return GST_MFX_FILTER_STATUS_ERROR_MORE_DATA;

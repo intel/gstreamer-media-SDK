@@ -505,9 +505,6 @@ gst_mfxsink_set_render_backend(GstMfxSink * sink)
         break;
     }
 #endif
-    case GST_MFX_DISPLAY_TYPE_DRM:
-        sink->display_type = GST_MFX_DISPLAY_TYPE_DRM;
-        break;
 display_unsupported:
     default:
         GST_ERROR("display type %s not supported",
@@ -656,7 +653,7 @@ static GstCaps *
 gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 {
 	GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
-	GstCaps *out_caps, *raw_caps;
+	GstCaps *out_caps;
 
 	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
         GstMfxDisplay *display = gst_mfx_display_wayland_new(sink->display_name);
@@ -707,9 +704,6 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 		return FALSE;
 
     gst_mfxsink_set_render_backend(sink);
-
-    if (sink->display_type == GST_MFX_DISPLAY_TYPE_DRM)
-		return TRUE;
 
 	if (!gst_mfx_plugin_base_set_caps(plugin, caps, NULL))
 		return FALSE;
