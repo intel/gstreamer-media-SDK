@@ -46,7 +46,7 @@ static const DisplayMap g_display_map[] = {
 typedef struct
 {
 	gpointer display;
-	gchar *display_name;
+	const gchar *display_name;
 	guint display_type;
 	guint gles_version;
 } InitParams;

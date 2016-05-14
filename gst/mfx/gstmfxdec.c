@@ -21,12 +21,14 @@ GST_DEBUG_CATEGORY_STATIC(mfxdec_debug);
 static const char gst_mfxdecode_sink_caps_str[] =
 	GST_CAPS_CODEC("video/mpeg, mpegversion=2, systemstream=(boolean)false")
 	GST_CAPS_CODEC("video/x-h264, \
-                stream-format = (string) { byte-stream }")
+                alignment = (string) au, \
+                stream-format = (string) byte-stream")
 	GST_CAPS_CODEC("video/x-h265, \
-                stream-format = (string) { byte-stream }")
+                alignment = (string) au, \
+                stream-format = (string) byte-stream")
 	GST_CAPS_CODEC("video/x-wmv, \
-                stream-format = (string) { sequence-layer-frame-layer }, \
-                header-format = (string) { none }")
+                stream-format = (string) sequence-layer-frame-layer, \
+                header-format = (string) none")
     GST_CAPS_CODEC("video/x-vp8")
     GST_CAPS_CODEC("image/jpeg")
 	;
@@ -158,7 +160,7 @@ gst_mfxdec_update_src_caps(GstMfxDec * mfxdec)
 	gst_caps_replace(&mfxdec->srcpad_caps, state->caps);
 	gst_video_codec_state_unref(state);
 
-	return TRUE;
+    return TRUE;
 }
 
 static void

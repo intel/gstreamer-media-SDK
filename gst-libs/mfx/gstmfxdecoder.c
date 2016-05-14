@@ -43,7 +43,7 @@ static void
 gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
 	g_byte_array_unref(decoder->bitstream);
-	gst_mfx_task_aggregator_unref(decoder->aggregator);
+	gst_mfx_task_aggregator_replace(&decoder->aggregator, NULL);
 	gst_mfx_task_replace(&decoder->decode_task, NULL);
 	gst_mfx_surface_pool_unref(decoder->pool);
 
