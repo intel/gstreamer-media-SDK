@@ -51,19 +51,6 @@ typedef gsize GstMfxID;
 #define GST_MFX_ID_ARGS(id) GSIZE_TO_POINTER(id)
 
 /**
-* GstMfxPoint:
-* @x: X coordinate
-* @y: Y coordinate
-*
-* A location within a surface.
-*/
-typedef struct _GstMfxPoint GstMfxPoint;
-struct _GstMfxPoint {
-	guint32 x;
-	guint32 y;
-};
-
-/**
 * GstMfxRectangle:
 * @x: X coordinate
 * @y: Y coordinate
@@ -94,20 +81,6 @@ typedef enum {
 	GST_MFX_ROTATION_270 = 270,
 } GstMfxRotation;
 
-/**
-* GstMfxRateControl:
-* @GST_MFX_RATECONTROL_NONE: No rate control performed by the
-*   underlying driver
-* @GST_MFX_RATECONTROL_CQP: Constant QP
-* @GST_MFX_RATECONTROL_CBR: Constant bitrate
-* @GST_MFX_RATECONTROL_VCM: Video conference mode
-* @GST_MFX_RATECONTROL_VBR: Variable bitrate
-* @GST_MFX_RATECONTROL_VBR_CONSTRAINED: Variable bitrate with peak
-*   rate higher than average bitrate
-*
-* The set of allowed rate control values for #GstMfxRateControl.
-* Note: this is only valid for encoders.
-*/
 typedef enum {
 	GST_MFX_RATECONTROL_NONE = 0,
 	GST_MFX_RATECONTROL_CQP,

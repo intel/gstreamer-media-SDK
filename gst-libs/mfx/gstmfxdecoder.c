@@ -43,7 +43,7 @@ static void
 gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
 	g_byte_array_unref(decoder->bitstream);
-	gst_mfx_task_aggregator_unref(decoder->aggregator);
+	gst_mfx_task_aggregator_replace(&decoder->aggregator, NULL);
 	gst_mfx_task_replace(&decoder->decode_task, NULL);
 	gst_mfx_surface_pool_unref(decoder->pool);
 
@@ -102,9 +102,15 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
 	decoder->mapped = mapped;
 	decoder->bs.MaxLength = 1024 * 16;
 
-    decoder->session = gst_mfx_task_aggregator_create_session(aggregator);
-    if (!decoder->session)
+	decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
+	decoder->decode_task = gst_mfx_task_new(decoder->aggregator,
+                                GST_MFX_TASK_DECODER);
+    if (!decoder->decode_task)
         return FALSE;
+
+    gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
+        decoder->decode_task);
+    decoder->session = gst_mfx_task_get_session(decoder->decode_task);
 
     sts = gst_mfx_decoder_load_decoder_plugins(decoder, &uid);
     if (sts < 0)
@@ -116,11 +122,6 @@ gst_mfx_decoder_init(GstMfxDecoder * decoder,
     decoder->bitstream = g_byte_array_sized_new(decoder->bs.MaxLength);
     decoder->param.IOPattern = mapped ?
         MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-    decoder->aggregator = gst_mfx_task_aggregator_ref(aggregator);
-	decoder->decode_task = gst_mfx_task_new_with_session(decoder->aggregator,
-                                decoder->session, GST_MFX_TASK_DECODER, mapped);
-    gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
-        decoder->decode_task);
 
     return TRUE;
 }
@@ -222,12 +223,11 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
     }
     else if (sts > 0) {
         decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-        gst_mfx_task_use_video_memory(decoder->decode_task, FALSE);
     }
 
     mapped = decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
     if (!mapped)
-        gst_mfx_task_use_video_memory(decoder->decode_task, TRUE);
+        gst_mfx_task_use_video_memory(decoder->decode_task);
 
     dec_request.NumFrameSuggested += 1 - decoder->param.AsyncDepth;
 
@@ -250,7 +250,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         if (vformat != GST_VIDEO_FORMAT_NV12)
             gst_mfx_filter_set_format(decoder->filter, vformat);
 
-        if(!gst_mfx_filter_start(decoder->filter))
+        if (!gst_mfx_filter_start(decoder->filter))
             return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 
         decoder->pool = gst_mfx_filter_get_pool(decoder->filter,

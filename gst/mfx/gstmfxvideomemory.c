@@ -478,7 +478,6 @@ gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxDisplay * display,
 	GstMfxSurfaceProxy *proxy;
 	GstMfxPrimeBufferProxy *dmabuf_proxy;
 	gint dmabuf_fd;
-	guint flags;
 
 	g_return_val_if_fail(allocator != NULL, NULL);
 	g_return_val_if_fail(meta != NULL, NULL);
