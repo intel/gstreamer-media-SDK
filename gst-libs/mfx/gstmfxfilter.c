@@ -944,11 +944,11 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 		sts = MFXVideoVPP_RunFrameVPPAsync(filter->session, insurf, outsurf, NULL, &syncp);
 
 		if (MFX_WRN_INCOMPATIBLE_VIDEO_PARAM == sts)
-            insurf->Info = filter->frame_info;
+            sts = MFX_ERR_NONE;
 
 		if (MFX_WRN_DEVICE_BUSY == sts)
 			g_usleep(500);
-	} while (sts > 0);
+	} while (MFX_WRN_DEVICE_BUSY == sts);
 
     if (MFX_ERR_MORE_DATA == sts)
         return GST_MFX_FILTER_STATUS_ERROR_MORE_DATA;
@@ -976,5 +976,6 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 
     if (more_surface)
         return GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE;
+
 	return GST_MFX_FILTER_STATUS_SUCCESS;
 }
