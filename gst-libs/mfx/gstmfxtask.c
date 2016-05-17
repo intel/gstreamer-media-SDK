@@ -206,22 +206,20 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
 }
 
 void
-gst_mfx_task_use_video_memory(GstMfxTask * task, gboolean use_vmem)
+gst_mfx_task_use_video_memory(GstMfxTask * task)
 {
-    if (use_vmem) {
-        mfxFrameAllocator frame_allocator = {
-            .pthis = task,
-            .Alloc = gst_mfx_task_frame_alloc,
-            .Free = gst_mfx_task_frame_free,
-            .Lock = gst_mfx_task_frame_lock,
-            .Unlock = gst_mfx_task_frame_unlock,
-            .GetHDL = gst_mfx_task_frame_get_hdl,
-        };
+    mfxFrameAllocator frame_allocator = {
+        .pthis = task,
+        .Alloc = gst_mfx_task_frame_alloc,
+        .Free = gst_mfx_task_frame_free,
+        .Lock = gst_mfx_task_frame_lock,
+        .Unlock = gst_mfx_task_frame_unlock,
+        .GetHDL = gst_mfx_task_frame_get_hdl,
+    };
 
-        MFXVideoCORE_SetFrameAllocator(task->session, &frame_allocator);
-    }
+    MFXVideoCORE_SetFrameAllocator(task->session, &frame_allocator);
 
-    task->use_video_memory = use_vmem;
+    task->use_video_memory = TRUE;
 }
 
 gboolean
@@ -250,7 +248,7 @@ gst_mfx_task_class(void)
 
 static void
 gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
-	mfxSession session, guint type_flags, gboolean mapped)
+	mfxSession session, guint type_flags)
 {
     task->task_type = type_flags;
 	task->display = gst_mfx_display_ref(
@@ -262,12 +260,12 @@ gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     MFXVideoCORE_SetHandle(task->session, MFX_HANDLE_VA_DISPLAY,
 		GST_MFX_DISPLAY_VADISPLAY(task->display));
 
-    task->use_video_memory = !mapped;
+    task->use_video_memory = FALSE;
 }
 
 GstMfxTask *
 gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
-    guint type_flags, gboolean mapped)
+    guint type_flags)
 {
 	mfxSession session;
 
@@ -277,12 +275,12 @@ gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
 	if (!session)
         return NULL;
 
-	return gst_mfx_task_new_with_session(aggregator, session, type_flags, mapped);
+	return gst_mfx_task_new_with_session(aggregator, session, type_flags);
 }
 
 GstMfxTask *
 gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
-	mfxSession session, guint type_flags, gboolean mapped)
+	mfxSession session, guint type_flags)
 {
 	GstMfxTask *task;
 
@@ -293,7 +291,7 @@ gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
 	if (!task)
 		return NULL;
 
-	gst_mfx_task_init(task, aggregator, session, type_flags, mapped);
+	gst_mfx_task_init(task, aggregator, session, type_flags);
 
 	return task;
 }

@@ -56,13 +56,37 @@ enum
 	PROP_DISPLAY_NAME,
 	PROP_FULLSCREEN,
 	PROP_FORCE_ASPECT_RATIO,
+	PROP_GL_API,
 	PROP_SIGNAL_HANDOFFS,
 	N_PROPERTIES
 };
 
 #define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_ANY
-
+#define DEFAULT_GL_API                  GST_MFX_GLAPI_GLES2
 #define DEFAULT_SIGNAL_HANDOFFS         FALSE
+
+#define GST_MFX_TYPE_GL_API \
+	gst_mfx_gl_api_get_type()
+
+static GType
+gst_mfx_gl_api_get_type(void)
+{
+	static GType gl_api_type = 0;
+
+	static const GEnumValue api_types[] = {
+		{ GST_MFX_GLAPI_OPENGL,
+		"Desktop OpenGL", "opengl" },
+		{ GST_MFX_GLAPI_GLES2,
+		"OpenGL ES 2.0", "gles2" },
+		{ 0, NULL, NULL },
+	};
+
+	if (!gl_api_type) {
+		gl_api_type =
+			g_enum_register_static("GstMfxGLAPI", api_types);
+	}
+	return gl_api_type;
+}
 
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
 
@@ -476,7 +500,7 @@ gst_mfxsink_set_render_backend(GstMfxSink * sink)
 #if USE_WAYLAND
     case GST_MFX_DISPLAY_TYPE_WAYLAND:
         if (!sink->display) {
-            display = gst_mfx_display_wayland_new(NULL);
+            display = gst_mfx_display_wayland_new(sink->display_name);
             if (!display)
                 goto display_unsupported;
         }
@@ -486,28 +510,13 @@ gst_mfxsink_set_render_backend(GstMfxSink * sink)
 #endif
 #if USE_EGL
     case GST_MFX_DISPLAY_TYPE_EGL:
-    {
-        GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(sink);
-        GstMfxTask *task;
-        guint gl_api = 2; /* GLES2 by default */
-
-        /* Use desktop OpenGL when output surfaces are stored in system memory
-         * since glTexImage2D() doesn't quite work with OpenGLES2 using UFO */
-        task = gst_mfx_task_aggregator_get_current_task(plugin->aggregator);
-        if (task && gst_mfx_task_has_mapped_surface(task))
-            gl_api = 0;
-
-        display = gst_mfx_display_egl_new (gl_api);
+        display = gst_mfx_display_egl_new (sink->display_name, sink->gl_api);
         if (!display)
             goto display_unsupported;
         sink->backend = gst_mfxsink_backend_egl();
         sink->display_type = GST_MFX_DISPLAY_VADISPLAY_TYPE(display);
         break;
-    }
 #endif
-    case GST_MFX_DISPLAY_TYPE_DRM:
-        sink->display_type = GST_MFX_DISPLAY_TYPE_DRM;
-        break;
 display_unsupported:
     default:
         GST_ERROR("display type %s not supported",
@@ -656,10 +665,10 @@ static GstCaps *
 gst_mfxsink_get_caps_impl(GstBaseSink * base_sink)
 {
 	GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
-	GstCaps *out_caps, *raw_caps;
+	GstCaps *out_caps;
 
 	if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
-        GstMfxDisplay *display = gst_mfx_display_wayland_new(NULL);
+        GstMfxDisplay *display = gst_mfx_display_wayland_new(sink->display_name);
         sink->display_type_req = display ?
             GST_MFX_DISPLAY_TYPE_WAYLAND : GST_MFX_DISPLAY_TYPE_EGL;
 
@@ -707,9 +716,6 @@ gst_mfxsink_set_caps(GstBaseSink * base_sink, GstCaps * caps)
 		return FALSE;
 
     gst_mfxsink_set_render_backend(sink);
-
-    if (sink->display_type == GST_MFX_DISPLAY_TYPE_DRM)
-		return TRUE;
 
 	if (!gst_mfx_plugin_base_set_caps(plugin, caps, NULL))
 		return FALSE;
@@ -894,6 +900,9 @@ gst_mfxsink_set_property(GObject * object,
 	case PROP_FORCE_ASPECT_RATIO:
 		sink->keep_aspect = g_value_get_boolean(value);
 		break;
+    case PROP_GL_API:
+	    sink->gl_api = g_value_get_enum(value);
+		break;
 	case PROP_SIGNAL_HANDOFFS:
 		sink->signal_handoffs = g_value_get_boolean(value);
 		break;
@@ -921,6 +930,9 @@ gst_mfxsink_get_property(GObject * object,
 		break;
 	case PROP_FORCE_ASPECT_RATIO:
 		g_value_set_boolean(value, sink->keep_aspect);
+		break;
+    case PROP_GL_API:
+		g_value_set_enum(value, sink->gl_api);
 		break;
 	case PROP_SIGNAL_HANDOFFS:
 		g_value_set_boolean(value, sink->signal_handoffs);
@@ -1036,6 +1048,19 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		"When enabled, scaling will respect original aspect ratio",
 		TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+    /**
+	* GstMfxSink:gl-api:
+	*
+	* Select the OpenGL API for rendering
+	*/
+	g_properties[PROP_GL_API] =
+		g_param_spec_enum("gl-api",
+		"OpenGL API",
+		"OpenGL API to use",
+		GST_MFX_TYPE_GL_API,
+		DEFAULT_GL_API,
+		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
 	/**
 	* GstMfxSink:signal-handoffs:
 	*
@@ -1068,6 +1093,8 @@ gst_mfxsink_init(GstMfxSink * sink)
 
 	gst_mfx_plugin_base_init(plugin, GST_CAT_DEFAULT);
 	sink->display_type_req = DEFAULT_DISPLAY_TYPE;
+	sink->gl_api = DEFAULT_GL_API;
+	sink->display_name = NULL;
 
 	sink->video_par_n = 1;
 	sink->video_par_d = 1;

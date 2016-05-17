@@ -15,18 +15,14 @@ GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxpostproc);
 /* Default templates */
 /* *INDENT-OFF* */
 static const char gst_mfxpostproc_sink_caps_str[] =
-	GST_MFX_MAKE_SURFACE_CAPS ", "
-	GST_CAPS_INTERLACED_MODES "; "
-	GST_VIDEO_CAPS_MAKE("{ NV12, YV12, UYVY, YUY2, BGRA, BGRx }") ", "
-	GST_CAPS_INTERLACED_MODES;
+	GST_MFX_MAKE_SURFACE_CAPS "; "
+	GST_VIDEO_CAPS_MAKE("{ NV12, YV12, UYVY, YUY2, BGRA, BGRx }");
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
 static const char gst_mfxpostproc_src_caps_str[] =
-	GST_MFX_MAKE_SURFACE_CAPS ", "
-	GST_CAPS_INTERLACED_MODES "; "
-	GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }") ", "
-	GST_CAPS_INTERLACED_MODES;
+	GST_MFX_MAKE_SURFACE_CAPS "; "
+	GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }");
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
@@ -73,7 +69,7 @@ enum
 };
 
 #define DEFAULT_FORMAT                  GST_VIDEO_FORMAT_NV12
-#define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_NONE
+#define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 #define DEFAULT_FRC_ALG                 GST_MFX_FRC_NONE
 
@@ -90,8 +86,6 @@ gst_mfx_deinterlace_mode_get_type(void)
 	static GType deinterlace_mode_type = 0;
 
 	static const GEnumValue mode_types[] = {
-		{ GST_MFX_DEINTERLACE_MODE_NONE,
-		"None", "none" },
 		{ GST_MFX_DEINTERLACE_MODE_BOB,
 		"Bob deinterlacing", "bob" },
 		{ GST_MFX_DEINTERLACE_MODE_ADVANCED,
@@ -901,7 +895,7 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
 	gst_element_class_add_pad_template(element_class, pad_template);
 
 	/**
-	* GstMfxVpp:deinterlace-mode:
+	* GstMfxPostproc:deinterlace-mode:
 	*
 	* This selects whether the deinterlacing should always be applied
 	* or if they should only be applied on content that has the

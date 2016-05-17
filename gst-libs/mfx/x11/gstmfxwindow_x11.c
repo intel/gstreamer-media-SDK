@@ -100,7 +100,6 @@ gst_mfx_window_x11_show(GstMfxWindow * window)
 		GST_MFX_WINDOW_X11_GET_PRIVATE(window);
 	Display *const dpy = GST_MFX_OBJECT_NATIVE_DISPLAY(window);
 	const Window xid = GST_MFX_OBJECT_ID(window);
-	XWindowAttributes wattr;
 	gboolean has_errors;
 
 	if (priv->is_mapped)

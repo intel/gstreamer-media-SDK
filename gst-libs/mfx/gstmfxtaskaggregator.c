@@ -25,6 +25,8 @@ gst_mfx_task_aggregator_finalize(GstMfxTaskAggregator * aggregator)
 {
 	g_list_free_full(aggregator->cache, gst_mfx_mini_object_unref);
 	gst_mfx_display_unref(aggregator->display);
+
+	MFXClose(aggregator->parent_session);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -105,6 +107,7 @@ gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 {
 	mfxIMPL impl;
 	mfxStatus sts;
+	mfxSession session;
 	const char *desc;
 
 	mfxInitParam init_params;
@@ -114,15 +117,15 @@ gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 	//init_params.GPUCopy = MFX_GPUCOPY_ON;
 	init_params.Implementation = MFX_IMPL_AUTO_ANY;
 	init_params.Version.Major = 1;
-	init_params.Version.Minor = 0;
+	init_params.Version.Minor = 1;
 
-	sts = MFXInitEx(init_params, &aggregator->parent_session);
+	sts = MFXInitEx(init_params, &session);
 	if (sts < 0) {
 		GST_ERROR("Error initializing internal MFX session");
 		return NULL;
 	}
 
-	sts = MFXQueryIMPL(aggregator->parent_session, &impl);
+	sts = MFXQueryIMPL(session, &impl);
 
 	switch (MFX_IMPL_BASETYPE(impl)) {
 	case MFX_IMPL_SOFTWARE:
@@ -140,7 +143,12 @@ gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 
 	GST_INFO("Initialized internal MFX session using %s implementation", desc);
 
-	return aggregator->parent_session;
+	if (!aggregator->parent_session)
+        aggregator->parent_session = session;
+    else
+        sts = MFXJoinSession(aggregator->parent_session, session);
+
+	return session;
 }
 
 static gint
