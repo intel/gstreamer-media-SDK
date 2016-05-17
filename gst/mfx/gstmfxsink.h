@@ -33,6 +33,11 @@ typedef gboolean(*GstMfxSinkHandleEventsFunc) (GstMfxSink * sink);
 typedef gboolean(*GstMfxSinkPreStartEventThreadFunc) (GstMfxSink * sink);
 typedef gboolean(*GstMfxSinkPreStopEventThreadFunc) (GstMfxSink * sink);
 
+typedef enum {
+	GST_MFX_GLAPI_OPENGL = 0,
+	GST_MFX_GLAPI_GLES2 = 2,
+} GstMfxGLAPI;
+
 struct _GstMfxSinkBackend
 {
 	GstMfxSinkCreateWindowFunc create_window;
@@ -68,6 +73,8 @@ struct _GstMfxSink
 	GstMfxDisplayType display_type;
 	GstMfxDisplayType display_type_req;
 	gchar *display_name;
+
+	GstMfxGLAPI gl_api;
 
 	guint handle_events : 1;
 	guint fullscreen : 1;

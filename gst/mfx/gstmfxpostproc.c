@@ -895,7 +895,7 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
 	gst_element_class_add_pad_template(element_class, pad_template);
 
 	/**
-	* GstMfxVpp:deinterlace-mode:
+	* GstMfxPostproc:deinterlace-mode:
 	*
 	* This selects whether the deinterlacing should always be applied
 	* or if they should only be applied on content that has the
