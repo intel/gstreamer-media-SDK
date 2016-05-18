@@ -292,7 +292,6 @@ gst_mfx_query_peer_has_raw_caps(GstPad * pad)
 {
     GstPad *other_pad = NULL;
     GstElement *element = NULL;
-    //gchar *element_name = NULL;
     GstCaps *caps = NULL;
     gboolean mapped = FALSE;
 
@@ -311,30 +310,21 @@ gst_mfx_query_peer_has_raw_caps(GstPad * pad)
         caps = gst_pad_get_allowed_caps(other_pad);
         gst_object_unref (other_pad);
 
-        //g_print("%s\n\n", gst_caps_to_string(caps));
-
         if (!gst_caps_has_mfx_surface(caps)) {
             mapped = TRUE;
             goto cleanup;
         }
         gst_caps_replace(&caps, NULL);
 
-        //element_name = gst_element_get_name (element);
-        //g_print("%s\n", element_name);
-
         pad = gst_element_get_static_pad (element, "src");
         if (!pad)
             break;
 
-
-        //g_free (element_name);
-        //element_name = NULL;
         g_clear_object (&element);
     }
 
 cleanup:
     gst_caps_replace(&caps, NULL);
-    //g_free (element_name);
     g_clear_object (&element);
 
     return mapped;

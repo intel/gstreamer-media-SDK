@@ -510,16 +510,12 @@ gst_mfxsink_set_render_backend(GstMfxSink * sink)
 #endif
 #if USE_EGL
     case GST_MFX_DISPLAY_TYPE_EGL:
-    {
-        GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE(sink);
-
         display = gst_mfx_display_egl_new (sink->display_name, sink->gl_api);
         if (!display)
             goto display_unsupported;
         sink->backend = gst_mfxsink_backend_egl();
         sink->display_type = GST_MFX_DISPLAY_VADISPLAY_TYPE(display);
         break;
-    }
 #endif
 display_unsupported:
     default:
