@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxcodecmap.h"
+#include "gstmfxprofile.h"
 #include "gstmfxvideomemory.h"
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
@@ -296,11 +296,17 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 		query);
 }
 
+static inline guint
+gst_mfx_codec_from_caps (GstCaps * caps)
+{
+  return gst_mfx_profile_get_codec (gst_mfx_profile_from_caps (caps));
+}
+
 static gboolean
 gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 {
     GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(mfxdec);
-	mfxU32 codec = gst_get_mfx_codec_from_caps(caps);
+	mfxU32 codec = gst_mfx_codec_from_caps(caps);
 	GstVideoInfo info;
 
 	if (!codec)
@@ -343,7 +349,7 @@ gst_mfxdec_reset_full(GstMfxDec * mfxdec, GstCaps * caps,
 	mfxU32 codec;
 
 	if (!hard && mfxdec->decoder) {
-		codec = gst_get_mfx_codec_from_caps(caps);
+		codec = gst_mfx_codec_from_caps(caps);
 		if (codec == gst_mfx_decoder_get_codec(mfxdec->decoder))
 			return TRUE;
 	}

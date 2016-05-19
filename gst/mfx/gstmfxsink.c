@@ -65,29 +65,6 @@ enum
 #define DEFAULT_GL_API                  GST_MFX_GLAPI_GLES2
 #define DEFAULT_SIGNAL_HANDOFFS         FALSE
 
-#define GST_MFX_TYPE_GL_API \
-	gst_mfx_gl_api_get_type()
-
-static GType
-gst_mfx_gl_api_get_type(void)
-{
-	static GType gl_api_type = 0;
-
-	static const GEnumValue api_types[] = {
-		{ GST_MFX_GLAPI_OPENGL,
-		"Desktop OpenGL", "opengl" },
-		{ GST_MFX_GLAPI_GLES2,
-		"OpenGL ES 2.0", "gles2" },
-		{ 0, NULL, NULL },
-	};
-
-	if (!gl_api_type) {
-		gl_api_type =
-			g_enum_register_static("GstMfxGLAPI", api_types);
-	}
-	return gl_api_type;
-}
-
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
 
 //static void gst_mfxsink_video_overlay_expose(GstVideoOverlay * overlay);
@@ -126,6 +103,29 @@ gst_mfxsink_render_surface(GstMfxSink * sink, GstMfxSurfaceProxy * proxy,
 #if USE_EGL
 # include <egl/gstmfxdisplay_egl.h>
 # include <egl/gstmfxwindow_egl.h>
+
+# define GST_MFX_TYPE_GL_API \
+	gst_mfx_gl_api_get_type()
+
+static GType
+gst_mfx_gl_api_get_type(void)
+{
+	static GType gl_api_type = 0;
+
+	static const GEnumValue api_types[] = {
+		{ GST_MFX_GLAPI_OPENGL,
+		"Desktop OpenGL", "opengl" },
+		{ GST_MFX_GLAPI_GLES2,
+		"OpenGL ES 2.0", "gles2" },
+		{ 0, NULL, NULL },
+	};
+
+	if (!gl_api_type) {
+		gl_api_type =
+			g_enum_register_static("GstMfxGLAPI", api_types);
+	}
+	return gl_api_type;
+}
 
 #if USE_X11
 # include <x11/gstmfxdisplay_x11.h>
@@ -900,9 +900,11 @@ gst_mfxsink_set_property(GObject * object,
 	case PROP_FORCE_ASPECT_RATIO:
 		sink->keep_aspect = g_value_get_boolean(value);
 		break;
+#if USE_EGL
     case PROP_GL_API:
 	    sink->gl_api = g_value_get_enum(value);
 		break;
+#endif
 	case PROP_SIGNAL_HANDOFFS:
 		sink->signal_handoffs = g_value_get_boolean(value);
 		break;
@@ -931,9 +933,11 @@ gst_mfxsink_get_property(GObject * object,
 	case PROP_FORCE_ASPECT_RATIO:
 		g_value_set_boolean(value, sink->keep_aspect);
 		break;
+#if USE_EGL
     case PROP_GL_API:
 		g_value_set_enum(value, sink->gl_api);
 		break;
+#endif
 	case PROP_SIGNAL_HANDOFFS:
 		g_value_set_boolean(value, sink->signal_handoffs);
 		break;
@@ -1047,7 +1051,7 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		"Force aspect ratio",
 		"When enabled, scaling will respect original aspect ratio",
 		TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
+#if USE_EGL
     /**
 	* GstMfxSink:gl-api:
 	*
@@ -1060,7 +1064,7 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		GST_MFX_TYPE_GL_API,
 		DEFAULT_GL_API,
 		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
+#endif
 	/**
 	* GstMfxSink:signal-handoffs:
 	*
