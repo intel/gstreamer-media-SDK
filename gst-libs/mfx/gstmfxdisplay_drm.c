@@ -1,3 +1,23 @@
+/*
+ *  Copyright (C) 2012-2013 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #include "sysdeps.h"
 #include <string.h>
 #include <unistd.h>
@@ -9,17 +29,12 @@
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxdisplay_drm.h"
 #include "gstmfxdisplay_drm_priv.h"
-//#include "gstmfxwindow_drm.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-
-static const guint g_display_types = 1U << GST_MFX_DISPLAY_TYPE_DRM;
-
 static GMutex g_drm_device_type_lock;
 
-/* Reconstruct a device path without our prefix */
 static const gchar *
 get_device_path (GstMfxDisplay * display)
 {
@@ -32,7 +47,6 @@ get_device_path (GstMfxDisplay * display)
 	return device_path;
 }
 
-/* Mangle device path with our prefix */
 static gboolean
 set_device_path (GstMfxDisplay * display, const gchar * device_path)
 {
@@ -186,14 +200,6 @@ gst_mfx_display_drm_get_display_info (GstMfxDisplay * display,
 	return TRUE;
 }
 
-/*static GstMfxWindow *
-gst_mfx_display_drm_create_window (GstMfxDisplay * display,
-    guint width, guint height)
-{
-	return id != GST_MFX_ID_INVALID ?
-		NULL : gst_mfx_window_drm_new (display, width, height);
-}*/
-
 static void
 gst_mfx_display_drm_init (GstMfxDisplay * display)
 {
@@ -219,7 +225,6 @@ gst_mfx_display_drm_class_init (GstMfxDisplayDRMClass * klass)
 	dpy_class->open_display = gst_mfx_display_drm_open_display;
 	dpy_class->close_display = gst_mfx_display_drm_close_display;
 	dpy_class->get_display = gst_mfx_display_drm_get_display_info;
-	//dpy_class->create_window = gst_mfx_display_drm_create_window;
 }
 
 static inline const GstMfxDisplayClass *

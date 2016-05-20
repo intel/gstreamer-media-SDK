@@ -1,3 +1,25 @@
+/*
+ *  Copyright (C) 2012-2013 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #ifndef GST_MFX_PROFILE_H
 #define GST_MFX_PROFILE_H
 
@@ -31,14 +53,6 @@ G_BEGIN_DECLS
 *   MPEG-2 main profile
 * @GST_MFX_PROFILE_MPEG2_HIGH:
 *   MPEG-2 high profile
-* @GST_MFX_PROFILE_MPEG4_SIMPLE:
-*   MPEG-4 Part-2 simple profile
-* @GST_MFX_PROFILE_MPEG4_ADVANCED_SIMPLE:
-*   MPEG-4 Part-2 advanced simple profile
-* @GST_MFX_PROFILE_MPEG4_MAIN:
-*   MPEG-4 Part-2 main profile
-* @GST_MFX_PROFILE_H263_BASELINE:
-*   H.263 baseline profile
 * @GST_MFX_PROFILE_H264_BASELINE:
 *   H.264 (MPEG-4 Part-10) baseline profile [A.2.1]
 * @GST_MFX_PROFILE_H264_CONSTRAINED_BASELINE:
@@ -55,14 +69,6 @@ G_BEGIN_DECLS
 * @GST_MFX_PROFILE_H264_HIGH_422:
 *   H.264 (MPEG-4 Part-10) high 4:2:2 profile [A.2.6], or high 4:2:2
 *   intra profile [A.2.9], depending on constraint_set3_flag
-* @GST_MFX_PROFILE_H264_HIGH_444:
-*   H.264 (MPEG-4 Part-10) high 4:4:4 predictive profile [A.2.7], or
-*   high 4:4:4 intra profile [A.2.10], depending on constraint_set3_flag
-* @GST_MFX_PROFILE_H264_SCALABLE_BASELINE:
-*   H.264 (MPEG-4 Part-10) scalable baseline profile [G.10.1.1]
-* @GST_MFX_PROFILE_H264_SCALABLE_HIGH:
-*   H.264 (MPEG-4 Part-10) scalable high profile [G.10.1.2], or scalable
-*   high intra profile [G.10.1.3], depending on constraint_set3_flag
 * @GST_MFX_PROFILE_H264_MULTIVIEW_HIGH:
 *   H.264 (MPEG-4 Part-10) multiview high profile [H.10.1.1]
 * @GST_MFX_PROFILE_H264_STEREO_HIGH:
@@ -81,8 +87,6 @@ G_BEGIN_DECLS
 *   H.265 main 10 profile [A.3.3]
 * @GST_MFX_PROFILE_H265_MAIN_STILL_PICTURE:
 *   H.265 main still picture profile [A.3.4]
-* @GST_MFX_PROFILE_VP9:
-*   VP9 prfile 0
 *
 * The set of all profiles for #GstMfxProfile.
 */

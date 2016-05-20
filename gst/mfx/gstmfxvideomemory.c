@@ -1,3 +1,25 @@
+/*
+ *  Copyright (C) 2013 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #include "gstmfxvideomemory.h"
 
 GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxvideomemory);
@@ -198,14 +220,14 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
 {
     gpointer data;
 
-    g_return_val_if_fail (mem, NULL);
-    g_return_val_if_fail (mem->meta, NULL);
+    g_return_val_if_fail(mem, NULL);
+    g_return_val_if_fail(mem->meta, NULL);
 
     if (mem->map_count == 0) {
         switch (flags & GST_MAP_READWRITE) {
         case 0:
             // No flags set: return a GstMfxSurfaceProxy
-            gst_mfx_surface_proxy_replace (&mem->proxy,
+            gst_mfx_surface_proxy_replace(&mem->proxy,
                 gst_mfx_video_meta_get_surface_proxy (mem->meta));
             if (!mem->proxy)
                 goto error_no_surface_proxy;
@@ -213,12 +235,12 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
             break;
         case GST_MAP_READ:
             // Only read flag set: return raw pixels
-            if (!ensure_surface (mem))
+            if (!ensure_surface(mem))
                 goto error_no_surface;
             if (!gst_mfx_surface_proxy_is_mapped(mem->proxy)) {
-                if (!ensure_image (mem))
+                if (!ensure_image(mem))
                     goto error_no_image;
-                if (!vaapi_image_map (mem->image))
+                if (!vaapi_image_map(mem->image))
                     goto error_map_image;
                 mem->map_type = GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR;
             }
@@ -239,7 +261,7 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
         case GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR:
             if (!mem->image)
                 goto error_no_image;
-            data = vaapi_image_get_plane (mem->image, 0);;
+            data = vaapi_image_get_plane(mem->image, 0);
             break;
         case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
             data = gst_mfx_surface_proxy_get_data(mem->proxy);

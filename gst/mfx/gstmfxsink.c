@@ -1,3 +1,26 @@
+/*
+ *  Copyright (C) 2011-2014 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *    Author: Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #include <gst/gst.h>
 #include <gst/video/video.h>
 
@@ -57,14 +80,11 @@ enum
 	PROP_FULLSCREEN,
 	PROP_FORCE_ASPECT_RATIO,
 	PROP_GL_API,
-	PROP_SIGNAL_HANDOFFS,
 	N_PROPERTIES
 };
 
 #define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_ANY
 #define DEFAULT_GL_API                  GST_MFX_GLAPI_GLES2
-#define DEFAULT_SIGNAL_HANDOFFS         FALSE
-
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
 
 //static void gst_mfxsink_video_overlay_expose(GstVideoOverlay * overlay);
@@ -801,15 +821,6 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 	if (!gst_mfxsink_render_surface(sink, proxy, surface_rect))
 		goto error;
 
-	if (sink->signal_handoffs)
-        g_signal_emit(sink, gst_mfxsink_signals[HANDOFF_SIGNAL], 0, buffer);
-
-	/* Retain VA surface until the next one is displayed */
-	/* Need to release the lock for the duration, otherwise a deadlock is possible */
-	//gst_mfx_display_unlock(sink->display);
-	//gst_buffer_replace(&sink->video_buffer, buffer);
-	//gst_mfx_display_lock(sink->display);
-
 	ret = GST_FLOW_OK;
 
 done:
@@ -900,13 +911,8 @@ gst_mfxsink_set_property(GObject * object,
 	case PROP_FORCE_ASPECT_RATIO:
 		sink->keep_aspect = g_value_get_boolean(value);
 		break;
-#if USE_EGL
     case PROP_GL_API:
 	    sink->gl_api = g_value_get_enum(value);
-		break;
-#endif
-	case PROP_SIGNAL_HANDOFFS:
-		sink->signal_handoffs = g_value_get_boolean(value);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -933,13 +939,8 @@ gst_mfxsink_get_property(GObject * object,
 	case PROP_FORCE_ASPECT_RATIO:
 		g_value_set_boolean(value, sink->keep_aspect);
 		break;
-#if USE_EGL
     case PROP_GL_API:
 		g_value_set_enum(value, sink->gl_api);
-		break;
-#endif
-	case PROP_SIGNAL_HANDOFFS:
-		g_value_set_boolean(value, sink->signal_handoffs);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -1051,7 +1052,7 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		"Force aspect ratio",
 		"When enabled, scaling will respect original aspect ratio",
 		TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-#if USE_EGL
+
     /**
 	* GstMfxSink:gl-api:
 	*
@@ -1064,30 +1065,8 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		GST_MFX_TYPE_GL_API,
 		DEFAULT_GL_API,
 		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-#endif
-	/**
-	* GstMfxSink:signal-handoffs:
-	*
-	* Send a signal after rendering the buffer.
-	*/
-	g_properties[PROP_SIGNAL_HANDOFFS] =
-		g_param_spec_boolean("signal-handoffs", "Signal handoffs",
-		"Send a signal after rendering the buffer", DEFAULT_SIGNAL_HANDOFFS,
-		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
 	g_object_class_install_properties(object_class, N_PROPERTIES, g_properties);
-
-	/**
-	* GstMfxSink::handoff:
-	* @object: the #GstMfxSink instance
-	* @buffer: the buffer that was rendered
-	*
-	* This signal gets emitted after rendering the frame.
-	*/
-	gst_mfxsink_signals[HANDOFF_SIGNAL] =
-		g_signal_new("handoff", G_TYPE_FROM_CLASS(klass),
-		G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_marshal_generic,
-		G_TYPE_NONE, 1, GST_TYPE_BUFFER | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
@@ -1104,6 +1083,5 @@ gst_mfxsink_init(GstMfxSink * sink)
 	sink->video_par_d = 1;
 	sink->handle_events = TRUE;
 	sink->keep_aspect = TRUE;
-	sink->signal_handoffs = DEFAULT_SIGNAL_HANDOFFS;
 	gst_video_info_init(&sink->video_info);
 }
