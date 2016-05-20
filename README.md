@@ -8,7 +8,7 @@ Overview
 --------
 
 GStreamer-MSDK consists of a collection of Media SDK-based plugins for
-GStreamer.
+GStreamer. This project is influenced by gstreamer-vaapi architecture.
 
   * `mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1 and
     JPEG videos using the underlying hardware capabilities. 
@@ -17,6 +17,13 @@ GStreamer.
     display.
 
   * 'mfxvpp' is used to do video processing on RAW videos.
+
+License
+-------
+
+gstreamer-mediasdk libraries and plugin elements are available
+under the terms of the GNU Lesser General Public License v2.1+
+
 
 Features
 --------
