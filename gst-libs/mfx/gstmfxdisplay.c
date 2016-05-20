@@ -1,3 +1,25 @@
+/*
+ *  Copyright (C) 2011-2013 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #include "sysdeps.h"
 #include <string.h>
 #include <fcntl.h>
@@ -94,11 +116,11 @@ gst_mfx_display_type_get_type(void)
 		"Auto detection", "any" },
 #if USE_EGL
 		{ GST_MFX_DISPLAY_TYPE_EGL,
-		"VA/EGL display", "egl" },
+		"EGL X11/Wayland display", "egl" },
 #endif
 #if USE_WAYLAND
         { GST_MFX_DISPLAY_TYPE_WAYLAND,
-		"VA/Wayland display", "wayland" },
+		"Wayland display", "wayland" },
 #endif
 		{ 0, NULL, NULL },
 	};
@@ -106,35 +128,6 @@ gst_mfx_display_type_get_type(void)
 	if (!g_type)
 		g_type = g_enum_register_static("GstMfxDisplayType", display_types);
 	return g_type;
-}
-
-/**
-* gst_mfx_display_type_is_compatible:
-* @type1: the #GstMfxDisplayType to test
-* @type2: the reference #GstMfxDisplayType
-*
-* Compares whether #GstMfxDisplay @type1 is compatible with @type2.
-* That is, if @type2 is in "any" category, or derived from @type1.
-*
-* Returns: %TRUE if @type1 is compatible with @type2, %FALSE otherwise.
-*/
-gboolean
-gst_mfx_display_type_is_compatible(GstMfxDisplayType type1,
-	GstMfxDisplayType type2)
-{
-	if (type1 == type2)
-		return TRUE;
-
-	switch (type1) {
-	case GST_MFX_DISPLAY_TYPE_X11:
-	case GST_MFX_DISPLAY_TYPE_WAYLAND:
-		if (type2 == GST_MFX_DISPLAY_TYPE_EGL)
-			return TRUE;
-		break;
-	default:
-		break;
-	}
-	return type2 == GST_MFX_DISPLAY_TYPE_ANY;
 }
 
 static void
@@ -248,8 +241,6 @@ gst_mfx_display_create(GstMfxDisplay * display,
 		gst_mfx_display_calculate_pixel_aspect_ratio(display);
 		break;
 	}
-	//if (!priv->display)
-		//return FALSE;
 
     if (!g_va_display) {
         int fd = open(get_default_device_path(display), O_RDWR | O_CLOEXEC);
@@ -359,42 +350,18 @@ error:
 	return NULL;
 }
 
-/**
-* gst_mfx_display_ref:
-* @display: a #GstMfxDisplay
-*
-* Atomically increases the reference count of the given @display by one.
-*
-* Returns: The same @display argument
-*/
 GstMfxDisplay *
 gst_mfx_display_ref(GstMfxDisplay * display)
 {
 	return gst_mfx_display_ref_internal(display);
 }
 
-/**
-* gst_mfx_display_unref:
-* @display: a #GstMfxDisplay
-*
-* Atomically decreases the reference count of the @display by one. If
-* the reference count reaches zero, the display will be free'd.
-*/
 void
 gst_mfx_display_unref(GstMfxDisplay * display)
 {
 	gst_mfx_display_unref_internal(display);
 }
 
-/**
-* gst_mfx_display_replace:
-* @old_display_ptr: a pointer to a #GstMfxDisplay
-* @new_display: a #GstMfxDisplay
-*
-* Atomically replaces the display display held in @old_display_ptr
-* with @new_display. This means that @old_display_ptr shall reference
-* a valid display. However, @new_display can be NULL.
-*/
 void
 gst_mfx_display_replace(GstMfxDisplay ** old_display_ptr,
 	GstMfxDisplay * new_display)

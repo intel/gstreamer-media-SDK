@@ -1,10 +1,32 @@
+/*
+ *  Copyright (C) 2011-2014 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #include "gstmfxcompat.h"
 #include "gstmfxdec.h"
 
 #include <string.h>
 
 #include "gstmfxsurfaceproxy.h"
-#include "gstmfxcodecmap.h"
+#include "gstmfxprofile.h"
 #include "gstmfxvideomemory.h"
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
@@ -296,11 +318,17 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 		query);
 }
 
+static inline guint
+gst_mfx_codec_from_caps (GstCaps * caps)
+{
+  return gst_mfx_profile_get_codec (gst_mfx_profile_from_caps (caps));
+}
+
 static gboolean
 gst_mfxdec_create(GstMfxDec * mfxdec, GstCaps * caps)
 {
     GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(mfxdec);
-	mfxU32 codec = gst_get_mfx_codec_from_caps(caps);
+	mfxU32 codec = gst_mfx_codec_from_caps(caps);
 	GstVideoInfo info;
 
 	if (!codec)
@@ -343,7 +371,7 @@ gst_mfxdec_reset_full(GstMfxDec * mfxdec, GstCaps * caps,
 	mfxU32 codec;
 
 	if (!hard && mfxdec->decoder) {
-		codec = gst_get_mfx_codec_from_caps(caps);
+		codec = gst_mfx_codec_from_caps(caps);
 		if (codec == gst_mfx_decoder_get_codec(mfxdec->decoder))
 			return TRUE;
 	}
@@ -416,7 +444,6 @@ gst_mfxdec_handle_frame(GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 	GstMfxDec *mfxdec = GST_MFXDEC(vdec);
 	GstMfxDecoderStatus sts;
 	GstFlowReturn ret = GST_FLOW_OK;
-	GstVideoInfo info;
 	GstMfxSurfaceProxy *out_proxy = NULL;
 
     if (!gst_mfxdec_negotiate(mfxdec))

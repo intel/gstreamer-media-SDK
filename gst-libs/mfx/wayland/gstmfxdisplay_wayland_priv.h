@@ -1,3 +1,26 @@
+/*
+ *  Copyright (C) 2012-2013 Intel Corporation
+ *    Author: Sreerenj Balachandran <sreerenj.balachandran@intel.com>
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #ifndef GST_MFX_DISPLAY_WAYLAND_PRIV_H
 #define GST_MFX_DISPLAY_WAYLAND_PRIV_H
 
@@ -21,7 +44,7 @@ G_BEGIN_DECLS
 
 #ifndef BATCH_SIZE
 #define BATCH_SIZE 0x80000
-#endif 
+#endif
 
 typedef struct _GstMfxDisplayWaylandPrivate   GstMfxDisplayWaylandPrivate;
 typedef struct _GstMfxDisplayWaylandClass     GstMfxDisplayWaylandClass;
@@ -53,7 +76,7 @@ struct _GstMfxDisplayWaylandPrivate
 	guint phys_height;
 	gint event_fd;
 	gint drm_fd;
-	gchar *drm_device_name;	
+	gchar *drm_device_name;
 	drm_intel_bufmgr *bufmgr;
 	gboolean is_auth;
 	guint use_foreign_display : 1;
