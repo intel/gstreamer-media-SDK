@@ -1,3 +1,26 @@
+/*
+ *  Copyright (C) 2012-2014 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *    Author: Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #include "gstmfxcompat.h"
 #include <gst/video/video.h>
 
@@ -327,7 +350,6 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
 	GstMfxVideoMeta *inbuf_meta, *outbuf_meta;
 	GstMfxSurfaceProxy *proxy, *out_proxy;
 	GstMfxFilterStatus status;
-	guint flags;
 	GstFlowReturn ret;
 	GstMfxRectangle *crop_rect = NULL;
 	GstMfxRectangle tmp_rect;
@@ -399,7 +421,6 @@ gst_mfxpostproc_transform(GstBaseTransform * trans, GstBuffer * inbuf,
     } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
 
 	return GST_FLOW_OK;
-
 	/* ERRORS */
 error_create_buffer:
     {
@@ -449,7 +470,7 @@ gst_mfxpostproc_decide_allocation(GstBaseTransform * trans, GstQuery * query)
 static gboolean
 ensure_allowed_sinkpad_caps(GstMfxPostproc * vpp)
 {
-	GstCaps *out_caps, *raw_caps;
+	GstCaps *out_caps;
 
 	if (vpp->allowed_sinkpad_caps)
 		return TRUE;
@@ -612,6 +633,7 @@ gst_mfxpostproc_transform_size(GstBaseTransform * trans,
 		*othersize = 0;
 	else
 		*othersize = size;
+
 	return TRUE;
 }
 

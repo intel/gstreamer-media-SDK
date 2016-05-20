@@ -1,3 +1,23 @@
+/*
+ *  Copyright (C) 2012-2014 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #ifndef GST_MFX_TYPES_H
 #define GST_MFX_TYPES_H
 
@@ -69,10 +89,10 @@ struct _GstMfxRectangle {
 
 /**
 * GstMfxRotation:
-* @GST_MFX_ROTATION_0: the VA display is not rotated.
-* @GST_MFX_ROTATION_90: the VA display is rotated by 90°, clockwise.
-* @GST_MFX_ROTATION_180: the VA display is rotated by 180°, clockwise.
-* @GST_MFX_ROTATION_270: the VA display is rotated by 270°, clockwise.
+* @GST_MFX_ROTATION_0: the output surface is not rotated.
+* @GST_MFX_ROTATION_90: the output surface is rotated by 90°, clockwise.
+* @GST_MFX_ROTATION_180: the output surface is rotated by 180°, clockwise.
+* @GST_MFX_ROTATION_270: the output surface is rotated by 270°, clockwise.
 */
 typedef enum {
 	GST_MFX_ROTATION_0 = 0,
@@ -80,19 +100,6 @@ typedef enum {
 	GST_MFX_ROTATION_180 = 180,
 	GST_MFX_ROTATION_270 = 270,
 } GstMfxRotation;
-
-typedef enum {
-	GST_MFX_RATECONTROL_NONE = 0,
-	GST_MFX_RATECONTROL_CQP,
-	GST_MFX_RATECONTROL_CBR,
-	GST_MFX_RATECONTROL_VCM,
-	GST_MFX_RATECONTROL_VBR,
-	GST_MFX_RATECONTROL_VBR_CONSTRAINED,
-} GstMfxRateControl;
-
-/* Define a mask for GstMfxRateControl */
-#define GST_MFX_RATECONTROL_MASK(RC) \
-	(1 << G_PASTE(GST_MFX_RATECONTROL_,RC))
 
 G_END_DECLS
 

@@ -1,3 +1,27 @@
+/*
+ *  Copyright (C) 2012-2013 Intel Corporation
+ *    Author: Sreerenj Balachandran <sreerenj.balachandran@intel.com>
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *    Author: Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #include "sysdeps.h"
 #include <unistd.h>
 #include <fcntl.h>
@@ -12,8 +36,6 @@
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
-
-static const guint g_display_types = 1U << GST_MFX_DISPLAY_TYPE_WAYLAND;
 
 static inline const gchar *
 get_default_display_name(void)
@@ -72,9 +94,8 @@ static const struct wl_output_listener output_listener = {
 };
 
 /* DRM listeners for wl_drm interface */
-static void drm_handle_device(void *data
-    , struct wl_drm *drm
-    , const char *device)
+static void drm_handle_device(void *data, struct wl_drm *drm,
+    const char *device)
 {
 	GstMfxDisplayWaylandPrivate *const priv = data;
 	priv->drm_device_name = g_strdup(device);
@@ -91,22 +112,18 @@ static void drm_handle_device(void *data
     wl_drm_authenticate(priv->drm, magic);
 }
 
-static void drm_handle_format(void *data
-    , struct wl_drm *drm
-    , uint32_t format)
+static void drm_handle_format(void *data, struct wl_drm *drm, uint32_t format)
 {
     /* NOT IMPLEMENTED */
 }
 
-static void drm_handle_capabilities(void *data
-    , struct wl_drm *drm
-    , uint32_t value)
+static void drm_handle_capabilities(void *data, struct wl_drm *drm,
+    uint32_t value)
 {
     /* NOT IMPLEMENTED */
 }
 
-static void drm_handle_authenticated(void *data
-    , struct wl_drm *drm)
+static void drm_handle_authenticated(void *data, struct wl_drm *drm)
 {
 	GstMfxDisplayWaylandPrivate *const priv = data;
 	priv->bufmgr = drm_intel_bufmgr_gem_init(priv->drm_fd, BATCH_SIZE);
@@ -122,8 +139,7 @@ static const struct wl_drm_listener drm_listener = {
 };
 
 static void
-registry_handle_global(void *data,
-struct wl_registry *registry,
+registry_handle_global(void *data, struct wl_registry *registry,
 	uint32_t id, const char *interface, uint32_t version)
 {
 	GstMfxDisplayWaylandPrivate *const priv = data;
@@ -174,7 +190,7 @@ gst_mfx_display_wayland_setup(GstMfxDisplay * display)
 		GST_ERROR("failed to bind compositor interface");
 		return FALSE;
 	}
-	
+
 	if (!priv->is_auth) {
 		wl_display_roundtrip(priv->wl_display);
 	}
@@ -231,14 +247,14 @@ gst_mfx_display_wayland_close_display(GstMfxDisplay * display)
         drm_intel_bufmgr_destroy(priv->bufmgr);
 		priv->bufmgr = NULL;
 	}
-	
+
 	if (priv->drm) {
 		wl_drm_destroy(priv->drm);
 		close(priv->drm_fd);
 		g_free(priv->drm_device_name);
 		priv->drm = NULL;
 	}
-	
+
 	if (priv->output) {
 		wl_output_destroy(priv->output);
 		priv->output = NULL;
