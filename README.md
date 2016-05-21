@@ -4,11 +4,12 @@ GStreamer-MSDK
 ==============
   MediaSDK plugins for GStreamer
 
+
 Overview
 --------
 
 GStreamer-MSDK consists of a collection of Media SDK-based plugins for
-GStreamer. This project is influenced by gstreamer-vaapi architecture.
+GStreamer.
 
   * `mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1 and
     JPEG videos using the underlying hardware capabilities. 
@@ -17,6 +18,7 @@ GStreamer. This project is influenced by gstreamer-vaapi architecture.
     display.
 
   * 'mfxvpp' is used to do video processing on RAW videos.
+
 
 License
 -------
@@ -40,7 +42,7 @@ Requirements
 Software requirements
 
   * MediaSDK 2016 R1 for Yocto Embedded (MediaSDK2016R1forYoctoEmbedded-Alpha3.tar.gz) or
-    Media Server Studio 2016 Professional R1 (Haswell)
+    Media Server Studio 2016 Professional R1 (Haswell / Broadwell)
   * GStreamer 1.4.x (up to including GStreamer 1.6):
   * GStreamer-Plugins-Base 1.4.x (up to including GStreamer 1.6):
   * CMake
@@ -81,6 +83,7 @@ To install the plugins:
 
 The plugins will be installed in the /usr/lib/gstreamer-1.0 directory.
 
+
 Usage
 -----
 
@@ -100,19 +103,27 @@ Usage
 	 gst-launch-1.0 filesrc location=/path/to/video.mp4 ! \
 			 qtdemux ! h264parse ! mfxdecode ! mfxvpp rotation=180 ! mfxsink
 
-       
+
 Known Issues
 -----------
 
   * Decode for VC-1 Advance Profile bitstream is not working.
 
+
 Work In Progress
 ----------------
 
  - H.264, MPEG2, HEVC encoder
- 
 
+ 
 To Do
 -----
 
  - Codec parsers
+
+
+Acknowledgements
+----------------
+
+This project is developed based on the well-established GStreamer VAAPI architecture, hence we would like to publicly thank the GStreamer VAAPI developers for their hard work and contributions to the GStreamer-VAAPI project.
+
