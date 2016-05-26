@@ -60,10 +60,10 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
 	memset(resp, 0, sizeof (mfxFrameAllocResponse));
 
-	if (!(req->Type & MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET)) {
+	/*if (!(req->Type & MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET)) {
         GST_ERROR("Unsupported surface type: %d\n", req->Type);
 		return MFX_ERR_UNSUPPORTED;
-	}
+	}*/
 
 	task->num_surfaces = req->NumFrameSuggested;
 	task->frame_info = req->Info;
@@ -103,7 +103,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     resp->mids = task->surface_ids;
 	resp->NumFrameActual = task->num_surfaces;
 
-	if (task->task_type & GST_MFX_TASK_DECODER)
+	//if (task->task_type & GST_MFX_TASK_DECODER)
 		task->response = g_slice_dup(mfxFrameAllocResponse, resp);
 
 	return MFX_ERR_NONE;

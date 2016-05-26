@@ -245,7 +245,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
         decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
     }
 
-    mapped = decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+    mapped = !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
     if (!mapped)
         gst_mfx_task_use_video_memory(decoder->decode_task);
 
