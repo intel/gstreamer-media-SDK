@@ -73,6 +73,12 @@ To make a debug build, please follow the command below:
 
 	cmake .. -DDEBUG=ON
 		
+
+To build the plugin for Media Server Solutions, please follow the command below:
+
+	cmake .. -DFOR_MSS=ON
+		
+
 Next step is to compile the GStreamer-MSDK plugins:
 
 	make
