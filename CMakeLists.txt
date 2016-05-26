@@ -14,6 +14,8 @@ option (HAVE_MFX_DECODER "Build MSDK Decoder plugin." ON)
 option (HAVE_MFX_ENCODER "Build MSDK Encoder plugin." OFF)
 option (HAVE_MFX_VPP "Build MSDK VPP plugin." ON)
 option (HAVE_MFX_SINK "Build MSDK SINK plugin." ON)
+option (FOR_MSS "Build plugins for MSS." OFF)
+
 
 option (HAVE_WAYLAND_RENDERER "Build MSDK SINK plugin with Wayland renderer." ON)
 option (HAVE_X11_RENDERER "Build MSDK SINK plugin with X11 renderer." ON)
@@ -73,6 +75,10 @@ configure_file (
 include_directories("${PROJECT_BINARY_DIR}")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++ -DHAVE_CONFIG_H")
+
+if (FOR_MSS)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFOR_MSS")
+endif()
 
 include_directories(
 	gst/mfx
