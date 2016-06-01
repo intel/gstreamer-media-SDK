@@ -61,8 +61,8 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
     case MFX_FOURCC_NV12:
         proxy->data_size = frame_size * 3 / 2;
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
-        ptr->Pitch = proxy->pitches[0] = proxy->pitches[1] =
-            GST_ROUND_UP_16(info->Width);
+        ptr->Pitch = proxy->pitches[0] = proxy->pitches[1] = info->Width;
+
 #ifdef WITH_MSS
 		ptr->Y = proxy->planes[0] = proxy->data + 1;
 #else
@@ -74,7 +74,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
     case MFX_FOURCC_YV12:
         proxy->data_size = frame_size * 3 / 2;
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
-        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width);
+        ptr->Pitch = proxy->pitches[0] = info->Width;
         proxy->pitches[1] = proxy->pitches[2] = ptr->Pitch / 2;
 
         ptr->Y = proxy->planes[0] = proxy->data;
@@ -85,7 +85,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
     case MFX_FOURCC_YUY2:
         proxy->data_size = frame_size * 2;
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
-        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 2;
+        ptr->Pitch = proxy->pitches[0] = info->Width * 2;
 
 #ifdef WITH_MSS
 		ptr->Y = proxy->planes[0] = proxy->data + 1;
@@ -99,7 +99,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
     case MFX_FOURCC_UYVY:
         proxy->data_size = frame_size * 2;
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
-        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 2;
+        ptr->Pitch = proxy->pitches[0] = info->Width * 2;
 
         ptr->U = proxy->planes[0] = proxy->data;
         ptr->Y = ptr->U + 1;
@@ -109,7 +109,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
     case MFX_FOURCC_RGB4:
         proxy->data_size = frame_size * 4;
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
-        ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 4;
+        ptr->Pitch = proxy->pitches[0] = info->Width * 4;
 
         ptr->B = proxy->planes[0] = proxy->data + 4;
         ptr->G = ptr->B + 1;
