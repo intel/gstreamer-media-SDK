@@ -292,7 +292,7 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         }
         else {
             filter->vpp_request[i]->NumFrameSuggested +=
-                vpp_request[0].NumFrameSuggested;
+                vpp_request[i].NumFrameSuggested;
             filter->vpp_request[i]->NumFrameMin =
                 filter->vpp_request[i]->NumFrameSuggested;
         }
@@ -300,7 +300,7 @@ gst_mfx_filter_start(GstMfxFilter * filter)
         gst_mfx_task_set_request(filter->vpp[i], filter->vpp_request[i]);
 
         if (!mapped) {
-            //filter->vpp_request[i]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+            filter->vpp_request[i]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
             sts = gst_mfx_task_frame_alloc(filter->vpp[i], filter->vpp_request[i],
                     &response);
@@ -988,9 +988,9 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 	}
 
 	if (syncp) {
-		/*do {
+		do {
 			sts = MFXVideoCORE_SyncOperation(filter->session, syncp, 1000);
-		} while (MFX_WRN_IN_EXECUTION == sts);*/
+		} while (MFX_WRN_IN_EXECUTION == sts);
 
         *out_proxy = gst_mfx_surface_pool_find_proxy(filter->vpp_pool[1], outsurf);
 	}

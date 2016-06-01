@@ -11,6 +11,7 @@
 #include "gstmfxdebug.h"
 
 #define DEFAULT_ENCODER_PRESET GST_MFX_ENCODER_PRESET_MEDIUM
+#define DEFAULT_ASYNC_DEPTH    4
 
 /* Helper function to create a new encoder property object */
 static GstMfxEncoderPropData *
@@ -228,7 +229,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
 		g_param_spec_uint("async-depth",
 		"Asynchronous depth",
 		"Number of parallel operations before explicit sync", 0, 16,
-		4, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+		DEFAULT_ASYNC_DEPTH, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
 	* GstMfxEncoder:preset:
@@ -303,17 +304,26 @@ gst_mfx_encoder_set_input_params(GstMfxEncoder * encoder)
 	encoder->params.mfx.FrameInfo.BitDepthChroma = 8;
 	encoder->params.mfx.FrameInfo.BitDepthLuma = 8;
 
-    encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_16(encoder->info.width);
-    encoder->params.mfx.FrameInfo.Height =
-        (MFX_PICSTRUCT_PROGRESSIVE == encoder->params.mfx.FrameInfo.PicStruct) ?
-        GST_ROUND_UP_16(encoder->info.height) :
-        GST_ROUND_UP_32(encoder->info.height);
+	if (encoder->codec == MFX_CODEC_HEVC &&
+			!g_strcmp0(encoder->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
+		encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_32(encoder->info.width);
+		encoder->params.mfx.FrameInfo.Height = GST_ROUND_UP_32(encoder->info.height);
+	}
+	else {
+		encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_16(encoder->info.width);
+		encoder->params.mfx.FrameInfo.Height =
+			(MFX_PICSTRUCT_PROGRESSIVE == encoder->params.mfx.FrameInfo.PicStruct) ?
+			GST_ROUND_UP_16(encoder->info.height) :
+			GST_ROUND_UP_32(encoder->info.height);
+	}
 
 	encoder->bs.MaxLength = encoder->params.mfx.FrameInfo.Width *
 		encoder->params.mfx.FrameInfo.Height * 4;
 	encoder->bitstream = g_byte_array_sized_new(encoder->bs.MaxLength);
 	if (!encoder->bitstream)
 		return FALSE;
+
+    encoder->bs.Data = encoder->bitstream->data;
 
 	set_encoding_params(encoder);
 }
@@ -546,10 +556,10 @@ gst_mfx_encoder_start(GstMfxEncoder *encoder)
 
 	gst_mfx_encoder_set_input_params(encoder);
 
-	/*sts = MFXVideoENCODE_Query(encoder->session, &encoder->params,
+	sts = MFXVideoENCODE_Query(encoder->session, &encoder->params,
 				&encoder->params);
 	if (sts > 0)
-		GST_WARNING("Incompatible video params detected %d", sts);*/
+		GST_WARNING("Incompatible video params detected %d", sts);
 
 	sts = MFXVideoENCODE_QueryIOSurf(encoder->session, &encoder->params,
 				&enc_request);
@@ -622,10 +632,9 @@ gst_mfx_encoder_encode(GstMfxEncoder * encoder,
 		proxy = filter_proxy;
 	}
 
-	do {
-		encoder->bs.Data = encoder->bitstream->data;
+	insurf = gst_mfx_surface_proxy_get_frame_surface (proxy);
 
-		insurf = gst_mfx_surface_proxy_get_frame_surface (proxy);
+	do {
 		sts = MFXVideoENCODE_EncodeFrameAsync(encoder->session,
 			NULL, insurf, &encoder->bs, &syncp);
 
@@ -659,8 +668,12 @@ gst_mfx_encoder_encode(GstMfxEncoder * encoder,
 			sts = MFXVideoCORE_SyncOperation(encoder->session, syncp, 1000);
 		} while (MFX_WRN_IN_EXECUTION == sts);
 
-		frame->output_buffer = gst_buffer_copy(gst_buffer_new_wrapped(encoder->bs.Data,
-            encoder->bs.MaxLength));
+        frame->output_buffer =
+            gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
+            encoder->bs.Data + encoder->bs.DataOffset,
+            encoder->bs.MaxLength, 0, encoder->bs.DataLength, NULL, NULL);
+
+        encoder->bs.DataLength = 0;
 	}
 
 	return GST_MFX_ENCODER_STATUS_SUCCESS;

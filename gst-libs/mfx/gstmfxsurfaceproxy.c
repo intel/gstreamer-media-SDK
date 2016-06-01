@@ -55,11 +55,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
 	guint frame_size;
 	gboolean success = TRUE;
 
-    frame_size = GST_ROUND_UP_16(info->Width) *
-            GST_ROUND_UP_16(info->Height);
-#ifndef FOR_MSS
-    guint video_size = info->CropH * info->CropW;
-#endif
+    frame_size = info->Width * info->Height;
 
     switch (info->FourCC) {
     case MFX_FOURCC_NV12:
@@ -67,13 +63,13 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
         ptr->Pitch = proxy->pitches[0] = proxy->pitches[1] =
             GST_ROUND_UP_16(info->Width);
-#ifdef FOR_MSS
+#ifdef WITH_MSS
 		ptr->Y = proxy->planes[0] = proxy->data + 1;
-        ptr->UV = proxy->planes[1] = ptr->Y + frame_size;
 #else
         ptr->Y = proxy->planes[0] = proxy->data;
-        ptr->UV = proxy->planes[1] = ptr->Y+video_size;
 #endif
+        ptr->UV = proxy->planes[1] = ptr->Y + frame_size;
+
         break;
     case MFX_FOURCC_YV12:
         proxy->data_size = frame_size * 3 / 2;
@@ -91,7 +87,11 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
         ptr->Pitch = proxy->pitches[0] = GST_ROUND_UP_16(info->Width) * 2;
 
-        ptr->Y = proxy->planes[0] = proxy->data + 1;
+#ifdef WITH_MSS
+		ptr->Y = proxy->planes[0] = proxy->data + 1;
+#else
+        ptr->Y = proxy->planes[0] = proxy->data;
+#endif
         ptr->U = ptr->Y + 1;
         ptr->V = ptr->Y + 3;
 

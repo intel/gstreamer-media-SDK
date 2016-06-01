@@ -135,7 +135,7 @@ gst_mfx_task_aggregator_create_session(GstMfxTaskAggregator * aggregator)
 	memset(&init_params, 0, sizeof(init_params));
 
 	//init_params.GPUCopy = MFX_GPUCOPY_ON;
-	init_params.Implementation = MFX_IMPL_AUTO_ANY;
+	init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
 	init_params.Version.Major = 1;
 	init_params.Version.Minor = 1;
 

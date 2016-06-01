@@ -103,7 +103,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     resp->mids = task->surface_ids;
 	resp->NumFrameActual = task->num_surfaces;
 
-	//if (task->task_type & GST_MFX_TASK_DECODER)
+	//if (task->task_type & (GST_MFX_TASK_DECODER | GST_MFX_TASK_ENCODER))
 		task->response = g_slice_dup(mfxFrameAllocResponse, resp);
 
 	return MFX_ERR_NONE;

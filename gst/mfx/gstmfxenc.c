@@ -385,7 +385,6 @@ gst_mfxenc_handle_frame(GstVideoEncoder * venc,
 	GstFlowReturn ret;
 	GstBuffer *buf;
 
-	buf = NULL;
 	ret = gst_mfx_plugin_base_get_input_buffer(GST_MFX_PLUGIN_BASE(encode),
 		frame->input_buffer, &buf);
 	if (ret != GST_FLOW_OK)
@@ -394,7 +393,7 @@ gst_mfxenc_handle_frame(GstVideoEncoder * venc,
 	gst_buffer_replace(&frame->input_buffer, buf);
 	gst_buffer_unref(buf);
 
-	meta = gst_buffer_get_mfx_video_meta(buf);
+	meta = gst_buffer_get_mfx_video_meta(frame->input_buffer);
 	if (!meta)
 		goto error_buffer_no_meta;
 
@@ -404,20 +403,20 @@ gst_mfxenc_handle_frame(GstVideoEncoder * venc,
 
 	gst_video_codec_frame_set_user_data(frame,
 		gst_mfx_surface_proxy_ref(proxy),
-		(GDestroyNotify)gst_mfx_surface_proxy_unref);
+		NULL);
 
 	//GST_VIDEO_ENCODER_STREAM_UNLOCK(encode);
 	status = gst_mfx_encoder_encode(encode->encoder, frame);
 	//GST_VIDEO_ENCODER_STREAM_LOCK(encode);
 	if (status < GST_MFX_ENCODER_STATUS_SUCCESS)
 		goto error_encode_frame;
-    else if (status == GST_MFX_ENCODER_STATUS_MORE_DATA)
+    else if (status > 0)
         goto done;
 
 	ret = gst_mfxenc_push_frame(encode, frame);
+	//gst_video_codec_frame_unref(frame);
 
 done:
-	//gst_video_codec_frame_unref(frame);
 	return GST_FLOW_OK;
 
 	/* ERRORS */

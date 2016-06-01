@@ -302,8 +302,14 @@ _h264_convert_byte_stream_to_avc(GstBuffer * buf)
 		if (!nal_size)
 			goto error;
 
-		g_assert(nal_body - nal_start_code == 4);
-		_start_code_to_size(nal_start_code, nal_size);
+        /* A start code size of 3 indicates the start of an
+         * encoded picture in MSDK */
+        if (nal_body - nal_start_code == 3) {
+            memmove(info.data + 4, nal_body, nal_size);
+            info.size = nal_size + 4;
+            _start_code_to_size(info.data, nal_size);
+        }
+
 		nal_start_code = nal_body + nal_size;
 	}
 	gst_buffer_unmap(buf, &info);

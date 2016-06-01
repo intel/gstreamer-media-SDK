@@ -1052,7 +1052,7 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		"Force aspect ratio",
 		"When enabled, scaling will respect original aspect ratio",
 		TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
+#if USE_EGL
     /**
 	* GstMfxSink:gl-api:
 	*
@@ -1065,7 +1065,7 @@ gst_mfxsink_class_init(GstMfxSinkClass * klass)
 		GST_MFX_TYPE_GL_API,
 		DEFAULT_GL_API,
 		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
+#endif
 	g_object_class_install_properties(object_class, N_PROPERTIES, g_properties);
 }
 

@@ -24,7 +24,7 @@
 #define SX_BITRATE 6
 
 /* Define default rate control mode ("constant-qp") */
-#define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_CQP
+#define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_CBR
 
 /* Supported set of rate control methods, within this implementation */
 #define SUPPORTED_RATECONTROLS                          \
@@ -283,7 +283,6 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
 {
     GstMfxEncoderH264 *const encoder =
         GST_MFX_ENCODER_H264_CAST (base_encoder);
-    GstVideoInfo *const vip = GST_MFX_ENCODER_VIDEO_INFO (encoder);
     GstMfxEncoderStatus status;
     guint mb_width, mb_height;
 
@@ -393,9 +392,10 @@ gst_mfx_encoder_h264_get_codec_data(GstMfxEncoder * base_encoder,
 	GstMfxEncoderH264 *const encoder =
 		GST_MFX_ENCODER_H264_CAST(base_encoder);
 	GstBuffer *buffer;
-	guint8 *codec_data;
+	guint8 *codec_data, *cur;
 	mfxStatus sts;
 	guint8 sps_data[128], pps_data[128];
+	guint sps_size, pps_size, extradata_size;
 
 	mfxExtCodingOptionSPSPPS extradata = {
 		.Header.BufferId = MFX_EXTBUFF_CODING_OPTION_SPSPPS,
@@ -421,27 +421,53 @@ gst_mfx_encoder_h264_get_codec_data(GstMfxEncoder * base_encoder,
 
 	mfxExtBuffer *ext_buffers[] = {
 		(mfxExtBuffer*)&extradata,
-		(mfxExtBuffer*)&co,
-		(mfxExtBuffer*)&co2,
-		(mfxExtBuffer*)&co3,
+		//(mfxExtBuffer*)&co,
+		//(mfxExtBuffer*)&co2,
+		//(mfxExtBuffer*)&co3,
 	};
 
 	base_encoder->params.ExtParam = ext_buffers;
-	base_encoder->params.NumExtParam = 4;
+	base_encoder->params.NumExtParam = 1;
 
 	sts = MFXVideoENCODE_GetVideoParam(base_encoder->session, &base_encoder->params);
 	if (sts < 0)
 		return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
 
-	codec_data = (guint8 *)g_slice_alloc(extradata.SPSBufSize + extradata.PPSBufSize);
+    sps_size = extradata.SPSBufSize - 4;
+    pps_size = extradata.PPSBufSize - 4;
+    extradata_size = sps_size + pps_size + 88;
+
+	codec_data = (guint8 *)g_slice_alloc(extradata_size);
 	if (!codec_data)
 		goto error_alloc_buffer;
 
-	memcpy(codec_data, sps_data, extradata.SPSBufSize);
-	memcpy(codec_data + extradata.SPSBufSize, pps_data, extradata.PPSBufSize);
+    cur = codec_data;
 
-	buffer = gst_buffer_new_wrapped(codec_data,
-		extradata.SPSBufSize + extradata.PPSBufSize);
+    *cur++ = 0x01;
+    *cur++ = sps_data[5];
+    *cur++ = sps_data[6];
+    *cur++ = sps_data[7];
+    *cur++ = 0xFF;
+    *cur++ = 0xE1;
+
+    /* Set sps size */
+    *cur++ = (sps_size >> 8) & 0xFF;
+    *cur++ = sps_size & 0xFF;
+
+	memcpy(cur, sps_data + 4, sps_size);
+	cur += sps_size;
+
+	*cur++ = 0x01;
+
+	/* Set pps size */
+	*cur++ = (pps_size >> 8) & 0xFF;
+	*cur++ = pps_size & 0xFF;
+
+	memcpy(cur, pps_data + 4, pps_size);
+
+    buffer =
+        gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY, codec_data,
+        extradata_size, 0, extradata_size, NULL, NULL);
 	if (!buffer)
 		goto error_alloc_buffer;
 	*out_buffer_ptr = buffer;
