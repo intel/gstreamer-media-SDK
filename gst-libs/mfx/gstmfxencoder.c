@@ -346,8 +346,8 @@ gst_mfx_encoder_init_properties(GstMfxEncoder * encoder,
 
 	encoder->params.mfx.CodecId = encoder->codec;
 	encoder->mapped = mapped;
-	encoder->params.IOPattern =
-        mapped ? MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
+	encoder->params.IOPattern = mapped ?
+        MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
 	encoder->info = *info;
 
     if (!mapped)
@@ -403,7 +403,6 @@ gst_mfx_encoder_finalize(GstMfxEncoder * encoder)
 	g_byte_array_unref(encoder->bitstream);
 	gst_mfx_task_aggregator_unref(encoder->aggregator);
 	gst_mfx_task_replace(&encoder->encode_task, NULL);
-	gst_mfx_surface_pool_unref(encoder->pool);
 
 	if (encoder->properties) {
 		g_ptr_array_unref(encoder->properties);
@@ -568,11 +567,23 @@ gst_mfx_encoder_start(GstMfxEncoder *encoder)
 		return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
 	}
 
+	if (encoder->mapped &&
+            GST_VIDEO_INFO_FORMAT(&encoder->info) != GST_VIDEO_FORMAT_NV12) {
+        encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
+        gst_mfx_task_use_video_memory(encoder->encode_task);
+	}
+
+	sts = MFXVideoENCODE_Init(encoder->session, &encoder->params);
+	if (sts < 0) {
+		GST_ERROR("Error initializing the MFX video encoder %d", sts);
+		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+	}
+
 	gst_mfx_task_set_request(encoder->encode_task, &enc_request);
 
-	if (GST_VIDEO_INFO_FORMAT(&encoder->info) != GST_VIDEO_FORMAT_NV12) {
+    if (GST_VIDEO_INFO_FORMAT(&encoder->info) != GST_VIDEO_FORMAT_NV12) {
 		encoder->filter = gst_mfx_filter_new_with_task(encoder->aggregator,
-			encoder->encode_task, GST_MFX_TASK_VPP_OUT, encoder->mapped, encoder->mapped);
+			encoder->encode_task, GST_MFX_TASK_VPP_OUT, encoder->mapped, FALSE);
 
 		enc_request.NumFrameSuggested += (1 - encoder->params.AsyncDepth);
 
@@ -581,34 +592,10 @@ gst_mfx_encoder_start(GstMfxEncoder *encoder)
 
         gst_mfx_filter_set_frame_info(encoder->filter, &encoder->info);
 
-		gst_mfx_filter_set_format(encoder->filter, GST_VIDEO_FORMAT_NV12);
+        gst_mfx_filter_set_format(encoder->filter, GST_VIDEO_FORMAT_NV12);
 
 		if (!gst_mfx_filter_start(encoder->filter))
 			return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
-
-		encoder->pool = gst_mfx_filter_get_pool(encoder->filter,
-			GST_MFX_TASK_VPP_OUT);
-		if (!encoder->pool)
-			return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
-	}
-	/*else {
-		sts = gst_mfx_task_frame_alloc(encoder->encode_task, &enc_request,
-			&enc_response);
-		if (MFX_ERR_NONE != sts) {
-			return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
-		}
-	}*/
-
-	sts = MFXVideoENCODE_Init(encoder->session, &encoder->params);
-	if (sts < 0) {
-		GST_ERROR("Error initializing the MFX video encoder %d", sts);
-		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
-	}
-
-	if (!encoder->pool) {
-		encoder->pool = gst_mfx_surface_pool_new_with_task(encoder->encode_task);
-		if (!encoder->pool)
-			return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
 	}
 
 	return GST_MFX_ENCODER_STATUS_SUCCESS;
@@ -619,7 +606,7 @@ gst_mfx_encoder_encode(GstMfxEncoder * encoder,
 	GstVideoCodecFrame * frame)
 {
 	GstMapInfo minfo;
-	GstMfxSurfaceProxy *proxy, *filter_proxy, *in_proxy;
+	GstMfxSurfaceProxy *proxy, *filter_proxy;
 	mfxFrameSurface1 *insurf;
 	mfxSyncPoint syncp;
 	mfxStatus sts = MFX_ERR_NONE;

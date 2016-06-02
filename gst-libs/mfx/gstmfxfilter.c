@@ -988,9 +988,10 @@ gst_mfx_filter_process(GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
 	}
 
 	if (syncp) {
-		do {
-			sts = MFXVideoCORE_SyncOperation(filter->session, syncp, 1000);
-		} while (MFX_WRN_IN_EXECUTION == sts);
+        if (!gst_mfx_task_has_type(filter->vpp[1], GST_MFX_TASK_ENCODER))
+            do {
+                sts = MFXVideoCORE_SyncOperation(filter->session, syncp, 1000);
+            } while (MFX_WRN_IN_EXECUTION == sts);
 
         *out_proxy = gst_mfx_surface_pool_find_proxy(filter->vpp_pool[1], outsurf);
 	}

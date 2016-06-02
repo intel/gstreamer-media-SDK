@@ -132,7 +132,6 @@ struct _GstMfxEncoder
 
 	GstMfxTaskAggregator   *aggregator;
 	GstMfxTask             *encode_task;
-	GstMfxSurfacePool      *pool;
 	GstMfxFilter           *filter;
 	GByteArray             *bitstream;
 	gboolean                mapped;

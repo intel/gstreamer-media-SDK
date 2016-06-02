@@ -229,7 +229,7 @@ mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy,
         if (!vaapi_check_status(sts, "vaCreateSurfaces()"))
             return FALSE;
 
-        proxy->surface.Data.MemId = &proxy->surface_id;
+        proxy->surface.Data.MemId = proxy->surface_id;
     }
 
 	return TRUE;
@@ -528,6 +528,13 @@ gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy)
 
 	va_image.image_id = VA_INVALID_ID;
 	va_image.buf = VA_INVALID_ID;
+
+	GST_MFX_DISPLAY_LOCK(proxy->display);
+	status = vaSyncSurface(GST_MFX_DISPLAY_VADISPLAY(proxy->display),
+		GST_MFX_SURFACE_PROXY_MEMID(proxy));
+	GST_MFX_DISPLAY_UNLOCK(proxy->display);
+	if (!vaapi_check_status(status, "vaSyncSurface()"))
+		return NULL;
 
 	GST_MFX_DISPLAY_LOCK(proxy->display);
 	status = vaDeriveImage(GST_MFX_DISPLAY_VADISPLAY(proxy->display),
