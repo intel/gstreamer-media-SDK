@@ -321,7 +321,53 @@ gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 static inline guint
 gst_mfx_codec_from_caps (GstCaps * caps)
 {
-  return gst_mfx_profile_get_codec (gst_mfx_profile_from_caps (caps));
+  return gst_mfx_profile_get_codec(gst_mfx_profile_from_caps (caps));
+}
+
+static gboolean
+gst_mfx_query_peer_has_raw_caps(GstPad * pad)
+{
+    GstPad *other_pad = NULL;
+    GstElement *element = NULL;
+    GstCaps *caps = NULL;
+    gchar *element_name = NULL;
+    gboolean mapped = FALSE;
+
+    other_pad = gst_pad_get_peer (pad);
+    if (!other_pad)
+        goto cleanup;
+
+    caps = gst_pad_get_allowed_caps(other_pad);
+    gst_object_unref (other_pad);
+
+    if (!gst_caps_has_mfx_surface(caps)){
+        mapped = TRUE;
+        goto cleanup;
+    }
+
+    /* Check if next downstream element is mfxvpp, because vid-to-sys
+     * vpp in-out doesn't work correctly. In that case, set decode
+     * output to sys for sys-to-sys vpp in-out */
+    element = gst_pad_get_parent_element (other_pad);
+    if (!element)
+        goto cleanup;
+    element_name = gst_element_get_name(element);
+    if (strncmp(element_name, "mfxpostproc", 11) == 0) {
+        other_pad = gst_element_get_static_pad (element, "src");
+        caps = gst_pad_get_allowed_caps(other_pad);
+
+        gst_object_unref (other_pad);
+
+        if (!gst_caps_has_mfx_surface(caps))
+            mapped = TRUE;
+    }
+
+    g_clear_object (&element);
+
+cleanup:
+    gst_caps_replace(&caps, NULL);
+
+    return mapped;
 }
 
 static gboolean

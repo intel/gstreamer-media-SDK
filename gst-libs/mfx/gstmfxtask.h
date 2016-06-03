@@ -114,12 +114,6 @@ mfxStatus
 gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse *resp);
 
 mfxStatus
-gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr);
-
-mfxStatus
-gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr);
-
-mfxStatus
 gst_mfx_task_frame_get_hdl (mfxHDL pthis, mfxMemId mid, mfxHDL *hdl);
 
 G_END_DECLS

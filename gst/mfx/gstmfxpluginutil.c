@@ -310,49 +310,6 @@ gst_caps_has_mfx_surface(GstCaps * caps)
 	return _gst_caps_has_feature(caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 }
 
-gboolean
-gst_mfx_query_peer_has_raw_caps(GstPad * pad)
-{
-    GstPad *other_pad = NULL;
-    GstElement *element = NULL;
-    GstCaps *caps = NULL;
-    gboolean mapped = FALSE;
-
-    gst_object_ref (pad);
-
-    for (;;) {
-        other_pad = gst_pad_get_peer (pad);
-        gst_object_unref (pad);
-        if (!other_pad)
-            break;
-
-        element = gst_pad_get_parent_element (other_pad);
-        if (!element)
-            break;
-
-        caps = gst_pad_get_allowed_caps(other_pad);
-        gst_object_unref (other_pad);
-
-        if (!gst_caps_has_mfx_surface(caps)) {
-            mapped = TRUE;
-            goto cleanup;
-        }
-        gst_caps_replace(&caps, NULL);
-
-        pad = gst_element_get_static_pad (element, "src");
-        if (!pad)
-            break;
-
-        g_clear_object (&element);
-    }
-
-cleanup:
-    gst_caps_replace(&caps, NULL);
-    g_clear_object (&element);
-
-    return mapped;
-}
-
 void
 gst_video_info_change_format(GstVideoInfo * vip, GstVideoFormat format,
     guint width, guint height)

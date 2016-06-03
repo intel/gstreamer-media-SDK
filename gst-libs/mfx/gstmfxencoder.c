@@ -10,8 +10,8 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-#define DEFAULT_ENCODER_PRESET GST_MFX_ENCODER_PRESET_MEDIUM
-#define DEFAULT_ASYNC_DEPTH    4
+#define DEFAULT_ENCODER_PRESET  GST_MFX_ENCODER_PRESET_MEDIUM
+#define DEFAULT_ASYNC_DEPTH     4
 
 /* Helper function to create a new encoder property object */
 static GstMfxEncoderPropData *
@@ -250,8 +250,8 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
 static gboolean
 set_encoding_params(GstMfxEncoder * encoder)
 {
-	encoder->params.AsyncDepth = 4;
-	encoder->params.mfx.TargetUsage = MFX_TARGETUSAGE_BALANCED;
+	encoder->params.AsyncDepth = encoder->async_depth;
+	encoder->params.mfx.TargetUsage = encoder->preset;
 	encoder->params.mfx.RateControlMethod = encoder->rc_method;
 
 	if (encoder->bitrate)
@@ -346,12 +346,10 @@ gst_mfx_encoder_init_properties(GstMfxEncoder * encoder,
 
 	encoder->params.mfx.CodecId = encoder->codec;
 	encoder->mapped = mapped;
-	encoder->params.IOPattern = mapped ?
-        MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
+    encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
 	encoder->info = *info;
 
-    if (!mapped)
-        gst_mfx_task_use_video_memory(encoder->encode_task);
+    gst_mfx_task_use_video_memory(encoder->encode_task);
 
 	return TRUE;
 }
@@ -375,6 +373,10 @@ gst_mfx_encoder_init(GstMfxEncoder * encoder,
 	CHECK_VTABLE_HOOK(get_default_properties);
 
 #undef CHECK_VTABLE_HOOK
+
+    /* Default params for all encoders */
+    encoder->preset = DEFAULT_ENCODER_PRESET;
+	encoder->async_depth = DEFAULT_ASYNC_DEPTH;
 
 	if (!klass->init(encoder))
 		return FALSE;
@@ -543,7 +545,6 @@ gst_mfx_encoder_set_qpb(GstMfxEncoder * encoder, mfxU16 qpb)
 	return TRUE;
 }
 
-
 GstMfxEncoderStatus
 gst_mfx_encoder_start(GstMfxEncoder *encoder)
 {
@@ -567,36 +568,28 @@ gst_mfx_encoder_start(GstMfxEncoder *encoder)
 		return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
 	}
 
-	if (encoder->mapped &&
-            GST_VIDEO_INFO_FORMAT(&encoder->info) != GST_VIDEO_FORMAT_NV12) {
-        encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
-        gst_mfx_task_use_video_memory(encoder->encode_task);
-	}
-
 	sts = MFXVideoENCODE_Init(encoder->session, &encoder->params);
 	if (sts < 0) {
 		GST_ERROR("Error initializing the MFX video encoder %d", sts);
 		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 	}
 
-	gst_mfx_task_set_request(encoder->encode_task, &enc_request);
+    /* Even if VPP is not required, surfaces need to be saved into a pool */
+    encoder->filter = gst_mfx_filter_new_with_task(encoder->aggregator,
+        encoder->encode_task, GST_MFX_TASK_VPP_OUT, encoder->mapped, FALSE);
 
-    if (GST_VIDEO_INFO_FORMAT(&encoder->info) != GST_VIDEO_FORMAT_NV12) {
-		encoder->filter = gst_mfx_filter_new_with_task(encoder->aggregator,
-			encoder->encode_task, GST_MFX_TASK_VPP_OUT, encoder->mapped, FALSE);
+    enc_request.NumFrameSuggested += (1 - encoder->params.AsyncDepth);
 
-		enc_request.NumFrameSuggested += (1 - encoder->params.AsyncDepth);
+    gst_mfx_filter_set_request(encoder->filter, &enc_request,
+        GST_MFX_TASK_VPP_OUT);
 
-		gst_mfx_filter_set_request(encoder->filter, &enc_request,
-			GST_MFX_TASK_VPP_OUT);
+    gst_mfx_filter_set_frame_info(encoder->filter, &encoder->info);
 
-        gst_mfx_filter_set_frame_info(encoder->filter, &encoder->info);
-
+    if (GST_VIDEO_INFO_FORMAT(&encoder->info) != GST_VIDEO_FORMAT_NV12)
         gst_mfx_filter_set_format(encoder->filter, GST_VIDEO_FORMAT_NV12);
 
-		if (!gst_mfx_filter_start(encoder->filter))
-			return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
-	}
+    if (!gst_mfx_filter_start(encoder->filter))
+        return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 
 	return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
@@ -743,13 +736,6 @@ set_property(GstMfxEncoder * encoder, gint prop_id, const GValue * value)
 		break;
 	}
 	return status;
-
-	/* ERRORS */
-error_operation_failed:
-	{
-		GST_ERROR("could not change codec state after encoding started");
-		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
-	}
 }
 
 GstMfxEncoderStatus

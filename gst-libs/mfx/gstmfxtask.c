@@ -137,18 +137,6 @@ gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
 }
 
 mfxStatus
-gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
-{
-	return MFX_ERR_UNSUPPORTED;
-}
-
-mfxStatus
-gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
-{
-	return MFX_ERR_UNSUPPORTED;
-}
-
-mfxStatus
 gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL *hdl)
 {
 	*hdl = mid;
@@ -232,8 +220,6 @@ gst_mfx_task_use_video_memory(GstMfxTask * task)
         .pthis = task,
         .Alloc = gst_mfx_task_frame_alloc,
         .Free = gst_mfx_task_frame_free,
-        .Lock = gst_mfx_task_frame_lock,
-        .Unlock = gst_mfx_task_frame_unlock,
         .GetHDL = gst_mfx_task_frame_get_hdl,
     };
 

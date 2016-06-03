@@ -249,7 +249,7 @@ gst_mfx_decoder_start(GstMfxDecoder *decoder)
     if (!mapped)
         gst_mfx_task_use_video_memory(decoder->decode_task);
 
-    dec_request.NumFrameSuggested += 1 - decoder->param.AsyncDepth;
+    dec_request.NumFrameSuggested += (1 - decoder->param.AsyncDepth);
 
     gst_mfx_task_set_request(decoder->decode_task, &dec_request);
 
