@@ -165,19 +165,20 @@ struct _GstMfxEncoder
 	int						nb_extparam_internal;
 
     /* H264 specific coding options */
-	mfxU16                  max_slice_size;
-	mfxU16                  max_frame_size;
-	mfxU16                  bitrate_limit;
+    gboolean				use_cabac;
+    gint                    bitrate_limit;
+	gint                    max_slice_size;
+	gint                    max_frame_size;
 	mfxU16                  int_ref_type;
 	mfxU16                  int_ref_cycle_size;
 	mfxU16                  int_ref_qp_delta;
 
-	mfxU16                  mbbrc;
-	mfxU16                  extbrc;
+	gint                    mbbrc;
+	gint                    extbrc;
 	mfxU16                  trellis;
-	mfxU16                  b_strategy;
-	mfxU16                  adaptive_i;
-	mfxU16                  adaptive_b;
+	gint                    b_strategy;
+	gint                    adaptive_i;
+	gint                    adaptive_b;
 
 	mfxU16					rdo;
 	mfxU16					pic_timing_sei;
@@ -185,7 +186,6 @@ struct _GstMfxEncoder
 	mfxU16					recovery_point_sei;
 	mfxU16					max_dec_frame_buffering;
 	mfxU16					look_ahead_downsampling;
-	gboolean				use_cabac;
 };
 
 struct _GstMfxEncoderClassData

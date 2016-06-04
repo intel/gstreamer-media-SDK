@@ -11,6 +11,7 @@
 #include "gstmfxdebug.h"
 
 #define DEFAULT_ENCODER_PRESET  GST_MFX_ENCODER_PRESET_MEDIUM
+#define DEFAULT_QP              23
 #define DEFAULT_ASYNC_DEPTH     4
 
 /* Helper function to create a new encoder property object */
@@ -193,7 +194,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
 		g_param_spec_uint("qpi",
 		"Quantization parameter for I-frames",
 		"Quantization parameter for I-frames", 0, 51,
-		0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+		DEFAULT_QP, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
 	* GstMfxEncoder:qpp:
@@ -205,7 +206,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
 		g_param_spec_uint("qpp",
 		"Quantization parameter for P-frames",
 		"Quantization parameter for P-frames", 0, 51,
-		0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+		DEFAULT_QP, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
 	* GstMfxEncoder:qpb:
@@ -217,7 +218,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
 		g_param_spec_uint("qpb",
 		"Quantization parameter for B-frames",
 		"Quantization parameter for B-frames", 0, 51,
-		0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+		DEFAULT_QP, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
 	* GstMfxEncoder:async-depth:
@@ -297,9 +298,7 @@ set_extended_coding_options(GstMfxEncoder * encoder)
 		encoder->extco2.ExtBRC = encoder->extbrc ?
             MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
 
-	if (encoder->max_frame_size >= 0)
-		encoder->extco2.MaxFrameSize = encoder->max_frame_size;
-	if (encoder->max_slice_size >= 0)
+    if (encoder->max_slice_size >= 0)
 		encoder->extco2.MaxSliceSize = encoder->max_slice_size;
 
 	encoder->extco2.Trellis = encoder->trellis;
@@ -314,7 +313,22 @@ set_extended_coding_options(GstMfxEncoder * encoder)
 		encoder->extco2.AdaptiveB = encoder->adaptive_b ?
             MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
 
-	encoder->extco2.LookAheadDS = encoder->look_ahead_downsampling;
+    switch (encoder->rc_method) {
+    case GST_MFX_RATECONTROL_VBR:
+    case GST_MFX_RATECONTROL_AVBR:
+        if (encoder->max_frame_size >= 0)
+            encoder->extco2.MaxFrameSize = encoder->max_frame_size;
+        break;
+    case GST_MFX_RATECONTROL_LA_BRC:
+    case GST_MFX_RATECONTROL_LA_ICQ:
+    case GST_MFX_RATECONTROL_LA_HRD:
+        if (encoder->la_depth)
+            encoder->extco2.LookAheadDepth = encoder->la_depth;
+        //encoder->extco2.LookAheadDS = encoder->look_ahead_downsampling;
+        break;
+    default:
+        break;
+    }
 
 	encoder->extparam_internal[encoder->nb_extparam_internal++] =
         (mfxExtBuffer *)&encoder->extco2;
@@ -329,6 +343,7 @@ set_encoding_params(GstMfxEncoder * encoder)
 	encoder->params.AsyncDepth = encoder->async_depth;
 	encoder->params.mfx.TargetUsage = encoder->preset;
 	encoder->params.mfx.RateControlMethod = encoder->rc_method;
+	encoder->params.mfx.IdrInterval = encoder->idr_interval;
 
 	if (encoder->bitrate)
 		encoder->params.mfx.TargetKbps = encoder->bitrate;
@@ -338,8 +353,7 @@ set_encoding_params(GstMfxEncoder * encoder)
 		encoder->params.mfx.GopPicSize = encoder->gop_size;
 	if (encoder->num_refs)
 		encoder->params.mfx.NumRefFrame = encoder->num_refs;
-	if (encoder->idr_interval)
-		encoder->params.mfx.IdrInterval = encoder->idr_interval;
+
 	if (encoder->num_slices)
 		encoder->params.mfx.NumSlice = encoder->num_slices;
 
@@ -352,7 +366,7 @@ set_encoding_params(GstMfxEncoder * encoder)
 			encoder->params.mfx.QPB = encoder->qpb;
 	}
 
-    if (encoder->codec = MFX_CODEC_AVC)
+    if (MFX_CODEC_AVC == encoder->codec)
         set_extended_coding_options(encoder);
 }
 

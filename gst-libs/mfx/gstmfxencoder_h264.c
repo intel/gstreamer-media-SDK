@@ -24,7 +24,7 @@
 #define SX_BITRATE 6
 
 /* Define default rate control mode ("constant-qp") */
-#define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_CBR
+#define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_CQP
 
 /* Supported set of rate control methods, within this implementation */
 #define SUPPORTED_RATECONTROLS                          \
@@ -52,10 +52,6 @@ h264_get_cpb_nal_factor(GstMfxProfile profile)
 		break;
 	case GST_MFX_PROFILE_AVC_HIGH_422:
 		f = 4800;
-		break;
-	case GST_MFX_PROFILE_AVC_MULTIVIEW_HIGH:
-	case GST_MFX_PROFILE_AVC_STEREO_HIGH:
-		f = 1500;                 /* H.10.2.1 (r) */
 		break;
 	default:
 		f = 1200;
@@ -409,7 +405,7 @@ gst_mfx_encoder_h264_set_property(GstMfxEncoder * base_encoder,
 
 	switch (prop_id) {
 	case GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE:
-		base_encoder->max_slice_size = g_value_get_uint(value);
+		base_encoder->max_slice_size = g_value_get_int(value);
 		break;
 	case GST_MFX_ENCODER_H264_PROP_LA_DEPTH:
 		base_encoder->la_depth = g_value_get_uint(value);
@@ -475,8 +471,9 @@ gst_mfx_encoder_h264_get_default_properties(void)
 	*/
 	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
 		GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE,
-		g_param_spec_uint("max-slice-size",
-		"Max slice size", "Maximum encoded slice size in bytes", 0, 10, 0,
+		g_param_spec_int("max-slice-size",
+		"Max slice size", "Maximum encoded slice size in bytes",
+		-1, G_MAXUINT16, -1,
 		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
@@ -487,7 +484,7 @@ gst_mfx_encoder_h264_get_default_properties(void)
 	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
 		GST_MFX_ENCODER_H264_PROP_LA_DEPTH,
 		g_param_spec_uint("la-depth",
-		"Lookahead depth", "Depth of look ahead in number frames", 1, 100, 1,
+		"Lookahead depth", "Depth of look ahead in number frames", 0, 100, 0,
 		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
