@@ -83,40 +83,19 @@ struct _GstMfxEncoderH264
 	guint32 num_bframes;
 	guint32 mb_width;
 	guint32 mb_height;
-	gboolean use_cabac;
 	GstClockTime cts_offset;
 	gboolean config_changed;
 
 	guint bitrate_bits;           // bitrate (bits)
 	guint cpb_length;             // length of CPB buffer (ms)
 	guint cpb_length_bits;        // length of CPB buffer (bits)
-
-	/* H264 specific coding options */
-	mfxU16 la_depth;
-	mfxU16 max_slice_size;
-	mfxU16 max_frame_size;
-	mfxU16 bitrate_limit;
-	mfxU16 int_ref_type;
-	mfxU16 int_ref_cycle_size;
-	mfxU16 int_ref_qp_delta;
-
-	mfxU16 mbbrc;
-	mfxU16 extbrc;
-	mfxU16 trellis;
-	mfxU16 b_strategy;
-	mfxU16 adaptive_i;
-	mfxU16 adaptive_b;
-
-	mfxU16 single_sei_nal_unit;
-	mfxU16 recovery_point_sei;
-	mfxU16 max_dec_frame_buffering;
-	mfxU16 look_ahead_downsampling;
 };
 
 /* Check target decoder constraints */
 static gboolean
 ensure_profile_limits(GstMfxEncoderH264 * encoder)
 {
+    GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST(encoder);
 	GstMfxProfile profile;
 
 	if (!encoder->max_profile_idc)
@@ -132,7 +111,7 @@ ensure_profile_limits(GstMfxEncoderH264 * encoder)
 	}
 
 	/* Try Constrained Baseline profile coding tools */
-	if (encoder->max_profile_idc < 77) {
+	if (encoder->max_profile_idc < 77 || !base_encoder->use_cabac) {
 		if (encoder->num_bframes)
 			profile = GST_MFX_PROFILE_AVC_BASELINE;
 		else
@@ -236,7 +215,7 @@ ensure_bitrate(GstMfxEncoderH264 * encoder)
 			thus estimating +15% here ; and using adaptive 8x8 transforms
 			in I-frames could bring up to +10% improvement. */
 			guint bits_per_mb = 48;
-			if (!encoder->use_cabac)
+			if (!base_encoder->use_cabac)
 				bits_per_mb += (bits_per_mb * 15) / 100;
 
 			base_encoder->bitrate =
@@ -296,7 +275,6 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
         encoder->config_changed = TRUE;
     }
 
-
     status = ensure_profile_and_level (encoder);
     if (status != GST_MFX_ENCODER_STATUS_SUCCESS)
         return status;
@@ -311,66 +289,6 @@ gst_mfx_encoder_h264_init(GstMfxEncoder * base_encoder)
 		GST_MFX_ENCODER_H264_CAST(base_encoder);
 
 	base_encoder->codec = MFX_CODEC_AVC;
-
-	base_encoder->extco.Header.BufferId = MFX_EXTBUFF_CODING_OPTION;
-	base_encoder->extco.Header.BufferSz = sizeof(base_encoder->extco);
-
-	base_encoder->extco.CAVLC = !encoder->use_cabac ? MFX_CODINGOPTION_ON
-		: MFX_CODINGOPTION_UNKNOWN;
-
-	base_encoder->extco.PicTimingSEI = base_encoder->pic_timing_sei ?
-		MFX_CODINGOPTION_ON : MFX_CODINGOPTION_UNKNOWN;
-
-	if (base_encoder->rdo >= 0)
-		base_encoder->extco.RateDistortionOpt = base_encoder->rdo > 0 ?
-			MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-
-	//base_encoder->extco.NalHrdConformance = encoder->strict_std_compliance ?
-		//MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-
-	if (encoder->single_sei_nal_unit >= 0)
-		base_encoder->extco.SingleSeiNalUnit = encoder->single_sei_nal_unit ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-	if (encoder->recovery_point_sei >= 0)
-		base_encoder->extco.RecoveryPointSEI = encoder->recovery_point_sei ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-	base_encoder->extco.MaxDecFrameBuffering = encoder->max_dec_frame_buffering;
-
-	base_encoder->extparam_internal[base_encoder->nb_extparam_internal++] = (mfxExtBuffer *)&base_encoder->extco;
-
-	base_encoder->extco2.Header.BufferId = MFX_EXTBUFF_CODING_OPTION2;
-	base_encoder->extco2.Header.BufferSz = sizeof(base_encoder->extco2);
-
-	if (encoder->int_ref_type)
-		base_encoder->extco2.IntRefType = encoder->int_ref_type;
-	if (encoder->int_ref_cycle_size)
-		base_encoder->extco2.IntRefCycleSize = encoder->int_ref_cycle_size;
-	if (encoder->int_ref_qp_delta != INT16_MIN)
-		base_encoder->extco2.IntRefQPDelta = encoder->int_ref_qp_delta;
-
-	if (encoder->bitrate_limit >= 0)
-		base_encoder->extco2.BitrateLimit = encoder->bitrate_limit ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-	if (encoder->mbbrc >= 0)
-		base_encoder->extco2.MBBRC = encoder->mbbrc ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-	if (encoder->extbrc >= 0)
-		base_encoder->extco2.ExtBRC = encoder->extbrc ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-
-	if (encoder->max_frame_size >= 0)
-		base_encoder->extco2.MaxFrameSize = encoder->max_frame_size;
-	if (encoder->max_slice_size >= 0)
-		base_encoder->extco2.MaxSliceSize = encoder->max_slice_size;
-
-	base_encoder->extco2.Trellis = encoder->trellis;
-
-	if (encoder->b_strategy >= 0)
-		base_encoder->extco2.BRefType = encoder->b_strategy ? MFX_B_REF_PYRAMID : MFX_B_REF_OFF;
-	if (encoder->adaptive_i >= 0)
-		base_encoder->extco2.AdaptiveI = encoder->adaptive_i ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-	if (encoder->adaptive_b >= 0)
-		base_encoder->extco2.AdaptiveB = encoder->adaptive_b ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-
-
-	base_encoder->extparam_internal[base_encoder->nb_extparam_internal++] = (mfxExtBuffer *)&base_encoder->extco2;
-
-	base_encoder->extco2.LookAheadDS = encoder->look_ahead_downsampling;
 
 	return TRUE;
 }
@@ -421,13 +339,13 @@ gst_mfx_encoder_h264_get_codec_data(GstMfxEncoder * base_encoder,
 
 	mfxExtBuffer *ext_buffers[] = {
 		(mfxExtBuffer*)&extradata,
-		//(mfxExtBuffer*)&co,
-		//(mfxExtBuffer*)&co2,
+		(mfxExtBuffer*)&co,
+		(mfxExtBuffer*)&co2,
 		//(mfxExtBuffer*)&co3,
 	};
 
 	base_encoder->params.ExtParam = ext_buffers;
-	base_encoder->params.NumExtParam = 1;
+	base_encoder->params.NumExtParam = 3;
 
 	sts = MFXVideoENCODE_GetVideoParam(base_encoder->session, &base_encoder->params);
 	if (sts < 0)
@@ -484,20 +402,20 @@ error_alloc_buffer:
 
 static GstMfxEncoderStatus
 gst_mfx_encoder_h264_set_property(GstMfxEncoder * base_encoder,
-gint prop_id, const GValue * value)
+    gint prop_id, const GValue * value)
 {
 	GstMfxEncoderH264 *const encoder =
 		GST_MFX_ENCODER_H264_CAST(base_encoder);
 
 	switch (prop_id) {
 	case GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE:
-		encoder->max_slice_size = g_value_get_uint(value);
+		base_encoder->max_slice_size = g_value_get_uint(value);
 		break;
 	case GST_MFX_ENCODER_H264_PROP_LA_DEPTH:
-		encoder->la_depth = g_value_get_uint(value);
+		base_encoder->la_depth = g_value_get_uint(value);
 		break;
 	case GST_MFX_ENCODER_H264_PROP_CABAC:
-		encoder->use_cabac = g_value_get_boolean(value);
+		base_encoder->use_cabac = g_value_get_boolean(value);
 		break;
 	case GST_MFX_ENCODER_H264_PROP_CPB_LENGTH:
 		encoder->cpb_length = g_value_get_uint(value);
@@ -584,7 +502,7 @@ gst_mfx_encoder_h264_get_default_properties(void)
 		g_param_spec_boolean("cabac",
 		"Enable CABAC",
 		"Enable CABAC entropy coding mode",
-		FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+		TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
 	* GstMfxEncoderH264:cpb-length:

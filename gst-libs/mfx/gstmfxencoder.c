@@ -247,7 +247,83 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
 	return props;
 }
 
-static gboolean
+static void
+set_extended_coding_options(GstMfxEncoder * encoder)
+{
+	encoder->extco.Header.BufferId = MFX_EXTBUFF_CODING_OPTION;
+	encoder->extco.Header.BufferSz = sizeof(encoder->extco);
+
+	encoder->extco.CAVLC = !encoder->use_cabac ?
+		MFX_CODINGOPTION_ON : MFX_CODINGOPTION_UNKNOWN;
+
+	encoder->extco.PicTimingSEI = encoder->pic_timing_sei ?
+		MFX_CODINGOPTION_ON : MFX_CODINGOPTION_UNKNOWN;
+
+	if (encoder->rdo >= 0)
+		encoder->extco.RateDistortionOpt = encoder->rdo > 0 ?
+			MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+
+	//encoder->extco.NalHrdConformance = encoder->strict_std_compliance ?
+		//MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+
+	if (encoder->single_sei_nal_unit >= 0)
+		encoder->extco.SingleSeiNalUnit = encoder->single_sei_nal_unit ?
+			MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+	if (encoder->recovery_point_sei >= 0)
+		encoder->extco.RecoveryPointSEI = encoder->recovery_point_sei ?
+			MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    encoder->extco.MaxDecFrameBuffering = encoder->max_dec_frame_buffering;
+
+	encoder->extparam_internal[encoder->nb_extparam_internal++] =
+		(mfxExtBuffer *)&encoder->extco;
+
+	encoder->extco2.Header.BufferId = MFX_EXTBUFF_CODING_OPTION2;
+	encoder->extco2.Header.BufferSz = sizeof(encoder->extco2);
+
+	if (encoder->int_ref_type)
+		encoder->extco2.IntRefType = encoder->int_ref_type;
+	if (encoder->int_ref_cycle_size)
+		encoder->extco2.IntRefCycleSize = encoder->int_ref_cycle_size;
+	if (encoder->int_ref_qp_delta != INT16_MIN)
+		encoder->extco2.IntRefQPDelta = encoder->int_ref_qp_delta;
+
+	if (encoder->bitrate_limit >= 0)
+		encoder->extco2.BitrateLimit = encoder->bitrate_limit ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+	if (encoder->mbbrc >= 0)
+		encoder->extco2.MBBRC = encoder->mbbrc ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+	if (encoder->extbrc >= 0)
+		encoder->extco2.ExtBRC = encoder->extbrc ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+
+	if (encoder->max_frame_size >= 0)
+		encoder->extco2.MaxFrameSize = encoder->max_frame_size;
+	if (encoder->max_slice_size >= 0)
+		encoder->extco2.MaxSliceSize = encoder->max_slice_size;
+
+	encoder->extco2.Trellis = encoder->trellis;
+
+	if (encoder->b_strategy >= 0)
+		encoder->extco2.BRefType = encoder->b_strategy ?
+            MFX_B_REF_PYRAMID : MFX_B_REF_OFF;
+	if (encoder->adaptive_i >= 0)
+		encoder->extco2.AdaptiveI = encoder->adaptive_i ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+	if (encoder->adaptive_b >= 0)
+		encoder->extco2.AdaptiveB = encoder->adaptive_b ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+
+	encoder->extco2.LookAheadDS = encoder->look_ahead_downsampling;
+
+	encoder->extparam_internal[encoder->nb_extparam_internal++] =
+        (mfxExtBuffer *)&encoder->extco2;
+
+    encoder->params.ExtParam = encoder->extparam_internal;
+	encoder->params.NumExtParam = encoder->nb_extparam_internal;
+}
+
+static void
 set_encoding_params(GstMfxEncoder * encoder)
 {
 	encoder->params.AsyncDepth = encoder->async_depth;
@@ -276,10 +352,8 @@ set_encoding_params(GstMfxEncoder * encoder)
 			encoder->params.mfx.QPB = encoder->qpb;
 	}
 
-	//encoder->params.ExtParam = encoder->extparam_internal;
-	//encoder->params.NumExtParam = encoder->nb_extparam_internal;
-
-	return TRUE;
+    if (encoder->codec = MFX_CODEC_AVC)
+        set_extended_coding_options(encoder);
 }
 
 static void
@@ -374,10 +448,6 @@ gst_mfx_encoder_init(GstMfxEncoder * encoder,
 
 #undef CHECK_VTABLE_HOOK
 
-    /* Default params for all encoders */
-    encoder->preset = DEFAULT_ENCODER_PRESET;
-	encoder->async_depth = DEFAULT_ASYNC_DEPTH;
-
 	if (!klass->init(encoder))
 		return FALSE;
 	if (!gst_mfx_encoder_init_properties(encoder, aggregator, info, mapped))
@@ -471,6 +541,14 @@ gst_mfx_encoder_set_preset(GstMfxEncoder * encoder, GstMfxEncoderPreset preset)
 	encoder->preset = preset;
 
 	return TRUE;
+}
+
+gboolean
+gst_mfx_encoder_set_async_depth(GstMfxEncoder * encoder, mfxU16 async_depth)
+{
+    encoder->async_depth = async_depth;
+
+    return TRUE;
 }
 
 gboolean
@@ -600,19 +678,19 @@ gst_mfx_encoder_encode(GstMfxEncoder * encoder,
 {
 	GstMapInfo minfo;
 	GstMfxSurfaceProxy *proxy, *filter_proxy;
+	GstMfxFilterStatus filter_sts;
 	mfxFrameSurface1 *insurf;
 	mfxSyncPoint syncp;
 	mfxStatus sts = MFX_ERR_NONE;
 
 	proxy = gst_video_codec_frame_get_user_data(frame);
-
-	if (gst_mfx_task_has_type(encoder->encode_task, GST_MFX_TASK_VPP_OUT)) {
-		gst_mfx_filter_process(encoder->filter, proxy, &filter_proxy);
-
-		proxy = filter_proxy;
+	filter_sts = gst_mfx_filter_process(encoder->filter, proxy, &filter_proxy);
+	if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
+		GST_ERROR("MFX pre-processing error when encoding.");
+		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 	}
 
-	insurf = gst_mfx_surface_proxy_get_frame_surface (proxy);
+	insurf = gst_mfx_surface_proxy_get_frame_surface (filter_proxy);
 
 	do {
 		sts = MFXVideoENCODE_EncodeFrameAsync(encoder->session,
@@ -676,6 +754,7 @@ set_property(GstMfxEncoder * encoder, gint prop_id, const GValue * value)
 {
 	GstMfxEncoderStatus status =
 		GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
+    gboolean success = FALSE;
 
 	g_assert(value != NULL);
 
@@ -692,57 +771,62 @@ set_property(GstMfxEncoder * encoder, gint prop_id, const GValue * value)
 	/* Handle common properties */
 	switch (prop_id) {
 	case GST_MFX_ENCODER_PROP_RATECONTROL:
-		status = gst_mfx_encoder_set_rate_control(encoder,
+		success = gst_mfx_encoder_set_rate_control(encoder,
 			g_value_get_enum(value));
 		break;
 	case GST_MFX_ENCODER_PROP_BITRATE:
-		status = gst_mfx_encoder_set_bitrate(encoder,
+		success = gst_mfx_encoder_set_bitrate(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_IDR_INTERVAL:
-		status = gst_mfx_encoder_set_idr_interval(encoder,
+		success = gst_mfx_encoder_set_idr_interval(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_GOP_SIZE:
-		status = gst_mfx_encoder_set_gop_size(encoder,
+		success = gst_mfx_encoder_set_gop_size(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_GOP_REFDIST:
-		status = gst_mfx_encoder_set_gop_refdist(encoder,
+		success = gst_mfx_encoder_set_gop_refdist(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_NUM_REFS:
-		status = gst_mfx_encoder_set_num_references(encoder,
+		success = gst_mfx_encoder_set_num_references(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_NUM_SLICES:
-		status = gst_mfx_encoder_set_num_slices(encoder,
+		success = gst_mfx_encoder_set_num_slices(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_QPI:
-		status = gst_mfx_encoder_set_qpi(encoder,
+		success = gst_mfx_encoder_set_qpi(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_QPP:
-		status = gst_mfx_encoder_set_qpp(encoder,
+		success = gst_mfx_encoder_set_qpp(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_QPB:
-		status = gst_mfx_encoder_set_qpb(encoder,
+		success = gst_mfx_encoder_set_qpb(encoder,
 			g_value_get_uint(value));
 		break;
 	case GST_MFX_ENCODER_PROP_PRESET:
-		status = gst_mfx_encoder_set_preset(encoder, g_value_get_enum(value));
+		success = gst_mfx_encoder_set_preset(encoder, g_value_get_enum(value));
+		break;
+    case GST_MFX_ENCODER_PROP_ASYNC_DEPTH:
+		success = gst_mfx_encoder_set_async_depth(encoder, g_value_get_uint(value));
 		break;
 	}
-	return status;
+
+	return success ? GST_MFX_ENCODER_STATUS_SUCCESS :
+        GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
 }
 
 GstMfxEncoderStatus
 gst_mfx_encoder_set_property(GstMfxEncoder * encoder, gint prop_id,
 	const GValue * value)
 {
-	GstMfxEncoderStatus status;
+	GstMfxEncoderStatus status = GST_MFX_ENCODER_STATUS_SUCCESS;
 	GValue default_value = G_VALUE_INIT;
 
 	g_return_val_if_fail(encoder != NULL,
