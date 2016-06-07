@@ -28,6 +28,80 @@ GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxvideomemory);
 static void gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem);
 
 static gboolean
+copy_image(GstMfxVideoMemory *mem)
+{
+	guint i = 0, data_size = 0, width = 0,
+          height = 0, pitch = 0, frame_size = 0;
+	gpointer cur = NULL;
+	guchar *plane = NULL;
+
+	data_size = vaapi_image_get_data_size(mem->image);
+	width = GST_VIDEO_INFO_WIDTH(mem->image_info);
+	height = GST_VIDEO_INFO_HEIGHT(mem->image_info);
+	pitch = vaapi_image_get_pitch(mem->image, 0);
+
+	if(!data_size)
+		return FALSE;
+
+	mem->data = (guchar *)g_slice_alloc0(data_size);
+	if(!mem->data)
+		return FALSE;
+
+    /* Determine the base data pointer */
+    cur = mem->data;
+
+    /* For now, MSDK only allow NV12 output */
+    /* Y-Plane Size */
+    frame_size = width * height;
+    plane = vaapi_image_get_plane(mem->image, 0);
+    if(pitch != width) {
+        for(i=0; i<height; i++) {
+            memcpy(cur, plane, width);
+            cur += width;
+            plane += pitch;
+        }
+    } else {
+        memcpy(cur, plane, frame_size);
+        cur += frame_size;
+    }
+
+    /* UV-Plane Size */
+    height /= 2;
+    frame_size = width * height;
+    plane = vaapi_image_get_plane(mem->image, 1);
+    if( pitch != width ) {
+        for(i=0; i<height; i++) {
+            memcpy(cur, plane, width);
+            cur += width;
+            plane += pitch;
+        }
+    } else {
+        memcpy(cur, plane, frame_size);
+    }
+	mem->mapped = FALSE;
+
+	return TRUE;
+}
+
+static void
+get_image_data(GstMfxVideoMemory *mem)
+{
+	guint plane_count = 0;
+	gboolean ret;
+
+	plane_count = GST_VIDEO_INFO_N_PLANES(mem->image_info);
+
+    if(plane_count > 1) {
+        ret = copy_image(mem);
+        if (!ret)
+            mem->data = NULL;
+    } else {
+        mem->data = vaapi_image_get_plane(mem->image, 0);
+        mem->mapped = TRUE;
+    }
+}
+
+static gboolean
 ensure_image (GstMfxVideoMemory * mem)
 {
     if (!mem->image) {
@@ -184,6 +258,7 @@ gst_mfx_video_memory_new(GstAllocator * base_allocator,
 	mem->meta = meta ? gst_mfx_video_meta_ref(meta) : NULL;
 	mem->map_type = 0;
 	mem->map_count = 0;
+    mem->mapped = FALSE;
 
 	return GST_MEMORY_CAST(mem);
 }
@@ -261,7 +336,10 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
         case GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR:
             if (!mem->image)
                 goto error_no_image;
-            data = vaapi_image_get_plane(mem->image, 0);
+	    get_image_data(mem);
+	    data = mem->data;
+	    if(!data)
+		    goto error_no_image;
             break;
         case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
             data = gst_mfx_surface_proxy_get_data(mem->proxy);
@@ -302,6 +380,9 @@ gst_mfx_video_memory_unmap (GstMfxVideoMemory * mem)
                 gst_mfx_surface_proxy_replace (&mem->proxy, NULL);
                 break;
             case GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR:
+                if(!mem->mapped)
+                    g_slice_free1(vaapi_image_get_data_size(mem->image),
+                            mem->data);
                 vaapi_image_unmap (mem->image);
                 break;
             case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
