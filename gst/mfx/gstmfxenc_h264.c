@@ -26,7 +26,7 @@ static const char gst_mfxenc_h264_sink_caps_str[] =
 /* *INDENT-OFF* */
 static const char gst_mfxenc_h264_src_caps_str[] =
 	GST_CODEC_CAPS ", "
-	"profile = (string) { baseline, main, high }";
+	"profile = (string) { constrained-baseline, baseline, main, high }";
 /* *INDENT-ON* */
 
 /* *INDENT-OFF* */
@@ -127,7 +127,7 @@ find_best_profile(GstCaps * caps)
 	FindBestProfileData data;
 	guint i, j, num_structures, num_values;
 
-	data.best_profile = GST_MFX_PROFILE_UNKNOWN;
+	data.best_profile = GST_MFX_PROFILE_AVC_BASELINE;
 	data.best_score = 0;
 
 	num_structures = gst_caps_get_size(caps);

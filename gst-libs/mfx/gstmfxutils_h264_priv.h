@@ -18,7 +18,7 @@ G_BEGIN_DECLS
 * The data structure that describes the limits of an H.264 level.
 */
 typedef struct {
-	GstMfxLevelH264 level;
+	mfxU16 level;
 	guint8 level_idc;
 	guint32 MaxMBPS;
 	guint32 MaxFS;
@@ -27,25 +27,10 @@ typedef struct {
 	guint32 MaxCPB;
 } GstMfxH264LevelLimits;
 
-/* Returns GstMfxProfile from H.264 profile_idc value */
-GstMfxProfile
-gst_mfx_utils_h264_get_profile(guint8 profile_idc);
 
 /* Returns H.264 profile_idc value from GstMfxProfile */
 guint8
 gst_mfx_utils_h264_get_profile_idc(GstMfxProfile profile);
-
-/* Returns GstMfxLevelH264 from H.264 level_idc value */
-GstMfxLevelH264
-gst_mfx_utils_h264_get_level(guint8 level_idc);
-
-/* Returns H.264 level_idc value from GstMfxLevelH264 */
-guint8
-gst_mfx_utils_h264_get_level_idc(GstMfxLevelH264 level);
-
-/* Returns level limits as specified in Table A-1 of the H.264 standard */
-const GstMfxH264LevelLimits *
-gst_mfx_utils_h264_get_level_limits(GstMfxLevelH264 level);
 
 /* Returns the Table A-1 specification */
 const GstMfxH264LevelLimits *

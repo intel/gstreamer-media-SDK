@@ -311,12 +311,7 @@ ensure_encoder(GstMfxEnc * encode)
 static gboolean
 gst_mfxenc_open(GstVideoEncoder * venc)
 {
-	GstMfxEnc *const encode = GST_MFXENC_CAST(venc);
-
-	if (!gst_mfx_plugin_base_open(GST_MFX_PLUGIN_BASE(encode)))
-		return FALSE;
-
-	return ensure_aggregator(encode);
+	return ensure_aggregator(GST_MFXENC_CAST(venc));
 }
 
 static gboolean
@@ -365,6 +360,8 @@ gst_mfxenc_set_format(GstVideoEncoder * venc, GstVideoCodecState * state)
 		return FALSE;
 
     status = gst_mfx_encoder_start(encode->encoder);
+    if (GST_MFX_ENCODER_STATUS_SUCCESS != status)
+        return FALSE;
 
 	if (encode->input_state)
 		gst_video_codec_state_unref(encode->input_state);
@@ -402,22 +399,22 @@ gst_mfxenc_handle_frame(GstVideoEncoder * venc,
 		goto error_buffer_no_surface_proxy;
 
 	gst_video_codec_frame_set_user_data(frame,
-		gst_mfx_surface_proxy_ref(proxy),
-		NULL);
+        gst_mfx_surface_proxy_ref(proxy), NULL);
 
 	//GST_VIDEO_ENCODER_STREAM_UNLOCK(encode);
 	status = gst_mfx_encoder_encode(encode->encoder, frame);
 	//GST_VIDEO_ENCODER_STREAM_LOCK(encode);
 	if (status < GST_MFX_ENCODER_STATUS_SUCCESS)
 		goto error_encode_frame;
-    else if (status > 0)
+    else if (status > 0) {
+        ret = GST_FLOW_OK;
         goto done;
+    }
 
 	ret = gst_mfxenc_push_frame(encode, frame);
-	//gst_video_codec_frame_unref(frame);
 
 done:
-	return GST_FLOW_OK;
+	return ret;
 
 	/* ERRORS */
 error_buffer_invalid:

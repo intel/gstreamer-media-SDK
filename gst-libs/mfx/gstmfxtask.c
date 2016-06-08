@@ -31,7 +31,7 @@ struct _GstMfxTask {
 
 	GstMfxDisplay          *display;
 	VASurfaceID            *surfaces;
-	mfxMemId               *surface_ids;
+	mfxMemId               *mem_ids;
 	mfxFrameInfo            frame_info;
 	mfxU16                  num_surfaces;
 	GQueue				   *surface_queue;
@@ -70,11 +70,11 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
     task->surfaces =
         g_slice_alloc(task->num_surfaces * sizeof(*task->surfaces));
-    task->surface_ids =
-        g_slice_alloc(task->num_surfaces * sizeof(*task->surface_ids));
+    task->mem_ids =
+        g_slice_alloc(task->num_surfaces * sizeof(*task->mem_ids));
     task->surface_queue = g_queue_new();
 
-    if (!task->surfaces || !task->surface_ids || !task->surface_queue)
+    if (!task->surfaces || !task->mem_ids || !task->surface_queue)
         goto fail;
 
     fourcc = gst_mfx_video_format_to_va_fourcc(task->frame_info.FourCC);
@@ -96,11 +96,11 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
     }
 
     for (i = 0; i < task->num_surfaces; i++) {
-        task->surface_ids[i] = &task->surfaces[i];
-        g_queue_push_tail(task->surface_queue, task->surface_ids[i]);
+        task->mem_ids[i] = &task->surfaces[i];
+        g_queue_push_tail(task->surface_queue, task->mem_ids[i]);
     }
 
-    resp->mids = task->surface_ids;
+    resp->mids = task->mem_ids;
 	resp->NumFrameActual = task->num_surfaces;
 
 	if (task->task_type & GST_MFX_TASK_DECODER)
@@ -109,7 +109,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 	return MFX_ERR_NONE;
 fail:
 	g_slice_free1(task->num_surfaces * sizeof(*task->surfaces), task->surfaces);
-	g_slice_free1(task->num_surfaces * sizeof(*task->surface_ids), task->surface_ids);
+	g_slice_free1(task->num_surfaces * sizeof(*task->mem_ids), task->mem_ids);
 	g_queue_free(task->surface_queue);
 
 	return MFX_ERR_MEMORY_ALLOC;
@@ -126,7 +126,7 @@ gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
 	GST_MFX_DISPLAY_UNLOCK(task->display);
 
 	g_slice_free1(task->num_surfaces * sizeof(*task->surfaces), task->surfaces);
-	g_slice_free1(task->num_surfaces * sizeof(*task->surface_ids), task->surface_ids);
+	g_slice_free1(task->num_surfaces * sizeof(*task->mem_ids), task->mem_ids);
 	g_queue_free(task->surface_queue);
 	if (task->response)
         g_slice_free1(sizeof(mfxFrameAllocResponse), task->response);

@@ -311,14 +311,6 @@ gst_mfx_profile_get_caps(GstMfxProfile profile)
 	return out_caps;
 }
 
-/**
-* gst_mfx_profile_get_codec:
-* @profile: a #GstMfxProfile
-*
-* Extracts the #GstMfxCodec from @profile.
-*
-* Return value: the #GstMfxCodec from @profile
-*/
 mfxU32
 gst_mfx_profile_get_codec(GstMfxProfile profile)
 {
@@ -329,4 +321,10 @@ gst_mfx_profile_get_codec(GstMfxProfile profile)
 			return m->codec;
 
 	return 0;
+}
+
+mfxU32
+gst_mfx_profile_get_codec_profile(GstMfxProfile profile)
+{
+	return gst_mfx_profile_get_codec(profile) ^ profile;
 }

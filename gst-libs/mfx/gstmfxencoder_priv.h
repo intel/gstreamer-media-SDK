@@ -129,6 +129,7 @@ struct _GstMfxEncoder
 
 	GPtrArray			   *properties;
 	GstMfxProfile			profile;
+	mfxU16                  level;
 
 	GstMfxTaskAggregator   *aggregator;
 	GstMfxTask             *encode_task;
@@ -147,6 +148,7 @@ struct _GstMfxEncoder
 	/* Encoder params */
 	GstMfxEncoderPreset		preset;
 	GstMfxRateControl		rc_method;
+	guint                   global_quality;
 	mfxU16					bitrate;
 	mfxU16					async_depth;
 	mfxU16					la_depth;
@@ -155,9 +157,9 @@ struct _GstMfxEncoder
 	mfxU16					gop_refdist;
 	mfxU16					num_refs;
 	mfxU16					num_slices;
-	mfxU16					qpi;
-	mfxU16					qpp;
-	mfxU16					qpb;
+	mfxU16					qpi_offset;
+	mfxU16					qpp_offset;
+	mfxU16					qpb_offset;
 
 	mfxExtCodingOption		extco;
 	mfxExtCodingOption2		extco2;
@@ -166,26 +168,18 @@ struct _GstMfxEncoder
 
     /* H264 specific coding options */
     gboolean				use_cabac;
-    gint                    bitrate_limit;
 	gint                    max_slice_size;
 	gint                    max_frame_size;
-	mfxU16                  int_ref_type;
-	mfxU16                  int_ref_cycle_size;
-	mfxU16                  int_ref_qp_delta;
 
-	gint                    mbbrc;
-	gint                    extbrc;
-	mfxU16                  trellis;
-	gint                    b_strategy;
-	gint                    adaptive_i;
-	gint                    adaptive_b;
+	GstMfxOption            mbbrc;
+	GstMfxOption            extbrc;
+	GstMfxOption            b_strategy;
+	GstMfxOption            adaptive_i;
+	GstMfxOption            adaptive_b;
 
-	mfxU16					rdo;
-	mfxU16					pic_timing_sei;
-	mfxU16					single_sei_nal_unit;
-	mfxU16					recovery_point_sei;
 	mfxU16					max_dec_frame_buffering;
 	mfxU16					look_ahead_downsampling;
+	mfxU16                  trellis;
 };
 
 struct _GstMfxEncoderClassData

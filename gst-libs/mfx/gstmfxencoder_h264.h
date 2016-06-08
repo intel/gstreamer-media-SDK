@@ -13,12 +13,13 @@ typedef struct _GstMfxEncoderH264 GstMfxEncoderH264;
 
 /**
 * GstMfxEncoderH264Prop:
-* @GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE: Number of B-frames between I
-*   and P (uint).
-* @GST_MFX_ENCODER_H264_PROP_LA_DEPTH: Number of slices per frame (uint).
+* @GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE:
+* @GST_MFX_ENCODER_H264_PROP_LA_DEPTH:
 * @GST_MFX_ENCODER_H264_PROP_CABAC: Enable CABAC entropy coding mode (bool).
 * @GST_MFX_ENCODER_H264_PROP_CPB_LENGTH: Length of the CPB buffer
 *   in milliseconds (uint).
+* @GST_MFX_ENCODER_H264_PROP_TRELLIS:
+* @GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS:
 *
 * The set of H.264 encoder specific configurable properties.
 */
@@ -27,6 +28,8 @@ typedef enum {
 	GST_MFX_ENCODER_H264_PROP_LA_DEPTH = -2,
 	GST_MFX_ENCODER_H264_PROP_CABAC = -3,
 	GST_MFX_ENCODER_H264_PROP_CPB_LENGTH = -4,
+	GST_MFX_ENCODER_H264_PROP_TRELLIS = -5,
+	GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS = -6,
 } GstMfxEncoderH264Prop;
 
 GstMfxEncoder *
@@ -42,7 +45,7 @@ gst_mfx_encoder_h264_set_max_profile(GstMfxEncoderH264 * encoder,
 
 gboolean
 gst_mfx_encoder_h264_get_profile_and_level(GstMfxEncoderH264 * encoder,
-	GstMfxProfile * out_profile_ptr, GstMfxLevelH264 * out_level_ptr);
+	GstMfxProfile * out_profile_ptr, mfxU16 * out_level_ptr);
 
 G_END_DECLS
 

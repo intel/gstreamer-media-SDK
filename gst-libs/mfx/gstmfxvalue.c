@@ -39,6 +39,28 @@ gst_mfx_rotation_get_type(void)
 	return g_type;
 }
 
+GType
+gst_mfx_option_get_type(void)
+{
+	static volatile gsize g_type = 0;
+
+	static const GEnumValue options[] = {
+		{ GST_MFX_OPTION_AUTO,
+		"Let Media SDK decide", "auto" },
+		{ GST_MFX_OPTION_ON,
+		"Turn on option", "on" },
+		{ GST_MFX_OPTION_OFF,
+		"Turn off option", "off" },
+		{ 0, NULL, NULL },
+	};
+
+	if (g_once_init_enter(&g_type)) {
+		GType type = g_enum_register_static("GstMfxOption", options);
+		g_once_init_leave(&g_type, type);
+	}
+	return g_type;
+}
+
 /* --- GstMfxRateControl --- */
 
 GType

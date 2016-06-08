@@ -52,8 +52,14 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
 {
 	mfxFrameData *ptr = &proxy->surface.Data;
 	mfxFrameInfo *info = &proxy->surface.Info;
-	guint frame_size;
+	guint frame_size, offset;
 	gboolean success = TRUE;
+
+#ifdef WITH_MSS
+    offset = 1;
+#else
+    offset = 0;
+#endif
 
     frame_size = info->Width * info->Height;
 
@@ -63,11 +69,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
         ptr->Pitch = proxy->pitches[0] = proxy->pitches[1] = info->Width;
 
-#ifdef WITH_MSS
-		ptr->Y = proxy->planes[0] = proxy->data + 1;
-#else
-        ptr->Y = proxy->planes[0] = proxy->data;
-#endif
+		ptr->Y = proxy->planes[0] = proxy->data + offset;
         ptr->UV = proxy->planes[1] = ptr->Y + frame_size;
 
         break;
@@ -87,11 +89,7 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
         proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
         ptr->Pitch = proxy->pitches[0] = info->Width * 2;
 
-#ifdef WITH_MSS
-		ptr->Y = proxy->planes[0] = proxy->data + 1;
-#else
-        ptr->Y = proxy->planes[0] = proxy->data;
-#endif
+		ptr->Y = proxy->planes[0] = proxy->data + offset;
         ptr->U = ptr->Y + 1;
         ptr->V = ptr->Y + 3;
 
@@ -229,7 +227,7 @@ mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy,
         if (!vaapi_check_status(sts, "vaCreateSurfaces()"))
             return FALSE;
 
-        proxy->surface.Data.MemId = proxy->surface_id;
+        proxy->surface.Data.MemId = &proxy->surface_id;
     }
 
 	return TRUE;

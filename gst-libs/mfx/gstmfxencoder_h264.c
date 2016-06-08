@@ -47,9 +47,6 @@ h264_get_cpb_nal_factor(GstMfxProfile profile)
 	case GST_MFX_PROFILE_AVC_HIGH:
 		f = 1500;
 		break;
-	case GST_MFX_PROFILE_AVC_HIGH10:
-		f = 3600;
-		break;
 	case GST_MFX_PROFILE_AVC_HIGH_422:
 		f = 4800;
 		break;
@@ -71,8 +68,6 @@ struct _GstMfxEncoderH264
 {
 	GstMfxEncoder parent_instance;
 
-	GstMfxProfile profile;
-	GstMfxLevelH264 level;
 	guint8 profile_idc;
 	guint8 max_profile_idc;
 	guint8 level_idc;
@@ -115,7 +110,7 @@ ensure_profile_limits(GstMfxEncoderH264 * encoder)
 	}
 
 	if (profile) {
-		encoder->profile = profile;
+		base_encoder->profile = profile;
 		encoder->profile_idc = encoder->max_profile_idc;
 	}
 	return TRUE;
@@ -125,7 +120,8 @@ ensure_profile_limits(GstMfxEncoderH264 * encoder)
 static gboolean
 ensure_level(GstMfxEncoderH264 * encoder)
 {
-	const guint cpb_factor = h264_get_cpb_nal_factor(encoder->profile);
+    GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST(encoder);
+	const guint cpb_factor = h264_get_cpb_nal_factor(base_encoder->profile);
 	const GstMfxH264LevelLimits *limits_table;
 	guint i, num_limits, PicSizeMbs, MaxDpbMbs, MaxMBPS;
 
@@ -148,7 +144,7 @@ ensure_level(GstMfxEncoderH264 * encoder)
 	if (i == num_limits)
 		goto error_unsupported_level;
 
-	encoder->level = limits_table[i].level;
+	base_encoder->level = limits_table[i].level;
 	encoder->level_idc = limits_table[i].level_idc;
 
 	return TRUE;
@@ -232,8 +228,9 @@ ensure_bitrate(GstMfxEncoderH264 * encoder)
 static GstMfxEncoderStatus
 ensure_profile_and_level(GstMfxEncoderH264 * encoder)
 {
-	const GstMfxProfile profile = encoder->profile;
-	const GstMfxLevelH264 level = encoder->level;
+    GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST(encoder);
+	const GstMfxProfile profile = base_encoder->profile;
+	const mfxU16 level = base_encoder->level;
 
 	if (!ensure_profile_limits(encoder))
 		return GST_MFX_ENCODER_STATUS_ERROR_UNSUPPORTED_PROFILE;
@@ -243,10 +240,10 @@ ensure_profile_and_level(GstMfxEncoderH264 * encoder)
 	if (!ensure_level(encoder))
 		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 
-	if (encoder->profile != profile || encoder->level != level) {
+	if (base_encoder->profile != profile || base_encoder->level != level) {
 		GST_DEBUG("selected %s profile at level %s",
-			gst_mfx_utils_h264_get_profile_string(encoder->profile),
-			gst_mfx_utils_h264_get_level_string(encoder->level));
+			gst_mfx_utils_h264_get_profile_string(base_encoder->profile),
+			gst_mfx_utils_h264_get_level_string(base_encoder->level));
 		encoder->config_changed = TRUE;
 	}
 
@@ -380,7 +377,7 @@ gst_mfx_encoder_h264_get_codec_data(GstMfxEncoder * base_encoder,
 	memcpy(cur, pps_data + 4, pps_size);
 
     buffer =
-        gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY, codec_data,
+        gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, codec_data,
         extradata_size, 0, extradata_size, NULL, NULL);
 	if (!buffer)
 		goto error_alloc_buffer;
@@ -412,6 +409,12 @@ gst_mfx_encoder_h264_set_property(GstMfxEncoder * base_encoder,
 		break;
 	case GST_MFX_ENCODER_H264_PROP_CABAC:
 		base_encoder->use_cabac = g_value_get_boolean(value);
+		break;
+    case GST_MFX_ENCODER_H264_PROP_TRELLIS:
+		base_encoder->trellis = g_value_get_enum(value);
+		break;
+    case GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS:
+		base_encoder->look_ahead_downsampling = g_value_get_enum(value);
 		break;
 	case GST_MFX_ENCODER_H264_PROP_CPB_LENGTH:
 		encoder->cpb_length = g_value_get_uint(value);
@@ -465,30 +468,30 @@ gst_mfx_encoder_h264_get_default_properties(void)
 		return NULL;
 
 	/**
-	* GstMfxEncoderH264:max-slice-size:
+	* GstMfxEncoderH264:max-slice-size
 	*
 	* Maximum encoded slice size in bytes.
 	*/
 	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
 		GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE,
 		g_param_spec_int("max-slice-size",
-		"Max slice size", "Maximum encoded slice size in bytes",
-		-1, G_MAXUINT16, -1,
-		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+            "Maximum slice size", "Maximum encoded slice size in bytes",
+            -1, G_MAXUINT16, -1,
+            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoderH264:la-depth:
+	* GstMfxEncoderH264:la-depth
 	*
 	* Depth of look ahead in number frames.
 	*/
 	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
 		GST_MFX_ENCODER_H264_PROP_LA_DEPTH,
 		g_param_spec_uint("la-depth",
-		"Lookahead depth", "Depth of look ahead in number frames", 0, 100, 0,
-		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+            "Lookahead depth", "Depth of lookahead in frames", 0, 100, 0,
+            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoderH264:cabac:
+	* GstMfxEncoderH264:cabac
 	*
 	* Enable CABAC entropy coding mode for improved compression ratio,
 	* at the expense that the minimum target profile is Main. Default
@@ -497,21 +500,49 @@ gst_mfx_encoder_h264_get_default_properties(void)
 	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
 		GST_MFX_ENCODER_H264_PROP_CABAC,
 		g_param_spec_boolean("cabac",
-		"Enable CABAC",
-		"Enable CABAC entropy coding mode",
-		TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+            "Enable CABAC",
+            "Enable CABAC entropy coding mode",
+            TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+    /**
+	* GstMfxEncoderH264:trellis
+	*
+	* Enable trellis quantization
+	*/
+    GST_MFX_ENCODER_PROPERTIES_APPEND(props,
+		GST_MFX_ENCODER_H264_PROP_TRELLIS,
+		g_param_spec_enum("trellis",
+            "Trellis quantization",
+            "Enable trellis quantization",
+            gst_mfx_encoder_trellis_get_type(), GST_MFX_ENCODER_TRELLIS_OFF,
+            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+
+    /**
+	* GstMfxEncoderH264:trellis
+	*
+	* Enable trellis quantization
+	*/
+    GST_MFX_ENCODER_PROPERTIES_APPEND(props,
+		GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS,
+		g_param_spec_enum("lookahead-ds",
+            "Look ahead downsampling",
+            "Look ahead downsampling",
+            gst_mfx_encoder_lookahead_ds_get_type(),
+            GST_MFX_ENCODER_LOOKAHEAD_DS_AUTO,
+            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoderH264:cpb-length:
+	* GstMfxEncoderH264:cpb-length
 	*
 	* The size of the CPB buffer in milliseconds.
 	*/
 	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
 		GST_MFX_ENCODER_H264_PROP_CPB_LENGTH,
 		g_param_spec_uint("cpb-length",
-		"CPB Length", "Length of the CPB buffer in milliseconds",
-		1, 10000, DEFAULT_CPB_LENGTH,
-		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+            "CPB Length", "Length of the CPB buffer in milliseconds",
+            1, 10000, DEFAULT_CPB_LENGTH,
+            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	return props;
 }
@@ -565,16 +596,18 @@ gst_mfx_encoder_h264_set_max_profile(GstMfxEncoderH264 * encoder,
 */
 gboolean
 gst_mfx_encoder_h264_get_profile_and_level(GstMfxEncoderH264 * encoder,
-	GstMfxProfile * out_profile_ptr, GstMfxLevelH264 * out_level_ptr)
+	GstMfxProfile * out_profile_ptr, mfxU16 * out_level_ptr)
 {
+    GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST(encoder);
+
 	g_return_val_if_fail(encoder != NULL, FALSE);
 
-	if (!encoder->profile || !encoder->level)
+	if (!base_encoder->profile || !base_encoder->level)
 		return FALSE;
 
 	if (out_profile_ptr)
-		*out_profile_ptr = encoder->profile;
+		*out_profile_ptr = base_encoder->profile;
 	if (out_level_ptr)
-		*out_level_ptr = encoder->level;
+		*out_level_ptr = base_encoder->level;
 	return TRUE;
 }

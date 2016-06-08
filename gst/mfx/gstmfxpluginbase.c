@@ -541,7 +541,7 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
 
     meta = gst_buffer_get_mfx_video_meta (inbuf);
     if (meta) {
-        *outbuf_ptr = plugin->use_dmabuf ? inbuf : gst_buffer_ref (inbuf);
+        *outbuf_ptr = gst_buffer_ref (inbuf);
         return GST_FLOW_OK;
     }
 

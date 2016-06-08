@@ -88,6 +88,12 @@ struct _GstMfxRectangle {
 	guint32 height;
 };
 
+typedef enum {
+	GST_MFX_OPTION_AUTO = -1,
+	GST_MFX_OPTION_OFF,
+	GST_MFX_OPTION_ON,
+} GstMfxOption;
+
 /**
 * GstMfxRotation:
 * @GST_MFX_ROTATION_0: the output surface is not rotated.

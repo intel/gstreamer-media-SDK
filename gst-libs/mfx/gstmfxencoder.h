@@ -53,6 +53,20 @@ typedef enum
 } GstMfxEncoderStatus;
 
 typedef enum {
+	GST_MFX_ENCODER_LOOKAHEAD_DS_AUTO = MFX_LOOKAHEAD_DS_UNKNOWN,
+	GST_MFX_ENCODER_LOOKAHEAD_DS_OFF = MFX_LOOKAHEAD_DS_OFF,
+	GST_MFX_ENCODER_LOOKAHEAD_DS_2X = MFX_LOOKAHEAD_DS_2x,
+	GST_MFX_ENCODER_LOOKAHEAD_DS_4X = MFX_LOOKAHEAD_DS_4x,
+} GstMfxEncoderLookAheadDS;
+
+typedef enum {
+	GST_MFX_ENCODER_TRELLIS_OFF = MFX_TRELLIS_OFF,
+	GST_MFX_ENCODER_TRELLIS_I = MFX_TRELLIS_I,
+	GST_MFX_ENCODER_TRELLIS_IP = MFX_TRELLIS_I|MFX_TRELLIS_P,
+	GST_MFX_ENCODER_TRELLIS_IPB = MFX_TRELLIS_I|MFX_TRELLIS_P|MFX_TRELLIS_B,
+} GstMfxEncoderTrellis;
+
+typedef enum {
 	GST_MFX_ENCODER_PRESET_VERY_SLOW = MFX_TARGETUSAGE_BEST_QUALITY,
 	GST_MFX_ENCODER_PRESET_SLOWER = MFX_TARGETUSAGE_2,
 	GST_MFX_ENCODER_PRESET_SLOW = MFX_TARGETUSAGE_3,
@@ -72,9 +86,15 @@ typedef enum {
 	GST_MFX_ENCODER_PROP_GOP_REFDIST,
 	GST_MFX_ENCODER_PROP_NUM_REFS,
 	GST_MFX_ENCODER_PROP_NUM_SLICES,
+	GST_MFX_ENCODER_PROP_QUANTIZER,
 	GST_MFX_ENCODER_PROP_QPI,
 	GST_MFX_ENCODER_PROP_QPP,
 	GST_MFX_ENCODER_PROP_QPB,
+	GST_MFX_ENCODER_PROP_MBBRC,
+	GST_MFX_ENCODER_PROP_EXTBRC,
+	GST_MFX_ENCODER_PROP_ADAPTIVE_I,
+	GST_MFX_ENCODER_PROP_ADAPTIVE_B,
+	GST_MFX_ENCODER_PROP_B_PYRAMID,
 	GST_MFX_ENCODER_PROP_ASYNC_DEPTH,
 } GstMfxEncoderProp;
 
@@ -92,6 +112,12 @@ typedef struct {
 
 GType
 gst_mfx_encoder_preset_get_type (void);
+
+GType
+gst_mfx_encoder_trellis_get_type (void);
+
+GType
+gst_mfx_encoder_lookahead_ds_get_type (void);
 
 GstMfxEncoder *
 gst_mfx_encoder_ref(GstMfxEncoder * encoder);
@@ -130,13 +156,31 @@ gboolean
 gst_mfx_encoder_set_num_slices(GstMfxEncoder * encoder, mfxU16 num_slices);
 
 gboolean
-gst_mfx_encoder_set_qpi(GstMfxEncoder * encoder, mfxU16 qpi);
+gst_mfx_encoder_set_quantizer(GstMfxEncoder * encoder, guint quantizer);
 
 gboolean
-gst_mfx_encoder_set_qpp(GstMfxEncoder * encoder, mfxU16 qpp);
+gst_mfx_encoder_set_qpi_offset(GstMfxEncoder * encoder, mfxU16 offset);
 
 gboolean
-gst_mfx_encoder_set_qpb(GstMfxEncoder * encoder, mfxU16 qpb);
+gst_mfx_encoder_set_qpp_offset(GstMfxEncoder * encoder, mfxU16 offset);
+
+gboolean
+gst_mfx_encoder_set_qpb_offset(GstMfxEncoder * encoder, mfxU16 offset);
+
+gboolean
+gst_mfx_encoder_set_mbbrc(GstMfxEncoder * encoder, GstMfxOption option);
+
+gboolean
+gst_mfx_encoder_set_extbrc(GstMfxEncoder * encoder, GstMfxOption option);
+
+gboolean
+gst_mfx_encoder_set_adaptive_i(GstMfxEncoder * encoder, GstMfxOption option);
+
+gboolean
+gst_mfx_encoder_set_adaptive_b(GstMfxEncoder * encoder, GstMfxOption option);
+
+gboolean
+gst_mfx_encoder_set_b_strategy(GstMfxEncoder * encoder, GstMfxOption option);
 
 gboolean
 gst_mfx_encoder_set_preset(GstMfxEncoder * encoder, GstMfxEncoderPreset preset);

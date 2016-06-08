@@ -6,10 +6,12 @@
 
 G_BEGIN_DECLS
 
+#define GST_MFX_TYPE_OPTION gst_mfx_option_get_type()
+
 /**
 * GST_MFX_TYPE_ROTATION:
 *
-* A type that represents the VA display rotation.
+* A type that represents the MFX surface rotation.
 *
 * Return value: the #GType of GstMfxRotation
 */
@@ -23,6 +25,9 @@ G_BEGIN_DECLS
 * Return value: the #GType of GstMfxRateControl
 */
 #define GST_MFX_TYPE_RATE_CONTROL gst_mfx_rate_control_get_type()
+
+GType
+gst_mfx_option_get_type(void);
 
 GType
 gst_mfx_rotation_get_type(void);
