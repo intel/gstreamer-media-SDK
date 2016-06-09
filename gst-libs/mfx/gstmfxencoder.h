@@ -134,22 +134,10 @@ gst_mfx_encoder_get_codec_data (GstMfxEncoder * encoder,
     GstBuffer ** out_codec_data_ptr);
 
 gboolean
-gst_mfx_encoder_set_bitrate(GstMfxEncoder * encoder, mfxU16 bitrate);
-
-gboolean
-gst_mfx_encoder_set_idr_interval(GstMfxEncoder * encoder, mfxU16 idr_interval);
-
-gboolean
-gst_mfx_encoder_set_gop_size(GstMfxEncoder * encoder, mfxU16 gop_size);
-
-gboolean
 gst_mfx_encoder_set_gop_refdist(GstMfxEncoder * encoder, gint gop_refdist);
 
 gboolean
 gst_mfx_encoder_set_num_references(GstMfxEncoder * encoder, mfxU16 num_refs);
-
-gboolean
-gst_mfx_encoder_set_num_slices(GstMfxEncoder * encoder, mfxU16 num_slices);
 
 gboolean
 gst_mfx_encoder_set_quantizer(GstMfxEncoder * encoder, guint quantizer);
@@ -171,6 +159,9 @@ gst_mfx_encoder_start(GstMfxEncoder * encoder);
 
 GstMfxEncoderStatus
 gst_mfx_encoder_encode(GstMfxEncoder * encoder, GstVideoCodecFrame * frame);
+
+GstMfxEncoderStatus
+gst_mfx_encoder_flush(GstMfxEncoder * encoder, GstVideoCodecFrame ** frame);
 
 G_END_DECLS
 

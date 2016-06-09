@@ -446,16 +446,23 @@ gst_mfxenc_finish(GstVideoEncoder * venc)
 {
 	GstMfxEnc *const encode = GST_MFXENC_CAST(venc);
 	GstMfxEncoderStatus status;
+	GstVideoCodecFrame *frame;
 	GstFlowReturn ret = GST_FLOW_OK;
 
-	/* Don't try to destroy encoder if none was created in the first place.
-	Return "not-negotiated" error since this means we did not even reach
-	GstVideoEncoder::set_format() state, where the encoder could have
-	been created */
+	/* Return "not-negotiated" error since this means we did not even reach
+	 * GstVideoEncoder::set_format() state, where the encoder could have
+	 * been created */
 	if (!encode->encoder)
 		return GST_FLOW_NOT_NEGOTIATED;
 
-	return GST_FLOW_OK;
+    do {
+        status = gst_mfx_encoder_flush(encode->encoder, &frame);
+        if (GST_MFX_ENCODER_STATUS_SUCCESS != status)
+            break;
+        ret = gst_mfxenc_push_frame(encode, frame);
+    } while (GST_MFX_ENCODER_STATUS_SUCCESS == status);
+
+	return ret;
 }
 
 static gboolean

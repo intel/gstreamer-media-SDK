@@ -43,10 +43,6 @@ gboolean
 gst_mfx_encoder_h264_set_max_profile(GstMfxEncoderH264 * encoder,
 	GstMfxProfile profile);
 
-gboolean
-gst_mfx_encoder_h264_get_profile_and_level(GstMfxEncoderH264 * encoder,
-	GstMfxProfile * out_profile_ptr, mfxU16 * out_level_ptr);
-
 G_END_DECLS
 
 #endif /*GST_MFX_ENCODER_H264_H */
