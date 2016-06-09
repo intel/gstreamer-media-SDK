@@ -137,17 +137,13 @@ gboolean
 gst_mfx_encoder_set_bitrate(GstMfxEncoder * encoder, mfxU16 bitrate);
 
 gboolean
-gst_mfx_encoder_set_rate_control(GstMfxEncoder * encoder,
-	GstMfxRateControl rc_method);
-
-gboolean
 gst_mfx_encoder_set_idr_interval(GstMfxEncoder * encoder, mfxU16 idr_interval);
 
 gboolean
 gst_mfx_encoder_set_gop_size(GstMfxEncoder * encoder, mfxU16 gop_size);
 
 gboolean
-gst_mfx_encoder_set_gop_refdist(GstMfxEncoder * encoder, mfxU16 gop_refdist);
+gst_mfx_encoder_set_gop_refdist(GstMfxEncoder * encoder, gint gop_refdist);
 
 gboolean
 gst_mfx_encoder_set_num_references(GstMfxEncoder * encoder, mfxU16 num_refs);
@@ -166,24 +162,6 @@ gst_mfx_encoder_set_qpp_offset(GstMfxEncoder * encoder, mfxU16 offset);
 
 gboolean
 gst_mfx_encoder_set_qpb_offset(GstMfxEncoder * encoder, mfxU16 offset);
-
-gboolean
-gst_mfx_encoder_set_mbbrc(GstMfxEncoder * encoder, GstMfxOption option);
-
-gboolean
-gst_mfx_encoder_set_extbrc(GstMfxEncoder * encoder, GstMfxOption option);
-
-gboolean
-gst_mfx_encoder_set_adaptive_i(GstMfxEncoder * encoder, GstMfxOption option);
-
-gboolean
-gst_mfx_encoder_set_adaptive_b(GstMfxEncoder * encoder, GstMfxOption option);
-
-gboolean
-gst_mfx_encoder_set_b_strategy(GstMfxEncoder * encoder, GstMfxOption option);
-
-gboolean
-gst_mfx_encoder_set_preset(GstMfxEncoder * encoder, GstMfxEncoderPreset preset);
 
 gboolean
 gst_mfx_encoder_set_async_depth(GstMfxEncoder * encoder, mfxU16 async_depth);

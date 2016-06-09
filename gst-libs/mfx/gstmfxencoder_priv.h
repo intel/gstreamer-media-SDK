@@ -154,7 +154,7 @@ struct _GstMfxEncoder
 	mfxU16					la_depth;
 	mfxU16					idr_interval;
 	mfxU16					gop_size;
-	mfxU16					gop_refdist;
+	gint					gop_refdist;
 	mfxU16					num_refs;
 	mfxU16					num_slices;
 	mfxU16					qpi_offset;
@@ -169,7 +169,6 @@ struct _GstMfxEncoder
     /* H264 specific coding options */
     gboolean				use_cabac;
 	gint                    max_slice_size;
-	gint                    max_frame_size;
 
 	GstMfxOption            mbbrc;
 	GstMfxOption            extbrc;
@@ -177,7 +176,6 @@ struct _GstMfxEncoder
 	GstMfxOption            adaptive_i;
 	GstMfxOption            adaptive_b;
 
-	mfxU16					max_dec_frame_buffering;
 	mfxU16					look_ahead_downsampling;
 	mfxU16                  trellis;
 };

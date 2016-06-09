@@ -33,6 +33,7 @@
 	GST_MFX_RATECONTROL_MASK (VBR)		|               \
 	GST_MFX_RATECONTROL_MASK (AVBR)		|				\
 	GST_MFX_RATECONTROL_MASK (LA_BRC)	|               \
+    GST_MFX_RATECONTROL_MASK (LA_HRD)	|               \
 	GST_MFX_RATECONTROL_MASK (ICQ)		|               \
 	GST_MFX_RATECONTROL_MASK (LA_ICQ))
 
@@ -201,6 +202,7 @@ ensure_bitrate(GstMfxEncoderH264 * encoder)
 	case GST_MFX_RATECONTROL_VBR:
 	case GST_MFX_RATECONTROL_AVBR:
 	case GST_MFX_RATECONTROL_LA_BRC:
+    case GST_MFX_RATECONTROL_LA_HRD:
 		if (!base_encoder->bitrate) {
 			/* According to the literature and testing, CABAC entropy coding
 			mode could provide for +10% to +18% improvement in general,

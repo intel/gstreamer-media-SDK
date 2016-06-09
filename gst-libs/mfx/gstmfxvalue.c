@@ -84,7 +84,7 @@ gst_mfx_rate_control_get_type(void)
 		{ GST_MFX_RATECONTROL_QVBR,
 		"Quality variable bitrate", "qvbr" },
 		{ GST_MFX_RATECONTROL_LA_BRC,
-		"Bitrate control with look-ahead", "la" },
+		"Bitrate control with look-ahead", "la-brc" },
 		{ GST_MFX_RATECONTROL_ICQ,
 		"Intelligent constant quality", "icq" },
 		{ GST_MFX_RATECONTROL_LA_ICQ,

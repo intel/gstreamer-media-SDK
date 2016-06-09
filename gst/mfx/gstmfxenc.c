@@ -9,10 +9,6 @@
 #define GST_PLUGIN_NAME "mfxencode"
 #define GST_PLUGIN_DESC "A MFX-based video encoder"
 
-#define GST_MFX_ENCODE_FLOW_TIMEOUT           GST_FLOW_CUSTOM_SUCCESS
-#define GST_MFX_ENCODE_FLOW_MEM_ERROR         GST_FLOW_CUSTOM_ERROR
-#define GST_MFX_ENCODE_FLOW_CONVERT_ERROR     GST_FLOW_CUSTOM_ERROR_1
-
 GST_DEBUG_CATEGORY_STATIC(gst_mfxencode_debug);
 #define GST_CAT_DEFAULT gst_mfxencode_debug
 
