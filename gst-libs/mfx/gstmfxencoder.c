@@ -101,7 +101,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
 	g_assert(cdata->rate_control_get_type != NULL);
 
 	/**
-	* GstMfxEncoder:rate-control:
+	* GstMfxEncoder:rate-control
 	*
 	* The desired rate control mode, expressed as a #GstMfxRateControl.
 	*/
@@ -113,7 +113,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:bitrate:
+	* GstMfxEncoder:bitrate
 	*
 	* The desired bitrate, expressed in kbps.
 	*/
@@ -125,7 +125,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             0, 100 * 1024, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:idr-interval:
+	* GstMfxEncoder:idr-interval
 	*
 	* IDR-frame interval in terms of I-frames.
 	*/
@@ -137,7 +137,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:gop-size:
+	* GstMfxEncoder:gop-size
 	*
 	* Number of pictures within the current GOP
 	*/
@@ -149,7 +149,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             0, G_MAXUINT16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:gop-dist:
+	* GstMfxEncoder:gop-dist
 	*
 	* Distance between I- or P- key frames
 	*/
@@ -161,7 +161,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             -1, 32, -1, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:num-refs:
+	* GstMfxEncoder:num-refs
 	*
 	* Number of reference frames
 	*/
@@ -173,7 +173,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             0, 16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:num-slices:
+	* GstMfxEncoder:num-slices
 	*
 	* Number of slices in each video frame
 	*/
@@ -185,7 +185,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     /**
-	* GstMfxEncoder:quantizer:
+	* GstMfxEncoder:quantizer
 	*
 	* Constant quantizer or quality to apply
 	*/
@@ -197,7 +197,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             DEFAULT_QUANTIZER, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:qpi-offset:
+	* GstMfxEncoder:qpi-offset
 	*
 	* Quantization parameter offset for I-frames
 	*/
@@ -209,7 +209,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:qpp-offset:
+	* GstMfxEncoder:qpp-offset
 	*
 	* Quantization parameter offset for P-frames
 	*/
@@ -221,7 +221,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             2, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:qpb-offset:
+	* GstMfxEncoder:qpb-offset
 	*
 	* Quantization parameter offset for B-frames
 	*/
@@ -297,8 +297,32 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
             GST_MFX_TYPE_OPTION, GST_MFX_OPTION_AUTO,
             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+    /**
+	* GstMfxEncoder:accuracy
+	*
+	* Accuracy of AVBR rate control
+	*/
+	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
+		GST_MFX_ENCODER_PROP_ACCURACY,
+		g_param_spec_uint("accuracy",
+            "AVBR accuracy",
+            "Accuracy of AVBR rate control", 0, G_MAXUINT16,
+            0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+    /**
+	* GstMfxEncoder:convergence
+	*
+	* Convergence of AVBR rate control
+	*/
+	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
+		GST_MFX_ENCODER_PROP_CONVERGENCE,
+		g_param_spec_uint("convergence",
+            "AVBR convergence",
+            "Convergence of AVBR rate control", 0, G_MAXUINT16,
+            0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
 	/**
-	* GstMfxEncoder:async-depth:
+	* GstMfxEncoder:async-depth
 	*
 	* Number of parallel operations before explicit sync
 	*/
@@ -310,7 +334,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass)
 		DEFAULT_ASYNC_DEPTH, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	* GstMfxEncoder:preset:
+	* GstMfxEncoder:preset
 	*
 	* The desired encoder preset option.
 	*/
@@ -364,7 +388,7 @@ set_default_option_values(GstMfxEncoder * encoder)
     encoder->extco2.ExtBRC          = MFX_CODINGOPTION_UNKNOWN;
     //encoder->extco2.LookAheadDepth  = 40;
     encoder->extco2.RepeatPPS       = MFX_CODINGOPTION_ON;
-    encoder->extco2.BRefType        = MFX_B_REF_UNKNOWN; // controlled via gop.b_pyramid
+    encoder->extco2.BRefType        = MFX_B_REF_UNKNOWN;
     encoder->extco2.AdaptiveI       = MFX_CODINGOPTION_UNKNOWN;
     encoder->extco2.AdaptiveB       = MFX_CODINGOPTION_UNKNOWN;
     //encoder->extco2.LookAheadDS     = MFX_LOOKAHEAD_DS_OFF;
@@ -446,6 +470,10 @@ set_encoding_params(GstMfxEncoder * encoder)
         encoder->gop_refdist =
             encoder->gop_refdist < 0 ? 4 : encoder->gop_refdist;
         break;
+    case GST_MFX_RATECONTROL_AVBR:
+        encoder->params.mfx.Convergence = encoder->avbr_convergence;
+        encoder->params.mfx.Accuracy = encoder->avbr_accuracy;
+        break;
     case GST_MFX_RATECONTROL_ICQ:
     case GST_MFX_RATECONTROL_LA_ICQ:
         encoder->params.mfx.ICQQuality = CLAMP(encoder->global_quality, 1, 51);
@@ -462,22 +490,19 @@ set_encoding_params(GstMfxEncoder * encoder)
 	encoder->params.mfx.GopPicSize = encoder->gop_size;
 	encoder->params.mfx.NumSlice = encoder->num_slices;
 
-	if (encoder->profile == GST_MFX_PROFILE_AVC_CONSTRAINED_BASELINE) {
-        encoder->params.mfx.GopRefDist = 1;
-        encoder->b_strategy = GST_MFX_OPTION_OFF;
-	}
-    else {
-        encoder->params.mfx.GopRefDist = CLAMP(
-            encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
-    }
-
 	if (encoder->bitrate)
 		encoder->params.mfx.TargetKbps = encoder->bitrate;
+	if (encoder->profile == GST_MFX_PROFILE_AVC_CONSTRAINED_BASELINE ||
+            encoder->profile == GST_MFX_PROFILE_AVC_BASELINE)
+        encoder->params.mfx.GopRefDist = 1;
+    else
+        encoder->params.mfx.GopRefDist = CLAMP(
+            encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
 
     set_extended_coding_options(encoder);
 }
 
-static gboolean
+static void
 gst_mfx_encoder_set_input_params(GstMfxEncoder * encoder)
 {
     encoder->params.mfx.CodecProfile =
@@ -487,7 +512,8 @@ gst_mfx_encoder_set_input_params(GstMfxEncoder * encoder)
 
 	encoder->params.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
 	encoder->params.mfx.FrameInfo.FourCC = MFX_FOURCC_NV12;
-	encoder->params.mfx.FrameInfo.PicStruct = GST_VIDEO_INFO_IS_INTERLACED(&encoder->info) ?
+	encoder->params.mfx.FrameInfo.PicStruct =
+        GST_VIDEO_INFO_IS_INTERLACED(&encoder->info) ?
 		(GST_VIDEO_INFO_FLAG_IS_SET(&encoder->info, GST_VIDEO_FRAME_FLAG_TFF) ?
 			MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF)
 		: MFX_PICSTRUCT_PROGRESSIVE;
@@ -517,14 +543,6 @@ gst_mfx_encoder_set_input_params(GstMfxEncoder * encoder)
 			GST_ROUND_UP_32(encoder->info.height);
 	}
 
-	encoder->bs.MaxLength = encoder->params.mfx.FrameInfo.Width *
-		encoder->params.mfx.FrameInfo.Height * 4;
-	encoder->bitstream = g_byte_array_sized_new(encoder->bs.MaxLength);
-	if (!encoder->bitstream)
-		return FALSE;
-
-    encoder->bs.Data = encoder->bitstream->data;
-
 	set_encoding_params(encoder);
 }
 
@@ -541,6 +559,10 @@ gst_mfx_encoder_init_properties(GstMfxEncoder * encoder,
 	gst_mfx_task_aggregator_set_current_task(encoder->aggregator,
 		encoder->encode_task);
 	encoder->session = gst_mfx_task_get_session(encoder->encode_task);
+
+	encoder->bitstream = g_byte_array_new();
+	if (!encoder->bitstream)
+		return FALSE;
 
 	encoder->params.mfx.CodecId = encoder->codec;
 	encoder->info = *info;
@@ -600,6 +622,7 @@ gst_mfx_encoder_finalize(GstMfxEncoder * encoder)
 
 	klass->finalize(encoder);
 
+    gst_mfx_filter_replace(&encoder->filter, NULL);
 	MFXVideoENCODE_Close(encoder->session);
 
 	g_byte_array_unref(encoder->bitstream);
@@ -784,7 +807,8 @@ gst_mfx_encoder_encode(GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 	proxy = gst_video_codec_frame_get_user_data(frame);
 
 	if (gst_mfx_task_has_type(encoder->encode_task, GST_MFX_TASK_VPP_OUT)) {
-        filter_sts = gst_mfx_filter_process(encoder->filter, proxy, &filter_proxy);
+        filter_sts = gst_mfx_filter_process(encoder->filter, proxy,
+                            &filter_proxy);
         if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
             GST_ERROR("MFX pre-processing error during encode.");
             return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
@@ -801,15 +825,12 @@ gst_mfx_encoder_encode(GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 		if (MFX_WRN_DEVICE_BUSY == sts)
 			g_usleep(500);
 		else if (MFX_ERR_NOT_ENOUGH_BUFFER == sts) {
-			encoder->bitstream = g_byte_array_remove_range(encoder->bitstream, 0,
-				encoder->bs.DataOffset);
-			encoder->bs.DataOffset = 0;
-			encoder->bs.MaxLength = encoder->bitstream->len +
-				encoder->params.mfx.BufferSizeInKB * 1000;
-			encoder->bitstream = g_byte_array_set_size(encoder->bs.Data,
+			encoder->bs.MaxLength += 1024 * 16;
+			encoder->bitstream = g_byte_array_set_size(encoder->bitstream,
 				encoder->bs.MaxLength);
+            encoder->bs.Data = encoder->bitstream->data;
 		}
-	} while (MFX_WRN_DEVICE_BUSY == sts);
+	} while (MFX_WRN_DEVICE_BUSY == sts || MFX_ERR_NOT_ENOUGH_BUFFER == sts);
 
 	if (MFX_ERR_MORE_BITSTREAM == sts)
 		return GST_MFX_ENCODER_STATUS_NO_BUFFER;
@@ -851,7 +872,13 @@ gst_mfx_encoder_flush(GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
 
 		if (MFX_WRN_DEVICE_BUSY == sts)
 			g_usleep(500);
-	} while (MFX_WRN_DEVICE_BUSY == sts);
+        else if (MFX_ERR_NOT_ENOUGH_BUFFER == sts) {
+			encoder->bs.MaxLength += 1024 * 16;
+			encoder->bitstream = g_byte_array_set_size(encoder->bitstream,
+				encoder->bs.MaxLength);
+            encoder->bs.Data = encoder->bitstream->data;
+		}
+	} while (MFX_WRN_DEVICE_BUSY == sts || MFX_ERR_NOT_ENOUGH_BUFFER == sts);
 
 	if (MFX_ERR_NONE != sts)
 		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
@@ -864,12 +891,11 @@ gst_mfx_encoder_flush(GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
 		if (MFX_ERR_NONE != sts)
             return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 
-		*frame = g_slice_new0(GstVideoCodecFrame);
+        *frame = g_slice_new0(GstVideoCodecFrame);
 
-        (*frame)->output_buffer =
-            gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
-            encoder->bs.Data + encoder->bs.DataOffset,
-            encoder->bs.MaxLength, 0, encoder->bs.DataLength, NULL, NULL);
+        (*frame)->output_buffer = gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
+                encoder->bs.Data + encoder->bs.DataOffset,
+                encoder->bs.MaxLength, 0, encoder->bs.DataLength, NULL, NULL);
 
         encoder->bs.DataLength = 0;
 	}
@@ -963,6 +989,12 @@ set_property(GstMfxEncoder * encoder, gint prop_id, const GValue * value)
 		break;
     case GST_MFX_ENCODER_PROP_B_PYRAMID:
 		encoder->b_strategy = g_value_get_enum(value);
+		break;
+    case GST_MFX_ENCODER_PROP_ACCURACY:
+	    encoder->avbr_accuracy = g_value_get_uint(value);
+		break;
+    case GST_MFX_ENCODER_PROP_CONVERGENCE:
+	    encoder->avbr_convergence = g_value_get_uint(value);
 		break;
 	case GST_MFX_ENCODER_PROP_PRESET:
 		encoder->preset = g_value_get_enum(value);

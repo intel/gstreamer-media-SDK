@@ -63,12 +63,13 @@ gst_mfx_decoder_get_codec(GstMfxDecoder * decoder)
 static void
 gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
+    gst_mfx_filter_replace(&decoder->filter, NULL);
+	MFXVideoDECODE_Close(decoder->session);
+
 	g_byte_array_unref(decoder->bitstream);
 	gst_mfx_task_aggregator_replace(&decoder->aggregator, NULL);
 	gst_mfx_task_replace(&decoder->decode_task, NULL);
 	gst_mfx_surface_pool_unref(decoder->pool);
-
-	MFXVideoDECODE_Close(decoder->session);
 }
 
 static mfxStatus
@@ -300,6 +301,7 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 {
 	GstMapInfo minfo;
 	GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
+	GstMfxFilterStatus filter_sts;
 	GstMfxSurfaceProxy *proxy, *filter_proxy;
 	mfxFrameSurface1 *insurf, *outsurf = NULL;
 	mfxSyncPoint syncp;
@@ -366,11 +368,15 @@ gst_mfx_decoder_decode(GstMfxDecoder * decoder,
 		proxy = gst_mfx_surface_pool_find_proxy(decoder->pool, outsurf);
 
 		if (gst_mfx_task_has_type(decoder->decode_task, GST_MFX_TASK_VPP_IN)) {
-			gst_mfx_filter_process(decoder->filter, proxy, &filter_proxy);
-
+			filter_sts = gst_mfx_filter_process(decoder->filter, proxy,
+                                &filter_proxy);
+            if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
+                GST_ERROR("MFX post-processing error while decoding.");
+                ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+                goto end;
+            }
 			proxy = filter_proxy;
 		}
-
 		*out_proxy = proxy;
 	}
 

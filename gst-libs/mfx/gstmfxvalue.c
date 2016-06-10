@@ -48,9 +48,9 @@ gst_mfx_option_get_type(void)
 		{ GST_MFX_OPTION_AUTO,
 		"Let Media SDK decide", "auto" },
 		{ GST_MFX_OPTION_ON,
-		"Turn on option", "on" },
+		"Turn option on", "on" },
 		{ GST_MFX_OPTION_OFF,
-		"Turn off option", "off" },
+		"Turn option off", "off" },
 		{ 0, NULL, NULL },
 	};
 

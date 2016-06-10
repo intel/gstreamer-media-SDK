@@ -11,9 +11,6 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-/* Define the maximum IDR period */
-#define MAX_IDR_PERIOD 512
-
 /* Default CPB length (in milliseconds) */
 #define DEFAULT_CPB_LENGTH 1500
 
@@ -69,7 +66,6 @@ struct _GstMfxEncoderH264
 {
 	GstMfxEncoder parent_instance;
 
-	guint8 profile_idc;
 	guint8 max_profile_idc;
 	guint8 level_idc;
 	gboolean has_bframes;
@@ -80,40 +76,6 @@ struct _GstMfxEncoderH264
 	guint cpb_length;             // length of CPB buffer (ms)
 	guint cpb_length_bits;        // length of CPB buffer (bits)
 };
-
-/* Check target decoder constraints */
-static gboolean
-ensure_profile_limits(GstMfxEncoderH264 * encoder)
-{
-    GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST(encoder);
-	GstMfxProfile profile;
-
-	if (!encoder->max_profile_idc)
-		return FALSE;
-
-	GST_WARNING("lowering coding tools to meet target decoder constraints");
-
-	profile = GST_MFX_PROFILE_AVC_HIGH;
-
-	/* Check Main profile coding tools */
-	if (encoder->max_profile_idc < 100) {
-		profile = GST_MFX_PROFILE_AVC_MAIN;
-	}
-
-	/* Check Baseline profile coding tools */
-	if (encoder->max_profile_idc < 77) {
-		if (!base_encoder->use_cabac)
-			profile = GST_MFX_PROFILE_AVC_CONSTRAINED_BASELINE;
-		else
-			profile = GST_MFX_PROFILE_AVC_BASELINE;
-	}
-
-	if (profile) {
-		base_encoder->profile = profile;
-		encoder->profile_idc = encoder->max_profile_idc;
-	}
-	return TRUE;
-}
 
 /* Derives the level from the currently set limits */
 static gboolean
@@ -222,31 +184,6 @@ ensure_bitrate(GstMfxEncoderH264 * encoder)
 	ensure_bitrate_hrd(encoder);
 }
 
-/* Constructs profile and level information based on user-defined limits */
-static GstMfxEncoderStatus
-ensure_profile_and_level(GstMfxEncoderH264 * encoder)
-{
-    GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST(encoder);
-	const GstMfxProfile profile = base_encoder->profile;
-	const mfxU16 level = base_encoder->level;
-
-	if (!ensure_profile_limits(encoder))
-		return GST_MFX_ENCODER_STATUS_ERROR_UNSUPPORTED_PROFILE;
-
-	/* Ensure bitrate if not set already and derive the right level to use */
-	ensure_bitrate(encoder);
-	if (!ensure_level(encoder))
-		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
-
-	if (base_encoder->profile != profile || base_encoder->level != level) {
-		GST_DEBUG("selected %s profile at level %s",
-			gst_mfx_utils_h264_get_profile_string(base_encoder->profile),
-			gst_mfx_utils_h264_get_level_string(base_encoder->level));
-	}
-
-	return GST_MFX_ENCODER_STATUS_SUCCESS;
-}
-
 static GstMfxEncoderStatus
 gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
 {
@@ -254,6 +191,15 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
         GST_MFX_ENCODER_H264_CAST (base_encoder);
     GstMfxEncoderStatus status;
     guint mb_width, mb_height;
+
+    if (base_encoder->gop_refdist == 1 || encoder->max_profile_idc < 77) {
+        encoder->has_bframes = FALSE;
+        base_encoder->b_strategy = GST_MFX_OPTION_OFF;
+
+        /* CABAC is disabled when selecting baseline profiles in Media SDK */
+        if (encoder->max_profile_idc < 77)
+            base_encoder->use_cabac = FALSE;
+    }
 
     mb_width = (GST_MFX_ENCODER_WIDTH (encoder) + 15) / 16;
     mb_height = (GST_MFX_ENCODER_HEIGHT (encoder) + 15) / 16;
@@ -264,12 +210,14 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
         encoder->mb_height = mb_height;
     }
 
-    if (base_encoder->gop_refdist == 1 || encoder->max_profile_idc < 77)
-        encoder->has_bframes = FALSE;
+    /* Ensure bitrate if not set already and derive the right level to use */
+	ensure_bitrate(encoder);
+	if (!ensure_level(encoder))
+		return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 
-    status = ensure_profile_and_level (encoder);
-    if (status != GST_MFX_ENCODER_STATUS_SUCCESS)
-        return status;
+    GST_DEBUG("selected %s profile at level %s",
+        gst_mfx_utils_h264_get_profile_string(base_encoder->profile),
+        gst_mfx_utils_h264_get_level_string(base_encoder->level));
 
     return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
@@ -570,9 +518,7 @@ gst_mfx_encoder_h264_set_max_profile(GstMfxEncoderH264 * encoder,
 	if (!profile_idc)
 		return FALSE;
 
-    if (profile == GST_MFX_PROFILE_AVC_CONSTRAINED_BASELINE)
-        base_encoder->use_cabac = FALSE;
-
+    base_encoder->profile = profile;
 	encoder->max_profile_idc = profile_idc;
 	return TRUE;
 }

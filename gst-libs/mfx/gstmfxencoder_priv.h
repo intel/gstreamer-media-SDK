@@ -128,7 +128,7 @@ struct _GstMfxEncoder
 	GstMfxMiniObject		parent_instance;
 
 	GPtrArray			   *properties;
-	GstMfxProfile			profile;
+	GstMfxProfile           profile;
 	mfxU16                  level;
 
 	GstMfxTaskAggregator   *aggregator;
@@ -160,6 +160,8 @@ struct _GstMfxEncoder
 	mfxU16					qpi_offset;
 	mfxU16					qpp_offset;
 	mfxU16					qpb_offset;
+	mfxU16                  avbr_accuracy;
+	mfxU16                  avbr_convergence;
 
 	mfxExtCodingOption		extco;
 	mfxExtCodingOption2		extco2;
