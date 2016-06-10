@@ -55,11 +55,12 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
 	guint frame_size, offset = 0;
 	gboolean success = TRUE;
 
+    frame_size = info->CropH * info->CropW;
+
 #ifdef WITH_MSS
     offset = 1;
-#endif
-
     frame_size = info->Width * info->Height;
+#endif
 
     switch (info->FourCC) {
     case MFX_FOURCC_NV12:
