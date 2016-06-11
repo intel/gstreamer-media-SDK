@@ -30,7 +30,7 @@ static void gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem);
 static gboolean
 copy_image(GstMfxVideoMemory *mem)
 {
-	guint i, data_size, width, height, pitch, offset, num_planes, plane_size;
+	guint i, j, data_size, width, height, pitch, offset, num_planes, plane_size;
 	guint8 *plane = NULL;
 
 	data_size = GST_VIDEO_INFO_SIZE(mem->image_info);
@@ -54,7 +54,7 @@ copy_image(GstMfxVideoMemory *mem)
         height = plane_size / width;
 
         if (pitch != width)
-            for(i = 0; i < height; i++) {
+            for(j = 0; j < height; j++) {
                 memcpy(mem->data + offset, plane, width);
                 plane += pitch;
                 offset += width;
