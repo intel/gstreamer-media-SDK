@@ -28,7 +28,7 @@ GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxvideomemory);
 static void gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem);
 
 static gboolean
-copy_image(GstMfxVideoMemory *mem)
+copy_image(GstMfxVideoMemory *mem, gboolean mapped)
 {
 	guint i, j, data_size, width, height, pitch, offset, num_planes, plane_size;
 	guint8 *plane = NULL;
@@ -41,8 +41,14 @@ copy_image(GstMfxVideoMemory *mem)
     num_planes = GST_VIDEO_INFO_N_PLANES(mem->image_info);
 
 	for (i = 0; i < num_planes; i++) {
-        plane = vaapi_image_get_plane(mem->image, i);
-        pitch = vaapi_image_get_pitch(mem->image, i);
+        if (!mapped) {
+            plane = vaapi_image_get_plane(mem->image, i);
+            pitch = vaapi_image_get_pitch(mem->image, i);
+        }
+        else {
+            plane = gst_mfx_surface_proxy_get_plane(mem->proxy, i);
+            pitch = gst_mfx_surface_proxy_get_pitch(mem->proxy, i);
+        }
         offset = GST_VIDEO_INFO_PLANE_OFFSET(mem->image_info, i);
         if (i != num_planes - 1)
             plane_size =
@@ -68,19 +74,19 @@ copy_image(GstMfxVideoMemory *mem)
 	return TRUE;
 }
 
-static void
-get_image_data(GstMfxVideoMemory *mem)
+static gboolean
+get_image_data(GstMfxVideoMemory *mem, gboolean mapped)
 {
-	gboolean ret;
-
-    if(GST_VIDEO_INFO_N_PLANES(mem->image_info) > 1) {
-        ret = copy_image(mem);
-        if (!ret)
-            mem->data = NULL;
+    if (GST_VIDEO_INFO_N_PLANES(mem->image_info) > 1) {
+        return copy_image(mem, mapped);
     } else {
-        mem->data = vaapi_image_get_plane(mem->image, 0);
+        if (!mapped)
+            mem->data = vaapi_image_get_plane(mem->image, 0);
+        else
+            mem->data = gst_mfx_surface_proxy_get_data(mem->proxy);
         mem->mapped = TRUE;
     }
+    return TRUE;
 }
 
 static gboolean
@@ -275,8 +281,6 @@ static gpointer
 gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
     guint flags)
 {
-    gpointer data;
-
     g_return_val_if_fail(mem, NULL);
     g_return_val_if_fail(mem->meta, NULL);
 
@@ -313,24 +317,23 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
         case GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE:
             if (!mem->proxy)
                 goto error_no_surface_proxy;
-            data = mem->proxy;
+            mem->data = mem->proxy;
             break;
         case GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR:
             if (!mem->image)
                 goto error_no_image;
-	    get_image_data(mem);
-	    data = mem->data;
-	    if(!data)
-		    goto error_no_image;
+            if(!get_image_data(mem, FALSE))
+                goto error_no_image;
             break;
         case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
-            data = gst_mfx_surface_proxy_get_data(mem->proxy);
+            if(!get_image_data(mem, TRUE))
+                goto error_no_image;
             break;
         default:
             goto error_unsupported_map_type;
     }
     mem->map_count++;
-    return data;
+    return mem->data;
 
   /* ERRORS */
 error_unsupported_map:
