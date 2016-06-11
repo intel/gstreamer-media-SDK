@@ -128,8 +128,7 @@ struct _GstMfxEncoder
 	GstMfxMiniObject		parent_instance;
 
 	GPtrArray			   *properties;
-	GstMfxProfile           profile;
-	mfxU16                  level;
+	mfxU16                  profile;
 
 	GstMfxTaskAggregator   *aggregator;
 	GstMfxTask             *encode_task;

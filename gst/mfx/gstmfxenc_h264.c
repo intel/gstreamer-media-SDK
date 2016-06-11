@@ -92,43 +92,11 @@ gst_mfxenc_h264_get_property(GObject * object,
 	}
 }
 
-typedef struct
+static mfxU16
+get_profile(GstCaps * caps)
 {
-	GstMfxProfile best_profile;
-	guint best_score;
-} FindBestProfileData;
-
-static void
-find_best_profile_value(FindBestProfileData * data, const GValue * value)
-{
-	const gchar *str;
-	GstMfxProfile profile;
-	guint score;
-
-	if (!value || !G_VALUE_HOLDS_STRING(value))
-		return;
-
-	str = g_value_get_string(value);
-	if (!str)
-		return;
-	profile = gst_mfx_utils_h264_get_profile_from_string(str);
-	if (!profile)
-		return;
-	score = gst_mfx_utils_h264_get_profile_score(profile);
-	if (score < data->best_score)
-		return;
-	data->best_profile = profile;
-	data->best_score = score;
-}
-
-static GstMfxProfile
-find_best_profile(GstCaps * caps)
-{
-	FindBestProfileData data;
+	mfxU16 profile = MFX_PROFILE_UNKNOWN;
 	guint i, j, num_structures, num_values;
-
-	data.best_profile = GST_MFX_PROFILE_AVC_BASELINE;
-	data.best_score = 0;
 
 	num_structures = gst_caps_get_size(caps);
 	for (i = 0; i < num_structures; i++) {
@@ -137,24 +105,19 @@ find_best_profile(GstCaps * caps)
 
 		if (!value)
 			continue;
-		if (G_VALUE_HOLDS_STRING(value))
-			find_best_profile_value(&data, value);
-		else if (GST_VALUE_HOLDS_LIST(value)) {
-			num_values = gst_value_list_get_size(value);
-			for (j = 0; j < num_values; j++)
-				find_best_profile_value(&data, gst_value_list_get_value(value, j));
+		if (G_VALUE_HOLDS_STRING(value)) {
+			const gchar *str = g_value_get_string(value);
+			profile = gst_mfx_utils_h264_get_profile_from_string(str);
 		}
 	}
-	return data.best_profile;
+	return profile;
 }
 
 static gboolean
 gst_mfxenc_h264_set_config(GstMfxEnc * base_encode)
 {
-	GstMfxEncoderH264 *const encoder =
-		GST_MFX_ENCODER_H264(base_encode->encoder);
 	GstCaps *allowed_caps;
-	GstMfxProfile profile;
+	mfxU16 profile;
 
 	/* Check for the largest profile that is supported */
 	allowed_caps =
@@ -162,12 +125,12 @@ gst_mfxenc_h264_set_config(GstMfxEnc * base_encode)
 	if (!allowed_caps)
 		return TRUE;
 
-	profile = find_best_profile(allowed_caps);
+	profile = get_profile(allowed_caps);
 	gst_caps_unref(allowed_caps);
-	if (profile) {
+	if (profile != MFX_PROFILE_UNKNOWN) {
 		GST_INFO("using %s profile as target decoder constraints",
 			gst_mfx_utils_h264_get_profile_string(profile));
-		if (!gst_mfx_encoder_h264_set_max_profile(encoder, profile))
+		if (!gst_mfx_encoder_h264_set_max_profile(base_encode->encoder, profile))
 			return FALSE;
 	}
 	return TRUE;
@@ -205,7 +168,6 @@ gst_mfxenc_h264_get_caps(GstMfxEnc * base_encode)
 
 	base_encode->need_codec_data = encode->is_avc;
 
-	/* XXX: update profile and level information */
 	return caps;
 }
 

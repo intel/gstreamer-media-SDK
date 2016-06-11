@@ -52,13 +52,11 @@ gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
 {
 	mfxFrameData *ptr = &proxy->surface.Data;
 	mfxFrameInfo *info = &proxy->surface.Info;
-	guint frame_size, offset;
+	guint frame_size, offset = 0;
 	gboolean success = TRUE;
 
 #ifdef WITH_MSS
     offset = 1;
-#else
-    offset = 0;
 #endif
 
     frame_size = info->Width * info->Height;

@@ -53,7 +53,7 @@ gst_mfx_utils_h264_get_profile_from_string(const gchar * str)
 {
 	const struct map *const m = map_lookup_name(gst_mfx_h264_profile_map, str);
 
-	return m ? m->value : MFX_PROFILE_UNKNOWN;
+	return m ? m->value : 0;
 }
 
 /** Returns a string representation for the supplied H.264 profile */

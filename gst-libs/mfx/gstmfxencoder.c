@@ -452,8 +452,10 @@ set_extended_coding_options(GstMfxEncoder * encoder)
 }
 
 static void
-set_encoding_params(GstMfxEncoder * encoder)
+gst_mfx_encoder_set_encoding_params(GstMfxEncoder * encoder)
 {
+    encoder->params.mfx.CodecProfile = encoder->profile;
+
 	switch (encoder->rc_method) {
     case GST_MFX_RATECONTROL_CQP:
         encoder->params.mfx.QPI =
@@ -492,23 +494,16 @@ set_encoding_params(GstMfxEncoder * encoder)
 
 	if (encoder->bitrate)
 		encoder->params.mfx.TargetKbps = encoder->bitrate;
-	if (encoder->profile == GST_MFX_PROFILE_AVC_CONSTRAINED_BASELINE ||
-            encoder->profile == GST_MFX_PROFILE_AVC_BASELINE)
-        encoder->params.mfx.GopRefDist = 1;
-    else
-        encoder->params.mfx.GopRefDist = CLAMP(
-            encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
+    encoder->params.mfx.GopRefDist = CLAMP(
+        encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
 
     set_extended_coding_options(encoder);
 }
 
 static void
-gst_mfx_encoder_set_input_params(GstMfxEncoder * encoder)
+gst_mfx_encoder_set_frame_info(GstMfxEncoder * encoder)
 {
-    encoder->params.mfx.CodecProfile =
-        gst_mfx_profile_get_codec_profile(encoder->profile);
-    if (encoder->level)
-        encoder->params.mfx.CodecLevel = encoder->level;
+    encoder->params.mfx.CodecId = encoder->codec;
 
 	encoder->params.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
 	encoder->params.mfx.FrameInfo.FourCC = MFX_FOURCC_NV12;
@@ -530,8 +525,7 @@ gst_mfx_encoder_set_input_params(GstMfxEncoder * encoder)
 	encoder->params.mfx.FrameInfo.BitDepthChroma = 8;
 	encoder->params.mfx.FrameInfo.BitDepthLuma = 8;
 
-	if (encoder->codec == MFX_CODEC_HEVC &&
-			!g_strcmp0(encoder->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
+	if (encoder->codec == MFX_CODEC_HEVC) {
 		encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_32(encoder->info.width);
 		encoder->params.mfx.FrameInfo.Height = GST_ROUND_UP_32(encoder->info.height);
 	}
@@ -542,8 +536,6 @@ gst_mfx_encoder_set_input_params(GstMfxEncoder * encoder)
 			GST_ROUND_UP_16(encoder->info.height) :
 			GST_ROUND_UP_32(encoder->info.height);
 	}
-
-	set_encoding_params(encoder);
 }
 
 static gboolean
@@ -564,7 +556,6 @@ gst_mfx_encoder_init_properties(GstMfxEncoder * encoder,
 	if (!encoder->bitstream)
 		return FALSE;
 
-	encoder->params.mfx.CodecId = encoder->codec;
 	encoder->info = *info;
 	encoder->mapped = mapped;
 
@@ -600,10 +591,13 @@ gst_mfx_encoder_init(GstMfxEncoder * encoder,
 
 #undef CHECK_VTABLE_HOOK
 
+    if (!gst_mfx_encoder_init_properties(encoder, aggregator, info, mapped))
+		return FALSE;
 	if (!klass->init(encoder))
 		return FALSE;
-	if (!gst_mfx_encoder_init_properties(encoder, aggregator, info, mapped))
-		return FALSE;
+
+    gst_mfx_encoder_set_frame_info(encoder);
+
 	return TRUE;
 
 	/* ERRORS */
@@ -752,7 +746,7 @@ gst_mfx_encoder_start(GstMfxEncoder *encoder)
 
 	memset(&enc_request, 0, sizeof (mfxFrameAllocRequest));
 
-	gst_mfx_encoder_set_input_params(encoder);
+	gst_mfx_encoder_set_encoding_params(encoder);
 
 	sts = MFXVideoENCODE_Query(encoder->session, &encoder->params,
 				&encoder->params);
