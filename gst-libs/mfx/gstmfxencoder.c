@@ -454,6 +454,17 @@ set_extended_coding_options(GstMfxEncoder * encoder)
 static void
 gst_mfx_encoder_set_encoding_params(GstMfxEncoder * encoder)
 {
+    /* Use input system memory with raw NV12 surfaces or SW HEVC encoder */
+	if (!g_strcmp0(encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7") ||
+            (GST_VIDEO_INFO_FORMAT(&encoder->info) == GST_VIDEO_FORMAT_NV12 &&
+             encoder->mapped)) {
+        encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
+	}
+	else {
+        encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
+        gst_mfx_task_use_video_memory(encoder->encode_task);
+	}
+
     encoder->params.mfx.CodecProfile = encoder->profile;
 
 	switch (encoder->rc_method) {
@@ -552,21 +563,15 @@ gst_mfx_encoder_init_properties(GstMfxEncoder * encoder,
 		encoder->encode_task);
 	encoder->session = gst_mfx_task_get_session(encoder->encode_task);
 
-	encoder->bitstream = g_byte_array_new();
+    encoder->bs.MaxLength = info->width * info->height * 4;
+	encoder->bitstream = g_byte_array_sized_new(encoder->bs.MaxLength);
 	if (!encoder->bitstream)
 		return FALSE;
+    encoder->bs.Data = encoder->bitstream->data;
 
 	encoder->info = *info;
 	encoder->mapped = mapped;
 
-    /* Use input system memory with raw NV12 surfaces */
-	if (mapped && GST_VIDEO_INFO_FORMAT(info) == GST_VIDEO_FORMAT_NV12) {
-        encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
-	}
-	else {
-        encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
-        gst_mfx_task_use_video_memory(encoder->encode_task);
-	}
 
 	return TRUE;
 }
@@ -743,6 +748,9 @@ gst_mfx_encoder_start(GstMfxEncoder *encoder)
 	mfxStatus sts = MFX_ERR_NONE;
 	mfxFrameAllocRequest enc_request;
 	mfxFrameAllocResponse enc_response;
+	gboolean mapped =
+        g_strcmp0(encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7") ?
+        FALSE : TRUE;
 
 	memset(&enc_request, 0, sizeof (mfxFrameAllocRequest));
 
@@ -767,9 +775,10 @@ gst_mfx_encoder_start(GstMfxEncoder *encoder)
 	}
 
     /* Even if VPP is not required, surfaces need to be saved into a pool */
-    if (!!(encoder->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY)) {
+    if (GST_VIDEO_INFO_FORMAT(&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
+            !encoder->mapped) {
         encoder->filter = gst_mfx_filter_new_with_task(encoder->aggregator,
-            encoder->encode_task, GST_MFX_TASK_VPP_OUT, encoder->mapped, FALSE);
+            encoder->encode_task, GST_MFX_TASK_VPP_OUT, encoder->mapped, mapped);
 
         enc_request.NumFrameSuggested += (1 - encoder->params.AsyncDepth);
 

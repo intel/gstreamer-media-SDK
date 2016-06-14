@@ -24,6 +24,7 @@
 #include "gstmfxpostproc.h"
 #include "gstmfxsink.h"
 #include "gstmfxenc_h264.h"
+#include "gstmfxenc_h265.h"
 
 #define PACKAGE "gstmfx"
 #define VERSION "0.0.1"
@@ -39,6 +40,8 @@ plugin_init(GstPlugin * plugin)
 		GST_TYPE_MFXSINK);
     gst_element_register(plugin, "mfxh264enc", GST_RANK_NONE,
 		GST_TYPE_MFXENC_H264);
+    gst_element_register(plugin, "mfxhevcenc", GST_RANK_NONE,
+		GST_TYPE_MFXENC_H265);
 
 	return TRUE;
 }

@@ -10,15 +10,6 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-/* Default CPB length (in milliseconds) */
-#define DEFAULT_CPB_LENGTH 1500
-
-/* Scale factor for CPB size (HRD cpb_size_scale: min = 4) */
-#define SX_CPB_SIZE 4
-
-/* Scale factor for bitrate (HRD bit_rate_scale: min = 6) */
-#define SX_BITRATE 6
-
 /* Define default rate control mode ("constant-qp") */
 #define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_CQP
 
@@ -43,41 +34,7 @@
 struct _GstMfxEncoderH264
 {
 	GstMfxEncoder parent_instance;
-
-	guint bitrate_bits;           // bitrate (bits)
-	guint cpb_length;             // length of CPB buffer (ms)
-	guint cpb_length_bits;        // length of CPB buffer (bits)
 };
-
-/* Normalizes bitrate (and CPB size) for HRD conformance */
-static void
-ensure_bitrate_hrd(GstMfxEncoderH264 * encoder)
-{
-	GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST(encoder);
-	guint bitrate, cpb_size;
-
-	if (!base_encoder->bitrate) {
-		encoder->bitrate_bits = 0;
-		return;
-	}
-
-	/* Round down bitrate. This is a hard limit mandated by the user */
-	g_assert(SX_BITRATE >= 6);
-	bitrate = (base_encoder->bitrate * 1000) & ~((1U << SX_BITRATE) - 1);
-	if (bitrate != encoder->bitrate_bits) {
-		GST_DEBUG("HRD bitrate: %u bits/sec", bitrate);
-		encoder->bitrate_bits = bitrate;
-	}
-
-	/* Round up CPB size. This is an HRD compliance detail */
-	g_assert(SX_CPB_SIZE >= 4);
-	cpb_size = gst_util_uint64_scale(bitrate, encoder->cpb_length, 1000) &
-		~((1U << SX_CPB_SIZE) - 1);
-	if (cpb_size != encoder->cpb_length_bits) {
-		GST_DEBUG("HRD CPB size: %u bits", cpb_size);
-		encoder->cpb_length_bits = cpb_size;
-	}
-}
 
 /* Estimates a good enough bitrate if none was supplied */
 static void
@@ -118,7 +75,6 @@ ensure_bitrate(GstMfxEncoderH264 * encoder)
 		base_encoder->bitrate = 0;
 		break;
 	}
-	ensure_bitrate_hrd(encoder);
 }
 
 static GstMfxEncoderStatus
@@ -273,9 +229,6 @@ gst_mfx_encoder_h264_set_property(GstMfxEncoder * base_encoder,
     case GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS:
 		base_encoder->look_ahead_downsampling = g_value_get_enum(value);
 		break;
-	case GST_MFX_ENCODER_H264_PROP_CPB_LENGTH:
-		encoder->cpb_length = g_value_get_uint(value);
-		break;
 	default:
 		return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
 	}
@@ -352,7 +305,7 @@ gst_mfx_encoder_h264_get_default_properties(void)
 	*
 	* Enable CABAC entropy coding mode for improved compression ratio,
 	* at the expense that the minimum target profile is Main. Default
-	* is CAVLC entropy coding mode.
+	* is CABAC entropy coding mode.
 	*/
 	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
 		GST_MFX_ENCODER_H264_PROP_CABAC,
@@ -376,9 +329,9 @@ gst_mfx_encoder_h264_get_default_properties(void)
 
 
     /**
-	* GstMfxEncoderH264:trellis
+	* GstMfxEncoderH264:lookahead-ds
 	*
-	* Enable trellis quantization
+	* Enable trellis Look ahead downsampling
 	*/
     GST_MFX_ENCODER_PROPERTIES_APPEND(props,
 		GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS,
@@ -387,18 +340,6 @@ gst_mfx_encoder_h264_get_default_properties(void)
             "Look ahead downsampling",
             gst_mfx_encoder_lookahead_ds_get_type(),
             GST_MFX_ENCODER_LOOKAHEAD_DS_AUTO,
-            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-	/**
-	* GstMfxEncoderH264:cpb-length
-	*
-	* The size of the CPB buffer in milliseconds.
-	*/
-	GST_MFX_ENCODER_PROPERTIES_APPEND(props,
-		GST_MFX_ENCODER_H264_PROP_CPB_LENGTH,
-		g_param_spec_uint("cpb-length",
-            "CPB Length", "Length of the CPB buffer in milliseconds",
-            1, 10000, DEFAULT_CPB_LENGTH,
             G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	return props;
