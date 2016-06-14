@@ -380,9 +380,6 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
     guint i;
 
 	for (i = 0; i < 2; i++) {
-        if (!filter->vpp_request[0])
-            continue;
-
         gst_mfx_task_replace(&filter->vpp[i], NULL);
         gst_mfx_surface_pool_replace(&filter->vpp_pool[i], NULL);
 	}
@@ -390,14 +387,12 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
     /* Free allocated memory for filters */
     g_slice_free1((sizeof(mfxU32) * filter->vpp_use.NumAlg),
             filter->vpp_use.AlgList);
-
     g_slice_free1((sizeof(mfxExtBuffer *) * filter->params.NumExtParam),
             filter->ext_buffer);
-
     g_ptr_array_free(filter->filter_op_data, TRUE);
-
-    MFXVideoVPP_Close(filter->session);
 	gst_mfx_task_aggregator_replace(&filter->aggregator, NULL);
+
+	MFXVideoVPP_Close(filter->session);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -483,7 +478,8 @@ gst_mfx_filter_replace(GstMfxFilter ** old_filter_ptr,
 GstMfxSurfacePool *
 gst_mfx_filter_get_pool(GstMfxFilter * filter, guint flags)
 {
-    return filter->vpp_pool[!!(flags & GST_MFX_TASK_VPP_OUT)];
+    return gst_mfx_surface_pool_ref(
+                filter->vpp_pool[!!(flags & GST_MFX_TASK_VPP_OUT)]);
 }
 
 gboolean

@@ -30,10 +30,10 @@ static void gst_mfx_video_memory_reset_image (GstMfxVideoMemory * mem);
 static gboolean
 copy_image(GstMfxVideoMemory *mem)
 {
-	guint i, j, data_size, width, height, pitch, offset, num_planes, plane_size;
-	guint8 *plane = NULL;
+	guint i, j, src_stride, dest_stride, height, offset, num_planes, plane_size;
+	guint8 *src_plane = NULL;
 
-	data_size = GST_VIDEO_INFO_SIZE(mem->image_info);
+	guint data_size = GST_VIDEO_INFO_SIZE(mem->image_info);
 	mem->data = (guint8 *)g_slice_alloc0(data_size);
 	if (!mem->data)
 		return FALSE;
@@ -42,31 +42,33 @@ copy_image(GstMfxVideoMemory *mem)
 
 	for (i = 0; i < num_planes; i++) {
         if (mem->image) {
-            plane = vaapi_image_get_plane(mem->image, i);
-            pitch = vaapi_image_get_pitch(mem->image, i);
+            src_plane = vaapi_image_get_plane(mem->image, i);
+            src_stride = vaapi_image_get_pitch(mem->image, i);
         }
         else {
-            plane = gst_mfx_surface_proxy_get_plane(mem->proxy, i);
-            pitch = gst_mfx_surface_proxy_get_pitch(mem->proxy, i);
+            src_plane = gst_mfx_surface_proxy_get_plane(mem->proxy, i);
+            src_stride = gst_mfx_surface_proxy_get_pitch(mem->proxy, i);
         }
+
+        dest_stride = GST_VIDEO_INFO_PLANE_STRIDE(mem->image_info, i);
         offset = GST_VIDEO_INFO_PLANE_OFFSET(mem->image_info, i);
+
         if (i != num_planes - 1)
             plane_size =
                 GST_VIDEO_INFO_PLANE_OFFSET(mem->image_info, i + 1) - offset;
         else
             plane_size = data_size - offset;
 
-        width = GST_VIDEO_INFO_PLANE_STRIDE(mem->image_info, i);
-        height = plane_size / width;
-
-        if (pitch != width)
+        if (src_stride != dest_stride) {
+            height = plane_size / dest_stride;
             for(j = 0; j < height; j++) {
-                memcpy(mem->data + offset, plane, width);
-                plane += pitch;
-                offset += width;
+                memcpy(mem->data + offset, src_plane, dest_stride);
+                src_plane += src_stride;
+                offset += dest_stride;
             }
+        }
         else
-            memcpy(mem->data + offset, plane, plane_size);
+            memcpy(mem->data + offset, src_plane, plane_size);
     }
 
 	mem->mapped = FALSE;
@@ -77,16 +79,23 @@ copy_image(GstMfxVideoMemory *mem)
 static gboolean
 get_image_data(GstMfxVideoMemory *mem)
 {
-    if (GST_VIDEO_INFO_N_PLANES(mem->image_info) > 1) {
-        return copy_image(mem);
-    } else {
+    guint width = GST_VIDEO_INFO_WIDTH(mem->image_info);
+    guint aligned_width = GST_MFX_SURFACE_PROXY_WIDTH(mem->proxy);
+    guint height = GST_VIDEO_INFO_HEIGHT(mem->image_info);
+    guint aligned_height = GST_MFX_SURFACE_PROXY_HEIGHT(mem->proxy);
+
+    if ((width == aligned_width && height == aligned_height && !mem->image) ||
+            GST_VIDEO_INFO_N_PLANES(mem->image_info) == 1) {
         if (mem->image)
             mem->data = vaapi_image_get_plane(mem->image, 0);
         else
-            mem->data = gst_mfx_surface_proxy_get_data(mem->proxy);
+            mem->data = gst_mfx_surface_proxy_get_plane(mem->proxy, 0);
         mem->mapped = TRUE;
+        return TRUE;
     }
-    return TRUE;
+    else {
+        return copy_image(mem);
+    }
 }
 
 static gboolean
@@ -167,7 +176,6 @@ gst_video_meta_map_mfx_surface(GstVideoMeta * meta, guint plane,
 		*data = vaapi_image_get_plane(mem->image, plane);
 		*stride = vaapi_image_get_pitch(mem->image, plane);
 	}
-
 
 	info->flags = flags;
 	return TRUE;
@@ -322,9 +330,6 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize,
         case GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR:
             if (!mem->image)
                 goto error_no_image;
-            if(!get_image_data(mem))
-                goto error_no_image;
-            break;
         case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
             if(!get_image_data(mem))
                 goto error_no_image;
@@ -365,12 +370,11 @@ gst_mfx_video_memory_unmap (GstMfxVideoMemory * mem)
                 gst_mfx_surface_proxy_replace (&mem->proxy, NULL);
                 break;
             case GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR:
-                if(!mem->mapped)
-                    g_slice_free1(vaapi_image_get_data_size(mem->image),
-                            mem->data);
                 vaapi_image_unmap (mem->image);
-                break;
             case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
+                if (!mem->mapped)
+                    g_slice_free1(GST_VIDEO_INFO_SIZE(mem->image_info),
+                        mem->data);
                 break;
             default:
                 goto error_incompatible_map;

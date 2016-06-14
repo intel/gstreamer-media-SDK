@@ -36,34 +36,29 @@ GST_DEBUG_CATEGORY_STATIC(gst_debug_mfxpostproc);
 #define GST_CAT_DEFAULT gst_debug_mfxpostproc
 
 /* Default templates */
-/* *INDENT-OFF* */
 static const char gst_mfxpostproc_sink_caps_str[] =
 	GST_MFX_MAKE_SURFACE_CAPS "; "
-	GST_VIDEO_CAPS_MAKE("{ NV12, YV12, UYVY, YUY2, BGRA, BGRx }");
-/* *INDENT-ON* */
+#ifndef WITH_MSS
+	GST_VIDEO_CAPS_MAKE("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
+#else
+    GST_VIDEO_CAPS_MAKE("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
+#endif
 
-/* *INDENT-OFF* */
 static const char gst_mfxpostproc_src_caps_str[] =
 	GST_MFX_MAKE_SURFACE_CAPS "; "
 	GST_VIDEO_CAPS_MAKE("{ NV12, BGRA }");
-/* *INDENT-ON* */
 
-/* *INDENT-OFF* */
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
 	GST_STATIC_PAD_TEMPLATE("sink",
 	GST_PAD_SINK,
 	GST_PAD_ALWAYS,
 	GST_STATIC_CAPS(gst_mfxpostproc_sink_caps_str));
-/* *INDENT-ON* */
 
-/* *INDENT-OFF* */
 static GstStaticPadTemplate gst_mfxpostproc_src_factory =
 	GST_STATIC_PAD_TEMPLATE("src",
 	GST_PAD_SRC,
 	GST_PAD_ALWAYS,
 	GST_STATIC_CAPS(gst_mfxpostproc_src_caps_str));
-/* *INDENT-ON* */
-
 
 G_DEFINE_TYPE_WITH_CODE(
 	GstMfxPostproc,
@@ -454,8 +449,8 @@ gst_mfxpostproc_propose_allocation (GstBaseTransform * trans,
     GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
     GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (trans);
 
-    if (vpp->get_va_surfaces)
-        return FALSE;
+    //if (vpp->get_va_surfaces)
+      //  return FALSE;
 
     if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
         return FALSE;
@@ -1056,6 +1051,7 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
 		"The color contrast value",
 		0.0, 10.0, 1.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+#ifndef WITH_MSS
     /**
     * GstMfxPostproc:rotation:
     *
@@ -1068,6 +1064,7 @@ gst_mfxpostproc_class_init(GstMfxPostprocClass * klass)
                 "The rotation angle",
                 GST_MFX_ROTATION_MODE,
                 DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+#endif
 
     /**
      * GstMfxPostproc: framerate conversion:

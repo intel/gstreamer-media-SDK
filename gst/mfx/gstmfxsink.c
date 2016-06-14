@@ -822,8 +822,8 @@ gst_mfxsink_show_frame(GstVideoSink * video_sink, GstBuffer * src_buffer)
 		goto error;
 
 	ret = GST_FLOW_OK;
-
 done:
+    gst_buffer_unref(buffer);
 	return ret;
 
 error:

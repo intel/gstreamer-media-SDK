@@ -68,9 +68,9 @@ gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
 	gst_mfx_task_replace(&pool->task, NULL);
 	gst_mfx_display_replace(&pool->display, NULL);
 
-    g_list_free_full (pool->used_objects, gst_mfx_mini_object_unref);
+    g_list_free_full (pool->used_objects, gst_mfx_surface_proxy_unref);
     g_queue_foreach (&pool->free_objects,
-		(GFunc) gst_mfx_mini_object_unref, NULL);
+		(GFunc) gst_mfx_surface_proxy_unref, NULL);
     g_queue_clear (&pool->free_objects);
     g_mutex_clear (&pool->mutex);
 }

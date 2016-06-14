@@ -567,6 +567,10 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
           GST_MAP_WRITE))
         goto error_map_dst_buffer;
 
+    /* Hack for incoming video frames with changed GstVideoInfo dimensions */
+    GST_VIDEO_FRAME_WIDTH(&src_frame) = GST_VIDEO_FRAME_WIDTH(&out_frame);
+    GST_VIDEO_FRAME_HEIGHT(&src_frame) = GST_VIDEO_FRAME_HEIGHT(&out_frame);
+
     success = gst_video_frame_copy (&out_frame, &src_frame);
     gst_video_frame_unmap (&out_frame);
     gst_video_frame_unmap (&src_frame);

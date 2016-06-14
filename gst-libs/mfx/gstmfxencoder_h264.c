@@ -44,9 +44,6 @@ struct _GstMfxEncoderH264
 {
 	GstMfxEncoder parent_instance;
 
-	guint32 mb_width;
-	guint32 mb_height;
-
 	guint bitrate_bits;           // bitrate (bits)
 	guint cpb_length;             // length of CPB buffer (ms)
 	guint cpb_length_bits;        // length of CPB buffer (bits)
@@ -96,6 +93,12 @@ ensure_bitrate(GstMfxEncoderH264 * encoder)
 	case GST_MFX_RATECONTROL_LA_BRC:
     case GST_MFX_RATECONTROL_LA_HRD:
 		if (!base_encoder->bitrate) {
+            guint mb_width = (GST_MFX_ENCODER_WIDTH (encoder) + 15) / 16;
+            guint mb_height = (GST_MFX_ENCODER_HEIGHT (encoder) + 15) / 16;
+
+            GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (encoder),
+                GST_MFX_ENCODER_HEIGHT (encoder));
+
 			/* According to the literature and testing, CABAC entropy coding
 			mode could provide for +10% to +18% improvement in general,
 			thus estimating +15% here ; and using adaptive 8x8 transforms
@@ -105,7 +108,7 @@ ensure_bitrate(GstMfxEncoderH264 * encoder)
 				bits_per_mb += (bits_per_mb * 15) / 100;
 
 			base_encoder->bitrate =
-				encoder->mb_width * encoder->mb_height * bits_per_mb *
+				mb_width * mb_height * bits_per_mb *
 				GST_MFX_ENCODER_FPS_N(encoder) /
 				GST_MFX_ENCODER_FPS_D(encoder) / 1000;
 			GST_INFO("target bitrate computed to %u kbps", base_encoder->bitrate);
@@ -124,7 +127,6 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
     GstMfxEncoderH264 *const encoder =
         GST_MFX_ENCODER_H264_CAST (base_encoder);
     GstMfxEncoderStatus status;
-    guint mb_width, mb_height;
 
     if (base_encoder->profile == MFX_PROFILE_AVC_CONSTRAINED_BASELINE ||
             base_encoder->profile == MFX_PROFILE_AVC_BASELINE) {
@@ -135,15 +137,6 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
 
     if (base_encoder->gop_refdist == 1)
         base_encoder->b_strategy = GST_MFX_OPTION_OFF;
-
-    mb_width = (GST_MFX_ENCODER_WIDTH (encoder) + 15) / 16;
-    mb_height = (GST_MFX_ENCODER_HEIGHT (encoder) + 15) / 16;
-    if (mb_width != encoder->mb_width || mb_height != encoder->mb_height) {
-        GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (encoder),
-            GST_MFX_ENCODER_HEIGHT (encoder));
-        encoder->mb_width = mb_width;
-        encoder->mb_height = mb_height;
-    }
 
     /* Ensure bitrate if not set */
 	ensure_bitrate(encoder);

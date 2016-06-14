@@ -64,12 +64,13 @@ static void
 gst_mfx_decoder_finalize(GstMfxDecoder *decoder)
 {
     gst_mfx_filter_replace(&decoder->filter, NULL);
-	MFXVideoDECODE_Close(decoder->session);
 
 	g_byte_array_unref(decoder->bitstream);
 	gst_mfx_task_aggregator_replace(&decoder->aggregator, NULL);
 	gst_mfx_task_replace(&decoder->decode_task, NULL);
-	gst_mfx_surface_pool_unref(decoder->pool);
+	gst_mfx_surface_pool_replace(&decoder->pool, NULL);
+
+	MFXVideoDECODE_Close(decoder->session);
 }
 
 static mfxStatus

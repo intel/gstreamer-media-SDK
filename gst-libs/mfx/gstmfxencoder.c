@@ -616,9 +616,6 @@ gst_mfx_encoder_finalize(GstMfxEncoder * encoder)
 
 	klass->finalize(encoder);
 
-    gst_mfx_filter_replace(&encoder->filter, NULL);
-	MFXVideoENCODE_Close(encoder->session);
-
 	g_byte_array_unref(encoder->bitstream);
 	gst_mfx_task_aggregator_unref(encoder->aggregator);
 	gst_mfx_task_replace(&encoder->encode_task, NULL);
@@ -627,6 +624,9 @@ gst_mfx_encoder_finalize(GstMfxEncoder * encoder)
 		g_ptr_array_unref(encoder->properties);
 		encoder->properties = NULL;
 	}
+
+	gst_mfx_filter_replace(&encoder->filter, NULL);
+	MFXVideoENCODE_Close(encoder->session);
 }
 
 GstMfxEncoder *

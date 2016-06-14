@@ -97,10 +97,10 @@ void
 gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy, guint * width_ptr,
 	guint * height_ptr);
 
-guchar *
+guint8 *
 gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane);
 
-guchar *
+guint8 *
 gst_mfx_surface_proxy_get_data(GstMfxSurfaceProxy * proxy);
 
 guint16

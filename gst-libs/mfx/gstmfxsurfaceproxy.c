@@ -31,7 +31,6 @@ struct _GstMfxSurfaceProxy
 	GstMfxMiniObject    parent_instance;
 
 	GstMfxTask         *task;
-	GstMfxSurfacePool  *pool;
 	GstMfxDisplay      *display;
 	GstMfxID            surface_id;
 
@@ -41,79 +40,100 @@ struct _GstMfxSurfaceProxy
     guint               width;
 	guint               height;
 	guint               data_size;
-	guchar             *data;
+	guint8             *data;
 	guchar             *planes[3];
 	guint16             pitches[3];
 	gboolean            mapped;
 };
+
+static inline gboolean
+has_mss_driver(GstMfxDisplay * display)
+{
+    return !strncmp(gst_mfx_display_get_vendor_string(display), "16.4.4", 6);
+}
 
 static gboolean
 gst_mfx_surface_proxy_map(GstMfxSurfaceProxy * proxy)
 {
 	mfxFrameData *ptr = &proxy->surface.Data;
 	mfxFrameInfo *info = &proxy->surface.Info;
-	guint frame_size, offset = 0;
+	guint frame_size, offset;
 	gboolean success = TRUE;
 
     frame_size = info->Width * info->Height;
-
-#ifdef WITH_MSS
-    offset = 1;
-#endif
+    offset = has_mss_driver(proxy->display) ? 1 : 0;
 
     switch (info->FourCC) {
     case MFX_FOURCC_NV12:
         proxy->data_size = frame_size * 3 / 2;
-        proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
+        proxy->data = g_slice_alloc(proxy->data_size + offset);
+        if (!proxy->data)
+            goto error;
         ptr->Pitch = proxy->pitches[0] = proxy->pitches[1] = info->Width;
 
-		ptr->Y = proxy->planes[0] = proxy->data + offset;
-        ptr->UV = proxy->planes[1] = ptr->Y + frame_size;
+		proxy->planes[0] = ptr->Y = proxy->data + offset;
+        proxy->planes[1] = ptr->UV = ptr->Y + frame_size;
 
         break;
     case MFX_FOURCC_YV12:
         proxy->data_size = frame_size * 3 / 2;
-        proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
+        proxy->data = g_slice_alloc(proxy->data_size);
+        if (!proxy->data)
+            goto error;
         ptr->Pitch = proxy->pitches[0] = info->Width;
         proxy->pitches[1] = proxy->pitches[2] = ptr->Pitch / 2;
 
-        ptr->Y = proxy->planes[0] = proxy->data;
-        ptr->V = proxy->planes[1] = ptr->Y + frame_size;
-        ptr->U = proxy->planes[2] = ptr->V + (frame_size / 4);
+        proxy->planes[0] = ptr->Y = proxy->data;
+        if (proxy->format == GST_VIDEO_FORMAT_I420) {
+            proxy->planes[1] = ptr->U = ptr->Y + frame_size;
+            proxy->planes[2] = ptr->V = ptr->U + (frame_size / 4);
+        }
+        else {
+            proxy->planes[1] = ptr->V = ptr->Y + frame_size;
+            proxy->planes[2] = ptr->U = ptr->V + (frame_size / 4);
+        }
 
         break;
     case MFX_FOURCC_YUY2:
         proxy->data_size = frame_size * 2;
-        proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
+        proxy->data = g_slice_alloc(proxy->data_size + offset);
+        if (!proxy->data)
+            goto error;
         ptr->Pitch = proxy->pitches[0] = info->Width * 2;
 
-		ptr->Y = proxy->planes[0] = proxy->data + offset;
+		proxy->planes[0] = ptr->Y = proxy->data + offset;
         ptr->U = ptr->Y + 1;
         ptr->V = ptr->Y + 3;
 
         break;
     case MFX_FOURCC_UYVY:
         proxy->data_size = frame_size * 2;
-        proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
+        proxy->data = g_slice_alloc(proxy->data_size);
+        if (!proxy->data)
+            goto error;
         ptr->Pitch = proxy->pitches[0] = info->Width * 2;
 
-        ptr->U = proxy->planes[0] = proxy->data;
+        proxy->planes[0] = ptr->U = proxy->data;
         ptr->Y = ptr->U + 1;
         ptr->V = ptr->U + 2;
 
         break;
     case MFX_FOURCC_RGB4:
         proxy->data_size = frame_size * 4;
-        proxy->data = (guchar *)g_slice_alloc(proxy->data_size);
+        proxy->data = g_slice_alloc(proxy->data_size + offset);
+        if (!proxy->data)
+            goto error;
         ptr->Pitch = proxy->pitches[0] = info->Width * 4;
 
-        ptr->B = proxy->planes[0] = proxy->data + 4;
+        proxy->planes[0] = ptr->B = proxy->data + offset;
         ptr->G = ptr->B + 1;
         ptr->R = ptr->B + 2;
         ptr->A = ptr->B + 3;
 
         break;
     default:
+error:
+        GST_ERROR("Failed to create surface proxy.");
         success = FALSE;
         break;
     }
@@ -140,7 +160,6 @@ gst_mfx_surface_proxy_unmap(GstMfxSurfaceProxy * proxy)
 static gboolean
 mfx_surface_proxy_create_from_task(GstMfxSurfaceProxy * proxy)
 {
-
     mfxFrameAllocRequest *req;
     req = gst_mfx_task_get_request(proxy->task);
     if (!req)
@@ -166,7 +185,8 @@ mfx_surface_proxy_create_from_task(GstMfxSurfaceProxy * proxy)
 }
 
 static void
-gst_mfx_surface_proxy_derive_mfx_frame_info(GstMfxSurfaceProxy * proxy, GstVideoInfo * info)
+gst_mfx_surface_proxy_derive_mfx_frame_info(GstMfxSurfaceProxy * proxy,
+    GstVideoInfo * info)
 {
     mfxFrameInfo *frame_info = &proxy->surface.Info;
 
@@ -234,28 +254,21 @@ mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy,
 static void
 gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
 {
-    if (proxy->pool) {
-        gst_mfx_surface_pool_put_surface(proxy->pool, proxy);
-        gst_mfx_surface_pool_replace(&proxy->pool, NULL);
-    }
-
     if (proxy->mapped)
         gst_mfx_surface_proxy_unmap(proxy);
     else {
         if (proxy->task) {
             g_queue_push_tail(gst_mfx_task_get_surfaces(proxy->task),
-                proxy->surface.Data.MemId);
-
-            gst_mfx_task_replace(proxy->task, NULL);
+                proxy->surface_id);
+            gst_mfx_task_replace(&proxy->task, NULL);
         }
         else {
             GST_MFX_DISPLAY_LOCK(proxy->display);
             vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(proxy->display),
-                proxy->surface.Data.MemId, 1);
+                &proxy->surface_id, 1);
             GST_MFX_DISPLAY_UNLOCK(proxy->display);
         }
     }
-
     gst_mfx_display_replace(&proxy->display, NULL);
 }
 
@@ -274,7 +287,8 @@ gst_mfx_surface_proxy_init_properties(GstMfxSurfaceProxy * proxy)
 {
     mfxFrameInfo *info = &proxy->surface.Info;
 
-	proxy->format = gst_video_format_from_mfx_fourcc(info->FourCC);
+	proxy->format = proxy->format ? proxy->format :
+        gst_video_format_from_mfx_fourcc(info->FourCC);
 	proxy->width = info->Width;
 	proxy->height = info->Height;
 
@@ -299,6 +313,7 @@ gst_mfx_surface_proxy_new (GstMfxDisplay * display, GstVideoInfo * info,
 
     proxy->display = gst_mfx_display_ref(display);
     proxy->mapped = mapped;
+    proxy->format = GST_VIDEO_INFO_FORMAT(info);
 
     if (!mfx_surface_proxy_create(proxy, info))
 		goto error;
@@ -322,9 +337,9 @@ gst_mfx_surface_proxy_new_from_task (GstMfxTask * task)
 	if (!proxy)
 		return NULL;
 
-	proxy->pool = NULL;
 	proxy->task = gst_mfx_task_ref(task);
 	proxy->display = gst_mfx_display_ref(GST_MFX_TASK_DISPLAY(task));
+
 	if (!mfx_surface_proxy_create_from_task(proxy))
 		goto error;
 	gst_mfx_surface_proxy_init_properties(proxy);
@@ -347,8 +362,7 @@ gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool)
 	if (!proxy)
 		return NULL;
 
-	proxy->pool = gst_mfx_surface_pool_ref(pool);
-	proxy = gst_mfx_surface_pool_get_surface(proxy->pool);
+	proxy = gst_mfx_surface_pool_get_surface(pool);
 	if (!proxy)
         return NULL;
 	gst_mfx_surface_proxy_init_properties(proxy);
@@ -367,7 +381,6 @@ gst_mfx_surface_proxy_copy(GstMfxSurfaceProxy * proxy)
 	if (!copy)
 		return NULL;
 
-	copy->pool = proxy->pool ? gst_mfx_surface_pool_ref(proxy->pool) : NULL;
 	copy->task = proxy->task ? gst_mfx_task_ref(proxy->task) : NULL;
 	copy->surface = proxy->surface;
 	copy->format = proxy->format;
@@ -480,7 +493,7 @@ gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy,
 		*height_ptr = proxy->height;
 }
 
-guchar *
+guint8 *
 gst_mfx_surface_proxy_get_data(GstMfxSurfaceProxy * proxy)
 {
     g_return_val_if_fail(proxy != NULL, NULL);
@@ -488,7 +501,7 @@ gst_mfx_surface_proxy_get_data(GstMfxSurfaceProxy * proxy)
     return proxy->data;
 }
 
-guchar *
+guint8 *
 gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane)
 {
     g_return_val_if_fail(proxy != NULL, NULL);
