@@ -47,6 +47,16 @@ map_lookup_name(const struct map *m, const gchar * name)
 	return NULL;
 }
 
+/** Returns a relative score for the supplied MFX profile */
+guint
+gst_mfx_utils_h264_get_profile_score(mfxU16 profile)
+{
+	const struct map *const m =
+		map_lookup_value(gst_mfx_h264_profile_map, profile);
+
+	return m ? 1 + (m - gst_mfx_h264_profile_map) : 0;
+}
+
 /** Returns MFX profile from a string representation */
 mfxU16
 gst_mfx_utils_h264_get_profile_from_string(const gchar * str)

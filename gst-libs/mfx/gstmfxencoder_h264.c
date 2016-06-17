@@ -53,9 +53,6 @@ ensure_bitrate(GstMfxEncoderH264 * encoder)
             guint mb_width = (GST_MFX_ENCODER_WIDTH (encoder) + 15) / 16;
             guint mb_height = (GST_MFX_ENCODER_HEIGHT (encoder) + 15) / 16;
 
-            GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (encoder),
-                GST_MFX_ENCODER_HEIGHT (encoder));
-
 			/* According to the literature and testing, CABAC entropy coding
 			mode could provide for +10% to +18% improvement in general,
 			thus estimating +15% here ; and using adaptive 8x8 transforms
@@ -84,18 +81,17 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
         GST_MFX_ENCODER_H264_CAST (base_encoder);
     GstMfxEncoderStatus status;
 
-    if (base_encoder->profile == MFX_PROFILE_AVC_CONSTRAINED_BASELINE ||
-            base_encoder->profile == MFX_PROFILE_AVC_BASELINE) {
+    if (base_encoder->profile == MFX_PROFILE_AVC_BASELINE)
         base_encoder->gop_refdist = 1;
-        /* CABAC is disabled when selecting baseline profile in Media SDK */
-        base_encoder->use_cabac = FALSE;
-    }
 
     if (base_encoder->gop_refdist == 1)
         base_encoder->b_strategy = GST_MFX_OPTION_OFF;
 
     /* Ensure bitrate if not set */
 	ensure_bitrate(encoder);
+
+	GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (encoder),
+                GST_MFX_ENCODER_HEIGHT (encoder));
 
     return GST_MFX_ENCODER_STATUS_SUCCESS;
 }

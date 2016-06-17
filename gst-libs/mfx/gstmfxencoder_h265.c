@@ -101,6 +101,7 @@ gst_mfx_encoder_load_hevc_plugin(GstMfxEncoder *encoder)
 		sts = MFXVideoUSER_Load(encoder->session, &uid, 1);
 		if (MFX_ERR_NONE == sts) {
             encoder->plugin_uid = plugin_uids[i];
+            GST_DEBUG("Loaded HEVC encoder plugin %s", encoder->plugin_uid);
 			return TRUE;
 		}
 	}
@@ -110,9 +111,6 @@ gst_mfx_encoder_load_hevc_plugin(GstMfxEncoder *encoder)
 static gboolean
 gst_mfx_encoder_h265_init(GstMfxEncoder * base_encoder)
 {
-	GstMfxEncoderH265 *const encoder =
-		GST_MFX_ENCODER_H265_CAST(base_encoder);
-
 	base_encoder->codec = MFX_CODEC_HEVC;
 
 	return gst_mfx_encoder_load_hevc_plugin(base_encoder);
@@ -121,6 +119,14 @@ gst_mfx_encoder_h265_init(GstMfxEncoder * base_encoder)
 static void
 gst_mfx_encoder_h265_finalize(GstMfxEncoder * base_encoder)
 {
+    mfxPluginUID uid;
+    guint c;
+
+    for (c = 0; c < sizeof(uid.Data); c++)
+        sscanf(base_encoder->plugin_uid + 2 * c, "%2hhx", uid.Data + c);
+
+    MFXVideoUSER_UnLoad(base_encoder->session, &uid);
+
 }
 
 /* Generate "codec-data" buffer */
@@ -215,11 +221,8 @@ error_alloc_buffer:
 
 static GstMfxEncoderStatus
 gst_mfx_encoder_h265_set_property(GstMfxEncoder * base_encoder,
-gint prop_id, const GValue * value)
+    gint prop_id, const GValue * value)
 {
-	GstMfxEncoderH265 *const encoder =
-		GST_MFX_ENCODER_H265_CAST(base_encoder);
-
 	switch (prop_id) {
 	case GST_MFX_ENCODER_H265_PROP_LA_DEPTH:
 		base_encoder->la_depth = g_value_get_uint(value);
@@ -257,7 +260,7 @@ GstVideoInfo * info, gboolean mapped)
 /**
 * gst_mfx_encoder_h265_get_default_properties:
 *
-* Determines the set of common and H.264 specific encoder properties.
+* Determines the set of common and H.265 specific encoder properties.
 * The caller owns an extra reference to the resulting array of
 * #GstMfxEncoderPropInfo elements, so it shall be released with
 * g_ptr_array_unref() after usage.

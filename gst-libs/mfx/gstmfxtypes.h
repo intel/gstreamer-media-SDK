@@ -88,6 +88,12 @@ struct _GstMfxRectangle {
 	guint32 height;
 };
 
+typedef struct _GstMfxMemoryId GstMfxMemoryId;
+struct _GstMfxMemoryId {
+    mfxMemId                mid;
+    mfxFrameInfo           *info;
+};
+
 typedef enum {
 	GST_MFX_OPTION_AUTO = -1,
 	GST_MFX_OPTION_OFF,

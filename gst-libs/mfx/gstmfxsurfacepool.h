@@ -50,10 +50,6 @@ gst_mfx_surface_pool_replace (GstMfxSurfacePool ** old_pool_ptr,
 GstMfxSurfaceProxy *
 gst_mfx_surface_pool_get_surface (GstMfxSurfacePool * pool);
 
-void
-gst_mfx_surface_pool_put_surface (GstMfxSurfacePool * pool,
-	GstMfxSurfaceProxy * surface);
-
 guint
 gst_mfx_surface_pool_get_size (GstMfxSurfacePool * pool);
 

@@ -32,6 +32,7 @@ struct _GstMfxSurfaceProxy
 
 	GstMfxTask         *task;
 	GstMfxDisplay      *display;
+	GstMfxMemoryId      mem_id;
 	GstMfxID            surface_id;
 
 	mfxFrameSurface1    surface;
@@ -168,17 +169,18 @@ mfx_surface_proxy_create_from_task(GstMfxSurfaceProxy * proxy)
     proxy->surface.Info = req->Info;
 
     if (gst_mfx_task_has_mapped_surface(proxy->task)) {
-        proxy->mapped = TRUE;
         gst_mfx_surface_proxy_map(proxy);
+        proxy->mapped = TRUE;
     }
     else {
-        proxy->mapped = FALSE;
-        proxy->surface_id = g_queue_pop_head(
-            gst_mfx_task_get_surfaces(proxy->task));
-        if (!proxy->surface_id)
+        GstMfxMemoryId *mid;
+
+        mid = gst_mfx_task_get_memory_id(proxy->task);
+        if (!mid)
             return FALSE;
 
-        proxy->surface.Data.MemId = proxy->surface_id;
+        proxy->surface.Data.MemId = mid;
+        proxy->mapped = FALSE;
     }
 
 	return TRUE;
@@ -245,7 +247,9 @@ mfx_surface_proxy_create(GstMfxSurfaceProxy * proxy,
         if (!vaapi_check_status(sts, "vaCreateSurfaces()"))
             return FALSE;
 
-        proxy->surface.Data.MemId = &proxy->surface_id;
+        proxy->mem_id.mid = &proxy->surface_id;
+        proxy->mem_id.info = &frame_info;
+        proxy->surface.Data.MemId = &proxy->mem_id;
     }
 
 	return TRUE;
@@ -258,8 +262,6 @@ gst_mfx_surface_proxy_finalize(GstMfxSurfaceProxy * proxy)
         gst_mfx_surface_proxy_unmap(proxy);
     else {
         if (proxy->task) {
-            g_queue_push_tail(gst_mfx_task_get_surfaces(proxy->task),
-                proxy->surface_id);
             gst_mfx_task_replace(&proxy->task, NULL);
         }
         else {
@@ -436,8 +438,9 @@ gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy)
 {
 	g_return_val_if_fail(proxy != NULL, GST_MFX_ID_INVALID);
 
-	return proxy->surface.Data.MemId ? *(GstMfxID *)proxy->surface.Data.MemId :
-	    GST_MFX_ID_INVALID;
+	GstMfxMemoryId *mid = proxy->surface.Data.MemId;
+
+	return mid ? *(GstMfxID *)mid->mid : GST_MFX_ID_INVALID;
 }
 
 GstMfxDisplay *

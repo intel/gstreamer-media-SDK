@@ -200,33 +200,29 @@ gst_mfxenc_push_frame(GstMfxEnc * encode, GstVideoCodecFrame * out_frame)
 
 	out_buffer = out_frame->output_buffer;
 	if (klass->format_buffer) {
-		ret = klass->format_buffer(encode, &out_buffer);
+	    ret = klass->format_buffer(encode, &out_buffer);
+		if (GST_FLOW_OK != ret)
+            goto error_format_buffer;
 	}
 
 	GST_DEBUG("output:%" GST_TIME_FORMAT ", size:%zu",
 		GST_TIME_ARGS(out_frame->pts), gst_buffer_get_size(out_buffer));
 
 	return gst_video_encoder_finish_frame(venc, out_frame);
-
 	/* ERRORS */
-error_get_buffer:
+error_format_buffer:
 	{
-		GST_ERROR("failed to get encoded buffer (status %d)", status);
-		return GST_FLOW_ERROR;
-	}
-error_allocate_buffer:
-	{
-		GST_ERROR("failed to allocate encoded buffer in system memory");
+		GST_ERROR("failed to format encoded buffer in system memory");
 		if (out_buffer)
 			gst_buffer_unref(out_buffer);
-		gst_video_codec_frame_unref(out_frame);
+		//gst_video_codec_frame_unref(out_frame);
 		return ret;
 	}
 error_output_state:
 	{
 		GST_ERROR("failed to negotiate output state (status %d)", status);
 		//GST_VIDEO_ENCODER_STREAM_UNLOCK(encode);
-		gst_video_codec_frame_unref(out_frame);
+		//gst_video_codec_frame_unref(out_frame);
 		return GST_FLOW_NOT_NEGOTIATED;
 	}
 }
@@ -406,12 +402,10 @@ gst_mfxenc_handle_frame(GstVideoEncoder * venc,
         ret = GST_FLOW_OK;
         goto done;
     }
-
 	ret = gst_mfxenc_push_frame(encode, frame);
 
 done:
 	return ret;
-
 	/* ERRORS */
 error_buffer_invalid:
 	{

@@ -509,6 +509,16 @@ gst_mfx_encoder_set_encoding_params(GstMfxEncoder * encoder)
         encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
 
     set_extended_coding_options(encoder);
+
+    if (!g_strcmp0(encoder->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347") &&
+            (!((encoder->info.width & 15) ^ 8) ||
+            !((encoder->info.height & 15) ^ 8))) {
+        encoder->exthevc.PicWidthInLumaSamples = encoder->info.width;
+        encoder->exthevc.PicHeightInLumaSamples = encoder->info.height;
+
+        encoder->extparam_internal[encoder->params.NumExtParam++] =
+            (mfxExtBuffer *)&encoder->exthevc;
+    }
 }
 
 static void
@@ -1152,7 +1162,7 @@ gst_mfx_encoder_preset_get_type (void)
 
     static const GEnumValue encoder_preset_values[] = {
         { GST_MFX_ENCODER_PRESET_VERY_FAST,
-          "Best speed", "very-fast" },
+          "Best speed", "veryfast" },
         { GST_MFX_ENCODER_PRESET_FASTER,
           "Faster", "faster" },
         { GST_MFX_ENCODER_PRESET_FAST,
@@ -1164,7 +1174,7 @@ gst_mfx_encoder_preset_get_type (void)
         { GST_MFX_ENCODER_PRESET_SLOWER,
           "Slower", "slower" },
         { GST_MFX_ENCODER_PRESET_VERY_SLOW,
-          "Best quality", "very-slow" },
+          "Best quality", "veryslow" },
         { 0, NULL, NULL },
   };
 

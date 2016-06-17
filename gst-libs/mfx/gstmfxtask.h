@@ -93,14 +93,11 @@ gst_mfx_task_has_mapped_surface(GstMfxTask * task);
 GstMfxDisplay *
 gst_mfx_task_get_display(GstMfxTask * task);
 
-GQueue *
-gst_mfx_task_get_surfaces (GstMfxTask * task);
+GstMfxMemoryId *
+gst_mfx_task_get_memory_id(GstMfxTask * task);
 
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task);
-
-mfxFrameInfo *
-gst_mfx_task_get_frame_info (GstMfxTask * task);
 
 /* ------------------------------------------------------------------------ */
 /* --- MFX Frame Allocator                                              --- */
@@ -112,9 +109,6 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest *req,
 
 mfxStatus
 gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse *resp);
-
-mfxStatus
-gst_mfx_task_frame_get_hdl (mfxHDL pthis, mfxMemId mid, mfxHDL *hdl);
 
 G_END_DECLS
 

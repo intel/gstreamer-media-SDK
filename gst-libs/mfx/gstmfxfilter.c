@@ -61,6 +61,7 @@ struct _GstMfxFilter
 	mfxVideoParam           params;
 	mfxFrameInfo            frame_info;
     mfxFrameAllocRequest   *vpp_request[2];
+    mfxFrameAllocResponse   response[2];
 
 	/* VPP output parameters */
 	mfxU32                  fourcc;
@@ -303,7 +304,7 @@ gst_mfx_filter_start(GstMfxFilter * filter)
             filter->vpp_request[i]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
             sts = gst_mfx_task_frame_alloc(filter->vpp[i], filter->vpp_request[i],
-                    &response);
+                    &filter->response[i]);
             if (MFX_ERR_NONE != sts)
                 return FALSE;
         }
@@ -380,6 +381,10 @@ gst_mfx_filter_finalize(GstMfxFilter * filter)
     guint i;
 
 	for (i = 0; i < 2; i++) {
+	    if (!filter->vpp[i] || (filter->vpp[i] &&
+                gst_mfx_task_has_type(filter->vpp[i], GST_MFX_TASK_DECODER)))
+            continue;
+        gst_mfx_task_frame_free(filter->vpp[i], &filter->response[i]);
         gst_mfx_task_replace(&filter->vpp[i], NULL);
         gst_mfx_surface_pool_replace(&filter->vpp_pool[i], NULL);
 	}
