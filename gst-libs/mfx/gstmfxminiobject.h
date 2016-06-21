@@ -107,7 +107,7 @@ typedef struct _GstMfxMiniObjectClass         GstMfxMiniObjectClass;
 * GstMfxMiniObject:
 * @object_class: the #GstMfxMiniObjectClass
 * @ref_count: the object reference count that should be manipulated
-*   through gst_mfx_mini_object_ref() et al. helpers
+*   through gst_mfx_mini_object_ref () et al. helpers
 * @flags: set of flags that should be manipulated through
 *   GST_MFX_MINI_OBJECT_FLAG_*() functions
 *
@@ -140,31 +140,31 @@ struct _GstMfxMiniObjectClass
 };
 
 GstMfxMiniObject *
-gst_mfx_mini_object_new(const GstMfxMiniObjectClass * object_class);
+gst_mfx_mini_object_new (const GstMfxMiniObjectClass * object_class);
 
 GstMfxMiniObject *
-gst_mfx_mini_object_new0(const GstMfxMiniObjectClass * object_class);
+gst_mfx_mini_object_new0 (const GstMfxMiniObjectClass * object_class);
 
 GstMfxMiniObject *
-gst_mfx_mini_object_ref(GstMfxMiniObject * object);
+gst_mfx_mini_object_ref (GstMfxMiniObject * object);
 
 void
-gst_mfx_mini_object_unref(GstMfxMiniObject * object);
+gst_mfx_mini_object_unref (GstMfxMiniObject * object);
 
 void
-gst_mfx_mini_object_replace(GstMfxMiniObject ** old_object_ptr,
+gst_mfx_mini_object_replace (GstMfxMiniObject ** old_object_ptr,
 GstMfxMiniObject * new_object);
 
 #undef  gst_mfx_mini_object_ref
 #define gst_mfx_mini_object_ref(object) \
-	gst_mfx_mini_object_ref_internal (object)
+	gst_mfx_mini_object_ref_internal(object)
 
 #undef  gst_mfx_mini_object_unref
 #define gst_mfx_mini_object_unref(object) \
-	gst_mfx_mini_object_unref_internal (object)
+	gst_mfx_mini_object_unref_internal(object)
 
 void
-gst_mfx_mini_object_free(GstMfxMiniObject * object);
+gst_mfx_mini_object_free (GstMfxMiniObject * object);
 
 /**
 * gst_mfx_mini_object_ref_internal:
@@ -176,9 +176,9 @@ gst_mfx_mini_object_free(GstMfxMiniObject * object);
 * Returns: The same @object argument
 */
 static inline GstMfxMiniObject *
-gst_mfx_mini_object_ref_internal(GstMfxMiniObject * object)
+gst_mfx_mini_object_ref_internal (GstMfxMiniObject * object)
 {
-	g_atomic_int_inc(&object->ref_count);
+	g_atomic_int_inc (&object->ref_count);
 	return object;
 }
 
@@ -192,10 +192,10 @@ gst_mfx_mini_object_ref_internal(GstMfxMiniObject * object)
 * This is an internal function that does not do any run-time type check.
 */
 static inline void
-gst_mfx_mini_object_unref_internal(GstMfxMiniObject * object)
+gst_mfx_mini_object_unref_internal (GstMfxMiniObject * object)
 {
-	if (g_atomic_int_dec_and_test(&object->ref_count))
-		gst_mfx_mini_object_free(object);
+	if (g_atomic_int_dec_and_test (&object->ref_count))
+		gst_mfx_mini_object_free (object);
 }
 
 G_END_DECLS

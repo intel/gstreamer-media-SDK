@@ -86,6 +86,9 @@ gst_mfx_caps_feature_contains(const GstCaps * caps,
 gboolean
 gst_caps_has_mfx_surface(GstCaps * caps);
 
+gboolean
+gst_mfx_query_peer_has_raw_caps(GstPad * pad);
+
 void
 gst_video_info_change_format(GstVideoInfo * vip, GstVideoFormat format,
     guint width, guint height);

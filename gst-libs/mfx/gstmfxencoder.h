@@ -8,7 +8,7 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_ENCODER(obj) \
+#define GST_MFX_ENCODER (obj) \
 	((GstMfxEncoder *)(obj))
 
 typedef struct _GstMfxEncoder GstMfxEncoder;
@@ -122,13 +122,13 @@ GType
 gst_mfx_encoder_lookahead_ds_get_type (void);
 
 GstMfxEncoder *
-gst_mfx_encoder_ref(GstMfxEncoder * encoder);
+gst_mfx_encoder_ref (GstMfxEncoder * encoder);
 
 void
-gst_mfx_encoder_unref(GstMfxEncoder * encoder);
+gst_mfx_encoder_unref (GstMfxEncoder * encoder);
 
 void
-gst_mfx_encoder_replace(GstMfxEncoder ** old_encoder_ptr,
+gst_mfx_encoder_replace (GstMfxEncoder ** old_encoder_ptr,
 	GstMfxEncoder * new_encoder);
 
 GstMfxEncoderStatus
@@ -136,34 +136,34 @@ gst_mfx_encoder_get_codec_data (GstMfxEncoder * encoder,
     GstBuffer ** out_codec_data_ptr);
 
 gboolean
-gst_mfx_encoder_set_gop_refdist(GstMfxEncoder * encoder, gint gop_refdist);
+gst_mfx_encoder_set_gop_refdist (GstMfxEncoder * encoder, gint gop_refdist);
 
 gboolean
-gst_mfx_encoder_set_num_references(GstMfxEncoder * encoder, mfxU16 num_refs);
+gst_mfx_encoder_set_num_references (GstMfxEncoder * encoder, mfxU16 num_refs);
 
 gboolean
-gst_mfx_encoder_set_quantizer(GstMfxEncoder * encoder, guint quantizer);
+gst_mfx_encoder_set_quantizer (GstMfxEncoder * encoder, guint quantizer);
 
 gboolean
-gst_mfx_encoder_set_qpi_offset(GstMfxEncoder * encoder, mfxU16 offset);
+gst_mfx_encoder_set_qpi_offset (GstMfxEncoder * encoder, mfxU16 offset);
 
 gboolean
-gst_mfx_encoder_set_qpp_offset(GstMfxEncoder * encoder, mfxU16 offset);
+gst_mfx_encoder_set_qpp_offset (GstMfxEncoder * encoder, mfxU16 offset);
 
 gboolean
-gst_mfx_encoder_set_qpb_offset(GstMfxEncoder * encoder, mfxU16 offset);
+gst_mfx_encoder_set_qpb_offset (GstMfxEncoder * encoder, mfxU16 offset);
 
 gboolean
-gst_mfx_encoder_set_async_depth(GstMfxEncoder * encoder, mfxU16 async_depth);
+gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth);
 
 GstMfxEncoderStatus
-gst_mfx_encoder_start(GstMfxEncoder * encoder);
+gst_mfx_encoder_start (GstMfxEncoder * encoder);
 
 GstMfxEncoderStatus
-gst_mfx_encoder_encode(GstMfxEncoder * encoder, GstVideoCodecFrame * frame);
+gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame);
 
 GstMfxEncoderStatus
-gst_mfx_encoder_flush(GstMfxEncoder * encoder, GstVideoCodecFrame ** frame);
+gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame);
 
 G_END_DECLS
 

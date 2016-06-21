@@ -42,7 +42,7 @@ struct _GstMfxEncH265Class
 };
 
 GType
-gst_mfxenc_h265_get_type(void);
+gst_mfxenc_h265_get_type (void);
 
 G_END_DECLS
 

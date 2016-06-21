@@ -32,19 +32,19 @@ G_BEGIN_DECLS
 	((GstMfxSurfaceProxy *) (obj))
 
 #define GST_MFX_SURFACE_PROXY_SURFACE(proxy) \
-	gst_mfx_surface_proxy_get_frame_surface(proxy)
+	gst_mfx_surface_proxy_get_frame_surface (proxy)
 
 #define GST_MFX_SURFACE_PROXY_MEMID(proxy) \
-	gst_mfx_surface_proxy_get_id(proxy)
+	gst_mfx_surface_proxy_get_id (proxy)
 
 #define GST_MFX_SURFACE_PROXY_FORMAT(proxy) \
-	gst_mfx_surface_proxy_get_format(proxy)
+	gst_mfx_surface_proxy_get_format (proxy)
 
 #define GST_MFX_SURFACE_PROXY_WIDTH(proxy) \
-	gst_mfx_surface_proxy_get_width(proxy)
+	gst_mfx_surface_proxy_get_width (proxy)
 
 #define GST_MFX_SURFACE_PROXY_HEIGHT(proxy) \
-	gst_mfx_surface_proxy_get_height(proxy)
+	gst_mfx_surface_proxy_get_height (proxy)
 
 typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
@@ -54,66 +54,63 @@ gst_mfx_surface_proxy_new (GstMfxDisplay * display, GstVideoInfo * info,
     gboolean mapped);
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new_from_task(GstMfxTask * task);
+gst_mfx_surface_proxy_new_from_task (GstMfxTask * task);
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_new_from_pool(GstMfxSurfacePool * pool);
+gst_mfx_surface_proxy_new_from_pool (GstMfxSurfacePool * pool);
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_copy(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_copy (GstMfxSurfaceProxy * proxy);
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_proxy_ref(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_ref (GstMfxSurfaceProxy * proxy);
 
 void
-gst_mfx_surface_proxy_unref(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_unref (GstMfxSurfaceProxy * proxy);
 
 void
-gst_mfx_surface_proxy_replace(GstMfxSurfaceProxy ** old_proxy_ptr,
+gst_mfx_surface_proxy_replace (GstMfxSurfaceProxy ** old_proxy_ptr,
 	GstMfxSurfaceProxy * new_proxy);
 
 mfxFrameSurface1 *
-gst_mfx_surface_proxy_get_frame_surface(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_frame_surface (GstMfxSurfaceProxy * proxy);
 
 GstMfxID
-gst_mfx_surface_proxy_get_id(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_id (GstMfxSurfaceProxy * proxy);
 
 GstMfxDisplay *
-gst_mfx_surface_proxy_get_display(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_display (GstMfxSurfaceProxy * proxy);
 
 gboolean
-gst_mfx_surface_proxy_is_mapped(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_is_mapped (GstMfxSurfaceProxy * proxy);
 
 GstVideoFormat
-gst_mfx_surface_proxy_get_format(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_format (GstMfxSurfaceProxy * proxy);
 
 guint
-gst_mfx_surface_proxy_get_width(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_width (GstMfxSurfaceProxy * proxy);
 
 guint
-gst_mfx_surface_proxy_get_height(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_height (GstMfxSurfaceProxy * proxy);
 
 void
-gst_mfx_surface_proxy_get_size(GstMfxSurfaceProxy * proxy, guint * width_ptr,
+gst_mfx_surface_proxy_get_size (GstMfxSurfaceProxy * proxy, guint * width_ptr,
 	guint * height_ptr);
 
 guint8 *
-gst_mfx_surface_proxy_get_plane(GstMfxSurfaceProxy * proxy, guint plane);
+gst_mfx_surface_proxy_get_plane (GstMfxSurfaceProxy * proxy, guint plane);
 
 guint8 *
-gst_mfx_surface_proxy_get_data(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_data (GstMfxSurfaceProxy * proxy);
 
 guint16
-gst_mfx_surface_proxy_get_pitch(GstMfxSurfaceProxy * proxy, guint plane);
-
-GstMfxTask *
-gst_mfx_surface_proxy_get_task_context(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_pitch (GstMfxSurfaceProxy * proxy, guint plane);
 
 const GstMfxRectangle *
-gst_mfx_surface_proxy_get_crop_rect(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_get_crop_rect (GstMfxSurfaceProxy * proxy);
 
 VaapiImage *
-gst_mfx_surface_proxy_derive_image(GstMfxSurfaceProxy * proxy);
+gst_mfx_surface_proxy_derive_image (GstMfxSurfaceProxy * proxy);
 
 G_END_DECLS
 

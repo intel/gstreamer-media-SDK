@@ -6,7 +6,7 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_ENCODER_H264(encoder) \
+#define GST_MFX_ENCODER_H264 (encoder) \
 	((GstMfxEncoderH264 *) (encoder))
 
 typedef struct _GstMfxEncoderH264 GstMfxEncoderH264;
@@ -30,14 +30,14 @@ typedef enum {
 } GstMfxEncoderH264Prop;
 
 GstMfxEncoder *
-gst_mfx_encoder_h264_new(GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_h264_new (GstMfxTaskAggregator * aggregator,
 	GstVideoInfo * info, gboolean mapped);
 
 GPtrArray *
-gst_mfx_encoder_h264_get_default_properties(void);
+gst_mfx_encoder_h264_get_default_properties (void);
 
 gboolean
-gst_mfx_encoder_h264_set_max_profile(GstMfxEncoder * encoder, mfxU16 profile);
+gst_mfx_encoder_h264_set_max_profile (GstMfxEncoder * encoder, mfxU16 profile);
 
 G_END_DECLS
 

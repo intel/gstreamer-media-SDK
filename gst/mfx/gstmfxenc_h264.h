@@ -42,7 +42,7 @@ struct _GstMfxEncH264Class
 };
 
 GType
-gst_mfxenc_h264_get_type(void);
+gst_mfxenc_h264_get_type (void);
 
 G_END_DECLS
 

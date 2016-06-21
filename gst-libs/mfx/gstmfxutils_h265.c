@@ -17,9 +17,9 @@ static const struct map gst_mfx_h265_profile_map[] = {
 
 /* Lookup value in map */
 static const struct map *
-map_lookup_value(const struct map *m, guint value)
+map_lookup_value (const struct map *m, guint value)
 {
-	g_return_val_if_fail(m != NULL, NULL);
+	g_return_val_if_fail (m != NULL, NULL);
 
 	for (; m->name != NULL; m++) {
 		if (m->value == value)
@@ -30,35 +30,45 @@ map_lookup_value(const struct map *m, guint value)
 
 /* Lookup name in map */
 static const struct map *
-map_lookup_name(const struct map *m, const gchar * name)
+map_lookup_name (const struct map *m, const gchar * name)
 {
-	g_return_val_if_fail(m != NULL, NULL);
+	g_return_val_if_fail (m != NULL, NULL);
 
 	if (!name)
 		return NULL;
 
 	for (; m->name != NULL; m++) {
-		if (strcmp(m->name, name) == 0)
+		if (strcmp (m->name, name) == 0)
 			return m;
 	}
 	return NULL;
 }
 
+/** Returns a relative score for the supplied MFX profile */
+guint
+gst_mfx_utils_h265_get_profile_score (mfxU16 profile)
+{
+	const struct map *const m =
+		map_lookup_value (gst_mfx_h265_profile_map, profile);
+
+	return m ? 1 + (m - gst_mfx_h265_profile_map) : 0;
+}
+
 /** Returns MFX profile from a string representation */
 mfxU16
-gst_mfx_utils_h265_get_profile_from_string(const gchar * str)
+gst_mfx_utils_h265_get_profile_from_string (const gchar * str)
 {
-	const struct map *const m = map_lookup_name(gst_mfx_h265_profile_map, str);
+	const struct map *const m = map_lookup_name (gst_mfx_h265_profile_map, str);
 
 	return m ? m->value : 0;
 }
 
 /** Returns a string representation for the supplied H.264 profile */
 const gchar *
-gst_mfx_utils_h265_get_profile_string(mfxU16 profile)
+gst_mfx_utils_h265_get_profile_string (mfxU16 profile)
 {
 	const struct map *const m =
-		map_lookup_value(gst_mfx_h265_profile_map, profile);
+		map_lookup_value (gst_mfx_h265_profile_map, profile);
 
 	return m ? m->name : NULL;
 }

@@ -36,7 +36,7 @@ struct _ResponseData {
     mfxU16                  num_surfaces;
     mfxFrameAllocResponse  *response;
     mfxFrameInfo            frame_info;
-    guint                   count;
+    guint                   num_used;
 };
 
 struct _GstMfxTask {
@@ -51,7 +51,7 @@ struct _GstMfxTask {
 };
 
 static gint
-find_response(gconstpointer response_data, gconstpointer response)
+find_response (gconstpointer response_data, gconstpointer response)
 {
     ResponseData *_response_data = (ResponseData *)response_data;
     mfxFrameAllocResponse *_response = (mfxFrameAllocResponse *)response;
@@ -60,7 +60,7 @@ find_response(gconstpointer response_data, gconstpointer response)
 }
 
 mfxStatus
-gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
+gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest *req,
 	mfxFrameAllocResponse *resp)
 {
 	GstMfxTask *task = pthis;
@@ -73,7 +73,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 	ResponseData *response_data;
 
 	if (task->task_type & GST_MFX_TASK_DECODER) {
-        GList *l = g_list_first(task->saved_responses);
+        GList *l = g_list_first (task->saved_responses);
         if (l) {
             response_data = l->data;
             *resp = *response_data->response;
@@ -81,14 +81,14 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
         }
 	}
 
-	memset(resp, 0, sizeof (mfxFrameAllocResponse));
+	memset (resp, 0, sizeof (mfxFrameAllocResponse));
 
 	if (!(req->Type & MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET)) {
-        GST_ERROR("Unsupported surface type: %d\n", req->Type);
+        GST_ERROR ("Unsupported surface type: %d\n", req->Type);
 		return MFX_ERR_UNSUPPORTED;
 	}
 
-    response_data = g_malloc0(sizeof(ResponseData));
+    response_data = g_malloc0 (sizeof (ResponseData));
 	response_data->num_surfaces = req->NumFrameSuggested;
 	response_data->frame_info = req->Info;
 
@@ -96,35 +96,35 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 	num_surfaces = response_data->num_surfaces;
 
 	response_data->mem_ids =
-        g_slice_alloc(num_surfaces * sizeof(GstMfxMemoryId));
+        g_slice_alloc (num_surfaces * sizeof (GstMfxMemoryId));
     response_data->mids =
-        g_slice_alloc(num_surfaces * sizeof(mfxMemId));
+        g_slice_alloc (num_surfaces * sizeof (mfxMemId));
 
     if (!response_data->mem_ids || !response_data->mids)
         goto error_allocate_memory;
 
     if (info->FourCC != MFX_FOURCC_P8) {
         response_data->surfaces =
-            g_slice_alloc0(num_surfaces * sizeof(VASurfaceID));
+            g_slice_alloc0 (num_surfaces * sizeof (VASurfaceID));
 
         if (!response_data->surfaces)
             goto error_allocate_memory;
 
-        fourcc = gst_mfx_video_format_to_va_fourcc(info->FourCC);
+        fourcc = gst_mfx_video_format_to_va_fourcc (info->FourCC);
         attrib.type = VASurfaceAttribPixelFormat;
         attrib.flags = VA_SURFACE_ATTRIB_SETTABLE;
         attrib.value.type = VAGenericValueTypeInteger;
         attrib.value.value.i = fourcc;
 
-        GST_MFX_DISPLAY_LOCK(task->display);
-        sts = vaCreateSurfaces(GST_MFX_DISPLAY_VADISPLAY(task->display),
-                    gst_mfx_video_format_to_va_format(info->FourCC),
+        GST_MFX_DISPLAY_LOCK (task->display);
+        sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
+                    gst_mfx_video_format_to_va_format (info->FourCC),
                     req->Info.Width, req->Info.Height,
                     response_data->surfaces, num_surfaces,
                     &attrib, 1);
-        GST_MFX_DISPLAY_UNLOCK(task->display);
-        if (!vaapi_check_status(sts, "vaCreateSurfaces()")) {
-            GST_ERROR("Error allocating VA surfaces %d", sts);
+        GST_MFX_DISPLAY_UNLOCK (task->display);
+        if (!vaapi_check_status (sts, "vaCreateSurfaces ()")) {
+            GST_ERROR ("Error allocating VA surfaces %d", sts);
             goto error_allocate_memory;
         }
 
@@ -142,14 +142,14 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
             (req->Info.Width * req->Info.Height) * 400 / (16 * 16);
 
         response_data->coded_buf =
-            g_slice_alloc(num_surfaces * sizeof(VABufferID));
+            g_slice_alloc (num_surfaces * sizeof (VABufferID));
 
         for (i = 0; i < num_surfaces; i++) {
-            sts = vaCreateBuffer(GST_MFX_DISPLAY_VADISPLAY(task->display),
+            sts = vaCreateBuffer (GST_MFX_DISPLAY_VADISPLAY (task->display),
                         context_id, VAEncCodedBufferType, codedbuf_size,
                         1, NULL, &response_data->coded_buf[i]);
-            if (!vaapi_check_status(sts, "vaCreateBuffer()")) {
-                GST_ERROR("Error allocating VA buffers %d", sts);
+            if (!vaapi_check_status (sts, "vaCreateBuffer ()")) {
+                GST_ERROR ("Error allocating VA buffers %d", sts);
                 goto error_allocate_memory;
             }
             mid = &response_data->mem_ids[i];
@@ -170,24 +170,24 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *req,
 
 error_allocate_memory:
     {
-        g_slice_free1(num_surfaces * sizeof(VABufferID), response_data->coded_buf);
-        g_slice_free1(num_surfaces * sizeof(GstMfxMemoryId), response_data->mem_ids);
-        g_slice_free1(num_surfaces * sizeof(mfxMemId), response_data->mids);
-        g_slice_free1(num_surfaces * sizeof(VASurfaceID), response_data->surfaces);
+        g_slice_free1 (num_surfaces * sizeof (VABufferID), response_data->coded_buf);
+        g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId), response_data->mem_ids);
+        g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
+        g_slice_free1 (num_surfaces * sizeof (VASurfaceID), response_data->surfaces);
 
         return MFX_ERR_MEMORY_ALLOC;
     }
 }
 
 mfxStatus
-gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
+gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse *resp)
 {
 	GstMfxTask *task = pthis;
 	mfxFrameInfo *info;
 	mfxU16 i, num_surfaces;
 	ResponseData *response_data;
 
-	GList *l = g_list_find_custom(task->saved_responses, resp,
+	GList *l = g_list_find_custom (task->saved_responses, resp,
                     find_response);
     if (!l)
         return MFX_ERR_NOT_FOUND;
@@ -198,33 +198,33 @@ gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse *resp)
 	num_surfaces = response_data->num_surfaces;
 
     if (info->FourCC != MFX_FOURCC_P8) {
-        GST_MFX_DISPLAY_LOCK(task->display);
-        vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(task->display),
+        GST_MFX_DISPLAY_LOCK (task->display);
+        vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
             response_data->surfaces, num_surfaces);
-        GST_MFX_DISPLAY_UNLOCK(task->display);
+        GST_MFX_DISPLAY_UNLOCK (task->display);
 
-        g_slice_free1(num_surfaces * sizeof(VASurfaceID),
+        g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
             response_data->surfaces);
     }
     else {
         for (i = 0; i < num_surfaces; i++) {
-            GST_MFX_DISPLAY_LOCK(task->display);
-            vaDestroyBuffer(GST_MFX_DISPLAY_VADISPLAY(task->display),
+            GST_MFX_DISPLAY_LOCK (task->display);
+            vaDestroyBuffer (GST_MFX_DISPLAY_VADISPLAY (task->display),
                 response_data->coded_buf[i]);
-            GST_MFX_DISPLAY_UNLOCK(task->display);
+            GST_MFX_DISPLAY_UNLOCK (task->display);
         }
-        g_slice_free1(num_surfaces * sizeof(VABufferID),
+        g_slice_free1 (num_surfaces * sizeof (VABufferID),
             response_data->coded_buf);
     }
 
-    g_slice_free1(num_surfaces * sizeof(GstMfxMemoryId), response_data->mem_ids);
-    g_slice_free1(num_surfaces * sizeof(mfxMemId), response_data->mids);
+    g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId), response_data->mem_ids);
+    g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
 
 	return MFX_ERR_NONE;
 }
 
 static mfxStatus
-gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
+gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
 {
     GstMfxTask *task = pthis;
     GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
@@ -233,12 +233,12 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
     if (mem_id->info->FourCC == MFX_FOURCC_P8) {
         VACodedBufferSegment *coded_buffer_segment;
 
-        GST_MFX_DISPLAY_LOCK(task->display);
-        sts = vaMapBuffer(GST_MFX_DISPLAY_VADISPLAY(task->display),
+        GST_MFX_DISPLAY_LOCK (task->display);
+        sts = vaMapBuffer (GST_MFX_DISPLAY_VADISPLAY (task->display),
                     *(VABufferID *)mem_id->mid, (void**)&coded_buffer_segment);
-        GST_MFX_DISPLAY_UNLOCK(task->display);
-        if (!vaapi_check_status(sts, "vaMapBuffer()")) {
-            GST_ERROR("Error mapping VA buffers %d", sts);
+        GST_MFX_DISPLAY_UNLOCK (task->display);
+        if (!vaapi_check_status (sts, "vaMapBuffer ()")) {
+            GST_ERROR ("Error mapping VA buffers %d", sts);
             return MFX_ERR_LOCK_MEMORY;
         }
         ptr->Y = (mfxU8 *)coded_buffer_segment->buf;
@@ -250,16 +250,16 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
 }
 
 static mfxStatus
-gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
+gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
 {
     GstMfxTask *task = pthis;
     GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
 
     if (mem_id->info->FourCC == MFX_FOURCC_P8) {
-        GST_MFX_DISPLAY_LOCK(task->display);
-        vaUnmapBuffer(GST_MFX_DISPLAY_VADISPLAY(task->display),
+        GST_MFX_DISPLAY_LOCK (task->display);
+        vaUnmapBuffer (GST_MFX_DISPLAY_VADISPLAY (task->display),
                     *(VABufferID *)mem_id->mid);
-        GST_MFX_DISPLAY_UNLOCK(task->display);
+        GST_MFX_DISPLAY_UNLOCK (task->display);
     }
     else
         return MFX_ERR_UNSUPPORTED;
@@ -268,9 +268,8 @@ gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr)
 }
 
 static mfxStatus
-gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL *hdl)
+gst_mfx_task_frame_get_hdl (mfxHDL pthis, mfxMemId mid, mfxHDL *hdl)
 {
-    GstMfxTask *task = pthis;
     GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
 
     if (!mem_id || !mem_id->mid || !hdl)
@@ -281,54 +280,53 @@ gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL *hdl)
 }
 
 GstMfxDisplay *
-gst_mfx_task_get_display(GstMfxTask * task)
+gst_mfx_task_get_display (GstMfxTask * task)
 {
-	g_return_val_if_fail(task != NULL, 0);
+	g_return_val_if_fail (task != NULL, 0);
 
 	return task->display;
 }
 
 mfxSession
-gst_mfx_task_get_session(GstMfxTask * task)
+gst_mfx_task_get_session (GstMfxTask * task)
 {
-	g_return_val_if_fail(task != NULL, 0);
+	g_return_val_if_fail (task != NULL, 0);
 
 	return task->session;
 }
 
 GstMfxMemoryId *
-gst_mfx_task_get_memory_id(GstMfxTask * task)
+gst_mfx_task_get_memory_id (GstMfxTask * task)
 {
     GList *l;
-    GstMfxMemoryId *mids;
     ResponseData *response_data;
 
-	g_return_val_if_fail(task != NULL, 0);
+	g_return_val_if_fail (task != NULL, 0);
 
-	l = g_list_first(task->saved_responses);
+	l = g_list_first (task->saved_responses);
 	response_data = l->data;
 
-	return &response_data->mem_ids[response_data->count++];
+	return &response_data->mem_ids[response_data->num_used++];
 }
 
 mfxFrameAllocRequest *
-gst_mfx_task_get_request(GstMfxTask * task)
+gst_mfx_task_get_request (GstMfxTask * task)
 {
-    g_return_val_if_fail(task != NULL, NULL);
+    g_return_val_if_fail (task != NULL, NULL);
 
     return &task->request;
 }
 
 void
-gst_mfx_task_set_request(GstMfxTask * task, mfxFrameAllocRequest * request)
+gst_mfx_task_set_request (GstMfxTask * task, mfxFrameAllocRequest * request)
 {
-    g_return_if_fail(task != NULL);
+    g_return_if_fail (task != NULL);
 
     task->request = *request;
 }
 
 gboolean
-gst_mfx_task_has_type(GstMfxTask * task, guint flags)
+gst_mfx_task_has_type (GstMfxTask * task, guint flags)
 {
 	return (task->task_type & flags);
 }
@@ -336,7 +334,7 @@ gst_mfx_task_has_type(GstMfxTask * task, guint flags)
 void
 gst_mfx_task_set_task_type (GstMfxTask * task, guint flags)
 {
-	g_return_if_fail(task != NULL);
+	g_return_if_fail (task != NULL);
 
 	task->task_type |= flags;
 }
@@ -344,13 +342,13 @@ gst_mfx_task_set_task_type (GstMfxTask * task, guint flags)
 guint
 gst_mfx_task_get_task_type (GstMfxTask * task)
 {
-	g_return_val_if_fail(task != NULL, GST_MFX_TASK_INVALID);
+	g_return_val_if_fail (task != NULL, GST_MFX_TASK_INVALID);
 
 	return task->task_type;
 }
 
 void
-gst_mfx_task_use_video_memory(GstMfxTask * task)
+gst_mfx_task_use_video_memory (GstMfxTask * task)
 {
     mfxFrameAllocator frame_allocator = {
         .pthis = task,
@@ -361,106 +359,106 @@ gst_mfx_task_use_video_memory(GstMfxTask * task)
         .GetHDL = gst_mfx_task_frame_get_hdl,
     };
 
-    MFXVideoCORE_SetFrameAllocator(task->session, &frame_allocator);
+    MFXVideoCORE_SetFrameAllocator (task->session, &frame_allocator);
 
     task->use_video_memory = TRUE;
 }
 
 gboolean
-gst_mfx_task_has_mapped_surface(GstMfxTask * task)
+gst_mfx_task_has_mapped_surface (GstMfxTask * task)
 {
     return !task->use_video_memory;
 }
 
 static void
-gst_mfx_task_finalize(GstMfxTask * task)
+gst_mfx_task_finalize (GstMfxTask * task)
 {
-	MFXClose(task->session);
+	MFXClose (task->session);
 	g_list_free_full (task->saved_responses, g_free);
-	gst_mfx_display_replace(&task->display, NULL);
+	gst_mfx_display_replace (&task->display, NULL);
 }
 
 
 static inline const GstMfxMiniObjectClass *
-gst_mfx_task_class(void)
+gst_mfx_task_class (void)
 {
 	static const GstMfxMiniObjectClass GstMfxTaskClass = {
-		sizeof(GstMfxTask),
+		sizeof (GstMfxTask),
 		(GDestroyNotify)gst_mfx_task_finalize
 	};
 	return &GstMfxTaskClass;
 }
 
 static void
-gst_mfx_task_init(GstMfxTask * task, GstMfxTaskAggregator * aggregator,
+gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 	mfxSession session, guint type_flags)
 {
     task->task_type = type_flags;
-	task->display = gst_mfx_display_ref(
-		GST_MFX_TASK_AGGREGATOR_DISPLAY(aggregator));
+	task->display = gst_mfx_display_ref (
+		GST_MFX_TASK_AGGREGATOR_DISPLAY (aggregator));
 	task->session = session;
 
-	gst_mfx_task_aggregator_add_task(aggregator, task);
+	gst_mfx_task_aggregator_add_task (aggregator, task);
 
-    MFXVideoCORE_SetHandle(task->session, MFX_HANDLE_VA_DISPLAY,
-		GST_MFX_DISPLAY_VADISPLAY(task->display));
+    MFXVideoCORE_SetHandle (task->session, MFX_HANDLE_VA_DISPLAY,
+		GST_MFX_DISPLAY_VADISPLAY (task->display));
 
     task->use_video_memory = FALSE;
 }
 
 GstMfxTask *
-gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new (GstMfxTaskAggregator * aggregator,
     guint type_flags)
 {
 	mfxSession session;
 
-	g_return_val_if_fail(aggregator != NULL, NULL);
+	g_return_val_if_fail (aggregator != NULL, NULL);
 
-	session = gst_mfx_task_aggregator_create_session(aggregator);
+	session = gst_mfx_task_aggregator_create_session (aggregator);
 	if (!session)
         return NULL;
 
-	return gst_mfx_task_new_with_session(aggregator, session, type_flags);
+	return gst_mfx_task_new_with_session (aggregator, session, type_flags);
 }
 
 GstMfxTask *
-gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
 	mfxSession session, guint type_flags)
 {
 	GstMfxTask *task;
 
-	g_return_val_if_fail(aggregator != NULL, NULL);
-	g_return_val_if_fail(session != NULL, NULL);
+	g_return_val_if_fail (aggregator != NULL, NULL);
+	g_return_val_if_fail (session != NULL, NULL);
 
-	task = gst_mfx_mini_object_new0(gst_mfx_task_class());
+	task = gst_mfx_mini_object_new0 (gst_mfx_task_class ());
 	if (!task)
 		return NULL;
 
-	gst_mfx_task_init(task, aggregator, session, type_flags);
+	gst_mfx_task_init (task, aggregator, session, type_flags);
 
 	return task;
 }
 
 GstMfxTask *
-gst_mfx_task_ref(GstMfxTask * task)
+gst_mfx_task_ref (GstMfxTask * task)
 {
-	g_return_val_if_fail(task != NULL, NULL);
+	g_return_val_if_fail (task != NULL, NULL);
 
-	return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(task));
+	return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (task));
 }
 
 void
-gst_mfx_task_unref(GstMfxTask * task)
+gst_mfx_task_unref (GstMfxTask * task)
 {
-	gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(task));
+	gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (task));
 }
 
 void
-gst_mfx_task_replace(GstMfxTask ** old_task_ptr,
+gst_mfx_task_replace (GstMfxTask ** old_task_ptr,
 	GstMfxTask * new_task)
 {
-	g_return_if_fail(old_task_ptr != NULL);
+	g_return_if_fail (old_task_ptr != NULL);
 
-	gst_mfx_mini_object_replace((GstMfxMiniObject **)old_task_ptr,
-		GST_MFX_MINI_OBJECT(new_task));
+	gst_mfx_mini_object_replace ((GstMfxMiniObject **)old_task_ptr,
+		GST_MFX_MINI_OBJECT (new_task));
 }

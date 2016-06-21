@@ -35,68 +35,68 @@
 static gpointer plugin_parent_class = NULL;
 
 static void
-plugin_set_aggregator(GstElement * element, GstContext * context)
+plugin_set_aggregator (GstElement * element, GstContext * context)
 {
-	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE(element);
-	GstElementClass *element_class = GST_ELEMENT_CLASS(plugin_parent_class);
+	GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (element);
+	GstElementClass *element_class = GST_ELEMENT_CLASS (plugin_parent_class);
 	GstMfxTaskAggregator *aggregator = NULL;
 
-	if (gst_mfx_video_context_get_aggregator(context, &aggregator))
-        gst_mfx_task_aggregator_replace(&plugin->aggregator, aggregator);
+	if (gst_mfx_video_context_get_aggregator (context, &aggregator))
+        gst_mfx_task_aggregator_replace (&plugin->aggregator, aggregator);
 
 	if (element_class->set_context)
-		element_class->set_context(element, context);
+		element_class->set_context (element, context);
 }
 
 void
-gst_mfx_plugin_base_init_interfaces(GType g_define_type_id)
+gst_mfx_plugin_base_init_interfaces (GType g_define_type_id)
 {
 }
 
 static gboolean
-default_has_interface(GstMfxPluginBase * plugin, GType type)
+default_has_interface (GstMfxPluginBase * plugin, GType type)
 {
 	return FALSE;
 }
 
 void
-gst_mfx_plugin_base_class_init(GstMfxPluginBaseClass * klass)
+gst_mfx_plugin_base_class_init (GstMfxPluginBaseClass * klass)
 {
 	klass->has_interface = default_has_interface;
 
-	plugin_parent_class = g_type_class_peek_parent(klass);
+	plugin_parent_class = g_type_class_peek_parent (klass);
 
-	GstElementClass *const element_class = GST_ELEMENT_CLASS(klass);
-	element_class->set_context = GST_DEBUG_FUNCPTR(plugin_set_aggregator);
+	GstElementClass *const element_class = GST_ELEMENT_CLASS (klass);
+	element_class->set_context = GST_DEBUG_FUNCPTR (plugin_set_aggregator);
 }
 
 void
-gst_mfx_plugin_base_init(GstMfxPluginBase * plugin,
+gst_mfx_plugin_base_init (GstMfxPluginBase * plugin,
 	GstDebugCategory * debug_category)
 {
 	plugin->debug_category = debug_category;
 
 	/* sink pad */
-	plugin->sinkpad = gst_element_get_static_pad(GST_ELEMENT(plugin), "sink");
-	gst_video_info_init(&plugin->sinkpad_info);
-	plugin->sinkpad_query = GST_PAD_QUERYFUNC(plugin->sinkpad);
+	plugin->sinkpad = gst_element_get_static_pad (GST_ELEMENT (plugin), "sink");
+	gst_video_info_init (&plugin->sinkpad_info);
+	plugin->sinkpad_query = GST_PAD_QUERYFUNC (plugin->sinkpad);
 
 	/* src pad */
-	if (!(GST_OBJECT_FLAGS(plugin) & GST_ELEMENT_FLAG_SINK)) {
-		plugin->srcpad = gst_element_get_static_pad(GST_ELEMENT(plugin), "src");
-		plugin->srcpad_query = GST_PAD_QUERYFUNC(plugin->srcpad);
+	if (!(GST_OBJECT_FLAGS (plugin) & GST_ELEMENT_FLAG_SINK)) {
+		plugin->srcpad = gst_element_get_static_pad (GST_ELEMENT (plugin), "src");
+		plugin->srcpad_query = GST_PAD_QUERYFUNC (plugin->srcpad);
 	}
-	gst_video_info_init(&plugin->srcpad_info);
+	gst_video_info_init (&plugin->srcpad_info);
 }
 
 void
-gst_mfx_plugin_base_finalize(GstMfxPluginBase * plugin)
+gst_mfx_plugin_base_finalize (GstMfxPluginBase * plugin)
 {
-	gst_mfx_plugin_base_close(plugin);
+	gst_mfx_plugin_base_close (plugin);
 	if (plugin->sinkpad)
-		gst_object_unref(plugin->sinkpad);
+		gst_object_unref (plugin->sinkpad);
 	if (plugin->srcpad)
-		gst_object_unref(plugin->srcpad);
+		gst_object_unref (plugin->srcpad);
 }
 
 /**
@@ -109,7 +109,7 @@ gst_mfx_plugin_base_finalize(GstMfxPluginBase * plugin)
 * Returns: %TRUE if successful, %FALSE otherwise.
 */
 gboolean
-gst_mfx_plugin_base_open(GstMfxPluginBase * plugin)
+gst_mfx_plugin_base_open (GstMfxPluginBase * plugin)
 {
 	return TRUE;
 }
@@ -122,27 +122,27 @@ gst_mfx_plugin_base_open(GstMfxPluginBase * plugin)
 * far. i.e. put the base plugin object into a clean state.
 */
 void
-gst_mfx_plugin_base_close(GstMfxPluginBase * plugin)
+gst_mfx_plugin_base_close (GstMfxPluginBase * plugin)
 {
-	gst_mfx_task_aggregator_replace(&plugin->aggregator, NULL);
+	gst_mfx_task_aggregator_replace (&plugin->aggregator, NULL);
 
-	gst_caps_replace(&plugin->sinkpad_caps, NULL);
+	gst_caps_replace (&plugin->sinkpad_caps, NULL);
 	plugin->sinkpad_caps_changed = FALSE;
-	gst_video_info_init(&plugin->sinkpad_info);
+	gst_video_info_init (&plugin->sinkpad_info);
 
-	g_clear_object(&plugin->srcpad_buffer_pool);
+	g_clear_object (&plugin->srcpad_buffer_pool);
 
-	gst_caps_replace(&plugin->srcpad_caps, NULL);
+	gst_caps_replace (&plugin->srcpad_caps, NULL);
 	plugin->srcpad_caps_changed = FALSE;
-	gst_video_info_init(&plugin->srcpad_info);
+	gst_video_info_init (&plugin->srcpad_info);
 }
 
 gboolean
-gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin)
+gst_mfx_plugin_base_ensure_aggregator (GstMfxPluginBase * plugin)
 {
-	gst_mfx_task_aggregator_replace(&plugin->aggregator, NULL);
+	gst_mfx_task_aggregator_replace (&plugin->aggregator, NULL);
 
-	if (!gst_mfx_ensure_aggregator(GST_ELEMENT(plugin)))
+	if (!gst_mfx_ensure_aggregator (GST_ELEMENT (plugin)))
 		return FALSE;
 
 	return TRUE;
@@ -152,7 +152,7 @@ gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin)
 /* XXX: this is a workaround to the absence of any proposer way to
 specify DMABUF memory capsfeatures or bufferpool option to downstream */
 static gboolean
-has_dmabuf_capable_peer(GstMfxPluginBase * plugin, GstPad * pad)
+has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
 {
 	GstPad *other_pad = NULL;
 	GstElement *element = NULL;
@@ -160,55 +160,55 @@ has_dmabuf_capable_peer(GstMfxPluginBase * plugin, GstPad * pad)
 	gboolean is_dmabuf_capable = FALSE;
 	gint v;
 
-	gst_object_ref(pad);
+	gst_object_ref (pad);
 
 	for (;;) {
-		other_pad = gst_pad_get_peer(pad);
-		gst_object_unref(pad);
+		other_pad = gst_pad_get_peer (pad);
+		gst_object_unref (pad);
 		if (!other_pad)
 			break;
 
-		element = gst_pad_get_parent_element(other_pad);
-		gst_object_unref(other_pad);
+		element = gst_pad_get_parent_element (other_pad);
+		gst_object_unref (other_pad);
 		if (!element)
 			break;
 
-		if (GST_IS_PUSH_SRC(element)) {
-			element_name = gst_element_get_name(element);
+		if (GST_IS_PUSH_SRC (element)) {
+			element_name = gst_element_get_name (element);
 			if (!element_name)
 				break;
 
-			if ((sscanf(element_name, "v4l2src%d", &v) != 1)
-				&& (sscanf(element_name, "camerasrc%d", &v) != 1))
+			if ((sscanf (element_name, "v4l2src%d", &v) != 1)
+				&& (sscanf (element_name, "camerasrc%d", &v) != 1))
 				break;
 
 			v = 0;
-			g_object_get(element, "io-mode", &v, NULL);
-			if (strncmp(element_name, "camerasrc", 9) == 0)
+			g_object_get (element, "io-mode", &v, NULL);
+			if (strncmp (element_name, "camerasrc", 9) == 0)
 				is_dmabuf_capable = v == 3;
 			else
 				is_dmabuf_capable = v == 5;     /* "dmabuf-import" enum value */
 			break;
 		}
-		else if (GST_IS_BASE_TRANSFORM(element)) {
-			element_name = gst_element_get_name(element);
-			if (!element_name || sscanf(element_name, "capsfilter%d", &v) != 1)
+		else if (GST_IS_BASE_TRANSFORM (element)) {
+			element_name = gst_element_get_name (element);
+			if (!element_name || sscanf (element_name, "capsfilter%d", &v) != 1)
 				break;
 
-			pad = gst_element_get_static_pad(element, "sink");
+			pad = gst_element_get_static_pad (element, "sink");
 			if (!pad)
 				break;
 		}
 		else
 			break;
 
-		g_free(element_name);
+		g_free (element_name);
 		element_name = NULL;
-		g_clear_object(&element);
+		g_clear_object (&element);
 	}
 
-	g_free(element_name);
-	g_clear_object(&element);
+	g_free (element_name);
+	g_clear_object (&element);
 	return is_dmabuf_capable;
 }
 
@@ -232,12 +232,12 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
     gboolean need_pool;
 
     if (!plugin->sinkpad_buffer_pool)
-        plugin->use_dmabuf = has_dmabuf_capable_peer(plugin, plugin->sinkpad);
+        plugin->use_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
 
     if (!plugin->use_dmabuf)
-        plugin->mapped = !gst_caps_has_mfx_surface(plugin->sinkpad_caps);
+        plugin->mapped = !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
 
-    if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
+    if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
         return FALSE;
 
     if (plugin->sinkpad_buffer_pool) {
@@ -252,7 +252,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
     }
 
     pool = gst_mfx_video_buffer_pool_new (
-                GST_MFX_TASK_AGGREGATOR_DISPLAY(plugin->aggregator),
+                GST_MFX_TASK_AGGREGATOR_DISPLAY (plugin->aggregator),
                 plugin->mapped);
     if (!pool)
         goto error_create_pool;
@@ -299,25 +299,25 @@ error_pool_config:
 * Returns: %TRUE if the update of caps was successful, %FALSE otherwise.
 */
 gboolean
-gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
+gst_mfx_plugin_base_set_caps (GstMfxPluginBase * plugin, GstCaps * incaps,
     GstCaps * outcaps)
 {
     if (outcaps && outcaps != plugin->srcpad_caps) {
-		gst_caps_replace(&plugin->srcpad_caps, outcaps);
-		if (!gst_video_info_from_caps(&plugin->srcpad_info, outcaps))
+		gst_caps_replace (&plugin->srcpad_caps, outcaps);
+		if (!gst_video_info_from_caps (&plugin->srcpad_info, outcaps))
 			return FALSE;
 		plugin->srcpad_caps_changed = TRUE;
 	}
 
 	if (incaps && incaps != plugin->sinkpad_caps) {
-		gst_caps_replace(&plugin->sinkpad_caps, incaps);
-		if (!gst_video_info_from_caps(&plugin->sinkpad_info, incaps))
+		gst_caps_replace (&plugin->sinkpad_caps, incaps);
+		if (!gst_video_info_from_caps (&plugin->sinkpad_info, incaps))
 			return FALSE;
 		plugin->sinkpad_caps_changed = TRUE;
-		plugin->sinkpad_caps_is_raw = !gst_caps_has_mfx_surface(incaps);
+		plugin->sinkpad_caps_is_raw = !gst_caps_has_mfx_surface (incaps);
 	}
 
-    if (!GST_IS_VIDEO_DECODER(plugin))
+    if (!GST_IS_VIDEO_DECODER (plugin))
         if (!ensure_sinkpad_buffer_pool (plugin, plugin->sinkpad_caps))
             return FALSE;
 
@@ -352,11 +352,11 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
 
 		if (plugin->use_dmabuf) {
 			GstStructure *const config =
-				gst_buffer_pool_get_config(plugin->sinkpad_buffer_pool);
+				gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
 
-			gst_buffer_pool_config_add_option(config,
+			gst_buffer_pool_config_add_option (config,
 				GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
-			if (!gst_buffer_pool_set_config(plugin->sinkpad_buffer_pool, config))
+			if (!gst_buffer_pool_set_config (plugin->sinkpad_buffer_pool, config))
 				goto error_pool_config;
 		}
     }
@@ -379,15 +379,15 @@ error_pool_config:
 }
 
 static inline gboolean
-gst_mfx_plugin_base_set_pool_config(GstBufferPool * pool,
+gst_mfx_plugin_base_set_pool_config (GstBufferPool * pool,
 	const gchar * option)
 {
 	GstStructure *config;
 
-	config = gst_buffer_pool_get_config(pool);
-	if (!gst_buffer_pool_config_has_option(config, option)) {
-		gst_buffer_pool_config_add_option(config, option);
-		return gst_buffer_pool_set_config(pool, config);
+	config = gst_buffer_pool_get_config (pool);
+	if (!gst_buffer_pool_config_has_option (config, option)) {
+		gst_buffer_pool_config_add_option (config, option);
+		return gst_buffer_pool_set_config (pool, config);
 	}
 	return TRUE;
 }
@@ -404,7 +404,7 @@ gst_mfx_plugin_base_set_pool_config(GstBufferPool * pool,
 * Returns: %TRUE if successful, %FALSE otherwise.
 */
 gboolean
-gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
+gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 	GstQuery * query)
 {
 	GstCaps *caps = NULL;
@@ -416,30 +416,30 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	gboolean has_video_meta = FALSE;
 	gboolean has_video_alignment = FALSE;
 
-	g_return_val_if_fail(plugin->aggregator != NULL, FALSE);
+	g_return_val_if_fail (plugin->aggregator != NULL, FALSE);
 
-	gst_query_parse_allocation(query, &caps, NULL);
+	gst_query_parse_allocation (query, &caps, NULL);
 
 	if (!caps)
 		goto error_no_caps;
 
-	has_video_meta = gst_query_find_allocation_meta(query,
+	has_video_meta = gst_query_find_allocation_meta (query,
 		GST_VIDEO_META_API_TYPE, NULL);
 
-	if (!gst_mfx_plugin_base_ensure_aggregator(plugin))
+	if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
 		goto error_ensure_aggregator;
 
-	gst_video_info_init(&vi);
-	gst_video_info_from_caps(&vi, caps);
+	gst_video_info_init (&vi);
+	gst_video_info_from_caps (&vi, caps);
 
-	if (gst_query_get_n_allocation_pools(query) > 0) {
-		gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &min, &max);
+	if (gst_query_get_n_allocation_pools (query) > 0) {
+		gst_query_parse_nth_allocation_pool (query, 0, &pool, &size, &min, &max);
 		update_pool = TRUE;
-		size = MAX(size, vi.size);
+		size = MAX (size, vi.size);
 		if (pool) {
 			/* Check whether downstream element proposed a bufferpool but did
-			not provide a correct propose_allocation() implementation */
-			has_video_alignment = gst_buffer_pool_has_option(pool,
+			not provide a correct propose_allocation () implementation */
+			has_video_alignment = gst_buffer_pool_has_option (pool,
 				GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT);
 		}
 	}
@@ -450,63 +450,63 @@ gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
 	}
 
 	/* GstMfxVideoMeta is mandatory, and this implies VA surface memory */
-	if (!pool || !gst_buffer_pool_has_option(pool,
+	if (!pool || !gst_buffer_pool_has_option (pool,
 		GST_BUFFER_POOL_OPTION_MFX_VIDEO_META)) {
-		GST_INFO_OBJECT(plugin, "%s. Making a new pool", pool == NULL ? "No pool" :
+		GST_INFO_OBJECT (plugin, "%s. Making a new pool", pool == NULL ? "No pool" :
 			"Pool not configured with GstMfxVideoMeta option");
 		if (pool)
-			gst_object_unref(pool);
-		pool = gst_mfx_video_buffer_pool_new(
-                    GST_MFX_TASK_AGGREGATOR_DISPLAY(plugin->aggregator),
+			gst_object_unref (pool);
+		pool = gst_mfx_video_buffer_pool_new (
+                    GST_MFX_TASK_AGGREGATOR_DISPLAY (plugin->aggregator),
                     plugin->mapped);
 		if (!pool)
 			goto error_create_pool;
 
-		config = gst_buffer_pool_get_config(pool);
-		gst_buffer_pool_config_set_params(config, caps, size, min, max);
-		gst_buffer_pool_config_add_option(config,
+		config = gst_buffer_pool_get_config (pool);
+		gst_buffer_pool_config_set_params (config, caps, size, min, max);
+		gst_buffer_pool_config_add_option (config,
 			GST_BUFFER_POOL_OPTION_MFX_VIDEO_META);
-		if (!gst_buffer_pool_set_config(pool, config))
+		if (!gst_buffer_pool_set_config (pool, config))
 			goto config_failed;
 	}
 
 	/* Check whether GstVideoMeta, or GstVideoAlignment, is needed (raw video) */
 	if (has_video_meta) {
-		if (!gst_mfx_plugin_base_set_pool_config(pool,
+		if (!gst_mfx_plugin_base_set_pool_config (pool,
 			GST_BUFFER_POOL_OPTION_VIDEO_META))
 			goto config_failed;
 	}
 
 	if (update_pool)
-		gst_query_set_nth_allocation_pool(query, 0, pool, size, min, max);
+		gst_query_set_nth_allocation_pool (query, 0, pool, size, min, max);
 	else
-		gst_query_add_allocation_pool(query, pool, size, min, max);
+		gst_query_add_allocation_pool (query, pool, size, min, max);
 
-	g_clear_object(&plugin->srcpad_buffer_pool);
+	g_clear_object (&plugin->srcpad_buffer_pool);
 	plugin->srcpad_buffer_pool = pool;
 	return TRUE;
 
 	/* ERRORS */
 error_no_caps:
 	{
-		GST_ERROR_OBJECT(plugin, "no caps specified");
+		GST_ERROR_OBJECT (plugin, "no caps specified");
 		return FALSE;
 	}
 error_ensure_aggregator:
 	{
-		GST_ERROR_OBJECT(plugin, "failed to ensure aggregator");
+		GST_ERROR_OBJECT (plugin, "failed to ensure aggregator");
 		return FALSE;
 	}
 error_create_pool:
 	{
-		GST_ERROR_OBJECT(plugin, "failed to create buffer pool");
+		GST_ERROR_OBJECT (plugin, "failed to create buffer pool");
 		return FALSE;
 	}
 config_failed:
 	{
 		if (pool)
-			gst_object_unref(pool);
-		GST_ELEMENT_ERROR(plugin, RESOURCE, SETTINGS,
+			gst_object_unref (pool);
+		GST_ELEMENT_ERROR (plugin, RESOURCE, SETTINGS,
 			("Failed to configure the buffer pool"),
 			("Configuration is most likely invalid, please report this issue."));
 		return FALSE;
@@ -534,7 +534,6 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
     GstBuffer *outbuf;
     GstVideoFrame src_frame, out_frame;
     gboolean success;
-    GstMapInfo minfo;
 
     g_return_val_if_fail (inbuf != NULL, GST_FLOW_ERROR);
     g_return_val_if_fail (outbuf_ptr != NULL, GST_FLOW_ERROR);
@@ -568,8 +567,8 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
         goto error_map_dst_buffer;
 
     /* Hack for incoming video frames with changed GstVideoInfo dimensions */
-    GST_VIDEO_FRAME_WIDTH(&src_frame) = GST_VIDEO_FRAME_WIDTH(&out_frame);
-    GST_VIDEO_FRAME_HEIGHT(&src_frame) = GST_VIDEO_FRAME_HEIGHT(&out_frame);
+    GST_VIDEO_FRAME_WIDTH (&src_frame) = GST_VIDEO_FRAME_WIDTH (&out_frame);
+    GST_VIDEO_FRAME_HEIGHT (&src_frame) = GST_VIDEO_FRAME_HEIGHT (&out_frame);
 
     success = gst_video_frame_copy (&out_frame, &src_frame);
     gst_video_frame_unmap (&out_frame);
@@ -577,7 +576,6 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
     if (!success)
         goto error_copy_buffer;
 
-done:
     gst_buffer_copy_into (outbuf, inbuf, GST_BUFFER_COPY_FLAGS |
       GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
     *outbuf_ptr = outbuf;

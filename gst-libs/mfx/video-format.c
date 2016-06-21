@@ -50,77 +50,84 @@ GstMfxFormatMap format_map[] = {
 };
 
 GstVideoFormat
-gst_video_format_from_mfx_fourcc(mfxU32 fourcc)
+gst_video_format_from_mfx_fourcc (mfxU32 fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++) {
-        if(fourcc == m->mfx_fourcc)
+
+    for (m = format_map; m->format; m++) {
+        if (fourcc == m->mfx_fourcc)
             return m->format;
     }
     return GST_VIDEO_FORMAT_UNKNOWN;
 }
 
 mfxU32
-gst_video_format_to_mfx_fourcc(GstVideoFormat format)
+gst_video_format_to_mfx_fourcc (GstVideoFormat format)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++) {
-        if(format == m->format)
+
+    for (m = format_map; m->format; m++) {
+        if (format == m->format)
             return m->mfx_fourcc;
     }
     return 0;
 }
 
 GstVideoFormat
-gst_video_format_from_va_fourcc(guint fourcc)
+gst_video_format_from_va_fourcc (guint fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++) {
-         if(fourcc == m->va_fourcc)
-             return m->format;
+
+    for (m = format_map; m->format; m++) {
+        if (fourcc == m->va_fourcc)
+            return m->format;
     }
     return GST_VIDEO_FORMAT_UNKNOWN;
 }
 
 guint
-gst_video_format_to_va_fourcc(GstVideoFormat format)
+gst_video_format_to_va_fourcc (GstVideoFormat format)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++) {
-        if(format == m->format)
+
+    for (m = format_map; m->format; m++) {
+        if (format == m->format)
             return m->va_fourcc;
     }
     return 0;
 }
 
 mfxU32
-gst_mfx_video_format_from_va_fourcc(guint fourcc)
+gst_mfx_video_format_from_va_fourcc (guint fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++) {
-        if(fourcc == m->va_fourcc)
+
+    for (m = format_map; m->format; m++) {
+        if (fourcc == m->va_fourcc)
             return m->mfx_fourcc;
     }
     return 0;
 }
 
 guint
-gst_mfx_video_format_to_va_fourcc(mfxU32 fourcc)
+gst_mfx_video_format_to_va_fourcc (mfxU32 fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++) {
-        if(fourcc == m->mfx_fourcc)
+
+    for (m = format_map; m->format; m++) {
+        if (fourcc == m->mfx_fourcc)
             return m->va_fourcc;
     }
     return 0;
 }
 
 guint
-gst_mfx_video_format_to_va_format(mfxU32 fourcc)
+gst_mfx_video_format_to_va_format (mfxU32 fourcc)
 {
     GstMfxFormatMap *m;
-    for(m = format_map; m->format; m++) {
-        if(fourcc == m->mfx_fourcc)
+
+    for (m = format_map; m->format; m++) {
+        if (fourcc == m->mfx_fourcc)
             return m->va_format;
     }
     return 0;

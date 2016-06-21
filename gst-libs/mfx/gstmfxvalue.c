@@ -2,21 +2,10 @@
 #include <gobject/gvaluecollector.h>
 #include "gstmfxvalue.h"
 
-static gpointer
-default_copy_func(gpointer data)
-{
-	return data;
-}
-
-static void
-default_free_func(gpointer data)
-{
-}
-
 /* --- GstMfxRotation --- */
 
 GType
-gst_mfx_rotation_get_type(void)
+gst_mfx_rotation_get_type (void)
 {
 	static volatile gsize g_type = 0;
 
@@ -32,15 +21,15 @@ gst_mfx_rotation_get_type(void)
 		{ 0, NULL, NULL },
 	};
 
-	if (g_once_init_enter(&g_type)) {
-		GType type = g_enum_register_static("GstMfxRotation", rotation_values);
-		g_once_init_leave(&g_type, type);
+	if (g_once_init_enter (&g_type)) {
+		GType type = g_enum_register_static ("GstMfxRotation", rotation_values);
+		g_once_init_leave (&g_type, type);
 	}
 	return g_type;
 }
 
 GType
-gst_mfx_option_get_type(void)
+gst_mfx_option_get_type (void)
 {
 	static volatile gsize g_type = 0;
 
@@ -54,9 +43,9 @@ gst_mfx_option_get_type(void)
 		{ 0, NULL, NULL },
 	};
 
-	if (g_once_init_enter(&g_type)) {
-		GType type = g_enum_register_static("GstMfxOption", options);
-		g_once_init_leave(&g_type, type);
+	if (g_once_init_enter (&g_type)) {
+		GType type = g_enum_register_static ("GstMfxOption", options);
+		g_once_init_leave (&g_type, type);
 	}
 	return g_type;
 }
@@ -64,7 +53,7 @@ gst_mfx_option_get_type(void)
 /* --- GstMfxRateControl --- */
 
 GType
-gst_mfx_rate_control_get_type(void)
+gst_mfx_rate_control_get_type (void)
 {
 	static volatile gsize g_type = 0;
 
@@ -94,34 +83,34 @@ gst_mfx_rate_control_get_type(void)
 		{ 0, NULL, NULL },
 	};
 
-	if (g_once_init_enter(&g_type)) {
-		GType type = g_enum_register_static("GstMfxRateControl",
+	if (g_once_init_enter (&g_type)) {
+		GType type = g_enum_register_static ("GstMfxRateControl",
 			rate_control_values);
-		g_once_init_leave(&g_type, type);
+		g_once_init_leave (&g_type, type);
 	}
 	return g_type;
 }
 
 static gboolean
-build_enum_subset_values_from_mask(GstMfxEnumSubset * subset, guint32 mask)
+build_enum_subset_values_from_mask (GstMfxEnumSubset * subset, guint32 mask)
 {
 	GEnumClass *enum_class;
 	const GEnumValue *value;
 	guint i, n;
 
-	enum_class = g_type_class_ref(subset->parent_type);
+	enum_class = g_type_class_ref (subset->parent_type);
 	if (!enum_class)
 		return FALSE;
 
 	for (i = 0, n = 0; i < 32 && n < subset->num_values; i++) {
 		if (!(mask & (1U << i)))
 			continue;
-		value = g_enum_get_value(enum_class, i);
+		value = g_enum_get_value (enum_class, i);
 		if (!value)
 			continue;
 		subset->values[n++] = *value;
 	}
-	g_type_class_unref(enum_class);
+	g_type_class_unref (enum_class);
 	if (n != subset->num_values - 1)
 		goto error_invalid_num_values;
 	return TRUE;
@@ -129,26 +118,26 @@ build_enum_subset_values_from_mask(GstMfxEnumSubset * subset, guint32 mask)
 	/* ERRORS */
 error_invalid_num_values:
 	{
-		g_error("invalid number of static values for `%s'", subset->type_name);
+		g_error ("invalid number of static values for `%s'", subset->type_name);
 		return FALSE;
 	}
 }
 
 GType
-gst_mfx_type_define_enum_subset_from_mask(GstMfxEnumSubset * subset,
+gst_mfx_type_define_enum_subset_from_mask (GstMfxEnumSubset * subset,
     guint32 mask)
 {
-	if (g_once_init_enter(&subset->type)) {
+	if (g_once_init_enter (&subset->type)) {
 		GType type;
 
-		build_enum_subset_values_from_mask(subset, mask);
-		memset(&subset->type_info, 0, sizeof (subset->type_info));
-		g_enum_complete_type_info(subset->parent_type, &subset->type_info,
+		build_enum_subset_values_from_mask (subset, mask);
+		memset (&subset->type_info, 0, sizeof (subset->type_info));
+		g_enum_complete_type_info (subset->parent_type, &subset->type_info,
 			subset->values);
 
-		type = g_type_register_static(G_TYPE_ENUM, subset->type_name,
+		type = g_type_register_static (G_TYPE_ENUM, subset->type_name,
 			&subset->type_info, 0);
-		g_once_init_leave(&subset->type, type);
+		g_once_init_leave (&subset->type, type);
 	}
 	return subset->type;
 }

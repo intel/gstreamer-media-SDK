@@ -34,10 +34,10 @@ G_BEGIN_DECLS
 	((GstMfxTask *) (obj))
 
 #define GST_MFX_TASK_SESSION(task) \
-	gst_mfx_task_get_session(task)
+	gst_mfx_task_get_session (task)
 
 #define GST_MFX_TASK_DISPLAY(task) \
-	gst_mfx_task_get_display(task)
+	gst_mfx_task_get_display (task)
 
 
 typedef struct _GstMfxTask GstMfxTask;
@@ -52,11 +52,11 @@ typedef enum {
 } GstMfxTaskType;
 
 GstMfxTask *
-gst_mfx_task_new(GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new (GstMfxTaskAggregator * aggregator,
 	guint type_flags);
 
 GstMfxTask *
-gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
 	mfxSession session, guint type_flags);
 
 GstMfxTask *
@@ -70,31 +70,31 @@ gst_mfx_task_replace (GstMfxTask ** old_task_ptr,
 	GstMfxTask * new_task);
 
 mfxFrameAllocRequest *
-gst_mfx_task_get_request(GstMfxTask * task);
+gst_mfx_task_get_request (GstMfxTask * task);
 
 void
-gst_mfx_task_set_request(GstMfxTask * task, mfxFrameAllocRequest * req);
+gst_mfx_task_set_request (GstMfxTask * task, mfxFrameAllocRequest * req);
 
 gboolean
 gst_mfx_task_has_type (GstMfxTask * task, guint flags);
 
 void
-gst_mfx_task_set_task_type(GstMfxTask * task, guint flags);
+gst_mfx_task_set_task_type (GstMfxTask * task, guint flags);
 
 guint
 gst_mfx_task_get_task_type (GstMfxTask * task);
 
 void
-gst_mfx_task_use_video_memory(GstMfxTask * task);
+gst_mfx_task_use_video_memory (GstMfxTask * task);
 
 gboolean
-gst_mfx_task_has_mapped_surface(GstMfxTask * task);
+gst_mfx_task_has_mapped_surface (GstMfxTask * task);
 
 GstMfxDisplay *
-gst_mfx_task_get_display(GstMfxTask * task);
+gst_mfx_task_get_display (GstMfxTask * task);
 
 GstMfxMemoryId *
-gst_mfx_task_get_memory_id(GstMfxTask * task);
+gst_mfx_task_get_memory_id (GstMfxTask * task);
 
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task);
