@@ -28,6 +28,7 @@
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxfilter.h"
+#include "gstmfxvalue.h"
 
 G_BEGIN_DECLS
 
@@ -39,11 +40,11 @@ G_BEGIN_DECLS
 	(G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXPOSTPROC, \
 	GstMfxPostprocClass))
 #define GST_IS_MFXPOSTPROC(obj) \
-	(G_TYPE_CHECK_INSTANCE_TYPE((obj), GST_TYPE_MFXPOSTPROC))
+	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXPOSTPROC))
 #define GST_IS_MFXPOSTPROC_CLASS(klass) \
-	(G_TYPE_CHECK_CLASS_TYPE((klass), GST_TYPE_MFXPOSTPROC))
+	(G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXPOSTPROC))
 #define GST_MFXPOSTPROC_GET_CLASS(obj) \
-	(G_TYPE_INSTANCE_GET_CLASS((obj), GST_TYPE_MFXPOSTPROC, \
+	(G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXPOSTPROC, \
 	GstMfxPostprocClass))
 
 typedef struct _GstMfxPostproc GstMfxPostproc;
@@ -136,7 +137,7 @@ struct _GstMfxPostprocClass
 };
 
 GType
-gst_mfxpostproc_get_type(void);
+gst_mfxpostproc_get_type (void);
 
 G_END_DECLS
 

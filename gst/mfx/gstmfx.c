@@ -23,24 +23,30 @@
 #include "gstmfxdec.h"
 #include "gstmfxpostproc.h"
 #include "gstmfxsink.h"
+#include "gstmfxenc_h264.h"
+#include "gstmfxenc_h265.h"
 
 #define PACKAGE "gstmfx"
 #define VERSION "0.0.1"
 
 static gboolean
-plugin_init(GstPlugin * plugin)
+plugin_init (GstPlugin * plugin)
 {
-	gst_element_register(plugin, "mfxdecode", GST_RANK_NONE,
+	gst_element_register (plugin, "mfxdecode", GST_RANK_NONE,
 		GST_TYPE_MFXDEC);
-    gst_element_register(plugin, "mfxvpp", GST_RANK_NONE,
+    gst_element_register (plugin, "mfxvpp", GST_RANK_NONE,
 		GST_TYPE_MFXPOSTPROC);
-	gst_element_register(plugin, "mfxsink", GST_RANK_NONE,
+	gst_element_register (plugin, "mfxsink", GST_RANK_NONE,
 		GST_TYPE_MFXSINK);
+    gst_element_register (plugin, "mfxh264enc", GST_RANK_NONE,
+		GST_TYPE_MFXENC_H264);
+    gst_element_register (plugin, "mfxhevcenc", GST_RANK_NONE,
+		GST_TYPE_MFXENC_H265);
 
 	return TRUE;
 }
 
-GST_PLUGIN_DEFINE(
+GST_PLUGIN_DEFINE (
 	GST_VERSION_MAJOR,  /* major */
 	GST_VERSION_MINOR,  /* minor */
 	mfx,              /* short unique name */
