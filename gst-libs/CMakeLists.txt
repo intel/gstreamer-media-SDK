@@ -5,7 +5,7 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 
-if(HAVE_WAYLAND_RENDERER)
+if (HAVE_WAYLAND_RENDERER)
 	file(GLOB WAYLAND_SOURCE "mfx/wayland/*.c")
 	include_directories( mfx/wayland )
 endif()

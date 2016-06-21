@@ -11,13 +11,13 @@ gst_mfx_rotation_get_type (void)
 
 	static const GEnumValue rotation_values[] = {
 		{ GST_MFX_ROTATION_0,
-		"Unrotated mode", "0" },
+		"Unrotated", "0" },
 		{ GST_MFX_ROTATION_90,
-		"Rotated by 90°, clockwise", "90" },
+		"Rotate by 90 degrees clockwise", "90" },
 		{ GST_MFX_ROTATION_180,
-		"Rotated by 180°, clockwise", "180" },
+		"Rotate by 180  degrees clockwise", "180" },
 		{ GST_MFX_ROTATION_270,
-		"Rotated by 270°, clockwise", "270" },
+		"Rotate by 270  degrees clockwise", "270" },
 		{ 0, NULL, NULL },
 	};
 

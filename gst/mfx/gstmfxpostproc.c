@@ -93,8 +93,6 @@ enum
 
 #define GST_MFX_TYPE_DEINTERLACE_MODE \
 	gst_mfx_deinterlace_mode_get_type ()
-#define GST_MFX_ROTATION_MODE \
-    gst_mfx_rotation_get_type ()
 #define GST_MFX_FRC_ALGORITHM \
     gst_mfx_frc_alg_get_type ()
 
@@ -1037,7 +1035,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
             g_param_spec_enum ("rotation",
                 "Rotation",
                 "The rotation angle",
-                GST_MFX_ROTATION_MODE,
+                GST_MFX_TYPE_ROTATION,
                 DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 #endif
 

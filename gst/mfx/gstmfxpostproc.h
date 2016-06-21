@@ -28,6 +28,7 @@
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxfilter.h"
+#include "gstmfxvalue.h"
 
 G_BEGIN_DECLS
 

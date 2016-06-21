@@ -6,7 +6,7 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_TYPE_OPTION gst_mfx_option_get_type()
+#define GST_MFX_TYPE_OPTION gst_mfx_option_get_type ()
 
 /**
 * GST_MFX_TYPE_ROTATION:
@@ -15,7 +15,7 @@ G_BEGIN_DECLS
 *
 * Return value: the #GType of GstMfxRotation
 */
-#define GST_MFX_TYPE_ROTATION gst_mfx_rotation_get_type()
+#define GST_MFX_TYPE_ROTATION gst_mfx_rotation_get_type ()
 
 /**
 * GST_MFX_TYPE_RATE_CONTROL:
@@ -24,16 +24,16 @@ G_BEGIN_DECLS
 *
 * Return value: the #GType of GstMfxRateControl
 */
-#define GST_MFX_TYPE_RATE_CONTROL gst_mfx_rate_control_get_type()
+#define GST_MFX_TYPE_RATE_CONTROL gst_mfx_rate_control_get_type ()
 
 GType
-gst_mfx_option_get_type(void);
+gst_mfx_option_get_type (void);
 
 GType
-gst_mfx_rotation_get_type(void);
+gst_mfx_rotation_get_type (void);
 
 GType
-gst_mfx_rate_control_get_type(void);
+gst_mfx_rate_control_get_type (void);
 
 /**
 * GST_MFX_POPCOUNT32:
@@ -81,7 +81,7 @@ typedef struct {
 } GstMfxEnumSubset;
 
 GType
-gst_mfx_type_define_enum_subset_from_mask(GstMfxEnumSubset *subset,
+gst_mfx_type_define_enum_subset_from_mask (GstMfxEnumSubset *subset,
 	guint32 mask);
 
 #define GST_MFX_TYPE_DEFINE_ENUM_SUBSET_FROM_MASK(NAME, name, TYPE, MASK) \
