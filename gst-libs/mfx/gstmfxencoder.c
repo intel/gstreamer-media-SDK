@@ -443,6 +443,17 @@ set_extended_coding_options (GstMfxEncoder * encoder)
         break;
     }
 
+    if (encoder->codec == MFX_CODEC_HEVC && !((encoder->info.width & 15) ^ 8) ||
+            !((encoder->info.height & 15) ^ 8)) {
+        encoder->exthevc.Header.BufferId = MFX_EXTBUFF_HEVC_PARAM;
+        encoder->exthevc.Header.BufferSz = sizeof (encoder->exthevc);
+        encoder->exthevc.PicWidthInLumaSamples = encoder->info.width;
+        encoder->exthevc.PicHeightInLumaSamples = encoder->info.height;
+
+        encoder->extparam_internal[encoder->params.NumExtParam++] =
+            (mfxExtBuffer *)&encoder->exthevc;
+    }
+
     encoder->extparam_internal[encoder->params.NumExtParam++] =
 		(mfxExtBuffer *)&encoder->extco;
 	encoder->extparam_internal[encoder->params.NumExtParam++] =
@@ -509,16 +520,6 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
         encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
 
     set_extended_coding_options (encoder);
-
-    if (!g_strcmp0 (encoder->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347") &&
-            (!((encoder->info.width & 15) ^ 8) ||
-            !((encoder->info.height & 15) ^ 8))) {
-        encoder->exthevc.PicWidthInLumaSamples = encoder->info.width;
-        encoder->exthevc.PicHeightInLumaSamples = encoder->info.height;
-
-        encoder->extparam_internal[encoder->params.NumExtParam++] =
-            (mfxExtBuffer *)&encoder->exthevc;
-    }
 }
 
 static void
@@ -1134,15 +1135,15 @@ GstMfxEncoderStatus
 gst_mfx_encoder_get_codec_data (GstMfxEncoder * encoder,
     GstBuffer ** out_codec_data_ptr)
 {
-  GstMfxEncoderStatus ret = GST_MFX_ENCODER_STATUS_SUCCESS;
-  GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
+    GstMfxEncoderStatus ret = GST_MFX_ENCODER_STATUS_SUCCESS;
+    GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
 
-  *out_codec_data_ptr = NULL;
-  if (!klass->get_codec_data)
-    return GST_MFX_ENCODER_STATUS_SUCCESS;
+    *out_codec_data_ptr = NULL;
+    if (!klass->get_codec_data)
+        return GST_MFX_ENCODER_STATUS_SUCCESS;
 
-  ret = klass->get_codec_data (encoder, out_codec_data_ptr);
-  return ret;
+    ret = klass->get_codec_data (encoder, out_codec_data_ptr);
+    return ret;
 }
 
 GType

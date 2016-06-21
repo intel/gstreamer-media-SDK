@@ -47,9 +47,7 @@ G_DEFINE_TYPE (GstMfxEncH264, gst_mfxenc_h264, GST_TYPE_MFXENC);
 static void
 gst_mfxenc_h264_init (GstMfxEncH264 * encode)
 {
-	GstMfxEnc *const base_encode = GST_MFXENC_CAST (encode);
-
-	gst_mfxenc_init_properties (base_encode);
+	gst_mfxenc_init_properties (GST_MFXENC_CAST (encode));
 }
 
 static void
