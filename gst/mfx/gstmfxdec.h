@@ -25,7 +25,6 @@
 #include <gst/video/gstvideodecoder.h>
 
 #include <mfxvideo.h>
-#include <X11/Xlib.h>
 #include <stdio.h>
 
 #include "gstmfxdecoder.h"
