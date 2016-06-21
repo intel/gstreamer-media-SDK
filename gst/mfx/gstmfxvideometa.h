@@ -37,42 +37,36 @@ typedef struct _GstMfxVideoMeta GstMfxVideoMeta;
 	gst_mfx_video_meta_api_get_type ()
 
 GType
-gst_mfx_video_meta_api_get_type(void);
+gst_mfx_video_meta_api_get_type (void);
 
 GstMfxVideoMeta *
-gst_mfx_video_meta_copy(GstMfxVideoMeta * meta);
+gst_mfx_video_meta_copy (GstMfxVideoMeta * meta);
 
 GstMfxVideoMeta *
-gst_mfx_video_meta_new(void);
+gst_mfx_video_meta_new (void);
 
 GstMfxVideoMeta *
-gst_mfx_video_meta_new_from_pool(GstMfxSurfacePool * pool);
-
-GstMfxVideoMeta *
-gst_mfx_video_meta_new_with_surface_proxy(GstMfxSurfaceProxy * proxy);
-
-GstMfxVideoMeta *
-gst_mfx_video_meta_ref(GstMfxVideoMeta * meta);
+gst_mfx_video_meta_ref (GstMfxVideoMeta * meta);
 
 void
-gst_mfx_video_meta_unref(GstMfxVideoMeta * meta);
+gst_mfx_video_meta_unref (GstMfxVideoMeta * meta);
 
 void
 gst_mfx_video_meta_replace (GstMfxVideoMeta ** old_meta_ptr,
     GstMfxVideoMeta * new_meta);
 
 GstMfxSurfaceProxy *
-gst_mfx_video_meta_get_surface_proxy(GstMfxVideoMeta * meta);
+gst_mfx_video_meta_get_surface_proxy (GstMfxVideoMeta * meta);
 
 void
-gst_mfx_video_meta_set_surface_proxy(GstMfxVideoMeta * meta,
+gst_mfx_video_meta_set_surface_proxy (GstMfxVideoMeta * meta,
 	GstMfxSurfaceProxy * proxy);
 
 GstMfxVideoMeta *
-gst_buffer_get_mfx_video_meta(GstBuffer * buffer);
+gst_buffer_get_mfx_video_meta (GstBuffer * buffer);
 
 void
-gst_buffer_set_mfx_video_meta(GstBuffer * buffer, GstMfxVideoMeta * meta);
+gst_buffer_set_mfx_video_meta (GstBuffer * buffer, GstMfxVideoMeta * meta);
 
 G_END_DECLS
 

@@ -33,7 +33,7 @@ Features
  - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC, and VP8 Videos
  - Support for the Wayland and X11(with EGL backend)display server
  - Support for headless decode pipelines.
- - Support MediaSDK video processing capabilities:
+ - Support Media SDK video processing capabilities:
 
 
 Requirements
@@ -73,6 +73,12 @@ To make a debug build, please follow the command below:
 
 	cmake .. -DDEBUG=ON
 		
+
+To build the plugin for Media Server Studio, please follow the command below:
+
+	cmake .. -DWITH_MSS=ON
+		
+
 Next step is to compile the GStreamer-MSDK plugins:
 
 	make

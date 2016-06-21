@@ -39,7 +39,7 @@ typedef struct _GstMfxPluginBaseClass GstMfxPluginBaseClass;
 #define GST_MFX_PLUGIN_BASE_CLASS(plugin) \
 	((GstMfxPluginBaseClass *)(plugin))
 #define GST_MFX_PLUGIN_BASE_GET_CLASS(plugin) \
-	GST_MFX_PLUGIN_BASE_CLASS(GST_ELEMENT_GET_CLASS( \
+	GST_MFX_PLUGIN_BASE_CLASS(GST_ELEMENT_GET_CLASS ( \
 	GST_MFX_PLUGIN_BASE_ELEMENT(plugin)))
 #define GST_MFX_PLUGIN_BASE_PARENT(plugin) \
 	(&GST_MFX_PLUGIN_BASE(plugin)->parent_instance)
@@ -54,7 +54,7 @@ typedef struct _GstMfxPluginBaseClass GstMfxPluginBaseClass;
 #define GST_MFX_PLUGIN_BASE_DECODER_CLASS(plugin) \
 	(&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->decoder)
 #define GST_MFX_PLUGIN_BASE_ENCODER(plugin) \
-	(&GST_MFX_PLUGIN_BASE_PARENT(plugin)->encoder)
+	(&GST_MFX_PLUGIN_BASE_PARENT (plugin)->encoder)
 #define GST_MFX_PLUGIN_BASE_ENCODER_CLASS(plugin) \
 	(&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->encoder)
 #define GST_MFX_PLUGIN_BASE_TRANSFORM(plugin) \
@@ -67,15 +67,15 @@ typedef struct _GstMfxPluginBaseClass GstMfxPluginBaseClass;
 	(&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->sink)
 
 #define GST_MFX_PLUGIN_BASE_INIT_INTERFACES \
-	gst_mfx_plugin_base_init_interfaces(g_define_type_id);
+	gst_mfx_plugin_base_init_interfaces (g_define_type_id);
 
 #define GST_MFX_PLUGIN_BASE_SINK_PAD(plugin) \
 	(GST_MFX_PLUGIN_BASE(plugin)->sinkpad)
-#define GST_MFX_PLUGIN_BASE_SINK_PAD_CAPS(plugin) \
+#define GST_MFX_PLUGIN_BASE_SINK_PAD_CAPS (plugin) \
 	(GST_MFX_PLUGIN_BASE(plugin)->sinkpad_caps)
 #define GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(plugin) \
 	(&GST_MFX_PLUGIN_BASE(plugin)->sinkpad_info)
-#define GST_MFX_PLUGIN_BASE_SINK_PAD_QUERYFUNC(plugin) \
+#define GST_MFX_PLUGIN_BASE_SINK_PAD_QUERYFUNC (plugin) \
 	(GST_MFX_PLUGIN_BASE(plugin)->sinkpad_query)
 #define GST_MFX_PLUGIN_BASE_SRC_PAD(plugin) \
 	(GST_MFX_PLUGIN_BASE(plugin)->srcpad)
@@ -137,33 +137,33 @@ struct _GstMfxPluginBaseClass
 		GstVideoSinkClass sink;
 	} parent_class;
 
-	gboolean(*has_interface) (GstMfxPluginBase * plugin, GType type);
+	gboolean (*has_interface) (GstMfxPluginBase * plugin, GType type);
 };
 
 void
-gst_mfx_plugin_base_init_interfaces(GType type);
+gst_mfx_plugin_base_init_interfaces (GType type);
 
 void
-gst_mfx_plugin_base_class_init(GstMfxPluginBaseClass * klass);
+gst_mfx_plugin_base_class_init (GstMfxPluginBaseClass * klass);
 
 void
-gst_mfx_plugin_base_init(GstMfxPluginBase * plugin,
+gst_mfx_plugin_base_init (GstMfxPluginBase * plugin,
 	GstDebugCategory * debug_category);
 
 void
-gst_mfx_plugin_base_finalize(GstMfxPluginBase * plugin);
+gst_mfx_plugin_base_finalize (GstMfxPluginBase * plugin);
 
 gboolean
-gst_mfx_plugin_base_open(GstMfxPluginBase * plugin);
+gst_mfx_plugin_base_open (GstMfxPluginBase * plugin);
 
 void
-gst_mfx_plugin_base_close(GstMfxPluginBase * plugin);
+gst_mfx_plugin_base_close (GstMfxPluginBase * plugin);
 
 gboolean
-gst_mfx_plugin_base_ensure_aggregator(GstMfxPluginBase * plugin);
+gst_mfx_plugin_base_ensure_aggregator (GstMfxPluginBase * plugin);
 
 gboolean
-gst_mfx_plugin_base_set_caps(GstMfxPluginBase * plugin, GstCaps * incaps,
+gst_mfx_plugin_base_set_caps (GstMfxPluginBase * plugin, GstCaps * incaps,
 	GstCaps * outcaps);
 
 gboolean
@@ -171,7 +171,7 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
     GstQuery * query);
 
 gboolean
-gst_mfx_plugin_base_decide_allocation(GstMfxPluginBase * plugin,
+gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 	GstQuery * query);
 
 GstFlowReturn

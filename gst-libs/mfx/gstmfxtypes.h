@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2012-2014 Intel Corporation
- *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -22,6 +22,7 @@
 #define GST_MFX_TYPES_H
 
 #include <glib.h>
+#include <mfxvideo.h>
 
 G_BEGIN_DECLS
 
@@ -87,6 +88,18 @@ struct _GstMfxRectangle {
 	guint32 height;
 };
 
+typedef struct _GstMfxMemoryId GstMfxMemoryId;
+struct _GstMfxMemoryId {
+    mfxMemId                mid;
+    mfxFrameInfo           *info;
+};
+
+typedef enum {
+	GST_MFX_OPTION_AUTO = -1,
+	GST_MFX_OPTION_OFF,
+	GST_MFX_OPTION_ON,
+} GstMfxOption;
+
 /**
 * GstMfxRotation:
 * @GST_MFX_ROTATION_0: the output surface is not rotated.
@@ -100,6 +113,24 @@ typedef enum {
 	GST_MFX_ROTATION_180 = 180,
 	GST_MFX_ROTATION_270 = 270,
 } GstMfxRotation;
+
+typedef enum {
+	GST_MFX_RATECONTROL_NONE = 0,
+	GST_MFX_RATECONTROL_CQP = MFX_RATECONTROL_CQP,
+	GST_MFX_RATECONTROL_CBR = MFX_RATECONTROL_CBR,
+	GST_MFX_RATECONTROL_VCM = MFX_RATECONTROL_VCM,
+	GST_MFX_RATECONTROL_VBR = MFX_RATECONTROL_VBR,
+	GST_MFX_RATECONTROL_AVBR = MFX_RATECONTROL_AVBR,
+	GST_MFX_RATECONTROL_QVBR = MFX_RATECONTROL_QVBR,
+	GST_MFX_RATECONTROL_LA_BRC = MFX_RATECONTROL_LA,
+	GST_MFX_RATECONTROL_ICQ = MFX_RATECONTROL_ICQ,
+	GST_MFX_RATECONTROL_LA_ICQ = MFX_RATECONTROL_LA_ICQ,
+	GST_MFX_RATECONTROL_LA_HRD = MFX_RATECONTROL_LA_HRD,
+} GstMfxRateControl;
+
+/* Define a mask for GstVaapiRateControl */
+#define GST_MFX_RATECONTROL_MASK(RC) \
+	(1U << G_PASTE(GST_MFX_RATECONTROL_,RC))
 
 G_END_DECLS
 

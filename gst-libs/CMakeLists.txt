@@ -5,7 +5,7 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 
-if(HAVE_WAYLAND_RENDERER)
+if (HAVE_WAYLAND_RENDERER)
 	file(GLOB WAYLAND_SOURCE "mfx/wayland/*.c")
 	include_directories( mfx/wayland )
 endif()
@@ -18,7 +18,10 @@ if (HAVE_EGL_RENDERER)
 	include_directories ( mfx/egl )
 endif()
 
-add_library(gstmfxhelper SHARED ${SOURCE} ${WAYLAND_SOURCE} ${X11_SOURCE} ${EGL_RENDERER})
+file(GLOB COMMON_UTILS "mfx/common/*.c")
+include_directories ( mfx/common )
+
+add_library(gstmfxhelper SHARED ${SOURCE} ${WAYLAND_SOURCE} ${X11_SOURCE} ${EGL_RENDERER} ${COMMON_UTILS})
 target_link_libraries(gstmfxhelper
 	${GLIB-2.0_LIBRARIES}
 	${GOBJECT-2.0_LIBRARIES}
