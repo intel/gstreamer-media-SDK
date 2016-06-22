@@ -119,12 +119,6 @@ Known Issues
 Work In Progress
 ----------------
 
- - H.264, MPEG2, HEVC encoder
-
- 
-To Do
------
-
  - Codec parsers
 
 

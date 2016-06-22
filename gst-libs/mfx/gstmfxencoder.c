@@ -443,8 +443,9 @@ set_extended_coding_options (GstMfxEncoder * encoder)
         break;
     }
 
-    if (encoder->codec == MFX_CODEC_HEVC && !((encoder->info.width & 15) ^ 8) ||
-            !((encoder->info.height & 15) ^ 8)) {
+    if ((!((encoder->info.width & 15) ^ 8) ||
+            !((encoder->info.height & 15) ^ 8)) &&
+            (encoder->codec == MFX_CODEC_HEVC)) {
         encoder->exthevc.Header.BufferId = MFX_EXTBUFF_HEVC_PARAM;
         encoder->exthevc.Header.BufferSz = sizeof (encoder->exthevc);
         encoder->exthevc.PicWidthInLumaSamples = encoder->info.width;
