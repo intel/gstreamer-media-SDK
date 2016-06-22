@@ -26,6 +26,7 @@
 #include "gstmfxenc_h264.h"
 #include "gstmfxenc_h265.h"
 #include "gstmfxenc_mpeg2.h"
+#include "gstmfxenc_jpeg.h"
 
 #define PACKAGE "gstmfx"
 #define VERSION "0.0.1"
@@ -45,6 +46,8 @@ plugin_init (GstPlugin * plugin)
 		GST_TYPE_MFXENC_H265);
     gst_element_register (plugin, "mfxmpeg2enc", GST_RANK_NONE,
 		GST_TYPE_MFXENC_MPEG2);
+    gst_element_register (plugin, "mfxjpegenc", GST_RANK_NONE,
+		GST_TYPE_MFXENC_JPEG);
 
 	return TRUE;
 }

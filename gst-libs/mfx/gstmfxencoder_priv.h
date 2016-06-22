@@ -161,6 +161,7 @@ struct _GstMfxEncoder
 	mfxU16					qpb_offset;
 	mfxU16                  avbr_accuracy;
 	mfxU16                  avbr_convergence;
+	mfxU16                  jpeg_quality;
 
 	mfxExtCodingOption		extco;
 	mfxExtCodingOption2		extco2;

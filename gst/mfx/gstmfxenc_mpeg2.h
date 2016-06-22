@@ -1,5 +1,5 @@
-#ifndef GST_MFXENCODE_MPEG2_H
-#define GST_MFXENCODE_MPEG2_H
+#ifndef GST_MFXENC_MPEG2_H
+#define GST_MFXENC_MPEG2_H
 
 #include <gst/gst.h>
 #include "gstmfxenc.h"
@@ -31,10 +31,6 @@ struct _GstMfxEncMpeg2
 {
 	/*< private >*/
 	GstMfxEnc parent_instance;
-
-	guint32 quantizer;
-	guint32 intra_period;
-	guint32 ip_period;
 };
 
 struct _GstMfxEncMpeg2Class
@@ -48,4 +44,4 @@ gst_mfxenc_mpeg2_get_type(void);
 
 G_END_DECLS
 
-#endif /* GST_MFXENCODE_MPEG2_H */
+#endif /* GST_MFXENC_MPEG2_H */

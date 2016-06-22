@@ -478,49 +478,56 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 	}
 
     encoder->params.mfx.CodecProfile = encoder->profile;
-
-	switch (encoder->rc_method) {
-    case GST_MFX_RATECONTROL_CQP:
-        encoder->params.mfx.QPI =
-            CLAMP (encoder->global_quality + encoder->qpi_offset, 0, 51);
-        encoder->params.mfx.QPP =
-            CLAMP (encoder->global_quality + encoder->qpp_offset, 0, 51);
-        encoder->params.mfx.QPB =
-            CLAMP (encoder->global_quality + encoder->qpb_offset, 0, 51);
-
-        /* If set to auto, then enable b-pyramid */
-        if (GST_MFX_OPTION_AUTO == encoder->b_strategy)
-            encoder->b_strategy = GST_MFX_OPTION_ON;
-        encoder->gop_size = 32;
-        encoder->gop_refdist =
-            encoder->gop_refdist < 0 ? 4 : encoder->gop_refdist;
-        break;
-    case GST_MFX_RATECONTROL_AVBR:
-        encoder->params.mfx.Convergence = encoder->avbr_convergence;
-        encoder->params.mfx.Accuracy = encoder->avbr_accuracy;
-        break;
-    case GST_MFX_RATECONTROL_ICQ:
-    case GST_MFX_RATECONTROL_LA_ICQ:
-        encoder->params.mfx.ICQQuality = CLAMP (encoder->global_quality, 1, 51);
-        break;
-    default:
-        break;
-    }
-
     encoder->params.AsyncDepth = encoder->async_depth;
-	encoder->params.mfx.TargetUsage = encoder->preset;
-	encoder->params.mfx.RateControlMethod = encoder->rc_method;
-	encoder->params.mfx.IdrInterval = encoder->idr_interval;
-	encoder->params.mfx.NumRefFrame = CLAMP (encoder->num_refs, 0, 16);
-	encoder->params.mfx.GopPicSize = encoder->gop_size;
-	encoder->params.mfx.NumSlice = encoder->num_slices;
 
-	if (encoder->bitrate)
-		encoder->params.mfx.TargetKbps = encoder->bitrate;
-    encoder->params.mfx.GopRefDist = CLAMP (
-        encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
+    if (encoder->codec != MFX_CODEC_JPEG) {
+        switch (encoder->rc_method) {
+        case GST_MFX_RATECONTROL_CQP:
+            encoder->params.mfx.QPI =
+                CLAMP (encoder->global_quality + encoder->qpi_offset, 0, 51);
+            encoder->params.mfx.QPP =
+                CLAMP (encoder->global_quality + encoder->qpp_offset, 0, 51);
+            encoder->params.mfx.QPB =
+                CLAMP (encoder->global_quality + encoder->qpb_offset, 0, 51);
 
-    set_extended_coding_options (encoder);
+            /* If set to auto, then enable b-pyramid */
+            if (GST_MFX_OPTION_AUTO == encoder->b_strategy)
+                encoder->b_strategy = GST_MFX_OPTION_ON;
+            encoder->gop_size = 32;
+            encoder->gop_refdist =
+                encoder->gop_refdist < 0 ? 4 : encoder->gop_refdist;
+            break;
+        case GST_MFX_RATECONTROL_AVBR:
+            encoder->params.mfx.Convergence = encoder->avbr_convergence;
+            encoder->params.mfx.Accuracy = encoder->avbr_accuracy;
+            break;
+        case GST_MFX_RATECONTROL_ICQ:
+        case GST_MFX_RATECONTROL_LA_ICQ:
+            encoder->params.mfx.ICQQuality = CLAMP (encoder->global_quality, 1, 51);
+            break;
+        default:
+            break;
+        }
+
+        encoder->params.mfx.TargetUsage = encoder->preset;
+        encoder->params.mfx.RateControlMethod = encoder->rc_method;
+        encoder->params.mfx.IdrInterval = encoder->idr_interval;
+        encoder->params.mfx.NumRefFrame = CLAMP (encoder->num_refs, 0, 16);
+        encoder->params.mfx.GopPicSize = encoder->gop_size;
+        encoder->params.mfx.NumSlice = encoder->num_slices;
+
+        if (encoder->bitrate)
+            encoder->params.mfx.TargetKbps = encoder->bitrate;
+        encoder->params.mfx.GopRefDist = CLAMP (
+            encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
+
+        set_extended_coding_options (encoder);
+    }
+    else {
+        encoder->params.mfx.Interleaved = 1;
+        encoder->params.mfx.Quality = encoder->jpeg_quality;
+        encoder->params.mfx.RestartInterval = 0;
+    }
 }
 
 static void
