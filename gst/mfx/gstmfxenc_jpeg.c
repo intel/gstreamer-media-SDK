@@ -123,7 +123,7 @@ gst_mfxenc_jpeg_class_init (GstMfxEncJpegClass * klass)
   encode_class->alloc_encoder = gst_mfxenc_jpeg_alloc_encoder;
 
   gst_element_class_set_static_metadata (element_class,
-      "MFX MPEG-2 encoder",
+      "MFX JPEG encoder",
       "Codec/Encoder/Video",
       GST_PLUGIN_DESC, "Ishmael Sameen <ishmael.visayana.sameen@intel.com>");
 
