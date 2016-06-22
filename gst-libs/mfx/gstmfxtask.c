@@ -393,7 +393,7 @@ static void
 gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 	mfxSession session, guint type_flags)
 {
-    task->task_type = type_flags;
+    task->task_type |= type_flags;
 	task->display = gst_mfx_display_ref (
 		GST_MFX_TASK_AGGREGATOR_DISPLAY (aggregator));
 	task->session = session;

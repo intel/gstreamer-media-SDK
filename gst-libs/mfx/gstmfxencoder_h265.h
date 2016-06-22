@@ -2,7 +2,6 @@
 #define GST_MFX_ENCODER_H265_H
 
 #include "gstmfxencoder.h"
-#include "gstmfxutils_h265.h"
 
 G_BEGIN_DECLS
 
@@ -29,9 +28,6 @@ gst_mfx_encoder_h265_new (GstMfxTaskAggregator * aggregator,
 
 GPtrArray *
 gst_mfx_encoder_h265_get_default_properties (void);
-
-gboolean
-gst_mfx_encoder_h265_set_max_profile (GstMfxEncoder * encoder, mfxU16 profile);
 
 G_END_DECLS
 

@@ -6,8 +6,6 @@
 #include "gstmfxcompat.h"
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_h265.h"
-#include "gstmfxutils_h265.h"
-#include "gstmfxsurfaceproxy.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -391,14 +389,4 @@ gst_mfx_encoder_h265_get_default_properties (void)
 		G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	return props;
-}
-
-gboolean
-gst_mfx_encoder_h265_set_max_profile (GstMfxEncoder * encoder, mfxU16 profile)
-{
-	g_return_val_if_fail (encoder != NULL, FALSE);
-	g_return_val_if_fail (profile != MFX_PROFILE_UNKNOWN, FALSE);
-
-	encoder->profile = profile;
-	return TRUE;
 }

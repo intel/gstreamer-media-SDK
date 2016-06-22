@@ -1,7 +1,6 @@
 #include "gstmfxcompat.h"
 #include "gstmfxdisplay.h"
 #include "gstmfxencoder_h265.h"
-#include "gstmfxutils_h265.h"
 #include "gstmfxenc_h265.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideomemory.h"
@@ -26,8 +25,7 @@ static const char gst_mfxenc_h265_sink_caps_str[] =
 #endif
 
 static const char gst_mfxenc_h265_src_caps_str[] =
-	GST_CODEC_CAPS ", "
-	"profile = (string) { main }";
+	GST_CODEC_CAPS;
 
 static GstStaticPadTemplate gst_mfxenc_h265_sink_factory =
 	GST_STATIC_PAD_TEMPLATE ("sink",
@@ -84,107 +82,6 @@ guint prop_id, GValue * value, GParamSpec * pspec)
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
 	}
-}
-
-/*static mfxU16
-get_profile (GstCaps * caps)
-{
-	mfxU16 profile = MFX_PROFILE_UNKNOWN;
-	guint i, j, num_structures, num_values;
-
-	num_structures = gst_caps_get_size (caps);
-	for (i = 0; i < num_structures; i++) {
-		GstStructure *const structure = gst_caps_get_structure (caps, i);
-		const GValue *const value = gst_structure_get_value (structure, "profile");
-
-		if (!value)
-			continue;
-		if (G_VALUE_HOLDS_STRING (value)) {
-			const gchar *str = g_value_get_string (value);
-			profile = gst_mfx_utils_h265_get_profile_from_string (str);
-		}
-	}
-	return profile;
-}*/
-
-typedef struct
-{
-	mfxU16 best_profile;
-	guint best_score;
-} FindBestProfileData;
-
-static void
-find_best_profile_value (FindBestProfileData * data, const GValue * value)
-{
-	const gchar *str;
-	mfxU16 profile;
-	guint score;
-
-	if (!value || !G_VALUE_HOLDS_STRING (value))
-		return;
-
-	str = g_value_get_string (value);
-	if (!str)
-		return;
-	profile = gst_mfx_utils_h265_get_profile_from_string (str);
-	if (!profile)
-		return;
-	score = gst_mfx_utils_h265_get_profile_score (profile);
-	if (score < data->best_score)
-		return;
-	data->best_profile = profile;
-	data->best_score = score;
-}
-
-static mfxU16
-find_best_profile (GstCaps * caps)
-{
-	FindBestProfileData data;
-	guint i, j, num_structures, num_values;
-
-	data.best_profile = MFX_PROFILE_UNKNOWN;
-	data.best_score = 0;
-
-	num_structures = gst_caps_get_size (caps);
-	for (i = 0; i < num_structures; i++) {
-		GstStructure *const structure = gst_caps_get_structure (caps, i);
-		const GValue *const value = gst_structure_get_value (structure, "profile");
-
-		if (!value)
-			continue;
-		if (G_VALUE_HOLDS_STRING (value))
-			find_best_profile_value (&data, value);
-		else if (GST_VALUE_HOLDS_LIST (value)) {
-			num_values = gst_value_list_get_size (value);
-			for (j = 0; j < num_values; j++)
-				find_best_profile_value (&data, gst_value_list_get_value (value, j));
-		}
-	}
-	return data.best_profile;
-}
-
-static gboolean
-gst_mfxenc_h265_set_config (GstMfxEnc * base_encode)
-{
-	GstCaps *allowed_caps;
-	mfxU16 profile;
-
-	/* Check for the largest profile that is supported */
-	allowed_caps =
-		gst_pad_get_allowed_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (base_encode));
-	if (!allowed_caps)
-		return TRUE;
-
-	//profile = get_profile (allowed_caps);
-	profile = find_best_profile (allowed_caps);
-	gst_caps_unref (allowed_caps);
-	if (profile != MFX_PROFILE_UNKNOWN) {
-		GST_INFO ("using %s profile as target decoder constraints",
-			gst_mfx_utils_h265_get_profile_string (profile));
-		if (!gst_mfx_encoder_h265_set_max_profile (base_encode->encoder, profile))
-			return FALSE;
-	}
-	return TRUE;
 }
 
 static GstCaps *
@@ -365,7 +262,6 @@ gst_mfxenc_h265_class_init (GstMfxEncH265Class * klass)
 	object_class->get_property = gst_mfxenc_h265_get_property;
 
 	encode_class->get_properties = gst_mfx_encoder_h265_get_default_properties;
-	encode_class->set_config = gst_mfxenc_h265_set_config;
 	encode_class->get_caps = gst_mfxenc_h265_get_caps;
 	encode_class->alloc_encoder = gst_mfxenc_h265_alloc_encoder;
 	encode_class->format_buffer = gst_mfxenc_h265_format_buffer;

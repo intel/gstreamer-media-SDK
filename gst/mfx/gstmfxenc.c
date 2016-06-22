@@ -197,7 +197,7 @@ gst_mfxenc_push_frame (GstMfxEnc * encode, GstVideoCodecFrame * out_frame)
 		goto error_output_state;
 	//GST_VIDEO_ENCODER_STREAM_UNLOCK (encode);
 
-	out_buffer = out_frame->output_buffer;
+    out_buffer = out_frame->output_buffer;
 	if (klass->format_buffer) {
 	    ret = klass->format_buffer (encode, &out_buffer);
 		if (GST_FLOW_OK != ret)
@@ -207,7 +207,9 @@ gst_mfxenc_push_frame (GstMfxEnc * encode, GstVideoCodecFrame * out_frame)
 	GST_DEBUG ("output:%" GST_TIME_FORMAT ", size:%zu",
 		GST_TIME_ARGS (out_frame->pts), gst_buffer_get_size (out_buffer));
 
-	return gst_video_encoder_finish_frame (venc, out_frame);
+    ret = gst_video_encoder_finish_frame (venc, out_frame);
+
+    return ret;
 	/* ERRORS */
 error_format_buffer:
 	{

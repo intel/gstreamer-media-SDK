@@ -6,7 +6,6 @@
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_h264.h"
 #include "gstmfxutils_h264.h"
-#include "gstmfxsurfaceproxy.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"

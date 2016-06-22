@@ -565,14 +565,22 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 	GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean mapped)
 {
 	encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
-	encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
-		GST_MFX_TASK_ENCODER);
+
+	/*if (!mapped) {
+        GstMfxTask *task = gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
+        encoder->session = gst_mfx_task_get_session (task);
+        encoder->encode_task = gst_mfx_task_new_with_session(encoder->aggregator, encoder->session, GST_MFX_TASK_ENCODER);
+	}*/
+	//else {
+        encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
+            GST_MFX_TASK_ENCODER);
+        encoder->session = gst_mfx_task_get_session (encoder->encode_task);
+	//}
 	if (!encoder->encode_task)
 		return FALSE;
 
-	gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
-		encoder->encode_task);
-	encoder->session = gst_mfx_task_get_session (encoder->encode_task);
+    gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
+        encoder->encode_task);
 
     encoder->bs.MaxLength = info->width * info->height * 4;
 	encoder->bitstream = g_byte_array_sized_new (encoder->bs.MaxLength);
