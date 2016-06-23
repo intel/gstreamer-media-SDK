@@ -1,42 +1,74 @@
-file(GLOB SOURCE  "mfx/*.c")
+set(SOURCE
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdisplay.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdisplay_drm.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxfilter.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxminiobject.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxobject.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxprimebufferproxy.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxprofile.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurfacepool.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurfaceproxy.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxtaskaggregator.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxtask.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxtexture.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxutils_vaapi.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxvalue.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxwindow.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/mfx/video-format.c")
 
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set (CMAKE_INSTALL_PREFIX "${GSTREAMER_LIBDIR}/gstreamer-1.0")
+if(MFX_DECODER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdecoder.c")
+endif()
+
+if(WAYLAND_RENDERER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/gstmfxdisplay_wayland.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/gstmfxwindow_wayland.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/scaler-protocol.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/wayland-drm-protocol.c")
+endif()
+
+if(X11_RENDERER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/x11/gstmfxdisplay_x11.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/x11/gstmfxutils_x11.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/x11/gstmfxwindow_x11.c")
 endif()
 
 
-if (HAVE_WAYLAND_RENDERER)
-	file(GLOB WAYLAND_SOURCE "mfx/wayland/*.c")
-	include_directories( mfx/wayland )
-endif()
-if (HAVE_X11_RENDERER)
-	file(GLOB X11_SOURCE "mfx/x11/*.c")
-	include_directories ( mfx/x11 )
-endif()
-if (HAVE_EGL_RENDERER)
-	file(GLOB EGL_RENDERER "mfx/egl/*.c")
-	include_directories ( mfx/egl )
+if(EGL_RENDERER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/egl/gstmfxdisplay_egl.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/egl/gstmfxtexture_egl.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/egl/gstmfxwindow_egl.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/egl/gstmfxutils_egl.c")
 endif()
 
-file(GLOB COMMON_UTILS "mfx/common/*.c")
-include_directories ( mfx/common )
+if(MFX_ENCODER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxencoder.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/common/gstbitwriter.c")
+endif()
 
-add_library(gstmfxhelper SHARED ${SOURCE} ${WAYLAND_SOURCE} ${X11_SOURCE} ${EGL_RENDERER} ${COMMON_UTILS})
-target_link_libraries(gstmfxhelper
-	${GLIB-2.0_LIBRARIES}
-	${GOBJECT-2.0_LIBRARIES}
-	${GSTREAMER_LIBRARIES}
-	${GSTREAMER_VIDEO_LIBRARIES}
-	${LIBVA_LIBRARIES}
-	${LIBVA_DRM_LIBRARIES}
-	${LIBDRM_LIBRARIES}
-	${LIBDRM_INTEL_LIBRARIES}
-	${LIBUDEV_LIBRARIES}
-	${SINK_LIBRARIES}
-	libmfx)
+if(MFX_H264_ENCODER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxencoder_h264.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxutils_h264.c")
+endif()
 
-install (TARGETS gstmfxhelper 
-	LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX} 
-	RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}
-	)
+if(MFX_H265_ENCODER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxencoder_h265.c")
+endif()
+if(MFX_MPEG2_ENCODER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxencoder_mpeg2.c")
+endif()
+if(MFX_JPEG_ENCODER)
+	set(SOURCE ${SOURCE}
+		"${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxencoder_jpeg.c")
+endif()
 
+set(GST_LIBS_SOURCE ${SOURCE} PARENT_SCOPE)
+#message("[DEBUG-SOURCE]:" ${SOURCE})
