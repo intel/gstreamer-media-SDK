@@ -33,23 +33,22 @@
 #undef gst_mfx_object_replace
 
 static void
-gst_mfx_object_finalize(GstMfxObject * object)
+gst_mfx_object_finalize (GstMfxObject * object)
 {
-	const GstMfxObjectClass *const klass = GST_MFX_OBJECT_GET_CLASS(object);
+  const GstMfxObjectClass *const klass = GST_MFX_OBJECT_GET_CLASS (object);
 
-	if (klass->finalize)
-		klass->finalize(object);
-	gst_mfx_display_replace(&object->display, NULL);
+  if (klass->finalize)
+    klass->finalize (object);
+  gst_mfx_display_replace (&object->display, NULL);
 }
 
 void
-gst_mfx_object_class_init(GstMfxObjectClass * klass, guint size)
+gst_mfx_object_class_init (GstMfxObjectClass * klass, guint size)
 {
-	GstMfxMiniObjectClass *const object_class =
-		GST_MFX_MINI_OBJECT_CLASS(klass);
+  GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
 
-	object_class->size = size;
-	object_class->finalize = (GDestroyNotify)gst_mfx_object_finalize;
+  object_class->size = size;
+  object_class->finalize = (GDestroyNotify) gst_mfx_object_finalize;
 }
 
 /**
@@ -67,31 +66,30 @@ gst_mfx_object_class_init(GstMfxObjectClass * klass, guint size)
 * Returns: The newly allocated #GstMfxObject
 */
 gpointer
-gst_mfx_object_new(const GstMfxObjectClass * klass,
-	GstMfxDisplay * display)
+gst_mfx_object_new (const GstMfxObjectClass * klass, GstMfxDisplay * display)
 {
-	const GstMfxMiniObjectClass *const object_class =
-		GST_MFX_MINI_OBJECT_CLASS(klass);
-	GstMfxObject *object;
-	guint sub_size;
+  const GstMfxMiniObjectClass *const object_class =
+      GST_MFX_MINI_OBJECT_CLASS (klass);
+  GstMfxObject *object;
+  guint sub_size;
 
-	g_return_val_if_fail(klass != NULL, NULL);
-	g_return_val_if_fail(display != NULL, NULL);
+  g_return_val_if_fail (klass != NULL, NULL);
+  g_return_val_if_fail (display != NULL, NULL);
 
-	object = (GstMfxObject *)gst_mfx_mini_object_new(object_class);
-	if (!object)
-		return NULL;
+  object = (GstMfxObject *) gst_mfx_mini_object_new (object_class);
+  if (!object)
+    return NULL;
 
-	object->display = gst_mfx_display_ref(display);
-	object->object_id = VA_INVALID_ID;
+  object->display = gst_mfx_display_ref (display);
+  object->object_id = VA_INVALID_ID;
 
-	sub_size = object_class->size - sizeof (*object);
-	if (sub_size > 0)
-		memset(((guchar *)object) + sizeof (*object), 0, sub_size);
+  sub_size = object_class->size - sizeof (*object);
+  if (sub_size > 0)
+    memset (((guchar *) object) + sizeof (*object), 0, sub_size);
 
-	if (klass && klass->init)
-		klass->init(object);
-	return object;
+  if (klass && klass->init)
+    klass->init (object);
+  return object;
 }
 
 /**
@@ -103,9 +101,9 @@ gst_mfx_object_new(const GstMfxObjectClass * klass,
 * Returns: The same @object argument
 */
 gpointer
-gst_mfx_object_ref(gpointer object)
+gst_mfx_object_ref (gpointer object)
 {
-	return gst_mfx_object_ref_internal(object);
+  return gst_mfx_object_ref_internal (object);
 }
 
 /**
@@ -116,9 +114,9 @@ gst_mfx_object_ref(gpointer object)
 * the reference count reaches zero, the object will be free'd.
 */
 void
-gst_mfx_object_unref(gpointer object)
+gst_mfx_object_unref (gpointer object)
 {
-	gst_mfx_object_unref_internal(object);
+  gst_mfx_object_unref_internal (object);
 }
 
 /**
@@ -131,9 +129,9 @@ gst_mfx_object_unref(gpointer object)
 * valid object. However, @new_object can be NULL.
 */
 void
-gst_mfx_object_replace(gpointer old_object_ptr, gpointer new_object)
+gst_mfx_object_replace (gpointer old_object_ptr, gpointer new_object)
 {
-	gst_mfx_object_replace_internal(old_object_ptr, new_object);
+  gst_mfx_object_replace_internal (old_object_ptr, new_object);
 }
 
 /**
@@ -145,11 +143,11 @@ gst_mfx_object_replace(gpointer old_object_ptr, gpointer new_object)
 * Return value: the parent #GstMfxDisplay object
 */
 GstMfxDisplay *
-gst_mfx_object_get_display(GstMfxObject * object)
+gst_mfx_object_get_display (GstMfxObject * object)
 {
-	g_return_val_if_fail(object != NULL, NULL);
+  g_return_val_if_fail (object != NULL, NULL);
 
-	return GST_MFX_OBJECT_DISPLAY(object);
+  return GST_MFX_OBJECT_DISPLAY (object);
 }
 
 /**
@@ -161,11 +159,11 @@ gst_mfx_object_get_display(GstMfxObject * object)
 * unlocked by the other thread.
 */
 void
-gst_mfx_object_lock_display(GstMfxObject * object)
+gst_mfx_object_lock_display (GstMfxObject * object)
 {
-	g_return_if_fail(object != NULL);
+  g_return_if_fail (object != NULL);
 
-	GST_MFX_OBJECT_LOCK_DISPLAY(object);
+  GST_MFX_OBJECT_LOCK_DISPLAY (object);
 }
 
 /**
@@ -177,11 +175,11 @@ gst_mfx_object_lock_display(GstMfxObject * object)
 * display itself.
 */
 void
-gst_mfx_object_unlock_display(GstMfxObject * object)
+gst_mfx_object_unlock_display (GstMfxObject * object)
 {
-	g_return_if_fail(object != NULL);
+  g_return_if_fail (object != NULL);
 
-	GST_MFX_OBJECT_UNLOCK_DISPLAY(object);
+  GST_MFX_OBJECT_UNLOCK_DISPLAY (object);
 }
 
 /**
@@ -193,9 +191,9 @@ gst_mfx_object_unlock_display(GstMfxObject * object)
 * Return value: the #GstMfxID of the @object
 */
 GstMfxID
-gst_mfx_object_get_id(GstMfxObject * object)
+gst_mfx_object_get_id (GstMfxObject * object)
 {
-	g_return_val_if_fail(object != NULL, 0);
+  g_return_val_if_fail (object != NULL, 0);
 
-	return GST_MFX_OBJECT_ID(object);
+  return GST_MFX_OBJECT_ID (object);
 }

@@ -38,46 +38,46 @@
 
 static void
 gst_mfx_texture_init (GstMfxTexture * texture, GstMfxID id,
-	guint target, guint format, guint width, guint height)
+    guint target, guint format, guint width, guint height)
 {
-	texture->is_wrapped = id != GST_MFX_ID_INVALID;
-	GST_MFX_OBJECT_ID (texture) = texture->is_wrapped ? id : 0;
-	texture->gl_target = target;
-	texture->gl_format = format;
-	texture->width = width;
-	texture->height = height;
+  texture->is_wrapped = id != GST_MFX_ID_INVALID;
+  GST_MFX_OBJECT_ID (texture) = texture->is_wrapped ? id : 0;
+  texture->gl_target = target;
+  texture->gl_format = format;
+  texture->width = width;
+  texture->height = height;
 }
 
 static inline gboolean
 gst_mfx_texture_allocate (GstMfxTexture * texture)
 {
-	return GST_MFX_TEXTURE_GET_CLASS (texture)->allocate (texture);
+  return GST_MFX_TEXTURE_GET_CLASS (texture)->allocate (texture);
 }
 
 GstMfxTexture *
 gst_mfx_texture_new_internal (const GstMfxTextureClass * klass,
-	GstMfxDisplay * display, GstMfxID id, guint target, guint format,
-	guint width, guint height)
+    GstMfxDisplay * display, GstMfxID id, guint target, guint format,
+    guint width, guint height)
 {
-	GstMfxTexture *texture;
+  GstMfxTexture *texture;
 
-	g_return_val_if_fail (target != 0, NULL);
-	g_return_val_if_fail (format != 0, NULL);
-	g_return_val_if_fail (width > 0, NULL);
-	g_return_val_if_fail (height > 0, NULL);
+  g_return_val_if_fail (target != 0, NULL);
+  g_return_val_if_fail (format != 0, NULL);
+  g_return_val_if_fail (width > 0, NULL);
+  g_return_val_if_fail (height > 0, NULL);
 
-	texture = gst_mfx_object_new (GST_MFX_MINI_OBJECT_CLASS (klass), display);
-	if (!texture)
-		return NULL;
+  texture = gst_mfx_object_new (GST_MFX_MINI_OBJECT_CLASS (klass), display);
+  if (!texture)
+    return NULL;
 
-	gst_mfx_texture_init (texture, id, target, format, width, height);
-	if (!gst_mfx_texture_allocate (texture))
-		goto error;
-	return texture;
+  gst_mfx_texture_init (texture, id, target, format, width, height);
+  if (!gst_mfx_texture_allocate (texture))
+    goto error;
+  return texture;
 
 error:
-	gst_mfx_object_unref (texture);
-	return NULL;
+  gst_mfx_object_unref (texture);
+  return NULL;
 }
 
 /**
@@ -98,18 +98,18 @@ error:
 */
 GstMfxTexture *
 gst_mfx_texture_new (GstMfxDisplay * display, guint target, guint format,
-guint width, guint height)
+    guint width, guint height)
 {
-	GstMfxDisplayClass *dpy_class;
+  GstMfxDisplayClass *dpy_class;
 
-	g_return_val_if_fail (display != NULL, NULL);
-	g_return_val_if_fail (gst_mfx_display_has_opengl (display), NULL);
+  g_return_val_if_fail (display != NULL, NULL);
+  g_return_val_if_fail (gst_mfx_display_has_opengl (display), NULL);
 
-	dpy_class = GST_MFX_DISPLAY_GET_CLASS (display);
-	if (G_UNLIKELY (!dpy_class->create_texture))
-		return NULL;
-	return dpy_class->create_texture (display, GST_MFX_ID_INVALID, target,
-		format, width, height);
+  dpy_class = GST_MFX_DISPLAY_GET_CLASS (display);
+  if (G_UNLIKELY (!dpy_class->create_texture))
+    return NULL;
+  return dpy_class->create_texture (display, GST_MFX_ID_INVALID, target,
+      format, width, height);
 }
 
 /**
@@ -137,17 +137,17 @@ guint width, guint height)
 */
 GstMfxTexture *
 gst_mfx_texture_new_wrapped (GstMfxDisplay * display, guint id,
-guint target, guint format, guint width, guint height)
+    guint target, guint format, guint width, guint height)
 {
-	GstMfxDisplayClass *dpy_class;
+  GstMfxDisplayClass *dpy_class;
 
-	g_return_val_if_fail (display != NULL, NULL);
-	g_return_val_if_fail (gst_mfx_display_has_opengl (display), NULL);
+  g_return_val_if_fail (display != NULL, NULL);
+  g_return_val_if_fail (gst_mfx_display_has_opengl (display), NULL);
 
-	dpy_class = GST_MFX_DISPLAY_GET_CLASS (display);
-	if (G_UNLIKELY (!dpy_class->create_texture))
-		return NULL;
-	return dpy_class->create_texture (display, id, target, format, width, height);
+  dpy_class = GST_MFX_DISPLAY_GET_CLASS (display);
+  if (G_UNLIKELY (!dpy_class->create_texture))
+    return NULL;
+  return dpy_class->create_texture (display, id, target, format, width, height);
 }
 
 /**
@@ -161,7 +161,7 @@ guint target, guint format, guint width, guint height)
 GstMfxTexture *
 gst_mfx_texture_ref (GstMfxTexture * texture)
 {
-	return gst_mfx_texture_ref_internal (texture);
+  return gst_mfx_texture_ref_internal (texture);
 }
 
 /**
@@ -174,7 +174,7 @@ gst_mfx_texture_ref (GstMfxTexture * texture)
 void
 gst_mfx_texture_unref (GstMfxTexture * texture)
 {
-	gst_mfx_texture_unref_internal (texture);
+  gst_mfx_texture_unref_internal (texture);
 }
 
 /**
@@ -188,9 +188,9 @@ gst_mfx_texture_unref (GstMfxTexture * texture)
 */
 void
 gst_mfx_texture_replace (GstMfxTexture ** old_texture_ptr,
-GstMfxTexture * new_texture)
+    GstMfxTexture * new_texture)
 {
-	gst_mfx_texture_replace_internal (old_texture_ptr, new_texture);
+  gst_mfx_texture_replace_internal (old_texture_ptr, new_texture);
 }
 
 /**
@@ -204,9 +204,9 @@ GstMfxTexture * new_texture)
 guint
 gst_mfx_texture_get_target (GstMfxTexture * texture)
 {
-	g_return_val_if_fail (texture != NULL, 0);
+  g_return_val_if_fail (texture != NULL, 0);
 
-	return GST_MFX_TEXTURE_TARGET (texture);
+  return GST_MFX_TEXTURE_TARGET (texture);
 }
 
 /**
@@ -220,9 +220,9 @@ gst_mfx_texture_get_target (GstMfxTexture * texture)
 guint
 gst_mfx_texture_get_format (GstMfxTexture * texture)
 {
-	g_return_val_if_fail (texture != NULL, 0);
+  g_return_val_if_fail (texture != NULL, 0);
 
-	return GST_MFX_TEXTURE_FORMAT (texture);
+  return GST_MFX_TEXTURE_FORMAT (texture);
 }
 
 /**
@@ -236,9 +236,9 @@ gst_mfx_texture_get_format (GstMfxTexture * texture)
 guint
 gst_mfx_texture_get_width (GstMfxTexture * texture)
 {
-	g_return_val_if_fail (texture != NULL, 0);
+  g_return_val_if_fail (texture != NULL, 0);
 
-	return GST_MFX_TEXTURE_WIDTH (texture);
+  return GST_MFX_TEXTURE_WIDTH (texture);
 }
 
 /**
@@ -252,9 +252,9 @@ gst_mfx_texture_get_width (GstMfxTexture * texture)
 guint
 gst_mfx_texture_get_height (GstMfxTexture * texture)
 {
-	g_return_val_if_fail (texture != NULL, 0);
+  g_return_val_if_fail (texture != NULL, 0);
 
-	return GST_MFX_TEXTURE_HEIGHT (texture);
+  return GST_MFX_TEXTURE_HEIGHT (texture);
 }
 
 /**
@@ -267,15 +267,15 @@ gst_mfx_texture_get_height (GstMfxTexture * texture)
 */
 void
 gst_mfx_texture_get_size (GstMfxTexture * texture,
-guint * width_ptr, guint * height_ptr)
+    guint * width_ptr, guint * height_ptr)
 {
-	g_return_if_fail (texture != NULL);
+  g_return_if_fail (texture != NULL);
 
-	if (width_ptr)
-		*width_ptr = GST_MFX_TEXTURE_WIDTH (texture);
+  if (width_ptr)
+    *width_ptr = GST_MFX_TEXTURE_WIDTH (texture);
 
-	if (height_ptr)
-		*height_ptr = GST_MFX_TEXTURE_HEIGHT (texture);
+  if (height_ptr)
+    *height_ptr = GST_MFX_TEXTURE_HEIGHT (texture);
 }
 
 /**
@@ -289,10 +289,9 @@ guint * width_ptr, guint * height_ptr)
 guint
 gst_mfx_texture_get_orientation_flags (GstMfxTexture * texture)
 {
-	g_return_val_if_fail (texture != NULL, 0);
+  g_return_val_if_fail (texture != NULL, 0);
 
-	return GST_MFX_TEXTURE_FLAGS (texture) &
-		GST_MFX_TEXTURE_ORIENTATION_FLAGS;
+  return GST_MFX_TEXTURE_FLAGS (texture) & GST_MFX_TEXTURE_ORIENTATION_FLAGS;
 }
 
 /**
@@ -308,11 +307,11 @@ gst_mfx_texture_get_orientation_flags (GstMfxTexture * texture)
 void
 gst_mfx_texture_set_orientation_flags (GstMfxTexture * texture, guint flags)
 {
-	g_return_if_fail (texture != NULL);
-	g_return_if_fail ((flags & ~GST_MFX_TEXTURE_ORIENTATION_FLAGS) == 0);
+  g_return_if_fail (texture != NULL);
+  g_return_if_fail ((flags & ~GST_MFX_TEXTURE_ORIENTATION_FLAGS) == 0);
 
-	GST_MFX_TEXTURE_FLAG_UNSET (texture, GST_MFX_TEXTURE_ORIENTATION_FLAGS);
-	GST_MFX_TEXTURE_FLAG_SET (texture, flags);
+  GST_MFX_TEXTURE_FLAG_UNSET (texture, GST_MFX_TEXTURE_ORIENTATION_FLAGS);
+  GST_MFX_TEXTURE_FLAG_SET (texture, flags);
 }
 
 /**
@@ -329,16 +328,16 @@ gst_mfx_texture_set_orientation_flags (GstMfxTexture * texture, guint flags)
 */
 gboolean
 gst_mfx_texture_put_surface (GstMfxTexture * texture,
-	GstMfxSurfaceProxy * proxy)
+    GstMfxSurfaceProxy * proxy)
 {
-	const GstMfxTextureClass *klass;
+  const GstMfxTextureClass *klass;
 
-	g_return_val_if_fail (texture != NULL, FALSE);
-	g_return_val_if_fail (proxy != NULL, FALSE);
+  g_return_val_if_fail (texture != NULL, FALSE);
+  g_return_val_if_fail (proxy != NULL, FALSE);
 
-	klass = GST_MFX_TEXTURE_GET_CLASS (texture);
-	if (!klass)
-		return FALSE;
+  klass = GST_MFX_TEXTURE_GET_CLASS (texture);
+  if (!klass)
+    return FALSE;
 
-	return klass->put_surface (texture, proxy);
+  return klass->put_surface (texture, proxy);
 }
