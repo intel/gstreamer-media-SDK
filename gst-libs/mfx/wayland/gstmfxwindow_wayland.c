@@ -95,7 +95,7 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_region *opaque_region;
   struct wl_viewport *viewport;
   struct wl_event_queue *event_queue;
-#if USE_EGL
+#ifdef USE_EGL
   struct wl_egl_window *egl_window;
 #endif
   GstPoll *poll;
@@ -421,7 +421,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
 
   if (priv->fullscreen_on_show)
     gst_mfx_window_wayland_set_fullscreen (window, TRUE);
-#if USE_EGL
+#ifdef USE_EGL
   if (gst_mfx_display_has_opengl (GST_MFX_OBJECT_DISPLAY (window))) {
     priv->egl_window = wl_egl_window_create (priv->surface, *width, *height);
     if (!priv->egl_window)
@@ -455,7 +455,7 @@ gst_mfx_window_wayland_destroy (GstMfxWindow * window)
     wl_event_queue_destroy (priv->event_queue);
     priv->event_queue = NULL;
   }
-#if USE_EGL
+#ifdef USE_EGL
   if (priv->egl_window) {
     wl_egl_window_destroy (priv->egl_window);
     priv->egl_window = NULL;

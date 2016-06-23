@@ -27,7 +27,7 @@
 #include "gstmfxdisplay_x11_priv.h"
 #include "gstmfxwindow_x11.h"
 
-#if HAVE_XRANDR
+#ifdef HAVE_XRANDR
 #include <X11/extensions/Xrandr.h>
 #endif
 
@@ -96,7 +96,7 @@ check_extensions (GstMfxDisplayX11 * display)
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
   int evt_base, err_base;
 
-#if HAVE_XRANDR
+#ifdef HAVE_XRANDR
   priv->use_xrandr = XRRQueryExtension (priv->x11_display,
       &evt_base, &err_base);
 #endif
@@ -224,7 +224,7 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
   width_mm = DisplayWidthMM (priv->x11_display, priv->x11_screen);
   height_mm = DisplayHeightMM (priv->x11_display, priv->x11_screen);
 
-#if HAVE_XRANDR
+#ifdef HAVE_XRANDR
   /* XXX: fix up physical size if the display is rotated */
   if (priv->use_xrandr) {
     XRRScreenConfiguration *xrr_config = NULL;

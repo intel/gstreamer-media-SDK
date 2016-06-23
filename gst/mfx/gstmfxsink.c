@@ -115,7 +115,7 @@ gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurfaceProxy * proxy,
 /* --- EGL Backend                                                  --- */
 /* ------------------------------------------------------------------------ */
 
-#if USE_EGL
+#ifdef USE_EGL
 #include <egl/gstmfxdisplay_egl.h>
 #include <egl/gstmfxwindow_egl.h>
 
@@ -141,18 +141,18 @@ gst_mfx_gl_api_get_type (void)
   return gl_api_type;
 }
 
-#if USE_X11
+#ifdef USE_X11
 #include <x11/gstmfxdisplay_x11.h>
 #include <x11/gstmfxwindow_x11.h>
 
-#if HAVE_XKBLIB
+#ifdef HAVE_XKBLIB
 #include <X11/XKBlib.h>
 #endif
 
 static inline KeySym
 x11_keycode_to_keysym (Display * dpy, unsigned int kc)
 {
-#if HAVE_XKBLIB
+#ifdef HAVE_XKBLIB
   return XkbKeycodeToKeysym (dpy, kc, 0, 0);
 #else
   return XKeycodeToKeysym (dpy, kc, 0);
@@ -316,7 +316,7 @@ gst_mfxsink_backend_egl (void)
 {
   static const GstMfxSinkBackend GstMfxSinkBackendEGL = {
     .create_window = gst_mfxsink_egl_create_window,
-#if USE_X11
+#ifdef USE_X11
     .handle_events = gst_mfxsink_x11_handle_events,
     .pre_start_event_thread = gst_mfxsink_x11_pre_start_event_thread,
     .pre_stop_event_thread = gst_mfxsink_x11_pre_stop_event_thread,
@@ -329,7 +329,7 @@ gst_mfxsink_backend_egl (void)
 /* ------------------------------------------------------------------------ */
 /* --- Wayland Backend                                                  --- */
 /* -------------------------------------------------------------------------*/
-#if USE_WAYLAND
+#ifdef USE_WAYLAND
 #include <wayland/gstmfxdisplay_wayland.h>
 #include <wayland/gstmfxwindow_wayland.h>
 
@@ -504,7 +504,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
   GstMfxDisplay *display = NULL;
 
   switch (sink->display_type_req) {
-#if USE_WAYLAND
+#ifdef USE_WAYLAND
     case GST_MFX_DISPLAY_TYPE_WAYLAND:
       if (!sink->display) {
         display = gst_mfx_display_wayland_new (sink->display_name);
@@ -515,7 +515,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
       sink->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
       break;
 #endif
-#if USE_EGL
+#ifdef USE_EGL
     case GST_MFX_DISPLAY_TYPE_EGL:
       display = gst_mfx_display_egl_new (sink->display_name, sink->gl_api);
       if (!display)
@@ -1034,7 +1034,7 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
       "Force aspect ratio",
       "When enabled, scaling will respect original aspect ratio",
       TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-#if USE_EGL
+#ifdef USE_EGL
   /**
    * GstMfxSink:gl-api:
    *
