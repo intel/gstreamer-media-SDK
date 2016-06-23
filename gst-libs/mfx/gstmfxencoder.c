@@ -350,187 +350,6 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
 }
 
 static void
-set_default_option_values (GstMfxEncoder * encoder)
-{
-    /* Extended coding options, introduced in API 1.0 */
-    encoder->extco.MECostType           = 0; // reserved, must be 0
-    encoder->extco.MESearchType         = 0; // reserved, must be 0
-    encoder->extco.MVSearchWindow.x     = 0; // reserved, must be 0
-    encoder->extco.MVSearchWindow.y     = 0; // reserved, must be 0
-    encoder->extco.RefPicListReordering = 0; // reserved, must be 0
-    encoder->extco.IntraPredBlockSize   = 0; // reserved, must be 0
-    encoder->extco.InterPredBlockSize   = 0; // reserved, must be 0
-    encoder->extco.MVPrecision          = 0; // reserved, must be 0
-    encoder->extco.EndOfSequence        = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.RateDistortionOpt    = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.ResetRefList         = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.MaxDecFrameBuffering = 0; // unspecified
-    encoder->extco.AUDelimiter          = MFX_CODINGOPTION_OFF;
-    encoder->extco.SingleSeiNalUnit     = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.PicTimingSEI         = MFX_CODINGOPTION_OFF;
-    encoder->extco.VuiNalHrdParameters  = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.FramePicture         = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.RefPicMarkRep        = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.FieldOutput          = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.NalHrdConformance    = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.SingleSeiNalUnit     = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.VuiVclHrdParameters  = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.ViewOutput           = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco.RecoveryPointSEI     = MFX_CODINGOPTION_UNKNOWN;
-
-    /* Extended coding options 2, introduced in API 1.6 */
-    encoder->extco2.IntRefType      = 0;
-    encoder->extco2.IntRefCycleSize = 2;
-    encoder->extco2.IntRefQPDelta   = 0;
-    encoder->extco2.MaxFrameSize    = 0;
-    encoder->extco2.BitrateLimit    = MFX_CODINGOPTION_ON;
-    encoder->extco2.MBBRC           = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco2.ExtBRC          = MFX_CODINGOPTION_UNKNOWN;
-    //encoder->extco2.LookAheadDepth  = 40;
-    encoder->extco2.RepeatPPS       = MFX_CODINGOPTION_ON;
-    encoder->extco2.BRefType        = MFX_B_REF_UNKNOWN;
-    encoder->extco2.AdaptiveI       = MFX_CODINGOPTION_UNKNOWN;
-    encoder->extco2.AdaptiveB       = MFX_CODINGOPTION_UNKNOWN;
-    //encoder->extco2.LookAheadDS     = MFX_LOOKAHEAD_DS_OFF;
-    encoder->extco2.NumMbPerSlice   = 0;
-}
-
-static void
-set_extended_coding_options (GstMfxEncoder * encoder)
-{
-	encoder->extco.Header.BufferId = MFX_EXTBUFF_CODING_OPTION;
-	encoder->extco.Header.BufferSz = sizeof (encoder->extco);
-
-	encoder->extco2.Header.BufferId = MFX_EXTBUFF_CODING_OPTION2;
-	encoder->extco2.Header.BufferSz = sizeof (encoder->extco2);
-
-	set_default_option_values (encoder);
-
-    if (encoder->mbbrc != GST_MFX_OPTION_AUTO)
-        encoder->extco2.MBBRC = encoder->mbbrc ?
-            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-    if (encoder->extbrc != GST_MFX_OPTION_AUTO)
-        encoder->extco2.ExtBRC = encoder->extbrc ?
-            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-    if (encoder->adaptive_i != GST_MFX_OPTION_AUTO)
-        encoder->extco2.AdaptiveI = encoder->adaptive_i ?
-            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-    if (encoder->adaptive_b != GST_MFX_OPTION_AUTO)
-        encoder->extco2.AdaptiveB = encoder->adaptive_b ?
-            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-    if (encoder->b_strategy != GST_MFX_OPTION_AUTO)
-        encoder->extco2.BRefType = encoder->b_strategy ?
-            MFX_B_REF_PYRAMID : MFX_B_REF_OFF;
-
-    if (MFX_CODEC_AVC == encoder->codec) {
-        if (encoder->max_slice_size >= 0)
-            encoder->extco2.MaxSliceSize = encoder->max_slice_size;
-        encoder->extco.CAVLC = !encoder->use_cabac ?
-            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
-        encoder->extco2.Trellis = encoder->trellis;
-    }
-
-    switch (encoder->rc_method) {
-    case GST_MFX_RATECONTROL_LA_BRC:
-    case GST_MFX_RATECONTROL_LA_ICQ:
-    case GST_MFX_RATECONTROL_LA_HRD:
-        if (!encoder->la_depth)
-            encoder->la_depth = 40;
-        encoder->extco2.LookAheadDepth = CLAMP (encoder->la_depth, 10, 100);
-        encoder->extco2.LookAheadDS = encoder->look_ahead_downsampling;
-        break;
-    default:
-        break;
-    }
-
-    if ((!((encoder->info.width & 15) ^ 8) ||
-            !((encoder->info.height & 15) ^ 8)) &&
-            (encoder->codec == MFX_CODEC_HEVC)) {
-        encoder->exthevc.Header.BufferId = MFX_EXTBUFF_HEVC_PARAM;
-        encoder->exthevc.Header.BufferSz = sizeof (encoder->exthevc);
-        encoder->exthevc.PicWidthInLumaSamples = encoder->info.width;
-        encoder->exthevc.PicHeightInLumaSamples = encoder->info.height;
-
-        encoder->extparam_internal[encoder->params.NumExtParam++] =
-            (mfxExtBuffer *)&encoder->exthevc;
-    }
-
-    encoder->extparam_internal[encoder->params.NumExtParam++] =
-		(mfxExtBuffer *)&encoder->extco;
-	encoder->extparam_internal[encoder->params.NumExtParam++] =
-        (mfxExtBuffer *)&encoder->extco2;
-
-    encoder->params.ExtParam = encoder->extparam_internal;
-}
-
-static void
-gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
-{
-    /* Use input system memory with raw NV12 surfaces or SW HEVC encoder */
-	if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7") ||
-            (GST_VIDEO_INFO_FORMAT (&encoder->info) == GST_VIDEO_FORMAT_NV12 &&
-             encoder->mapped)) {
-        encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
-	}
-	else {
-        encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
-        gst_mfx_task_use_video_memory (encoder->encode_task);
-	}
-
-    encoder->params.mfx.CodecProfile = encoder->profile;
-    encoder->params.AsyncDepth = encoder->async_depth;
-
-    if (encoder->codec != MFX_CODEC_JPEG) {
-        switch (encoder->rc_method) {
-        case GST_MFX_RATECONTROL_CQP:
-            encoder->params.mfx.QPI =
-                CLAMP (encoder->global_quality + encoder->qpi_offset, 0, 51);
-            encoder->params.mfx.QPP =
-                CLAMP (encoder->global_quality + encoder->qpp_offset, 0, 51);
-            encoder->params.mfx.QPB =
-                CLAMP (encoder->global_quality + encoder->qpb_offset, 0, 51);
-
-            /* If set to auto, then enable b-pyramid */
-            if (GST_MFX_OPTION_AUTO == encoder->b_strategy)
-                encoder->b_strategy = GST_MFX_OPTION_ON;
-            encoder->gop_size = 32;
-            encoder->gop_refdist =
-                encoder->gop_refdist < 0 ? 4 : encoder->gop_refdist;
-            break;
-        case GST_MFX_RATECONTROL_AVBR:
-            encoder->params.mfx.Convergence = encoder->avbr_convergence;
-            encoder->params.mfx.Accuracy = encoder->avbr_accuracy;
-            break;
-        case GST_MFX_RATECONTROL_ICQ:
-        case GST_MFX_RATECONTROL_LA_ICQ:
-            encoder->params.mfx.ICQQuality = CLAMP (encoder->global_quality, 1, 51);
-            break;
-        default:
-            break;
-        }
-
-        encoder->params.mfx.TargetUsage = encoder->preset;
-        encoder->params.mfx.RateControlMethod = encoder->rc_method;
-        encoder->params.mfx.IdrInterval = encoder->idr_interval;
-        encoder->params.mfx.NumRefFrame = CLAMP (encoder->num_refs, 0, 16);
-        encoder->params.mfx.GopPicSize = encoder->gop_size;
-        encoder->params.mfx.NumSlice = encoder->num_slices;
-
-        if (encoder->bitrate)
-            encoder->params.mfx.TargetKbps = encoder->bitrate;
-        encoder->params.mfx.GopRefDist = CLAMP (
-            encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
-
-        set_extended_coding_options (encoder);
-    }
-    else {
-        encoder->params.mfx.Interleaved = 1;
-        encoder->params.mfx.Quality = encoder->jpeg_quality;
-        encoder->params.mfx.RestartInterval = 0;
-    }
-}
-
-static void
 gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
 {
     encoder->params.mfx.CodecId = encoder->codec;
@@ -574,18 +393,12 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 {
 	encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
-	/*if (!mapped) {
-        GstMfxTask *task = gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
-        encoder->session = gst_mfx_task_get_session (task);
-        encoder->encode_task = gst_mfx_task_new_with_session(encoder->aggregator, encoder->session, GST_MFX_TASK_ENCODER);
-	}*/
-	//else {
-        encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
-            GST_MFX_TASK_ENCODER);
-        encoder->session = gst_mfx_task_get_session (encoder->encode_task);
-	//}
-	if (!encoder->encode_task)
-		return FALSE;
+    encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
+        GST_MFX_TASK_ENCODER);
+    if (!encoder->encode_task)
+        return FALSE;
+
+    encoder->session = gst_mfx_task_get_session (encoder->encode_task);
 
     gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
         encoder->encode_task);
@@ -768,23 +581,207 @@ gst_mfx_encoder_set_qpb_offset (GstMfxEncoder * encoder, mfxU16 offset)
 	return TRUE;
 }
 
+
+static void
+set_default_option_values (GstMfxEncoder * encoder)
+{
+    /* Extended coding options, introduced in API 1.0 */
+    encoder->extco.MECostType           = 0; // reserved, must be 0
+    encoder->extco.MESearchType         = 0; // reserved, must be 0
+    encoder->extco.MVSearchWindow.x     = 0; // reserved, must be 0
+    encoder->extco.MVSearchWindow.y     = 0; // reserved, must be 0
+    encoder->extco.RefPicListReordering = 0; // reserved, must be 0
+    encoder->extco.IntraPredBlockSize   = 0; // reserved, must be 0
+    encoder->extco.InterPredBlockSize   = 0; // reserved, must be 0
+    encoder->extco.MVPrecision          = 0; // reserved, must be 0
+    encoder->extco.EndOfSequence        = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.RateDistortionOpt    = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.ResetRefList         = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.MaxDecFrameBuffering = 0; // unspecified
+    encoder->extco.AUDelimiter          = MFX_CODINGOPTION_OFF;
+    encoder->extco.SingleSeiNalUnit     = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.PicTimingSEI         = MFX_CODINGOPTION_OFF;
+    encoder->extco.VuiNalHrdParameters  = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.FramePicture         = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.RefPicMarkRep        = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.FieldOutput          = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.NalHrdConformance    = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.SingleSeiNalUnit     = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.VuiVclHrdParameters  = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.ViewOutput           = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco.RecoveryPointSEI     = MFX_CODINGOPTION_UNKNOWN;
+
+    /* Extended coding options 2, introduced in API 1.6 */
+    encoder->extco2.IntRefType      = 0;
+    encoder->extco2.IntRefCycleSize = 2;
+    encoder->extco2.IntRefQPDelta   = 0;
+    encoder->extco2.MaxFrameSize    = 0;
+    encoder->extco2.BitrateLimit    = MFX_CODINGOPTION_ON;
+    encoder->extco2.MBBRC           = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco2.ExtBRC          = MFX_CODINGOPTION_UNKNOWN;
+    //encoder->extco2.LookAheadDepth  = 40;
+    encoder->extco2.RepeatPPS       = MFX_CODINGOPTION_ON;
+    encoder->extco2.BRefType        = MFX_B_REF_UNKNOWN;
+    encoder->extco2.AdaptiveI       = MFX_CODINGOPTION_UNKNOWN;
+    encoder->extco2.AdaptiveB       = MFX_CODINGOPTION_UNKNOWN;
+    //encoder->extco2.LookAheadDS     = MFX_LOOKAHEAD_DS_OFF;
+    encoder->extco2.NumMbPerSlice   = 0;
+}
+
+static void
+set_extended_coding_options (GstMfxEncoder * encoder)
+{
+	encoder->extco.Header.BufferId = MFX_EXTBUFF_CODING_OPTION;
+	encoder->extco.Header.BufferSz = sizeof (encoder->extco);
+
+	encoder->extco2.Header.BufferId = MFX_EXTBUFF_CODING_OPTION2;
+	encoder->extco2.Header.BufferSz = sizeof (encoder->extco2);
+
+	set_default_option_values (encoder);
+
+    if (encoder->mbbrc != GST_MFX_OPTION_AUTO)
+        encoder->extco2.MBBRC = encoder->mbbrc ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    if (encoder->extbrc != GST_MFX_OPTION_AUTO)
+        encoder->extco2.ExtBRC = encoder->extbrc ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    if (encoder->adaptive_i != GST_MFX_OPTION_AUTO)
+        encoder->extco2.AdaptiveI = encoder->adaptive_i ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    if (encoder->adaptive_b != GST_MFX_OPTION_AUTO)
+        encoder->extco2.AdaptiveB = encoder->adaptive_b ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    if (encoder->b_strategy != GST_MFX_OPTION_AUTO)
+        encoder->extco2.BRefType = encoder->b_strategy ?
+            MFX_B_REF_PYRAMID : MFX_B_REF_OFF;
+
+    if (MFX_CODEC_AVC == encoder->codec) {
+        if (encoder->max_slice_size >= 0)
+            encoder->extco2.MaxSliceSize = encoder->max_slice_size;
+        encoder->extco.CAVLC = !encoder->use_cabac ?
+            MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+        encoder->extco2.Trellis = encoder->trellis;
+    }
+
+    switch (encoder->rc_method) {
+    case GST_MFX_RATECONTROL_LA_BRC:
+    case GST_MFX_RATECONTROL_LA_ICQ:
+    case GST_MFX_RATECONTROL_LA_HRD:
+        if (!encoder->la_depth)
+            encoder->la_depth = 40;
+        encoder->extco2.LookAheadDepth = CLAMP (encoder->la_depth, 10, 100);
+        encoder->extco2.LookAheadDS = encoder->look_ahead_downsampling;
+        break;
+    default:
+        break;
+    }
+
+    if ((!((encoder->info.width & 15) ^ 8) ||
+            !((encoder->info.height & 15) ^ 8)) &&
+            (encoder->codec == MFX_CODEC_HEVC)) {
+        encoder->exthevc.Header.BufferId = MFX_EXTBUFF_HEVC_PARAM;
+        encoder->exthevc.Header.BufferSz = sizeof (encoder->exthevc);
+        encoder->exthevc.PicWidthInLumaSamples = encoder->info.width;
+        encoder->exthevc.PicHeightInLumaSamples = encoder->info.height;
+
+        encoder->extparam_internal[encoder->params.NumExtParam++] =
+            (mfxExtBuffer *)&encoder->exthevc;
+    }
+
+    encoder->extparam_internal[encoder->params.NumExtParam++] =
+		(mfxExtBuffer *)&encoder->extco;
+	encoder->extparam_internal[encoder->params.NumExtParam++] =
+        (mfxExtBuffer *)&encoder->extco2;
+
+    encoder->params.ExtParam = encoder->extparam_internal;
+}
+
+static void
+gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
+{
+    encoder->params.mfx.CodecProfile = encoder->profile;
+    encoder->params.AsyncDepth = encoder->async_depth;
+
+    if (encoder->codec != MFX_CODEC_JPEG) {
+        switch (encoder->rc_method) {
+        case GST_MFX_RATECONTROL_CQP:
+            encoder->params.mfx.QPI =
+                CLAMP (encoder->global_quality + encoder->qpi_offset, 0, 51);
+            encoder->params.mfx.QPP =
+                CLAMP (encoder->global_quality + encoder->qpp_offset, 0, 51);
+            encoder->params.mfx.QPB =
+                CLAMP (encoder->global_quality + encoder->qpb_offset, 0, 51);
+
+            /* If set to auto, then enable b-pyramid */
+            if (GST_MFX_OPTION_AUTO == encoder->b_strategy)
+                encoder->b_strategy = GST_MFX_OPTION_ON;
+            encoder->gop_size = 32;
+            encoder->gop_refdist =
+                encoder->gop_refdist < 0 ? 4 : encoder->gop_refdist;
+            break;
+        case GST_MFX_RATECONTROL_AVBR:
+            encoder->params.mfx.Convergence = encoder->avbr_convergence;
+            encoder->params.mfx.Accuracy = encoder->avbr_accuracy;
+            break;
+        case GST_MFX_RATECONTROL_ICQ:
+        case GST_MFX_RATECONTROL_LA_ICQ:
+            encoder->params.mfx.ICQQuality = CLAMP (encoder->global_quality, 1, 51);
+            break;
+        default:
+            break;
+        }
+
+        encoder->params.mfx.TargetUsage = encoder->preset;
+        encoder->params.mfx.RateControlMethod = encoder->rc_method;
+        encoder->params.mfx.IdrInterval = encoder->idr_interval;
+        encoder->params.mfx.NumRefFrame = CLAMP (encoder->num_refs, 0, 16);
+        encoder->params.mfx.GopPicSize = encoder->gop_size;
+        encoder->params.mfx.NumSlice = encoder->num_slices;
+
+        if (encoder->bitrate)
+            encoder->params.mfx.TargetKbps = encoder->bitrate;
+        encoder->params.mfx.GopRefDist = CLAMP (
+            encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
+
+        set_extended_coding_options (encoder);
+    }
+    else {
+        encoder->params.mfx.Interleaved = 1;
+        encoder->params.mfx.Quality = encoder->jpeg_quality;
+        encoder->params.mfx.RestartInterval = 0;
+    }
+}
+
 GstMfxEncoderStatus
 gst_mfx_encoder_start (GstMfxEncoder *encoder)
 {
 	mfxStatus sts = MFX_ERR_NONE;
 	mfxFrameAllocRequest enc_request;
-	gboolean mapped =
-        g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7") ?
-        FALSE : TRUE;
+	gboolean mapped = FALSE;
+
+	if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7"))
+        mapped = TRUE;
+
+	sts = MFXVideoENCODE_Query (encoder->session, &encoder->params,
+                &encoder->params);
+    if (MFX_WRN_PARTIAL_ACCELERATION == sts) {
+		GST_WARNING ("Partial acceleration %d", sts);
+		mapped = TRUE;
+    }
+
+    /* Use input system memory with raw NV12 surfaces */
+    if ((GST_VIDEO_INFO_FORMAT (&encoder->info) == GST_VIDEO_FORMAT_NV12 &&
+            encoder->mapped) || mapped) {
+        encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
+    }
+    else {
+        encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
+        gst_mfx_task_use_video_memory (encoder->encode_task);
+    }
 
 	memset (&enc_request, 0, sizeof (mfxFrameAllocRequest));
 
 	gst_mfx_encoder_set_encoding_params (encoder);
-
-	sts = MFXVideoENCODE_Query (encoder->session, &encoder->params,
-				&encoder->params);
-	if (sts > 0)
-		GST_WARNING ("Incompatible video params detected %d", sts);
 
 	sts = MFXVideoENCODE_QueryIOSurf (encoder->session, &encoder->params,
 				&enc_request);

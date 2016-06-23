@@ -34,32 +34,36 @@
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
-	gst_element_register (plugin, "mfxdecode", GST_RANK_NONE,
-		GST_TYPE_MFXDEC);
-    gst_element_register (plugin, "mfxvpp", GST_RANK_NONE,
-		GST_TYPE_MFXPOSTPROC);
-	gst_element_register (plugin, "mfxsink", GST_RANK_NONE,
-		GST_TYPE_MFXSINK);
-    gst_element_register (plugin, "mfxh264enc", GST_RANK_NONE,
-		GST_TYPE_MFXENC_H264);
-    gst_element_register (plugin, "mfxhevcenc", GST_RANK_NONE,
-		GST_TYPE_MFXENC_H265);
-    gst_element_register (plugin, "mfxmpeg2enc", GST_RANK_NONE,
-		GST_TYPE_MFXENC_MPEG2);
-    gst_element_register (plugin, "mfxjpegenc", GST_RANK_NONE,
-		GST_TYPE_MFXENC_JPEG);
+  gst_element_register (plugin, "mfxdecode", GST_RANK_NONE, GST_TYPE_MFXDEC);
 
-	return TRUE;
+  gst_element_register (plugin, "mfxvpp", GST_RANK_NONE, GST_TYPE_MFXPOSTPROC);
+
+  gst_element_register (plugin, "mfxsink", GST_RANK_NONE, GST_TYPE_MFXSINK);
+
+  gst_element_register (plugin, "mfxh264enc",
+      GST_RANK_NONE, GST_TYPE_MFXENC_H264);
+
+  gst_element_register (plugin, "mfxhevcenc",
+      GST_RANK_NONE, GST_TYPE_MFXENC_H265);
+
+  gst_element_register (plugin, "mfxmpeg2enc",
+      GST_RANK_NONE, GST_TYPE_MFXENC_MPEG2);
+
+  gst_element_register (plugin, "mfxjpegenc",
+      GST_RANK_NONE, GST_TYPE_MFXENC_JPEG);
+
+  return TRUE;
 }
 
-GST_PLUGIN_DEFINE (
-	GST_VERSION_MAJOR,  /* major */
-	GST_VERSION_MINOR,  /* minor */
-	mfx,              /* short unique name */
-	"MFX encoder/decoder/video post-processing plugins",  /* info */
-	plugin_init,    /* GstPlugin::plugin_init */
-	VERSION,        /* version */
-	"LGPL",          /* license */
-	PACKAGE,        /* package-name, usually the file archive name */
-	"http://www.intel.com" /* origin */
-	)
+
+
+GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,   /* major */
+    GST_VERSION_MINOR,          /* minor */
+    mfx,                        /* short unique name */
+    "MFX encoder/decoder/video post-processing plugins",        /* info */
+    plugin_init,                /* GstPlugin::plugin_init */
+    VERSION,                    /* version */
+    "LGPL",                     /* license */
+    PACKAGE,                    /* package-name, usually the file archive name */
+    "http://www.intel.com"      /* origin */
+    )

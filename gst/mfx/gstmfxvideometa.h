@@ -34,7 +34,7 @@ G_BEGIN_DECLS
 typedef struct _GstMfxVideoMeta GstMfxVideoMeta;
 
 #define GST_MFX_VIDEO_META_API_TYPE \
-	gst_mfx_video_meta_api_get_type ()
+  gst_mfx_video_meta_api_get_type ()
 
 GType
 gst_mfx_video_meta_api_get_type (void);
@@ -60,7 +60,7 @@ gst_mfx_video_meta_get_surface_proxy (GstMfxVideoMeta * meta);
 
 void
 gst_mfx_video_meta_set_surface_proxy (GstMfxVideoMeta * meta,
-	GstMfxSurfaceProxy * proxy);
+  GstMfxSurfaceProxy * proxy);
 
 GstMfxVideoMeta *
 gst_buffer_get_mfx_video_meta (GstBuffer * buffer);

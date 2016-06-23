@@ -30,40 +30,40 @@
 G_BEGIN_DECLS
 
 #define GST_TYPE_MFXDEC \
-	(gst_mfxdec_get_type ())
+  (gst_mfxdec_get_type ())
 #define GST_MFXDEC_CAST(obj) \
-	((GstMfxDec *)(obj))
+  ((GstMfxDec *)(obj))
 #define GST_MFXDEC(obj) \
-	(G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXDEC, GstMfxDec))
+  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXDEC, GstMfxDec))
 #define GST_MFXDEC_CLASS(klass) \
-	(G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXDEC, GstMfxDecClass))
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXDEC, GstMfxDecClass))
 #define GST_MFXDEC_GET_CLASS(obj) \
-	(G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXDEC, GstMfxDecClass))
+  (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXDEC, GstMfxDecClass))
 #define GST_IS_MFXDEC(obj) \
-	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXDEC))
+  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXDEC))
 #define GST_IS_MFXDEC_CLASS(klass) \
-	(G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXDEC))
+  (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXDEC))
 
 typedef struct _GstMfxDec GstMfxDec;
 typedef struct _GstMfxDecClass GstMfxDecClass;
 
 struct _GstMfxDec {
-	/*< private >*/
-	GstMfxPluginBase  parent_instance;
+  /*< private >*/
+  GstMfxPluginBase     parent_instance;
 
-	GstCaps				*sinkpad_caps;
-	GstCaps				*srcpad_caps;
-	GstMfxDecoder		*decoder;
-	guint                async_depth;
+  GstCaps             *sinkpad_caps;
+  GstCaps             *srcpad_caps;
+  GstMfxDecoder       *decoder;
+  guint                async_depth;
 
-	GstVideoCodecState	*input_state;
-	volatile gboolean	 active;
-	volatile gboolean    do_renego;
+  GstVideoCodecState  *input_state;
+  volatile gboolean    active;
+  volatile gboolean    do_renego;
 };
 
 struct _GstMfxDecClass {
-	/*< private >*/
-	GstMfxPluginBaseClass parent_class;
+  /*< private >*/
+  GstMfxPluginBaseClass parent_class;
 };
 
 GType gst_mfxdec_get_type (void);
