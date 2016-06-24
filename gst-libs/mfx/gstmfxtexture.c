@@ -33,8 +33,8 @@
 #undef gst_mfx_texture_replace
 
 #define GST_MFX_TEXTURE_ORIENTATION_FLAGS \
-	(GST_MFX_TEXTURE_ORIENTATION_FLAG_X_INVERTED | \
-	GST_MFX_TEXTURE_ORIENTATION_FLAG_Y_INVERTED)
+  (GST_MFX_TEXTURE_ORIENTATION_FLAG_X_INVERTED | \
+  GST_MFX_TEXTURE_ORIENTATION_FLAG_Y_INVERTED)
 
 static void
 gst_mfx_texture_init (GstMfxTexture * texture, GstMfxID id,
@@ -81,21 +81,21 @@ error:
 }
 
 /**
-* gst_mfx_texture_new:
-* @display: a #GstMfxDisplay
-* @target: the target to which the texture is bound
-* @format: the format of the pixel data
-* @width: the requested width, in pixels
-* @height: the requested height, in pixels
-*
-* Creates a texture with the specified dimensions, @target and
-* @format. Note that only GL_TEXTURE_2D @target and GL_RGBA or
-* GL_BGRA formats are supported at this time.
-*
-* The application shall maintain the live GL context itself.
-*
-* Return value: the newly created #GstMfxTexture object
-*/
+ * gst_mfx_texture_new:
+ * @display: a #GstMfxDisplay
+ * @target: the target to which the texture is bound
+ * @format: the format of the pixel data
+ * @width: the requested width, in pixels
+ * @height: the requested height, in pixels
+ *
+ * Creates a texture with the specified dimensions, @target and
+ * @format. Note that only GL_TEXTURE_2D @target and GL_RGBA or
+ * GL_BGRA formats are supported at this time.
+ *
+ * The application shall maintain the live GL context itself.
+ *
+ * Return value: the newly created #GstMfxTexture object
+ */
 GstMfxTexture *
 gst_mfx_texture_new (GstMfxDisplay * display, guint target, guint format,
     guint width, guint height)
@@ -113,28 +113,28 @@ gst_mfx_texture_new (GstMfxDisplay * display, guint target, guint format,
 }
 
 /**
-* gst_mfx_texture_new_wrapped:
-* @display: a #GstMfxDisplay
-* @texture_id: the foreign GL texture name to use
-* @target: the target to which the texture is bound
-* @format: the format of the pixel data
-* @width: the suggested width, in pixels
-* @height: the suggested height, in pixels
-*
-* Creates a texture with the specified dimensions, @target and
-* @format. Note that only GL_TEXTURE_2D @target and GL_RGBA or
-* GL_BGRA formats are supported at this time.
-*
-* The size arguments @width and @height are only a suggestion. Should
-* this be 0x0, then the actual size of the allocated texture storage
-* would be either inherited from the original texture storage, if any
-* and/or if possible, or derived from the VA surface in subsequent
-* gst_mfx_texture_put_surface () calls.
-*
-* The application shall maintain the live GL context itself.
-*
-* Return value: the newly created #GstMfxTexture object
-*/
+ * gst_mfx_texture_new_wrapped:
+ * @display: a #GstMfxDisplay
+ * @texture_id: the foreign GL texture name to use
+ * @target: the target to which the texture is bound
+ * @format: the format of the pixel data
+ * @width: the suggested width, in pixels
+ * @height: the suggested height, in pixels
+ *
+ * Creates a texture with the specified dimensions, @target and
+ * @format. Note that only GL_TEXTURE_2D @target and GL_RGBA or
+ * GL_BGRA formats are supported at this time.
+ *
+ * The size arguments @width and @height are only a suggestion. Should
+ * this be 0x0, then the actual size of the allocated texture storage
+ * would be either inherited from the original texture storage, if any
+ * and/or if possible, or derived from the VA surface in subsequent
+ * gst_mfx_texture_put_surface () calls.
+ *
+ * The application shall maintain the live GL context itself.
+ *
+ * Return value: the newly created #GstMfxTexture object
+ */
 GstMfxTexture *
 gst_mfx_texture_new_wrapped (GstMfxDisplay * display, guint id,
     guint target, guint format, guint width, guint height)
@@ -151,13 +151,13 @@ gst_mfx_texture_new_wrapped (GstMfxDisplay * display, guint id,
 }
 
 /**
-* gst_mfx_texture_ref:
-* @texture: a #GstMfxTexture
-*
-* Atomically increases the reference count of the given @texture by one.
-*
-* Returns: The same @texture argument
-*/
+ * gst_mfx_texture_ref:
+ * @texture: a #GstMfxTexture
+ *
+ * Atomically increases the reference count of the given @texture by one.
+ *
+ * Returns: The same @texture argument
+ */
 GstMfxTexture *
 gst_mfx_texture_ref (GstMfxTexture * texture)
 {
@@ -165,12 +165,12 @@ gst_mfx_texture_ref (GstMfxTexture * texture)
 }
 
 /**
-* gst_mfx_texture_unref:
-* @texture: a #GstMfxTexture
-*
-* Atomically decreases the reference count of the @texture by one. If
-* the reference count reaches zero, the texture will be free'd.
-*/
+ * gst_mfx_texture_unref:
+ * @texture: a #GstMfxTexture
+ *
+ * Atomically decreases the reference count of the @texture by one. If
+ * the reference count reaches zero, the texture will be free'd.
+ */
 void
 gst_mfx_texture_unref (GstMfxTexture * texture)
 {
@@ -178,14 +178,14 @@ gst_mfx_texture_unref (GstMfxTexture * texture)
 }
 
 /**
-* gst_mfx_texture_replace:
-* @old_texture_ptr: a pointer to a #GstMfxTexture
-* @new_texture: a #GstMfxTexture
-*
-* Atomically replaces the texture held in @old_texture_ptr
-* with @new_texture. This means that @old_texture_ptr shall reference
-* a valid texture. However, @new_texture can be NULL.
-*/
+ * gst_mfx_texture_replace:
+ * @old_texture_ptr: a pointer to a #GstMfxTexture
+ * @new_texture: a #GstMfxTexture
+ *
+ * Atomically replaces the texture held in @old_texture_ptr
+ * with @new_texture. This means that @old_texture_ptr shall reference
+ * a valid texture. However, @new_texture can be NULL.
+ */
 void
 gst_mfx_texture_replace (GstMfxTexture ** old_texture_ptr,
     GstMfxTexture * new_texture)
@@ -194,13 +194,13 @@ gst_mfx_texture_replace (GstMfxTexture ** old_texture_ptr,
 }
 
 /**
-* gst_mfx_texture_get_target:
-* @texture: a #GstMfxTexture
-*
-* Returns the @texture target type
-*
-* Return value: the texture target
-*/
+ * gst_mfx_texture_get_target:
+ * @texture: a #GstMfxTexture
+ *
+ * Returns the @texture target type
+ *
+ * Return value: the texture target
+ */
 guint
 gst_mfx_texture_get_target (GstMfxTexture * texture)
 {
@@ -210,13 +210,13 @@ gst_mfx_texture_get_target (GstMfxTexture * texture)
 }
 
 /**
-* gst_mfx_texture_get_format
-* @texture: a #GstMfxTexture
-*
-* Returns the @texture format
-*
-* Return value: the texture format
-*/
+ * gst_mfx_texture_get_format
+ * @texture: a #GstMfxTexture
+ *
+ * Returns the @texture format
+ *
+ * Return value: the texture format
+ */
 guint
 gst_mfx_texture_get_format (GstMfxTexture * texture)
 {
@@ -226,13 +226,13 @@ gst_mfx_texture_get_format (GstMfxTexture * texture)
 }
 
 /**
-* gst_mfx_texture_get_width:
-* @texture: a #GstMfxTexture
-*
-* Returns the @texture width.
-*
-* Return value: the texture width, in pixels
-*/
+ * gst_mfx_texture_get_width:
+ * @texture: a #GstMfxTexture
+ *
+ * Returns the @texture width.
+ *
+ * Return value: the texture width, in pixels
+ */
 guint
 gst_mfx_texture_get_width (GstMfxTexture * texture)
 {
@@ -242,13 +242,13 @@ gst_mfx_texture_get_width (GstMfxTexture * texture)
 }
 
 /**
-* gst_mfx_texture_get_height:
-* @texture: a #GstMfxTexture
-*
-* Returns the @texture height.
-*
-* Return value: the texture height, in pixels.
-*/
+ * gst_mfx_texture_get_height:
+ * @texture: a #GstMfxTexture
+ *
+ * Returns the @texture height.
+ *
+ * Return value: the texture height, in pixels.
+ */
 guint
 gst_mfx_texture_get_height (GstMfxTexture * texture)
 {
@@ -258,13 +258,13 @@ gst_mfx_texture_get_height (GstMfxTexture * texture)
 }
 
 /**
-* gst_mfx_texture_get_size:
-* @texture: a #GstMfxTexture
-* @width_ptr: return location for the width, or %NULL
-* @height_ptr: return location for the height, or %NULL
-*
-* Retrieves the dimensions of a #GstMfxTexture.
-*/
+ * gst_mfx_texture_get_size:
+ * @texture: a #GstMfxTexture
+ * @width_ptr: return location for the width, or %NULL
+ * @height_ptr: return location for the height, or %NULL
+ *
+ * Retrieves the dimensions of a #GstMfxTexture.
+ */
 void
 gst_mfx_texture_get_size (GstMfxTexture * texture,
     guint * width_ptr, guint * height_ptr)
@@ -279,13 +279,13 @@ gst_mfx_texture_get_size (GstMfxTexture * texture,
 }
 
 /**
-* gst_mfx_texture_get_orientation_flags:
-* @texture: a #GstMfxTexture
-*
-* Retrieves the texture memory layout flags, i.e. orientation.
-*
-* Return value: the #GstMfxTextureOrientationFlags.
-*/
+ * gst_mfx_texture_get_orientation_flags:
+ * @texture: a #GstMfxTexture
+ *
+ * Retrieves the texture memory layout flags, i.e. orientation.
+ *
+ * Return value: the #GstMfxTextureOrientationFlags.
+ */
 guint
 gst_mfx_texture_get_orientation_flags (GstMfxTexture * texture)
 {
@@ -295,15 +295,15 @@ gst_mfx_texture_get_orientation_flags (GstMfxTexture * texture)
 }
 
 /**
-* gst_mfx_texture_set_orientation_flags:
-* @texture: a #GstMfxTexture
-* @flags: a bitmask of #GstMfxTextureOrientationFlags
-*
-* Reset the texture orientation flags to the supplied set of
-* @flags. This completely replaces the previously installed
-* flags. So, should they still be needed, then they shall be
-* retrieved first with gst_mfx_texture_get_orientation_flags ().
-*/
+ * gst_mfx_texture_set_orientation_flags:
+ * @texture: a #GstMfxTexture
+ * @flags: a bitmask of #GstMfxTextureOrientationFlags
+ *
+ * Reset the texture orientation flags to the supplied set of
+ * @flags. This completely replaces the previously installed
+ * flags. So, should they still be needed, then they shall be
+ * retrieved first with gst_mfx_texture_get_orientation_flags ().
+ */
 void
 gst_mfx_texture_set_orientation_flags (GstMfxTexture * texture, guint flags)
 {
@@ -315,17 +315,17 @@ gst_mfx_texture_set_orientation_flags (GstMfxTexture * texture, guint flags)
 }
 
 /**
-* gst_mfx_texture_put_surface:
-* @texture: a #GstMfxTexture
-* @surface: a #GstMfxSurfaceProxy
-* @flags: postprocessing flags. See #GstMfxTextureRenderFlags
-*
-* Renders the @surface into the àtexture. The @flags specify how
-* de-interlacing (if needed), color space conversion, scaling and
-* other postprocessing transformations are performed.
-*
-* Return value: %TRUE on success
-*/
+ * gst_mfx_texture_put_surface:
+ * @texture: a #GstMfxTexture
+ * @surface: a #GstMfxSurfaceProxy
+ * @flags: postprocessing flags. See #GstMfxTextureRenderFlags
+ *
+ * Renders the @surface into the àtexture. The @flags specify how
+ * de-interlacing (if needed), color space conversion, scaling and
+ * other postprocessing transformations are performed.
+ *
+ * Return value: %TRUE on success
+ */
 gboolean
 gst_mfx_texture_put_surface (GstMfxTexture * texture,
     GstMfxSurfaceProxy * proxy)

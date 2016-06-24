@@ -11,14 +11,14 @@
 #define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_NONE
 
 /* Supported set of rate control methods, within this implementation */
-#define SUPPORTED_RATECONTROLS	(GST_MFX_RATECONTROL_MASK (NONE))
+#define SUPPORTED_RATECONTROLS  (GST_MFX_RATECONTROL_MASK (NONE))
 
 /* ------------------------------------------------------------------------- */
-/* --- JPEG Encoder                                                     --- */
+/* --- JPEG Encoder                                                      --- */
 /* ------------------------------------------------------------------------- */
 
 #define GST_MFX_ENCODER_JPEG_CAST(encoder) \
-	((GstMfxEncoderJpeg *)(encoder))
+  ((GstMfxEncoderJpeg *)(encoder))
 
 struct _GstMfxEncoderJpeg
 {
@@ -95,10 +95,10 @@ gst_mfx_encoder_jpeg_get_default_properties (void)
   GPtrArray *props = NULL;
 
   /**
-	 * GstMfxEncoderJpeg:quality
-	 *
-	 * Quality parameter for JPEG encoder
-	 */
+   * GstMfxEncoderJpeg:quality
+   *
+   * Quality parameter for JPEG encoder
+   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_JPEG_PROP_QUALITY,
       g_param_spec_uint ("quality",

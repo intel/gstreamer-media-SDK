@@ -386,15 +386,15 @@ gst_mfx_display_wayland_class (void)
 }
 
 /**
-* gst_mfx_display_wayland_new:
-* @display_name: the Wayland display name
-*
-* Opens an Wayland #wl_display using @display_name and returns a
-* newly allocated #GstMfxDisplay object. The Wayland display will
-* be cloed when the reference count of the object reaches zero.
-*
-* Return value: a newly allocated #GstMfxDisplay object
-*/
+ * gst_mfx_display_wayland_new:
+ * @display_name: the Wayland display name
+ *
+ * Opens an Wayland #wl_display using @display_name and returns a
+ * newly allocated #GstMfxDisplay object. The Wayland display will
+ * be cloed when the reference count of the object reaches zero.
+ *
+ * Return value: a newly allocated #GstMfxDisplay object
+ */
 GstMfxDisplay *
 gst_mfx_display_wayland_new (const gchar * display_name)
 {
@@ -403,16 +403,16 @@ gst_mfx_display_wayland_new (const gchar * display_name)
 }
 
 /**
-* gst_mfx_display_wayland_new_with_display:
-* @wl_display: an Wayland #wl_display
-*
-* Creates a #GstMfxDisplay based on the Wayland @wl_display
-* display. The caller still owns the display and must call
-* wl_display_disconnect() when all #GstMfxDisplay references are
-* released. Doing so too early can yield undefined behaviour.
-*
-* Return value: a newly allocated #GstMfxDisplay object
-*/
+ * gst_mfx_display_wayland_new_with_display:
+ * @wl_display: an Wayland #wl_display
+ *
+ * Creates a #GstMfxDisplay based on the Wayland @wl_display
+ * display. The caller still owns the display and must call
+ * wl_display_disconnect() when all #GstMfxDisplay references are
+ * released. Doing so too early can yield undefined behaviour.
+ *
+ * Return value: a newly allocated #GstMfxDisplay object
+ */
 GstMfxDisplay *
 gst_mfx_display_wayland_new_with_display (struct wl_display * wl_display)
 {
@@ -423,15 +423,15 @@ gst_mfx_display_wayland_new_with_display (struct wl_display * wl_display)
 }
 
 /**
-* gst_mfx_display_wayland_get_display:
-* @display: a #GstMfxDisplayWayland
-*
-* Returns the underlying Wayland #wl_display that was created by
-* gst_mfx_display_wayland_new() or that was bound from
-* gst_mfx_display_wayland_new_with_display().
-*
-* Return value: the Wayland #wl_display attached to @display
-*/
+ * gst_mfx_display_wayland_get_display:
+ * @display: a #GstMfxDisplayWayland
+ *
+ * Returns the underlying Wayland #wl_display that was created by
+ * gst_mfx_display_wayland_new() or that was bound from
+ * gst_mfx_display_wayland_new_with_display().
+ *
+ * Return value: the Wayland #wl_display attached to @display
+ */
 struct wl_display *
 gst_mfx_display_wayland_get_display (GstMfxDisplayWayland * display)
 {

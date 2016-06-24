@@ -108,10 +108,10 @@ struct _GstMfxWindowWaylandPrivate
 };
 
 /**
-* GstMfxWindowWayland:
-*
-* A Wayland window abstraction.
-*/
+ * GstMfxWindowWayland:
+ *
+ * A Wayland window abstraction.
+ */
 struct _GstMfxWindowWayland
 {
   /*< private > */
@@ -147,10 +147,10 @@ static const struct wl_buffer_listener frame_buffer_listener = {
 };
 
 /**
-* GstMfxWindowWaylandClass:
-*
-* An Wayland #Window wrapper class.
-*/
+ * GstMfxWindowWaylandClass:
+ *
+ * An Wayland #Window wrapper class.
+ */
 struct _GstMfxWindowWaylandClass
 {
   /*< private > */
@@ -230,8 +230,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   FrameState *frame;
   guintptr fd = 0;
   guint32 drm_format = 0;
-  gint offsets[3] = { 0 }, pitches[3] = {
-  0}, num_planes = 0, i = 0;
+  gint offsets[3] = { 0 }, pitches[3] = { 0 }, num_planes = 0, i = 0;
   VaapiImage *vaapi_image;
 
   buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
@@ -242,9 +241,9 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   vaapi_image = GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE (buffer_proxy);
   num_planes = vaapi_image_get_plane_count (vaapi_image);
 
-  /* Using compositor scaling. Correct way is to use VPP scaling */
-  if (src_rect->width != dst_rect->width
-      || src_rect->height != dst_rect->height) {
+  /* Use compositor scaling */
+  if (src_rect->width != dst_rect->width ||
+src_rect->height != dst_rect->height) {
     if (priv->viewport)
       wl_viewport_set_destination (priv->viewport, dst_rect->width,
           dst_rect->height);
@@ -269,13 +268,11 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   GST_MFX_OBJECT_LOCK_DISPLAY (window);
   buffer =
-      wl_drm_create_prime_buffer (display_priv->drm, fd, src_rect->width,
-      src_rect->height, drm_format, offsets[0]
-      , pitches[0]
-      , offsets[1]
-      , pitches[1]
-      , offsets[2]
-      , pitches[2]);
+      wl_drm_create_prime_buffer (display_priv->drm, fd,
+          src_rect->width, src_rect->height, drm_format,
+          offsets[0], pitches[0],
+          offsets[1], pitches[1],
+          offsets[2], pitches[2]);
   GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
   if (!buffer) {
     GST_ERROR ("No wl_buffer created\n");
@@ -535,17 +532,17 @@ GST_MFX_OBJECT_DEFINE_CLASS_WITH_CODE (GstMfxWindowWayland,
     gst_mfx_window_wayland, gst_mfx_window_wayland_class_init (&g_class));
 
 /**
-* gst_mfx_window_wayland_new:
-* @display: a #GstMfxDisplay
-* @width: the requested window width, in pixels
-* @height: the requested windo height, in pixels
-*
-* Creates a window with the specified @width and @height. The window
-* will be attached to the @display and remains invisible to the user
-* until gst_mfx_window_show() is called.
-*
-* Return value: the newly allocated #GstMfxWindow object
-*/
+ * gst_mfx_window_wayland_new:
+ * @display: a #GstMfxDisplay
+ * @width: the requested window width, in pixels
+ * @height: the requested windo height, in pixels
+ *
+ * Creates a window with the specified @width and @height. The window
+ * will be attached to the @display and remains invisible to the user
+ * until gst_mfx_window_show() is called.
+ *
+ * Return value: the newly allocated #GstMfxWindow object
+ */
 GstMfxWindow *
 gst_mfx_window_wayland_new (GstMfxDisplay * display, guint width, guint height)
 {

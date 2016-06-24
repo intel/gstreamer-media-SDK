@@ -52,19 +52,19 @@ gst_mfx_object_class_init (GstMfxObjectClass * klass, guint size)
 }
 
 /**
-* gst_mfx_object_new:
-* @klass: The object class
-* @display: The #GstMfxDisplay
-*
-* Creates a new #GstMfxObject. The @klass argument shall not be
-* %NULL, and it must reference a statically allocated descriptor.
-*
-* This function zero-initializes the derived object data. Also note
-* that this is an internal function that shall not be used outside of
-* libgstmfx libraries.
-*
-* Returns: The newly allocated #GstMfxObject
-*/
+ * gst_mfx_object_new:
+ * @klass: The object class
+ * @display: The #GstMfxDisplay
+ *
+ * Creates a new #GstMfxObject. The @klass argument shall not be
+ * %NULL, and it must reference a statically allocated descriptor.
+ *
+ * This function zero-initializes the derived object data. Also note
+ * that this is an internal function that shall not be used outside of
+ * libgstmfx libraries.
+ *
+ * Returns: The newly allocated #GstMfxObject
+ */
 gpointer
 gst_mfx_object_new (const GstMfxObjectClass * klass, GstMfxDisplay * display)
 {
@@ -93,13 +93,13 @@ gst_mfx_object_new (const GstMfxObjectClass * klass, GstMfxDisplay * display)
 }
 
 /**
-* gst_mfx_object_ref:
-* @object: a #GstMfxObject
-*
-* Atomically increases the reference count of the given @object by one.
-*
-* Returns: The same @object argument
-*/
+ * gst_mfx_object_ref:
+ * @object: a #GstMfxObject
+ *
+ * Atomically increases the reference count of the given @object by one.
+ *
+ * Returns: The same @object argument
+ */
 gpointer
 gst_mfx_object_ref (gpointer object)
 {
@@ -107,12 +107,12 @@ gst_mfx_object_ref (gpointer object)
 }
 
 /**
-* gst_mfx_object_unref:
-* @object: a #GstMfxObject
-*
-* Atomically decreases the reference count of the @object by one. If
-* the reference count reaches zero, the object will be free'd.
-*/
+ * gst_mfx_object_unref:
+ * @object: a #GstMfxObject
+ *
+ * Atomically decreases the reference count of the @object by one. If
+ * the reference count reaches zero, the object will be free'd.
+ */
 void
 gst_mfx_object_unref (gpointer object)
 {
@@ -120,14 +120,14 @@ gst_mfx_object_unref (gpointer object)
 }
 
 /**
-* gst_mfx_object_replace:
-* @old_object_ptr: a pointer to a #GstMfxObject
-* @new_object: a #GstMfxObject
-*
-* Atomically replaces the object object held in @old_object_ptr with
-* @new_object. This means that @old_object_ptr shall reference a
-* valid object. However, @new_object can be NULL.
-*/
+ * gst_mfx_object_replace:
+ * @old_object_ptr: a pointer to a #GstMfxObject
+ * @new_object: a #GstMfxObject
+ *
+ * Atomically replaces the object object held in @old_object_ptr with
+ * @new_object. This means that @old_object_ptr shall reference a
+ * valid object. However, @new_object can be NULL.
+ */
 void
 gst_mfx_object_replace (gpointer old_object_ptr, gpointer new_object)
 {
@@ -135,13 +135,13 @@ gst_mfx_object_replace (gpointer old_object_ptr, gpointer new_object)
 }
 
 /**
-* gst_mfx_object_get_display:
-* @object: a #GstMfxObject
-*
-* Returns the #GstMfxDisplay this @object is bound to.
-*
-* Return value: the parent #GstMfxDisplay object
-*/
+ * gst_mfx_object_get_display:
+ * @object: a #GstMfxObject
+ *
+ * Returns the #GstMfxDisplay this @object is bound to.
+ *
+ * Return value: the parent #GstMfxDisplay object
+ */
 GstMfxDisplay *
 gst_mfx_object_get_display (GstMfxObject * object)
 {
@@ -151,13 +151,13 @@ gst_mfx_object_get_display (GstMfxObject * object)
 }
 
 /**
-* gst_mfx_object_lock_display:
-* @object: a #GstMfxObject
-*
-* Locks @object parent display. If display is already locked by
-* another thread, the current thread will block until display is
-* unlocked by the other thread.
-*/
+ * gst_mfx_object_lock_display:
+ * @object: a #GstMfxObject
+ *
+ * Locks @object parent display. If display is already locked by
+ * another thread, the current thread will block until display is
+ * unlocked by the other thread.
+ */
 void
 gst_mfx_object_lock_display (GstMfxObject * object)
 {
@@ -167,13 +167,13 @@ gst_mfx_object_lock_display (GstMfxObject * object)
 }
 
 /**
-* gst_mfx_object_unlock_display:
-* @object: a #GstMfxObject
-*
-* Unlocks @object parent display. If another thread is blocked in a
-* gst_mfx_object_lock_display() call, it will be woken and can lock
-* display itself.
-*/
+ * gst_mfx_object_unlock_display:
+ * @object: a #GstMfxObject
+ *
+ * Unlocks @object parent display. If another thread is blocked in a
+ * gst_mfx_object_lock_display() call, it will be woken and can lock
+ * display itself.
+ */
 void
 gst_mfx_object_unlock_display (GstMfxObject * object)
 {
@@ -183,13 +183,13 @@ gst_mfx_object_unlock_display (GstMfxObject * object)
 }
 
 /**
-* gst_mfx_object_get_id:
-* @object: a #GstMfxObject
-*
-* Returns the #GstMfxID contained in the @object.
-*
-* Return value: the #GstMfxID of the @object
-*/
+ * gst_mfx_object_get_id:
+ * @object: a #GstMfxObject
+ *
+ * Returns the #GstMfxID contained in the @object.
+ *
+ * Return value: the #GstMfxID of the @object
+ */
 GstMfxID
 gst_mfx_object_get_id (GstMfxObject * object)
 {

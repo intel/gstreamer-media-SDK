@@ -99,17 +99,17 @@ error:
 }
 
 /**
-* gst_mfx_window_new:
-* @display: a #GstMfxDisplay
-* @width: the requested window width, in pixels
-* @height: the requested windo height, in pixels
-*
-* Creates a window with the specified @width and @height. The window
-* will be attached to the @display and remains invisible to the user
-* until gst_mfx_window_show () is called.
-*
-* Return value: the newly allocated #GstMfxWindow object
-*/
+ * gst_mfx_window_new:
+ * @display: a #GstMfxDisplay
+ * @width: the requested window width, in pixels
+ * @height: the requested windo height, in pixels
+ *
+ * Creates a window with the specified @width and @height. The window
+ * will be attached to the @display and remains invisible to the user
+ * until gst_mfx_window_show () is called.
+ *
+ * Return value: the newly allocated #GstMfxWindow object
+ */
 GstMfxWindow *
 gst_mfx_window_new (GstMfxDisplay * display, guint width, guint height)
 {
@@ -124,13 +124,13 @@ gst_mfx_window_new (GstMfxDisplay * display, guint width, guint height)
 }
 
 /**
-* gst_mfx_window_ref:
-* @window: a #GstMfxWindow
-*
-* Atomically increases the reference count of the given @window by one.
-*
-* Returns: The same @window argument
-*/
+ * gst_mfx_window_ref:
+ * @window: a #GstMfxWindow
+ *
+ * Atomically increases the reference count of the given @window by one.
+ *
+ * Returns: The same @window argument
+ */
 GstMfxWindow *
 gst_mfx_window_ref (GstMfxWindow * window)
 {
@@ -138,12 +138,12 @@ gst_mfx_window_ref (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_unref:
-* @window: a #GstMfxWindow
-*
-* Atomically decreases the reference count of the @window by one. If
-* the reference count reaches zero, the window will be free'd.
-*/
+ * gst_mfx_window_unref:
+ * @window: a #GstMfxWindow
+ *
+ * Atomically decreases the reference count of the @window by one. If
+ * the reference count reaches zero, the window will be free'd.
+ */
 void
 gst_mfx_window_unref (GstMfxWindow * window)
 {
@@ -151,14 +151,14 @@ gst_mfx_window_unref (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_replace:
-* @old_window_ptr: a pointer to a #GstMfxWindow
-* @new_window: a #GstMfxWindow
-*
-* Atomically replaces the window window held in @old_window_ptr with
-* @new_window. This means that @old_window_ptr shall reference a
-* valid window. However, @new_window can be NULL.
-*/
+ * gst_mfx_window_replace:
+ * @old_window_ptr: a pointer to a #GstMfxWindow
+ * @new_window: a #GstMfxWindow
+ *
+ * Atomically replaces the window window held in @old_window_ptr with
+ * @new_window. This means that @old_window_ptr shall reference a
+ * valid window. However, @new_window can be NULL.
+ */
 void
 gst_mfx_window_replace (GstMfxWindow ** old_window_ptr,
     GstMfxWindow * new_window)
@@ -167,13 +167,13 @@ gst_mfx_window_replace (GstMfxWindow ** old_window_ptr,
 }
 
 /**
-* gst_mfx_window_get_display:
-* @window: a #GstMfxWindow
-*
-* Returns the #GstMfxDisplay this @window is bound to.
-*
-* Return value: the parent #GstMfxDisplay object
-*/
+ * gst_mfx_window_get_display:
+ * @window: a #GstMfxWindow
+ *
+ * Returns the #GstMfxDisplay this @window is bound to.
+ *
+ * Return value: the parent #GstMfxDisplay object
+ */
 GstMfxDisplay *
 gst_mfx_window_get_display (GstMfxWindow * window)
 {
@@ -183,12 +183,12 @@ gst_mfx_window_get_display (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_show:
-* @window: a #GstMfxWindow
-*
-* Flags a window to be displayed. Any window that is not shown will
-* not appear on the screen.
-*/
+ * gst_mfx_window_show:
+ * @window: a #GstMfxWindow
+ *
+ * Flags a window to be displayed. Any window that is not shown will
+ * not appear on the screen.
+ */
 void
 gst_mfx_window_show (GstMfxWindow * window)
 {
@@ -199,12 +199,12 @@ gst_mfx_window_show (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_hide:
-* @window: a #GstMfxWindow
-*
-* Reverses the effects of gst_mfx_window_show (), causing the window
-* to be hidden (invisible to the user).
-*/
+ * gst_mfx_window_hide:
+ * @window: a #GstMfxWindow
+ *
+ * Reverses the effects of gst_mfx_window_show (), causing the window
+ * to be hidden (invisible to the user).
+ */
 void
 gst_mfx_window_hide (GstMfxWindow * window)
 {
@@ -214,13 +214,13 @@ gst_mfx_window_hide (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_get_fullscreen:
-* @window: a #GstMfxWindow
-*
-* Retrieves whether the @window is fullscreen or not
-*
-* Return value: %TRUE if the window is fullscreen
-*/
+ * gst_mfx_window_get_fullscreen:
+ * @window: a #GstMfxWindow
+ *
+ * Retrieves whether the @window is fullscreen or not
+ *
+ * Return value: %TRUE if the window is fullscreen
+ */
 gboolean
 gst_mfx_window_get_fullscreen (GstMfxWindow * window)
 {
@@ -232,12 +232,12 @@ gst_mfx_window_get_fullscreen (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_set_fullscreen:
-* @window: a #GstMfxWindow
-* @fullscreen: %TRUE to request window to get fullscreen
-*
-* Requests to place the @window in fullscreen or unfullscreen states.
-*/
+ * gst_mfx_window_set_fullscreen:
+ * @window: a #GstMfxWindow
+ * @fullscreen: %TRUE to request window to get fullscreen
+ *
+ * Requests to place the @window in fullscreen or unfullscreen states.
+ */
 void
 gst_mfx_window_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
 {
@@ -255,13 +255,13 @@ gst_mfx_window_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
 }
 
 /**
-* gst_mfx_window_get_width:
-* @window: a #GstMfxWindow
-*
-* Retrieves the width of a #GstMfxWindow.
-*
-* Return value: the width of the @window, in pixels
-*/
+ * gst_mfx_window_get_width:
+ * @window: a #GstMfxWindow
+ *
+ * Retrieves the width of a #GstMfxWindow.
+ *
+ * Return value: the width of the @window, in pixels
+ */
 guint
 gst_mfx_window_get_width (GstMfxWindow * window)
 {
@@ -273,13 +273,13 @@ gst_mfx_window_get_width (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_get_height:
-* @window: a #GstMfxWindow
-*
-* Retrieves the height of a #GstMfxWindow
-*
-* Return value: the height of the @window, in pixels
-*/
+ * gst_mfx_window_get_height:
+ * @window: a #GstMfxWindow
+ *
+ * Retrieves the height of a #GstMfxWindow
+ *
+ * Return value: the height of the @window, in pixels
+ */
 guint
 gst_mfx_window_get_height (GstMfxWindow * window)
 {
@@ -291,13 +291,13 @@ gst_mfx_window_get_height (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_get_size:
-* @window: a #GstMfxWindow
-* @width_ptr: return location for the width, or %NULL
-* @height_ptr: return location for the height, or %NULL
-*
-* Retrieves the dimensions of a #GstMfxWindow.
-*/
+ * gst_mfx_window_get_size:
+ * @window: a #GstMfxWindow
+ * @width_ptr: return location for the width, or %NULL
+ * @height_ptr: return location for the height, or %NULL
+ *
+ * Retrieves the dimensions of a #GstMfxWindow.
+ */
 void
 gst_mfx_window_get_size (GstMfxWindow * window, guint * width_ptr,
     guint * height_ptr)
@@ -314,12 +314,12 @@ gst_mfx_window_get_size (GstMfxWindow * window, guint * width_ptr,
 }
 
 /**
-* gst_mfx_window_set_width:
-* @window: a #GstMfxWindow
-* @width: requested new width for the window, in pixels
-*
-* Resizes the @window to match the specified @width.
-*/
+ * gst_mfx_window_set_width:
+ * @window: a #GstMfxWindow
+ * @width: requested new width for the window, in pixels
+ *
+ * Resizes the @window to match the specified @width.
+ */
 void
 gst_mfx_window_set_width (GstMfxWindow * window, guint width)
 {
@@ -329,12 +329,12 @@ gst_mfx_window_set_width (GstMfxWindow * window, guint width)
 }
 
 /**
-* gst_mfx_window_set_height:
-* @window: a #GstMfxWindow
-* @height: requested new height for the window, in pixels
-*
-* Resizes the @window to match the specified @height.
-*/
+ * gst_mfx_window_set_height:
+ * @window: a #GstMfxWindow
+ * @height: requested new height for the window, in pixels
+ *
+ * Resizes the @window to match the specified @height.
+ */
 void
 gst_mfx_window_set_height (GstMfxWindow * window, guint height)
 {
@@ -344,13 +344,13 @@ gst_mfx_window_set_height (GstMfxWindow * window, guint height)
 }
 
 /**
-* gst_mfx_window_set_size:
-* @window: a #GstMfxWindow
-* @width: requested new width for the window, in pixels
-* @height: requested new height for the window, in pixels
-*
-* Resizes the @window to match the specified @width and @height.
-*/
+ * gst_mfx_window_set_size:
+ * @window: a #GstMfxWindow
+ * @width: requested new width for the window, in pixels
+ * @height: requested new height for the window, in pixels
+ *
+ * Resizes the @window to match the specified @width and @height.
+ */
 void
 gst_mfx_window_set_size (GstMfxWindow * window, guint width, guint height)
 {
@@ -388,23 +388,20 @@ get_window_rect (GstMfxWindow * window, GstMfxRectangle * rect)
 }
 
 /**
-* gst_mfx_window_put_surface:
-* @window: a #GstMfxWindow
-* @surface: a #GstMfxSurfaceProxy
-* @src_rect: the sub-rectangle of the source surface to
-*   extract and process. If %NULL, the entire surface will be used.
-* @dst_rect: the sub-rectangle of the destination
-*   window into which the surface is rendered. If %NULL, the entire
-*   window will be used.
-* @flags: postprocessing flags. See #GstMfxSurfaceRenderFlags
-*
-* Renders the @surface region specified by @src_rect into the @window
-* region specified by @dst_rect. The @flags specify how de-interlacing
-* (if needed), color space conversion, scaling and other postprocessing
-* transformations are performed.
-*
-* Return value: %TRUE on success
-*/
+ * gst_mfx_window_put_surface:
+ * @window: a #GstMfxWindow
+ * @surface: a #GstMfxSurfaceProxy
+ * @src_rect: the sub-rectangle of the source surface to
+ *   extract and process. If %NULL, the entire surface will be used.
+ * @dst_rect: the sub-rectangle of the destination
+ *   window into which the surface is rendered. If %NULL, the entire
+ *   window will be used.
+ *
+ * Renders the @surface region specified by @src_rect into the @window
+ * region specified by @dst_rect.
+ *
+ * Return value: %TRUE on success
+ */
 gboolean
 gst_mfx_window_put_surface (GstMfxWindow * window,
     GstMfxSurfaceProxy * proxy,
@@ -434,12 +431,12 @@ gst_mfx_window_put_surface (GstMfxWindow * window,
 }
 
 /**
-* gst_mfx_window_reconfigure:
-* @window: a #GstMfxWindow
-*
-* Updates internal window size from geometry of the underlying window
-* implementation if necessary.
-*/
+ * gst_mfx_window_reconfigure:
+ * @window: a #GstMfxWindow
+ *
+ * Updates internal window size from geometry of the underlying window
+ * implementation if necessary.
+ */
 void
 gst_mfx_window_reconfigure (GstMfxWindow * window)
 {
@@ -452,11 +449,11 @@ gst_mfx_window_reconfigure (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_unblock:
-* @window: a #GstMfxWindow
-*
-* Unblocks a rendering surface operation.
-*/
+ * gst_mfx_window_unblock:
+ * @window: a #GstMfxWindow
+ *
+ * Unblocks a rendering surface operation.
+ */
 gboolean
 gst_mfx_window_unblock (GstMfxWindow * window)
 {
@@ -473,11 +470,11 @@ gst_mfx_window_unblock (GstMfxWindow * window)
 }
 
 /**
-* gst_mfx_window_unblock_cancel:
-* @window: a #GstMfxWindow
-*
-* Cancels the previous unblock request.
-*/
+ * gst_mfx_window_unblock_cancel:
+ * @window: a #GstMfxWindow
+ *
+ * Cancels the previous unblock request.
+ */
 gboolean
 gst_mfx_window_unblock_cancel (GstMfxWindow * window)
 {

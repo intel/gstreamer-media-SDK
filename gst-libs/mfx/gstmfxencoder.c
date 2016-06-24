@@ -100,11 +100,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
 
   g_assert (cdata->rate_control_get_type != NULL);
 
-        /**
-	* GstMfxEncoder:rate-control
-	*
-	* The desired rate control mode, expressed as a #GstMfxRateControl.
-	*/
+ /**
+  * GstMfxEncoder:rate-control
+  *
+  * The desired rate control mode, expressed as a #GstMfxRateControl.
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_RATECONTROL,
       g_param_spec_enum ("rate-control",
@@ -112,11 +112,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           cdata->rate_control_get_type (), cdata->default_rate_control,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:bitrate
-	*
-	* The desired bitrate, expressed in kbps.
-	*/
+ /**
+  * GstMfxEncoder:bitrate
+  *
+  * The desired bitrate, expressed in kbps.
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_BITRATE,
       g_param_spec_uint ("bitrate",
@@ -124,11 +124,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "The desired bitrate expressed in kbps (0: auto-calculate)",
           0, 100 * 1024, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:idr-interval
-	*
-	* IDR-frame interval in terms of I-frames.
-	*/
+ /**
+  * GstMfxEncoder:idr-interval
+  *
+  * IDR-frame interval in terms of I-frames.
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_IDR_INTERVAL,
       g_param_spec_uint ("idr-interval",
@@ -136,11 +136,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Distance (in I-frames) between IDR frames",
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:gop-size
-	*
-	* Number of pictures within the current GOP
-	*/
+ /**
+  * GstMfxEncoder:gop-size
+  *
+  * Number of pictures within the current GOP
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_GOP_SIZE,
       g_param_spec_uint ("gop-size",
@@ -148,11 +148,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Number of pictures within the current GOP",
           0, G_MAXUINT16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:gop-dist
-	*
-	* Distance between I- or P- key frames
-	*/
+ /**
+  * GstMfxEncoder:gop-distance
+  *
+  * Distance between I- or P- key frames
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_GOP_REFDIST,
       g_param_spec_int ("gop-distance",
@@ -160,11 +160,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Distance between I- or P- key frames (1 means no B-frames)",
           -1, 32, -1, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:num-refs
-	*
-	* Number of reference frames
-	*/
+ /**
+  * GstMfxEncoder:num-refs
+  *
+  * Number of reference frames
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_NUM_REFS,
       g_param_spec_uint ("num-refs",
@@ -172,11 +172,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Number of reference frames",
           0, 16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:num-slices
-	*
-	* Number of slices in each video frame
-	*/
+ /**
+  * GstMfxEncoder:num-slices
+  *
+  * Number of slices in each video frame
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_NUM_SLICES,
       g_param_spec_uint ("num-slices",
@@ -184,11 +184,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Number of slices in each video frame",
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    /**
-	* GstMfxEncoder:quantizer
-	*
-	* Constant quantizer or quality to apply
-	*/
+ /**
+  * GstMfxEncoder:quantizer
+  *
+  * Constant quantizer or quality to apply
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_QUANTIZER,
       g_param_spec_uint ("quantizer",
@@ -196,11 +196,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Constant quantizer or quality to apply", 0, 51,
           DEFAULT_QUANTIZER, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:qpi-offset
-	*
-	* Quantization parameter offset for I-frames
-	*/
+ /**
+  * GstMfxEncoder:qpi-offset
+  *
+  * Quantization parameter offset for I-frames
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_QPI,
       g_param_spec_uint ("qpi-offset",
@@ -208,11 +208,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Quantization parameter offset for I-frames", 0, 51,
           0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:qpp-offset
-	*
-	* Quantization parameter offset for P-frames
-	*/
+ /**
+  * GstMfxEncoder:qpp-offset
+  *
+  * Quantization parameter offset for P-frames
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_QPP,
       g_param_spec_uint ("qpp-offset",
@@ -220,11 +220,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Quantization parameter offset for P-frames", 0, 51,
           2, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:qpb-offset
-	*
-	* Quantization parameter offset for B-frames
-	*/
+ /**
+  * GstMfxEncoder:qpb-offset
+  *
+  * Quantization parameter offset for B-frames
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_QPB,
       g_param_spec_uint ("qpb-offset",
@@ -232,11 +232,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Quantization parameter offset for B-frames", 0, 51,
           4, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    /**
-	* GstMfxEncoder:mbbrc
-	*
-	* MB level bitrate control
-	*/
+ /**
+  * GstMfxEncoder:mbbrc
+  *
+  * MB level bitrate control
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_MBBRC,
       g_param_spec_enum ("mbbrc",
@@ -245,11 +245,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           GST_MFX_TYPE_OPTION, GST_MFX_OPTION_ON,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    /**
-	* GstMfxEncoder:extbrc
-	*
-	* Extended bitrate control (deprecated)
-	*/
+ /**
+  * GstMfxEncoder:extbrc
+  *
+  * Extended bitrate control (deprecated)
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_EXTBRC,
       g_param_spec_enum ("extbrc",
@@ -258,11 +258,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           GST_MFX_TYPE_OPTION, GST_MFX_OPTION_OFF,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    /**
-	* GstMfxEncoder:adaptive-i
-	*
-	* Adaptive I-frame placement
-	*/
+ /**
+  * GstMfxEncoder:adaptive-i
+  *
+  * Adaptive I-frame placement
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_ADAPTIVE_I,
       g_param_spec_enum ("adaptive-i",
@@ -271,11 +271,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           GST_MFX_TYPE_OPTION, GST_MFX_OPTION_OFF,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    /**
-	* GstMfxEncoder:adaptive-b
-	*
-	* Adaptive B-frame placement
-	*/
+ /**
+  * GstMfxEncoder:adaptive-b
+  *
+  * Adaptive B-frame placement
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_ADAPTIVE_B,
       g_param_spec_enum ("adaptive-b",
@@ -284,11 +284,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           GST_MFX_TYPE_OPTION, GST_MFX_OPTION_OFF,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    /**
-	* GstMfxEncoder:b-pyramid
-	*
-	* Strategy to choose between I/P/B-frames
-	*/
+ /**
+  * GstMfxEncoder:b-pyramid
+  *
+  * Strategy to choose between I/P/B-frames
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_B_PYRAMID,
       g_param_spec_enum ("b-pyramid",
@@ -297,11 +297,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           GST_MFX_TYPE_OPTION, GST_MFX_OPTION_AUTO,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    /**
-	* GstMfxEncoder:accuracy
-	*
-	* Accuracy of AVBR rate control
-	*/
+ /**
+  * GstMfxEncoder:accuracy
+  *
+  * Accuracy of AVBR rate control
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_ACCURACY,
       g_param_spec_uint ("accuracy",
@@ -309,11 +309,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Accuracy of AVBR rate control", 0, G_MAXUINT16,
           0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    /**
-	* GstMfxEncoder:convergence
-	*
-	* Convergence of AVBR rate control
-	*/
+ /**
+  * GstMfxEncoder:convergence
+  *
+  * Convergence of AVBR rate control
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_CONVERGENCE,
       g_param_spec_uint ("convergence",
@@ -321,11 +321,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Convergence of AVBR rate control", 0, G_MAXUINT16,
           0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:async-depth
-	*
-	* Number of parallel operations before explicit sync
-	*/
+ /**
+  * GstMfxEncoder:async-depth
+  *
+  * Number of parallel operations before explicit sync
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_ASYNC_DEPTH,
       g_param_spec_uint ("async-depth",
@@ -333,11 +333,11 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
           "Number of parallel operations before explicit sync", 0, 20,
           DEFAULT_ASYNC_DEPTH, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoder:preset
-	*
-	* The desired encoder preset option.
-	*/
+ /**
+  * GstMfxEncoder:preset
+  *
+  * The desired encoder preset option.
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_PRESET,
       g_param_spec_enum ("preset",
@@ -424,10 +424,10 @@ gst_mfx_encoder_init (GstMfxEncoder * encoder,
 
   g_return_val_if_fail (aggregator != NULL, FALSE);
 
-#define CHECK_VTABLE_HOOK(FUNC) do {            \
-	if (!klass->FUNC)                           \
-	goto error_invalid_vtable;                \
-	} while (0)
+#define CHECK_VTABLE_HOOK(FUNC) do {        \
+  if (!klass->FUNC)                         \
+  goto error_invalid_vtable;                \
+  } while (0)
 
   CHECK_VTABLE_HOOK (init);
   CHECK_VTABLE_HOOK (finalize);

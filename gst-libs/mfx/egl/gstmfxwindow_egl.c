@@ -28,13 +28,13 @@
 #include "gstmfxdisplay_egl_priv.h"
 
 #define GST_MFX_WINDOW_EGL(obj) \
-	((GstMfxWindowEGL *)(obj))
+  ((GstMfxWindowEGL *)(obj))
 
 #define GST_MFX_WINDOW_EGL_CLASS(klass) \
-	((GstMfxWindowEGLClass *)(klass))
+  ((GstMfxWindowEGLClass *)(klass))
 
 #define GST_MFX_WINDOW_EGL_GET_CLASS(obj) \
-	GST_MFX_WINDOW_EGL_CLASS (GST_MFX_WINDOW_GET_CLASS (obj))
+  GST_MFX_WINDOW_EGL_CLASS (GST_MFX_WINDOW_GET_CLASS (obj))
 
 typedef struct _GstMfxWindowEGL GstMfxWindowEGL;
 typedef struct _GstMfxWindowEGLClass GstMfxWindowEGLClass;
@@ -477,20 +477,6 @@ gst_mfx_window_egl_render (GstMfxWindowEGL * window,
       (EglContextRunFunc) do_upload_surface, &args) && args.success;
 }
 
-
-/*static gboolean
-gst_mfx_window_egl_render_pixmap(GstMfxWindowEGL * window,
-	GstMfxPixmap * pixmap,
-	const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
-{
-	const GstMfxWindowClass *const klass =
-		GST_MFX_WINDOW_GET_CLASS(window->window);
-
-	if (!klass->render_pixmap)
-		return FALSE;
-	return klass->render_pixmap(window->window, pixmap, src_rect, dst_rect);
-}*/
-
 void
 gst_mfx_window_egl_class_init (GstMfxWindowEGLClass * klass)
 {
@@ -514,28 +500,26 @@ gst_mfx_window_egl_class_init (GstMfxWindowEGLClass * klass)
       gst_mfx_window_egl_resize;
   window_class->render = (GstMfxWindowRenderFunc)
       gst_mfx_window_egl_render;
-  //window_class->render_pixmap = (GstMfxWindowRenderPixmapFunc)
-  //gst_mfx_window_egl_render_pixmap;
 }
 
 #define gst_mfx_window_egl_finalize \
-	gst_mfx_window_egl_destroy
+  gst_mfx_window_egl_destroy
 
 GST_MFX_OBJECT_DEFINE_CLASS_WITH_CODE (GstMfxWindowEGL,
     gst_mfx_window_egl, gst_mfx_window_egl_class_init (&g_class));
 
 /**
-* gst_mfx_window_egl_new:
-* @display: a #GstMfxDisplay
-* @width: the requested window width, in pixels
-* @height: the requested windo height, in pixels
-*
-* Creates a window with the specified @width and @height. The window
-* will be attached to the @display and remains invisible to the user
-* until gst_mfx_window_show() is called.
-*
-* Return value: the newly allocated #GstMfxWindow object
-*/
+ * gst_mfx_window_egl_new:
+ * @display: a #GstMfxDisplay
+ * @width: the requested window width, in pixels
+ * @height: the requested windo height, in pixels
+ *
+ * Creates a window with the specified @width and @height. The window
+ * will be attached to the @display and remains invisible to the user
+ * until gst_mfx_window_show() is called.
+ *
+ * Return value: the newly allocated #GstMfxWindow object
+ */
 GstMfxWindow *
 gst_mfx_window_egl_new (GstMfxDisplay * display, guint width, guint height)
 {

@@ -35,16 +35,16 @@
 #include "gstmfxdebug.h"
 
 #define GST_MFX_TEXTURE_EGL(texture) \
-	((GstMfxTextureEGL *) (texture))
+  ((GstMfxTextureEGL *) (texture))
 
 typedef struct _GstMfxTextureEGL GstMfxTextureEGL;
 typedef struct _GstMfxTextureEGLClass GstMfxTextureEGLClass;
 
 /**
-* GstMfxTextureEGL:
-*
-* Base object for EGL texture wrapper.
-*/
+ * GstMfxTextureEGL:
+ *
+ * Base object for EGL texture wrapper.
+ */
 struct _GstMfxTextureEGL
 {
   /*< private > */
@@ -55,10 +55,10 @@ struct _GstMfxTextureEGL
 };
 
 /**
-* GstMfxTextureEGLClass:
-*
-* Base class for EGL texture wrapper.
-*/
+ * GstMfxTextureEGLClass:
+ *
+ * Base class for EGL texture wrapper.
+ */
 struct _GstMfxTextureEGLClass
 {
   /*< private > */
@@ -244,24 +244,24 @@ GST_MFX_OBJECT_DEFINE_CLASS_WITH_CODE (GstMfxTextureEGL,
     gst_mfx_texture_egl, gst_mfx_texture_egl_class_init (&g_class));
 
 /**
-* gst_mfx_texture_egl_new:
-* @display: a #GstMfxDisplay
-* @target: the target to which the texture is bound
-* @format: the format of the pixel data
-* @width: the requested width, in pixels
-* @height: the requested height, in pixels
-*
-* Creates a texture with the specified dimensions, @target and
-* @format. Note that only GL_TEXTURE_2D @target and GL_RGBA or
-* GL_BGRA formats are supported at this time.
-*
-* The application shall maintain the live EGL context itself. That
-* is, gst_mfx_window_egl_make_current() must be called beforehand,
-* or any other function like eglMakeCurrent() if the context is
-* managed outside of this library.
-*
-* Return value: the newly created #GstMfxTexture object
-*/
+ * gst_mfx_texture_egl_new:
+ * @display: a #GstMfxDisplay
+ * @target: the target to which the texture is bound
+ * @format: the format of the pixel data
+ * @width: the requested width, in pixels
+ * @height: the requested height, in pixels
+ *
+ * Creates a texture with the specified dimensions, @target and
+ * @format. Note that only GL_TEXTURE_2D @target and GL_RGBA or
+ * GL_BGRA formats are supported at this time.
+ *
+ * The application shall maintain the live EGL context itself. That
+ * is, gst_mfx_window_egl_make_current() must be called beforehand,
+ * or any other function like eglMakeCurrent() if the context is
+ * managed outside of this library.
+ *
+ * Return value: the newly created #GstMfxTexture object
+ */
 GstMfxTexture *
 gst_mfx_texture_egl_new (GstMfxDisplay * display, guint target,
     guint format, guint width, guint height)
@@ -274,25 +274,25 @@ gst_mfx_texture_egl_new (GstMfxDisplay * display, guint target,
 }
 
 /**
-* gst_mfx_texture_egl_new_wrapped:
-* @display: a #GstMfxDisplay
-* @texture_id: the foreign GL texture name to use
-* @target: the target to which the texture is bound
-* @format: the format of the pixel data
-* @width: the texture width, in pixels
-* @height: the texture height, in pixels
-*
-* Creates a texture from an existing GL texture, with the specified
-* @target and @format. Note that only GL_TEXTURE_2D @target and
-* GL_RGBA or GL_BGRA formats are supported at this time.
-*
-* The application shall maintain the live EGL context itself. That
-* is, gst_mfx_window_egl_make_current() must be called beforehand,
-* or any other function like eglMakeCurrent() if the context is
-* managed outside of this library.
-*
-* Return value: the newly created #GstMfxTexture object
-*/
+ * gst_mfx_texture_egl_new_wrapped:
+ * @display: a #GstMfxDisplay
+ * @texture_id: the foreign GL texture name to use
+ * @target: the target to which the texture is bound
+ * @format: the format of the pixel data
+ * @width: the texture width, in pixels
+ * @height: the texture height, in pixels
+ *
+ * Creates a texture from an existing GL texture, with the specified
+ * @target and @format. Note that only GL_TEXTURE_2D @target and
+ * GL_RGBA or GL_BGRA formats are supported at this time.
+ *
+ * The application shall maintain the live EGL context itself. That
+ * is, gst_mfx_window_egl_make_current() must be called beforehand,
+ * or any other function like eglMakeCurrent() if the context is
+ * managed outside of this library.
+ *
+ * Return value: the newly created #GstMfxTexture object
+ */
 GstMfxTexture *
 gst_mfx_texture_egl_new_wrapped (GstMfxDisplay * display,
     guint texture_id, guint target, GLenum format, guint width, guint height)

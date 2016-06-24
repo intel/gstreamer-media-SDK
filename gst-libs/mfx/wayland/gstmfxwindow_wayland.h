@@ -31,7 +31,7 @@ typedef struct _GstMfxWindowWayland GstMfxWindowWayland;
 
 GstMfxWindow *
 gst_mfx_window_wayland_new(GstMfxDisplay * display, guint width,
-	guint height);
+    guint height);
 
 G_END_DECLS
 

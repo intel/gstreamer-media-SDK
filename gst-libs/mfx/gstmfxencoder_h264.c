@@ -15,14 +15,14 @@
 
 /* Supported set of rate control methods, within this implementation */
 #define SUPPORTED_RATECONTROLS                      \
-	(GST_MFX_RATECONTROL_MASK (CQP)		|               \
-	GST_MFX_RATECONTROL_MASK (CBR)		|               \
-	GST_MFX_RATECONTROL_MASK (VBR)		|               \
-	GST_MFX_RATECONTROL_MASK (AVBR)		|				        \
-	GST_MFX_RATECONTROL_MASK (LA_BRC)	|               \
-	GST_MFX_RATECONTROL_MASK (LA_HRD)	|               \
-	GST_MFX_RATECONTROL_MASK (ICQ)		|               \
-	GST_MFX_RATECONTROL_MASK (LA_ICQ))
+  (GST_MFX_RATECONTROL_MASK (CQP)     |             \
+  GST_MFX_RATECONTROL_MASK (CBR)      |             \
+  GST_MFX_RATECONTROL_MASK (VBR)      |             \
+  GST_MFX_RATECONTROL_MASK (AVBR)     |             \
+  GST_MFX_RATECONTROL_MASK (LA_BRC)   |             \
+  GST_MFX_RATECONTROL_MASK (LA_HRD)   |             \
+  GST_MFX_RATECONTROL_MASK (ICQ)      |             \
+  GST_MFX_RATECONTROL_MASK (LA_ICQ))
 
 /* ------------------------------------------------------------------------- */
 /* --- H.264 Bitstream Writer                                            --- */
@@ -40,7 +40,7 @@
 /* ------------------------------------------------------------------------- */
 
 #define GST_MFX_ENCODER_H264_CAST(encoder) \
-	((GstMfxEncoderH264 *)(encoder))
+  ((GstMfxEncoderH264 *)(encoder))
 
 struct _GstMfxEncoderH264
 {
@@ -280,10 +280,10 @@ gst_mfx_encoder_h264_get_default_properties (void)
     return NULL;
 
   /**
-	 * GstMfxEncoderH264:max-slice-size
-	 *
-	 * Maximum encoded slice size in bytes.
-	 */
+   * GstMfxEncoderH264:max-slice-size
+   *
+   * Maximum encoded slice size in bytes.
+   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE,
       g_param_spec_int ("max-slice-size",
@@ -291,10 +291,10 @@ gst_mfx_encoder_h264_get_default_properties (void)
           -1, G_MAXUINT16, -1, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-	 * GstMfxEncoderH264:la-depth
-	 *
-	 * Depth of look ahead in number frames.
-	 */
+   * GstMfxEncoderH264:la-depth
+   *
+   * Depth of look ahead in number frames.
+   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_H264_PROP_LA_DEPTH,
       g_param_spec_uint ("la-depth",
@@ -302,12 +302,12 @@ gst_mfx_encoder_h264_get_default_properties (void)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-	 * GstMfxEncoderH264:cabac
-	 *
-	 * Enable CABAC entropy coding mode for improved compression ratio,
-	 * at the expense that the minimum target profile is Main. Default
-	 * is CABAC entropy coding mode.
-	 */
+   * GstMfxEncoderH264:cabac
+   *
+   * Enable CABAC entropy coding mode for improved compression ratio,
+   * at the expense that the minimum target profile is Main. Default
+   * is CABAC entropy coding mode.
+   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_H264_PROP_CABAC,
       g_param_spec_boolean ("cabac",
@@ -316,10 +316,10 @@ gst_mfx_encoder_h264_get_default_properties (void)
           TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-	 * GstMfxEncoderH264:trellis
-	 *
-	 * Enable trellis quantization
-	 */
+   * GstMfxEncoderH264:trellis
+   *
+   * Enable trellis quantization
+   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_H264_PROP_TRELLIS,
       g_param_spec_enum ("trellis",
@@ -330,10 +330,10 @@ gst_mfx_encoder_h264_get_default_properties (void)
 
 
   /**
-	 * GstMfxEncoderH264:lookahead-ds
-	 *
-	 * Enable trellis Look ahead downsampling
-	 */
+   * GstMfxEncoderH264:lookahead-ds
+   *
+   * Enable trellis Look ahead downsampling
+   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS,
       g_param_spec_enum ("lookahead-ds",

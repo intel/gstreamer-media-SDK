@@ -58,20 +58,20 @@ static const int x11_event_mask =
     PointerMotionMask | EnterWindowMask | ExposureMask | StructureNotifyMask);
 
 /**
-* x11_create_window:
-* @dpy: an X11 #Display
-* @w: the requested width, in pixels
-* @h: the requested height, in pixels
-* @vid: the requested visual id
-* @cmap: the requested colormap
-*
-* Creates a border-less window with the specified dimensions. If @vid
-* is zero, the default visual for @display will be used. If @cmap is
-* %None, no specific colormap will be bound to the window. Also note
-* the default background color is black.
-*
-* Return value: the newly created X #Window.
-*/
+ * x11_create_window:
+ * @dpy: an X11 #Display
+ * @w: the requested width, in pixels
+ * @h: the requested height, in pixels
+ * @vid: the requested visual id
+ * @cmap: the requested colormap
+ *
+ * Creates a border-less window with the specified dimensions. If @vid
+ * is zero, the default visual for @display will be used. If @cmap is
+ * %None, no specific colormap will be bound to the window. Also note
+ * the default background color is black.
+ *
+ * Return value: the newly created X #Window.
+ */
 Window
 x11_create_window (Display * dpy, guint w, guint h, guint vid, Colormap cmap)
 {

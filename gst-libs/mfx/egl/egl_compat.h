@@ -29,9 +29,9 @@
 #define GL_OES_EGL_image 1
 typedef void *GLeglImageOES;
 typedef void(*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)(GLenum target,
-	GLeglImageOES image);
+    GLeglImageOES image);
 typedef void(*PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC)(GLenum target,
-	GLeglImageOES image);
+    GLeglImageOES image);
 #endif /* GL_OES_EGL_image */
 
 #endif /* EGL_COMPAT_H */

@@ -83,7 +83,8 @@ gst_mfx_decoder_load_decoder_plugins (GstMfxDecoder * decoder, gchar ** out_uid)
   switch (decoder->codec) {
     case MFX_CODEC_HEVC:
     {
-      gchar *plugin_uids[] = { "33a61c0b4c27454ca8d85dde757c6f8e",
+      gchar *plugin_uids[] = {
+        "33a61c0b4c27454ca8d85dde757c6f8e",
         "15dd936825ad475ea34e35f3f54217a6",
         NULL
       };
@@ -99,7 +100,7 @@ gst_mfx_decoder_load_decoder_plugins (GstMfxDecoder * decoder, gchar ** out_uid)
     }
       break;
     case MFX_CODEC_VP8:
-      *out_uid = "f622394d8d87452f878c51f2fc9b4131";
+      *out_uid = g_strdup ("f622394d8d87452f878c51f2fc9b4131");
       for (c = 0; c < sizeof (uid.Data); c++)
         sscanf (*out_uid + 2 * c, "%2hhx", uid.Data + c);
       sts = MFXVideoUSER_Load (decoder->session, &uid, 1);

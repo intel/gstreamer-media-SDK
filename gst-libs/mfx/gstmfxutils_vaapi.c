@@ -214,7 +214,7 @@ vaapi_image_get_image (VaapiImage * image, VAImage * va_image)
   return TRUE;
 }
 
-/*
+/**
  * _vaapi_image_set_image:
  * @image: a #VaapiImage
  * @va_image: a VA image
@@ -508,7 +508,7 @@ vaapi_image_replace (VaapiImage ** old_image_ptr, VaapiImage * new_image)
       GST_MFX_MINI_OBJECT (new_image));
 }
 
-/* Check VA status for success or print out an error */
+/** Check VA status for success or print out an error */
 gboolean
 vaapi_check_status (VAStatus status, const gchar * msg)
 {

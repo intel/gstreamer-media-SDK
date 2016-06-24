@@ -6,17 +6,17 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_ENCODER_JPEG(encoder) \
-	((GstMfxEncoderJpeg *) (encoder))
+  ((GstMfxEncoderJpeg *) (encoder))
 
 typedef struct _GstMfxEncoderJpeg GstMfxEncoderJpeg;
 
 typedef enum {
-	GST_MFX_ENCODER_JPEG_PROP_QUALITY = -1
+  GST_MFX_ENCODER_JPEG_PROP_QUALITY = -1
 } GstMfxEncoderJpegProp;
 
 GstMfxEncoder *
 gst_mfx_encoder_jpeg_new(GstMfxTaskAggregator * aggregator,
-	GstVideoInfo * info, gboolean mapped);
+  	GstVideoInfo * info, gboolean mapped);
 
 GPtrArray *
 gst_mfx_encoder_jpeg_get_default_properties(void);

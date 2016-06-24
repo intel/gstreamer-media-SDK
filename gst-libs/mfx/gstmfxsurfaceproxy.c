@@ -1,5 +1,4 @@
 /*
-/*
  *  Copyright (C) 2016 Intel Corporation
  *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
  *
@@ -132,7 +131,7 @@ gst_mfx_surface_proxy_map (GstMfxSurfaceProxy * proxy)
 
       break;
     default:
-    error:
+error:
       GST_ERROR ("Failed to create surface proxy.");
       success = FALSE;
       break;

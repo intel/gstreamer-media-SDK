@@ -11,11 +11,11 @@
 #define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_CQP
 
 /* Supported set of rate control methods, within this implementation */
-#define SUPPORTED_RATECONTROLS                          \
-  (GST_MFX_RATECONTROL_MASK (CQP)		|               \
-  GST_MFX_RATECONTROL_MASK (CBR)		|               \
-  GST_MFX_RATECONTROL_MASK (VBR)		|               \
-  GST_MFX_RATECONTROL_MASK (AVBR)		|				\
+#define SUPPORTED_RATECONTROLS               \
+  (GST_MFX_RATECONTROL_MASK (CQP)   |        \
+  GST_MFX_RATECONTROL_MASK (CBR)    |        \
+  GST_MFX_RATECONTROL_MASK (VBR)    |        \
+  GST_MFX_RATECONTROL_MASK (AVBR)   |        \
   GST_MFX_RATECONTROL_MASK (ICQ))
 
 /* ------------------------------------------------------------------------- */
@@ -99,16 +99,16 @@ gst_mfx_encoder_mpeg2_new (GstMfxTaskAggregator * aggregator,
 }
 
 /**
-* gst_mfx_encoder_mpeg2_get_default_properties:
-*
-* Determines the set of common and H.264 specific encoder properties.
-* The caller owns an extra reference to the resulting array of
-* #GstMfxEncoderPropInfo elements, so it shall be released with
-* g_ptr_array_unref () after usage.
-*
-* Return value: the set of encoder properties for #GstMfxEncoderMpeg2,
-*   or %NULL if an error occurred.
-*/
+ * gst_mfx_encoder_mpeg2_get_default_properties:
+ *
+ * Determines the set of common and MPEG2 specific encoder properties.
+ * The caller owns an extra reference to the resulting array of
+ * #GstMfxEncoderPropInfo elements, so it shall be released with
+ * g_ptr_array_unref () after usage.
+ *
+ * Return value: the set of encoder properties for #GstMfxEncoderMpeg2,
+ *   or %NULL if an error occurred.
+ */
 GPtrArray *
 gst_mfx_encoder_mpeg2_get_default_properties (void)
 {

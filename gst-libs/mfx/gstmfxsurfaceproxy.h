@@ -29,22 +29,22 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_SURFACE_PROXY(obj) \
-	((GstMfxSurfaceProxy *) (obj))
+  ((GstMfxSurfaceProxy *) (obj))
 
 #define GST_MFX_SURFACE_PROXY_SURFACE(proxy) \
-	gst_mfx_surface_proxy_get_frame_surface (proxy)
+  gst_mfx_surface_proxy_get_frame_surface (proxy)
 
 #define GST_MFX_SURFACE_PROXY_MEMID(proxy) \
-	gst_mfx_surface_proxy_get_id (proxy)
+  gst_mfx_surface_proxy_get_id (proxy)
 
 #define GST_MFX_SURFACE_PROXY_FORMAT(proxy) \
-	gst_mfx_surface_proxy_get_format (proxy)
+  gst_mfx_surface_proxy_get_format (proxy)
 
 #define GST_MFX_SURFACE_PROXY_WIDTH(proxy) \
-	gst_mfx_surface_proxy_get_width (proxy)
+  gst_mfx_surface_proxy_get_width (proxy)
 
 #define GST_MFX_SURFACE_PROXY_HEIGHT(proxy) \
-	gst_mfx_surface_proxy_get_height (proxy)
+  gst_mfx_surface_proxy_get_height (proxy)
 
 typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 typedef struct _GstMfxSurfaceProxy GstMfxSurfaceProxy;
@@ -70,7 +70,7 @@ gst_mfx_surface_proxy_unref (GstMfxSurfaceProxy * proxy);
 
 void
 gst_mfx_surface_proxy_replace (GstMfxSurfaceProxy ** old_proxy_ptr,
-	GstMfxSurfaceProxy * new_proxy);
+    GstMfxSurfaceProxy * new_proxy);
 
 mfxFrameSurface1 *
 gst_mfx_surface_proxy_get_frame_surface (GstMfxSurfaceProxy * proxy);
@@ -95,7 +95,7 @@ gst_mfx_surface_proxy_get_height (GstMfxSurfaceProxy * proxy);
 
 void
 gst_mfx_surface_proxy_get_size (GstMfxSurfaceProxy * proxy, guint * width_ptr,
-	guint * height_ptr);
+    guint * height_ptr);
 
 guint8 *
 gst_mfx_surface_proxy_get_plane (GstMfxSurfaceProxy * proxy, guint plane);

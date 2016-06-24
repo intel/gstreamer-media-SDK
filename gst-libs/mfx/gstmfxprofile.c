@@ -88,13 +88,13 @@ get_profiles_map (GstMfxProfile profile)
 }
 
 /**
-* gst_mfx_profile_get_name:
-* @profile: a #GstMfxProfile
-*
-* Returns a string representation for the supplied @profile.
-*
-* Return value: the statically allocated string representation of @profile
-*/
+ * gst_mfx_profile_get_name:
+ * @profile: a #GstMfxProfile
+ *
+ * Returns a string representation for the supplied @profile.
+ *
+ * Return value: the statically allocated string representation of @profile
+ */
 const gchar *
 gst_mfx_profile_get_name (GstMfxProfile profile)
 {
@@ -104,15 +104,15 @@ gst_mfx_profile_get_name (GstMfxProfile profile)
 }
 
 /**
-* gst_mfx_profile_get_media_type_name:
-* @profile: a #GstMfxProfile
-*
-* Returns a string representation for the media type of the supplied
-* @profile.
-*
-* Return value: the statically allocated string representation of
-*   @profile media type
-*/
+ * gst_mfx_profile_get_media_type_name:
+ * @profile: a #GstMfxProfile
+ *
+ * Returns a string representation for the media type of the supplied
+ * @profile.
+ *
+ * Return value: the statically allocated string representation of
+ *   @profile media type
+ */
 const gchar *
 gst_mfx_profile_get_media_type_name (GstMfxProfile profile)
 {
@@ -122,14 +122,14 @@ gst_mfx_profile_get_media_type_name (GstMfxProfile profile)
 }
 
 /**
-* gst_mfx_profile_from_codec_data:
-* @codec: a #GstMfxCodec
-* @buffer: a #GstBuffer holding code data
-*
-* Tries to parse VA profile from @buffer data and @codec information.
-*
-* Return value: the #GstMfxProfile described in @buffer
-*/
+ * gst_mfx_profile_from_codec_data:
+ * @codec: a #GstMfxCodec
+ * @buffer: a #GstBuffer holding code data
+ *
+ * Tries to parse MFX profile from @buffer data and @codec information.
+ *
+ * Return value: the #GstMfxProfile described in @buffer
+ */
 static GstMfxProfile
 gst_mfx_profile_from_codec_data_h264 (GstBuffer * buffer)
 {
@@ -205,15 +205,15 @@ gst_mfx_profile_from_codec_data (mfxU32 codec, GstBuffer * buffer)
 }
 
 /**
-* gst_mfx_profile_from_caps:
-* @caps: a #GstCaps
-*
-* Converts @caps into the corresponding #GstMfxProfile. If the
-* profile cannot be represented by #GstMfxProfile, then zero is
-* returned.
-*
-* Return value: the #GstMfxProfile describing the @caps
-*/
+ * gst_mfx_profile_from_caps:
+ * @caps: a #GstCaps
+ *
+ * Converts @caps into the corresponding #GstMfxProfile. If the
+ * profile cannot be represented by #GstMfxProfile, then zero is
+ * returned.
+ *
+ * Return value: the #GstMfxProfile describing the @caps
+ */
 GstMfxProfile
 gst_mfx_profile_from_caps (const GstCaps * caps)
 {
@@ -267,14 +267,14 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
 }
 
 /**
-* gst_mfx_profile_get_caps:
-* @profile: a #GstMfxProfile
-*
-* Converts a #GstMfxProfile into the corresponding #GstCaps. If no
-* matching caps were found, %NULL is returned.
-*
-* Return value: the newly allocated #GstCaps, or %NULL if none was found
-*/
+ * gst_mfx_profile_get_caps:
+ * @profile: a #GstMfxProfile
+ *
+ * Converts a #GstMfxProfile into the corresponding #GstCaps. If no
+ * matching caps were found, %NULL is returned.
+ *
+ * Return value: the newly allocated #GstCaps, or %NULL if none was found
+ */
 GstCaps *
 gst_mfx_profile_get_caps (GstMfxProfile profile)
 {

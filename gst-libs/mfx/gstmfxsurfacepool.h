@@ -60,7 +60,7 @@ void
 gst_mfx_surface_pool_set_capacity (GstMfxSurfacePool * pool, guint capacity);
 
 GstMfxSurfaceProxy *
-gst_mfx_surface_pool_find_proxy(GstMfxSurfacePool * pool,
+gst_mfx_surface_pool_find_proxy (GstMfxSurfacePool * pool,
     mfxFrameSurface1 * surface);
 
 G_END_DECLS

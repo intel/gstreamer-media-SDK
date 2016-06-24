@@ -306,15 +306,15 @@ gst_mfx_display_x11_class (void)
 }
 
 /**
-* gst_mfx_display_x11_new:
-* @display_name: the X11 display name
-*
-* Opens an X11 #Display using @display_name and returns a newly
-* allocated #GstMfxDisplay object. The X11 display will be cloed
-* when the reference count of the object reaches zero.
-*
-* Return value: a newly allocated #GstMfxDisplay object
-*/
+ * gst_mfx_display_x11_new:
+ * @display_name: the X11 display name
+ *
+ * Opens an X11 #Display using @display_name and returns a newly
+ * allocated #GstMfxDisplay object. The X11 display will be cloed
+ * when the reference count of the object reaches zero.
+ *
+ * Return value: a newly allocated #GstMfxDisplay object
+ */
 GstMfxDisplay *
 gst_mfx_display_x11_new (const gchar * display_name)
 {
@@ -323,16 +323,16 @@ gst_mfx_display_x11_new (const gchar * display_name)
 }
 
 /**
-* gst_mfx_display_x11_new_with_display:
-* @x11_display: an X11 #Display
-*
-* Creates a #GstMfxDisplay based on the X11 @x11_display
-* display. The caller still owns the display and must call
-* XCloseDisplay() when all #GstMfxDisplay references are
-* released. Doing so too early can yield undefined behaviour.
-*
-* Return value: a newly allocated #GstMfxDisplay object
-*/
+ * gst_mfx_display_x11_new_with_display:
+ * @x11_display: an X11 #Display
+ *
+ * Creates a #GstMfxDisplay based on the X11 @x11_display
+ * display. The caller still owns the display and must call
+ * XCloseDisplay() when all #GstMfxDisplay references are
+ * released. Doing so too early can yield undefined behaviour.
+ *
+ * Return value: a newly allocated #GstMfxDisplay object
+ */
 GstMfxDisplay *
 gst_mfx_display_x11_new_with_display (Display * x11_display)
 {
@@ -343,15 +343,15 @@ gst_mfx_display_x11_new_with_display (Display * x11_display)
 }
 
 /**
-* gst_mfx_display_x11_get_display:
-* @display: a #GstMfxDisplayX11
-*
-* Returns the underlying X11 #Display that was created by
-* gst_mfx_display_x11_new() or that was bound from
-* gst_mfx_display_x11_new_with_display().
-*
-* Return value: the X11 #Display attached to @display
-*/
+ * gst_mfx_display_x11_get_display:
+ * @display: a #GstMfxDisplayX11
+ *
+ * Returns the underlying X11 #Display that was created by
+ * gst_mfx_display_x11_new() or that was bound from
+ * gst_mfx_display_x11_new_with_display().
+ *
+ * Return value: the X11 #Display attached to @display
+ */
 Display *
 gst_mfx_display_x11_get_display (GstMfxDisplayX11 * display)
 {
@@ -361,15 +361,15 @@ gst_mfx_display_x11_get_display (GstMfxDisplayX11 * display)
 }
 
 /**
-* gst_mfx_display_x11_get_screen:
-* @display: a #GstMfxDisplayX11
-*
-* Returns the default X11 screen that was created by
-* gst_mfx_display_x11_new() or that was bound from
-* gst_mfx_display_x11_new_with_display().
-*
-* Return value: the X11 #Display attached to @display
-*/
+ * gst_mfx_display_x11_get_screen:
+ * @display: a #GstMfxDisplayX11
+ *
+ * Returns the default X11 screen that was created by
+ * gst_mfx_display_x11_new() or that was bound from
+ * gst_mfx_display_x11_new_with_display().
+ *
+ * Return value: the X11 #Display attached to @display
+ */
 int
 gst_mfx_display_x11_get_screen (GstMfxDisplayX11 * display)
 {
@@ -379,16 +379,16 @@ gst_mfx_display_x11_get_screen (GstMfxDisplayX11 * display)
 }
 
 /**
-* gst_mfx_display_x11_set_synchronous:
-* @display: a #GstMfxDisplayX11
-* @synchronous: boolean value that indicates whether to enable or
-*   disable synchronization
-*
-* If @synchronous is %TRUE, gst_mfx_display_x11_set_synchronous()
-* turns on synchronous behaviour on the underlying X11
-* display. Otherwise, synchronous behaviour is disabled if
-* @synchronous is %FALSE.
-*/
+ * gst_mfx_display_x11_set_synchronous:
+ * @display: a #GstMfxDisplayX11
+ * @synchronous: boolean value that indicates whether to enable or
+ *   disable synchronization
+ *
+ * If @synchronous is %TRUE, gst_mfx_display_x11_set_synchronous()
+ * turns on synchronous behaviour on the underlying X11
+ * display. Otherwise, synchronous behaviour is disabled if
+ * @synchronous is %FALSE.
+ */
 void
 gst_mfx_display_x11_set_synchronous (GstMfxDisplayX11 * display,
     gboolean synchronous)

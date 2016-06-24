@@ -2,8 +2,6 @@
 #include <gobject/gvaluecollector.h>
 #include "gstmfxvalue.h"
 
-/* --- GstMfxRotation --- */
-
 GType
 gst_mfx_rotation_get_type (void)
 {
@@ -49,8 +47,6 @@ gst_mfx_option_get_type (void)
   }
   return g_type;
 }
-
-/* --- GstMfxRateControl --- */
 
 GType
 gst_mfx_rate_control_get_type (void)

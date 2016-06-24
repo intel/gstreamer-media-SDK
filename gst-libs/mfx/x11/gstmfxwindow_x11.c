@@ -353,24 +353,24 @@ gst_mfx_window_x11_class_init (GstMfxWindowX11Class * klass)
 }
 
 #define gst_mfx_window_x11_finalize \
-	gst_mfx_window_x11_destroy
+  gst_mfx_window_x11_destroy
 
 GST_MFX_OBJECT_DEFINE_CLASS_WITH_CODE (GstMfxWindowX11,
     gst_mfx_window_x11, gst_mfx_window_x11_class_init (&g_class));
 
 
 /**
-* gst_mfx_window_x11_new:
-* @display: a #GstMfxDisplay
-* @width: the requested window width, in pixels
-* @height: the requested windo height, in pixels
-*
-* Creates a window with the specified @width and @height. The window
-* will be attached to the @display and remains invisible to the user
-* until gst_mfx_window_show() is called.
-*
-* Return value: the newly allocated #GstMfxWindow object
-*/
+ * gst_mfx_window_x11_new:
+ * @display: a #GstMfxDisplay
+ * @width: the requested window width, in pixels
+ * @height: the requested windo height, in pixels
+ *
+ * Creates a window with the specified @width and @height. The window
+ * will be attached to the @display and remains invisible to the user
+ * until gst_mfx_window_show() is called.
+ *
+ * Return value: the newly allocated #GstMfxWindow object
+ */
 GstMfxWindow *
 gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height)
 {
@@ -384,14 +384,14 @@ gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height)
 }
 
 /**
-* gst_mfx_window_x11_get_xid:
-* @window: a #GstMfxWindowX11
-*
-* Returns the underlying X11 #Window that was created by
-* gst_mfx_window_x11_new()
-*
-* Return value: the underlying X11 #Window bound to @window.
-*/
+ * gst_mfx_window_x11_get_xid:
+ * @window: a #GstMfxWindowX11
+ *
+ * Returns the underlying X11 #Window that was created by
+ * gst_mfx_window_x11_new()
+ *
+ * Return value: the underlying X11 #Window bound to @window.
+ */
 Window
 gst_mfx_window_x11_get_xid (GstMfxWindowX11 * window)
 {

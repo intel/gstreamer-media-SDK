@@ -22,7 +22,7 @@
 // Generate strings
 
 #define GL_PROTO_GEN_STRING(x) \
-	GL_PROTO_GEN_STRING_I(x)
+  GL_PROTO_GEN_STRING_I(x)
 #define GL_PROTO_GEN_STRING_I(x) \
 #x
 
@@ -30,26 +30,26 @@
 // Concatenate arguments
 
 #define GL_PROTO_GEN_CONCAT(a1, a2) \
-	GL_PROTO_GEN_CONCAT2_I(a1, a2)
+  GL_PROTO_GEN_CONCAT2_I(a1, a2)
 #define GL_PROTO_GEN_CONCAT2(a1, a2) \
-	GL_PROTO_GEN_CONCAT2_I(a1, a2)
+  GL_PROTO_GEN_CONCAT2_I(a1, a2)
 #define GL_PROTO_GEN_CONCAT2_I(a1, a2) \
-	a1 ## a2
+  a1 ## a2
 
 #define GL_PROTO_GEN_CONCAT3(a1, a2, a3) \
-	GL_PROTO_GEN_CONCAT3_I(a1, a2, a3)
+  GL_PROTO_GEN_CONCAT3_I(a1, a2, a3)
 #define GL_PROTO_GEN_CONCAT3_I(a1, a2, a3) \
-	a1 ## a2 ## a3
+  a1 ## a2 ## a3
 
 #define GL_PROTO_GEN_CONCAT4(a1, a2, a3, a4) \
-	GL_PROTO_GEN_CONCAT4_I(a1, a2, a3, a4)
+  GL_PROTO_GEN_CONCAT4_I(a1, a2, a3, a4)
 #define GL_PROTO_GEN_CONCAT4_I(a1, a2, a3, a4) \
-	a1 ## a2 ## a3 ## a4
+  a1 ## a2 ## a3 ## a4
 
 #define GL_PROTO_GEN_CONCAT5(a1, a2, a3, a4, a5) \
-	GL_PROTO_GEN_CONCAT5_I(a1, a2, a3, a4, a5)
+  GL_PROTO_GEN_CONCAT5_I(a1, a2, a3, a4, a5)
 #define GL_PROTO_GEN_CONCAT5_I(a1, a2, a3, a4, a5) \
-	a1 ## a2 ## a3 ## a4 ## a5
+  a1 ## a2 ## a3 ## a4 ## a5
 
 /* ------------------------------------------------------------------------- */
 // Default macros

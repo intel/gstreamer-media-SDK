@@ -15,14 +15,14 @@
 
 /* Supported set of rate control methods, within this implementation */
 #define SUPPORTED_RATECONTROLS                      \
-	(GST_MFX_RATECONTROL_MASK (CQP)		|               \
-	GST_MFX_RATECONTROL_MASK (CBR)		|               \
-	GST_MFX_RATECONTROL_MASK (VBR)		|               \
-	GST_MFX_RATECONTROL_MASK (AVBR)		|				        \
-	GST_MFX_RATECONTROL_MASK (LA_BRC)	|               \
-	GST_MFX_RATECONTROL_MASK (LA_HRD)	|               \
-	GST_MFX_RATECONTROL_MASK (ICQ)		|               \
-	GST_MFX_RATECONTROL_MASK (LA_ICQ))
+  (GST_MFX_RATECONTROL_MASK (CQP)     |             \
+  GST_MFX_RATECONTROL_MASK (CBR)      |             \
+  GST_MFX_RATECONTROL_MASK (VBR)      |             \
+  GST_MFX_RATECONTROL_MASK (AVBR)     |             \
+  GST_MFX_RATECONTROL_MASK (LA_BRC)   |             \
+  GST_MFX_RATECONTROL_MASK (LA_HRD)   |             \
+  GST_MFX_RATECONTROL_MASK (ICQ)      |             \
+  GST_MFX_RATECONTROL_MASK (LA_ICQ))
 
 /* ------------------------------------------------------------------------- */
 /* --- H.265 Bitstream Writer                                            --- */
@@ -40,7 +40,7 @@
 /* ------------------------------------------------------------------------- */
 
 #define GST_MFX_ENCODER_H265_CAST(encoder) \
-	((GstMfxEncoderH265 *)(encoder))
+  ((GstMfxEncoderH265 *)(encoder))
 
 struct _GstMfxEncoderH265
 {
@@ -100,7 +100,8 @@ gst_mfx_encoder_load_hevc_plugin (GstMfxEncoder * encoder)
   mfxStatus sts;
   guint i, c;
 
-  gchar *plugin_uids[] = { "6fadc791a0c2eb479ab6dcd5ea9da347",
+  gchar *plugin_uids[] = {
+    "6fadc791a0c2eb479ab6dcd5ea9da347",
     //"e5400a06c74d41f5b12d430bbaa23d0b",
     "2fca99749fdb49aeb121a5b63ef568f7",
     NULL
@@ -146,9 +147,7 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
 {
   GstBuffer *buffer;
   mfxStatus sts;
-  guint8 sps_data[128] = { 0 }, pps_data[128] = {
-  0}, vps_data[128] = {
-  0};
+  guint8 sps_data[128] = { 0 }, pps_data[128] = { 0 }, vps_data[128] = { 0 };
   guint8 *sps_info, *pps_info, *vps_info;
   guint sps_size, pps_size, vps_size;
   GstBitWriter bs;
@@ -173,8 +172,8 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
   };
 
   mfxExtBuffer *ext_buffers[] = {
-    (mfxExtBuffer *) & spspps,
-    (mfxExtBuffer *) & vps,
+    (mfxExtBuffer *) &spspps,
+    (mfxExtBuffer *) &vps,
   };
 
   base_encoder->params.ExtParam = ext_buffers;
@@ -344,16 +343,16 @@ gst_mfx_encoder_h265_new (GstMfxTaskAggregator * aggregator,
 }
 
 /**
-* gst_mfx_encoder_h265_get_default_properties:
-*
-* Determines the set of common and H.265 specific encoder properties.
-* The caller owns an extra reference to the resulting array of
-* #GstMfxEncoderPropInfo elements, so it shall be released with
-* g_ptr_array_unref () after usage.
-*
-* Return value: the set of encoder properties for #GstMfxEncoderH265,
-*   or %NULL if an error occurred.
-*/
+ * gst_mfx_encoder_h265_get_default_properties:
+ *
+ * Determines the set of common and H.265 specific encoder properties.
+ * The caller owns an extra reference to the resulting array of
+ * #GstMfxEncoderPropInfo elements, so it shall be released with
+ * g_ptr_array_unref () after usage.
+ *
+ * Return value: the set of encoder properties for #GstMfxEncoderH265,
+ *   or %NULL if an error occurred.
+ */
 GPtrArray *
 gst_mfx_encoder_h265_get_default_properties (void)
 {
@@ -364,22 +363,22 @@ gst_mfx_encoder_h265_get_default_properties (void)
   if (!props)
     return NULL;
 
-        /**
-	* GstMfxEncoderH265:la-depth
-	*
-	* Depth of look ahead in number frames.
-	*/
+ /**
+  * GstMfxEncoderH265:la-depth
+  *
+  * Depth of look ahead in number frames.
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_H265_PROP_LA_DEPTH,
       g_param_spec_uint ("la-depth",
           "Lookahead depth", "Depth of lookahead in frames", 0, 100, 0,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-        /**
-	* GstMfxEncoderH265:lookahead-ds
-	*
-	* Look ahead downsampling
-	*/
+ /**
+  * GstMfxEncoderH265:lookahead-ds
+  *
+  * Look ahead downsampling
+  */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_H265_PROP_LOOKAHEAD_DS,
       g_param_spec_enum ("lookahead-ds",

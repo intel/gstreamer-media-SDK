@@ -27,14 +27,14 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_IS_DISPLAY_DRM(display) \
-	((display) != NULL && \
-	GST_MFX_DISPLAY_VADISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_DRM)
+  ((display) != NULL && \
+  GST_MFX_DISPLAY_VADISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_DRM)
 
 #define GST_MFX_DISPLAY_DRM_CAST(display) \
-	((GstMfxDisplayDRM *)(display))
+  ((GstMfxDisplayDRM *)(display))
 
 #define GST_MFX_DISPLAY_DRM_PRIVATE(display) \
-	(&GST_MFX_DISPLAY_DRM_CAST(display)->priv)
+  (&GST_MFX_DISPLAY_DRM_CAST(display)->priv)
 
 typedef struct _GstMfxDisplayDRMPrivate       GstMfxDisplayDRMPrivate;
 typedef struct _GstMfxDisplayDRMClass         GstMfxDisplayDRMClass;
@@ -64,10 +64,10 @@ struct _GstMfxDisplayDRMPrivate
 */
 struct _GstMfxDisplayDRM
 {
-	/*< private >*/
-	GstMfxDisplay parent_instance;
+  /*< private >*/
+  GstMfxDisplay parent_instance;
 
-	GstMfxDisplayDRMPrivate priv;
+  GstMfxDisplayDRMPrivate priv;
 };
 
 /**
@@ -77,8 +77,8 @@ struct _GstMfxDisplayDRM
 */
 struct _GstMfxDisplayDRMClass
 {
-	/*< private >*/
-	GstMfxDisplayClass parent_class;
+  /*< private >*/
+  GstMfxDisplayClass parent_class;
 };
 
 

@@ -31,19 +31,19 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_DISPLAY_CAST(display) \
-	((GstMfxDisplay *) (display))
+  ((GstMfxDisplay *) (display))
 
 #define GST_MFX_DISPLAY_GET_PRIVATE(display) \
-	(&GST_MFX_DISPLAY_CAST (display)->priv)
+  (&GST_MFX_DISPLAY_CAST (display)->priv)
 
 #define GST_MFX_DISPLAY_CLASS(klass) \
-	((GstMfxDisplayClass *) (klass))
+  ((GstMfxDisplayClass *) (klass))
 
 #define GST_MFX_IS_DISPLAY_CLASS(klass) \
-	((klass) != NULL)
+  ((klass) != NULL)
 
 #define GST_MFX_DISPLAY_GET_CLASS(obj) \
-	GST_MFX_DISPLAY_CLASS (GST_MFX_MINI_OBJECT_GET_CLASS (obj))
+  GST_MFX_DISPLAY_CLASS (GST_MFX_MINI_OBJECT_GET_CLASS (obj))
 
 typedef struct _GstMfxDisplayPrivate          GstMfxDisplayPrivate;
 typedef struct _GstMfxDisplayClass            GstMfxDisplayClass;
@@ -51,30 +51,30 @@ typedef enum _GstMfxDisplayInitType           GstMfxDisplayInitType;
 
 typedef void(*GstMfxDisplayInitFunc) (GstMfxDisplay * display);
 typedef gboolean(*GstMfxDisplayBindFunc) (GstMfxDisplay * display,
-	gpointer native_dpy);
+  gpointer native_dpy);
 typedef gboolean(*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
-	const gchar * name);
+  const gchar * name);
 typedef void(*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
 typedef void(*GstMfxDisplayLockFunc) (GstMfxDisplay * display);
 typedef void(*GstMfxDisplayUnlockFunc) (GstMfxDisplay * display);
 typedef void(*GstMfxDisplaySyncFunc) (GstMfxDisplay * display);
 typedef void(*GstMfxDisplayFlushFunc) (GstMfxDisplay * display);
 typedef gboolean(*GstMfxDisplayGetInfoFunc) (GstMfxDisplay * display,
-	GstMfxDisplayInfo * info);
+  GstMfxDisplayInfo * info);
 typedef void(*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
-	guint * pwidth, guint * pheight);
+  guint * pwidth, guint * pheight);
 typedef void(*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
-	guint * pwidth, guint * pheight);
+  guint * pwidth, guint * pheight);
 typedef GstMfxWindow *(*GstMfxDisplayCreateWindowFunc) (
-	GstMfxDisplay * display, guint width, guint height);
+  GstMfxDisplay * display, guint width, guint height);
 typedef GstMfxTexture *(*GstMfxDisplayCreateTextureFunc) (
-	GstMfxDisplay * display, GstMfxID id, guint target, guint format,
-	guint width, guint height);
+  GstMfxDisplay * display, GstMfxID id, guint target, guint format,
+  guint width, guint height);
 
 typedef guintptr(*GstMfxDisplayGetVisualIdFunc) (GstMfxDisplay * display,
-	GstMfxWindow * window);
+  GstMfxWindow * window);
 typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
-	GstMfxWindow * window);
+  GstMfxWindow * window);
 
 /**
 * GST_MFX_DISPLAY_GET_CLASS_TYPE:
@@ -85,7 +85,7 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
 */
 #undef  GST_MFX_DISPLAY_GET_CLASS_TYPE
 #define GST_MFX_DISPLAY_GET_CLASS_TYPE(display) \
-	(GST_MFX_DISPLAY_GET_CLASS (display)->display_type)
+  (GST_MFX_DISPLAY_GET_CLASS (display)->display_type)
 
 /**
 * GST_MFX_DISPLAY_NATIVE:
@@ -96,7 +96,7 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
 */
 #undef  GST_MFX_DISPLAY_NATIVE
 #define GST_MFX_DISPLAY_NATIVE(display) \
-	(GST_MFX_DISPLAY_GET_PRIVATE (display)->native_display)
+  (GST_MFX_DISPLAY_GET_PRIVATE (display)->native_display)
 
 /**
 * GST_MFX_DISPLAY_VADISPLAY:
@@ -107,100 +107,100 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
 */
 #undef  GST_MFX_DISPLAY_VADISPLAY
 #define GST_MFX_DISPLAY_VADISPLAY(display_) \
-	(GST_MFX_DISPLAY_GET_PRIVATE (display_)->display)
+  (GST_MFX_DISPLAY_GET_PRIVATE (display_)->display)
 
 /**
-* GST_MFX_DISPLAY_VADISPLAY_TYPE:
-* @display: a #GstMfxDisplay
-*
-* Returns the underlying VADisplay @display type
-* This is an internal macro that does not do any run-time type check.
-*/
+ * GST_MFX_DISPLAY_VADISPLAY_TYPE:
+ * @display: a #GstMfxDisplay
+ *
+ * Returns the underlying VADisplay @display type
+ * This is an internal macro that does not do any run-time type check.
+ */
 #undef  GST_MFX_DISPLAY_VADISPLAY_TYPE
 #define GST_MFX_DISPLAY_VADISPLAY_TYPE(display) \
-	(GST_MFX_DISPLAY_GET_PRIVATE (display)->display_type)
+  (GST_MFX_DISPLAY_GET_PRIVATE (display)->display_type)
 
 struct _GstMfxDisplayPrivate
 {
-	GRecMutex mutex;
-	GstMfxDisplayType display_type;
-	gchar *display_name;
-	gchar *device_path_default;
-	VADisplay display;
-	gpointer native_display;
-	guint width;
-	guint height;
-	guint width_mm;
-	guint height_mm;
-	guint par_n;
-	guint par_d;
-	gchar *vendor_string;
-	guint use_foreign_display : 1;
-	gboolean is_opengl;
+  GRecMutex mutex;
+  GstMfxDisplayType display_type;
+  gchar *display_name;
+  gchar *device_path_default;
+  VADisplay display;
+  gpointer native_display;
+  guint width;
+  guint height;
+  guint width_mm;
+  guint height_mm;
+  guint par_n;
+  guint par_d;
+  gchar *vendor_string;
+  guint use_foreign_display : 1;
+  gboolean is_opengl;
 };
 
 /**
-* GstMfxDisplay:
-*
-* Base class for VA displays.
-*/
+ * GstMfxDisplay:
+ *
+ * Base class for VA displays.
+ */
 struct _GstMfxDisplay
 {
-	/*< private >*/
-	GstMfxMiniObject parent_instance;
+  /*< private >*/
+  GstMfxMiniObject parent_instance;
 
-	GstMfxDisplayPrivate priv;
+  GstMfxDisplayPrivate priv;
 };
 
 /**
-* GstMfxDisplayClass:
-* @open_display: virtual function to open a display
-* @close_display: virtual function to close a display
-* @lock: (optional) virtual function to lock a display
-* @unlock: (optional) virtual function to unlock a display
-* @sync: (optional) virtual function to sync a display
-* @flush: (optional) virtual function to flush pending requests of a display
-* @get_display: virtual function to retrieve the #GstMfxDisplayInfo
-* @get_size: virtual function to retrieve the display dimensions, in pixels
-* @get_size_mm: virtual function to retrieve the display dimensions, in millimeters
-* @get_visual_id: (optional) virtual function to retrieve the window visual id
-* @get_colormap: (optional) virtual function to retrieve the window colormap
-* @create_window: (optional) virtual function to create a window
-* @create_texture: (optional) virtual function to create a texture
-*
-* Base class for VA displays.
-*/
+ * GstMfxDisplayClass:
+ * @open_display: virtual function to open a display
+ * @close_display: virtual function to close a display
+ * @lock: (optional) virtual function to lock a display
+ * @unlock: (optional) virtual function to unlock a display
+ * @sync: (optional) virtual function to sync a display
+ * @flush: (optional) virtual function to flush pending requests of a display
+ * @get_display: virtual function to retrieve the #GstMfxDisplayInfo
+ * @get_size: virtual function to retrieve the display dimensions, in pixels
+ * @get_size_mm: virtual function to retrieve the display dimensions, in millimeters
+ * @get_visual_id: (optional) virtual function to retrieve the window visual id
+ * @get_colormap: (optional) virtual function to retrieve the window colormap
+ * @create_window: (optional) virtual function to create a window
+ * @create_texture: (optional) virtual function to create a texture
+ *
+ * Base class for VA displays.
+ */
 struct _GstMfxDisplayClass
 {
-	/*< private >*/
-	GstMfxMiniObjectClass parent_class;
+  /*< private >*/
+  GstMfxMiniObjectClass parent_class;
 
-	/*< protected >*/
-	guint display_type;
+  /*< protected >*/
+  guint display_type;
 
-	/*< public >*/
-	GstMfxDisplayInitFunc init;
-	GstMfxDisplayBindFunc bind_display;
-	GstMfxDisplayOpenFunc open_display;
-	GstMfxDisplayCloseFunc close_display;
-	GstMfxDisplayLockFunc lock;
-	GstMfxDisplayUnlockFunc unlock;
-	GstMfxDisplaySyncFunc sync;
-	GstMfxDisplayFlushFunc flush;
-	GstMfxDisplayGetInfoFunc get_display;
-	GstMfxDisplayGetSizeFunc get_size;
-	GstMfxDisplayGetSizeMFunc get_size_mm;
-	GstMfxDisplayGetVisualIdFunc get_visual_id;
-	GstMfxDisplayGetColormapFunc get_colormap;
-	GstMfxDisplayCreateWindowFunc create_window;
-	GstMfxDisplayCreateTextureFunc create_texture;
+  /*< public >*/
+  GstMfxDisplayInitFunc init;
+  GstMfxDisplayBindFunc bind_display;
+  GstMfxDisplayOpenFunc open_display;
+  GstMfxDisplayCloseFunc close_display;
+  GstMfxDisplayLockFunc lock;
+  GstMfxDisplayUnlockFunc unlock;
+  GstMfxDisplaySyncFunc sync;
+  GstMfxDisplayFlushFunc flush;
+  GstMfxDisplayGetInfoFunc get_display;
+  GstMfxDisplayGetSizeFunc get_size;
+  GstMfxDisplayGetSizeMFunc get_size_mm;
+  GstMfxDisplayGetVisualIdFunc get_visual_id;
+  GstMfxDisplayGetColormapFunc get_colormap;
+  GstMfxDisplayCreateWindowFunc create_window;
+  GstMfxDisplayCreateTextureFunc create_texture;
 };
 
 /* Initialization types */
 enum _GstMfxDisplayInitType
 {
-	GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME = 1,
-	GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY
+  GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME = 1,
+  GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY
 };
 
 void
@@ -208,29 +208,29 @@ gst_mfx_display_class_init(GstMfxDisplayClass * klass);
 
 GstMfxDisplay *
 gst_mfx_display_new(const GstMfxDisplayClass * klass,
-	GstMfxDisplayInitType init_type, gpointer init_value);
+  GstMfxDisplayInitType init_type, gpointer init_value);
 
 #define gst_mfx_display_ref_internal(display) \
-	((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(display)))
+  ((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(display)))
 
 #define gst_mfx_display_unref_internal(display) \
-	gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(display))
+  gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(display))
 
 #define gst_mfx_display_replace_internal(old_display_ptr, new_display) \
-	gst_mfx_mini_object_replace((GstMfxMiniObject **)(old_display_ptr), \
-	GST_MFX_MINI_OBJECT(new_display))
+  gst_mfx_mini_object_replace((GstMfxMiniObject **)(old_display_ptr), \
+  GST_MFX_MINI_OBJECT(new_display))
 
 #undef  gst_mfx_display_ref
 #define gst_mfx_display_ref(display) \
-	gst_mfx_display_ref_internal((display))
+  gst_mfx_display_ref_internal((display))
 
 #undef  gst_mfx_display_unref
 #define gst_mfx_display_unref(display) \
-	gst_mfx_display_unref_internal((display))
+  gst_mfx_display_unref_internal((display))
 
 #undef  gst_mfx_display_replace
 #define gst_mfx_display_replace(old_display_ptr, new_display) \
-	gst_mfx_display_replace_internal((old_display_ptr), (new_display))
+  gst_mfx_display_replace_internal((old_display_ptr), (new_display))
 
 G_END_DECLS
 
