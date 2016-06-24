@@ -1,4 +1,8 @@
 /*
+ *  Copyright (C) 2010-2011 Splitted-Desktop Systems
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@splitted-desktop.com>
+ *  Copyright (C) 2012-2014 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
  *  Copyright (C) 2016 Intel Corporation
  *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
  *

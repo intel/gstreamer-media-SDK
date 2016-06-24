@@ -89,7 +89,8 @@ static const GstMfxFilterMap filter_map[] = {
       "Framerate conversion filter"},
   {GST_MFX_FILTER_FIELD_PROCESSING, MFX_EXTBUFF_VPP_FIELD_PROCESSING,
       "Field processing filter"},
-  //{ GST_MFX_FILTER_IMAGE_STABILIZATION, MFX_EXTBUFF_VPP_IMAGE_STABILIZATION, "Image stabilization filter" },
+  /*{ GST_MFX_FILTER_IMAGE_STABILIZATION, MFX_EXTBUFF_VPP_IMAGE_STABILIZATION,
+      "Image stabilization filter" },*/
   {GST_MFX_FILTER_ROTATION, MFX_EXTBUFF_VPP_ROTATION, "Rotation filter"},
   {0,}
 };
@@ -915,12 +916,12 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
       GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
       GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg, FALSE);
   /*g_return_val_if_fail (GST_MFX_FRC_NONE == alg||
-     GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
-     GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg ||
-     GST_MFX_FRC_FRAME_INTERPOLATION == alg ||
-     GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg ||
-     GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg,
-     FALSE); */
+      GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
+      GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg ||
+      GST_MFX_FRC_FRAME_INTERPOLATION == alg ||
+      GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg ||
+      GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg,
+      FALSE); */
 
   switch (alg) {
     case GST_MFX_FRC_NONE:
@@ -932,17 +933,17 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
     case GST_MFX_FRC_DISTRIBUTED_TIMESTAMP:
       mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP;
       break;
-      /*case GST_MFX_FRC_FRAME_INTERPOLATION:
-         mode = MFX_FRCALGM_FRAME_INTERPOLATION;
-         break;
-         case GST_MFX_FRC_FI_PRESERVE_TIMESTAMP:
-         mode = MFX_FRCALGM_PRESERVE_TIMESTAMP ||
-         MFX_FRCALGM_FRAME_INTERPOLATION;
-         break;
-         case GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP:
-         mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP ||
-         MFX_FRCALGM_FRAME_INTERPOLATION;
-         break; */
+    /*case GST_MFX_FRC_FRAME_INTERPOLATION:
+      mode = MFX_FRCALGM_FRAME_INTERPOLATION;
+      break;
+      case GST_MFX_FRC_FI_PRESERVE_TIMESTAMP:
+      mode = MFX_FRCALGM_PRESERVE_TIMESTAMP ||
+      MFX_FRCALGM_FRAME_INTERPOLATION;
+      break;
+      case GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP:
+      mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP ||
+      MFX_FRCALGM_FRAME_INTERPOLATION;
+      break; */
     default:
       mode = 0;
       break;
