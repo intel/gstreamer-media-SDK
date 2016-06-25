@@ -705,13 +705,13 @@ set_extended_coding_options (GstMfxEncoder * encoder)
     encoder->exthevc.PicHeightInLumaSamples = encoder->info.height;
 
     encoder->extparam_internal[encoder->params.NumExtParam++] =
-        (mfxExtBuffer *) & encoder->exthevc;
+        (mfxExtBuffer *) &encoder->exthevc;
   }
 
   encoder->extparam_internal[encoder->params.NumExtParam++] =
-      (mfxExtBuffer *) & encoder->extco;
+      (mfxExtBuffer *) &encoder->extco;
   encoder->extparam_internal[encoder->params.NumExtParam++] =
-      (mfxExtBuffer *) & encoder->extco2;
+      (mfxExtBuffer *) &encoder->extco2;
 
   encoder->params.ExtParam = encoder->extparam_internal;
 }
@@ -760,11 +760,12 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 
     if (encoder->bitrate)
       encoder->params.mfx.TargetKbps = encoder->bitrate;
-    encoder->params.mfx.GopRefDist =
-        CLAMP (encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
+    encoder->params.mfx.GopRefDist = CLAMP (
+        encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
 
     set_extended_coding_options (encoder);
-  } else {
+  }
+  else {
     encoder->params.mfx.Interleaved = 1;
     encoder->params.mfx.Quality = encoder->jpeg_quality;
     encoder->params.mfx.RestartInterval = 0;
@@ -772,40 +773,44 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 }
 
 GstMfxEncoderStatus
-gst_mfx_encoder_start (GstMfxEncoder * encoder)
+gst_mfx_encoder_start (GstMfxEncoder *encoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
   mfxFrameAllocRequest enc_request;
-  gboolean mapped = FALSE;
-
-  if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7"))
-    mapped = TRUE;
-
-  sts = MFXVideoENCODE_Query (encoder->session, &encoder->params,
-      &encoder->params);
-  if (MFX_WRN_PARTIAL_ACCELERATION == sts) {
-    GST_WARNING ("Partial acceleration %d", sts);
-    mapped = TRUE;
-  }
-
-  /* Use input system memory with raw NV12 surfaces */
-  if ((GST_VIDEO_INFO_FORMAT (&encoder->info) == GST_VIDEO_FORMAT_NV12 &&
-          encoder->mapped) || mapped) {
-    encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
-  } else {
-    encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
-    gst_mfx_task_use_video_memory (encoder->encode_task);
-  }
+  gboolean mapped =
+      g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7") ?
+      FALSE : TRUE;
 
   memset (&enc_request, 0, sizeof (mfxFrameAllocRequest));
 
   gst_mfx_encoder_set_encoding_params (encoder);
 
+  sts = MFXVideoENCODE_Query (encoder->session, &encoder->params,
+      &encoder->params);
+  if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
+    GST_WARNING ("Partial acceleration %d", sts);
+    mapped = TRUE;
+  }
+  else if (sts > 0)
+    GST_WARNING ("Incompatible video params detected %d", sts);
+
+  /* Use input system memory with raw NV12 surfaces or SW HEVC encoder */
+  if ((GST_VIDEO_INFO_FORMAT (&encoder->info) == GST_VIDEO_FORMAT_NV12 &&
+      encoder->mapped) || mapped) {
+    encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
+  }
+  else {
+    encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
+    gst_mfx_task_use_video_memory (encoder->encode_task);
+  }
+
   sts = MFXVideoENCODE_QueryIOSurf (encoder->session, &encoder->params,
-      &enc_request);
+        &enc_request);
   if (sts < 0) {
     GST_ERROR ("Unable to query encode allocation request %d", sts);
     return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
+  } else if (sts > 0) {
+    mapped = TRUE;
   }
 
   sts = MFXVideoENCODE_Init (encoder->session, &encoder->params);

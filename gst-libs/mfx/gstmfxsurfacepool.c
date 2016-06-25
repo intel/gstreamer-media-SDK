@@ -52,6 +52,19 @@ sync_output_surface (gconstpointer proxy, gconstpointer surf)
 }
 
 static void
+gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
+{
+  guint i, num_surfaces = gst_mfx_task_get_num_surfaces(pool->task);
+  GstMfxSurfaceProxy *surface;
+
+  for (i = 0; i < num_surfaces; i++) {
+    surface = gst_mfx_surface_proxy_new_from_task (pool->task);
+    g_queue_push_tail (&pool->free_surfaces,
+        gst_mfx_surface_proxy_ref (surface));
+  }
+}
+
+static void
 gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
 {
   pool->used_surfaces = NULL;
@@ -60,6 +73,9 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
 
   g_queue_init (&pool->free_surfaces);
   g_mutex_init (&pool->mutex);
+
+  if (pool->task && !gst_mfx_task_has_mapped_surface(pool->task))
+    gst_mfx_surface_pool_add_surfaces(pool);
 }
 
 void

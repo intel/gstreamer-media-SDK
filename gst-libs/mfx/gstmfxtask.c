@@ -74,7 +74,8 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   mfxU16 num_surfaces;
   ResponseData *response_data;
 
-  if (task->task_type & GST_MFX_TASK_DECODER) {
+  if (task->task_type & GST_MFX_TASK_DECODER &&
+      !(task->task_type & GST_MFX_TASK_ENCODER)) {
     GList *l = g_list_first (task->saved_responses);
     if (l) {
       response_data = l->data;
@@ -306,6 +307,20 @@ gst_mfx_task_get_memory_id (GstMfxTask * task)
   response_data = l->data;
 
   return &response_data->mem_ids[response_data->num_used++];
+}
+
+guint
+gst_mfx_task_get_num_surfaces (GstMfxTask * task)
+{
+  GList *l;
+  ResponseData *response_data;
+
+  g_return_val_if_fail (task != NULL, 0);
+
+  l = g_list_first (task->saved_responses);
+  response_data = l->data;
+
+  return response_data->num_surfaces;
 }
 
 mfxFrameAllocRequest *

@@ -63,3 +63,7 @@ endif()
 if(MFX_JPEG_ENCODER)
   add_definitions(-DMFX_JPEG_ENCODER)
 endif()
+
+if(MFX_JPEG_ENCODER)
+  add_definitions(-DMFX_JPEG_ENCODER)
+endif()

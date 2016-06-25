@@ -96,6 +96,9 @@ gst_mfx_task_get_display (GstMfxTask * task);
 GstMfxMemoryId *
 gst_mfx_task_get_memory_id (GstMfxTask * task);
 
+guint
+gst_mfx_task_get_num_surfaces (GstMfxTask * task);
+
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task);
 
