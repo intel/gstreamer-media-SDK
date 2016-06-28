@@ -25,7 +25,7 @@
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideomemory.h"
 
-#define GST_PLUGIN_NAME "mfxh265enc"
+#define GST_PLUGIN_NAME "mfxhevcenc"
 #define GST_PLUGIN_DESC "An MFX based H.265 video encoder"
 
 GST_DEBUG_CATEGORY_STATIC (gst_mfx_h265_enc_debug);

@@ -413,6 +413,22 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 {
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
+  /*if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !mapped) {
+    encoder->encode_task =
+        gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
+    encoder->session = gst_mfx_task_get_session (encoder->encode_task);
+    gst_mfx_task_set_task_type(encoder->encode_task, GST_MFX_TASK_ENCODER);
+  }
+  else {
+    encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
+        GST_MFX_TASK_ENCODER);
+    encoder->session = gst_mfx_task_get_session (encoder->encode_task);
+    gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
+        encoder->encode_task);
+  }
+  if (!encoder->encode_task)
+    return FALSE;*/
+
   encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
       GST_MFX_TASK_ENCODER);
   if (!encoder->encode_task)
@@ -896,8 +912,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
     frame->output_buffer =
         gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
-        encoder->bs.Data + encoder->bs.DataOffset,
-        encoder->bs.MaxLength, 0, encoder->bs.DataLength, NULL, NULL);
+            encoder->bs.Data + encoder->bs.DataOffset, encoder->bs.MaxLength,
+            0, encoder->bs.DataLength, NULL, NULL);
 
     encoder->bs.DataLength = 0;
   }
@@ -940,8 +956,8 @@ gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
 
     (*frame)->output_buffer =
         gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
-        encoder->bs.Data + encoder->bs.DataOffset, encoder->bs.MaxLength, 0,
-        encoder->bs.DataLength, NULL, NULL);
+            encoder->bs.Data + encoder->bs.DataOffset, encoder->bs.MaxLength,
+            0, encoder->bs.DataLength, NULL, NULL);
 
     encoder->bs.DataLength = 0;
   }

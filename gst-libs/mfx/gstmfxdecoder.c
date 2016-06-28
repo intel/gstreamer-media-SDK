@@ -43,6 +43,8 @@ struct _GstMfxDecoder
   GstMfxFilter *filter;
   GByteArray *bitstream;
 
+  GAsyncQueue *frames;
+
   mfxSession session;
   mfxVideoParam param;
   mfxBitstream bs;
@@ -128,6 +130,8 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
   decoder->decoder_inited = FALSE;
   decoder->mapped = mapped;
   decoder->bs.MaxLength = 1024 * 16;
+  //decoder->bs.DataFlag |= MFX_BITSTREAM_COMPLETE_FRAME;
+  decoder->frames = g_async_queue_new();
 
   decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   decoder->decode_task = gst_mfx_task_new (decoder->aggregator,
@@ -143,8 +147,10 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
   if (sts < 0)
     return FALSE;
 
-  if (!g_strcmp0 (uid, "15dd936825ad475ea34e35f3f54217a6"))
+  if (!g_strcmp0 (uid, "15dd936825ad475ea34e35f3f54217a6")) {
     mapped = TRUE;
+    decoder->bs.DataFlag |= MFX_BITSTREAM_COMPLETE_FRAME;
+  }
   g_free (uid);
 
   decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
@@ -331,7 +337,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame, GstMfxSurfaceProxy ** out_proxy)
+    GstVideoCodecFrame * frame, GstVideoCodecFrame ** out_frame)
 {
   GstMapInfo minfo;
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
@@ -340,6 +346,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxFrameSurface1 *insurf, *outsurf = NULL;
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
+
+  g_async_queue_push(decoder->frames, frame);
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
     GST_ERROR ("Failed to map input buffer");
@@ -402,7 +410,9 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       }
       proxy = filter_proxy;
     }
-    *out_proxy = proxy;
+
+    *out_frame = g_async_queue_pop(decoder->frames);
+    gst_video_codec_frame_set_user_data(*out_frame, proxy, NULL);
   }
 
 end:

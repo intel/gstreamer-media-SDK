@@ -22,7 +22,6 @@
 #define __GST_MFX_DEC_H__
 
 #include <gst/gst.h>
-#include <gst/video/gstvideodecoder.h>
 
 #include "gstmfxdecoder.h"
 #include "gstmfxpluginbase.h"

@@ -167,7 +167,7 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
 {
   GstBuffer *buffer;
   mfxStatus sts;
-  guint8 sps_data[128] = { 0 }, pps_data[128] = { 0 }, vps_data[128] = { 0 };
+  guint8 sps_data[128], pps_data[128], vps_data[128];
   guint8 *sps_info, *pps_info, *vps_info;
   guint sps_size, pps_size, vps_size;
   GstBitWriter bs;
