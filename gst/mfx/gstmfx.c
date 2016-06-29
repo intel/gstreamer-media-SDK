@@ -18,11 +18,10 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#include <gst/gst.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
 #ifdef MFX_DECODER
 #include "gstmfxdec.h"
 #endif
@@ -44,6 +43,8 @@
 #ifdef MFX_JPEG_ENCODER
 #include "gstmfxenc_jpeg.h"
 #endif
+
+#include "parsers/gstvc1parse.h"
 
 static gboolean
 plugin_init (GstPlugin * plugin)
@@ -79,6 +80,8 @@ plugin_init (GstPlugin * plugin)
   gst_element_register (plugin, "mfxjpegenc",
       GST_RANK_NONE, GST_TYPE_MFXENC_JPEG);
 #endif
+  gst_element_register (plugin, "mfxvc1parse",
+      GST_RANK_NONE, GST_MFX_TYPE_VC1_PARSE);
 
   return TRUE;
 }

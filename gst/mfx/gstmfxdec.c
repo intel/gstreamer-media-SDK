@@ -48,9 +48,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
     GST_CAPS_CODEC ("video/x-h265, \
         alignment = (string) au, \
         stream-format = (string) byte-stream")
-    GST_CAPS_CODEC ("video/x-wmv, \
-        stream-format = (string) sequence-layer-frame-layer, \
-        header-format = (string) none")
+    GST_CAPS_CODEC ("video/x-wmv")
     GST_CAPS_CODEC ("video/x-vp8")
     GST_CAPS_CODEC ("image/jpeg")
   ;
@@ -191,6 +189,62 @@ gst_mfxdec_release (GstMfxDec * mfxdec)
   gst_object_unref (mfxdec);
 }
 
+static GstFlowReturn
+gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame,
+    GstMfxSurfaceProxy * proxy)
+{
+  GstFlowReturn ret;
+  GstMfxVideoMeta *meta;
+  const GstMfxRectangle *crop_rect;
+
+  ret = gst_video_decoder_allocate_output_frame (GST_VIDEO_DECODER (mfxdec), frame);
+  if (ret != GST_FLOW_OK)
+    goto error_create_buffer;
+
+  meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
+  if (!meta)
+    goto error_get_meta;
+  gst_mfx_video_meta_set_surface_proxy (meta, proxy);
+  crop_rect = gst_mfx_surface_proxy_get_crop_rect (proxy);
+  if (crop_rect) {
+    GstVideoCropMeta *const crop_meta =
+      gst_buffer_add_video_crop_meta (frame->output_buffer);
+    if (crop_meta) {
+      crop_meta->x = crop_rect->x;
+      crop_meta->y = crop_rect->y;
+      crop_meta->width = crop_rect->width;
+      crop_meta->height = crop_rect->height;
+    }
+  }
+
+  ret = gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
+  if (ret != GST_FLOW_OK)
+    goto error_commit_buffer;
+
+  return ret;
+
+  /* ERRORS */
+error_create_buffer:
+  {
+    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
+    gst_video_codec_frame_unref (frame);
+    return GST_FLOW_ERROR;
+  }
+error_get_meta:
+  {
+    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
+    gst_video_codec_frame_unref (frame);
+    return GST_FLOW_ERROR;
+  }
+error_commit_buffer:
+  {
+    GST_INFO_OBJECT (mfxdec, "downstream element rejected the frame (%s [%d])",
+      gst_flow_get_name (ret), ret);
+    gst_video_codec_frame_unref (frame);
+    return GST_FLOW_ERROR;
+  }
+}
+
 static gboolean
 gst_mfxdec_negotiate (GstMfxDec * mfxdec)
 {
@@ -262,11 +316,21 @@ gst_mfxdec_decide_allocation (GstVideoDecoder * vdec, GstQuery * query)
     query);
 }
 
+static inline guint
+gst_mfx_codec_from_caps (GstCaps * caps)
+{
+  return gst_mfx_profile_get_codec (gst_mfx_profile_from_caps (caps));
+}
+
 static gboolean
 gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
+  mfxU32 codec = gst_mfx_codec_from_caps (caps);
   GstVideoInfo info;
+
+  if (!codec)
+    return FALSE;
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
     return FALSE;
@@ -278,8 +342,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
       gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      gst_mfx_profile_from_caps (caps), &info,
-      mfxdec->async_depth, plugin->mapped);
+      codec, mfxdec->async_depth, &info, plugin->mapped);
   if (!mfxdec->decoder)
     return FALSE;
 
@@ -303,25 +366,16 @@ static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
   gboolean hard)
 {
-  GstMfxDecoderStatus sts;
-  GstMfxProfile profile;
+  mfxU32 codec;
 
   if (!hard && mfxdec->decoder) {
-    profile = gst_mfx_profile_from_caps (caps);
-    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder))
+    codec = gst_mfx_codec_from_caps (caps);
+    if (codec == gst_mfx_decoder_get_codec (mfxdec->decoder))
       return TRUE;
   }
 
   gst_mfxdec_destroy (mfxdec);
-
-  if (!gst_mfxdec_create (mfxdec, caps))
-    return FALSE;
-
-  sts = gst_mfx_decoder_start (mfxdec->decoder);
-  if (sts != GST_MFX_DECODER_STATUS_SUCCESS)
-    return FALSE;
-
-  return TRUE;
+  return gst_mfxdec_create (mfxdec, caps);
 }
 
 static void
@@ -383,86 +437,27 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
 }
 
 static GstFlowReturn
-gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
-{
-  GstFlowReturn ret;
-  GstMfxVideoMeta *meta;
-  const GstMfxRectangle *crop_rect;
-  GstMfxSurfaceProxy *proxy;
-  GstBuffer *buf;
-
-  proxy = gst_video_codec_frame_get_user_data(frame);
-
-  buf = gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
-  if (!buf)
-    goto error_create_buffer;
-  gst_buffer_replace(&frame->output_buffer, buf);
-  gst_buffer_make_writable(frame->output_buffer);
-
-  meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
-  if (!meta)
-    goto error_get_meta;
-  gst_mfx_video_meta_set_surface_proxy (meta, proxy);
-  crop_rect = gst_mfx_surface_proxy_get_crop_rect (proxy);
-  if (crop_rect) {
-    GstVideoCropMeta *const crop_meta =
-      gst_buffer_add_video_crop_meta (frame->output_buffer);
-    if (crop_meta) {
-      crop_meta->x = crop_rect->x;
-      crop_meta->y = crop_rect->y;
-      crop_meta->width = crop_rect->width;
-      crop_meta->height = crop_rect->height;
-    }
-  }
-
-  ret = gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
-  if (ret != GST_FLOW_OK)
-    goto error_commit_buffer;
-
-  return GST_FLOW_OK;
-  /* ERRORS */
-error_create_buffer:
-  {
-    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
-    gst_video_codec_frame_unref (frame);
-    return GST_FLOW_ERROR;
-  }
-error_get_meta:
-  {
-    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
-    gst_video_codec_frame_unref (frame);
-    return GST_FLOW_ERROR;
-  }
-error_commit_buffer:
-  {
-    GST_INFO_OBJECT (mfxdec, "downstream element rejected the frame (%s [%d])",
-      gst_flow_get_name (ret), ret);
-    gst_video_codec_frame_unref (frame);
-    return GST_FLOW_ERROR;
-  }
-}
-
-static GstFlowReturn
 gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 {
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
   GstMfxDecoderStatus sts;
   GstFlowReturn ret = GST_FLOW_OK;
-  GstVideoCodecFrame *out_frame = NULL;
+  GstMfxSurfaceProxy *out_proxy = NULL;
 
     if (!gst_mfxdec_negotiate (mfxdec))
         goto not_negotiated;
 
-  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, &out_frame);
+  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, &out_proxy);
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
-      GST_VIDEO_CODEC_FRAME_FLAG_SET (frame,
-        GST_VIDEO_CODEC_FRAME_FLAG_DECODE_ONLY);
+      //GST_VIDEO_CODEC_FRAME_FLAG_SET (frame,
+        //GST_VIDEO_CODEC_FRAME_FLAG_DECODE_ONLY);
+      gst_video_decoder_drop_frame (vdec, frame);
       ret = GST_FLOW_OK;
       break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
-      ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+      ret = gst_mfxdec_push_decoded_frame (mfxdec, frame, out_proxy);
       break;
     case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:
     case GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER:

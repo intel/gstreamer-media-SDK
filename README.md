@@ -116,12 +116,6 @@ Known Issues
   * Decode for VC-1 Advance Profile bitstream is not working.
 
 
-Work In Progress
-----------------
-
- - Codec parsers
-
-
 Acknowledgements
 ----------------
 

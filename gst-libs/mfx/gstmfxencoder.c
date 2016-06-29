@@ -1130,21 +1130,6 @@ error_invalid_framerate:
   }
 }
 
-
-/* Reconfigures the encoder with the new properties */
-static GstMfxEncoderStatus
-gst_mfx_encoder_reconfigure_internal (GstMfxEncoder * encoder)
-{
-  GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
-  GstMfxEncoderStatus status;
-
-  status = klass->reconfigure (encoder);
-  if (status != GST_MFX_ENCODER_STATUS_SUCCESS)
-    return status;
-
-  return GST_MFX_ENCODER_STATUS_SUCCESS;
-}
-
 /**
  * gst_mfx_encoder_set_codec_state:
  * @encoder: a #GstMfxEncoder
@@ -1165,6 +1150,7 @@ GstMfxEncoderStatus
 gst_mfx_encoder_set_codec_state (GstMfxEncoder * encoder,
     GstVideoCodecState * state)
 {
+  GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
   GstMfxEncoderStatus status;
 
   g_return_val_if_fail (encoder != NULL,
@@ -1178,7 +1164,7 @@ gst_mfx_encoder_set_codec_state (GstMfxEncoder * encoder,
       return status;
     encoder->info = state->info;
   }
-  return gst_mfx_encoder_reconfigure_internal (encoder);
+  return klass->reconfigure (encoder);
 }
 
 GstMfxEncoderStatus
