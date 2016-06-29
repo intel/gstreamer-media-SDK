@@ -44,7 +44,9 @@
 #include "gstmfxenc_jpeg.h"
 #endif
 
+#ifdef MFX_VC1_PARSER
 #include "parsers/gstvc1parse.h"
+#endif
 
 static gboolean
 plugin_init (GstPlugin * plugin)
