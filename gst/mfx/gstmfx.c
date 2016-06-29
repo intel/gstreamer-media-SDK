@@ -80,9 +80,11 @@ plugin_init (GstPlugin * plugin)
   gst_element_register (plugin, "mfxjpegenc",
       GST_RANK_NONE, GST_TYPE_MFXENC_JPEG);
 #endif
+
+#ifdef MFX_VC1_PARSER
   gst_element_register (plugin, "mfxvc1parse",
       GST_RANK_NONE, GST_MFX_TYPE_VC1_PARSE);
-
+#endif
   return TRUE;
 }
 

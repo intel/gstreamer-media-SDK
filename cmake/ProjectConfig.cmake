@@ -1,5 +1,6 @@
 set(BASE_LIBRARIES "")
 set(SINK_BACKEND "")
+set(PARSER "")
 
 if(UNIX)
   include(FindPkgConfig)
@@ -8,6 +9,7 @@ endif()
 include(${CMAKE_SOURCE_DIR}/cmake/FindMediaSDK.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/FindBaseDependencies.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/FindSinkDependencies.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/FindVC1ParserDependencies.cmake)
 
 FindMediaSDK()
 FindBaseLibs(BASE_LIBRARIES)
@@ -66,4 +68,9 @@ endif()
 
 if(MFX_JPEG_ENCODER)
   add_definitions(-DMFX_JPEG_ENCODER)
+endif()
+
+if(MFX_VC1_PARSER)
+  FindVC1(PARSER)
+  add_definitions(-DMFX_VC1_PARSER)
 endif()

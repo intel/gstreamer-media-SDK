@@ -31,6 +31,8 @@ CMAKE_DEPENDENT_OPTION(EGL_RENDERER "Build Sink plugin with EGL backend"
 
 option (WITH_MSS "Build plugins for MSS." OFF)
 
+option (MFX_VC1_PARSER "Build VC1 AP Parser plugin" ON)
+
 include(${CMAKE_SOURCE_DIR}/cmake/ProjectInfo.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/ProjectConfig.cmake)
 
@@ -54,7 +56,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++")
 
 include_directories(
     gst/mfx
-    gst-libs/mfx)
+    gst-libs/mfx
+    parsers)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "${GSTREAMER_LIBDIR}/gstreamer-1.0")
@@ -75,14 +78,17 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #Add gst and gst-libs as subdirectory
 add_subdirectory (gst-libs)
 add_subdirectory (gst)
+add_subdirectory (parsers)
 
 LIST(APPEND SOURCE ${GST_SOURCE})
 LIST(APPEND SOURCE ${GST_LIBS_SOURCE})
+LIST(APPEND SOURCE ${GST_PARSE})
 
 add_library(gstmfx SHARED ${SOURCE})
 target_link_libraries(gstmfx
     ${BASE_LIBRARIES}
     ${SINK_BACKEND}
+    ${PARSER}
     libmfx)
 
 # Add uninstall target. Taken from the KDE4 scripts

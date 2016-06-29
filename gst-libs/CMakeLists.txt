@@ -71,4 +71,3 @@ if(MFX_JPEG_ENCODER)
 endif()
 
 set(GST_LIBS_SOURCE ${SOURCE} PARENT_SCOPE)
-#message("[DEBUG-SOURCE]:" ${SOURCE})
