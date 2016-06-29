@@ -24,8 +24,9 @@
 #include <gst/gst.h>
 #include <gst/video/gstvideodecoder.h>
 
-#include "gstmfxdecoder.h"
 #include "gstmfxpluginbase.h"
+
+#include <gst-libs/mfx/gstmfxdecoder.h>
 
 G_BEGIN_DECLS
 

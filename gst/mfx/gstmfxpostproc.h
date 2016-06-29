@@ -25,10 +25,11 @@
 #define GST_MFXPOSTPROC_H
 
 #include "gstmfxpluginbase.h"
-#include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurfacepool.h"
-#include "gstmfxfilter.h"
-#include "gstmfxvalue.h"
+
+#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurfacepool.h>
+#include <gst-libs/mfx/gstmfxfilter.h>
+#include <gst-libs/mfx/gstmfxvalue.h>
 
 G_BEGIN_DECLS
 

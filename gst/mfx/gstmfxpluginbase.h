@@ -27,7 +27,8 @@
 #include <gst/video/gstvideodecoder.h>
 #include <gst/video/gstvideoencoder.h>
 #include <gst/video/gstvideosink.h>
-#include "gstmfxtaskaggregator.h"
+
+#include <gst-libs/mfx/gstmfxtaskaggregator.h>
 
 G_BEGIN_DECLS
 

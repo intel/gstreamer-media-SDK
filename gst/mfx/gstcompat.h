@@ -1,7 +1,7 @@
 #ifndef GST_COMPAT_H
 #define GST_COMPAT_H
 
-#include "sysdeps.h"
+#include "gst-libs/mfx/sysdeps.h"
 
 #if !GST_CHECK_VERSION (1,5,0)
 static inline GstBuffer *

@@ -22,14 +22,12 @@
 
 #include "gstcompat.h"
 #include "gstmfxdec.h"
-
-#include <string.h>
-
-#include "gstmfxsurfaceproxy.h"
-#include "gstmfxprofile.h"
 #include "gstmfxvideomemory.h"
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
+
+#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxprofile.h>
 
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAT_DEFAULT(mfxdec_debug)

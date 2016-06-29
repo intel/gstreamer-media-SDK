@@ -24,10 +24,11 @@
 #define GST_MFX_VIDEO_META_H
 
 #include <gst/video/video.h>
-#include "gstmfxdisplay.h"
-#include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurfacepool.h"
-#include "gstmfxutils_vaapi.h"
+
+#include <gst-libs/mfx/gstmfxdisplay.h>
+#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurfacepool.h>
+#include <gst-libs/mfx/gstmfxutils_vaapi.h>
 
 G_BEGIN_DECLS
 
