@@ -21,11 +21,7 @@
 #ifndef __GST_MFX_DEC_H__
 #define __GST_MFX_DEC_H__
 
-#include <gst/gst.h>
-#include <gst/video/gstvideodecoder.h>
-
 #include "gstmfxpluginbase.h"
-
 #include <gst-libs/mfx/gstmfxdecoder.h>
 
 G_BEGIN_DECLS

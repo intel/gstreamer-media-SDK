@@ -299,9 +299,8 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
   WRITE_UINT32 (&bs, pps_size, 16);     /* PPS nalUnitLength */
   gst_bit_writer_put_bytes (&bs, pps_info, pps_size);
 
-  buffer = gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
-      GST_BIT_WRITER_DATA (&bs), GST_BIT_WRITER_BIT_SIZE (&bs) / 8,
-      0, GST_BIT_WRITER_BIT_SIZE (&bs) / 8, NULL, NULL);
+  buffer = gst_buffer_new_wrapped (
+      GST_BIT_WRITER_DATA (&bs), GST_BIT_WRITER_BIT_SIZE (&bs) / 8);
   if (!buffer)
     goto error_alloc_buffer;
   *out_buffer_ptr = buffer;

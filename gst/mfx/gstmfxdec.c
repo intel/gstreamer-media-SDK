@@ -197,8 +197,8 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame,
   GstMfxVideoMeta *meta;
   const GstMfxRectangle *crop_rect;
 
-  ret = gst_video_decoder_allocate_output_frame (GST_VIDEO_DECODER (mfxdec), frame);
-  if (ret != GST_FLOW_OK)
+  frame->output_buffer = gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
+  if (!frame->output_buffer)
     goto error_create_buffer;
 
   meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
