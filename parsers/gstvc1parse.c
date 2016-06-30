@@ -250,8 +250,6 @@ gst_mfx_vc1_parse_init (GstMfxVC1Parse * vc1parse)
 static void
 gst_vc1_parse_finalize (GObject * object)
 {
-  /*GstMfxVC1Parse *vc1parse = GST_VC1_PARSE (object); */
-
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -275,7 +273,7 @@ gst_vc1_parse_reset (GstMfxVC1Parse * vc1parse)
 
   vc1parse->input_header_format = VC1_HEADER_FORMAT_NONE;
   vc1parse->input_stream_format = VC1_STREAM_FORMAT_BDU;
-  vc1parse->output_stream_format = VC1_STREAM_FORMAT_SEQUENCE_LAYER_BDU;
+  vc1parse->output_stream_format = VC1_STREAM_FORMAT_BDU;
   gst_buffer_replace (&vc1parse->seq_layer_buffer, NULL);
   gst_buffer_replace (&vc1parse->seq_hdr_buffer, NULL);
   gst_buffer_replace (&vc1parse->entrypoint_buffer, NULL);
@@ -315,7 +313,7 @@ gst_vc1_parse_is_format_allowed (GstMfxVC1Parse * vc1parse)
 
   GST_DEBUG_OBJECT (vc1parse, "check stream-format conversion");
   switch (vc1parse->output_stream_format) {
-    case VC1_STREAM_FORMAT_SEQUENCE_LAYER_BDU:
+    case VC1_STREAM_FORMAT_BDU:
       if (vc1parse->input_stream_format == VC1_STREAM_FORMAT_BDU_FRAME ||
           vc1parse->input_stream_format ==
           VC1_STREAM_FORMAT_SEQUENCE_LAYER_BDU_FRAME ||
@@ -356,7 +354,7 @@ gst_vc1_parse_renegotiate (GstMfxVC1Parse * vc1parse)
   GST_DEBUG_OBJECT (vc1parse, "Renegotiating");
 
   if (vc1parse->profile == GST_VC1_PROFILE_ADVANCED)
-    vc1parse->output_stream_format = VC1_STREAM_FORMAT_SEQUENCE_LAYER_BDU;
+    vc1parse->output_stream_format = VC1_STREAM_FORMAT_BDU;
   else
     vc1parse->output_stream_format = VC1_STREAM_FORMAT_SEQUENCE_LAYER_FRAME_LAYER;
 
@@ -1401,24 +1399,19 @@ gst_vc1_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
     return GST_FLOW_OK;
 
   switch (vc1parse->output_stream_format) {
-    case VC1_STREAM_FORMAT_SEQUENCE_LAYER_BDU:
+    case VC1_STREAM_FORMAT_BDU:
       switch (vc1parse->input_stream_format) {
         case VC1_STREAM_FORMAT_BDU:
-          /* We just need to send the sequence-layer first */
-          if (!vc1parse->codec_data_sent) {
-            ret = gst_vc1_parse_push_sequence_and_entrypoint_headers (vc1parse);
-            if (ret != GST_FLOW_OK) {
-              GST_ERROR_OBJECT (vc1parse, "push sequence layer failed");
-              break;
-            }
-            vc1parse->codec_data_sent = TRUE;
-          }
+          g_assert_not_reached ();
           break;
         case VC1_STREAM_FORMAT_BDU_FRAME:
           goto conversion_not_supported;
           break;
         case VC1_STREAM_FORMAT_SEQUENCE_LAYER_BDU:
-          g_assert_not_reached ();
+          /* We just need to drop sequence-layer buffer */
+          if (frame->flags & GST_BASE_PARSE_FRAME_FLAG_NO_FRAME) {
+            ret = GST_BASE_PARSE_FLOW_DROPPED;
+          }
           break;
         case VC1_STREAM_FORMAT_SEQUENCE_LAYER_BDU_FRAME:
         case VC1_STREAM_FORMAT_SEQUENCE_LAYER_RAW_FRAME:
@@ -1435,8 +1428,6 @@ gst_vc1_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
             }
             vc1parse->codec_data_sent = TRUE;
           }
-          /* FIXME: We may only authorize this when header-format is set to
-           * none and we should add the entrypoint for advanced profile. */
           ret = gst_vc1_parse_convert_asf_to_bdu (vc1parse, frame);
           break;
         case VC1_STREAM_FORMAT_FRAME_LAYER:

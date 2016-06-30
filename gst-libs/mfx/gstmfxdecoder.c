@@ -45,6 +45,7 @@ struct _GstMfxDecoder
   mfxSession session;
   mfxVideoParam param;
   mfxBitstream bs;
+  mfxPluginUID plugin_uid;
   mfxU32 codec;
 
   GstVideoInfo info;
@@ -70,40 +71,47 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
   gst_mfx_task_replace (&decoder->decode_task, NULL);
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
 
+  if ((decoder->codec == MFX_CODEC_HEVC) || (decoder->codec == MFX_CODEC_VP8))
+    MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
+
   MFXVideoDECODE_Close (decoder->session);
 }
 
 static mfxStatus
-gst_mfx_decoder_load_decoder_plugins (GstMfxDecoder * decoder, gchar ** out_uid)
+gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 {
-  mfxPluginUID uid;
   mfxStatus sts;
   guint i, c;
 
   switch (decoder->codec) {
     case MFX_CODEC_HEVC:
     {
-      gchar *plugin_uids[] = {
+      gchar *uids[] = {
         "33a61c0b4c27454ca8d85dde757c6f8e",
         "15dd936825ad475ea34e35f3f54217a6",
         NULL
       };
-      for (i = 0; plugin_uids[i]; i++) {
-        for (c = 0; c < sizeof (uid.Data); c++)
-          sscanf (plugin_uids[i] + 2 * c, "%2hhx", uid.Data + c);
-        sts = MFXVideoUSER_Load (decoder->session, &uid, 1);
+      for (i = 0; uids[i]; i++) {
+        for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
+          sscanf (uids[i] + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+        sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
         if (MFX_ERR_NONE == sts) {
-          *out_uid = g_strdup (plugin_uids[i]);
+          if (!g_strcmp0 (uids[i], "15dd936825ad475ea34e35f3f54217a6")) {
+            decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
+            decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+          }
           break;
         }
       }
     }
       break;
     case MFX_CODEC_VP8:
-      *out_uid = g_strdup ("f622394d8d87452f878c51f2fc9b4131");
-      for (c = 0; c < sizeof (uid.Data); c++)
-        sscanf (*out_uid + 2 * c, "%2hhx", uid.Data + c);
-      sts = MFXVideoUSER_Load (decoder->session, &uid, 1);
+    {
+      gchar *uid = "f622394d8d87452f878c51f2fc9b4131";
+      for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
+        sscanf (*uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
+    }
       break;
     default:
       sts = MFX_ERR_NONE;
@@ -118,14 +126,18 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
     GstVideoInfo * info, gboolean mapped)
 {
   mfxStatus sts = MFX_ERR_NONE;
-  gchar *uid = NULL;
 
   decoder->info = *info;
   decoder->codec = decoder->param.mfx.CodecId = codec;
-  decoder->param.AsyncDepth = async_depth;
-  decoder->decoder_inited = FALSE;
   decoder->mapped = mapped;
+  decoder->param.AsyncDepth = async_depth;
+  decoder->param.IOPattern = mapped ?
+      MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+  decoder->decoder_inited = FALSE;
   decoder->bs.MaxLength = 1024 * 16;
+  decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
+  if (!decoder->bitstream)
+    return FALSE;
 
   decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   decoder->decode_task = gst_mfx_task_new (decoder->aggregator,
@@ -137,19 +149,9 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
       decoder->decode_task);
   decoder->session = gst_mfx_task_get_session (decoder->decode_task);
 
-  sts = gst_mfx_decoder_load_decoder_plugins (decoder, &uid);
+  sts = gst_mfx_decoder_configure_plugins (decoder);
   if (sts < 0)
     return FALSE;
-
-  if (!g_strcmp0 (uid, "15dd936825ad475ea34e35f3f54217a6"))
-    mapped = TRUE;
-  g_free (uid);
-
-  decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
-  if (!decoder->bitstream)
-    return FALSE;
-  decoder->param.IOPattern = mapped ?
-      MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 
   return TRUE;
 }

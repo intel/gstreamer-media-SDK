@@ -41,7 +41,9 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 
 /* *INDENT-OFF* */
 static const char gst_mfxdecode_sink_caps_str[] =
-    GST_CAPS_CODEC ("video/mpeg, mpegversion=2, systemstream=(boolean)false")
+    GST_CAPS_CODEC ("video/mpeg, \
+        mpegversion = 2, \
+        systemstream = (boolean) false")
     GST_CAPS_CODEC ("video/x-h264, \
         alignment = (string) au, \
         stream-format = (string) byte-stream")
@@ -453,7 +455,6 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
       //GST_VIDEO_CODEC_FRAME_FLAG_SET (frame,
         //GST_VIDEO_CODEC_FRAME_FLAG_DECODE_ONLY);
-      gst_video_decoder_drop_frame (vdec, frame);
       ret = GST_FLOW_OK;
       break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
