@@ -410,3 +410,58 @@ end:
 
   return ret;
 }
+
+GstMfxDecoderStatus
+gst_mfx_decoder_flush (GstMfxDecoder * decoder,
+    GstVideoCodecFrame ** out_frame)
+{
+  GstMfxDecoderStatus ret;
+  GstMfxFilterStatus filter_sts;
+  GstMfxSurfaceProxy *proxy, *filter_proxy;
+  mfxFrameSurface1 *insurf, *outsurf = NULL;
+  mfxSyncPoint syncp;
+  mfxStatus sts;
+
+  do {
+    proxy = gst_mfx_surface_proxy_new_from_pool (decoder->pool);
+    if (!proxy)
+      return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
+
+    insurf = gst_mfx_surface_proxy_get_frame_surface (proxy);
+    sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, NULL,
+        insurf, &outsurf, &syncp);
+
+    if (sts == MFX_WRN_DEVICE_BUSY)
+      g_usleep (500);
+  } while (MFX_WRN_DEVICE_BUSY == sts);
+
+  if (sts == MFX_ERR_NONE) {
+    do {
+      sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
+    } while (MFX_WRN_IN_EXECUTION == sts);
+
+    proxy = gst_mfx_surface_pool_find_proxy (decoder->pool, outsurf);
+
+    if (gst_mfx_task_has_type (decoder->decode_task, GST_MFX_TASK_VPP_IN)) {
+      filter_sts = gst_mfx_filter_process (decoder->filter, proxy,
+          &filter_proxy);
+
+      if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
+        GST_ERROR ("MFX post-processing error while decoding.");
+        ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+      }
+      proxy = filter_proxy;
+    }
+    *out_frame = g_queue_pop_tail (decoder->frames);
+    gst_video_codec_frame_set_user_data(*out_frame,
+        gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
+    (*out_frame)->pts = (*out_frame)->dts;
+
+    decoder->num_decoded_frames++;
+    GST_DEBUG("decoded frame number : %ld\n", decoder->num_decoded_frames);
+    ret = GST_MFX_DECODER_STATUS_SUCCESS;
+  } else {
+    ret = GST_MFX_DECODER_STATUS_FLUSHED;
+  }
+  return ret;
+}
