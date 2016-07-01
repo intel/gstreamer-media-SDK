@@ -483,6 +483,22 @@ not_negotiated:
   }
 }
 
+static GstFlowReturn
+gst_mfxdec_finish (GstVideoDecoder *vdec)
+{
+  GstMfxDec *mfxdec = GST_MFXDEC (vdec);
+  GstMfxDecoderStatus sts;
+  GstVideoCodecFrame *out_frame;
+  GstFlowReturn ret = GST_FLOW_OK;
+  do {
+    sts = gst_mfx_decoder_flush (mfxdec->decoder, &out_frame);
+    if (GST_MFX_DECODER_STATUS_FLUSHED == sts)
+      break;
+    ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+  } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
+  return ret;
+}
+
 static void
 gst_mfxdec_class_init (GstMfxDecClass *klass)
 {
@@ -516,6 +532,7 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
   video_decoder_class->open = GST_DEBUG_FUNCPTR (gst_mfxdec_open);
   video_decoder_class->close = GST_DEBUG_FUNCPTR (gst_mfxdec_close);
   video_decoder_class->flush = GST_DEBUG_FUNCPTR (gst_mfxdec_flush);
+  video_decoder_class->finish = GST_DEBUG_FUNCPTR (gst_mfxdec_finish);
   video_decoder_class->set_format = GST_DEBUG_FUNCPTR (gst_mfxdec_set_format);
   video_decoder_class->handle_frame =
       GST_DEBUG_FUNCPTR (gst_mfxdec_handle_frame);
