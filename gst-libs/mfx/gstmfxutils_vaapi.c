@@ -27,83 +27,79 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-struct _VaapiImage {
-    /*< private >*/
-    GstMfxMiniObject    parent_instance;
-    GstMfxDisplay      *display;
-    GstVideoFormat      format;
-    guchar             *image_data;
-    guint               width;
-    guint               height;
-    VAImage             image;
+struct _VaapiImage
+{
+  /*< private > */
+  GstMfxMiniObject parent_instance;
+  GstMfxDisplay *display;
+  GstVideoFormat format;
+  guchar *image_data;
+  guint width;
+  guint height;
+  VAImage image;
 };
 
 static gboolean
-_vaapi_image_set_image (VaapiImage *image, const VAImage *va_image);
+_vaapi_image_set_image (VaapiImage * image, const VAImage * va_image);
 
 static void
-vaapi_image_finalize (VaapiImage *image)
+vaapi_image_finalize (VaapiImage * image)
 {
-	VAImageID image_id;
-	VAStatus status;
+  VAImageID image_id;
+  VAStatus status;
 
-    vaapi_image_unmap (image);
+  vaapi_image_unmap (image);
 
-	image_id = vaapi_image_get_id (image);
-	GST_DEBUG ("image %" GST_MFX_ID_FORMAT, GST_MFX_ID_ARGS (image_id));
+  image_id = vaapi_image_get_id (image);
+  GST_DEBUG ("image %" GST_MFX_ID_FORMAT, GST_MFX_ID_ARGS (image_id));
 
-    if (image_id != VA_INVALID_ID) {
-		GST_MFX_DISPLAY_LOCK (image->display);
-		status = vaDestroyImage (GST_MFX_DISPLAY_VADISPLAY (image->display), image_id);
-		GST_MFX_DISPLAY_UNLOCK (image->display);
-        if (!vaapi_check_status (status, "vaDestroyImage ()"))
-			g_warning ("failed to destroy image %" GST_MFX_ID_FORMAT,
-				GST_MFX_ID_ARGS (image_id));
-    }
-    gst_mfx_display_unref (image->display);
+  if (image_id != VA_INVALID_ID) {
+    GST_MFX_DISPLAY_LOCK (image->display);
+    status =
+        vaDestroyImage (GST_MFX_DISPLAY_VADISPLAY (image->display), image_id);
+    GST_MFX_DISPLAY_UNLOCK (image->display);
+    if (!vaapi_check_status (status, "vaDestroyImage ()"))
+      g_warning ("failed to destroy image %" GST_MFX_ID_FORMAT,
+          GST_MFX_ID_ARGS (image_id));
+  }
+  gst_mfx_display_unref (image->display);
 }
 
 static gboolean
-vaapi_image_create (VaapiImage *image,
+vaapi_image_create (VaapiImage * image,
     guint width, guint height, GstVideoFormat format)
 {
-    VAStatus status;
-    VAImageFormat va_format = {
-        .fourcc         = gst_video_format_to_va_fourcc (format),
-        .byte_order     = VA_LSB_FIRST,
-        .bits_per_pixel = 8,
-        .depth          = 8,
-    };
+  VAStatus status;
+  VAImageFormat va_format = {
+    .fourcc = gst_video_format_to_va_fourcc (format),
+    .byte_order = VA_LSB_FIRST,
+    .bits_per_pixel = 8,
+    .depth = 8,
+  };
 
-	GST_MFX_DISPLAY_LOCK (image->display);
-    status = vaCreateImage (
-		GST_MFX_DISPLAY_VADISPLAY (image->display),
-        &va_format,
-        width,
-        height,
-        &image->image
-    );
-	GST_MFX_DISPLAY_UNLOCK (image->display);
+  GST_MFX_DISPLAY_LOCK (image->display);
+  status = vaCreateImage (GST_MFX_DISPLAY_VADISPLAY (image->display),
+      &va_format, width, height, &image->image);
+  GST_MFX_DISPLAY_UNLOCK (image->display);
 
-    if (status != VA_STATUS_SUCCESS)
-        return FALSE;
+  if (status != VA_STATUS_SUCCESS)
+    return FALSE;
 
-    image->format = format;
-    image->width = width;
-    image->height = height;
+  image->format = format;
+  image->width = width;
+  image->height = height;
 
-    return TRUE;
+  return TRUE;
 }
 
 static inline const GstMfxMiniObjectClass *
 vaapi_image_class (void)
 {
-    static const GstMfxMiniObjectClass \
-        VaapiImageClass = {
-            sizeof (VaapiImage),
-            (GDestroyNotify)vaapi_image_finalize
-        };
-    return &VaapiImageClass;
+  static const GstMfxMiniObjectClass VaapiImageClass = {
+    sizeof (VaapiImage),
+    (GDestroyNotify) vaapi_image_finalize
+  };
+  return &VaapiImageClass;
 }
 
 /**
@@ -122,28 +118,28 @@ VaapiImage *
 vaapi_image_new (GstMfxDisplay * display, guint width, guint height,
     GstVideoFormat format)
 {
-    VaapiImage *image;
+  VaapiImage *image;
 
-    g_return_val_if_fail (width > 0, NULL);
-    g_return_val_if_fail (height > 0, NULL);
-    g_return_val_if_fail (display != NULL, NULL);
+  g_return_val_if_fail (width > 0, NULL);
+  g_return_val_if_fail (height > 0, NULL);
+  g_return_val_if_fail (display != NULL, NULL);
 
-    image = (VaapiImage *)
-        gst_mfx_mini_object_new0 (vaapi_image_class ());
+  image = (VaapiImage *)
+      gst_mfx_mini_object_new0 (vaapi_image_class ());
 
-    if (!image)
-        return NULL;
+  if (!image)
+    return NULL;
 
-    image->display = gst_mfx_display_ref (display);
-    image->image.image_id = VA_INVALID_ID;
-    image->image.buf = VA_INVALID_ID;
-    if (!vaapi_image_create (image, width, height, format))
-        goto error;
-    return image;
+  image->display = gst_mfx_display_ref (display);
+  image->image.image_id = VA_INVALID_ID;
+  image->image.buf = VA_INVALID_ID;
+  if (!vaapi_image_create (image, width, height, format))
+    goto error;
+  return image;
 
 error:
-    vaapi_image_unref (image);
-    return NULL;
+  vaapi_image_unref (image);
+  return NULL;
 }
 
 /**
@@ -159,23 +155,23 @@ error:
  * Return value: the newly allocated #VaapiImage object
  */
 VaapiImage *
-vaapi_image_new_with_image (GstMfxDisplay *display, VAImage *va_image)
+vaapi_image_new_with_image (GstMfxDisplay * display, VAImage * va_image)
 {
-    VaapiImage *image;
+  VaapiImage *image;
 
-    g_return_val_if_fail (va_image, NULL);
-    g_return_val_if_fail (va_image->image_id != VA_INVALID_ID, NULL);
-    g_return_val_if_fail (va_image->buf != VA_INVALID_ID, NULL);
+  g_return_val_if_fail (va_image, NULL);
+  g_return_val_if_fail (va_image->image_id != VA_INVALID_ID, NULL);
+  g_return_val_if_fail (va_image->buf != VA_INVALID_ID, NULL);
 
-	image = (VaapiImage *)
-        gst_mfx_mini_object_new0 (vaapi_image_class ());
+  image = (VaapiImage *)
+      gst_mfx_mini_object_new0 (vaapi_image_class ());
 
-    if (!image)
-        return NULL;
+  if (!image)
+    return NULL;
 
-    image->display = gst_mfx_display_ref (display);
-    _vaapi_image_set_image (image, va_image);
-    return image;
+  image->display = gst_mfx_display_ref (display);
+  _vaapi_image_set_image (image, va_image);
+  return image;
 }
 
 /**
@@ -187,15 +183,15 @@ vaapi_image_new_with_image (GstMfxDisplay *display, VAImage *va_image)
  * Return value: the underlying VA image id
  */
 VAImageID
-vaapi_image_get_id (VaapiImage *image)
+vaapi_image_get_id (VaapiImage * image)
 {
-    VAImage *va_image;
+  VAImage *va_image;
 
-    g_return_val_if_fail (image != NULL, VA_INVALID_ID);
+  g_return_val_if_fail (image != NULL, VA_INVALID_ID);
 
-    va_image = &image->image;
+  va_image = &image->image;
 
-	return va_image->image_id;
+  return va_image->image_id;
 }
 
 /**
@@ -208,17 +204,17 @@ vaapi_image_get_id (VaapiImage *image)
  * Return value: %TRUE on success
  */
 gboolean
-vaapi_image_get_image (VaapiImage *image, VAImage *va_image)
+vaapi_image_get_image (VaapiImage * image, VAImage * va_image)
 {
-    g_return_val_if_fail (image != NULL, FALSE);
+  g_return_val_if_fail (image != NULL, FALSE);
 
-    if (va_image)
-        *va_image = image->image;
+  if (va_image)
+    *va_image = image->image;
 
-    return TRUE;
+  return TRUE;
 }
 
-/*
+/**
  * _vaapi_image_set_image:
  * @image: a #VaapiImage
  * @va_image: a VA image
@@ -230,14 +226,14 @@ vaapi_image_get_image (VaapiImage *image, VAImage *va_image)
  * Return value: %TRUE on success
  */
 gboolean
-_vaapi_image_set_image (VaapiImage *image, const VAImage *va_image)
+_vaapi_image_set_image (VaapiImage * image, const VAImage * va_image)
 {
-    image->format = gst_video_format_from_va_fourcc (va_image->format.fourcc);
-    image->image  = *va_image;
-    image->width  = va_image->width;
-    image->height = va_image->height;
+  image->format = gst_video_format_from_va_fourcc (va_image->format.fourcc);
+  image->image = *va_image;
+  image->width = va_image->width;
+  image->height = va_image->height;
 
-    return TRUE;
+  return TRUE;
 }
 
 /**
@@ -249,11 +245,11 @@ _vaapi_image_set_image (VaapiImage *image, const VAImage *va_image)
  * Return value: the #GstVideoFormat
  */
 GstVideoFormat
-vaapi_image_get_format (VaapiImage *image)
+vaapi_image_get_format (VaapiImage * image)
 {
-    g_return_val_if_fail (image != NULL, 0);
+  g_return_val_if_fail (image != NULL, 0);
 
-    return image->format;
+  return image->format;
 }
 
 /**
@@ -265,11 +261,11 @@ vaapi_image_get_format (VaapiImage *image)
  * Return value: the image width, in pixels
  */
 guint
-vaapi_image_get_width (VaapiImage *image)
+vaapi_image_get_width (VaapiImage * image)
 {
-    g_return_val_if_fail (image != NULL, 0);
+  g_return_val_if_fail (image != NULL, 0);
 
-    return image->width;
+  return image->width;
 }
 
 /**
@@ -281,11 +277,11 @@ vaapi_image_get_width (VaapiImage *image)
  * Return value: the image height, in pixels.
  */
 guint
-vaapi_image_get_height (VaapiImage *image)
+vaapi_image_get_height (VaapiImage * image)
 {
-    g_return_val_if_fail (image != NULL, 0);
+  g_return_val_if_fail (image != NULL, 0);
 
-    return image->height;
+  return image->height;
 }
 
 /**
@@ -297,21 +293,21 @@ vaapi_image_get_height (VaapiImage *image)
  * Retrieves the dimensions of a #VaapiImage.
  */
 void
-vaapi_image_get_size (VaapiImage *image, guint *pwidth, guint *pheight)
+vaapi_image_get_size (VaapiImage * image, guint * pwidth, guint * pheight)
 {
-    g_return_if_fail (image != NULL);
+  g_return_if_fail (image != NULL);
 
-    if (pwidth)
-        *pwidth = image->width;
+  if (pwidth)
+    *pwidth = image->width;
 
-    if (pheight)
-        *pheight = image->height;
+  if (pheight)
+    *pheight = image->height;
 }
 
 static inline gboolean
-_vaapi_image_is_mapped (VaapiImage *image)
+_vaapi_image_is_mapped (VaapiImage * image)
 {
-    return image->image_data != NULL;
+  return image->image_data != NULL;
 }
 
 /**
@@ -324,27 +320,24 @@ _vaapi_image_is_mapped (VaapiImage *image)
  * Return value: %TRUE on success
  */
 gboolean
-vaapi_image_map (VaapiImage *image)
+vaapi_image_map (VaapiImage * image)
 {
-	VAStatus status;
+  VAStatus status;
 
-	g_return_val_if_fail (image != NULL, FALSE);
+  g_return_val_if_fail (image != NULL, FALSE);
 
-    if (_vaapi_image_is_mapped (image))
-        goto map_success;
+  if (_vaapi_image_is_mapped (image))
+    goto map_success;
 
-	GST_MFX_DISPLAY_LOCK (image->display);
-    status = vaMapBuffer (
-		GST_MFX_DISPLAY_VADISPLAY (image->display),
-        image->image.buf,
-        (void **)&image->image_data
-    );
-	GST_MFX_DISPLAY_UNLOCK (image->display);
-    if (!vaapi_check_status (status, "vaMapBuffer ()"))
-        return FALSE;
+  GST_MFX_DISPLAY_LOCK (image->display);
+  status = vaMapBuffer (GST_MFX_DISPLAY_VADISPLAY (image->display),
+      image->image.buf, (void **) &image->image_data);
+  GST_MFX_DISPLAY_UNLOCK (image->display);
+  if (!vaapi_check_status (status, "vaMapBuffer ()"))
+    return FALSE;
 
 map_success:
-    return TRUE;
+  return TRUE;
 }
 
 /**
@@ -357,26 +350,24 @@ map_success:
  * Return value: %TRUE on success
  */
 gboolean
-vaapi_image_unmap (VaapiImage *image)
+vaapi_image_unmap (VaapiImage * image)
 {
-	VAStatus status;
+  VAStatus status;
 
-	g_return_val_if_fail (image != NULL, FALSE);
+  g_return_val_if_fail (image != NULL, FALSE);
 
-    if (!_vaapi_image_is_mapped (image))
-        return TRUE;
-
-	GST_MFX_DISPLAY_LOCK (image->display);
-    status = vaUnmapBuffer (
-		GST_MFX_DISPLAY_VADISPLAY (image->display),
-        image->image.buf
-    );
-	GST_MFX_DISPLAY_UNLOCK (image->display);
-    if (!vaapi_check_status (status, "vaUnmapBuffer ()"))
-        return FALSE;
-
-    image->image_data = NULL;
+  if (!_vaapi_image_is_mapped (image))
     return TRUE;
+
+  GST_MFX_DISPLAY_LOCK (image->display);
+  status = vaUnmapBuffer (GST_MFX_DISPLAY_VADISPLAY (image->display),
+      image->image.buf);
+  GST_MFX_DISPLAY_UNLOCK (image->display);
+  if (!vaapi_check_status (status, "vaUnmapBuffer ()"))
+    return FALSE;
+
+  image->image_data = NULL;
+  return TRUE;
 }
 
 /**
@@ -389,11 +380,11 @@ vaapi_image_unmap (VaapiImage *image)
  * Return value: the number of planes available in the @image
  */
 guint
-vaapi_image_get_plane_count (VaapiImage *image)
+vaapi_image_get_plane_count (VaapiImage * image)
 {
-    g_return_val_if_fail (image != NULL, 0);
+  g_return_val_if_fail (image != NULL, 0);
 
-    return image->image.num_planes;
+  return image->image.num_planes;
 }
 
 /**
@@ -407,13 +398,13 @@ vaapi_image_get_plane_count (VaapiImage *image)
  * Return value: the pixels data of the specified @plane
  */
 guchar *
-vaapi_image_get_plane (VaapiImage *image, guint plane)
+vaapi_image_get_plane (VaapiImage * image, guint plane)
 {
-    g_return_val_if_fail (image != NULL, NULL);
-    g_return_val_if_fail (_vaapi_image_is_mapped (image), NULL);
-    g_return_val_if_fail (plane < image->image.num_planes, NULL);
+  g_return_val_if_fail (image != NULL, NULL);
+  g_return_val_if_fail (_vaapi_image_is_mapped (image), NULL);
+  g_return_val_if_fail (plane < image->image.num_planes, NULL);
 
-    return image->image_data + image->image.offsets[plane];
+  return image->image_data + image->image.offsets[plane];
 }
 
 /**
@@ -427,12 +418,12 @@ vaapi_image_get_plane (VaapiImage *image, guint plane)
  * Return value: the line size (stride) of the specified plane
  */
 guint
-vaapi_image_get_pitch (VaapiImage *image, guint plane)
+vaapi_image_get_pitch (VaapiImage * image, guint plane)
 {
-    g_return_val_if_fail (image != NULL, 0);
-    g_return_val_if_fail (plane < image->image.num_planes, 0);
+  g_return_val_if_fail (image != NULL, 0);
+  g_return_val_if_fail (plane < image->image.num_planes, 0);
 
-    return image->image.pitches[plane];
+  return image->image.pitches[plane];
 }
 
 /**
@@ -446,11 +437,11 @@ vaapi_image_get_pitch (VaapiImage *image, guint plane)
  * Return value: the whole image data size of the @image
  */
 guint
-vaapi_image_get_data_size (VaapiImage *image)
+vaapi_image_get_data_size (VaapiImage * image)
 {
-    g_return_val_if_fail (image != NULL, 0);
+  g_return_val_if_fail (image != NULL, 0);
 
-    return image->image.data_size;
+  return image->image.data_size;
 }
 
 /**
@@ -462,12 +453,12 @@ vaapi_image_get_data_size (VaapiImage *image)
  * Return value: the offset value of the plane of the image
  */
 guint
-vaapi_image_get_offset (VaapiImage *image, guint plane)
+vaapi_image_get_offset (VaapiImage * image, guint plane)
 {
-    g_return_val_if_fail (image != NULL, 0);
-    g_return_val_if_fail (plane < image->image.num_planes, 0);
+  g_return_val_if_fail (image != NULL, 0);
+  g_return_val_if_fail (plane < image->image.num_planes, 0);
 
-    return image->image.offsets[plane];
+  return image->image.offsets[plane];
 }
 
 /**
@@ -481,9 +472,9 @@ vaapi_image_get_offset (VaapiImage *image, guint plane)
 VaapiImage *
 vaapi_image_ref (VaapiImage * image)
 {
-    g_return_val_if_fail (image != NULL, NULL);
+  g_return_val_if_fail (image != NULL, NULL);
 
-    return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (image));
+  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (image));
 }
 
 /**
@@ -496,7 +487,7 @@ vaapi_image_ref (VaapiImage * image)
 void
 vaapi_image_unref (VaapiImage * image)
 {
-    gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (image));
+  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (image));
 }
 
 /**
@@ -509,22 +500,21 @@ vaapi_image_unref (VaapiImage * image)
  * object. However, @new_image can be NULL.
  */
 void
-vaapi_image_replace (VaapiImage ** old_image_ptr,
-        VaapiImage * new_image)
+vaapi_image_replace (VaapiImage ** old_image_ptr, VaapiImage * new_image)
 {
-    g_return_if_fail (old_image_ptr != NULL);
+  g_return_if_fail (old_image_ptr != NULL);
 
-    gst_mfx_mini_object_replace ((GstMfxMiniObject **)old_image_ptr,
-            GST_MFX_MINI_OBJECT (new_image));
+  gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_image_ptr,
+      GST_MFX_MINI_OBJECT (new_image));
 }
 
-/* Check VA status for success or print out an error */
+/** Check VA status for success or print out an error */
 gboolean
 vaapi_check_status (VAStatus status, const gchar * msg)
 {
-    if (status != VA_STATUS_SUCCESS) {
-        GST_DEBUG ("%s: %s", msg, vaErrorStr (status));
-        return FALSE;
-    }
-    return TRUE;
+  if (status != VA_STATUS_SUCCESS) {
+    GST_DEBUG ("%s: %s", msg, vaErrorStr (status));
+    return FALSE;
+  }
+  return TRUE;
 }

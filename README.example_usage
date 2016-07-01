@@ -1,0 +1,45 @@
+Decode:
+h264  : gst-launch-1.0 filesrc location=<input.mp4> ! qtdemux ! h264parse ! mfxdecode ! mfxsink
+mpeg2 : gst-launch-1.0 filesrc location=<input.mpg> ! tsdemux ! mpegvideoparse ! mfxdecode ! mfxsink
+hevc  : gst-launch-1.0 filesrc location=<input.mkv> ! matroskademux ! h265parse ! mfxdecode ! mfxsink
+mjpeg : gst-launch-1.0 filesrc location=<input.av1> ! avidemux ! mfxdecode ! mfxsink
+vc1   : gst-launch-1.0 filesrc location=<input.wmv> ! asfdemux ! vc1parse ! mfxdecode ! mfxsink
+vp8   : gst-launch-1.0 filesrc location=<input.webm> ! matroskademux ! mfxdecode ! mfxsink
+
+Encode:
+gst-launch-1.0 filesrc location=<raw input> ! videoparse width=<w> height=<h> format={nv12,yv12,uyvy,yuy2,bgra,i420,bgrx} ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
+
+Colorspace conversion:
+gst-launch-1.0 filesrc location=<raw input> ! videoparse width=<w> height=<h> format={nv12,yv12,uyvy,yuy2,bgra,i420,bgrx} ! mfxvpp ! 'video/x-raw(memory:MFXSurface),format={NV12,BGRA}' ! mfxsink
+
+Transcode:
+gst-launch-1.0 filesrc location=<input> ! <pipelines> ! mfxdecode ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
+
+Transcoding while preview:
+gst-launch-1.0 filesrc location=<input> ! <pipelines> ! mfxdecode ! tee name=tp tp. ! queue ! mfxsink  tp. ! queue ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
+
+Preview camera using dma-buffer sharing:
+gst-launch-1.0 v4l2src io-mode=5 ! mfxvpp ! mfxsink
+
+rtp receiver (h264):
+gst-launch-1.0 -v udpsrc port=<port> caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264" ! rtph264depay ! h264parse ! mfxdecode ! mfxsink
+
+rtp sender (h264):
+gst-launch-1.0 v4l2src io-mode=5 ! mfxh264enc ! video/x-h264,stream-format=byte-stream,profile=baseline ! rtph264pay pt=96 ! udpsink host=<ip> port=<port>
+
+rtp receiver (jpeg):
+gst-launch-1.0 -v udpsrc port=<port> caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)JPEG" ! rtpjpegdepay ! mfxdecode ! mfxsink
+
+rtp sender (jpeg):
+gst-launch-1.0 v4l2src io-mode=5 ! mfxjpegenc quality=<q> ! rtpjpegpay pt=96 ! udpsink host=<ip> port=<port>
+
+Multi-window decode:
+gst-launch-1.0 filesrc location=<video> ! <pipeline> ! mfxdecode ! tee name=tp tp. ! queue ! mfxsink  tp. ! queue ! mfxsink
+
+VPP	   :
+decode 	   : gst-launch-1.0 filesrc location=<input> ! <pipelines> ! mfxdecode ! mfxvpp <options> ! mfxsink
+encode	   : gst-launch-1.0 filesrc location=<raw input> ! videoparse width=<w> height=<h> format={nv12,yv12,uyvy,yuy2,bgra,i420,bgrx} ! mfxvpp <options> ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
+transcode  : gst-launch-1.0 filesrc location=<input> ! <pipelines> ! mfxdecode ! mfxvpp <options> ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
+multi-view : gst-launch-1.0 filesrc location=<video> ! <pipeline> ! mfxdecode ! tee name=tp tp. ! queue ! mfxvpp <options> ! mfxsink  tp. ! queue ! mfxvpp <options> ! mfxsink
+
+<options> includes: width=<w> height=<h> deinterlace-mode={bob,adi,adi-noref} rotation={90,180,270} denoise={0-100} detail={0-100} etc

@@ -31,33 +31,33 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_TASK(obj) \
-	((GstMfxTask *) (obj))
+  ((GstMfxTask *) (obj))
 
 #define GST_MFX_TASK_SESSION(task) \
-	gst_mfx_task_get_session (task)
+  gst_mfx_task_get_session (task)
 
 #define GST_MFX_TASK_DISPLAY(task) \
-	gst_mfx_task_get_display (task)
+  gst_mfx_task_get_display (task)
 
 
 typedef struct _GstMfxTask GstMfxTask;
 typedef struct _GstMfxTaskAggregator GstMfxTaskAggregator;
 
 typedef enum {
-	GST_MFX_TASK_INVALID = 0,
-	GST_MFX_TASK_DECODER = (1 << 0),
-	GST_MFX_TASK_VPP_IN = (1 << 1),
-	GST_MFX_TASK_VPP_OUT = (1 << 2),
-	GST_MFX_TASK_ENCODER = (1 << 3),
+  GST_MFX_TASK_INVALID = 0,
+  GST_MFX_TASK_DECODER = (1 << 0),
+  GST_MFX_TASK_VPP_IN = (1 << 1),
+  GST_MFX_TASK_VPP_OUT = (1 << 2),
+  GST_MFX_TASK_ENCODER = (1 << 3),
 } GstMfxTaskType;
 
 GstMfxTask *
 gst_mfx_task_new (GstMfxTaskAggregator * aggregator,
-	guint type_flags);
+  guint type_flags);
 
 GstMfxTask *
 gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
-	mfxSession session, guint type_flags);
+    mfxSession session, guint type_flags);
 
 GstMfxTask *
 gst_mfx_task_ref (GstMfxTask * task);
@@ -67,7 +67,7 @@ gst_mfx_task_unref (GstMfxTask * task);
 
 void
 gst_mfx_task_replace (GstMfxTask ** old_task_ptr,
-	GstMfxTask * new_task);
+    GstMfxTask * new_task);
 
 mfxFrameAllocRequest *
 gst_mfx_task_get_request (GstMfxTask * task);
@@ -96,6 +96,9 @@ gst_mfx_task_get_display (GstMfxTask * task);
 GstMfxMemoryId *
 gst_mfx_task_get_memory_id (GstMfxTask * task);
 
+guint
+gst_mfx_task_get_num_surfaces (GstMfxTask * task);
+
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task);
 
@@ -105,7 +108,7 @@ gst_mfx_task_get_session (GstMfxTask * task);
 
 mfxStatus
 gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest *req,
-	mfxFrameAllocResponse *resp);
+    mfxFrameAllocResponse *resp);
 
 mfxStatus
 gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse *resp);

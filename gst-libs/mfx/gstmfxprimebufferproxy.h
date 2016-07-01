@@ -27,46 +27,46 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_PRIME_BUFFER_PROXY(obj) \
-	((GstMfxPrimeBufferProxy *)(obj))
+  ((GstMfxPrimeBufferProxy *)(obj))
 
 /**
-* GST_MFX_PRIME_BUFFER_PROXY_HANDLE:
-* @buf: a #GstMfxPrimeBufferProxy
-*
-* Macro that evaluates to the handle of the underlying VA buffer @buf
-*/
+ * GST_MFX_PRIME_BUFFER_PROXY_HANDLE:
+ * @buf: a #GstMfxPrimeBufferProxy
+ *
+ * Macro that evaluates to the handle of the underlying VA buffer @buf
+ */
 #define GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buf) \
-	gst_mfx_prime_buffer_proxy_get_handle (GST_MFX_PRIME_BUFFER_PROXY (buf))
+  gst_mfx_prime_buffer_proxy_get_handle (GST_MFX_PRIME_BUFFER_PROXY (buf))
 
 #define GST_MFX_PRIME_BUFFER_PROXY_SIZE(buf) \
-	gst_mfx_prime_buffer_proxy_get_size (GST_MFX_PRIME_BUFFER_PROXY (buf))
+  gst_mfx_prime_buffer_proxy_get_size (GST_MFX_PRIME_BUFFER_PROXY (buf))
 
 #define GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buf) \
-    gst_mfx_prime_buffer_proxy_get_vaapi_image (GST_MFX_PRIME_BUFFER_PROXY(buf))
+  gst_mfx_prime_buffer_proxy_get_vaapi_image (GST_MFX_PRIME_BUFFER_PROXY(buf))
 
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_surface(GstMfxSurfaceProxy * parent);
+gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurfaceProxy * parent);
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_ref(GstMfxPrimeBufferProxy * proxy);
+gst_mfx_prime_buffer_proxy_ref (GstMfxPrimeBufferProxy * proxy);
 
 void
-gst_mfx_prime_buffer_proxy_unref(GstMfxPrimeBufferProxy * proxy);
+gst_mfx_prime_buffer_proxy_unref (GstMfxPrimeBufferProxy * proxy);
 
 void
-gst_mfx_prime_buffer_proxy_replace(GstMfxPrimeBufferProxy ** old_proxy_ptr,
-	GstMfxPrimeBufferProxy * new_proxy);
+gst_mfx_prime_buffer_proxy_replace (GstMfxPrimeBufferProxy ** old_proxy_ptr,
+    GstMfxPrimeBufferProxy * new_proxy);
 
 guintptr
-gst_mfx_prime_buffer_proxy_get_handle(GstMfxPrimeBufferProxy * proxy);
+gst_mfx_prime_buffer_proxy_get_handle (GstMfxPrimeBufferProxy * proxy);
 
 guint
-gst_mfx_prime_buffer_proxy_get_size(GstMfxPrimeBufferProxy * proxy);
+gst_mfx_prime_buffer_proxy_get_size (GstMfxPrimeBufferProxy * proxy);
 
 VaapiImage *
-gst_mfx_prime_buffer_proxy_get_vaapi_image(GstMfxPrimeBufferProxy *proxy);
+gst_mfx_prime_buffer_proxy_get_vaapi_image (GstMfxPrimeBufferProxy *proxy);
 
 G_END_DECLS
 

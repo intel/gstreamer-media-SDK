@@ -23,44 +23,46 @@
 #ifndef GST_MFX_VIDEO_MEMORY_H
 #define GST_MFX_VIDEO_MEMORY_H
 
-#include "sysdeps.h"
+#include "gstcompat.h"
 #include <gst/gstallocator.h>
 #include <gst/video/video-info.h>
-#include "gstmfxsurfaceproxy.h"
-#include "gstmfxprimebufferproxy.h"
-#include "gstmfxsurfacepool.h"
-#include "gstmfxutils_vaapi.h"
-#include "gstmfxvideometa.h"
-#include "gstmfxdisplay.h"
-#include "gstmfxtaskaggregator.h"
 #include <gst/allocators/allocators.h>
+
+#include "gstmfxvideometa.h"
+
+#include <gst-libs/mfx/gstmfxdisplay.h>
+#include <gst-libs/mfx/gstmfxtaskaggregator.h>
+#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxprimebufferproxy.h>
+#include <gst-libs/mfx/gstmfxsurfacepool.h>
+#include <gst-libs/mfx/gstmfxutils_vaapi.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GstMfxVideoMemory GstMfxVideoMemory;
-typedef struct _GstMfxVideoAllocator GstMfxVideoAllocator;
-typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
+typedef struct _GstMfxVideoMemory           GstMfxVideoMemory;
+typedef struct _GstMfxVideoAllocator        GstMfxVideoAllocator;
+typedef struct _GstMfxVideoAllocatorClass   GstMfxVideoAllocatorClass;
 
 /* ------------------------------------------------------------------------ */
 /* --- GstMfxVideoMemory                                              --- */
 /* ------------------------------------------------------------------------ */
 
 #define GST_MFX_VIDEO_MEMORY_CAST(mem) \
-	((GstMfxVideoMemory *) (mem))
+  ((GstMfxVideoMemory *) (mem))
 
 #define GST_MFX_IS_VIDEO_MEMORY(mem) \
-	((mem) && (mem)->allocator && GST_MFX_IS_VIDEO_ALLOCATOR((mem)->allocator))
+  ((mem) && (mem)->allocator && GST_MFX_IS_VIDEO_ALLOCATOR((mem)->allocator))
 
 #define GST_MFX_VIDEO_MEMORY_NAME             "GstMfxVideoMemory"
 
 #define GST_CAPS_FEATURE_MEMORY_MFX_SURFACE   "memory:MFXSurface"
 
 #define GST_MFX_VIDEO_MEMORY_FLAG_IS_SET(mem, flag) \
-	GST_MEMORY_FLAG_IS_SET (mem, flag)
+  GST_MEMORY_FLAG_IS_SET (mem, flag)
 #define GST_MFX_VIDEO_MEMORY_FLAG_SET(mem, flag) \
-	GST_MINI_OBJECT_FLAG_SET (mem, flag)
+  GST_MINI_OBJECT_FLAG_SET (mem, flag)
 #define GST_MFX_VIDEO_MEMORY_FLAG_UNSET(mem, flag) \
-	GST_MEMORY_FLAG_UNSET (mem, flag)
+  GST_MEMORY_FLAG_UNSET (mem, flag)
 
 /**
  * GstMfxVideoMemoryMapType:
@@ -86,17 +88,17 @@ typedef enum
 */
 struct _GstMfxVideoMemory
 {
-	GstMemory parent_instance;
+  GstMemory            parent_instance;
 
-	/*< private >*/
-	GstMfxSurfaceProxy *proxy;
-	const GstVideoInfo *image_info;
-	VaapiImage *image;
-	GstMfxVideoMeta *meta;
-	guint map_type;
-	gint map_count;
-	gpointer data;
-    gboolean mapped;
+  /*< private >*/
+  GstMfxSurfaceProxy  *proxy;
+  const GstVideoInfo  *image_info;
+  VaapiImage          *image;
+  GstMfxVideoMeta     *meta;
+  guint                map_type;
+  gint                 map_count;
+  gpointer             data;
+  gboolean             mapped;
 };
 
 GstMemory *
@@ -119,15 +121,15 @@ gst_mfx_video_memory_reset_surface (GstMfxVideoMemory * mem);
 /* ------------------------------------------------------------------------ */
 
 #define GST_MFX_VIDEO_ALLOCATOR_CAST(allocator) \
-	((GstMfxVideoAllocator *) (allocator))
+  ((GstMfxVideoAllocator *) (allocator))
 
 #define GST_MFX_TYPE_VIDEO_ALLOCATOR \
-	(gst_mfx_video_allocator_get_type ())
+  (gst_mfx_video_allocator_get_type ())
 #define GST_MFX_VIDEO_ALLOCATOR(obj) \
-	(G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_MFX_TYPE_VIDEO_ALLOCATOR, \
-	GstMfxVideoAllocator))
+  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_MFX_TYPE_VIDEO_ALLOCATOR, \
+  GstMfxVideoAllocator))
 #define GST_MFX_IS_VIDEO_ALLOCATOR(obj) \
-	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_MFX_TYPE_VIDEO_ALLOCATOR))
+  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_MFX_TYPE_VIDEO_ALLOCATOR))
 
 #define GST_MFX_VIDEO_ALLOCATOR_NAME          "GstMfxVideoAllocator"
 
@@ -138,11 +140,11 @@ gst_mfx_video_memory_reset_surface (GstMfxVideoMemory * mem);
 */
 struct _GstMfxVideoAllocator
 {
-	GstAllocator parent_instance;
+  GstAllocator         parent_instance;
 
-	/*< private >*/
-	GstVideoInfo image_info;
-	GstMfxSurfacePool *surface_pool;
+  /*< private >*/
+  GstVideoInfo         image_info;
+  GstMfxSurfacePool   *surface_pool;
 };
 
 /**
@@ -152,7 +154,7 @@ struct _GstMfxVideoAllocator
 */
 struct _GstMfxVideoAllocatorClass
 {
-	GstAllocatorClass parent_class;
+  GstAllocatorClass parent_class;
 };
 
 GType
@@ -160,15 +162,15 @@ gst_mfx_video_allocator_get_type(void);
 
 GstAllocator *
 gst_mfx_video_allocator_new(GstMfxDisplay * display,
-	const GstVideoInfo * vip, gboolean mapped);
+    const GstVideoInfo * vip, gboolean mapped);
 
 /* ------------------------------------------------------------------------ */
-/* --- GstMfxDmaBufMemory                                             --- */
+/* --- GstMfxDmaBufMemory                                               --- */
 /* ------------------------------------------------------------------------ */
 
 GstMemory *
 gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxDisplay * display,
-	const GstVideoInfo *vip, GstMfxVideoMeta * meta);
+    const GstVideoInfo *vip, GstMfxVideoMeta * meta);
 
 G_END_DECLS
 

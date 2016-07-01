@@ -31,7 +31,7 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_TASK_AGGREGATOR (obj) \
-	((GstMfxTaskAggregator *) (obj))
+  ((GstMfxTaskAggregator *) (obj))
 
 #define GST_MFX_TASK_AGGREGATOR_DISPLAY(aggregator) \
     gst_mfx_task_aggregator_get_display (aggregator)
@@ -47,7 +47,7 @@ gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator);
 
 gboolean
 gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
-	GstMfxTask * task);
+    GstMfxTask * task);
 
 void
 gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
@@ -61,14 +61,14 @@ gst_mfx_task_aggregator_unref (GstMfxTaskAggregator * aggregator);
 
 void
 gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
-	GstMfxTaskAggregator * new_aggregator);
+    GstMfxTaskAggregator * new_aggregator);
 
 GstMfxDisplay *
 gst_mfx_task_aggregator_get_display (GstMfxTaskAggregator * aggregator);
 
 gboolean
 gst_mfx_task_aggregator_find_task (GstMfxTaskAggregator * aggregator,
-	GstMfxTask * task);
+    GstMfxTask * task);
 
 
 G_END_DECLS
