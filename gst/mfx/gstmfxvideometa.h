@@ -24,17 +24,18 @@
 #define GST_MFX_VIDEO_META_H
 
 #include <gst/video/video.h>
-#include "gstmfxdisplay.h"
-#include "gstmfxsurfaceproxy.h"
-#include "gstmfxsurfacepool.h"
-#include "gstmfxutils_vaapi.h"
+
+#include <gst-libs/mfx/gstmfxdisplay.h>
+#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurfacepool.h>
+#include <gst-libs/mfx/gstmfxutils_vaapi.h>
 
 G_BEGIN_DECLS
 
 typedef struct _GstMfxVideoMeta GstMfxVideoMeta;
 
 #define GST_MFX_VIDEO_META_API_TYPE \
-	gst_mfx_video_meta_api_get_type ()
+  gst_mfx_video_meta_api_get_type ()
 
 GType
 gst_mfx_video_meta_api_get_type (void);
@@ -60,7 +61,7 @@ gst_mfx_video_meta_get_surface_proxy (GstMfxVideoMeta * meta);
 
 void
 gst_mfx_video_meta_set_surface_proxy (GstMfxVideoMeta * meta,
-	GstMfxSurfaceProxy * proxy);
+  GstMfxSurfaceProxy * proxy);
 
 GstMfxVideoMeta *
 gst_buffer_get_mfx_video_meta (GstBuffer * buffer);

@@ -116,18 +116,6 @@ Known Issues
   * Decode for VC-1 Advance Profile bitstream is not working.
 
 
-Work In Progress
-----------------
-
- - H.264, MPEG2, HEVC encoder
-
- 
-To Do
------
-
- - Codec parsers
-
-
 Acknowledgements
 ----------------
 
