@@ -22,14 +22,12 @@
 
 #include "gstcompat.h"
 #include "gstmfxdec.h"
-
-#include <string.h>
-
-#include "gstmfxsurfaceproxy.h"
-#include "gstmfxprofile.h"
 #include "gstmfxvideomemory.h"
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
+
+#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxprofile.h>
 
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAT_DEFAULT(mfxdec_debug)
@@ -407,9 +405,6 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   GstMfxSurfaceProxy *proxy;
   GstBuffer *buf;
 
-  GST_VIDEO_CODEC_FRAME_FLAG_UNSET (frame,
-    GST_VIDEO_CODEC_FRAME_FLAG_DECODE_ONLY);
-
   proxy = gst_video_codec_frame_get_user_data(frame);
 
   buf = gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
@@ -433,6 +428,8 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   }
 
   gst_buffer_replace(&frame->output_buffer, buf);
+
+  frame->pts = frame->dts;
 
   ret = gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
   if (ret != GST_FLOW_OK)
@@ -472,18 +469,15 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   if (!gst_mfxdec_negotiate (mfxdec))
       goto not_negotiated;
 
-  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
-
-  while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
-    ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
-    if (ret != GST_FLOW_OK)
-      break;
-  }
+  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, &out_frame);
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
+      gst_video_decoder_drop_frame (vdec, frame);
+      ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
+      break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
-      ret = GST_FLOW_OK;
+      ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
       break;
     case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:
     case GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER:

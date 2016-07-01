@@ -21,8 +21,9 @@
  */
 
 #include "gstmfxvideometa.h"
-#include "gstmfxsurfacepool.h"
 #include "gstmfxvideomemory.h"
+
+#include <gst-libs/mfx/gstmfxsurfacepool.h>
 
 #define GST_MFX_VIDEO_META(obj) \
   ((GstMfxVideoMeta *) (obj))

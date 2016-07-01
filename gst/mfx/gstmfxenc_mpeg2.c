@@ -21,11 +21,12 @@
  */
 
 #include "gstcompat.h"
-#include "gstmfxdisplay.h"
-#include "gstmfxencoder_mpeg2.h"
 #include "gstmfxenc_mpeg2.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideomemory.h"
+
+#include <gst-libs/mfx/gstmfxdisplay.h>
+#include <gst-libs/mfx/gstmfxencoder_mpeg2.h>
 
 #define GST_PLUGIN_NAME "mfxmpeg2enc"
 #define GST_PLUGIN_DESC "An MFX-based MPEG-2 video encoder"

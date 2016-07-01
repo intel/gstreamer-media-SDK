@@ -23,17 +23,19 @@
 #ifndef GST_MFX_VIDEO_MEMORY_H
 #define GST_MFX_VIDEO_MEMORY_H
 
-#include "sysdeps.h"
+#include "gstcompat.h"
 #include <gst/gstallocator.h>
 #include <gst/video/video-info.h>
-#include "gstmfxsurfaceproxy.h"
-#include "gstmfxprimebufferproxy.h"
-#include "gstmfxsurfacepool.h"
-#include "gstmfxutils_vaapi.h"
-#include "gstmfxvideometa.h"
-#include "gstmfxdisplay.h"
-#include "gstmfxtaskaggregator.h"
 #include <gst/allocators/allocators.h>
+
+#include "gstmfxvideometa.h"
+
+#include <gst-libs/mfx/gstmfxdisplay.h>
+#include <gst-libs/mfx/gstmfxtaskaggregator.h>
+#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxprimebufferproxy.h>
+#include <gst-libs/mfx/gstmfxsurfacepool.h>
+#include <gst-libs/mfx/gstmfxutils_vaapi.h>
 
 G_BEGIN_DECLS
 

@@ -27,13 +27,14 @@
 /* Supported interfaces */
 #include <gst/video/navigation.h>
 
-#include "sysdeps.h"
+#include "gstcompat.h"
 #include "gstmfxsink.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
-#include "gstmfxsurfaceproxy.h"
+
+#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
 
 #define GST_PLUGIN_NAME "mfxsink"
 #define GST_PLUGIN_DESC "A MFX-based videosink"

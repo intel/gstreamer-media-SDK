@@ -24,7 +24,7 @@
 #define GST_MFXENCODE_H
 
 #include "gstmfxpluginbase.h"
-#include "gstmfxencoder.h"
+#include <gst-libs/mfx/gstmfxencoder.h>
 
 G_BEGIN_DECLS
 

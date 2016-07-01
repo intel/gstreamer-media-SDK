@@ -24,9 +24,10 @@
 #define GST_MFXSINK_H
 
 #include "gstmfxpluginbase.h"
-#include "gstmfxwindow.h"
 #include "gstmfxpluginutil.h"
-#include "gstmfxdisplay.h"
+
+#include <gst-libs/mfx/gstmfxdisplay.h>
+#include <gst-libs/mfx/gstmfxwindow.h>
 
 G_BEGIN_DECLS
 
