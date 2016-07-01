@@ -22,8 +22,7 @@
 
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
-
-#include <gst-libs/mfx/gstmfxdisplay.h>
+#include "gstmfxdisplay.h"
 
 GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxvideopool);
 #define GST_CAT_DEFAULT gst_debug_mfxvideopool

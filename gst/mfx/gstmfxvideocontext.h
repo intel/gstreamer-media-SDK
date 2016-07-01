@@ -25,7 +25,7 @@
 #ifndef GST_MFX_VIDEO_CONTEXT_H
 #define GST_MFX_VIDEO_CONTEXT_H
 
-#include <gst-libs/mfx/gstmfxtaskaggregator.h>
+#include "gstmfxtaskaggregator.h"
 
 #define GST_MFX_AGGREGATOR_CONTEXT_TYPE_NAME "gst.mfx.Aggregator"
 

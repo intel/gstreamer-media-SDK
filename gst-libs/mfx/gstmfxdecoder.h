@@ -85,7 +85,11 @@ gst_mfx_decoder_get_codec (GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame, GstMfxSurfaceProxy ** out_proxy);
+    GstVideoCodecFrame * frame);
+
+gboolean
+gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
+    GstVideoCodecFrame ** out_frame);
 
 G_END_DECLS
 

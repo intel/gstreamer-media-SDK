@@ -793,9 +793,10 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
   mfxFrameAllocRequest enc_request;
-  gboolean mapped =
-      g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7") ?
-      FALSE : TRUE;
+  gboolean mapped = FALSE;
+
+  if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7"))
+    mapped = TRUE;
 
   memset (&enc_request, 0, sizeof (mfxFrameAllocRequest));
 

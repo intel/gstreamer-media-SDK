@@ -24,9 +24,8 @@
 #define __GST_MFX_VIDEO_BUFFER_POOL_H__
 
 #include <gst/video/gstvideopool.h>
-
-#include <gst-libs/mfx/gstmfxdisplay.h>
-#include <gst-libs/mfx/gstmfxtaskaggregator.h>
+#include "gstmfxdisplay.h"
+#include "gstmfxtaskaggregator.h"
 
 G_BEGIN_DECLS
 

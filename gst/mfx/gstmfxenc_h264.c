@@ -21,13 +21,12 @@
  */
 
 #include "gstcompat.h"
+#include "gstmfxdisplay.h"
+#include "gstmfxencoder_h264.h"
+#include "gstmfxutils_h264.h"
 #include "gstmfxenc_h264.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideomemory.h"
-
-#include <gst-libs/mfx/gstmfxdisplay.h>
-#include <gst-libs/mfx/gstmfxencoder_h264.h>
-#include <gst-libs/mfx/gstmfxutils_h264.h>
 
 #define GST_PLUGIN_NAME "mfxh264enc"
 #define GST_PLUGIN_DESC "An MFX-based H.264 video encoder"

@@ -23,10 +23,9 @@
 #ifndef GST_MFX_PLUGIN_UTIL_H
 #define GST_MFX_PLUGIN_UTIL_H
 
+#include "gstmfxtaskaggregator.h"
+#include "gstmfxsurfaceproxy.h"
 #include "gstmfxvideomemory.h"
-
-#include <gst-libs/mfx/gstmfxtaskaggregator.h>
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
 
 gboolean
 gst_mfx_ensure_aggregator(GstElement * element);

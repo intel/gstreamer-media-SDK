@@ -19,12 +19,11 @@
  */
 
 #include "gstcompat.h"
+#include "gstmfxdisplay.h"
+#include "gstmfxencoder_jpeg.h"
 #include "gstmfxenc_jpeg.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideomemory.h"
-
-#include <gst-libs/mfx/gstmfxdisplay.h>
-#include <gst-libs/mfx/gstmfxencoder_jpeg.h>
 
 #define GST_PLUGIN_NAME "mfxjpegenc"
 #define GST_PLUGIN_DESC "An MFX-based JPEG encoder"

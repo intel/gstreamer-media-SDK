@@ -27,14 +27,13 @@
 /* Supported interfaces */
 #include <gst/video/navigation.h>
 
-#include "gstcompat.h"
+#include "sysdeps.h"
 #include "gstmfxsink.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
-
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include "gstmfxsurfaceproxy.h"
 
 #define GST_PLUGIN_NAME "mfxsink"
 #define GST_PLUGIN_DESC "A MFX-based videosink"
@@ -117,8 +116,8 @@ gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurfaceProxy * proxy,
 /* ------------------------------------------------------------------------ */
 
 #ifdef USE_EGL
-#include <gst-libs/mfx/egl/gstmfxdisplay_egl.h>
-#include <gst-libs/mfx/egl/gstmfxwindow_egl.h>
+#include <egl/gstmfxdisplay_egl.h>
+#include <egl/gstmfxwindow_egl.h>
 
 #define GST_MFX_TYPE_GL_API \
   gst_mfx_gl_api_get_type ()
@@ -143,8 +142,8 @@ gst_mfx_gl_api_get_type (void)
 }
 
 #ifdef USE_X11
-#include <gst-libs/mfx/x11/gstmfxdisplay_x11.h>
-#include <gst-libs/mfx/x11/gstmfxwindow_x11.h>
+#include <x11/gstmfxdisplay_x11.h>
+#include <x11/gstmfxwindow_x11.h>
 
 #ifdef HAVE_XKBLIB
 #include <X11/XKBlib.h>
@@ -331,8 +330,8 @@ gst_mfxsink_backend_egl (void)
 /* --- Wayland Backend                                                  --- */
 /* -------------------------------------------------------------------------*/
 #ifdef USE_WAYLAND
-#include <gst-libs/mfx/wayland/gstmfxdisplay_wayland.h>
-#include <gst-libs/mfx/wayland/gstmfxwindow_wayland.h>
+#include <wayland/gstmfxdisplay_wayland.h>
+#include <wayland/gstmfxwindow_wayland.h>
 
 static gboolean
 gst_mfxsink_wayland_create_window (GstMfxSink * sink, guint width, guint height)
