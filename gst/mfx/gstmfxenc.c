@@ -238,14 +238,14 @@ error_format_buffer:
     GST_ERROR ("failed to format encoded buffer in system memory");
     if (out_buffer)
       gst_buffer_unref (out_buffer);
-    //gst_video_codec_frame_unref (out_frame);
+    gst_video_codec_frame_unref (out_frame);
     return ret;
   }
 error_output_state:
   {
     GST_ERROR ("failed to negotiate output state");
     //GST_VIDEO_ENCODER_STREAM_UNLOCK (encode);
-    //gst_video_codec_frame_unref (out_frame);
+    gst_video_codec_frame_unref (out_frame);
     return GST_FLOW_NOT_NEGOTIATED;
   }
 }

@@ -180,21 +180,6 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   gst_caps_replace (&mfxdec->srcpad_caps, state->caps);
   gst_video_codec_state_unref (state);
 
-  gint fps_n = GST_VIDEO_INFO_FPS_N (vi);
-  gint fps_d = GST_VIDEO_INFO_FPS_D (vi);
-  if (fps_n <= 0 || fps_d <= 0) {
-    GST_DEBUG_OBJECT (mfxdec, "forcing 25/1 framerate for latency calculation");
-    fps_n = 25;
-    fps_d = 1;
-  }
-
-  /* For parsing/preparation purposes we'd need at least 1 frame
-   * latency in general, with perfectly known unit boundaries (NALU,
-   * AU), and up to 2 frames when we need to wait for the second frame
-   * start to determine the first frame is complete */
-  GstClockTime latency = gst_util_uint64_scale (2 * GST_SECOND, fps_d, fps_n);
-  gst_video_decoder_set_latency (vdec, latency, latency);
-
   return TRUE;
 }
 
@@ -403,22 +388,22 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   GstMfxVideoMeta *meta;
   const GstMfxRectangle *crop_rect;
   GstMfxSurfaceProxy *proxy;
-  GstBuffer *buf;
 
   proxy = gst_video_codec_frame_get_user_data(frame);
 
-  buf = gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
-  if (!buf)
+  frame->output_buffer =
+      gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
+  if (!frame->output_buffer)
     goto error_create_buffer;
 
-  meta = gst_buffer_get_mfx_video_meta (buf);
+  meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
   if (!meta)
     goto error_get_meta;
   gst_mfx_video_meta_set_surface_proxy (meta, proxy);
   crop_rect = gst_mfx_surface_proxy_get_crop_rect (proxy);
   if (crop_rect) {
     GstVideoCropMeta *const crop_meta =
-      gst_buffer_add_video_crop_meta (buf);
+      gst_buffer_add_video_crop_meta (frame->output_buffer);
     if (crop_meta) {
       crop_meta->x = crop_rect->x;
       crop_meta->y = crop_rect->y;
@@ -426,10 +411,6 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
       crop_meta->height = crop_rect->height;
     }
   }
-
-  gst_buffer_replace(&frame->output_buffer, buf);
-
-  frame->pts = frame->dts;
 
   ret = gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
   if (ret != GST_FLOW_OK)
@@ -473,7 +454,6 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
-      gst_video_decoder_drop_frame (vdec, frame);
       ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
       break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
@@ -486,6 +466,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       ret = GST_FLOW_ERROR;
   }
 
+  gst_video_codec_frame_unref (frame);
   return ret;
 
 error_decode:
