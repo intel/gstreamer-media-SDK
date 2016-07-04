@@ -153,7 +153,7 @@ struct _GstMfxEncoder
   mfxU16                  profile;
 
   GstMfxTaskAggregator   *aggregator;
-  GstMfxTask             *encode_task;
+  GstMfxTask             *encode;
   GstMfxFilter           *filter;
   GByteArray             *bitstream;
   gboolean                mapped;

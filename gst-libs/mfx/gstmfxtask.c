@@ -91,14 +91,18 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   }
 
   response_data = g_malloc0 (sizeof (ResponseData));
-  response_data->num_surfaces = task->request.NumFrameSuggested;
   response_data->frame_info = req->Info;
-
   info = &response_data->frame_info;
+
+  if (info->FourCC != MFX_FOURCC_P8)
+    response_data->num_surfaces = task->request.NumFrameSuggested;
+  else
+    response_data->num_surfaces = req->NumFrameSuggested;
+
   num_surfaces = response_data->num_surfaces;
 
   response_data->mem_ids =
-    g_slice_alloc (num_surfaces * sizeof (GstMfxMemoryId));
+      g_slice_alloc (num_surfaces * sizeof (GstMfxMemoryId));
   response_data->mids = g_slice_alloc (num_surfaces * sizeof (mfxMemId));
 
   if (!response_data->mem_ids || !response_data->mids)

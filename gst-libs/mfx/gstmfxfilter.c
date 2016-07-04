@@ -57,6 +57,8 @@ struct _GstMfxFilter
   GstMfxTaskAggregator *aggregator;
   GstMfxTask *vpp[2];
   GstMfxSurfacePool *vpp_pool[2];
+  gboolean inited;
+
   mfxSession session;
   mfxVideoParam params;
   mfxFrameInfo frame_info;
@@ -265,7 +267,7 @@ init_params (GstMfxFilter * filter)
 }
 
 gboolean
-gst_mfx_filter_start (GstMfxFilter * filter)
+gst_mfx_filter_prepare (GstMfxFilter * filter)
 {
   mfxFrameAllocRequest request[2];
   mfxStatus sts = MFX_ERR_NONE;
@@ -299,7 +301,7 @@ gst_mfx_filter_start (GstMfxFilter * filter)
 
   gst_mfx_task_set_request (filter->vpp[1], &request[1]);
 
-  /* /* Initialize input VPP surface pool when shared alloc request is set */
+  /* Initialize input VPP surface pool when shared alloc request is set */
   if (filter->shared_request[0]) {
     gboolean mapped = !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
 
@@ -368,6 +370,7 @@ gst_mfx_filter_init (GstMfxFilter * filter,
   filter->params.IOPattern |= mapped_out ?
       MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   filter->aggregator = gst_mfx_task_aggregator_ref (aggregator);
+  filter->inited = FALSE;
 
   /* Initialize the array of operation data */
   filter->filter_op_data = g_ptr_array_new_with_free_func (free_filter_op_data);
@@ -948,8 +951,8 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   return TRUE;
 }
 
-static gboolean
-allocate_output_surfaces (GstMfxFilter * filter)
+static GstMfxFilterStatus
+gst_mfx_filter_start (GstMfxFilter * filter)
 {
   mfxStatus sts = MFX_ERR_NONE;
   gboolean mapped = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
@@ -963,21 +966,21 @@ allocate_output_surfaces (GstMfxFilter * filter)
     sts = gst_mfx_task_frame_alloc (filter->vpp[1], filter->shared_request[1],
         &filter->response[1]);
     if (MFX_ERR_NONE != sts)
-      return FALSE;
+      return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
   }
 
   filter->vpp_pool[1] = gst_mfx_surface_pool_new_with_task (filter->vpp[1]);
   if (!filter->vpp_pool[1])
-    return FALSE;
+    return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 
   init_filters (filter);
 
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
   if (sts < 0) {
     GST_ERROR ("Error initializing MFX VPP %d", sts);
-    return FALSE;
+    return GST_MFX_FILTER_STATUS_ERROR_OPERATION_FAILED;
   }
-  return TRUE;
+  return GST_MFX_FILTER_STATUS_SUCCESS;
 }
 
 GstMfxFilterStatus
@@ -987,13 +990,16 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurfaceProxy * proxy,
   mfxFrameSurface1 *insurf, *outsurf = NULL;
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
+  GstMfxFilterStatus ret = GST_MFX_FILTER_STATUS_SUCCESS;
   gboolean more_surface = FALSE;
 
   /* Delayed VPP initialization to enable surface pool sharing with
    * encoder plugin */
-  if (G_UNLIKELY (!filter->vpp_pool[1])) {
-    if (!allocate_output_surfaces (filter))
-      return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
+  if (G_UNLIKELY (!filter->inited)) {
+    ret = gst_mfx_filter_start (filter);
+    if (ret != GST_MFX_FILTER_STATUS_SUCCESS)
+      return ret;
+    filter->inited = TRUE;
   }
 
   insurf = gst_mfx_surface_proxy_get_frame_surface (proxy);

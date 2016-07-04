@@ -408,9 +408,7 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     }
   }
   else {
-    mfxFrameAllocRequest *request;
-
-    request = gst_mfx_task_get_request(encoder->encode_task);
+    mfxFrameAllocRequest *request = gst_mfx_task_get_request(encoder->encode);
     encoder->params.mfx.FrameInfo = request->Info;
   }
 }
@@ -422,20 +420,20 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
   if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !mapped) {
-    encoder->encode_task =
+    encoder->encode =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
-    encoder->session = gst_mfx_task_get_session (encoder->encode_task);
-    gst_mfx_task_set_task_type(encoder->encode_task, GST_MFX_TASK_ENCODER);
+    encoder->session = gst_mfx_task_get_session (encoder->encode);
+    gst_mfx_task_set_task_type(encoder->encode, GST_MFX_TASK_ENCODER);
     encoder->shared = TRUE;
   }
   else {
-    encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
+    encoder->encode = gst_mfx_task_new (encoder->aggregator,
         GST_MFX_TASK_ENCODER);
-    encoder->session = gst_mfx_task_get_session (encoder->encode_task);
+    encoder->session = gst_mfx_task_get_session (encoder->encode);
     gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
-        encoder->encode_task);
+        encoder->encode);
   }
-  if (!encoder->encode_task)
+  if (!encoder->encode)
     return FALSE;
 
   encoder->bs.MaxLength = info->width * info->height * 4;
@@ -497,7 +495,7 @@ gst_mfx_encoder_finalize (GstMfxEncoder * encoder)
 
   g_byte_array_unref (encoder->bitstream);
   gst_mfx_task_aggregator_unref (encoder->aggregator);
-  gst_mfx_task_replace (&encoder->encode_task, NULL);
+  gst_mfx_task_replace (&encoder->encode, NULL);
 
   if (encoder->properties) {
     g_ptr_array_unref (encoder->properties);
@@ -817,7 +815,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   }
   else {
     encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
-    gst_mfx_task_use_video_memory (encoder->encode_task);
+    gst_mfx_task_use_video_memory (encoder->encode);
   }
 
   sts = MFXVideoENCODE_QueryIOSurf (encoder->session, &encoder->params,
@@ -832,10 +830,10 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   if (encoder->shared) {
     mfxFrameAllocRequest *request;
 
-    request = gst_mfx_task_get_request(encoder->encode_task);
+    request = gst_mfx_task_get_request(encoder->encode);
     enc_request.NumFrameSuggested += (request->NumFrameSuggested - encoder->params.AsyncDepth);
     enc_request.NumFrameMin = enc_request.NumFrameSuggested;
-    gst_mfx_task_set_request(encoder->encode_task, &enc_request);
+    gst_mfx_task_set_request(encoder->encode, &enc_request);
   }
 
   sts = MFXVideoENCODE_Init (encoder->session, &encoder->params);
@@ -846,7 +844,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 
   if (!encoder->shared) {
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
-        encoder->encode_task, GST_MFX_TASK_VPP_OUT, encoder->mapped, mapped);
+        encoder->encode, GST_MFX_TASK_VPP_OUT, encoder->mapped, mapped);
 
     enc_request.NumFrameSuggested += (1 - encoder->params.AsyncDepth);
 
@@ -858,7 +856,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12)
       gst_mfx_filter_set_format (encoder->filter, GST_VIDEO_FORMAT_NV12);
 
-    if (!gst_mfx_filter_start (encoder->filter))
+    if (!gst_mfx_filter_prepare (encoder->filter))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
@@ -876,7 +874,7 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
   proxy = gst_video_codec_frame_get_user_data (frame);
 
-  if (gst_mfx_task_has_type (encoder->encode_task, GST_MFX_TASK_VPP_OUT)) {
+  if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT)) {
     filter_sts = gst_mfx_filter_process (encoder->filter, proxy, &filter_proxy);
     if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
       GST_ERROR ("MFX pre-processing error during encode.");
