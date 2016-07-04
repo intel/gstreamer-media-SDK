@@ -374,36 +374,44 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
 {
   encoder->params.mfx.CodecId = encoder->codec;
 
-  encoder->params.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-  encoder->params.mfx.FrameInfo.FourCC = MFX_FOURCC_NV12;
-  encoder->params.mfx.FrameInfo.PicStruct =
-      GST_VIDEO_INFO_IS_INTERLACED (&encoder->info) ?
-      (GST_VIDEO_INFO_FLAG_IS_SET (&encoder->info, GST_VIDEO_FRAME_FLAG_TFF) ?
-      MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF)
-      : MFX_PICSTRUCT_PROGRESSIVE;
+  if (!encoder->shared) {
+    encoder->params.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+    encoder->params.mfx.FrameInfo.FourCC = MFX_FOURCC_NV12;
+    encoder->params.mfx.FrameInfo.PicStruct =
+        GST_VIDEO_INFO_IS_INTERLACED (&encoder->info) ?
+        (GST_VIDEO_INFO_FLAG_IS_SET (&encoder->info, GST_VIDEO_FRAME_FLAG_TFF) ?
+        MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF)
+        : MFX_PICSTRUCT_PROGRESSIVE;
 
-  encoder->params.mfx.FrameInfo.CropX = 0;
-  encoder->params.mfx.FrameInfo.CropY = 0;
-  encoder->params.mfx.FrameInfo.CropW = encoder->info.width;
-  encoder->params.mfx.FrameInfo.CropH = encoder->info.height;
-  encoder->params.mfx.FrameInfo.FrameRateExtN =
-      encoder->info.fps_n ? encoder->info.fps_n : 30;
-  encoder->params.mfx.FrameInfo.FrameRateExtD = encoder->info.fps_d;
-  encoder->params.mfx.FrameInfo.AspectRatioW = encoder->info.par_n;
-  encoder->params.mfx.FrameInfo.AspectRatioH = encoder->info.par_d;
-  encoder->params.mfx.FrameInfo.BitDepthChroma = 8;
-  encoder->params.mfx.FrameInfo.BitDepthLuma = 8;
+    encoder->params.mfx.FrameInfo.CropX = 0;
+    encoder->params.mfx.FrameInfo.CropY = 0;
+    encoder->params.mfx.FrameInfo.CropW = encoder->info.width;
+    encoder->params.mfx.FrameInfo.CropH = encoder->info.height;
+    encoder->params.mfx.FrameInfo.FrameRateExtN =
+        encoder->info.fps_n ? encoder->info.fps_n : 30;
+    encoder->params.mfx.FrameInfo.FrameRateExtD = encoder->info.fps_d;
+    encoder->params.mfx.FrameInfo.AspectRatioW = encoder->info.par_n;
+    encoder->params.mfx.FrameInfo.AspectRatioH = encoder->info.par_d;
+    encoder->params.mfx.FrameInfo.BitDepthChroma = 8;
+    encoder->params.mfx.FrameInfo.BitDepthLuma = 8;
 
-  if (!g_strcmp0 (encoder->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
-    encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (encoder->info.width);
-    encoder->params.mfx.FrameInfo.Height =
-        GST_ROUND_UP_32 (encoder->info.height);
-  } else {
-    encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_16 (encoder->info.width);
-    encoder->params.mfx.FrameInfo.Height =
-        (MFX_PICSTRUCT_PROGRESSIVE == encoder->params.mfx.FrameInfo.PicStruct) ?
-        GST_ROUND_UP_16 (encoder->info.height) :
-        GST_ROUND_UP_32 (encoder->info.height);
+    if (!g_strcmp0 (encoder->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
+      encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (encoder->info.width);
+      encoder->params.mfx.FrameInfo.Height =
+          GST_ROUND_UP_32 (encoder->info.height);
+    } else {
+      encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_16 (encoder->info.width);
+      encoder->params.mfx.FrameInfo.Height =
+          (MFX_PICSTRUCT_PROGRESSIVE == encoder->params.mfx.FrameInfo.PicStruct) ?
+          GST_ROUND_UP_16 (encoder->info.height) :
+          GST_ROUND_UP_32 (encoder->info.height);
+    }
+  }
+  else {
+    mfxFrameAllocRequest *request;
+
+    request = gst_mfx_task_get_request(encoder->encode_task);
+    encoder->params.mfx.FrameInfo = request->Info;
   }
 }
 
@@ -413,11 +421,12 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 {
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
-  /*if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !mapped) {
+  if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !mapped) {
     encoder->encode_task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
     encoder->session = gst_mfx_task_get_session (encoder->encode_task);
     gst_mfx_task_set_task_type(encoder->encode_task, GST_MFX_TASK_ENCODER);
+    encoder->shared = TRUE;
   }
   else {
     encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
@@ -427,17 +436,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
         encoder->encode_task);
   }
   if (!encoder->encode_task)
-    return FALSE;*/
-
-  encoder->encode_task = gst_mfx_task_new (encoder->aggregator,
-      GST_MFX_TASK_ENCODER);
-  if (!encoder->encode_task)
     return FALSE;
-
-  encoder->session = gst_mfx_task_get_session (encoder->encode_task);
-
-  gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
-      encoder->encode_task);
 
   encoder->bs.MaxLength = info->width * info->height * 4;
   encoder->bitstream = g_byte_array_sized_new (encoder->bs.MaxLength);
@@ -830,15 +829,22 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     mapped = TRUE;
   }
 
+  if (encoder->shared) {
+    mfxFrameAllocRequest *request;
+
+    request = gst_mfx_task_get_request(encoder->encode_task);
+    enc_request.NumFrameSuggested += (request->NumFrameSuggested - encoder->params.AsyncDepth);
+    enc_request.NumFrameMin = enc_request.NumFrameSuggested;
+    gst_mfx_task_set_request(encoder->encode_task, &enc_request);
+  }
+
   sts = MFXVideoENCODE_Init (encoder->session, &encoder->params);
   if (sts < 0) {
     GST_ERROR ("Error initializing the MFX video encoder %d", sts);
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
-  /* Even if VPP is not required, surfaces need to be saved into a pool */
-  if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
-      !encoder->mapped) {
+  if (!encoder->shared) {
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
         encoder->encode_task, GST_MFX_TASK_VPP_OUT, encoder->mapped, mapped);
 

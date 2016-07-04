@@ -157,6 +157,7 @@ struct _GstMfxEncoder
   GstMfxFilter           *filter;
   GByteArray             *bitstream;
   gboolean                mapped;
+  gboolean                shared;
 
   mfxSession              session;
   mfxVideoParam           params;

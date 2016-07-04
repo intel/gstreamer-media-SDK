@@ -260,21 +260,11 @@ gst_mfxdec_decide_allocation (GstVideoDecoder * vdec, GstQuery * query)
     query);
 }
 
-static inline guint
-gst_mfx_codec_from_caps (GstCaps * caps)
-{
-  return gst_mfx_profile_get_codec (gst_mfx_profile_from_caps (caps));
-}
-
 static gboolean
 gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
-  mfxU32 codec = gst_mfx_codec_from_caps (caps);
   GstVideoInfo info;
-
-  if (!codec)
-    return FALSE;
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
     return FALSE;
@@ -286,7 +276,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
       gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      codec, mfxdec->async_depth, &info, plugin->mapped);
+      gst_mfx_profile_from_caps (caps), &info,
+      mfxdec->async_depth, plugin->mapped);
   if (!mfxdec->decoder)
     return FALSE;
 
@@ -310,11 +301,11 @@ static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
   gboolean hard)
 {
-  mfxU32 codec;
+  GstMfxProfile profile;
 
   if (!hard && mfxdec->decoder) {
-    codec = gst_mfx_codec_from_caps (caps);
-    if (codec == gst_mfx_decoder_get_codec (mfxdec->decoder))
+    profile = gst_mfx_profile_from_caps (caps);
+    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder))
       return TRUE;
   }
 
@@ -389,6 +380,8 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   const GstMfxRectangle *crop_rect;
   GstMfxSurfaceProxy *proxy;
 
+  GST_VIDEO_CODEC_FRAME_FLAG_UNSET(frame, GST_VIDEO_CODEC_FRAME_FLAG_DECODE_ONLY);
+
   proxy = gst_video_codec_frame_get_user_data(frame);
 
   frame->output_buffer =
@@ -454,6 +447,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
+      GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY(frame);
       ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
       break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
