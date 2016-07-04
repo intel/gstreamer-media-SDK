@@ -19,6 +19,15 @@ GStreamer.
 
   * 'mfxvpp' is used to do video processing on RAW videos.
 
+  * 'mfxvc1parse' is used to parse VC-1 Simple, Main and Advance profile.
+
+  * 'mfxh264enc' is used to encode RAW video in H.264 format.
+  
+  * 'mfxhevcenc' is used to encode RAW video in H.265/HEVC format.
+
+  * 'mfxmpeg2enc' is used to encode RAW video in MPEG-2 format.
+  
+  * 'mfxjpegenc' is used to encode RAW video in JPEG format.
 
 License
 -------
@@ -31,9 +40,13 @@ Features
 --------
 
  - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC, and VP8 Videos
- - Support for the Wayland and X11(with EGL backend)display server
- - Support for headless decode pipelines.
- - Support Media SDK video processing capabilities:
+ - Support rendering using Wayland
+ - Support rendering using X11 with DRI3 backend
+ - Support rendering using EGL
+ - Support for headless decode pipelines
+ - Support all Media SDK postprocessing capabilities
+ - Encode RAW video into H.264, HEVC, MPEG-2 and JPEG format.
+ - Support VC-1 Simple, Main and Advance profile parsing.
 
 
 Requirements
@@ -41,15 +54,15 @@ Requirements
 
 Software requirements
 
-  * MediaSDK 2016 R1 for Yocto Embedded (MediaSDK2016R1forYoctoEmbedded-Alpha3.tar.gz) or
+  * MediaSDK 2016 R1 for Yocto Embedded or
     Media Server Studio 2016 Professional R1 (Haswell / Broadwell)
-  * GStreamer 1.4.x (up to including GStreamer 1.6):
-  * GStreamer-Plugins-Base 1.4.x (up to including GStreamer 1.6):
+  * GStreamer 1.4.x (up to including GStreamer 1.8):
+  * GStreamer-Plugins-Base 1.4.x (up to including GStreamer 1.8):
   * CMake
   
   * Renderers:
       Wayland (>=1.7)
-      X11 (With EGL backend)
+      X11 (DRI 3)
       EGL
 
 Hardware requirements
@@ -85,7 +98,7 @@ Next step is to compile the GStreamer-MSDK plugins:
 
 To install the plugins:
 
-        make install
+    make install
 
 The plugins will be installed in the /usr/lib/gstreamer-1.0 directory.
 
@@ -93,27 +106,12 @@ The plugins will be installed in the /usr/lib/gstreamer-1.0 directory.
 Usage
 -----
 
- - Play an H.264 video with a MP4 container
-
-    gst-launch-1.0 filesrc location=/path/to/video.mp4 ! \
-          qtdemux ! h264parse ! mfxdecode ! mfxsink
- 
-
- - Play an HEVC video with a Matroska container
-
-	gst-launch-1.0 filesrc location=/path/to/video.mkv ! \
-			matroskademux ! h265parse ! mfxdecode ! mfxsink
-
- - Rotate video by 180°
- 
-	 gst-launch-1.0 filesrc location=/path/to/video.mp4 ! \
-			 qtdemux ! h264parse ! mfxdecode ! mfxvpp rotation=180 ! mfxsink
-
+ - Please refer to README.example_usage for usage instructions.
 
 Known Issues
 -----------
 
-  * Decode for VC-1 Advance Profile bitstream is not working.
+  * HEVC encode at 25x16 and 4K is not working.
 
 
 Acknowledgements

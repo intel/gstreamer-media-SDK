@@ -25,6 +25,7 @@
 
 #include "gstmfxsurfaceproxy.h"
 #include "gstmfxtaskaggregator.h"
+#include "gstmfxprofile.h"
 
 G_BEGIN_DECLS
 
@@ -70,7 +71,8 @@ typedef enum {
 
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
-    mfxU32 codec, mfxU16 async_depth, GstVideoInfo * info, gboolean mapped);
+    GstMfxProfile profile, GstVideoInfo * info,
+    mfxU16 async_depth, gboolean mapped);
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder);
@@ -82,8 +84,8 @@ void
 gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
     GstMfxDecoder * new_decoder);
 
-mfxU32
-gst_mfx_decoder_get_codec (GstMfxDecoder * decoder);
+GstMfxProfile
+gst_mfx_decoder_get_profile (GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,

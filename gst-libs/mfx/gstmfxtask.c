@@ -74,8 +74,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   mfxU16 num_surfaces;
   ResponseData *response_data;
 
-  if (task->task_type & GST_MFX_TASK_DECODER &&
-      !(task->task_type & GST_MFX_TASK_ENCODER)) {
+  if (task->task_type & GST_MFX_TASK_DECODER) {
     GList *l = g_list_first (task->saved_responses);
     if (l) {
       response_data = l->data;
@@ -92,10 +91,14 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   }
 
   response_data = g_malloc0 (sizeof (ResponseData));
-  response_data->num_surfaces = req->NumFrameSuggested;
   response_data->frame_info = req->Info;
-
   info = &response_data->frame_info;
+
+  if (info->FourCC != MFX_FOURCC_P8)
+    response_data->num_surfaces = task->request.NumFrameSuggested;
+  else
+    response_data->num_surfaces = req->NumFrameSuggested;
+
   num_surfaces = response_data->num_surfaces;
 
   response_data->mem_ids =
@@ -350,7 +353,7 @@ gst_mfx_task_set_task_type (GstMfxTask * task, guint flags)
 {
   g_return_if_fail (task != NULL);
 
-  task->task_type |= flags;
+  task->task_type = flags;
 }
 
 guint

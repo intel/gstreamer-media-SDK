@@ -23,12 +23,25 @@
 #include "sysdeps.h"
 #include <string.h>
 #include <X11/Xatom.h>
+#include <X11/Xlib-xcb.h>
+
+#ifdef HAVE_XCBDRI3
+#include <xcb/dri3.h>
+#endif
+
+#ifdef HAVE_XCBPRESENT
+#include <xcb/present.h>
+#endif
+
+#include <X11/Xlib.h>
+
 #include "gstmfxwindow_x11.h"
 #include "gstmfxwindow_x11_priv.h"
 #include "gstmfxdisplay_x11.h"
 #include "gstmfxdisplay_x11_priv.h"
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxutils_x11.h"
+#include "gstmfxprimebufferproxy.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -329,9 +342,74 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GstMfxSurfaceProxy * proxy,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
+#if defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT)
+  GstMfxPrimeBufferProxy *buffer_proxy;
+  int fd, x, y, bpp;
+  VADisplay display;
+  xcb_connection_t *xcbconn;
+  unsigned int crop_w, crop_h, width, height, border, depth, stride, size;
+  Window root;
+  xcb_pixmap_t pixmap;
 
+  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
+  if (!buffer_proxy)
+      return FALSE;
 
-  return FALSE;
+  fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy);
+
+  display = XOpenDisplay (NULL);
+  if (!display)
+    return FALSE;
+
+  xcbconn = XGetXCBConnection (display);
+
+  crop_w = src_rect->width - src_rect->x;
+  crop_h = src_rect->height - src_rect->y;
+
+  XResizeWindow (display, GST_MFX_OBJECT_ID (window), crop_w, crop_h);
+  XGetGeometry (display, GST_MFX_OBJECT_ID (window), &root, &x, &y,
+      &width, &height, &border, &depth);
+
+  switch (depth) {
+    case 8:
+      bpp = 8;
+      break;
+    case 15:
+    case 16:
+      bpp = 16;
+      break;
+    case 24:
+    case 32:
+      bpp = 32;
+      break;
+    default:
+      break;
+  }
+
+  width = src_rect->width;
+  height = src_rect->height;
+  stride = width * bpp / 8;
+  size = GST_ROUND_UP_N (stride * height, 4096);
+
+  pixmap = xcb_generate_id (xcbconn);
+  xcb_dri3_pixmap_from_buffer (xcbconn, pixmap, root, size,
+      width, height, stride, depth, bpp, fd);
+  if (!pixmap)
+    return FALSE;
+
+  GST_MFX_OBJECT_LOCK_DISPLAY (window);
+  xcb_present_pixmap (xcbconn, GST_MFX_OBJECT_ID (window), pixmap,
+      0, 0, 0, 0, 0, None, None, None, XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0,
+      NULL);
+  GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
+
+  xcb_free_pixmap (xcbconn, pixmap);
+  xcb_flush (xcbconn);
+  XCloseDisplay (display);
+#else
+  GST_ERROR("Unable to render the video.\n");
+#endif
+  return TRUE;
 }
 
 void

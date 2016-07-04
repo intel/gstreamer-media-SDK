@@ -111,11 +111,6 @@ gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurfaceProxy * proxy,
       surface_rect, &sink->display_rect);
 }
 
-
-/* ------------------------------------------------------------------------ */
-/* --- EGL Backend                                                  --- */
-/* ------------------------------------------------------------------------ */
-
 #ifdef USE_EGL
 #include <egl/gstmfxdisplay_egl.h>
 #include <egl/gstmfxwindow_egl.h>
@@ -141,6 +136,7 @@ gst_mfx_gl_api_get_type (void)
   }
   return gl_api_type;
 }
+#endif // USE_EGL
 
 #ifdef USE_X11
 #include <x11/gstmfxdisplay_x11.h>
@@ -169,7 +165,11 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
   XEvent e;
 
   if (sink->window) {
-    GstMfxWindow *window = gst_mfx_window_egl_get_native_window (sink->window);
+    GstMfxWindow *window = sink->window;
+#ifdef USE_EGL
+    if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
+      window = gst_mfx_window_egl_get_native_window (sink->window);
+#endif
     GstMfxDisplay *const display = GST_MFX_OBJECT_DISPLAY (window);
     Display *const x11_dpy =
         gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11 (display));
@@ -271,7 +271,11 @@ gst_mfxsink_x11_pre_start_event_thread (GstMfxSink * sink)
       ExposureMask | StructureNotifyMask);
 
   if (sink->window) {
-    GstMfxWindow *window = gst_mfx_window_egl_get_native_window (sink->window);
+    GstMfxWindow *window = sink->window;
+#ifdef USE_EGL
+    if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
+      window = gst_mfx_window_egl_get_native_window (sink->window);
+#endif
     GstMfxDisplayX11 *const display =
         GST_MFX_DISPLAY_X11 (GST_MFX_OBJECT_DISPLAY (window));
 
@@ -288,7 +292,11 @@ static gboolean
 gst_mfxsink_x11_pre_stop_event_thread (GstMfxSink * sink)
 {
   if (sink->window) {
-    GstMfxWindow *window = gst_mfx_window_egl_get_native_window (sink->window);
+    GstMfxWindow *window = sink->window;
+#ifdef USE_EGL
+    if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
+      window = gst_mfx_window_egl_get_native_window (sink->window);
+#endif
     GstMfxDisplayX11 *const display =
         GST_MFX_DISPLAY_X11 (GST_MFX_OBJECT_DISPLAY (window));
 
@@ -300,8 +308,39 @@ gst_mfxsink_x11_pre_stop_event_thread (GstMfxSink * sink)
   return TRUE;
 }
 
-#endif
+/* ------------------------------------------------------------------------ */
+/* --- X11 Backend                                                      --- */
+/* -------------------------------------------------------------------------*/
 
+static gboolean
+gst_mfxsink_x11_create_window (GstMfxSink * sink, guint width, guint height)
+{
+  g_return_val_if_fail (sink->window == NULL, FALSE);
+  sink->window = gst_mfx_window_x11_new (sink->display, width, height);
+  if (!sink->window)
+    return FALSE;
+  return TRUE;
+}
+
+static const inline GstMfxSinkBackend *
+gst_mfxsink_backend_x11 (void)
+{
+  static const GstMfxSinkBackend GstMfxSinkBackendEGL = {
+    .create_window = gst_mfxsink_x11_create_window,
+    .handle_events = gst_mfxsink_x11_handle_events,
+    .pre_start_event_thread = gst_mfxsink_x11_pre_start_event_thread,
+    .pre_stop_event_thread = gst_mfxsink_x11_pre_stop_event_thread,
+  };
+  return &GstMfxSinkBackendEGL;
+}
+#endif // USE_X11
+
+
+/* ------------------------------------------------------------------------ */
+/* --- EGL Backend                                                      --- */
+/* ------------------------------------------------------------------------ */
+
+#ifdef USE_EGL
 static gboolean
 gst_mfxsink_egl_create_window (GstMfxSink * sink, guint width, guint height)
 {
@@ -325,7 +364,7 @@ gst_mfxsink_backend_egl (void)
   };
   return &GstMfxSinkBackendEGL;
 }
-#endif
+#endif // USE_EGL
 
 /* ------------------------------------------------------------------------ */
 /* --- Wayland Backend                                                  --- */
@@ -525,6 +564,15 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
       sink->display_type = GST_MFX_DISPLAY_VADISPLAY_TYPE (display);
       break;
 #endif
+#ifdef USE_X11
+    case GST_MFX_DISPLAY_TYPE_X11:
+      display = gst_mfx_display_x11_new (sink->display_name);
+      if (!display)
+        goto display_unsupported;
+      sink->backend = gst_mfxsink_backend_x11 ();
+      sink->display_type = GST_MFX_DISPLAY_TYPE_X11;
+      break;
+#endif
     display_unsupported:
     default:
       GST_ERROR ("display type %s not supported",
@@ -684,7 +732,8 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
     }
   }
 
-  if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
+  if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL ||
+      sink->display_type_req == GST_MFX_DISPLAY_TYPE_X11)
     out_caps =
         gst_mfx_video_format_new_template_caps_with_features
         (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);

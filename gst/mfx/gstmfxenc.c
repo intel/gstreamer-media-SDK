@@ -214,10 +214,8 @@ gst_mfxenc_push_frame (GstMfxEnc * encode, GstVideoCodecFrame * out_frame)
   GstFlowReturn ret;
 
   /* Update output state */
-  //GST_VIDEO_ENCODER_STREAM_LOCK (encode);
   if (!ensure_output_state (encode))
     goto error_output_state;
-  //GST_VIDEO_ENCODER_STREAM_UNLOCK (encode);
 
   out_buffer = out_frame->output_buffer;
   if (klass->format_buffer) {
@@ -244,7 +242,6 @@ error_format_buffer:
 error_output_state:
   {
     GST_ERROR ("failed to negotiate output state");
-    //GST_VIDEO_ENCODER_STREAM_UNLOCK (encode);
     gst_video_codec_frame_unref (out_frame);
     return GST_FLOW_NOT_NEGOTIATED;
   }
@@ -415,9 +412,7 @@ gst_mfxenc_handle_frame (GstVideoEncoder * venc, GstVideoCodecFrame * frame)
   gst_video_codec_frame_set_user_data (frame,
       gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
 
-  //GST_VIDEO_ENCODER_STREAM_UNLOCK (encode);
   status = gst_mfx_encoder_encode (encode->encoder, frame);
-  //GST_VIDEO_ENCODER_STREAM_LOCK (encode);
   if (status < GST_MFX_ENCODER_STATUS_SUCCESS)
     goto error_encode_frame;
   else if (status > 0) {
