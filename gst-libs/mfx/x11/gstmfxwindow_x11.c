@@ -24,8 +24,15 @@
 #include <string.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib-xcb.h>
+
+#ifdef HAVE_XCBDRI3
 #include <xcb/dri3.h>
+#endif
+
+#ifdef HAVE_XCBPRESENT
 #include <xcb/present.h>
+#endif
+
 #include <X11/Xlib.h>
 
 #include "gstmfxwindow_x11.h"
@@ -335,6 +342,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GstMfxSurfaceProxy * proxy,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
+#if defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT)
   GstMfxPrimeBufferProxy *buffer_proxy;
   int fd, x, y, bpp;
   VADisplay display;
@@ -398,7 +406,9 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   xcb_free_pixmap (xcbconn, pixmap);
   xcb_flush (xcbconn);
   XCloseDisplay (display);
-
+#else
+  GST_ERROR("Unable to render the video.\n");
+#endif
   return TRUE;
 }
 

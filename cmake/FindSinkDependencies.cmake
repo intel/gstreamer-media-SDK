@@ -15,11 +15,13 @@ function(FindX11 libs)
   if(XCBDRI3_FOUND)
 	  set(${libs} ${${libs}} ${XCBDRI3_LIBRARIES} PARENT_SCOPE)
 	  include_directories (${XCBDRI3_INCLUDE_DIRS})
+      add_definitions(-DHAVE_XCBDRI3)
   endif()
 
   if(XCBPRESENT_FOUND)
 	  set(${libs} ${${libs}} ${XCBPRESENT_LIBRARIES} PARENT_SCOPE)
 	  include_directories (${XCBPRESENT_INCLUDE_DIRS})
+      add_definitions(-DHAVE_XCBPRESENT)
   endif()
 
   if(X11_FOUND)
