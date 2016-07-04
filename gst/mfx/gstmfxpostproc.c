@@ -650,7 +650,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
           gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d)))
     return FALSE;
 
-  return gst_mfx_filter_start (vpp->filter);
+  return gst_mfx_filter_prepare (vpp->filter);
 }
 
 static void

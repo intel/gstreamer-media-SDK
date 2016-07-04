@@ -149,7 +149,7 @@ gst_mfx_filter_replace (GstMfxFilter ** old_filter_ptr,
     GstMfxFilter * new_filter);
 
 gboolean
-gst_mfx_filter_start (GstMfxFilter * filter);
+gst_mfx_filter_prepare (GstMfxFilter * filter);
 
 GstMfxFilterStatus
 gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,

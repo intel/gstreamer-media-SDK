@@ -260,21 +260,11 @@ gst_mfxdec_decide_allocation (GstVideoDecoder * vdec, GstQuery * query)
     query);
 }
 
-static inline guint
-gst_mfx_codec_from_caps (GstCaps * caps)
-{
-  return gst_mfx_profile_get_codec (gst_mfx_profile_from_caps (caps));
-}
-
 static gboolean
 gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
-  mfxU32 codec = gst_mfx_codec_from_caps (caps);
   GstVideoInfo info;
-
-  if (!codec)
-    return FALSE;
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
     return FALSE;
@@ -286,7 +276,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
       gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      codec, mfxdec->async_depth, &info, plugin->mapped);
+      gst_mfx_profile_from_caps (caps), &info,
+      mfxdec->async_depth, plugin->mapped);
   if (!mfxdec->decoder)
     return FALSE;
 
@@ -310,11 +301,11 @@ static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
   gboolean hard)
 {
-  mfxU32 codec;
+  GstMfxProfile profile;
 
   if (!hard && mfxdec->decoder) {
-    codec = gst_mfx_codec_from_caps (caps);
-    if (codec == gst_mfx_decoder_get_codec (mfxdec->decoder))
+    profile = gst_mfx_profile_from_caps (caps);
+    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder))
       return TRUE;
   }
 
