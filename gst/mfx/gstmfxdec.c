@@ -380,8 +380,6 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   const GstMfxRectangle *crop_rect;
   GstMfxSurfaceProxy *proxy;
 
-  GST_VIDEO_CODEC_FRAME_FLAG_UNSET(frame, GST_VIDEO_CODEC_FRAME_FLAG_DECODE_ONLY);
-
   proxy = gst_video_codec_frame_get_user_data(frame);
 
   frame->output_buffer =
@@ -447,7 +445,6 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
-      GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY(frame);
       ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
       break;
     case GST_MFX_DECODER_STATUS_SUCCESS:

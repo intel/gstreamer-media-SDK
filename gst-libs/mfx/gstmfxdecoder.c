@@ -174,6 +174,10 @@ task_init (GstMfxDecoder * decoder)
 
   gst_mfx_decoder_set_video_properties (decoder);
 
+  sts = gst_mfx_decoder_configure_plugins (decoder);
+  if (sts < 0)
+    return FALSE;
+
   sts = MFXVideoDECODE_QueryIOSurf (decoder->session, &decoder->param,
       &decoder->request);
   if (sts < 0) {
@@ -193,8 +197,6 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
     GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
     GstVideoInfo * info, mfxU16 async_depth, gboolean mapped)
 {
-  mfxStatus sts = MFX_ERR_NONE;
-
   decoder->info = *info;
   decoder->profile = profile;
   decoder->param.mfx.CodecId = gst_mfx_profile_get_codec(profile);
@@ -213,10 +215,6 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
 
   decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   if (!task_init(decoder))
-    return FALSE;
-
-  sts = gst_mfx_decoder_configure_plugins (decoder);
-  if (sts < 0)
     return FALSE;
 
   return TRUE;
