@@ -398,7 +398,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 
   GST_MFX_OBJECT_LOCK_DISPLAY (window);
   xcb_present_pixmap (xcbconn, GST_MFX_OBJECT_ID (window), pixmap,
-      0, 0, 0, 300, 300, None, None, None, XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, None, None, None, XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0,
       NULL);
   GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
 
