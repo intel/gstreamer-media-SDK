@@ -122,6 +122,10 @@ gst_mfx_display_type_get_type (void)
     {GST_MFX_DISPLAY_TYPE_WAYLAND,
         "Wayland display", "wayland"},
 #endif
+#ifdef USE_X11
+    {GST_MFX_DISPLAY_TYPE_X11,
+        "X11 display", "x11"},
+#endif
     {0, NULL, NULL},
   };
 

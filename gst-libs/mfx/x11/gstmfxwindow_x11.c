@@ -30,6 +30,17 @@
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxutils_x11.h"
 
+//FOR DRI3
+#include "gstmfxprimebufferproxy.h"
+#include <X11/Xlib-xcb.h>
+#include <xcb/dri3.h>
+#include <xcb/present.h>
+#include <X11/Xlib.h>
+
+//#define ALIGN(x, y) (((x) + (y) - 1) & -(y))
+//#define PAGE_ALIGN(x) ALIGN(x, 4096)
+//FOR DRI3
+
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
@@ -329,9 +340,74 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GstMfxSurfaceProxy * proxy,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
+//FOR DRI3
+  GstMfxPrimeBufferProxy *buffer_proxy;
+  int fd, x, y, bpp;
+  VADisplay display;
+  xcb_connection_t *xcbconn;
+  unsigned int cropW, cropH, width, height, border, depth, stride, size;
+  Window root;
+  xcb_pixmap_t pixmap;
 
+  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
+  if (!buffer_proxy)
+      return FALSE;
 
-  return FALSE;
+  fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy);
+
+  display = XOpenDisplay (NULL);
+  if (!display)
+    return FALSE;
+
+  xcbconn = XGetXCBConnection (display);
+
+  cropW = src_rect->width - src_rect->x;
+  cropH = src_rect->height - src_rect->y;
+
+  XResizeWindow (display, GST_MFX_OBJECT_ID (window), cropW, cropH);
+  XGetGeometry (display, GST_MFX_OBJECT_ID (window), &root, &x, &y,
+      &width, &height, &border, &depth);
+
+  switch (depth) {
+    case 8:
+      bpp = 8;
+      break;
+    case 15:
+    case 16:
+      bpp = 16;
+      break;
+    case 24:
+    case 32:
+      bpp = 32;
+      break;
+    default:
+      break;
+  }
+
+  width = src_rect->width;
+  height = src_rect->height;
+  stride = width * bpp / 8;
+  //size = PAGE_ALIGN (stride * height);
+  size = GST_ROUND_UP_N (stride * height, 4096);
+
+  pixmap = xcb_generate_id (xcbconn);
+  xcb_dri3_pixmap_from_buffer (xcbconn, pixmap, root, size,
+      width, height, stride, depth, bpp, fd);
+  if (!pixmap)
+    return FALSE;
+
+  GST_MFX_OBJECT_LOCK_DISPLAY (window);
+  xcb_present_pixmap (xcbconn, GST_MFX_OBJECT_ID (window), pixmap,
+      0, 0, 0, 300, 300, None, None, None, XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0,
+      NULL);
+  GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
+
+  xcb_free_pixmap (xcbconn, pixmap);
+  xcb_flush (xcbconn);
+  XCloseDisplay (display);
+
+  return TRUE;
+//FOR DRI3
 }
 
 void
