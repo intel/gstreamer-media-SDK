@@ -395,9 +395,17 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     encoder->params.mfx.FrameInfo.BitDepthChroma = 8;
     encoder->params.mfx.FrameInfo.BitDepthLuma = 8;
 
-    encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (encoder->info.width);
-    encoder->params.mfx.FrameInfo.Height =
-        GST_ROUND_UP_32 (encoder->info.height);
+    if (!g_strcmp0 (encoder->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
+      encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (encoder->info.width);
+      encoder->params.mfx.FrameInfo.Height =
+          GST_ROUND_UP_32 (encoder->info.height);
+    } else {
+      encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_16 (encoder->info.width);
+      encoder->params.mfx.FrameInfo.Height =
+          (MFX_PICSTRUCT_PROGRESSIVE == encoder->params.mfx.FrameInfo.PicStruct) ?
+          GST_ROUND_UP_16 (encoder->info.height) :
+          GST_ROUND_UP_32 (encoder->info.height);
+    }
   }
   else {
     mfxFrameAllocRequest *request = gst_mfx_task_get_request(encoder->encode);

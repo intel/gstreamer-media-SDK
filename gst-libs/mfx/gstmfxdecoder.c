@@ -51,7 +51,6 @@ struct _GstMfxDecoder
   mfxBitstream bs;
   mfxPluginUID plugin_uid;
   mfxFrameAllocRequest request;
-  mfxFrameAllocResponse response;
 
   GstVideoInfo info;
   gboolean inited;
@@ -114,7 +113,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
     {
       gchar *uid = "f622394d8d87452f878c51f2fc9b4131";
       for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
-        sscanf (*uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+        sscanf (uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
     }
       break;
@@ -131,7 +130,6 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   mfxFrameInfo *frame_info = &decoder->param.mfx.FrameInfo;
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-  frame_info->FourCC = MFX_FOURCC_NV12;
   frame_info->PicStruct =
       GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ? (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
           GST_VIDEO_FRAME_FLAG_TFF) ? MFX_PICSTRUCT_FIELD_TFF :
@@ -148,10 +146,16 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   frame_info->AspectRatioH = decoder->info.par_d;
   frame_info->BitDepthChroma = 8;
   frame_info->BitDepthLuma = 8;
-  frame_info->FourCC = MFX_FOURCC_NV12;
 
-  frame_info->Width = GST_ROUND_UP_32 (decoder->info.width);
-  frame_info->Height = GST_ROUND_UP_32 (decoder->info.height);
+  if (decoder->param.mfx.CodecId == MFX_CODEC_VP8)
+    frame_info->FourCC = MFX_FOURCC_YV12;
+  else
+    frame_info->FourCC = MFX_FOURCC_NV12;
+
+  frame_info->Width = GST_ROUND_UP_16 (decoder->info.width);
+  frame_info->Height =
+      (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
+      GST_ROUND_UP_16 (decoder->info.height) : GST_ROUND_UP_32 (decoder->info.height);
 
   decoder->param.mfx.CodecProfile =
       gst_mfx_profile_get_codec_profile(decoder->profile);
@@ -323,15 +327,6 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
         GST_MFX_TASK_VPP_IN);
     if (!decoder->pool)
       return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
-  }
-  else if (!mapped) {
-    sts = gst_mfx_task_frame_alloc (decoder->decode,
-        &decoder->request, &decoder->response);
-    if (MFX_ERR_NONE != sts)
-        return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
-
-    gst_mfx_task_set_task_type (decoder->decode,
-        gst_mfx_task_get_task_type(decoder->decode) | GST_MFX_TASK_DECODER);
   }
 
   sts = MFXVideoDECODE_Init (decoder->session, &decoder->param);

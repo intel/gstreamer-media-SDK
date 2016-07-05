@@ -146,8 +146,10 @@ gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info)
   filter->frame_info.BitDepthChroma = 8;
   filter->frame_info.BitDepthLuma = 8;
 
-  filter->frame_info.Width = GST_ROUND_UP_32 (info->width);
-  filter->frame_info.Height = GST_ROUND_UP_32 (info->height);
+  filter->frame_info.Width = GST_ROUND_UP_16 (info->width);
+  filter->frame_info.Height =
+      (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
+      GST_ROUND_UP_16 (info->height) : GST_ROUND_UP_32 (info->height);
 }
 
 static void
@@ -227,6 +229,17 @@ static gboolean
 init_params (GstMfxFilter * filter)
 {
   filter->params.vpp.In = filter->frame_info;
+  /* Aligned frame dimensions may differ between input and output surfaces
+   * so we sanitize the input frame dimensions, since output frame dimensions
+   * could have certain alignment requirements used in HEVC HW encoding */
+  if (filter->shared_request[1]) {
+    filter->params.vpp.In.Width = GST_ROUND_UP_16 (filter->frame_info.CropW);
+    filter->params.vpp.In.Height =
+        (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
+        GST_ROUND_UP_16 (filter->frame_info.CropH) :
+        GST_ROUND_UP_32 (filter->frame_info.CropH);
+  }
+
   filter->params.vpp.Out = filter->frame_info;
 
   if (filter->fourcc)
@@ -234,15 +247,15 @@ init_params (GstMfxFilter * filter)
 
   if (filter->width) {
     filter->params.vpp.Out.CropW = filter->width;
-    filter->params.vpp.Out.Width = GST_ROUND_UP_32 (filter->width);
+    filter->params.vpp.Out.Width = GST_ROUND_UP_16 (filter->width);
   }
   if (filter->height) {
     filter->params.vpp.Out.CropH = filter->height;
-    filter->params.vpp.Out.Height = GST_ROUND_UP_32 (filter->height);
+    filter->params.vpp.Out.Height = GST_ROUND_UP_16 (filter->height);
   }
   if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
     filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
-    filter->params.vpp.Out.Height = GST_ROUND_UP_32 (filter->frame_info.CropH);
+    filter->params.vpp.Out.Height = GST_ROUND_UP_16 (filter->frame_info.CropH);
   }
   if (filter->filter_op & GST_MFX_FILTER_FRAMERATE_CONVERSION &&
       (filter->fps_n && filter->fps_d)) {
