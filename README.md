@@ -111,7 +111,7 @@ Usage
 Known Issues
 -----------
 
-  * HEVC encode at 25x16 and 4K is not working.
+  * HEVC encode/transcode works except for 4k and raw videos.
 
 
 Acknowledgements

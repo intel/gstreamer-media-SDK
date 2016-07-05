@@ -119,9 +119,10 @@ gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info)
     if (filter->shared_request[i]) {
       filter->frame_info = filter->shared_request[i]->Info;
       /* Input fourcc may differ with shared encoder input request */
-      if (i)
+      if (i) {
         filter->frame_info.FourCC =
             gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (info));
+      }
       return;
     }
   }
@@ -228,19 +229,7 @@ init_filters (GstMfxFilter * filter)
 static gboolean
 init_params (GstMfxFilter * filter)
 {
-  filter->params.vpp.In = filter->frame_info;
-  /* Aligned frame dimensions may differ between input and output surfaces
-   * so we sanitize the input frame dimensions, since output frame dimensions
-   * could have certain alignment requirements used in HEVC HW encoding */
-  if (filter->shared_request[1]) {
-    filter->params.vpp.In.Width = GST_ROUND_UP_16 (filter->frame_info.CropW);
-    filter->params.vpp.In.Height =
-        (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
-        GST_ROUND_UP_16 (filter->frame_info.CropH) :
-        GST_ROUND_UP_32 (filter->frame_info.CropH);
-  }
-
-  filter->params.vpp.Out = filter->frame_info;
+  filter->params.vpp.In = filter->params.vpp.Out = filter->frame_info;
 
   if (filter->fourcc)
     filter->params.vpp.Out.FourCC = filter->fourcc;
@@ -299,7 +288,16 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
         MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
-  gst_mfx_task_set_request (filter->vpp[1], &request[1]);
+  if (filter->shared_request[1]) {
+    filter->shared_request[1]->NumFrameSuggested += request[1].NumFrameSuggested;
+    filter->shared_request[1]->NumFrameMin =
+        filter->shared_request[1]->NumFrameSuggested;
+  }
+  else {
+    filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
+  }
+
+  gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
 
   /* Initialize input VPP surface pool when shared alloc request is set */
   if (filter->shared_request[0]) {
@@ -315,6 +313,8 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     if (!mapped) {
       gst_mfx_task_use_video_memory (filter->vpp[0]);
       filter->shared_request[0]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+
+      gst_mfx_task_set_request (filter->vpp[0], filter->shared_request[0]);
 
       sts = gst_mfx_task_frame_alloc (filter->vpp[0], filter->shared_request[0],
           &filter->response[0]);
@@ -391,6 +391,7 @@ gst_mfx_filter_finalize (GstMfxFilter * filter)
     gst_mfx_task_frame_free (filter->vpp[i], &filter->response[i]);
     gst_mfx_task_replace (&filter->vpp[i], NULL);
     gst_mfx_surface_pool_replace (&filter->vpp_pool[i], NULL);
+    g_slice_free (mfxFrameAllocRequest, filter->shared_request[i]);
   }
 
   /* Free allocated memory for filters */
@@ -956,8 +957,6 @@ gst_mfx_filter_start (GstMfxFilter * filter)
 {
   mfxStatus sts = MFX_ERR_NONE;
   gboolean mapped = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
-
-  filter->shared_request[1] = gst_mfx_task_get_request(filter->vpp[1]);
 
   if (!mapped) {
     gst_mfx_task_use_video_memory (filter->vpp[1]);
