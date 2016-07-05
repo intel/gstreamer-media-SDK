@@ -130,10 +130,11 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   mfxFrameInfo *frame_info = &decoder->param.mfx.FrameInfo;
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-  frame_info->PicStruct =
-      GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ? (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
+  frame_info->FourCC = MFX_FOURCC_NV12;
+  frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ?
+      (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
           GST_VIDEO_FRAME_FLAG_TFF) ? MFX_PICSTRUCT_FIELD_TFF :
-      MFX_PICSTRUCT_FIELD_BFF)
+          MFX_PICSTRUCT_FIELD_BFF)
       : MFX_PICSTRUCT_PROGRESSIVE;
 
   frame_info->CropX = 0;
@@ -147,15 +148,11 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   frame_info->BitDepthChroma = 8;
   frame_info->BitDepthLuma = 8;
 
-  if (decoder->param.mfx.CodecId == MFX_CODEC_VP8)
-    frame_info->FourCC = MFX_FOURCC_YV12;
-  else
-    frame_info->FourCC = MFX_FOURCC_NV12;
-
   frame_info->Width = GST_ROUND_UP_16 (decoder->info.width);
   frame_info->Height =
       (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
-      GST_ROUND_UP_16 (decoder->info.height) : GST_ROUND_UP_32 (decoder->info.height);
+          GST_ROUND_UP_16 (decoder->info.height) :
+          GST_ROUND_UP_32 (decoder->info.height);
 
   decoder->param.mfx.CodecProfile =
       gst_mfx_profile_get_codec_profile(decoder->profile);
@@ -311,6 +308,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     decoder->request.Type =
         MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE |
         MFX_MEMTYPE_EXPORT_FRAME;
+
+    decoder->request.NumFrameSuggested += (1 - decoder->param.AsyncDepth);
 
     gst_mfx_filter_set_request (decoder->filter, &decoder->request,
         GST_MFX_TASK_VPP_IN);

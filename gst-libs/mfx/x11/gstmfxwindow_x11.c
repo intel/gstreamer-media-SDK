@@ -23,23 +23,18 @@
 #include "sysdeps.h"
 #include <string.h>
 #include <X11/Xatom.h>
+#include <X11/Xlib-xcb.h>
+#include <xcb/dri3.h>
+#include <xcb/present.h>
+#include <X11/Xlib.h>
+
 #include "gstmfxwindow_x11.h"
 #include "gstmfxwindow_x11_priv.h"
 #include "gstmfxdisplay_x11.h"
 #include "gstmfxdisplay_x11_priv.h"
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxutils_x11.h"
-
-//FOR DRI3
 #include "gstmfxprimebufferproxy.h"
-#include <X11/Xlib-xcb.h>
-#include <xcb/dri3.h>
-#include <xcb/present.h>
-#include <X11/Xlib.h>
-
-//#define ALIGN(x, y) (((x) + (y) - 1) & -(y))
-//#define PAGE_ALIGN(x) ALIGN(x, 4096)
-//FOR DRI3
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -340,12 +335,11 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GstMfxSurfaceProxy * proxy,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
-//FOR DRI3
   GstMfxPrimeBufferProxy *buffer_proxy;
   int fd, x, y, bpp;
   VADisplay display;
   xcb_connection_t *xcbconn;
-  unsigned int cropW, cropH, width, height, border, depth, stride, size;
+  unsigned int crop_w, crop_h, width, height, border, depth, stride, size;
   Window root;
   xcb_pixmap_t pixmap;
 
@@ -361,10 +355,10 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 
   xcbconn = XGetXCBConnection (display);
 
-  cropW = src_rect->width - src_rect->x;
-  cropH = src_rect->height - src_rect->y;
+  crop_w = src_rect->width - src_rect->x;
+  crop_h = src_rect->height - src_rect->y;
 
-  XResizeWindow (display, GST_MFX_OBJECT_ID (window), cropW, cropH);
+  XResizeWindow (display, GST_MFX_OBJECT_ID (window), crop_w, crop_h);
   XGetGeometry (display, GST_MFX_OBJECT_ID (window), &root, &x, &y,
       &width, &height, &border, &depth);
 
@@ -387,7 +381,6 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   width = src_rect->width;
   height = src_rect->height;
   stride = width * bpp / 8;
-  //size = PAGE_ALIGN (stride * height);
   size = GST_ROUND_UP_N (stride * height, 4096);
 
   pixmap = xcb_generate_id (xcbconn);
@@ -407,7 +400,6 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   XCloseDisplay (display);
 
   return TRUE;
-//FOR DRI3
 }
 
 void
