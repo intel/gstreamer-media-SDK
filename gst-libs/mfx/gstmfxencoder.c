@@ -792,6 +792,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   mfxFrameAllocRequest enc_request;
   gboolean mapped = FALSE;
 
+  /* Use input system memory with SW HEVC encoder */
   if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7"))
     mapped = TRUE;
 
@@ -808,9 +809,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   else if (sts > 0)
     GST_WARNING ("Incompatible video params detected %d", sts);
 
-  /* Use input system memory with raw NV12 surfaces or SW HEVC encoder */
-  if ((GST_VIDEO_INFO_FORMAT (&encoder->info) == GST_VIDEO_FORMAT_NV12 &&
-      encoder->mapped) || mapped) {
+  if (mapped) {
     encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
   }
   else {
@@ -831,7 +830,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     mfxFrameAllocRequest *request;
 
     request = gst_mfx_task_get_request(encoder->encode);
-    enc_request.NumFrameSuggested += (request->NumFrameSuggested - encoder->params.AsyncDepth);
+    enc_request.NumFrameSuggested +=
+        (request->NumFrameSuggested - encoder->params.AsyncDepth);
     enc_request.NumFrameMin = enc_request.NumFrameSuggested;
     gst_mfx_task_set_request(encoder->encode, &enc_request);
   }
@@ -842,7 +842,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
-  if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12) {
+  if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
+      encoder->mapped) {
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
         encoder->encode, GST_MFX_TASK_VPP_OUT, encoder->mapped, mapped);
 

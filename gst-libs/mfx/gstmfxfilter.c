@@ -119,9 +119,10 @@ gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info)
     if (filter->shared_request[i]) {
       filter->frame_info = filter->shared_request[i]->Info;
       /* Input fourcc may differ with shared encoder input request */
-      if (i)
+      if (i) {
         filter->frame_info.FourCC =
             gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (info));
+      }
       return;
     }
   }
@@ -228,19 +229,7 @@ init_filters (GstMfxFilter * filter)
 static gboolean
 init_params (GstMfxFilter * filter)
 {
-  filter->params.vpp.In = filter->frame_info;
-  /* Aligned frame dimensions may differ between input and output surfaces
-   * so we sanitize the input frame dimensions, since output frame dimensions
-   * could have certain alignment requirements used in HEVC HW encoding */
-  if (filter->shared_request[1]) {
-    filter->params.vpp.In.Width = GST_ROUND_UP_16 (filter->frame_info.CropW);
-    filter->params.vpp.In.Height =
-        (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
-        GST_ROUND_UP_16 (filter->frame_info.CropH) :
-        GST_ROUND_UP_32 (filter->frame_info.CropH);
-  }
-
-  filter->params.vpp.Out = filter->frame_info;
+  filter->params.vpp.In = filter->params.vpp.Out = filter->frame_info;
 
   if (filter->fourcc)
     filter->params.vpp.Out.FourCC = filter->fourcc;
