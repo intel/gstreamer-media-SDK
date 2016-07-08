@@ -261,7 +261,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   mfxFrameAllocRequest request[2];
   mfxStatus sts = MFX_ERR_NONE;
 
-  if (!filter->session) {
+  if (!filter->vpp[1]) {
     filter->vpp[1] =
         gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
     if (!filter->vpp[1])
@@ -269,10 +269,6 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     filter->session = gst_mfx_task_get_session (filter->vpp[1]);
     gst_mfx_task_aggregator_set_current_task (filter->aggregator,
         filter->vpp[1]);
-  }
-  else {
-    filter->vpp[1] = gst_mfx_task_new_with_session (filter->aggregator,
-      filter->session, GST_MFX_TASK_VPP_OUT);
   }
 
   if (!init_params (filter))
