@@ -141,7 +141,9 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
     }
   } else {
     VAContextID context_id = req->reserved[0];
-    int codedbuf_size = (req->Info.Width * req->Info.Height) * 400 / (16 * 16);
+    int width32 =  32 * ((req->Info.Width + 31) >> 5);
+    int height32 = 32 * ((req->Info.Height + 31) >> 5);
+    int codedbuf_size = (width32 * height32) * 400LL / (16 * 16);
 
     response_data->coded_buf =
         g_slice_alloc (num_surfaces * sizeof (VABufferID));
