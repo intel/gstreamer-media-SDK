@@ -66,10 +66,6 @@ gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
 GstMfxDisplay *
 gst_mfx_task_aggregator_get_display (GstMfxTaskAggregator * aggregator);
 
-gboolean
-gst_mfx_task_aggregator_find_task (GstMfxTaskAggregator * aggregator,
-    GstMfxTask * task);
-
 
 G_END_DECLS
 
