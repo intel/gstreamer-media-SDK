@@ -262,13 +262,19 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   mfxStatus sts = MFX_ERR_NONE;
 
   if (!filter->vpp[1]) {
-    filter->vpp[1] =
-        gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
-    if (!filter->vpp[1])
-      return FALSE;
-    filter->session = gst_mfx_task_get_session (filter->vpp[1]);
-    gst_mfx_task_aggregator_set_current_task (filter->aggregator,
-        filter->vpp[1]);
+    if (!filter->session) {
+      filter->vpp[1] =
+          gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
+      if (!filter->vpp[1])
+        return FALSE;
+      filter->session = gst_mfx_task_get_session (filter->vpp[1]);
+      gst_mfx_task_aggregator_set_current_task (filter->aggregator,
+          filter->vpp[1]);
+    }
+    else {
+      filter->vpp[1] = gst_mfx_task_new_with_session (filter->aggregator,
+          filter->session, GST_MFX_TASK_VPP_OUT);
+    }
   }
 
   if (!init_params (filter))
@@ -295,12 +301,12 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
 
   gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
 
-  /* Initialize input VPP surface pool when shared alloc request is set */
-  if (filter->shared_request[0]) {
+  /* Initialize input VPP surface pool when vpp input task is set */
+  if (filter->vpp[0]) {
     gboolean mapped = !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
 
-    if (!gst_mfx_task_aggregator_find_task (filter->aggregator, filter->vpp[0]))
-      return FALSE;
+    //if (!gst_mfx_task_aggregator_find_task (filter->aggregator, filter->vpp[0]))
+      //return FALSE;
 
     filter->shared_request[0]->NumFrameSuggested += request[0].NumFrameSuggested;
     filter->shared_request[0]->NumFrameMin =

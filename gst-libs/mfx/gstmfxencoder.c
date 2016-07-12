@@ -810,17 +810,13 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   else if (sts == MFX_WRN_INCOMPATIBLE_VIDEO_PARAM) {
     GST_WARNING ("Incompatible video params detected %d", sts);
   }
-  else if (sts < 0) {
-    GST_ERROR ("Unsupported video encode parameters %d", sts);
-    return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
-  }
 
   if (mapped) {
     encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
   }
   else {
-    gst_mfx_task_use_video_memory (encoder->encode);
     encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
+    gst_mfx_task_use_video_memory (encoder->encode);
   }
 
   sts = MFXVideoENCODE_QueryIOSurf (encoder->session, &encoder->params,
@@ -833,12 +829,12 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   if (encoder->shared) {
     request = gst_mfx_task_get_request(encoder->encode);
     request->NumFrameSuggested +=
-        (enc_request.NumFrameSuggested - encoder->params.AsyncDepth);
+        (enc_request.NumFrameSuggested - encoder->params.AsyncDepth + 1);
     request->NumFrameMin = request->NumFrameSuggested;
   }
   else {
-    gst_mfx_task_set_request(encoder->encode, &enc_request);
     request = &enc_request;
+    gst_mfx_task_set_request(encoder->encode, request);
   }
 
   if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
@@ -865,6 +861,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     GST_ERROR ("Error initializing the MFX video encoder %d", sts);
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
+
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
