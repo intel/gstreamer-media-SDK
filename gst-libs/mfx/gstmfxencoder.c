@@ -789,6 +789,7 @@ GstMfxEncoderStatus
 gst_mfx_encoder_start (GstMfxEncoder *encoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
+  mfxFrameAllocRequest *request;
   mfxFrameAllocRequest enc_request;
   gboolean mapped = FALSE;
 
@@ -806,8 +807,9 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     GST_WARNING ("Partial acceleration %d", sts);
     mapped = TRUE;
   }
-  else if (sts > 0)
+  else if (sts == MFX_WRN_INCOMPATIBLE_VIDEO_PARAM) {
     GST_WARNING ("Incompatible video params detected %d", sts);
+  }
 
   if (mapped) {
     encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
@@ -822,24 +824,17 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   if (sts < 0) {
     GST_ERROR ("Unable to query encode allocation request %d", sts);
     return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
-  } else if (sts > 0) {
-    mapped = TRUE;
   }
 
   if (encoder->shared) {
-    mfxFrameAllocRequest *request;
-
     request = gst_mfx_task_get_request(encoder->encode);
-    enc_request.NumFrameSuggested +=
-        (request->NumFrameSuggested - encoder->params.AsyncDepth);
-    enc_request.NumFrameMin = enc_request.NumFrameSuggested;
-    gst_mfx_task_set_request(encoder->encode, &enc_request);
+    request->NumFrameSuggested +=
+        (enc_request.NumFrameSuggested - encoder->params.AsyncDepth + 1);
+    request->NumFrameMin = request->NumFrameSuggested;
   }
-
-  sts = MFXVideoENCODE_Init (encoder->session, &encoder->params);
-  if (sts < 0) {
-    GST_ERROR ("Error initializing the MFX video encoder %d", sts);
-    return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+  else {
+    request = &enc_request;
+    gst_mfx_task_set_request(encoder->encode, request);
   }
 
   if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
@@ -847,9 +842,9 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
         encoder->encode, GST_MFX_TASK_VPP_OUT, encoder->mapped, mapped);
 
-    enc_request.NumFrameSuggested += (1 - encoder->params.AsyncDepth);
+    request->NumFrameSuggested += (1 - encoder->params.AsyncDepth);
 
-    gst_mfx_filter_set_request (encoder->filter, &enc_request,
+    gst_mfx_filter_set_request (encoder->filter, request,
         GST_MFX_TASK_VPP_OUT);
 
     gst_mfx_filter_set_frame_info (encoder->filter, &encoder->info);
@@ -859,6 +854,12 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 
     if (!gst_mfx_filter_prepare (encoder->filter))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+  }
+
+  sts = MFXVideoENCODE_Init (encoder->session, &encoder->params);
+  if (sts < 0) {
+    GST_ERROR ("Error initializing the MFX video encoder %d", sts);
+    return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
