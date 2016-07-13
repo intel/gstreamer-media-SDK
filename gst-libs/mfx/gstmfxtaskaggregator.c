@@ -171,28 +171,6 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator)
   return session;
 }
 
-static gint
-find_task (gconstpointer cur, gconstpointer task)
-{
-  GstMfxTask *_cur = (GstMfxTask *) cur;
-  GstMfxTask *_task = (GstMfxTask *) task;
-
-  return _cur != _task;
-}
-
-
-gboolean
-gst_mfx_task_aggregator_find_task (GstMfxTaskAggregator * aggregator,
-    GstMfxTask * task)
-{
-  g_return_val_if_fail (aggregator != NULL, NULL);
-
-  GList *l = g_list_find_custom (aggregator->cache, task,
-      find_task);
-
-  return l != NULL;
-}
-
 GstMfxTask *
 gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator)
 {

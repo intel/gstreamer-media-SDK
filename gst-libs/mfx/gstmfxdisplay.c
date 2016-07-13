@@ -312,6 +312,8 @@ gst_mfx_display_class_init (GstMfxDisplayClass * klass)
   GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
 
+  GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "A MFX helper");
+
   object_class->size = sizeof (GstMfxDisplay);
   object_class->finalize = (GDestroyNotify) gst_mfx_display_finalize;
   dpy_class->lock = gst_mfx_display_lock_default;

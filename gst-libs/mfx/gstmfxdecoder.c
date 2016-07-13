@@ -437,7 +437,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     (*out_frame)->pts = (*out_frame)->dts;
 
     decoder->num_decoded_frames++;
-    GST_DEBUG("decoded frame number : %ld\n", decoder->num_decoded_frames);
+    GST_DEBUG ("decoded frame number : %ld", decoder->num_decoded_frames);
   }
 
 end:
@@ -493,7 +493,7 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
     (*out_frame)->pts = (*out_frame)->dts;
 
     decoder->num_decoded_frames++;
-    GST_DEBUG("decoded frame number : %ld\n", decoder->num_decoded_frames);
+    GST_DEBUG("decoded frame number : %ld", decoder->num_decoded_frames);
     ret = GST_MFX_DECODER_STATUS_SUCCESS;
   } else {
     ret = GST_MFX_DECODER_STATUS_FLUSHED;

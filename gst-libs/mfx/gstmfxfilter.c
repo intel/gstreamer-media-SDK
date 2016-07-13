@@ -229,7 +229,19 @@ init_filters (GstMfxFilter * filter)
 static gboolean
 init_params (GstMfxFilter * filter)
 {
-  filter->params.vpp.In = filter->params.vpp.Out = filter->frame_info;
+  filter->params.vpp.In = filter->frame_info;
+
+  /* Aligned frame dimensions may differ between input and output surfaces
+   * so we sanitize the input frame dimensions, since output frame dimensions
+   * could have certain alignment requirements used in HEVC HW encoding */
+  if (filter->shared_request[1]) {
+    filter->params.vpp.In.Width = GST_ROUND_UP_16 (filter->frame_info.CropW);
+    filter->params.vpp.In.Height =
+        (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
+            GST_ROUND_UP_16 (filter->frame_info.CropH) :
+            GST_ROUND_UP_32 (filter->frame_info.CropH);
+  }
+  filter->params.vpp.Out = filter->frame_info;
 
   if (filter->fourcc)
     filter->params.vpp.Out.FourCC = filter->fourcc;
@@ -261,18 +273,20 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   mfxFrameAllocRequest request[2];
   mfxStatus sts = MFX_ERR_NONE;
 
-  if (!filter->session) {
-    filter->vpp[1] =
-        gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
-    if (!filter->vpp[1])
-      return FALSE;
-    filter->session = gst_mfx_task_get_session (filter->vpp[1]);
-    gst_mfx_task_aggregator_set_current_task (filter->aggregator,
-        filter->vpp[1]);
-  }
-  else {
-    filter->vpp[1] = gst_mfx_task_new_with_session (filter->aggregator,
-      filter->session, GST_MFX_TASK_VPP_OUT);
+  if (!filter->vpp[1]) {
+    if (!filter->session) {
+      filter->vpp[1] =
+          gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
+      if (!filter->vpp[1])
+        return FALSE;
+      filter->session = gst_mfx_task_get_session (filter->vpp[1]);
+      gst_mfx_task_aggregator_set_current_task (filter->aggregator,
+          filter->vpp[1]);
+    }
+    else {
+      filter->vpp[1] = gst_mfx_task_new_with_session (filter->aggregator,
+          filter->session, GST_MFX_TASK_VPP_OUT);
+    }
   }
 
   if (!init_params (filter))
@@ -299,12 +313,9 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
 
   gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
 
-  /* Initialize input VPP surface pool when shared alloc request is set */
-  if (filter->shared_request[0]) {
+  /* Initialize input VPP surface pool when vpp input task is set */
+  if (filter->vpp[0]) {
     gboolean mapped = !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
-
-    if (!gst_mfx_task_aggregator_find_task (filter->aggregator, filter->vpp[0]))
-      return FALSE;
 
     filter->shared_request[0]->NumFrameSuggested += request[0].NumFrameSuggested;
     filter->shared_request[0]->NumFrameMin =
