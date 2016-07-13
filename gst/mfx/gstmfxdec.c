@@ -29,6 +29,9 @@
 #include <gst-libs/mfx/gstmfxsurfaceproxy.h>
 #include <gst-libs/mfx/gstmfxprofile.h>
 
+#define GST_PLUGIN_NAME "mfxdecode"
+#define GST_PLUGIN_DESC "MFX Video Decoder"
+
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAT_DEFAULT mfxdec_debug
 
@@ -497,7 +500,8 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
   GstVideoDecoderClass *video_decoder_class = GST_VIDEO_DECODER_CLASS (klass);
 
-  GST_DEBUG_CATEGORY_INIT (mfxdec_debug, "mfxdec", 0, "MFX Video Decoder");
+  GST_DEBUG_CATEGORY_INIT (mfxdec_debug, GST_PLUGIN_NAME,
+      0, GST_PLUGIN_DESC);
 
   gst_mfx_plugin_base_class_init (GST_MFX_PLUGIN_BASE_CLASS (klass));
 
