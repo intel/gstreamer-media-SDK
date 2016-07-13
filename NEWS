@@ -1,7 +1,7 @@
 Version 1.0.0
 * Added X11 rendering with DRI3 backend.
 * Implemented decoder flushing mechanism after video finish decoding,
-* Implemented encoder for H.264, HEVC, JPEG and MPEG2.
+* Implemented H.264, HEVC, JPEG and MPEG2 encoder plugins.
 * Fixed frame lagging bug at the start of the video
 * Implemented VC-1 parser for VC-1 Simple, Main, and Advanced profile.
 

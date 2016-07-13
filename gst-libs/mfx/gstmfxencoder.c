@@ -862,7 +862,6 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
-
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 

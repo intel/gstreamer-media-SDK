@@ -11,23 +11,23 @@ Overview
 GStreamer-MSDK consists of a collection of Media SDK-based plugins for
 GStreamer.
 
-  * 'mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1 and
+  * 'mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1, VP8 and
     JPEG videos using the underlying hardware capabilities. 
 
   * 'mfxsink' is used to render the decoded frame to a Wayland / X11
     display.
 
-  * 'mfxvpp' is used to do video processing on RAW videos.
+  * 'mfxvpp' is used to do video processing on decoded or RAW video frames.
 
-  * 'mfxvc1parse' is used to parse VC-1 Simple, Main and Advance profile.
+  * 'mfxvc1parse' is used to parse VC-1 Simple, Main and Advance profiles.
 
-  * 'mfxh264enc' is used to encode RAW video in H.264 format.
+  * 'mfxh264enc' is used to encode / transcode videos to H.264 format.
   
-  * 'mfxhevcenc' is used to encode RAW video in H.265/HEVC format.
+  * 'mfxhevcenc' is used to encode / transcode videos to H.265/HEVC format.
 
-  * 'mfxmpeg2enc' is used to encode RAW video in MPEG-2 format.
+  * 'mfxmpeg2enc' is used to encode / transcode videos to MPEG-2 format.
   
-  * 'mfxjpegenc' is used to encode RAW video in JPEG format.
+  * 'mfxjpegenc' is used to encode / transcode videos to JPEG format.
 
 License
 -------
@@ -43,9 +43,9 @@ Features
  - Support rendering using Wayland
  - Support rendering using X11 with DRI3 backend
  - Support rendering using EGL
- - Support for headless decode pipelines
+ - Support for headless decode pipelines (via fakesink)
  - Support all Media SDK postprocessing capabilities
- - Encode RAW video into H.264, HEVC, MPEG-2 and JPEG format.
+ - Encode / transcode video into H.264, HEVC, MPEG-2 and JPEG formats.
  - Support VC-1 Simple, Main and Advance profile parsing.
 
 
@@ -98,7 +98,7 @@ Next step is to compile the GStreamer-MSDK plugins:
 
 To install the plugins:
 
-    make install
+    	make install
 
 The plugins will be installed in the /usr/lib/gstreamer-1.0 directory.
 
@@ -108,10 +108,10 @@ Usage
 
  - Please refer to README.example_usage for usage instructions.
 
-Known Issues
------------
+To do
+-----
 
-  * HEVC encode/transcode works except for 4k and raw videos.
+  * Playbin and text overlay support for decode and VPP plugins.
 
 
 Acknowledgements
