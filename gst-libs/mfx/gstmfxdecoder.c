@@ -90,8 +90,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
   guint i, c;
 
   switch (decoder->param.mfx.CodecId) {
-    case MFX_CODEC_HEVC:
-    {
+    case MFX_CODEC_HEVC: {
       gchar *uids[] = {
         "33a61c0b4c27454ca8d85dde757c6f8e",
         "15dd936825ad475ea34e35f3f54217a6",
@@ -107,16 +106,16 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
           break;
         }
       }
-    }
       break;
-    case MFX_CODEC_VP8:
-    {
+    }
+    case MFX_CODEC_VP8: {
       gchar *uid = "f622394d8d87452f878c51f2fc9b4131";
       for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
         sscanf (uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
-    }
+
       break;
+    }
     default:
       sts = MFX_ERR_NONE;
   }
@@ -282,8 +281,8 @@ static GstMfxDecoderStatus
 gst_mfx_decoder_start (GstMfxDecoder * decoder)
 {
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
-  GstVideoFormat vformat = GST_VIDEO_INFO_FORMAT (&decoder->info);
-  GstVideoFormat out_format;
+  GstVideoFormat out_format = GST_VIDEO_INFO_FORMAT (&decoder->info);
+  GstVideoFormat vformat;
   mfxStatus sts = MFX_ERR_NONE;
   gboolean mapped;
 
@@ -312,10 +311,10 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   if (!mapped)
     gst_mfx_task_use_video_memory (decoder->decode);
 
-  out_format =
+  vformat =
       gst_video_format_from_mfx_fourcc(decoder->param.mfx.FrameInfo.FourCC);
 
-  if (vformat != out_format || mapped != decoder->mapped) {
+  if (out_format != vformat || mapped != decoder->mapped) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
         decoder->decode, GST_MFX_TASK_VPP_IN, mapped, decoder->mapped);
 
@@ -333,8 +332,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 
     gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
 
-    if (vformat != out_format)
-      gst_mfx_filter_set_format (decoder->filter, vformat);
+    if (out_format != vformat)
+      gst_mfx_filter_set_format (decoder->filter, out_format);
 
     if (!gst_mfx_filter_prepare (decoder->filter))
       return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
