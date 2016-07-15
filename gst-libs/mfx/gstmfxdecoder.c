@@ -90,8 +90,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
   guint i, c;
 
   switch (decoder->param.mfx.CodecId) {
-    case MFX_CODEC_HEVC:
-    {
+    case MFX_CODEC_HEVC: {
       gchar *uids[] = {
         "33a61c0b4c27454ca8d85dde757c6f8e",
         "15dd936825ad475ea34e35f3f54217a6",
@@ -107,16 +106,16 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
           break;
         }
       }
-    }
       break;
-    case MFX_CODEC_VP8:
-    {
+    }
+    case MFX_CODEC_VP8: {
       gchar *uid = "f622394d8d87452f878c51f2fc9b4131";
       for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
         sscanf (uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
-    }
+
       break;
+    }
     default:
       sts = MFX_ERR_NONE;
   }
@@ -131,6 +130,7 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
   frame_info->FourCC = MFX_FOURCC_NV12;
+
   frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ?
       (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
           GST_VIDEO_FRAME_FLAG_TFF) ? MFX_PICSTRUCT_FIELD_TFF :
@@ -281,7 +281,8 @@ static GstMfxDecoderStatus
 gst_mfx_decoder_start (GstMfxDecoder * decoder)
 {
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
-  GstVideoFormat vformat = GST_VIDEO_INFO_FORMAT (&decoder->info);
+  GstVideoFormat out_format = GST_VIDEO_INFO_FORMAT (&decoder->info);
+  GstVideoFormat vformat;
   mfxStatus sts = MFX_ERR_NONE;
   gboolean mapped;
 
@@ -294,11 +295,26 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
   }
 
+  if ((decoder->param.mfx.CodecId == MFX_CODEC_JPEG) &&
+      (decoder->param.mfx.JPEGChromaFormat == MFX_CHROMAFORMAT_YUV444))
+  {
+    decoder->request.Info.FourCC =
+        decoder->param.mfx.FrameInfo.FourCC = MFX_FOURCC_RGB4;
+    decoder->request.Info.ChromaFormat =
+        decoder->param.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV444;
+    decoder->param.mfx.JPEGColorFormat = MFX_JPEG_COLORFORMAT_RGB;
+
+    gst_mfx_task_set_request (decoder->decode, &decoder->request);
+  }
+
   mapped = !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   if (!mapped)
     gst_mfx_task_use_video_memory (decoder->decode);
 
-  if (vformat != GST_VIDEO_FORMAT_NV12 || mapped != decoder->mapped) {
+  vformat =
+      gst_video_format_from_mfx_fourcc(decoder->param.mfx.FrameInfo.FourCC);
+
+  if (out_format != vformat || mapped != decoder->mapped) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
         decoder->decode, GST_MFX_TASK_VPP_IN, mapped, decoder->mapped);
 
@@ -316,8 +332,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 
     gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
 
-    if (vformat != GST_VIDEO_FORMAT_NV12)
-      gst_mfx_filter_set_format (decoder->filter, vformat);
+    if (out_format != vformat)
+      gst_mfx_filter_set_format (decoder->filter, out_format);
 
     if (!gst_mfx_filter_prepare (decoder->filter))
       return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;

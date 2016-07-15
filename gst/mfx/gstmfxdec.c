@@ -484,6 +484,7 @@ gst_mfxdec_finish (GstVideoDecoder *vdec)
   GstMfxDecoderStatus sts;
   GstVideoCodecFrame *out_frame;
   GstFlowReturn ret = GST_FLOW_OK;
+
   do {
     sts = gst_mfx_decoder_flush (mfxdec->decoder, &out_frame);
     if (GST_MFX_DECODER_STATUS_FLUSHED == sts)
@@ -493,12 +494,71 @@ gst_mfxdec_finish (GstVideoDecoder *vdec)
   return ret;
 }
 
+static gboolean
+gst_mfxdec_sink_query (GstVideoDecoder * vdec, GstQuery * query)
+{
+  gboolean ret = TRUE;
+  GstMfxDec *mfxdec = GST_MFXDEC (vdec);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
+
+  switch (GST_QUERY_TYPE (query)) {
+    case GST_QUERY_CONTEXT:{
+      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
+      break;
+    }
+    default:{
+      ret = GST_VIDEO_DECODER_CLASS (gst_mfxdec_parent_class)->sink_query (vdec, query);
+      break;
+    }
+  }
+
+  return ret;
+}
+
+static gboolean
+gst_mfxdec_src_query (GstVideoDecoder * vdec, GstQuery * query)
+{
+  gboolean ret = TRUE;
+  GstMfxDec *mfxdec = GST_MFXDEC (vdec);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
+
+  switch (GST_QUERY_TYPE (query)) {
+    case GST_QUERY_CAPS:{
+      GstCaps *caps, *filter = NULL;
+      GstPad *pad = GST_VIDEO_DECODER_SRC_PAD (vdec);
+
+      gst_query_parse_caps (query, &filter);
+      caps = gst_pad_get_pad_template_caps (pad);
+
+      if (filter) {
+        GstCaps *tmp = caps;
+        caps = gst_caps_intersect_full (filter, tmp, GST_CAPS_INTERSECT_FIRST);
+        gst_caps_unref (tmp);
+      }
+
+      gst_query_set_caps_result (query, caps);
+      gst_caps_unref (caps);
+      break;
+    }
+    case GST_QUERY_CONTEXT:{
+      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
+      break;
+    }
+    default:{
+      ret = GST_VIDEO_DECODER_CLASS (gst_mfxdec_parent_class)->src_query (vdec, query);
+      break;
+    }
+  }
+
+  return ret;
+}
+
 static void
 gst_mfxdec_class_init (GstMfxDecClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
-  GstVideoDecoderClass *video_decoder_class = GST_VIDEO_DECODER_CLASS (klass);
+  GstVideoDecoderClass *vdec_class = GST_VIDEO_DECODER_CLASS (klass);
 
   GST_DEBUG_CATEGORY_INIT (mfxdec_debug, GST_PLUGIN_NAME,
       0, GST_PLUGIN_DESC);
@@ -524,15 +584,16 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
       "Uses libmfx for decoding video streams",
       "Ishmael Sameen<ishmael.visayana.sameen@intel.com>");
 
-  video_decoder_class->open = GST_DEBUG_FUNCPTR (gst_mfxdec_open);
-  video_decoder_class->close = GST_DEBUG_FUNCPTR (gst_mfxdec_close);
-  video_decoder_class->flush = GST_DEBUG_FUNCPTR (gst_mfxdec_flush);
-  video_decoder_class->finish = GST_DEBUG_FUNCPTR (gst_mfxdec_finish);
-  video_decoder_class->set_format = GST_DEBUG_FUNCPTR (gst_mfxdec_set_format);
-  video_decoder_class->handle_frame =
-      GST_DEBUG_FUNCPTR (gst_mfxdec_handle_frame);
-  video_decoder_class->decide_allocation =
+  vdec_class->open = GST_DEBUG_FUNCPTR (gst_mfxdec_open);
+  vdec_class->close = GST_DEBUG_FUNCPTR (gst_mfxdec_close);
+  vdec_class->flush = GST_DEBUG_FUNCPTR (gst_mfxdec_flush);
+  vdec_class->finish = GST_DEBUG_FUNCPTR (gst_mfxdec_finish);
+  vdec_class->set_format = GST_DEBUG_FUNCPTR (gst_mfxdec_set_format);
+  vdec_class->handle_frame = GST_DEBUG_FUNCPTR (gst_mfxdec_handle_frame);
+  vdec_class->decide_allocation =
       GST_DEBUG_FUNCPTR (gst_mfxdec_decide_allocation);
+  vdec_class->src_query = GST_DEBUG_FUNCPTR (gst_mfxdec_src_query);
+  vdec_class->sink_query = GST_DEBUG_FUNCPTR (gst_mfxdec_sink_query);
 }
 
 static void
