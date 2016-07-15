@@ -131,6 +131,7 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
   frame_info->FourCC = MFX_FOURCC_NV12;
+
   frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ?
       (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
           GST_VIDEO_FRAME_FLAG_TFF) ? MFX_PICSTRUCT_FIELD_TFF :
@@ -282,6 +283,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 {
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
   GstVideoFormat vformat = GST_VIDEO_INFO_FORMAT (&decoder->info);
+  GstVideoFormat out_format;
   mfxStatus sts = MFX_ERR_NONE;
   gboolean mapped;
 
@@ -294,11 +296,26 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
   }
 
+  if ((decoder->param.mfx.CodecId == MFX_CODEC_JPEG) &&
+      (decoder->param.mfx.JPEGChromaFormat == MFX_CHROMAFORMAT_YUV444))
+  {
+    decoder->request.Info.FourCC =
+        decoder->param.mfx.FrameInfo.FourCC = MFX_FOURCC_RGB4;
+    decoder->request.Info.ChromaFormat =
+        decoder->param.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV444;
+    decoder->param.mfx.JPEGColorFormat = MFX_JPEG_COLORFORMAT_RGB;
+
+    gst_mfx_task_set_request (decoder->decode, &decoder->request);
+  }
+
   mapped = !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   if (!mapped)
     gst_mfx_task_use_video_memory (decoder->decode);
 
-  if (vformat != GST_VIDEO_FORMAT_NV12 || mapped != decoder->mapped) {
+  out_format =
+      gst_video_format_from_mfx_fourcc(decoder->param.mfx.FrameInfo.FourCC);
+
+  if (vformat != out_format || mapped != decoder->mapped) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
         decoder->decode, GST_MFX_TASK_VPP_IN, mapped, decoder->mapped);
 
@@ -316,7 +333,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 
     gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
 
-    if (vformat != GST_VIDEO_FORMAT_NV12)
+    if (vformat != out_format)
       gst_mfx_filter_set_format (decoder->filter, vformat);
 
     if (!gst_mfx_filter_prepare (decoder->filter))
