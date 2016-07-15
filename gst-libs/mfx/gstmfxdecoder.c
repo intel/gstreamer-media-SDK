@@ -162,6 +162,7 @@ static gboolean
 task_init (GstMfxDecoder * decoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
+  gboolean mapped;
 
   decoder->decode = gst_mfx_task_new (decoder->aggregator,
       GST_MFX_TASK_DECODER);
@@ -186,6 +187,13 @@ task_init (GstMfxDecoder * decoder)
   } else if (sts > 0) {
     decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
+
+  mapped = !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+  if (!mapped)
+    gst_mfx_task_use_video_memory (decoder->decode);
+
+  decoder->request.Type = mapped ?
+      MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
   gst_mfx_task_set_request (decoder->decode, &decoder->request);
 
@@ -284,7 +292,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   GstVideoFormat out_format = GST_VIDEO_INFO_FORMAT (&decoder->info);
   GstVideoFormat vformat;
   mfxStatus sts = MFX_ERR_NONE;
-  gboolean mapped;
+  gboolean mapped = gst_mfx_task_has_mapped_surface(decoder->decode);
 
   sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
       &decoder->param);
@@ -307,10 +315,6 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     gst_mfx_task_set_request (decoder->decode, &decoder->request);
   }
 
-  mapped = !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
-  if (!mapped)
-    gst_mfx_task_use_video_memory (decoder->decode);
-
   vformat =
       gst_video_format_from_mfx_fourcc(decoder->param.mfx.FrameInfo.FourCC);
 
@@ -321,7 +325,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     if (!decoder->filter)
       return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
 
-    decoder->request.Type =
+    decoder->request.Type |=
         MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE |
         MFX_MEMTYPE_EXPORT_FRAME;
 
@@ -413,7 +417,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   if (sts != MFX_ERR_NONE &&
       sts != MFX_ERR_MORE_DATA &&
       sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
-    GST_ERROR ("Error during MFX decoding.");
+    GST_ERROR ("Status %d : Error during MFX decoding", sts);
     ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
     goto end;
   }
