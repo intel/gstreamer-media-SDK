@@ -85,6 +85,11 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
 
   memset (resp, 0, sizeof (mfxFrameAllocResponse));
 
+  if (!(req->Type & MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET)) {
+    GST_ERROR ("Unsupported surface type: %d\n", req->Type);
+    return MFX_ERR_UNSUPPORTED;
+  }
+
   response_data = g_malloc0 (sizeof (ResponseData));
   response_data->frame_info = req->Info;
   info = &response_data->frame_info;
