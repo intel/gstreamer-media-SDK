@@ -45,7 +45,6 @@ struct _GstMfxDecoder
 
   GQueue *frames;
   guint32 num_decoded_frames;
-  GstClockTime pts_offset;
 
   mfxSession session;
   mfxVideoParam param;
@@ -376,9 +375,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
-  if (!decoder->pts_offset)
-    decoder->pts_offset = frame->pts;
-
   g_queue_push_head (decoder->frames, gst_video_codec_frame_ref(frame));
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
@@ -458,7 +454,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     *out_frame = g_queue_pop_tail (decoder->frames);
     gst_video_codec_frame_set_user_data(*out_frame,
         gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
-    (*out_frame)->pts = decoder->pts_offset + (*out_frame)->dts;
 
     decoder->num_decoded_frames++;
     GST_DEBUG ("decoded frame number : %ld", decoder->num_decoded_frames);
@@ -514,8 +509,6 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
     *out_frame = g_queue_pop_tail (decoder->frames);
     gst_video_codec_frame_set_user_data(*out_frame,
         gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
-
-    (*out_frame)->pts = decoder->pts_offset + (*out_frame)->dts;
 
     decoder->num_decoded_frames++;
     GST_DEBUG("decoded frame number : %ld", decoder->num_decoded_frames);
