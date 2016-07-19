@@ -407,7 +407,7 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   }
 
   ret = gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
-  if (ret != GST_FLOW_OK)
+  if (ret != GST_FLOW_OK && ret != GST_FLOW_EOS)
     goto error_commit_buffer;
 
   return GST_FLOW_OK;
@@ -428,7 +428,6 @@ error_commit_buffer:
   {
     GST_INFO_OBJECT (mfxdec, "downstream element rejected the frame (%s [%d])",
       gst_flow_get_name (ret), ret);
-    gst_video_codec_frame_unref (frame);
     return GST_FLOW_ERROR;
   }
 }
