@@ -352,7 +352,7 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
 
   /* There could be issues if we avoid the reset_full () while doing
-  * seeking: we have to reset the internal state */
+   * seeking: we have to reset the internal state */
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE);
 }
 

@@ -413,6 +413,16 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
   }
 }
 
+static void
+init_encoder_task (GstMfxEncoder * encoder)
+{
+  encoder->encode = gst_mfx_task_new (encoder->aggregator,
+      GST_MFX_TASK_ENCODER);
+  encoder->session = gst_mfx_task_get_session (encoder->encode);
+  gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
+      encoder->encode);
+}
+
 static gboolean
 gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
     GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean mapped)
@@ -420,18 +430,25 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
   if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !mapped) {
-    encoder->encode =
+    GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
-    encoder->session = gst_mfx_task_get_session (encoder->encode);
-    gst_mfx_task_set_task_type(encoder->encode, GST_MFX_TASK_ENCODER);
-    encoder->shared = TRUE;
+
+    if (!gst_mfx_task_has_mapped_surface (task)) {
+      gst_mfx_task_replace(&encoder->encode, task);
+      encoder->session = gst_mfx_task_get_session (encoder->encode);
+      gst_mfx_task_set_task_type(encoder->encode, GST_MFX_TASK_ENCODER);
+      encoder->shared = TRUE;
+    }
+    else {
+      gst_mfx_task_ensure_native_decoder_output (task);
+      mapped = TRUE;
+
+      init_encoder_task (encoder);
+      gst_mfx_task_unref (task);
+    }
   }
   else {
-    encoder->encode = gst_mfx_task_new (encoder->aggregator,
-        GST_MFX_TASK_ENCODER);
-    encoder->session = gst_mfx_task_get_session (encoder->encode);
-    gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
-        encoder->encode);
+    init_encoder_task (encoder);
   }
   if (!encoder->encode)
     return FALSE;

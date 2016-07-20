@@ -319,7 +319,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   vformat =
       gst_video_format_from_mfx_fourcc(decoder->param.mfx.FrameInfo.FourCC);
 
-  if (out_format != vformat || mapped != decoder->mapped) {
+  if (!gst_mfx_task_has_native_decoder_output(decoder->decode) &&
+      (out_format != vformat || mapped != decoder->mapped)) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
         decoder->decode, GST_MFX_TASK_VPP_IN, mapped, decoder->mapped);
 
