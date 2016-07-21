@@ -940,6 +940,9 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
             0, encoder->bs.DataLength, NULL, NULL);
 
     encoder->bs.DataLength = 0;
+
+    //GST_BUFFER_DURATION (frame->output_buffer) =
+      //  (encoder->info.fps_d / encoder->info.fps_n) * 1000000000;
   }
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
@@ -984,6 +987,9 @@ gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
             0, encoder->bs.DataLength, NULL, NULL);
 
     encoder->bs.DataLength = 0;
+
+    //GST_BUFFER_DURATION ((*frame)->output_buffer) =
+      //  (encoder->info.fps_d / encoder->info.fps_n) * 1000000000;
   }
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
