@@ -433,7 +433,8 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
 
-    if (!gst_mfx_task_has_mapped_surface (task)) {
+    if (!gst_mfx_task_has_mapped_surface (task) ||
+        gst_mfx_task_has_type (task, GST_MFX_TASK_VPP_OUT)) {
       gst_mfx_task_replace(&encoder->encode, task);
       encoder->session = gst_mfx_task_get_session (encoder->encode);
       gst_mfx_task_set_task_type(encoder->encode, GST_MFX_TASK_ENCODER);
@@ -940,9 +941,6 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
             0, encoder->bs.DataLength, NULL, NULL);
 
     encoder->bs.DataLength = 0;
-
-    //GST_BUFFER_DURATION (frame->output_buffer) =
-      //  (encoder->info.fps_d / encoder->info.fps_n) * 1000000000;
   }
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
@@ -987,9 +985,6 @@ gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
             0, encoder->bs.DataLength, NULL, NULL);
 
     encoder->bs.DataLength = 0;
-
-    //GST_BUFFER_DURATION ((*frame)->output_buffer) =
-      //  (encoder->info.fps_d / encoder->info.fps_n) * 1000000000;
   }
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
