@@ -314,7 +314,6 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstMfxFilterStatus status;
   GstFlowReturn ret;
   GstMfxRectangle *crop_rect = NULL;
-  GstMfxRectangle tmp_rect;
   GstBuffer *buf;
   GstClockTime timestamp;
 

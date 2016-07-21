@@ -442,8 +442,6 @@ gst_mfx_window_reconfigure (GstMfxWindow * window)
 {
   g_return_if_fail (window != NULL);
 
-  const GstMfxWindowClass *const klass = GST_MFX_WINDOW_GET_CLASS (window);
-
   window->check_geometry = TRUE;
   gst_mfx_window_ensure_size (window);
 }

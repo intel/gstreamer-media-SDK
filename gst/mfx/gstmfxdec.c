@@ -378,7 +378,6 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
 static GstFlowReturn
 gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
 {
-  GstFlowReturn ret;
   GstMfxVideoMeta *meta;
   const GstMfxRectangle *crop_rect;
   GstMfxSurfaceProxy *proxy;

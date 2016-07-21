@@ -111,7 +111,6 @@ static GstMfxEncoderStatus
 gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
 {
   GstMfxEncoderH264 *const encoder = GST_MFX_ENCODER_H264_CAST (base_encoder);
-  GstMfxEncoderStatus status;
 
   if (base_encoder->profile == MFX_PROFILE_AVC_BASELINE)
     base_encoder->gop_refdist = 1;
