@@ -121,10 +121,10 @@ ensure_texture (GstMfxWindowEGL * window, guint width, guint height)
   GstMfxTexture *texture;
   GstMfxDisplay *display = GST_MFX_OBJECT_DISPLAY (window);
 
-  /*if (window->texture &&
-     GST_MFX_TEXTURE_WIDTH(window->texture) == width &&
-     GST_MFX_TEXTURE_HEIGHT(window->texture) == height)
-     return TRUE; */
+  if (window->texture &&
+     GST_MFX_TEXTURE_WIDTH(window->texture) == GST_ROUND_UP_16 (width) &&
+     GST_MFX_TEXTURE_HEIGHT(window->texture) == GST_ROUND_UP_16 (height))
+     return TRUE;
 
   texture = gst_mfx_texture_egl_new (display,
       GL_TEXTURE_2D, GL_RGBA, width, height);

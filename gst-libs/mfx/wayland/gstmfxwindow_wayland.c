@@ -243,7 +243,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   /* Use compositor scaling */
   if (src_rect->width != dst_rect->width ||
-src_rect->height != dst_rect->height) {
+      src_rect->height != dst_rect->height) {
     if (priv->viewport)
       wl_viewport_set_destination (priv->viewport, dst_rect->width,
           dst_rect->height);
