@@ -352,7 +352,7 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
 
   /* There could be issues if we avoid the reset_full () while doing
-  * seeking: we have to reset the internal state */
+   * seeking: we have to reset the internal state */
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE);
 }
 
@@ -406,11 +406,7 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
     }
   }
 
-  ret = gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
-  if (ret != GST_FLOW_OK)
-    goto error_commit_buffer;
-
-  return GST_FLOW_OK;
+  return gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
   /* ERRORS */
 error_create_buffer:
   {
@@ -421,13 +417,6 @@ error_create_buffer:
 error_get_meta:
   {
     gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
-    gst_video_codec_frame_unref (frame);
-    return GST_FLOW_ERROR;
-  }
-error_commit_buffer:
-  {
-    GST_INFO_OBJECT (mfxdec, "downstream element rejected the frame (%s [%d])",
-      gst_flow_get_name (ret), ret);
     gst_video_codec_frame_unref (frame);
     return GST_FLOW_ERROR;
   }

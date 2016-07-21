@@ -52,7 +52,8 @@ configure_file (
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++ -Wall -fstack-protector-all -fPIE")
+set(CMAKE_C_RELEASE_FLAGS "${CMAKE_C_RELEASE_FLAGS} -D_FORTITY_SOURCE=2")
 
 include_directories(
     gst/mfx

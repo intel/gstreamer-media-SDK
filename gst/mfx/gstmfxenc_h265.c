@@ -203,8 +203,8 @@ static gboolean
 _h265_convert_byte_stream_to_hvc (GstBuffer * buf)
 {
   GstMapInfo info;
-  guint32 nal_size;
-  guint8 *nal_start_code, *nal_body;
+  guint32 nal_size, buf_size = 0;
+  guint8 *nal_start_code, *nal_body, *cur;
   guint8 *frame_end;
 
   g_assert (buf);
@@ -212,7 +212,7 @@ _h265_convert_byte_stream_to_hvc (GstBuffer * buf)
   if (!gst_buffer_map (buf, &info, GST_MAP_READ | GST_MAP_WRITE))
     return FALSE;
 
-  nal_start_code = info.data;
+  cur = nal_start_code = info.data;
   frame_end = info.data + info.size;
   nal_size = 0;
 
@@ -225,16 +225,19 @@ _h265_convert_byte_stream_to_hvc (GstBuffer * buf)
     /* A start code size of 3 indicates the start of an
      * encoded picture in MSDK */
     if (nal_body - nal_start_code == 3) {
-      memmove (info.data + 4, nal_body, nal_size);
+      memmove (cur + 4, nal_body, nal_size);
       /* Precede NALU with NALU size */
-      GST_WRITE_UINT32_BE (info.data, nal_size);
-      gst_buffer_resize (buf, 0, nal_size + 4);
-      break;
-    }
+      GST_WRITE_UINT32_BE (cur, nal_size);
 
+      cur += (nal_size + 4);
+      buf_size += (nal_size + 4);
+    }
     nal_start_code = nal_body + nal_size;
   }
   gst_buffer_unmap (buf, &info);
+
+  if (buf_size)
+    gst_buffer_resize (buf, 0, buf_size);
 
   return TRUE;
 

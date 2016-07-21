@@ -318,7 +318,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   vformat =
       gst_video_format_from_mfx_fourcc(decoder->param.mfx.FrameInfo.FourCC);
 
-  if (out_format != vformat || mapped != decoder->mapped) {
+  if (!gst_mfx_task_has_native_decoder_output(decoder->decode) &&
+      (out_format != vformat || mapped != decoder->mapped)) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
         decoder->decode, GST_MFX_TASK_VPP_IN, mapped, decoder->mapped);
 
@@ -363,6 +364,15 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   return ret;
 }
 
+static gint
+sort_pts (gconstpointer frame1, gconstpointer frame2, gpointer data)
+{
+  GstClockTime pts1 = ((GstVideoCodecFrame *) (frame1))->pts;
+  GstClockTime pts2 = ((GstVideoCodecFrame *) (frame2))->pts;
+
+  return (pts1 > pts2 ? -1 : pts1 == pts2 ? 0 : +1);
+}
+
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     GstVideoCodecFrame * frame, GstVideoCodecFrame ** out_frame)
@@ -375,7 +385,10 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
+  /* Save frames for later synchronization with decoded MFX surfaces */
   g_queue_push_head (decoder->frames, gst_video_codec_frame_ref(frame));
+  /* Ensure that frames are sorted according to presentation timestamps */
+  g_queue_sort (decoder->frames, sort_pts, NULL);
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
     GST_ERROR ("Failed to map input buffer");
@@ -454,7 +467,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     *out_frame = g_queue_pop_tail (decoder->frames);
     gst_video_codec_frame_set_user_data(*out_frame,
         gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
-    (*out_frame)->pts = (*out_frame)->dts;
 
     decoder->num_decoded_frames++;
     GST_DEBUG ("decoded frame number : %ld", decoder->num_decoded_frames);
@@ -510,7 +522,6 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
     *out_frame = g_queue_pop_tail (decoder->frames);
     gst_video_codec_frame_set_user_data(*out_frame,
         gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
-    (*out_frame)->pts = (*out_frame)->dts;
 
     decoder->num_decoded_frames++;
     GST_DEBUG("decoded frame number : %ld", decoder->num_decoded_frames);

@@ -380,8 +380,8 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     encoder->params.mfx.FrameInfo.PicStruct =
         GST_VIDEO_INFO_IS_INTERLACED (&encoder->info) ?
         (GST_VIDEO_INFO_FLAG_IS_SET (&encoder->info, GST_VIDEO_FRAME_FLAG_TFF) ?
-        MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF)
-        : MFX_PICSTRUCT_PROGRESSIVE;
+            MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF) :
+            MFX_PICSTRUCT_PROGRESSIVE;
 
     encoder->params.mfx.FrameInfo.CropX = 0;
     encoder->params.mfx.FrameInfo.CropY = 0;
@@ -396,13 +396,16 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     encoder->params.mfx.FrameInfo.BitDepthLuma = 8;
 
     if (!g_strcmp0 (encoder->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
-      encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (encoder->info.width);
+      encoder->params.mfx.FrameInfo.Width =
+          GST_ROUND_UP_32 (encoder->info.width);
       encoder->params.mfx.FrameInfo.Height =
           GST_ROUND_UP_32 (encoder->info.height);
     } else {
-      encoder->params.mfx.FrameInfo.Width = GST_ROUND_UP_16 (encoder->info.width);
+      encoder->params.mfx.FrameInfo.Width =
+          GST_ROUND_UP_16 (encoder->info.width);
       encoder->params.mfx.FrameInfo.Height =
-          (MFX_PICSTRUCT_PROGRESSIVE == encoder->params.mfx.FrameInfo.PicStruct) ?
+          (MFX_PICSTRUCT_PROGRESSIVE ==
+              encoder->params.mfx.FrameInfo.PicStruct) ?
           GST_ROUND_UP_16 (encoder->info.height) :
           GST_ROUND_UP_32 (encoder->info.height);
     }
@@ -413,6 +416,16 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
   }
 }
 
+static void
+init_encoder_task (GstMfxEncoder * encoder)
+{
+  encoder->encode = gst_mfx_task_new (encoder->aggregator,
+      GST_MFX_TASK_ENCODER);
+  encoder->session = gst_mfx_task_get_session (encoder->encode);
+  gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
+      encoder->encode);
+}
+
 static gboolean
 gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
     GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean mapped)
@@ -420,18 +433,26 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
   if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !mapped) {
-    encoder->encode =
+    GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
-    encoder->session = gst_mfx_task_get_session (encoder->encode);
-    gst_mfx_task_set_task_type(encoder->encode, GST_MFX_TASK_ENCODER);
-    encoder->shared = TRUE;
+
+    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER) &&
+        gst_mfx_task_has_mapped_surface (task)) {
+      gst_mfx_task_ensure_native_decoder_output (task);
+      mapped = TRUE;
+
+      init_encoder_task (encoder);
+      gst_mfx_task_unref (task);
+    }
+    else {
+      gst_mfx_task_replace(&encoder->encode, task);
+      encoder->session = gst_mfx_task_get_session (encoder->encode);
+      gst_mfx_task_set_task_type(encoder->encode, GST_MFX_TASK_ENCODER);
+      encoder->shared = TRUE;
+    }
   }
   else {
-    encoder->encode = gst_mfx_task_new (encoder->aggregator,
-        GST_MFX_TASK_ENCODER);
-    encoder->session = gst_mfx_task_get_session (encoder->encode);
-    gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
-        encoder->encode);
+    init_encoder_task (encoder);
   }
   if (!encoder->encode)
     return FALSE;

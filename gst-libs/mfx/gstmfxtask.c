@@ -50,6 +50,7 @@ struct _GstMfxTask
   mfxSession session;
   guint task_type;
   gboolean use_video_memory;
+  gboolean use_native_output;
 };
 
 static gint
@@ -347,6 +348,8 @@ gst_mfx_task_set_request (GstMfxTask * task, mfxFrameAllocRequest * request)
 gboolean
 gst_mfx_task_has_type (GstMfxTask * task, guint flags)
 {
+  g_return_val_if_fail (task != NULL, FALSE);
+
   return (task->task_type & flags);
 }
 
@@ -364,6 +367,22 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
   g_return_val_if_fail (task != NULL, GST_MFX_TASK_INVALID);
 
   return task->task_type;
+}
+
+void
+gst_mfx_task_ensure_native_decoder_output (GstMfxTask * task)
+{
+  g_return_if_fail (task != NULL);
+
+  task->use_native_output = TRUE;
+}
+
+gboolean
+gst_mfx_task_has_native_decoder_output (GstMfxTask * task)
+{
+  g_return_val_if_fail (task != NULL, FALSE);
+
+  return task->use_native_output;
 }
 
 void
@@ -386,6 +405,8 @@ gst_mfx_task_use_video_memory (GstMfxTask * task)
 gboolean
 gst_mfx_task_has_mapped_surface (GstMfxTask * task)
 {
+  g_return_val_if_fail (task != NULL, FALSE);
+
   return !task->use_video_memory;
 }
 
