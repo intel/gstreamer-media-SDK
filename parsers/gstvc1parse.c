@@ -346,10 +346,6 @@ conversion_not_supported:
 static gboolean
 gst_vc1_parse_renegotiate (GstMfxVC1Parse * vc1parse)
 {
-  GstCaps *in_caps;
-  GstCaps *allowed_caps;
-  GstCaps *tmp;
-
   /* Negotiate with downstream here */
   GST_DEBUG_OBJECT (vc1parse, "Renegotiating");
 
@@ -1335,8 +1331,6 @@ gst_vc1_parse_convert_to_frame_layer (GstMfxVC1Parse * vc1parse,
   GstMemory *mem;
   gboolean ok;
   gboolean keyframe;
-  guint8 sc_data[4];
-  guint32 startcode;
 
   buffer = frame->buffer;
   keyframe = !(GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_DELTA_UNIT));

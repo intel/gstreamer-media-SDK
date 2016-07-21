@@ -516,7 +516,6 @@ static void
 gst_mfxenc_class_init (GstMfxEncClass * klass)
 {
   GObjectClass *const object_class = G_OBJECT_CLASS (klass);
-  GstElementClass *const element_class = GST_ELEMENT_CLASS (klass);
   GstVideoEncoderClass *const venc_class = GST_VIDEO_ENCODER_CLASS (klass);
 
   GST_DEBUG_CATEGORY_INIT (gst_mfxencode_debug,
