@@ -67,8 +67,6 @@ enum
   LAST_SIGNAL
 };
 
-static guint gst_mfxsink_signals[LAST_SIGNAL] = { 0 };
-
 enum
 {
   PROP_0,
