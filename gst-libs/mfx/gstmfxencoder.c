@@ -537,14 +537,14 @@ gst_mfx_encoder_new (const GstMfxEncoderClass * klass,
 
   encoder = gst_mfx_mini_object_new0 (GST_MFX_MINI_OBJECT_CLASS (klass));
   if (!encoder)
-    goto error;
+     return NULL;
 
   if (!gst_mfx_encoder_init (encoder, aggregator, info, mapped))
-    goto error;
+     goto error;
 
   return encoder;
 error:
-  gst_mfx_mini_object_unref (encoder);
+  gst_mfx_mini_object_unref(encoder);
   return NULL;
 }
 
@@ -1178,13 +1178,13 @@ GstMfxEncoderStatus
 gst_mfx_encoder_set_codec_state (GstMfxEncoder * encoder,
     GstVideoCodecState * state)
 {
-  GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
-  GstMfxEncoderStatus status;
-
   g_return_val_if_fail (encoder != NULL,
       GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER);
   g_return_val_if_fail (state != NULL,
       GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER);
+
+  GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
+  GstMfxEncoderStatus status;
 
   if (!gst_video_info_is_equal (&state->info, &encoder->info)) {
     status = check_video_info (encoder, &state->info);

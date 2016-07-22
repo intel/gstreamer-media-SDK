@@ -118,7 +118,7 @@ static gboolean
 gst_mfx_display_egl_bind_display(GstMfxDisplayEGL * display,
   const InitParams * params)
 {
-  GstMfxDisplay *native_display;
+  GstMfxDisplay *native_display = NULL;
   EglDisplay *egl_display;
   const DisplayMap *m;
 

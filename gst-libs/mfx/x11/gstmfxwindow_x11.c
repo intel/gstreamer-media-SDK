@@ -343,7 +343,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 {
 #if defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT)
   GstMfxPrimeBufferProxy *buffer_proxy;
-  int fd, x, y, bpp;
+  int fd = 0, x = 0, y = 0, bpp = 0;
   VADisplay display;
   xcb_connection_t *xcbconn;
   unsigned int crop_w, crop_h, width, height, border, depth, stride, size;
