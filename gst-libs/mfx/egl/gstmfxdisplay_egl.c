@@ -320,9 +320,9 @@ gst_mfx_display_egl_new(const gchar * display_name, guint gles_version)
 {
   InitParams params;
 
-    params.display = NULL;
-    params.display_name = display_name;
-    params.display_type = GST_MFX_DISPLAY_TYPE_ANY;
+  params.display = NULL;
+  params.display_name = display_name;
+  params.display_type = GST_MFX_DISPLAY_TYPE_ANY;
   params.gles_version = gles_version;
 
   return gst_mfx_display_new(gst_mfx_display_egl_class(),

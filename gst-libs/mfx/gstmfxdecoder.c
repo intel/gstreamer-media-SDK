@@ -45,7 +45,6 @@ struct _GstMfxDecoder
 
   GQueue *frames;
   guint32 num_decoded_frames;
-  //GstClockTime pts_offset;
 
   mfxSession session;
   mfxVideoParam param;
@@ -365,6 +364,15 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   return ret;
 }
 
+static gint
+sort_pts (gconstpointer frame1, gconstpointer frame2, gpointer data)
+{
+  GstClockTime pts1 = ((GstVideoCodecFrame *) (frame1))->pts;
+  GstClockTime pts2 = ((GstVideoCodecFrame *) (frame2))->pts;
+
+  return (pts1 > pts2 ? -1 : pts1 == pts2 ? 0 : +1);
+}
+
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     GstVideoCodecFrame * frame, GstVideoCodecFrame ** out_frame)
@@ -377,11 +385,10 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
-  /*if ((decoder->param.mfx.CodecId != MFX_CODEC_VP8) &&
-      !decoder->pts_offset && !frame->system_frame_number)
-    decoder->pts_offset = frame->pts - frame->dts;*/
-
+  /* Save frames for later synchronization with decoded MFX surfaces */
   g_queue_push_head (decoder->frames, gst_video_codec_frame_ref(frame));
+  /* Ensure that frames are sorted according to presentation timestamps */
+  g_queue_sort (decoder->frames, sort_pts, NULL);
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
     GST_ERROR ("Failed to map input buffer");
@@ -461,8 +468,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     gst_video_codec_frame_set_user_data(*out_frame,
         gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
 
-    //(*out_frame)->pts = decoder->pts_offset + (*out_frame)->dts;
-
     decoder->num_decoded_frames++;
     GST_DEBUG ("decoded frame number : %ld", decoder->num_decoded_frames);
   }
@@ -517,8 +522,6 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
     *out_frame = g_queue_pop_tail (decoder->frames);
     gst_video_codec_frame_set_user_data(*out_frame,
         gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
-
-    //(*out_frame)->pts = decoder->pts_offset + (*out_frame)->dts;
 
     decoder->num_decoded_frames++;
     GST_DEBUG("decoded frame number : %ld", decoder->num_decoded_frames);
