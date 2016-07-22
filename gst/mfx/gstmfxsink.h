@@ -78,7 +78,7 @@ struct _GstMfxSink
 
   const GstMfxSinkBackend   *backend;
 
-  GstCaps *caps;
+  GstCaps                   *caps;
   GstMfxWindow              *window;
   guint                      window_width;
   guint                      window_height;
@@ -102,6 +102,7 @@ struct _GstMfxSink
   guint                      handle_events : 1;
   guint                      fullscreen : 1;
   guint                      keep_aspect : 1;
+  guint                      no_frame_drop : 1;
 };
 
 struct _GstMfxSinkClass
