@@ -74,6 +74,7 @@ enum
   PROP_DISPLAY_NAME,
   PROP_FULLSCREEN,
   PROP_FORCE_ASPECT_RATIO,
+  PROP_NO_FRAME_DROP,
   PROP_GL_API,
   N_PROPERTIES
 };
@@ -256,7 +257,7 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
       }
     }
     //if (do_expose)
-    //gst_mfxsink_video_overlay_expose (GST_VIDEO_OVERLAY (sink));
+      //gst_mfxsink_video_overlay_expose (GST_VIDEO_OVERLAY (sink));
   }
   return TRUE;
 }
@@ -799,6 +800,9 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   sink->window_height = win_height;
   GST_DEBUG ("window size %ux%u", win_width, win_height);
 
+  if (sink->no_frame_drop)
+    gst_base_sink_set_max_lateness (base_sink, -1);
+
   return gst_mfxsink_ensure_render_rect (sink, win_width, win_height);
 }
 
@@ -941,6 +945,9 @@ gst_mfxsink_set_property (GObject * object,
     case PROP_FORCE_ASPECT_RATIO:
       sink->keep_aspect = g_value_get_boolean (value);
       break;
+    case PROP_NO_FRAME_DROP:
+      sink->no_frame_drop = g_value_get_boolean (value);
+      break;
     case PROP_GL_API:
       sink->gl_api = g_value_get_enum (value);
       break;
@@ -968,6 +975,9 @@ gst_mfxsink_get_property (GObject * object,
       break;
     case PROP_FORCE_ASPECT_RATIO:
       g_value_set_boolean (value, sink->keep_aspect);
+      break;
+    case PROP_NO_FRAME_DROP:
+      g_value_set_boolean (value, sink->no_frame_drop);
       break;
     case PROP_GL_API:
       g_value_set_enum (value, sink->gl_api);
@@ -1082,6 +1092,19 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
       "Force aspect ratio",
       "When enabled, scaling will respect original aspect ratio",
       TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GstMfxSink:no-frame-drop:
+   *
+   * When enabled, all decoded frames arriving at the sink will be rendered
+   * regardless of its lateness. This option helps to deal with slow initial
+   * render times and possible frame drops when rendering the first few frames.
+   */
+  g_properties[PROP_NO_FRAME_DROP] =
+      g_param_spec_boolean ("no-frame-drop",
+      "No frame drop",
+      "Render all decoded frames when enabled, ignoring timestamp lateness",
+      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 #ifdef USE_EGL
   /**
    * GstMfxSink:gl-api:
@@ -1112,5 +1135,6 @@ gst_mfxsink_init (GstMfxSink * sink)
   sink->video_par_d = 1;
   sink->handle_events = TRUE;
   sink->keep_aspect = TRUE;
+  sink->no_frame_drop = TRUE;
   gst_video_info_init (&sink->video_info);
 }
