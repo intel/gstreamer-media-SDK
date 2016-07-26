@@ -108,8 +108,8 @@ Usage
 
  - Please refer to README.example_usage for usage instructions.
 
-To do
------
+TODO
+----
 
   * Playbin and text overlay support for decode and VPP plugins.
 

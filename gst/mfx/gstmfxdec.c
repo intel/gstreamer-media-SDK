@@ -218,7 +218,7 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
 }
 
 static void
-gst_mfx_dec_set_property (GObject * object, guint prop_id,
+gst_mfxdec_set_property (GObject * object, guint prop_id,
   const GValue * value, GParamSpec * pspec)
 {
   GstMfxDec *dec;
@@ -238,7 +238,7 @@ gst_mfx_dec_set_property (GObject * object, guint prop_id,
 }
 
 static void
-gst_mfx_dec_get_property (GObject * object, guint prop_id, GValue * value,
+gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
   GParamSpec * pspec)
 {
   GstMfxDec *dec;
@@ -553,8 +553,9 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
 
   gst_mfx_plugin_base_class_init (GST_MFX_PLUGIN_BASE_CLASS (klass));
 
-  gobject_class->set_property = gst_mfx_dec_set_property;
-  gobject_class->get_property = gst_mfx_dec_get_property;
+  gobject_class->set_property = gst_mfxdec_set_property;
+  gobject_class->get_property = gst_mfxdec_get_property;
+  gobject_class->finalize = gst_mfxdec_finalize;
 
   g_object_class_install_property (gobject_class, PROP_ASYNC_DEPTH,
   g_param_spec_uint ("async-depth", "Asynchronous Depth",
