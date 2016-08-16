@@ -2,14 +2,14 @@
 
 GStreamer-MSDK
 ==============
-  MediaSDK plugins for GStreamer
+  GStreamer plugins for Intel(R) Media SDK
 
 
 Overview
 --------
 
-GStreamer-MSDK consists of a collection of Media SDK-based plugins for
-GStreamer.
+GStreamer-MSDK consists of a collection of GStreamer plugins for
+Intel(R) Media SDK.
 
   * 'mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1, VP8 and
     JPEG videos using the underlying hardware capabilities. 
@@ -98,7 +98,7 @@ Next step is to compile the GStreamer-MSDK plugins:
 
 To install the plugins:
 
-    	make install
+	make install
 
 The plugins will be installed in the /usr/lib/gstreamer-1.0 directory.
 
