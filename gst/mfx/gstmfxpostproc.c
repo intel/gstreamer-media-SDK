@@ -45,7 +45,8 @@ static const char gst_mfxpostproc_sink_caps_str[] =
 #endif
 
 static const char gst_mfxpostproc_src_caps_str[] =
-    GST_MFX_MAKE_SURFACE_CAPS "; " GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
+    GST_MFX_MAKE_SURFACE_CAPS "; "
+    GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
 
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -185,7 +186,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
   gboolean mapped = !plugin->use_dmabuf &&
-      !gst_caps_has_mfx_surface (plugin->srcpad_caps);
+      gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
+      //!gst_caps_has_mfx_surface (plugin->srcpad_caps);
 
   if (vpp->filter)
     return TRUE;
@@ -314,7 +316,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstMfxFilterStatus status;
   GstFlowReturn ret;
   GstMfxRectangle *crop_rect = NULL;
-  GstBuffer *buf;
+  GstBuffer *buf, *buf2;
   GstClockTime timestamp;
 
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
@@ -359,6 +361,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
       }
     }
 
+
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_DATA == status)
       return GST_BASE_TRANSFORM_FLOW_DROPPED;
 
@@ -380,6 +383,9 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
       goto error_process_vpp;
 
   } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
+
+  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp),
+      outbuf);
 
   gst_buffer_unref (buf);
 

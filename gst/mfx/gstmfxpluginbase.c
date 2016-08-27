@@ -29,6 +29,10 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
 
+#ifdef HAVE_GST_GL_LIBS
+# include <gst/gl/egl/gstglcontext_egl.h>
+#endif
+
 /* Default debug category is from the subclass */
 #define GST_CAT_DEFAULT (plugin->debug_category)
 
@@ -412,6 +416,11 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   gboolean update_pool = FALSE;
   gboolean has_video_meta = FALSE;
   gboolean has_video_alignment = FALSE;
+#ifdef HAVE_GST_GL_LIBS
+  const GstStructure *params;
+  GstObject *gl_context;
+  guint idx;
+#endif
 
   g_return_val_if_fail (plugin->aggregator != NULL, FALSE);
 
@@ -422,6 +431,23 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 
   has_video_meta = gst_query_find_allocation_meta (query,
       GST_VIDEO_META_API_TYPE, NULL);
+
+#ifdef HAVE_GST_GL_LIBS
+  gst_query_find_allocation_meta(query,
+      GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx);
+  gst_query_parse_nth_allocation_meta (query, idx, &params);
+  if (!plugin->mapped && params) {
+    if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
+        &gl_context, NULL) && gl_context) {
+      plugin->srcpad_can_dmabuf =
+          (GST_IS_GL_CONTEXT_EGL (gl_context) &&
+          !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
+          gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
+            GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
+      gst_object_unref (gl_context);
+    }
+  }
+#endif
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     goto error_ensure_aggregator;
@@ -621,5 +647,72 @@ error_copy_buffer:
     GST_WARNING ("failed to upload buffer to VA surface");
     gst_buffer_unref (outbuf);
     return GST_FLOW_NOT_SUPPORTED;
+  }
+}
+
+gboolean
+gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
+    GstBuffer * outbuf)
+{
+  GstMfxVideoMeta *vmeta;
+  GstVideoMeta *meta = gst_buffer_get_video_meta (outbuf);
+  GstMfxSurfaceProxy *proxy;
+  GstMfxPrimeBufferProxy *dmabuf_proxy;
+  gint dmabuf_fd;
+  GstMemory *mem;
+  GstBuffer *buffer;
+  VaapiImage *image;
+  guint i;
+
+  g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf), FALSE);
+
+  if (!plugin->srcpad_can_dmabuf)
+    return FALSE;
+
+  vmeta = gst_buffer_get_mfx_video_meta (outbuf);
+  if (!vmeta)
+    return FALSE;
+  proxy = gst_mfx_video_meta_get_surface_proxy (vmeta);
+  if (!proxy)
+    return FALSE;
+  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
+  dmabuf_fd = gst_mfx_prime_buffer_proxy_get_handle (dmabuf_proxy);
+  if (dmabuf_fd < 0)
+    goto error_dmabuf_handle;
+
+  if (!plugin->dmabuf_allocator)
+    plugin->dmabuf_allocator = gst_dmabuf_allocator_new ();
+  mem = gst_dmabuf_allocator_alloc (plugin->dmabuf_allocator, dmabuf_fd,
+      gst_mfx_prime_buffer_proxy_get_size (dmabuf_proxy));
+  if (!mem)
+    goto error_dmabuf_handle;
+
+  gst_mini_object_set_qdata (GST_MINI_OBJECT_CAST (mem),
+      g_quark_from_static_string ("GstMfxPrimeBufferProxy"), dmabuf_proxy,
+      (GDestroyNotify) gst_mfx_prime_buffer_proxy_unref);
+
+  gst_buffer_prepend_memory (outbuf, mem);
+
+  image = gst_mfx_surface_proxy_derive_image (proxy);
+  if (!image)
+    goto error_dmabuf_handle;
+
+  meta->width = vaapi_image_get_width (image);
+  meta->height = vaapi_image_get_height (image);
+
+  for (i = 0; i < vaapi_image_get_plane_count (image); i++) {
+    meta->offset[i] = vaapi_image_get_offset (image, i);
+    meta->stride[i] = vaapi_image_get_pitch (image, i);
+  }
+
+  vaapi_image_unref(image);
+
+  return TRUE;
+
+  /* ERRORS */
+error_dmabuf_handle:
+  {
+    gst_mfx_prime_buffer_proxy_unref (dmabuf_proxy);
+    return FALSE;
   }
 }
