@@ -185,9 +185,8 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
-  gboolean mapped = !plugin->use_dmabuf &&
+  gboolean mapped = !plugin->sinkpad_use_dmabuf &&
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
-      //!gst_caps_has_mfx_surface (plugin->srcpad_caps);
 
   if (vpp->filter)
     return TRUE;
@@ -267,7 +266,6 @@ gst_mfxpostproc_update_sink_caps (GstMfxPostproc * vpp, GstCaps * caps,
   if (!video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr))
     return FALSE;
 
-  vpp->get_va_surfaces = gst_caps_has_mfx_surface (caps);
   return TRUE;
 }
 
@@ -587,21 +585,6 @@ gst_mfxpostproc_transform_caps (GstBaseTransform * trans,
 }
 
 static gboolean
-gst_mfxpostproc_transform_size (GstBaseTransform * trans,
-    GstPadDirection direction, GstCaps * caps, gsize size,
-    GstCaps * othercaps, gsize * othersize)
-{
-  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
-
-  if (direction == GST_PAD_SINK || vpp->get_va_surfaces)
-    *othersize = 0;
-  else
-    *othersize = size;
-
-  return TRUE;
-}
-
-static gboolean
 gst_mfxpostproc_create (GstMfxPostproc * vpp)
 {
   if (!gst_mfxpostproc_ensure_filter (vpp))
@@ -857,7 +840,6 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   object_class->set_property = gst_mfxpostproc_set_property;
   object_class->get_property = gst_mfxpostproc_get_property;
   trans_class->transform_caps = gst_mfxpostproc_transform_caps;
-  trans_class->transform_size = gst_mfxpostproc_transform_size;
   trans_class->transform = gst_mfxpostproc_transform;
   trans_class->set_caps = gst_mfxpostproc_set_caps;
   trans_class->query = gst_mfxpostproc_query;

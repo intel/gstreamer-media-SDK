@@ -234,10 +234,10 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   gboolean need_pool;
 
   if (!plugin->sinkpad_buffer_pool)
-    plugin->use_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
+    plugin->sinkpad_use_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
 
-  if (!plugin->use_dmabuf)
-    plugin->mapped = !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
+  plugin->mapped = !plugin->sinkpad_use_dmabuf &&
+      !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
@@ -352,7 +352,7 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
     gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
         plugin->sinkpad_buffer_size, 0, 0);
 
-    if (plugin->use_dmabuf) {
+    if (plugin->sinkpad_use_dmabuf) {
       GstStructure *const config =
           gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
 
@@ -417,7 +417,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   gboolean has_video_meta = FALSE;
   gboolean has_video_alignment = FALSE;
 #ifdef HAVE_GST_GL_LIBS
-  const GstStructure *params;
+  GstStructure *params;
   GstObject *gl_context;
   guint idx;
 #endif
@@ -433,18 +433,19 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       GST_VIDEO_META_API_TYPE, NULL);
 
 #ifdef HAVE_GST_GL_LIBS
-  gst_query_find_allocation_meta(query,
-      GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx);
-  gst_query_parse_nth_allocation_meta (query, idx, &params);
-  if (!plugin->mapped && params) {
-    if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
-        &gl_context, NULL) && gl_context) {
-      plugin->srcpad_can_dmabuf =
-          (GST_IS_GL_CONTEXT_EGL (gl_context) &&
-          !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
-          gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
-            GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
-      gst_object_unref (gl_context);
+  if (!plugin->mapped && gst_query_find_allocation_meta(query,
+      GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
+    gst_query_parse_nth_allocation_meta (query, idx, &params);
+    if (params) {
+      if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
+          &gl_context, NULL) && gl_context) {
+        plugin->srcpad_use_dmabuf =
+            (GST_IS_GL_CONTEXT_EGL (gl_context) &&
+            !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
+            gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
+              GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
+        gst_object_unref (gl_context);
+      }
     }
   }
 #endif
@@ -666,7 +667,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
 
   g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf), FALSE);
 
-  if (!plugin->srcpad_can_dmabuf)
+  if (!plugin->srcpad_use_dmabuf)
     return FALSE;
 
   vmeta = gst_buffer_get_mfx_video_meta (outbuf);
@@ -691,14 +692,11 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
       g_quark_from_static_string ("GstMfxPrimeBufferProxy"), dmabuf_proxy,
       (GDestroyNotify) gst_mfx_prime_buffer_proxy_unref);
 
-  gst_buffer_prepend_memory (outbuf, mem);
+  gst_buffer_replace_all_memory (outbuf, mem);
 
   image = gst_mfx_surface_proxy_derive_image (proxy);
   if (!image)
     goto error_dmabuf_handle;
-
-  meta->width = vaapi_image_get_width (image);
-  meta->height = vaapi_image_get_height (image);
 
   for (i = 0; i < vaapi_image_get_plane_count (image); i++) {
     meta->offset[i] = vaapi_image_get_offset (image, i);

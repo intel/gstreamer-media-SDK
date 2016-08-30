@@ -50,15 +50,6 @@ gst_mfx_surface_pool_replace (GstMfxSurfacePool ** old_pool_ptr,
 GstMfxSurfaceProxy *
 gst_mfx_surface_pool_get_surface (GstMfxSurfacePool * pool);
 
-guint
-gst_mfx_surface_pool_get_size (GstMfxSurfacePool * pool);
-
-guint
-gst_mfx_surface_pool_get_capacity (GstMfxSurfacePool * pool);
-
-void
-gst_mfx_surface_pool_set_capacity (GstMfxSurfacePool * pool, guint capacity);
-
 GstMfxSurfaceProxy *
 gst_mfx_surface_pool_find_proxy (GstMfxSurfacePool * pool,
     mfxFrameSurface1 * surface);

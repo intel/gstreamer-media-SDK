@@ -38,7 +38,6 @@ struct _GstMfxSurfacePool
   GQueue free_surfaces;
   GList *used_surfaces;
   guint used_count;
-  guint capacity;
   GMutex mutex;
 };
 
@@ -69,7 +68,6 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
 {
   pool->used_surfaces = NULL;
   pool->used_count = 0;
-  pool->capacity = 0;
 
   g_queue_init (&pool->free_surfaces);
   g_mutex_init (&pool->mutex);
@@ -211,9 +209,6 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
 {
   GstMfxSurfaceProxy *surface;
 
-  if (pool->capacity && pool->used_count >= pool->capacity)
-    return NULL;
-
   surface = g_queue_pop_head (&pool->free_surfaces);
   if (!surface) {
     g_mutex_unlock (&pool->mutex);
@@ -248,43 +243,6 @@ gst_mfx_surface_pool_get_surface (GstMfxSurfacePool * pool)
   g_mutex_unlock (&pool->mutex);
 
   return surface;
-}
-
-guint
-gst_mfx_surface_pool_get_size (GstMfxSurfacePool * pool)
-{
-  guint size;
-
-  g_return_val_if_fail (pool != NULL, 0);
-
-  g_mutex_lock (&pool->mutex);
-  size = g_queue_get_length (&pool->free_surfaces);
-  g_mutex_unlock (&pool->mutex);
-  return size;
-}
-
-guint
-gst_mfx_surface_pool_get_capacity (GstMfxSurfacePool * pool)
-{
-  guint capacity;
-
-  g_return_val_if_fail (pool != NULL, 0);
-
-  g_mutex_lock (&pool->mutex);
-  capacity = pool->capacity;
-  g_mutex_unlock (&pool->mutex);
-
-  return capacity;
-}
-
-void
-gst_mfx_surface_pool_set_capacity (GstMfxSurfacePool * pool, guint capacity)
-{
-  g_return_if_fail (pool != NULL);
-
-  g_mutex_lock (&pool->mutex);
-  pool->capacity = capacity;
-  g_mutex_unlock (&pool->mutex);
 }
 
 GstMfxSurfaceProxy *
