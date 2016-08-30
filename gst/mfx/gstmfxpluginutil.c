@@ -314,63 +314,45 @@ gst_mfx_query_peer_has_raw_caps (GstPad * pad)
   gchar *element_name = NULL;
   gboolean mapped = FALSE;
 
-  other_pad = gst_pad_get_peer (pad);
-  if (!other_pad)
-    goto cleanup;
-
-  caps = gst_pad_get_allowed_caps (other_pad);
-  gst_object_unref (other_pad);
-
-  element = gst_pad_get_parent_element (other_pad);
-  if (!element)
-    goto cleanup;
-  if (GST_IS_BIN (element) &&
-      gst_bin_get_by_name (element, "gluploadelement0"))
-    goto cleanup;
-  else {
-    element_name = gst_element_get_name (element);
-    if (strncmp (element_name, "gluploadelement", 15) == 0)
-      goto cleanup;
-  }
-
-  if (!gst_caps_has_mfx_surface (caps)) {
-    mapped = TRUE;
-    goto cleanup;
-  }
-
-  /* Check if next downstream element is mfxvpp, because vid-to-sys
-   * vpp in-out doesn't work correctly. In that case, set decode
-   * output to sys for sys-to-sys vpp in-out */
-  element_name = gst_element_get_name (element);
-  if (strncmp (element_name, "mfxpostproc", 11) == 0) {
-    other_pad = gst_element_get_static_pad (element, "src");
-    caps = gst_pad_get_allowed_caps (other_pad);
-
-    other_pad = gst_pad_get_peer (other_pad);
+  for (;;) {
+    other_pad = gst_pad_get_peer (pad);
     if (!other_pad)
       goto cleanup;
 
+    caps = gst_pad_get_allowed_caps (other_pad);
     gst_object_unref (other_pad);
 
     element = gst_pad_get_parent_element (other_pad);
     if (!element)
       goto cleanup;
+    pad = gst_element_get_static_pad (element, "src");
+
     if (GST_IS_BIN (element) &&
         gst_bin_get_by_name (element, "gluploadelement0"))
       goto cleanup;
     else {
       element_name = gst_element_get_name (element);
-      if (strncmp (element_name, "gluploadelement", 15) == 0)
-        goto cleanup;
+      if (GST_IS_BASE_TRANSFORM (element)) {
+        /* Check if next downstream element is mfxvpp, because vid-to-sys
+         * vpp in-out doesn't work correctly. In that case, set decode
+         * output to sys for sys-to-sys vpp in-out */
+        if (strncmp (element_name, "capsfilter", 10) == 0 ||
+            strncmp (element_name, "mfxpostproc", 11) == 0)
+          continue;
+        if (strncmp (element_name, "gluploadelement", 15) == 0)
+          goto cleanup;
+      }
+      else
+        break;
     }
-
-    if (!gst_caps_has_mfx_surface (caps))
-      mapped = TRUE;
   }
 
-  g_clear_object (&element);
+  if (!gst_caps_has_mfx_surface (caps))
+    mapped = TRUE;
 
 cleanup:
+  if (element)
+    g_clear_object (&element);
   gst_caps_replace (&caps, NULL);
 
   return mapped;
