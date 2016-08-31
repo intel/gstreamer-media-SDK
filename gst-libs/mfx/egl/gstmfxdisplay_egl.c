@@ -256,10 +256,7 @@ static GstMfxTexture *
 gst_mfx_display_egl_create_texture(GstMfxDisplay * display, GstMfxID id,
   guint target, guint format, guint width, guint height)
 {
-  return id != GST_MFX_ID_INVALID ?
-    gst_mfx_texture_egl_new_wrapped(display, id, target, format,
-    width, height) :
-    gst_mfx_texture_egl_new(display, target, format, width, height);
+  return gst_mfx_texture_egl_new(display, target, format, width, height);
 }
 
 static void

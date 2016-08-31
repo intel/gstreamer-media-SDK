@@ -175,14 +175,16 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     GstVideoFormat * out_format_ptr)
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
-  guint i, num_structures;
+  guint i, j, num_structures;
   GstCaps *caps = NULL;
-  GstCaps *sysmem_caps = NULL;
-  GstCaps *mfx_caps = NULL;
   GstCaps *out_caps, *temp1;
-  GstVideoFormat out_format;
   GstStructure *structure;
   gchar *format = NULL;
+
+  static const guint feature_list[] = {
+    GST_MFX_CAPS_FEATURE_MFX_SURFACE,
+    GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY,
+  };
 
   temp1 = gst_pad_get_pad_template_caps (pad);
   out_caps = gst_pad_peer_query_caps (pad, temp1);
@@ -193,28 +195,6 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   }
 
   num_structures = gst_caps_get_size (out_caps);
-  structure =
-      gst_structure_copy (gst_caps_get_structure (out_caps,
-          num_structures - 1));
-  if (gst_structure_has_field (structure, "format"))
-    gst_structure_fixate_field (structure, "format");
-  format = gst_structure_get_string (structure, "format");
-  out_format = format ? gst_video_format_from_string (format) :
-      GST_VIDEO_FORMAT_NV12;
-  if (structure)
-    gst_structure_free (structure);
-
-  mfx_caps =
-      gst_mfx_video_format_new_template_caps_with_features (out_format,
-      GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
-  if (!mfx_caps)
-    goto cleanup;
-
-  sysmem_caps =
-      gst_mfx_video_format_new_template_caps_with_features (out_format,
-      GST_CAPS_FEATURE_MEMORY_SYSTEM_MEMORY);
-  if (!sysmem_caps)
-    goto cleanup;
 
   for (i = 0; i < num_structures; i++) {
     GstCapsFeatures *const features = gst_caps_get_features (out_caps, i);
@@ -224,18 +204,19 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     if (gst_caps_features_is_any (features))
       continue;
 
+    gst_caps_replace (&caps, NULL);
     caps = gst_caps_new_full (gst_structure_copy (structure), NULL);
     if (!caps)
       continue;
     gst_caps_set_features (caps, 0, gst_caps_features_copy (features));
 
-    if (gst_caps_can_intersect (caps, mfx_caps) &&
-        feature < GST_MFX_CAPS_FEATURE_MFX_SURFACE)
-      feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
-    else if (gst_caps_can_intersect (caps, sysmem_caps) &&
-        feature < GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY)
-      feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
-    gst_caps_replace (&caps, NULL);
+    for (j = 0; j < G_N_ELEMENTS (feature_list); j++) {
+      if (gst_mfx_caps_feature_contains (caps, feature_list[j])
+          && feature < feature_list[j]) {
+        feature = feature_list[j];
+        break;
+      }
+    }
 
     /* Stop at the first match, the caps should already be sorted out
        by preference order from downstream elements */
@@ -243,11 +224,22 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
       break;
   }
 
-  *out_format_ptr = out_format;
+  if (!caps)
+    goto cleanup;
+
+  structure =
+      gst_structure_copy (gst_caps_get_structure (out_caps, 0));
+  if (!structure)
+      goto cleanup;
+  if (gst_structure_has_field (structure, "format"))
+    gst_structure_fixate_field (structure, "format");
+  format = gst_structure_get_string (structure, "format");
+  *out_format_ptr = format ? gst_video_format_from_string (format) :
+      GST_VIDEO_FORMAT_NV12;
+  if (structure)
+    gst_structure_free (structure);
 
 cleanup:
-  gst_caps_replace (&sysmem_caps, NULL);
-  gst_caps_replace (&mfx_caps, NULL);
   gst_caps_replace (&caps, NULL);
   gst_caps_replace (&out_caps, NULL);
   return feature;
@@ -279,9 +271,7 @@ _gst_caps_has_feature (const GstCaps * caps, const gchar * feature)
 
   for (i = 0; i < gst_caps_get_size (caps); i++) {
     GstCapsFeatures *const features = gst_caps_get_features (caps, i);
-    /* Skip ANY features, we need an exact match for correct evaluation */
-    if (gst_caps_features_is_any (features))
-      continue;
+
     if (gst_caps_features_contains (features, feature))
       return TRUE;
   }
@@ -312,47 +302,62 @@ gst_caps_has_mfx_surface (GstCaps * caps)
   return _gst_caps_has_feature (caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 }
 
+/* Workaround function to check if srcpad should be mapped or not */
 gboolean
-gst_mfx_query_peer_has_raw_caps (GstPad * pad)
+gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
 {
-  GstPad *other_pad = NULL;
+  GstPad *peer_sinkpad = NULL;
   GstElement *element = NULL;
-  GstCaps *caps = NULL;
+  GstCaps *caps = NULL, *templ = NULL;
   gchar *element_name = NULL;
   gboolean mapped = FALSE;
 
-  other_pad = gst_pad_get_peer (pad);
-  if (!other_pad)
-    goto cleanup;
+  while (1) {
+    peer_sinkpad = gst_pad_get_peer (srcpad);
+    if (!peer_sinkpad)
+      goto cleanup;
 
-  caps = gst_pad_get_allowed_caps (other_pad);
-  gst_object_unref (other_pad);
+    caps = gst_pad_get_allowed_caps (peer_sinkpad);
+    gst_object_unref (peer_sinkpad);
 
-  if (!gst_caps_has_mfx_surface (caps)) {
-    mapped = TRUE;
-    goto cleanup;
+    element = gst_pad_get_parent_element (peer_sinkpad);
+    if (!element)
+      goto cleanup;
+    srcpad = gst_element_get_static_pad (element, "src");
+
+    if (GST_IS_BIN (element) &&
+        gst_bin_get_by_name (element, "gluploadelement0")) {
+      goto cleanup;
+    }
+    else {
+      element_name = gst_element_get_name (element);
+      if (GST_IS_BASE_TRANSFORM (element)) {
+        /* Check if next downstream element is mfxvpp, because vid-to-sys
+         * vpp in-out doesn't work correctly. In that case, set decode
+         * output to sys for sys-to-sys vpp in-out */
+        if (strncmp (element_name, "mfxpostproc", 11) == 0) {
+          continue;
+        }
+
+        if (strncmp (element_name, "gluploadelement", 15) == 0)
+          goto cleanup;
+      }
+
+      templ = gst_pad_get_pad_template_caps (peer_sinkpad);
+
+      if (_gst_caps_has_feature (templ, GST_CAPS_FEATURES_ANY) ||
+          gst_caps_is_any (templ))
+        continue;
+
+      if (!gst_caps_has_mfx_surface (caps))
+        mapped = TRUE;
+      break;
+    }
   }
-
-  /* Check if next downstream element is mfxvpp, because vid-to-sys
-   * vpp in-out doesn't work correctly. In that case, set decode
-   * output to sys for sys-to-sys vpp in-out */
-  element = gst_pad_get_parent_element (other_pad);
-  if (!element)
-    goto cleanup;
-  element_name = gst_element_get_name (element);
-  if (strncmp (element_name, "mfxpostproc", 11) == 0) {
-    other_pad = gst_element_get_static_pad (element, "src");
-    caps = gst_pad_get_allowed_caps (other_pad);
-
-    gst_object_unref (other_pad);
-
-    if (!gst_caps_has_mfx_surface (caps))
-      mapped = TRUE;
-  }
-
-  g_clear_object (&element);
 
 cleanup:
+  if (element)
+    g_clear_object (&element);
   gst_caps_replace (&caps, NULL);
 
   return mapped;

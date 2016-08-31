@@ -124,8 +124,6 @@ struct _GstMfxPostproc
   /* Rotation angle */
   GstMfxRotation          angle;
 
-  guint                   get_va_surfaces : 1;
-  guint                   use_vpp : 1;
   guint                   keep_aspect : 1;
 };
 

@@ -121,9 +121,12 @@ struct _GstMfxPluginBase
   GstPadQueryFunction   srcpad_query;
   GstPadQueryFunction   sinkpad_query;
 
-  GstMfxTaskAggregator *aggregator;
   gboolean              mapped;
-  gboolean              use_dmabuf;
+  gboolean              sinkpad_use_dmabuf;
+  gboolean              srcpad_use_dmabuf;
+  GstAllocator         *dmabuf_allocator;
+
+  GstMfxTaskAggregator *aggregator;
 };
 
 struct _GstMfxPluginBaseClass
@@ -178,6 +181,10 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 GstFlowReturn
 gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
     GstBuffer * inbuf, GstBuffer ** outbuf_ptr);
+
+gboolean
+gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
+    GstBuffer * outbuf);
 
 
 G_END_DECLS

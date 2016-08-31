@@ -32,16 +32,11 @@
 #undef gst_mfx_texture_unref
 #undef gst_mfx_texture_replace
 
-#define GST_MFX_TEXTURE_ORIENTATION_FLAGS \
-  (GST_MFX_TEXTURE_ORIENTATION_FLAG_X_INVERTED | \
-  GST_MFX_TEXTURE_ORIENTATION_FLAG_Y_INVERTED)
-
 static void
 gst_mfx_texture_init (GstMfxTexture * texture, GstMfxID id,
     guint target, guint format, guint width, guint height)
 {
-  texture->is_wrapped = id != GST_MFX_ID_INVALID;
-  GST_MFX_OBJECT_ID (texture) = texture->is_wrapped ? id : 0;
+  GST_MFX_OBJECT_ID (texture) = 0;
   texture->gl_target = target;
   texture->gl_format = format;
   texture->width = width;
@@ -110,44 +105,6 @@ gst_mfx_texture_new (GstMfxDisplay * display, guint target, guint format,
     return NULL;
   return dpy_class->create_texture (display, GST_MFX_ID_INVALID, target,
       format, width, height);
-}
-
-/**
- * gst_mfx_texture_new_wrapped:
- * @display: a #GstMfxDisplay
- * @texture_id: the foreign GL texture name to use
- * @target: the target to which the texture is bound
- * @format: the format of the pixel data
- * @width: the suggested width, in pixels
- * @height: the suggested height, in pixels
- *
- * Creates a texture with the specified dimensions, @target and
- * @format. Note that only GL_TEXTURE_2D @target and GL_RGBA or
- * GL_BGRA formats are supported at this time.
- *
- * The size arguments @width and @height are only a suggestion. Should
- * this be 0x0, then the actual size of the allocated texture storage
- * would be either inherited from the original texture storage, if any
- * and/or if possible, or derived from the VA surface in subsequent
- * gst_mfx_texture_put_surface () calls.
- *
- * The application shall maintain the live GL context itself.
- *
- * Return value: the newly created #GstMfxTexture object
- */
-GstMfxTexture *
-gst_mfx_texture_new_wrapped (GstMfxDisplay * display, guint id,
-    guint target, guint format, guint width, guint height)
-{
-  GstMfxDisplayClass *dpy_class;
-
-  g_return_val_if_fail (display != NULL, NULL);
-  g_return_val_if_fail (gst_mfx_display_has_opengl (display), NULL);
-
-  dpy_class = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (G_UNLIKELY (!dpy_class->create_texture))
-    return NULL;
-  return dpy_class->create_texture (display, id, target, format, width, height);
 }
 
 /**
@@ -276,42 +233,6 @@ gst_mfx_texture_get_size (GstMfxTexture * texture,
 
   if (height_ptr)
     *height_ptr = GST_MFX_TEXTURE_HEIGHT (texture);
-}
-
-/**
- * gst_mfx_texture_get_orientation_flags:
- * @texture: a #GstMfxTexture
- *
- * Retrieves the texture memory layout flags, i.e. orientation.
- *
- * Return value: the #GstMfxTextureOrientationFlags.
- */
-guint
-gst_mfx_texture_get_orientation_flags (GstMfxTexture * texture)
-{
-  g_return_val_if_fail (texture != NULL, 0);
-
-  return GST_MFX_TEXTURE_FLAGS (texture) & GST_MFX_TEXTURE_ORIENTATION_FLAGS;
-}
-
-/**
- * gst_mfx_texture_set_orientation_flags:
- * @texture: a #GstMfxTexture
- * @flags: a bitmask of #GstMfxTextureOrientationFlags
- *
- * Reset the texture orientation flags to the supplied set of
- * @flags. This completely replaces the previously installed
- * flags. So, should they still be needed, then they shall be
- * retrieved first with gst_mfx_texture_get_orientation_flags ().
- */
-void
-gst_mfx_texture_set_orientation_flags (GstMfxTexture * texture, guint flags)
-{
-  g_return_if_fail (texture != NULL);
-  g_return_if_fail ((flags & ~GST_MFX_TEXTURE_ORIENTATION_FLAGS) == 0);
-
-  GST_MFX_TEXTURE_FLAG_UNSET (texture, GST_MFX_TEXTURE_ORIENTATION_FLAGS);
-  GST_MFX_TEXTURE_FLAG_SET (texture, flags);
 }
 
 /**

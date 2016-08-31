@@ -174,13 +174,11 @@ destroy_objects (GstMfxTextureEGL * texture)
 static void
 do_destroy_texture_unlocked (GstMfxTextureEGL * texture)
 {
-  //GstMfxTexture *const base_texture = GST_MFX_TEXTURE(texture);
   const GLuint texture_id = GST_MFX_TEXTURE_ID (texture);
 
   destroy_objects (texture);
 
   if (texture_id) {
-    //if (!base_texture->is_wrapped)
     egl_destroy_texture (texture->egl_context, texture_id);
     GST_MFX_TEXTURE_ID (texture) = 0;
   }
@@ -271,36 +269,4 @@ gst_mfx_texture_egl_new (GstMfxDisplay * display, guint target,
   return gst_mfx_texture_new_internal (GST_MFX_TEXTURE_CLASS
       (gst_mfx_texture_egl_class ()), display, GST_MFX_ID_INVALID, target,
       format, width, height);
-}
-
-/**
- * gst_mfx_texture_egl_new_wrapped:
- * @display: a #GstMfxDisplay
- * @texture_id: the foreign GL texture name to use
- * @target: the target to which the texture is bound
- * @format: the format of the pixel data
- * @width: the texture width, in pixels
- * @height: the texture height, in pixels
- *
- * Creates a texture from an existing GL texture, with the specified
- * @target and @format. Note that only GL_TEXTURE_2D @target and
- * GL_RGBA or GL_BGRA formats are supported at this time.
- *
- * The application shall maintain the live EGL context itself. That
- * is, gst_mfx_window_egl_make_current() must be called beforehand,
- * or any other function like eglMakeCurrent() if the context is
- * managed outside of this library.
- *
- * Return value: the newly created #GstMfxTexture object
- */
-GstMfxTexture *
-gst_mfx_texture_egl_new_wrapped (GstMfxDisplay * display,
-    guint texture_id, guint target, GLenum format, guint width, guint height)
-{
-  g_return_val_if_fail (GST_MFX_IS_DISPLAY_EGL (display), NULL);
-  g_return_val_if_fail (texture_id != GL_NONE, NULL);
-
-  return gst_mfx_texture_new_internal (GST_MFX_TEXTURE_CLASS
-      (gst_mfx_texture_egl_class ()), display, texture_id, target, format,
-      width, height);
 }

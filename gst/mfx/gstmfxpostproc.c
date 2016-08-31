@@ -45,7 +45,8 @@ static const char gst_mfxpostproc_sink_caps_str[] =
 #endif
 
 static const char gst_mfxpostproc_src_caps_str[] =
-    GST_MFX_MAKE_SURFACE_CAPS "; " GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
+    GST_MFX_MAKE_SURFACE_CAPS "; "
+    GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
 
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -92,6 +93,30 @@ enum
     gst_mfx_deinterlace_mode_get_type ()
 #define GST_MFX_FRC_ALGORITHM \
     gst_mfx_frc_alg_get_type ()
+
+GType
+gst_mfx_rotation_get_type (void)
+{
+  static volatile gsize g_type = 0;
+
+  static const GEnumValue rotation_values[] = {
+    {GST_MFX_ROTATION_0,
+        "Unrotated", "0"},
+    {GST_MFX_ROTATION_90,
+        "Rotate by 90 degrees clockwise", "90"},
+    {GST_MFX_ROTATION_180,
+        "Rotate by 180  degrees clockwise", "180"},
+    {GST_MFX_ROTATION_270,
+        "Rotate by 270  degrees clockwise", "270"},
+    {0, NULL, NULL},
+  };
+
+  if (g_once_init_enter (&g_type)) {
+    GType type = g_enum_register_static ("GstMfxRotation", rotation_values);
+    g_once_init_leave (&g_type, type);
+  }
+  return g_type;
+}
 
 static GType
 gst_mfx_deinterlace_mode_get_type (void)
@@ -184,8 +209,8 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
-  gboolean mapped = !plugin->use_dmabuf &&
-      !gst_caps_has_mfx_surface (plugin->srcpad_caps);
+  gboolean mapped = !plugin->sinkpad_use_dmabuf &&
+      gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
 
   if (vpp->filter)
     return TRUE;
@@ -265,7 +290,6 @@ gst_mfxpostproc_update_sink_caps (GstMfxPostproc * vpp, GstCaps * caps,
   if (!video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr))
     return FALSE;
 
-  vpp->get_va_surfaces = gst_caps_has_mfx_surface (caps);
   return TRUE;
 }
 
@@ -314,7 +338,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstMfxFilterStatus status;
   GstFlowReturn ret;
   GstMfxRectangle *crop_rect = NULL;
-  GstBuffer *buf;
+  GstBuffer *buf, *buf2;
   GstClockTime timestamp;
 
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
@@ -359,6 +383,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
       }
     }
 
+
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_DATA == status)
       return GST_BASE_TRANSFORM_FLOW_DROPPED;
 
@@ -380,6 +405,9 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
       goto error_process_vpp;
 
   } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
+
+  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp),
+      outbuf);
 
   gst_buffer_unref (buf);
 
@@ -578,21 +606,6 @@ gst_mfxpostproc_transform_caps (GstBaseTransform * trans,
   }
 
   return caps;
-}
-
-static gboolean
-gst_mfxpostproc_transform_size (GstBaseTransform * trans,
-    GstPadDirection direction, GstCaps * caps, gsize size,
-    GstCaps * othercaps, gsize * othersize)
-{
-  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
-
-  if (direction == GST_PAD_SINK || vpp->get_va_surfaces)
-    *othersize = 0;
-  else
-    *othersize = size;
-
-  return TRUE;
 }
 
 static gboolean
@@ -851,7 +864,6 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   object_class->set_property = gst_mfxpostproc_set_property;
   object_class->get_property = gst_mfxpostproc_get_property;
   trans_class->transform_caps = gst_mfxpostproc_transform_caps;
-  trans_class->transform_size = gst_mfxpostproc_transform_size;
   trans_class->transform = gst_mfxpostproc_transform;
   trans_class->set_caps = gst_mfxpostproc_set_caps;
   trans_class->query = gst_mfxpostproc_query;

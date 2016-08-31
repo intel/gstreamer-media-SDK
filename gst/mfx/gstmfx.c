@@ -52,7 +52,7 @@ static gboolean
 plugin_init (GstPlugin * plugin)
 {
 #ifdef MFX_DECODER
-  gst_element_register (plugin, "mfxdecode", GST_RANK_NONE, GST_TYPE_MFXDEC);
+  gst_element_register (plugin, "mfxdecode", GST_RANK_PRIMARY + 3, GST_TYPE_MFXDEC);
 #endif
 
 #ifdef MFX_VPP
@@ -60,7 +60,7 @@ plugin_init (GstPlugin * plugin)
 #endif
 
 #ifdef MFX_SINK
-  gst_element_register (plugin, "mfxsink", GST_RANK_NONE, GST_TYPE_MFXSINK);
+  gst_element_register (plugin, "mfxsink", GST_RANK_PRIMARY + 1, GST_TYPE_MFXSINK);
 #endif
 
 #ifdef MFX_H264_ENCODER
@@ -85,7 +85,7 @@ plugin_init (GstPlugin * plugin)
 
 #ifdef MFX_VC1_PARSER
   gst_element_register (plugin, "mfxvc1parse",
-      GST_RANK_NONE, GST_MFX_TYPE_VC1_PARSE);
+      GST_RANK_MARGINAL, GST_MFX_TYPE_VC1_PARSE);
 #endif
   return TRUE;
 }

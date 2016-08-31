@@ -1051,7 +1051,8 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurfaceProxy * proxy,
         sts = MFXVideoCORE_SyncOperation (filter->session, syncp, 1000);
       } while (MFX_WRN_IN_EXECUTION == sts);
 
-    *out_proxy = gst_mfx_surface_pool_find_proxy (filter->vpp_pool[1], outsurf);
+    gst_mfx_surface_proxy_replace (out_proxy,
+        gst_mfx_surface_pool_find_proxy (filter->vpp_pool[1], outsurf));
   }
 
   if (more_surface)

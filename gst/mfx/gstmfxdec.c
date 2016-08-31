@@ -58,7 +58,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_SURFACE_CAPS ";"
-  GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
+  GST_VIDEO_CAPS_MAKE ("{ BGRA, NV12 }");
 
 enum
 {
@@ -218,7 +218,7 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
 }
 
 static void
-gst_mfx_dec_set_property (GObject * object, guint prop_id,
+gst_mfxdec_set_property (GObject * object, guint prop_id,
   const GValue * value, GParamSpec * pspec)
 {
   GstMfxDec *dec;
@@ -238,7 +238,7 @@ gst_mfx_dec_set_property (GObject * object, guint prop_id,
 }
 
 static void
-gst_mfx_dec_get_property (GObject * object, guint prop_id, GValue * value,
+gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
   GParamSpec * pspec)
 {
   GstMfxDec *dec;
@@ -405,6 +405,9 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
     }
   }
 
+  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (mfxdec),
+      frame->output_buffer);
+
   return gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
   /* ERRORS */
 error_create_buffer:
@@ -553,13 +556,14 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
 
   gst_mfx_plugin_base_class_init (GST_MFX_PLUGIN_BASE_CLASS (klass));
 
-  gobject_class->set_property = gst_mfx_dec_set_property;
-  gobject_class->get_property = gst_mfx_dec_get_property;
+  gobject_class->set_property = gst_mfxdec_set_property;
+  gobject_class->get_property = gst_mfxdec_get_property;
+  gobject_class->finalize = gst_mfxdec_finalize;
 
   g_object_class_install_property (gobject_class, PROP_ASYNC_DEPTH,
   g_param_spec_uint ("async-depth", "Asynchronous Depth",
       "Number of async operations before explicit sync",
-      0, 16, DEFAULT_ASYNC_DEPTH,
+      0, 20, DEFAULT_ASYNC_DEPTH,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_pad_template (element_class,
