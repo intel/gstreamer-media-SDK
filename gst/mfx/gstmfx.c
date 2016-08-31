@@ -52,7 +52,7 @@ static gboolean
 plugin_init (GstPlugin * plugin)
 {
 #ifdef MFX_DECODER
-  gst_element_register (plugin, "mfxdecode", GST_RANK_NONE, GST_TYPE_MFXDEC);
+  gst_element_register (plugin, "mfxdecode", GST_RANK_PRIMARY + 3, GST_TYPE_MFXDEC);
 #endif
 
 #ifdef MFX_VPP
