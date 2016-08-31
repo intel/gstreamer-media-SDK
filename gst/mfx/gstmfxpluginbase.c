@@ -661,7 +661,6 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   GstMfxPrimeBufferProxy *dmabuf_proxy;
   gint dmabuf_fd;
   GstMemory *mem;
-  GstBuffer *buffer;
   VaapiImage *image;
   guint i;
 
