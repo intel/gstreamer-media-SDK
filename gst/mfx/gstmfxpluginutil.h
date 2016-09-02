@@ -66,10 +66,6 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad,
 const gchar *
 gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
 
-gboolean
-gst_mfx_caps_feature_contains(const GstCaps * caps,
-    GstMfxCapsFeature feature);
-
 /* Helpers to handle interlaced contents */
 #define GST_CAPS_INTERLACED_MODES \
     "interlace-mode = (string){ progressive, interleaved, mixed }"

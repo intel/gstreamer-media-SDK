@@ -104,20 +104,6 @@ typedef enum {
   GST_MFX_OPTION_ON,
 } GstMfxOption;
 
-/**
- * GstMfxRotation:
- * @GST_MFX_ROTATION_0: the output surface is not rotated.
- * @GST_MFX_ROTATION_90: the output surface is rotated by 90°, clockwise.
- * @GST_MFX_ROTATION_180: the output surface is rotated by 180°, clockwise.
- * @GST_MFX_ROTATION_270: the output surface is rotated by 270°, clockwise.
- */
-typedef enum {
-  GST_MFX_ROTATION_0 = 0,
-  GST_MFX_ROTATION_90 = 90,
-  GST_MFX_ROTATION_180 = 180,
-  GST_MFX_ROTATION_270 = 270,
-} GstMfxRotation;
-
 typedef enum {
   GST_MFX_RATECONTROL_NONE = 0,
   GST_MFX_RATECONTROL_CQP = MFX_RATECONTROL_CQP,

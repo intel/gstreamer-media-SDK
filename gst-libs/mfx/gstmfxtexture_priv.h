@@ -110,7 +110,6 @@ struct _GstMfxTexture {
   guint gl_format;
   guint width;
   guint height;
-  guint is_wrapped : 1;
 };
 
 /**
