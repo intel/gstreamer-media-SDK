@@ -111,10 +111,14 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
 static void
 gst_mfx_prime_buffer_proxy_finalize (GstMfxPrimeBufferProxy * proxy)
 {
-  if (g_va_get_surface_handle)
+  GstMfxDisplay *display = gst_mfx_surface_proxy_get_display (proxy->parent);
+
+  if (g_va_get_surface_handle) {
+    GST_MFX_DISPLAY_LOCK (display);
     close (proxy->fd);
+    GST_MFX_DISPLAY_UNLOCK (display);
+  }
   else {
-    GstMfxDisplay *display = gst_mfx_surface_proxy_get_display (proxy->parent);
     VAImage va_img;
 
     vaapi_image_get_image (proxy->image, &va_img);

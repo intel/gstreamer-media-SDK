@@ -659,7 +659,6 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   GstVideoMeta *meta = gst_buffer_get_video_meta (outbuf);
   GstMfxSurfaceProxy *proxy;
   GstMfxPrimeBufferProxy *dmabuf_proxy;
-  gint dmabuf_fd;
   GstMemory *mem;
   VaapiImage *image;
   guint i;
@@ -676,13 +675,13 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   if (!proxy)
     return FALSE;
   dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
-  dmabuf_fd = gst_mfx_prime_buffer_proxy_get_handle (dmabuf_proxy);
-  if (dmabuf_fd < 0)
-    goto error_dmabuf_handle;
+  if (!dmabuf_proxy)
+    return FALSE;
 
   if (!plugin->dmabuf_allocator)
     plugin->dmabuf_allocator = gst_dmabuf_allocator_new ();
-  mem = gst_dmabuf_allocator_alloc (plugin->dmabuf_allocator, dmabuf_fd,
+  mem = gst_dmabuf_allocator_alloc (plugin->dmabuf_allocator,
+      gst_mfx_prime_buffer_proxy_get_handle (dmabuf_proxy),
       gst_mfx_prime_buffer_proxy_get_size (dmabuf_proxy));
   if (!mem)
     goto error_dmabuf_handle;
@@ -691,7 +690,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
       g_quark_from_static_string ("GstMfxPrimeBufferProxy"), dmabuf_proxy,
       (GDestroyNotify) gst_mfx_prime_buffer_proxy_unref);
 
-  gst_buffer_replace_all_memory (outbuf, mem);
+  gst_buffer_replace_memory (outbuf, 0, mem);
 
   image = gst_mfx_surface_proxy_derive_image (proxy);
   if (!image)

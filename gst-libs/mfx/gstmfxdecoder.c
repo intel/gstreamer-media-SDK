@@ -203,15 +203,13 @@ task_init (GstMfxDecoder * decoder)
 static gboolean
 gst_mfx_decoder_init (GstMfxDecoder * decoder,
     GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-    GstVideoInfo * info, mfxU16 async_depth, gboolean mapped)
+    GstVideoInfo * info, mfxU16 async_depth)
 {
   decoder->info = *info;
   decoder->profile = profile;
   decoder->param.mfx.CodecId = gst_mfx_profile_get_codec(profile);
-  decoder->mapped = mapped;
   decoder->param.AsyncDepth = async_depth;
-  decoder->param.IOPattern = mapped ?
-      MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+  decoder->param.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   decoder->inited = FALSE;
   decoder->bs.MaxLength = 1024 * 16;
   decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
@@ -240,8 +238,7 @@ gst_mfx_decoder_class (void)
 
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
-    GstMfxProfile profile, GstVideoInfo * info,
-    mfxU16 async_depth, gboolean mapped)
+    GstMfxProfile profile, GstVideoInfo * info, mfxU16 async_depth)
 {
   GstMfxDecoder *decoder;
 
@@ -251,8 +248,7 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
   if (!decoder)
     goto error;
 
-  if (!gst_mfx_decoder_init (decoder, aggregator, profile, info,
-      async_depth, mapped))
+  if (!gst_mfx_decoder_init (decoder, aggregator, profile, info, async_depth))
     goto error;
 
   return decoder;

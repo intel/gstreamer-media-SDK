@@ -58,7 +58,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_SURFACE_CAPS ";"
-  GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
+  GST_VIDEO_CAPS_MAKE ("{ BGRA, NV12 }");
 
 enum
 {
@@ -275,12 +275,9 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
 
-  plugin->mapped =
-      gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      gst_mfx_profile_from_caps (caps), &info,
-      mfxdec->async_depth, plugin->mapped);
+      gst_mfx_profile_from_caps (caps), &info, mfxdec->async_depth);
   if (!mfxdec->decoder)
     return FALSE;
 
@@ -563,7 +560,7 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
   g_object_class_install_property (gobject_class, PROP_ASYNC_DEPTH,
   g_param_spec_uint ("async-depth", "Asynchronous Depth",
       "Number of async operations before explicit sync",
-      0, 16, DEFAULT_ASYNC_DEPTH,
+      0, 20, DEFAULT_ASYNC_DEPTH,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_pad_template (element_class,

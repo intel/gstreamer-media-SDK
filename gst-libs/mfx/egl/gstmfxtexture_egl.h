@@ -31,10 +31,6 @@ GstMfxTexture *
 gst_mfx_texture_egl_new(GstMfxDisplay * display, guint target,
     guint format, guint width, guint height);
 
-GstMfxTexture *
-gst_mfx_texture_egl_new_wrapped(GstMfxDisplay * display, guint id,
-    guint target, guint format, guint width, guint height);
-
 G_END_DECLS
 
 #endif /* GST_MFX_TEXTURE_EGL_H */

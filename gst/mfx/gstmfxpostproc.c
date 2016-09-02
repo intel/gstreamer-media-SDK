@@ -94,6 +94,30 @@ enum
 #define GST_MFX_FRC_ALGORITHM \
     gst_mfx_frc_alg_get_type ()
 
+GType
+gst_mfx_rotation_get_type (void)
+{
+  static volatile gsize g_type = 0;
+
+  static const GEnumValue rotation_values[] = {
+    {GST_MFX_ROTATION_0,
+        "Unrotated", "0"},
+    {GST_MFX_ROTATION_90,
+        "Rotate by 90 degrees clockwise", "90"},
+    {GST_MFX_ROTATION_180,
+        "Rotate by 180  degrees clockwise", "180"},
+    {GST_MFX_ROTATION_270,
+        "Rotate by 270  degrees clockwise", "270"},
+    {0, NULL, NULL},
+  };
+
+  if (g_once_init_enter (&g_type)) {
+    GType type = g_enum_register_static ("GstMfxRotation", rotation_values);
+    g_once_init_leave (&g_type, type);
+  }
+  return g_type;
+}
+
 static GType
 gst_mfx_deinterlace_mode_get_type (void)
 {

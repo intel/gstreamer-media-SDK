@@ -48,31 +48,9 @@ G_BEGIN_DECLS
 
 typedef struct _GstMfxTexture GstMfxTexture;
 
-/**
- * GstMfxTextureOrientationFlags:
- * @GST_MFX_TEXTURE_ORIENTATION_FLAG_X_INVERTED: indicates whether
- *   the right row comes first in memory.
- * @GST_MFX_TEXTURE_ORIENTATION_FLAG_Y_INVERTED: indicates whether
- *   the bottom line comes first in memory.
- *
- * Additional flags to indicate whether the texture data is organized
- * in memory with the X or Y, or both, axis inverted. e.g. if only
- * @GST_MFX_TEXTURE_ORIENTATION_FLAG_Y_INVERTED is set, this means
- * that the bottom line comes first in memory, with pixels laid out
- * from the left to the right.
- */
-typedef enum {
-  GST_MFX_TEXTURE_ORIENTATION_FLAG_X_INVERTED = 1 << 31,
-  GST_MFX_TEXTURE_ORIENTATION_FLAG_Y_INVERTED = 1 << 30,
-} GstMfxTextureOrientationFlags;
-
 GstMfxTexture *
 gst_mfx_texture_new(GstMfxDisplay * display, guint target, guint format,
     guint width, guint height);
-
-GstMfxTexture *
-gst_mfx_texture_new_wrapped(GstMfxDisplay * display, guint id,
-    guint target, guint format, guint width, guint height);
 
 GstMfxTexture *
 gst_mfx_texture_ref(GstMfxTexture * texture);
@@ -99,13 +77,6 @@ gst_mfx_texture_get_height(GstMfxTexture * texture);
 void
 gst_mfx_texture_get_size(GstMfxTexture * texture, guint * width_ptr,
     guint * height_ptr);
-
-guint
-gst_mfx_texture_get_orientation_flags(GstMfxTexture * texture);
-
-void
-gst_mfx_texture_set_orientation_flags(GstMfxTexture * texture,
-    guint flags);
 
 gboolean
 gst_mfx_texture_put_surface(GstMfxTexture * texture,

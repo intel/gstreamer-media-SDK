@@ -177,67 +177,32 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
   guint i, j, num_structures;
   GstCaps *caps = NULL;
-  GstCaps *out_caps, *temp1;
+  GstCaps *out_caps, *templ;
   GstStructure *structure;
   gchar *format = NULL;
 
-  static const guint feature_list[] = {
-    GST_MFX_CAPS_FEATURE_MFX_SURFACE,
-    GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY,
-  };
-
-  temp1 = gst_pad_get_pad_template_caps (pad);
-  out_caps = gst_pad_peer_query_caps (pad, temp1);
-  gst_caps_unref (temp1);
+  templ = gst_pad_get_pad_template_caps (pad);
+  out_caps = gst_caps_intersect_full (gst_pad_peer_query_caps (pad, templ),
+      templ, GST_CAPS_INTERSECT_FIRST);
+  gst_caps_unref (templ);
   if (!out_caps) {
     feature = GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED;
     goto cleanup;
   }
 
+  if (gst_caps_has_mfx_surface (out_caps))
+    feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
+
   num_structures = gst_caps_get_size (out_caps);
-
-  for (i = 0; i < num_structures; i++) {
-    GstCapsFeatures *const features = gst_caps_get_features (out_caps, i);
-    structure = gst_caps_get_structure (out_caps, i);
-
-    /* Skip ANY features, we need an exact match for correct evaluation */
-    if (gst_caps_features_is_any (features))
-      continue;
-
-    gst_caps_replace (&caps, NULL);
-    caps = gst_caps_new_full (gst_structure_copy (structure), NULL);
-    if (!caps)
-      continue;
-    gst_caps_set_features (caps, 0, gst_caps_features_copy (features));
-
-    for (j = 0; j < G_N_ELEMENTS (feature_list); j++) {
-      if (gst_mfx_caps_feature_contains (caps, feature_list[j])
-          && feature < feature_list[j]) {
-        feature = feature_list[j];
-        break;
-      }
-    }
-
-    /* Stop at the first match, the caps should already be sorted out
-       by preference order from downstream elements */
-    if (feature != GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY)
-      break;
-  }
-
-  if (!caps)
-    goto cleanup;
-
   structure =
-      gst_structure_copy (gst_caps_get_structure (out_caps, 0));
+      gst_structure_copy (gst_caps_get_structure (out_caps, num_structures - 1));
   if (!structure)
       goto cleanup;
   if (gst_structure_has_field (structure, "format"))
     gst_structure_fixate_field (structure, "format");
   format = gst_structure_get_string (structure, "format");
-  *out_format_ptr = format ? gst_video_format_from_string (format) :
-      GST_VIDEO_FORMAT_NV12;
-  if (structure)
-    gst_structure_free (structure);
+  *out_format_ptr = gst_video_format_from_string (format);
+  gst_structure_free (structure);
 
 cleanup:
   gst_caps_replace (&caps, NULL);
@@ -277,20 +242,6 @@ _gst_caps_has_feature (const GstCaps * caps, const gchar * feature)
   }
 
   return FALSE;
-}
-
-gboolean
-gst_mfx_caps_feature_contains (const GstCaps * caps, GstMfxCapsFeature feature)
-{
-  const gchar *feature_str;
-
-  g_return_val_if_fail (caps != NULL, FALSE);
-
-  feature_str = gst_mfx_caps_feature_to_string (feature);
-  if (!feature_str)
-    return FALSE;
-
-  return _gst_caps_has_feature (caps, feature_str);
 }
 
 /* Checks whether the supplied caps contain MFX surfaces */
