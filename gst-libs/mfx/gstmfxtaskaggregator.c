@@ -131,6 +131,8 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator)
   const char *desc;
 
   mfxInitParam init_params;
+  //mfxExtThreadsParam thread_params;
+  //mfxExtBuffer *extbuf[1];
 
   memset (&init_params, 0, sizeof (init_params));
 
@@ -138,6 +140,19 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator)
   init_params.Implementation = MFX_IMPL_AUTO_ANY;
   init_params.Version.Major = 1;
   init_params.Version.Minor = 15;
+
+  /*memset (&thread_params, 0, sizeof (mfxExtThreadsParam));
+
+  thread_params.Header.BufferId = MFX_EXTBUFF_THREADS_PARAM;
+  thread_params.Header.BufferSz = sizeof (mfxExtThreadsParam);
+  thread_params.SchedulingType = SCHED_BATCH;
+  thread_params.Priority = MFX_PRIORITY_LOW;
+  thread_params.NumThread = 8;
+
+  extbuf[0] = (mfxExtBuffer *) &thread_params;
+
+  init_params.ExtParam = extbuf;
+  init_params.NumExtParam = 1;*/
 
   sts = MFXInitEx (init_params, &session);
   if (sts < 0) {

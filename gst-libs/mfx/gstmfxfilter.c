@@ -374,7 +374,7 @@ static void
 gst_mfx_filter_init (GstMfxFilter * filter,
     GstMfxTaskAggregator * aggregator, gboolean mapped_in, gboolean mapped_out)
 {
-  filter->params.AsyncDepth = 4;  // assuming a reasonable async depth value
+  filter->params.AsyncDepth = 5;  // assuming a reasonable async depth value
   filter->params.IOPattern |= mapped_in ?
       MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
   filter->params.IOPattern |= mapped_out ?
