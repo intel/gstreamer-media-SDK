@@ -55,6 +55,7 @@ struct _GstMfxDecoder
   GstVideoInfo info;
   gboolean inited;
   gboolean mapped;
+  gboolean force_video_memory_output; // magic variable
 };
 
 GstMfxProfile
@@ -63,6 +64,16 @@ gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
   g_return_val_if_fail (decoder != NULL, 0);
 
   return decoder->profile;
+}
+
+void
+gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder)
+{
+  g_return_if_fail (decoder != NULL);
+
+  if (!decoder->mapped)
+    gst_mfx_task_use_video_memory (decoder->decode);
+  decoder->mapped = FALSE;
 }
 
 static void
@@ -162,7 +173,6 @@ static gboolean
 task_init (GstMfxDecoder * decoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
-  gboolean mapped;
 
   decoder->decode = gst_mfx_task_new (decoder->aggregator,
       GST_MFX_TASK_DECODER);
@@ -188,11 +198,9 @@ task_init (GstMfxDecoder * decoder)
     decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
-  mapped = !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
-  if (!mapped)
-    gst_mfx_task_use_video_memory (decoder->decode);
-
-  decoder->request.Type = mapped ?
+  decoder->force_video_memory_output = decoder->mapped =
+      !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+  decoder->request.Type = decoder->mapped ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
   gst_mfx_task_set_request (decoder->decode, &decoder->request);
@@ -290,6 +298,14 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
   gboolean mapped = gst_mfx_task_has_mapped_surface(decoder->decode);
 
+  if (mapped)
+    decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+
+  /* This makes sure no CSC happens with native mapped NV12 surfaces */
+  if (out_format == GST_VIDEO_FORMAT_NV12 && mapped &&
+      !decoder->force_video_memory_output)
+    decoder->mapped = TRUE;
+
   sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
       &decoder->param);
   if (MFX_ERR_MORE_DATA == sts) {
@@ -332,6 +348,11 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
         GST_MFX_TASK_VPP_IN);
 
     gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
+
+    /* assuming a reasonable async depth value to prevent stuttering
+     * when decoder is used with playbin and various sinks such as
+     * glimagesink, xvimagesink and cluttersink. */
+    gst_mfx_filter_set_async_depth (decoder->filter, 6);
 
     if (out_format != vformat)
       gst_mfx_filter_set_format (decoder->filter, out_format);

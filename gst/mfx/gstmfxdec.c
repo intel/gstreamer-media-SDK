@@ -212,6 +212,10 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!gst_mfx_plugin_base_set_caps (plugin, NULL, mfxdec->srcpad_caps))
     return FALSE;
 
+  if (!(plugin->mapped &&
+      (GST_VIDEO_INFO_FORMAT(&plugin->srcpad_info) == GST_VIDEO_FORMAT_NV12)))
+    gst_mfx_decoder_use_video_memory (mfxdec->decoder);
+
   mfxdec->do_renego = FALSE;
 
   return TRUE;
@@ -275,6 +279,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
 
+  plugin->mapped =
+      gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
       gst_mfx_profile_from_caps (caps), &info, mfxdec->async_depth);
@@ -425,6 +431,7 @@ static GstFlowReturn
 gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 {
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
+  GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vdec);
   GstMfxDecoderStatus sts;
   GstFlowReturn ret = GST_FLOW_OK;
   GstVideoCodecFrame *out_frame = NULL;
