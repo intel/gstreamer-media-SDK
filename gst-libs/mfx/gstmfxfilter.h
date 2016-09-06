@@ -218,4 +218,7 @@ gboolean
 gst_mfx_filter_set_frc_algorithm (GstMfxFilter *filter,
     GstMfxFrcAlgorithm alg);
 
+gboolean
+gst_mfx_filter_set_async_depth (GstMfxFilter * filter, mfxU16 async_depth);
+
 #endif /* GST_MFX_FILTER_H */

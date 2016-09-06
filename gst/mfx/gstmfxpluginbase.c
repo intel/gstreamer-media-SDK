@@ -447,6 +447,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
         gst_object_unref (gl_context);
       }
     }
+    if (!plugin->srcpad_use_dmabuf)
+      plugin->mapped = TRUE;
   }
 #endif
 
@@ -661,6 +663,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   GstMfxPrimeBufferProxy *dmabuf_proxy;
   GstMemory *mem;
   VaapiImage *image;
+  GstBuffer *buf;
   guint i;
 
   g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf), FALSE);
@@ -672,14 +675,16 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   if (!vmeta)
     return FALSE;
   proxy = gst_mfx_video_meta_get_surface_proxy (vmeta);
-  if (!proxy)
+  if (!proxy || gst_mfx_surface_proxy_is_mapped(proxy))
     return FALSE;
+
   dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
   if (!dmabuf_proxy)
     return FALSE;
 
   if (!plugin->dmabuf_allocator)
     plugin->dmabuf_allocator = gst_dmabuf_allocator_new ();
+
   mem = gst_dmabuf_allocator_alloc (plugin->dmabuf_allocator,
       gst_mfx_prime_buffer_proxy_get_handle (dmabuf_proxy),
       gst_mfx_prime_buffer_proxy_get_size (dmabuf_proxy));
@@ -690,7 +695,11 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
       g_quark_from_static_string ("GstMfxPrimeBufferProxy"), dmabuf_proxy,
       (GDestroyNotify) gst_mfx_prime_buffer_proxy_unref);
 
+  buf = gst_buffer_copy(outbuf);
+  gst_buffer_prepend_memory (buf, gst_buffer_get_memory (outbuf, 0));
+  gst_buffer_add_parent_buffer_meta (outbuf, buf);
   gst_buffer_replace_memory (outbuf, 0, mem);
+
 
   image = gst_mfx_surface_proxy_derive_image (proxy);
   if (!image)
