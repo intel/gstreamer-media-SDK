@@ -86,6 +86,9 @@ gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
 GstMfxProfile
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder);
 
+void
+gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder);
+
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     GstVideoCodecFrame * frame, GstVideoCodecFrame ** out_frame);
