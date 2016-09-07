@@ -209,7 +209,7 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
-  gboolean mapped = !plugin->sinkpad_use_dmabuf &&
+  gboolean srcpad_mapped =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
 
   if (vpp->filter)
@@ -218,13 +218,24 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!gst_mfxpostproc_ensure_aggregator (plugin))
     return FALSE;
 
-  if (mapped)
-    plugin->mapped = mapped;
+  /* Check if upstream MFX decoder element outputs raw native NV12 surfaces */
+  if (!plugin->mapped && !plugin->sinkpad_use_dmabuf) {
+    GstMfxTask *task = gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
+    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER))
+      plugin->mapped = gst_mfx_task_has_native_decoder_output (task);
+    gst_mfx_task_unref (task);
+  }
+
+  /* If sinkpad caps indicate video memory input,
+   * srcpad should not be mapped for vid-to-vid vpp */
+  if (!plugin->mapped && srcpad_mapped)
+    srcpad_mapped = FALSE;
 
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
 
-  vpp->filter = gst_mfx_filter_new (plugin->aggregator, plugin->mapped, mapped);
+  vpp->filter = gst_mfx_filter_new (plugin->aggregator,
+      plugin->mapped, srcpad_mapped);
   if (!vpp->filter)
     return FALSE;
   return TRUE;
