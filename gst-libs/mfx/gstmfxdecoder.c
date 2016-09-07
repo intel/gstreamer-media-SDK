@@ -193,7 +193,7 @@ task_init (GstMfxDecoder * decoder)
   if (sts < 0) {
     GST_ERROR ("Unable to query decode allocation request %d", sts);
     return FALSE;
-  } else if (sts > 0) {
+  } else if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
     decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
