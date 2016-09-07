@@ -55,7 +55,6 @@ struct _GstMfxDecoder
   GstVideoInfo info;
   gboolean inited;
   gboolean mapped;
-  gboolean force_video_memory_output; // magic variable
 };
 
 GstMfxProfile
@@ -198,10 +197,14 @@ task_init (GstMfxDecoder * decoder)
     decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
-  decoder->force_video_memory_output = decoder->mapped =
-      !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+  decoder->mapped =
+    !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   decoder->request.Type = decoder->mapped ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+
+  if (decoder->mapped &&
+      (GST_VIDEO_INFO_FORMAT (&decoder->info) == GST_VIDEO_FORMAT_NV12))
+    gst_mfx_task_ensure_native_decoder_output (decoder->decode);
 
   gst_mfx_task_set_request (decoder->decode, &decoder->request);
 
@@ -302,8 +305,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
 
   /* This makes sure no CSC happens with native mapped NV12 surfaces */
-  if (out_format == GST_VIDEO_FORMAT_NV12 && mapped &&
-      !decoder->force_video_memory_output)
+  if (out_format == GST_VIDEO_FORMAT_NV12 && mapped)
     decoder->mapped = TRUE;
 
   sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,

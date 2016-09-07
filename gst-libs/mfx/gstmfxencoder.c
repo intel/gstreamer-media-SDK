@@ -437,8 +437,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
 
     if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER) &&
-        gst_mfx_task_has_mapped_surface (task)) {
-      gst_mfx_task_ensure_native_decoder_output (task);
+        gst_mfx_task_has_native_decoder_output (task)) {
       mapped = TRUE;
 
       init_encoder_task (encoder);
