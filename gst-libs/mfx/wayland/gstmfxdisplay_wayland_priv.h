@@ -34,7 +34,7 @@ G_BEGIN_DECLS
 
 #define GST_MFX_IS_DISPLAY_WAYLAND(display) \
   ((display) != NULL && \
-  GST_MFX_DISPLAY_VADISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_WAYLAND)
+  GST_MFX_DISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_WAYLAND)
 
 #define GST_MFX_DISPLAY_WAYLAND_CAST(display) \
   ((GstMfxDisplayWayland *)(display))

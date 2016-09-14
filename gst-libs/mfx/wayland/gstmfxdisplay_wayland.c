@@ -203,23 +203,6 @@ gst_mfx_display_wayland_setup (GstMfxDisplay * display)
 }
 
 static gboolean
-gst_mfx_display_wayland_bind_display (GstMfxDisplay * display,
-    gpointer native_display)
-{
-  GstMfxDisplayWaylandPrivate *const priv =
-      GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
-
-  priv->wl_display = native_display;
-  priv->use_foreign_display = TRUE;
-
-  /* XXX: how to get socket/display name? */
-  GST_WARNING ("wayland: get display name");
-  set_display_name (display, NULL);
-
-  return gst_mfx_display_wayland_setup (display);
-}
-
-static gboolean
 gst_mfx_display_wayland_open_display (GstMfxDisplay * display,
     const gchar * name)
 {
@@ -363,7 +346,6 @@ gst_mfx_display_wayland_class_init (GstMfxDisplayWaylandClass * klass)
   object_class->size = sizeof (GstMfxDisplayWayland);
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
   dpy_class->init = gst_mfx_display_wayland_init;
-  dpy_class->bind_display = gst_mfx_display_wayland_bind_display;
   dpy_class->open_display = gst_mfx_display_wayland_open_display;
   dpy_class->close_display = gst_mfx_display_wayland_close_display;
   dpy_class->get_display = gst_mfx_display_wayland_get_display_info;
@@ -400,26 +382,6 @@ gst_mfx_display_wayland_new (const gchar * display_name)
 {
   return gst_mfx_display_new (gst_mfx_display_wayland_class (),
       GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME, (gpointer) display_name);
-}
-
-/**
- * gst_mfx_display_wayland_new_with_display:
- * @wl_display: an Wayland #wl_display
- *
- * Creates a #GstMfxDisplay based on the Wayland @wl_display
- * display. The caller still owns the display and must call
- * wl_display_disconnect() when all #GstMfxDisplay references are
- * released. Doing so too early can yield undefined behaviour.
- *
- * Return value: a newly allocated #GstMfxDisplay object
- */
-GstMfxDisplay *
-gst_mfx_display_wayland_new_with_display (struct wl_display * wl_display)
-{
-  g_return_val_if_fail (wl_display, NULL);
-
-  return gst_mfx_display_new (gst_mfx_display_wayland_class (),
-      GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY, wl_display);
 }
 
 /**

@@ -49,37 +49,37 @@ G_BEGIN_DECLS
 typedef struct _GstMfxTexture GstMfxTexture;
 
 GstMfxTexture *
-gst_mfx_texture_new(GstMfxDisplay * display, guint target, guint format,
+gst_mfx_texture_new (GstMfxDisplay * display, guint target, guint format,
     guint width, guint height);
 
 GstMfxTexture *
-gst_mfx_texture_ref(GstMfxTexture * texture);
+gst_mfx_texture_ref (GstMfxTexture * texture);
 
 void
-gst_mfx_texture_unref(GstMfxTexture * texture);
+gst_mfx_texture_unref (GstMfxTexture * texture);
 
 void
-gst_mfx_texture_replace(GstMfxTexture ** old_texture_ptr,
+gst_mfx_texture_replace (GstMfxTexture ** old_texture_ptr,
     GstMfxTexture * new_texture);
 
 guint
-gst_mfx_texture_get_target(GstMfxTexture * texture);
+gst_mfx_texture_get_target (GstMfxTexture * texture);
 
 guint
-gst_mfx_texture_get_format(GstMfxTexture * texture);
+gst_mfx_texture_get_format (GstMfxTexture * texture);
 
 guint
-gst_mfx_texture_get_width(GstMfxTexture * texture);
+gst_mfx_texture_get_width (GstMfxTexture * texture);
 
 guint
-gst_mfx_texture_get_height(GstMfxTexture * texture);
+gst_mfx_texture_get_height (GstMfxTexture * texture);
 
 void
-gst_mfx_texture_get_size(GstMfxTexture * texture, guint * width_ptr,
+gst_mfx_texture_get_size (GstMfxTexture * texture, guint * width_ptr,
     guint * height_ptr);
 
 gboolean
-gst_mfx_texture_put_surface(GstMfxTexture * texture,
+gst_mfx_texture_put_surface (GstMfxTexture * texture,
     GstMfxSurfaceProxy * proxy);
 
 G_END_DECLS

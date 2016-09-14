@@ -42,12 +42,12 @@ G_BEGIN_DECLS
   gst_mfx_display_get_class_type (GST_MFX_DISPLAY (display))
 
 /**
- * GST_MFX_DISPLAY_VADISPLAY_TYPE:
+ * GST_MFX_DISPLAY_TYPE:
  * @display: a #GstMfxDisplay
  *
  * Returns the underlying VADisplay @display type.
  */
-#define GST_MFX_DISPLAY_VADISPLAY_TYPE(display) \
+#define GST_MFX_DISPLAY_TYPE(display) \
   gst_mfx_display_get_display_type (GST_MFX_DISPLAY (display))
 
 /**
@@ -57,7 +57,7 @@ G_BEGIN_DECLS
  * Macro that evaluates to the #VADisplay of @display.
  */
 #define GST_MFX_DISPLAY_VADISPLAY(display) \
-  gst_mfx_display_get_display (GST_MFX_DISPLAY (display))
+  gst_mfx_display_get_vadisplay (GST_MFX_DISPLAY (display))
 
 /**
  * GST_MFX_DISPLAY_LOCK:
@@ -89,8 +89,7 @@ typedef enum
   GST_MFX_DISPLAY_TYPE_DRM,
 } GstMfxDisplayType;
 
-#define GST_MFX_TYPE_DISPLAY_TYPE \
-  (gst_mfx_display_type_get_type())
+#define GST_MFX_TYPE_DISPLAY_TYPE (gst_mfx_display_get_type())
 
 GType
 gst_mfx_display_type_get_type(void);
@@ -136,16 +135,13 @@ void
 gst_mfx_display_flush (GstMfxDisplay * display);
 
 GstMfxDisplayType
-gst_mfx_display_get_class_type (GstMfxDisplay * display);
-
-GstMfxDisplayType
 gst_mfx_display_get_display_type (GstMfxDisplay * display);
 
 const gchar *
 gst_mfx_display_get_display_name (GstMfxDisplay * display);
 
 VADisplay
-gst_mfx_display_get_display (GstMfxDisplay * display);
+gst_mfx_display_get_vadisplay (GstMfxDisplay * display);
 
 guint
 gst_mfx_display_get_width (GstMfxDisplay * display);
