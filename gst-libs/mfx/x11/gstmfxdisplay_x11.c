@@ -103,24 +103,6 @@ check_extensions (GstMfxDisplayX11 * display)
 }
 
 static gboolean
-gst_mfx_display_x11_bind_display (GstMfxDisplay * base_display,
-    gpointer native_display)
-{
-  GstMfxDisplayX11 *const display = GST_MFX_DISPLAY_X11_CAST (base_display);
-  GstMfxDisplayX11Private *const priv = &display->priv;
-
-  priv->x11_display = native_display;
-  priv->x11_screen = DefaultScreen (native_display);
-  priv->use_foreign_display = TRUE;
-
-  check_extensions (display);
-
-  if (!set_display_name (display, XDisplayString (priv->x11_display)))
-    return FALSE;
-  return TRUE;
-}
-
-static gboolean
 gst_mfx_display_x11_open_display (GstMfxDisplay * base_display,
     const gchar * name)
 {
@@ -281,7 +263,6 @@ gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
 
   object_class->size = sizeof (GstMfxDisplayX11);
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_X11;
-  dpy_class->bind_display = gst_mfx_display_x11_bind_display;
   dpy_class->open_display = gst_mfx_display_x11_open_display;
   dpy_class->close_display = gst_mfx_display_x11_close_display;
   dpy_class->sync = gst_mfx_display_x11_sync;
@@ -320,26 +301,6 @@ gst_mfx_display_x11_new (const gchar * display_name)
 {
   return gst_mfx_display_new (gst_mfx_display_x11_class (),
       GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME, (gpointer) display_name);
-}
-
-/**
- * gst_mfx_display_x11_new_with_display:
- * @x11_display: an X11 #Display
- *
- * Creates a #GstMfxDisplay based on the X11 @x11_display
- * display. The caller still owns the display and must call
- * XCloseDisplay() when all #GstMfxDisplay references are
- * released. Doing so too early can yield undefined behaviour.
- *
- * Return value: a newly allocated #GstMfxDisplay object
- */
-GstMfxDisplay *
-gst_mfx_display_x11_new_with_display (Display * x11_display)
-{
-  g_return_val_if_fail (x11_display, NULL);
-
-  return gst_mfx_display_new (gst_mfx_display_x11_class (),
-      GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY, x11_display);
 }
 
 /**

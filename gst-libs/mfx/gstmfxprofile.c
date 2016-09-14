@@ -23,7 +23,7 @@
 #include "sysdeps.h"
 #include <string.h>
 #include <gst/gstbuffer.h>
-#include "gstcompat.h"
+#include "gst-libs/mfx/sysdeps.h"
 #include "gstmfxprofile.h"
 
 typedef struct _GstMfxProfileMap GstMfxProfileMap;
@@ -50,21 +50,12 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
       "video/x-h264", "main"},
   {GST_MFX_PROFILE_AVC_HIGH, MFX_CODEC_AVC,
       "video/x-h264", "high"},
-#if GST_CHECK_VERSION(1,5,0)
   {GST_MFX_PROFILE_VC1_SIMPLE, MFX_CODEC_VC1,
       "video/x-wmv, wmvversion=3", "simple"},
   {GST_MFX_PROFILE_VC1_MAIN, MFX_CODEC_VC1,
       "video/x-wmv, wmvversion=3", "main"},
   {GST_MFX_PROFILE_VC1_ADVANCED, MFX_CODEC_VC1,
       "video/x-wmv, wmvversion=3, format=(string)WVC1", "advanced"},
-#else
-  {GST_MFX_PROFILE_VC1_SIMPLE, MFX_CODEC_VC1,
-      "video/x-wmv, wmvversion=3", NULL},
-  {GST_MFX_PROFILE_VC1_MAIN, MFX_CODEC_VC1,
-      "video/x-wmv, wmvversion=3", NULL},
-  {GST_MFX_PROFILE_VC1_ADVANCED, MFX_CODEC_VC1,
-      "video/x-wmv, wmvversion=3, format=(string)WVC1", NULL},
-#endif
   {GST_MFX_PROFILE_JPEG_BASELINE, MFX_CODEC_JPEG,
       "image/jpeg", NULL},
   {GST_MFX_PROFILE_VP8, MFX_CODEC_VP8,

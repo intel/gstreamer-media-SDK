@@ -56,8 +56,8 @@ Software requirements
 
   * MediaSDK 2016 R1 for Yocto Embedded or
     Media Server Studio 2016 Professional R1 (Haswell / Broadwell)
-  * GStreamer 1.4.x (up to including GStreamer 1.8):
-  * GStreamer-Plugins-Base 1.4.x (up to including GStreamer 1.8):
+  * GStreamer 1.6.x (up to including GStreamer 1.8):
+  * GStreamer-Plugins-Base 1.6.x (up to including GStreamer 1.8):
   * CMake
   
   * Renderers:

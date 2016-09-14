@@ -23,7 +23,7 @@
 #ifndef GST_MFX_VIDEO_MEMORY_H
 #define GST_MFX_VIDEO_MEMORY_H
 
-#include "gstcompat.h"
+#include "gst-libs/mfx/sysdeps.h"
 #include <gst/gstallocator.h>
 #include <gst/video/video-info.h>
 #include <gst/allocators/allocators.h>

@@ -110,14 +110,14 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
   (GST_MFX_DISPLAY_GET_PRIVATE (display_)->display)
 
 /**
- * GST_MFX_DISPLAY_VADISPLAY_TYPE:
+ * GST_MFX_DISPLAY_TYPE:
  * @display: a #GstMfxDisplay
  *
  * Returns the underlying VADisplay @display type
  * This is an internal macro that does not do any run-time type check.
  */
-#undef  GST_MFX_DISPLAY_VADISPLAY_TYPE
-#define GST_MFX_DISPLAY_VADISPLAY_TYPE(display) \
+#undef  GST_MFX_DISPLAY_TYPE
+#define GST_MFX_DISPLAY_TYPE(display) \
   (GST_MFX_DISPLAY_GET_PRIVATE (display)->display_type)
 
 struct _GstMfxDisplayPrivate

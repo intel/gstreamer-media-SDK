@@ -24,7 +24,7 @@
 #include <va/va.h>
 
 #include <common/gstbitwriter.h>
-#include "gstcompat.h"
+#include "gst-libs/mfx/sysdeps.h"
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_h264.h"
 #include "gstmfxutils_h264.h"
