@@ -20,7 +20,7 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#include "gstcompat.h"
+#include "gst-libs/mfx/sysdeps.h"
 #include "gstmfxenc.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideometa.h"

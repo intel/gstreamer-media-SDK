@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 
 #define GST_MFX_IS_DISPLAY_DRM(display) \
   ((display) != NULL && \
-  GST_MFX_DISPLAY_VADISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_DRM)
+  GST_MFX_DISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_DRM)
 
 #define GST_MFX_DISPLAY_DRM_CAST(display) \
   ((GstMfxDisplayDRM *)(display))

@@ -36,9 +36,6 @@ typedef struct _GstMfxDisplayX11  GstMfxDisplayX11;
 GstMfxDisplay *
 gst_mfx_display_x11_new (const gchar * display_name);
 
-GstMfxDisplay *
-gst_mfx_display_x11_new_with_display (Display * x11_display);
-
 Display *
 gst_mfx_display_x11_get_display (GstMfxDisplayX11 * display);
 

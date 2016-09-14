@@ -20,7 +20,7 @@
 
 #include <va/va.h>
 
-#include "gstcompat.h"
+#include "gst-libs/mfx/sysdeps.h"
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_jpeg.h"
 

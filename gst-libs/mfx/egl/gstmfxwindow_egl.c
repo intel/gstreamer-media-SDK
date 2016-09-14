@@ -502,8 +502,7 @@ gst_mfx_window_egl_class_init (GstMfxWindowEGLClass * klass)
       gst_mfx_window_egl_render;
 }
 
-#define gst_mfx_window_egl_finalize \
-  gst_mfx_window_egl_destroy
+#define gst_mfx_window_egl_finalize gst_mfx_window_egl_destroy
 
 GST_MFX_OBJECT_DEFINE_CLASS_WITH_CODE (GstMfxWindowEGL,
     gst_mfx_window_egl, gst_mfx_window_egl_class_init (&g_class));

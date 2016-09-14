@@ -27,7 +27,7 @@
 /* Supported interfaces */
 #include <gst/video/navigation.h>
 
-#include "gstcompat.h"
+#include "gst-libs/mfx/sysdeps.h"
 #include "gstmfxsink.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideometa.h"
@@ -44,7 +44,6 @@ GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxsink);
 
 /* Default template */
 static const char gst_mfxsink_sink_caps_str[] = GST_MFX_MAKE_SURFACE_CAPS ";";
-  //GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
 
 static GstStaticPadTemplate gst_mfxsink_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -560,7 +559,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
       if (!display)
         goto display_unsupported;
       sink->backend = gst_mfxsink_backend_egl ();
-      sink->display_type = GST_MFX_DISPLAY_VADISPLAY_TYPE (display);
+      sink->display_type = GST_MFX_DISPLAY_TYPE (display);
       break;
 #endif
 #ifdef USE_X11
@@ -812,7 +811,6 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
   GstMfxSink *const sink = GST_MFXSINK_CAST (video_sink);
   GstMfxVideoMeta *meta;
   GstMfxSurfaceProxy *proxy;
-  GstBuffer *buffer;
   GstMfxRectangle *surface_rect = NULL;
   GstMfxRectangle tmp_rect;
   GstFlowReturn ret;
@@ -827,14 +825,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
     surface_rect->height = crop_meta->height;
   }
 
-  ret = gst_mfx_plugin_base_get_input_buffer (GST_MFX_PLUGIN_BASE (sink),
-      src_buffer, &buffer);
-  if (ret == GST_FLOW_NOT_SUPPORTED)
-    return GST_FLOW_OK;
-  if (ret != GST_FLOW_OK)
-    return ret;
-
-  meta = gst_buffer_get_mfx_video_meta (buffer);
+  meta = gst_buffer_get_mfx_video_meta (src_buffer);
 
   proxy = gst_mfx_video_meta_get_surface_proxy (meta);
   if (!proxy)
@@ -857,7 +848,6 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
 
   ret = GST_FLOW_OK;
 done:
-  gst_buffer_unref (buffer);
   return ret;
 
 error:
@@ -871,19 +861,6 @@ no_surface:
   GST_WARNING_OBJECT (sink, "could not get surface");
   ret = GST_FLOW_ERROR;
   goto done;
-}
-
-static gboolean
-gst_mfxsink_propose_allocation (GstBaseSink * base_sink, GstQuery * query)
-{
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (base_sink);
-
-  if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
-    return FALSE;
-
-  gst_query_add_allocation_meta (query, GST_VIDEO_CROP_META_API_TYPE, NULL);
-
-  return TRUE;
 }
 
 static gboolean
@@ -1035,7 +1012,6 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
   basesink_class->get_caps = gst_mfxsink_get_caps;
   basesink_class->set_caps = gst_mfxsink_set_caps;
   basesink_class->query = GST_DEBUG_FUNCPTR (gst_mfxsink_query);
-  basesink_class->propose_allocation = gst_mfxsink_propose_allocation;
   basesink_class->unlock = gst_mfxsink_unlock;
   basesink_class->unlock_stop = gst_mfxsink_unlock_stop;
 

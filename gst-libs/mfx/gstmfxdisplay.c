@@ -1,5 +1,4 @@
 /*
-/*
  *  Copyright (C) 2011-2013 Intel Corporation
  *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
  *  Copyright (C) 2016 Intel Corporation
@@ -107,7 +106,7 @@ end:
 
 /* GstMfxDisplayType enumerations */
 GType
-gst_mfx_display_type_get_type (void)
+gst_mfx_display_get_type (void)
 {
   static GType g_type = 0;
 
@@ -460,24 +459,6 @@ gst_mfx_display_flush (GstMfxDisplay * display)
 }
 
 /**
- * gst_mfx_display_get_class_type:
- * @display: a #GstMfxDisplay
- *
- * Returns the #GstMfxDisplayType of @display. This is the type of
- * the object, thus the associated class, not the type of the VA
- * display.
- *
- * Return value: the #GstMfxDisplayType
- */
-GstMfxDisplayType
-gst_mfx_display_get_class_type (GstMfxDisplay * display)
-{
-  g_return_val_if_fail (display != NULL, GST_MFX_DISPLAY_TYPE_ANY);
-
-  return GST_MFX_DISPLAY_GET_CLASS_TYPE (display);
-}
-
-/**
  * gst_mfx_display_get_display_type:
  * @display: a #GstMfxDisplay
  *
@@ -491,7 +472,7 @@ gst_mfx_display_get_display_type (GstMfxDisplay * display)
 {
   g_return_val_if_fail (display != NULL, GST_MFX_DISPLAY_TYPE_ANY);
 
-  return GST_MFX_DISPLAY_VADISPLAY_TYPE (display);
+  return GST_MFX_DISPLAY_TYPE (display);
 }
 
 /**
@@ -519,7 +500,7 @@ gst_mfx_display_get_display_name (GstMfxDisplay * display)
  * Return value: the #VADisplay
  */
 VADisplay
-gst_mfx_display_get_display (GstMfxDisplay * display)
+gst_mfx_display_get_vadisplay (GstMfxDisplay * display)
 {
   g_return_val_if_fail (display != NULL, NULL);
 

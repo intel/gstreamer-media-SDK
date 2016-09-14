@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 
 #define GST_MFX_IS_DISPLAY_X11(display) \
   ((display) != NULL && \
-  GST_MFX_DISPLAY_VADISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_X11)
+  GST_MFX_DISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_X11)
 
 #define GST_MFX_DISPLAY_X11_CAST(display) \
   ((GstMfxDisplayX11 *)(display))
