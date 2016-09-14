@@ -92,7 +92,7 @@ typedef enum
 #define GST_MFX_TYPE_DISPLAY_TYPE (gst_mfx_display_get_type())
 
 GType
-gst_mfx_display_type_get_type(void);
+gst_mfx_display_get_type(void);
 
 /**
  * GstMfxDisplayInfo:
