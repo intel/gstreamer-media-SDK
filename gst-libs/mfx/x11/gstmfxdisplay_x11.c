@@ -248,9 +248,11 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
 
 static GstMfxWindow *
 gst_mfx_display_x11_create_window (GstMfxDisplay * display,
-    guint width, guint height)
+    GstMfxID id, guint width, guint height)
 {
-  return gst_mfx_window_x11_new (display, width, height);
+  return id != GST_MFX_ID_INVALID ?
+      gst_mfx_window_x11_new_with_xid (display, id) :
+      gst_mfx_window_x11_new (display, width, height);
 }
 
 void

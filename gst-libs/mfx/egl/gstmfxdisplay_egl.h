@@ -34,15 +34,8 @@ typedef struct _GstMfxDisplayEGL GstMfxDisplayEGL;
 GstMfxDisplay *
 gst_mfx_display_egl_new (const gchar * display_name, guint gles_version);
 
-EGLDisplay
-gst_mfx_display_egl_get_gl_display (GstMfxDisplayEGL * display);
-
-EGLContext
-gst_mfx_display_egl_get_gl_context (GstMfxDisplayEGL * display);
-
-gboolean
-gst_mfx_display_egl_set_gl_context (GstMfxDisplayEGL * display,
-    EGLContext gl_context);
+GstMfxDisplay *
+gst_mfx_display_egl_get_parent_display (GstMfxDisplayEGL * display);
 
 G_END_DECLS
 

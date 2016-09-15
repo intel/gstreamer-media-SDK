@@ -67,6 +67,7 @@ struct _GstMfxWindow
   guint height;
   guint display_width;
   guint display_height;
+  guint use_foreign_window:1;
   guint is_fullscreen : 1;
   guint check_geometry : 1;
 };
@@ -111,7 +112,7 @@ struct _GstMfxWindowClass
 
 GstMfxWindow *
 gst_mfx_window_new_internal(const GstMfxWindowClass * window_class,
-  GstMfxDisplay * display, guint width, guint height);
+  GstMfxDisplay * display, GstMfxID handle, guint width, guint height);
 
 #define gst_mfx_window_ref_internal(window) \
   ((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(window)))

@@ -77,18 +77,26 @@ gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
 
 GstMfxWindow *
 gst_mfx_window_new_internal (const GstMfxWindowClass * window_class,
-    GstMfxDisplay * display, guint width, guint height)
+    GstMfxDisplay * display, GstMfxID id, guint width, guint height)
 {
   GstMfxWindow *window;
 
-  g_return_val_if_fail (width > 0, NULL);
-  g_return_val_if_fail (height > 0, NULL);
+  if (id != GST_MFX_ID_INVALID) {
+    g_return_val_if_fail (width == 0, NULL);
+    g_return_val_if_fail (height == 0, NULL);
+  } else {
+    g_return_val_if_fail (width > 0, NULL);
+    g_return_val_if_fail (height > 0, NULL);
+  }
 
   window =
       gst_mfx_object_new (GST_MFX_MINI_OBJECT_CLASS (window_class), display);
   if (!window)
     return NULL;
 
+  window->use_foreign_window = id != GST_MFX_ID_INVALID;
+  GST_MFX_OBJECT_ID (window) =
+      window->use_foreign_window ? id : GST_MFX_ID_INVALID;
   if (!gst_mfx_window_create (window, width, height))
     goto error;
   return window;
@@ -120,7 +128,7 @@ gst_mfx_window_new (GstMfxDisplay * display, guint width, guint height)
   dpy_class = GST_MFX_DISPLAY_GET_CLASS (display);
   if (G_UNLIKELY (!dpy_class->create_window))
     return NULL;
-  return dpy_class->create_window (display, width, height);
+  return dpy_class->create_window (display, GST_MFX_ID_INVALID, width, height);
 }
 
 /**

@@ -92,6 +92,7 @@ struct _GstMfxPostproc
   GstMfxPluginBase        parent_instance;
 
   GstMfxFilter           *filter;
+  GstMfxTask             *peer_decoder;
   GstVideoFormat          format;        /* output video format */
   guint                   width;
   guint                   height;
