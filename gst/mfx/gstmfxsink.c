@@ -505,7 +505,7 @@ gst_mfxsink_video_overlay_set_window_handle (GstVideoOverlay * overlay,
   GstMfxSink *const sink = GST_MFXSINK (overlay);
 
   sink->foreign_window = TRUE;
-  if (sink->backend->create_window_from_handle)
+  if (sink->backend && sink->backend->create_window_from_handle)
     sink->backend->create_window_from_handle (sink, window);
 }
 
