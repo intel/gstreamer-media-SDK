@@ -46,6 +46,9 @@ typedef struct _GstMfxWindowX11 GstMfxWindowX11;
 GstMfxWindow *
 gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height);
 
+GstMfxWindow *
+gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid);
+
 Window
 gst_mfx_window_x11_get_xid (GstMfxWindowX11 * window);
 

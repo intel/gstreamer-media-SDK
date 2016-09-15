@@ -66,7 +66,7 @@ typedef void(*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
 typedef void(*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
   guint * pwidth, guint * pheight);
 typedef GstMfxWindow *(*GstMfxDisplayCreateWindowFunc) (
-  GstMfxDisplay * display, guint width, guint height);
+  GstMfxDisplay * display, GstMfxID id, guint width, guint height);
 typedef GstMfxTexture *(*GstMfxDisplayCreateTextureFunc) (
   GstMfxDisplay * display, GstMfxID id, guint target, guint format,
   guint width, guint height);

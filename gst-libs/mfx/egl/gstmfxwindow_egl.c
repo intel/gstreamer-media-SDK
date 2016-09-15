@@ -225,7 +225,7 @@ gst_mfx_window_egl_create (GstMfxWindowEGL * window,
 
   window->window =
       native_dpy_class->create_window (GST_MFX_DISPLAY (display->display),
-      *width, *height);
+      GST_MFX_OBJECT_ID (window), *width, *height);
   if (!window->window)
     return FALSE;
 
@@ -528,7 +528,16 @@ gst_mfx_window_egl_new (GstMfxDisplay * display, guint width, guint height)
 
   return
       gst_mfx_window_new_internal (GST_MFX_WINDOW_CLASS
-      (gst_mfx_window_egl_class ()), display, width, height);
+      (gst_mfx_window_egl_class ()), display, GST_MFX_ID_INVALID, width, height);
+}
+
+GstMfxWindow *
+gst_mfx_window_egl_new_with_window_handle (GstMfxDisplay * display, guintptr handle)
+{
+  g_return_val_if_fail (GST_MFX_IS_DISPLAY_EGL (display), NULL);
+
+  return gst_mfx_window_new_internal (GST_MFX_WINDOW_CLASS
+      (gst_mfx_window_egl_class ()), display, handle, 0, 0);
 }
 
 GstMfxWindow *

@@ -246,9 +246,11 @@ gst_mfx_display_egl_get_visual_id(GstMfxDisplayEGL * display,
 }
 
 static GstMfxWindow *
-gst_mfx_display_egl_create_window(GstMfxDisplay * display,
+gst_mfx_display_egl_create_window(GstMfxDisplay * display, GstMfxID id,
   guint width, guint height)
 {
+  if (id != GST_MFX_ID_INVALID)
+    return NULL;
   return gst_mfx_window_egl_new(display, width, height);
 }
 
@@ -332,28 +334,10 @@ gst_mfx_display_egl_get_context(GstMfxDisplayEGL * display)
   return ensure_context(display) ? display->egl_context : NULL;
 }
 
-EGLDisplay
-gst_mfx_display_egl_get_gl_display(GstMfxDisplayEGL * display)
+GstMfxDisplay *
+gst_mfx_display_egl_get_parent_display (GstMfxDisplayEGL * display)
 {
-  g_return_val_if_fail(GST_MFX_IS_DISPLAY_EGL(display), EGL_NO_DISPLAY);
+  g_return_val_if_fail(GST_MFX_IS_DISPLAY_EGL(display), NULL);
 
-  return display->egl_display->base.handle.p;
-}
-
-EGLContext
-gst_mfx_display_egl_get_gl_context(GstMfxDisplayEGL * display)
-{
-  g_return_val_if_fail(GST_MFX_IS_DISPLAY_EGL(display), EGL_NO_CONTEXT);
-
-  return ensure_context(display) ? display->egl_context->base.handle.p :
-    EGL_NO_CONTEXT;
-}
-
-gboolean
-gst_mfx_display_egl_set_gl_context(GstMfxDisplayEGL * display,
-  EGLContext gl_context)
-{
-  g_return_val_if_fail(GST_MFX_IS_DISPLAY_EGL(display), FALSE);
-
-  return ensure_context_is_wrapped(display, gl_context);
+  return display->display;
 }

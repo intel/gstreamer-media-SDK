@@ -220,10 +220,11 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
   /* Check if upstream MFX decoder element outputs raw native NV12 surfaces */
   if (!plugin->mapped && !plugin->sinkpad_use_dmabuf) {
-    GstMfxTask *task = gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
-    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER))
-      plugin->mapped = gst_mfx_task_has_native_decoder_output (task);
-    gst_mfx_task_unref (task);
+    if (!vpp->peer_decoder)
+      vpp->peer_decoder =
+          gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
+    if (gst_mfx_task_has_type (vpp->peer_decoder, GST_MFX_TASK_DECODER))
+      plugin->mapped = gst_mfx_task_has_native_decoder_output (vpp->peer_decoder);
   }
 
   /* If sinkpad caps indicate video memory input,
@@ -734,11 +735,12 @@ gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
 static void
 gst_mfxpostproc_finalize (GObject * object)
 {
-  GstMfxPostproc *const postproc = GST_MFXPOSTPROC (object);
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
-  gst_mfxpostproc_destroy (postproc);
+  gst_mfxpostproc_destroy (vpp);
+  gst_mfx_task_replace(&vpp->peer_decoder, NULL);
 
-  gst_mfx_plugin_base_finalize (GST_MFX_PLUGIN_BASE (postproc));
+  gst_mfx_plugin_base_finalize (GST_MFX_PLUGIN_BASE (vpp));
   G_OBJECT_CLASS (gst_mfxpostproc_parent_class)->finalize (object);
 }
 

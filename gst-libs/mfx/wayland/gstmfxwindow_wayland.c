@@ -551,5 +551,5 @@ gst_mfx_window_wayland_new (GstMfxDisplay * display, guint width, guint height)
   g_return_val_if_fail (GST_MFX_IS_DISPLAY_WAYLAND (display), NULL);
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW_CLASS
-      (gst_mfx_window_wayland_class ()), display, width, height);
+      (gst_mfx_window_wayland_class ()), display, GST_MFX_ID_INVALID, width, height);
 }
