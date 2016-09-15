@@ -386,7 +386,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   GstMfxPrimeBufferProxy *buffer_proxy;
 
   Display *display = gst_mfx_display_x11_get_display (x11_display);
-  int fd = 0, x = 0, y = 0, bpp = 0;
+  int x = 0, y = 0, bpp = 0;
   xcb_connection_t *xcbconn;
   unsigned int crop_w, crop_h, width, height, border, depth, stride, size;
   Window root;
@@ -396,16 +396,21 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   if (!buffer_proxy)
       return FALSE;
 
-  fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy);
-
+  GST_MFX_DISPLAY_LOCK (x11_display);
   xcbconn = XGetXCBConnection (display);
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   crop_w = src_rect->width - src_rect->x;
   crop_h = src_rect->height - src_rect->y;
 
+  GST_MFX_DISPLAY_LOCK (x11_display);
   XResizeWindow (display, GST_MFX_OBJECT_ID (window), crop_w, crop_h);
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
+
+  GST_MFX_DISPLAY_LOCK (x11_display);
   XGetGeometry (display, GST_MFX_OBJECT_ID (window), &root, &x, &y,
       &width, &height, &border, &depth);
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   switch (depth) {
     case 8:
@@ -430,18 +435,21 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 
   pixmap = xcb_generate_id (xcbconn);
   xcb_dri3_pixmap_from_buffer (xcbconn, pixmap, root, size,
-      width, height, stride, depth, bpp, fd);
+      width, height, stride, depth, bpp,
+      GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
   if (!pixmap)
     return FALSE;
 
-  GST_MFX_OBJECT_LOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_LOCK (x11_display);
   xcb_present_pixmap (xcbconn, GST_MFX_OBJECT_ID (window), pixmap,
       0, 0, 0, 0, 0, None, None, None, XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0,
       NULL);
-  GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   xcb_free_pixmap (xcbconn, pixmap);
   xcb_flush (xcbconn);
+
+  gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
 #else
   GST_ERROR("Unable to render the video.\n");
 #endif
