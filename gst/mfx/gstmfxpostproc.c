@@ -89,11 +89,6 @@ enum
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 #define DEFAULT_FRC_ALG                 GST_MFX_FRC_NONE
 
-#define GST_MFX_TYPE_DEINTERLACE_MODE \
-    gst_mfx_deinterlace_mode_get_type ()
-#define GST_MFX_FRC_ALGORITHM \
-    gst_mfx_frc_alg_get_type ()
-
 GType
 gst_mfx_rotation_get_type (void)
 {
@@ -118,7 +113,7 @@ gst_mfx_rotation_get_type (void)
   return g_type;
 }
 
-static GType
+GType
 gst_mfx_deinterlace_mode_get_type (void)
 {
   static GType deinterlace_mode_type = 0;
@@ -140,8 +135,8 @@ gst_mfx_deinterlace_mode_get_type (void)
   return deinterlace_mode_type;
 }
 
-static GType
-gst_mfx_frc_alg_get_type (void)
+GType
+gst_mfx_frc_algorithm_get_type (void)
 {
   static GType alg = 0;
   static const GEnumValue frc_alg[] = {
@@ -561,6 +556,11 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   out_format = GST_VIDEO_INFO_FPS_N (&peer_vi);
   fps_n = GST_VIDEO_INFO_FPS_N (&peer_vi);
   fps_d = GST_VIDEO_INFO_FPS_D (&peer_vi);
+
+  /* Update width and height from the caps */
+  if (GST_VIDEO_INFO_HEIGHT (&peer_vi) != 1 &&
+      GST_VIDEO_INFO_WIDTH (&peer_vi) != 1)
+      find_best_size(vpp, &peer_vi, &width, &height);
 
   if (vpp->format != DEFAULT_FORMAT)
     out_format = vpp->format;
@@ -1059,7 +1059,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
       g_param_spec_enum ("frc-algorithm",
           "Algorithm",
           "The algorithm type",
-          GST_MFX_FRC_ALGORITHM,
+          GST_MFX_TYPE_FRC_ALGORITHM,
           DEFAULT_FRC_ALG, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
