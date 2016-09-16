@@ -50,6 +50,10 @@ if(MFX_SINK)
   endif()
 endif()
 
+if(MFX_SINK_BIN)
+  add_definitions(-DMFX_SINK_BIN)
+endif()
+
 if(MFX_H264_ENCODER)
   add_definitions(-DMFX_H264_ENCODER)
 endif()
