@@ -626,6 +626,8 @@ gst_mfxsink_reconfigure_window (GstMfxSink * sink)
           sink->window_width, sink->window_height, win_width, win_height);
       sink->window_width = win_width;
       sink->window_height = win_height;
+      gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
+          gst_event_new_reconfigure ());
       return TRUE;
     }
   }
@@ -837,6 +839,8 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
   if (sink->fullscreen) {
     *width_ptr = display_width;
     *height_ptr = display_height;
+    gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
+       gst_event_new_reconfigure ());
     return;
   }
 
@@ -863,6 +867,9 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
   gst_video_sink_center_rect (src_rect, dst_rect, &out_rect, scale);
   *width_ptr = out_rect.w;
   *height_ptr = out_rect.h;
+  if (scale)
+    gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
+        gst_event_new_reconfigure());
 }
 
 static gboolean
@@ -910,6 +917,17 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
   else
     out_caps = gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
 
+  if ((sink->fullscreen || (sink->video_height > sink->window_height) ||
+      (sink->video_width > sink->window_width)) && sink->window) {
+    GstStructure *s0, *s1;
+    out_caps = gst_caps_make_writable (out_caps);
+    s0 = gst_caps_get_structure (out_caps, 0);
+    s1 = gst_structure_copy (gst_caps_get_structure (out_caps, 0));
+ 
+    gst_structure_set (s0, "width", G_TYPE_INT, sink->window_width,
+        "height", G_TYPE_INT, sink->window_height, NULL);
+    gst_caps_append_structure (out_caps, s1);
+  }
   return out_caps;
 }
 
