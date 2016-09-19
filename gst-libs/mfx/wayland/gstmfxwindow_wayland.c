@@ -93,7 +93,6 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_shell_surface *shell_surface;
   struct wl_surface *surface;
   struct wl_region *opaque_region;
-  struct wl_viewport *viewport;
   struct wl_event_queue *event_queue;
 #ifdef USE_EGL
   struct wl_egl_window *egl_window;
@@ -240,14 +239,6 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy);
   vaapi_image = GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE (buffer_proxy);
   num_planes = vaapi_image_get_plane_count (vaapi_image);
-
-  /* Use compositor scaling */
-  if (src_rect->width != dst_rect->width ||
-      src_rect->height != dst_rect->height) {
-    if (priv->viewport)
-      wl_viewport_set_destination (priv->viewport, dst_rect->width,
-          dst_rect->height);
-  }
 
   for (i = 0; i < num_planes; i++) {
     offsets[i] = vaapi_image_get_offset (vaapi_image, i);
@@ -407,14 +398,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
 
   wl_shell_surface_add_listener (priv->shell_surface,
       &shell_surface_listener, priv);
-  wl_shell_surface_set_toplevel (priv->shell_surface);
-
-  if (priv_display->scaler) {
-    GST_MFX_OBJECT_LOCK_DISPLAY (window);
-    priv->viewport =
-        wl_scaler_get_viewport (priv_display->scaler, priv->surface);
-    GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
-  }
+  wl_shell_surface_set_toplevel (priv->shell_surface); 
 
   priv->poll = gst_poll_new (TRUE);
   gst_poll_fd_init (&priv->pollfd);
