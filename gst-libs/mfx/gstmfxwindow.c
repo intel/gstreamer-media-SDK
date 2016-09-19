@@ -95,8 +95,7 @@ gst_mfx_window_new_internal (const GstMfxWindowClass * window_class,
     return NULL;
 
   window->use_foreign_window = id != GST_MFX_ID_INVALID;
-  GST_MFX_OBJECT_ID (window) =
-      window->use_foreign_window ? id : GST_MFX_ID_INVALID;
+  GST_MFX_OBJECT_ID (window) = id;
   if (!gst_mfx_window_create (window, width, height))
     goto error;
   return window;

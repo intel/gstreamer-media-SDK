@@ -186,17 +186,15 @@ static void
 gst_mfx_display_destroy (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
+  GstMfxDisplayClass *klass = GST_MFX_DISPLAY_GET_CLASS (display);
 
   if (priv->display) {
     vaTerminate (priv->display);
     priv->display = NULL;
   }
 
-  if (!priv->use_foreign_display) {
-    GstMfxDisplayClass *klass = GST_MFX_DISPLAY_GET_CLASS (display);
-    if (klass->close_display)
-      klass->close_display (display);
-  }
+  if (klass->close_display)
+    klass->close_display (display);
 
   g_free (priv->display_name);
   priv->display_name = NULL;

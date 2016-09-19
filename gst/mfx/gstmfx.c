@@ -63,12 +63,12 @@ plugin_init (GstPlugin * plugin)
 #endif
 
 #ifdef MFX_SINK
-  gst_element_register (plugin, "mfxsink", GST_RANK_PRIMARY + 1, GST_TYPE_MFXSINK);
+  gst_element_register (plugin, "mfxsink", GST_RANK_NONE, GST_TYPE_MFXSINK);
 #endif
 
 #ifdef MFX_SINK_BIN
   gst_element_register (plugin, "mfxsinkbin",
-      GST_RANK_NONE, GST_TYPE_MFX_SINK_BIN);
+      GST_RANK_PRIMARY + 2, GST_TYPE_MFX_SINK_BIN);
 #endif
 
 #ifdef MFX_H264_ENCODER

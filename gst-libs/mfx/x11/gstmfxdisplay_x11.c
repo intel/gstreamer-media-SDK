@@ -115,7 +115,6 @@ gst_mfx_display_x11_open_display (GstMfxDisplay * base_display,
   priv->x11_display = XOpenDisplay (get_display_name (display));
   if (!priv->x11_display)
     return FALSE;
-  priv->use_foreign_display = FALSE;
 
   priv->x11_screen = DefaultScreen (priv->x11_display);
 
@@ -129,8 +128,7 @@ gst_mfx_display_x11_close_display (GstMfxDisplay * display)
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
 
   if (priv->x11_display) {
-    if (!priv->use_foreign_display)
-      XCloseDisplay (priv->x11_display);
+    XCloseDisplay (priv->x11_display);
     priv->x11_display = NULL;
   }
 
@@ -170,7 +168,6 @@ gst_mfx_display_x11_get_display_info (GstMfxDisplay * display,
 {
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
 
-  /* Otherwise, create VA display if there is none already */
   info->native_display = priv->x11_display;
   info->display_name = priv->display_name;
   info->display_type = GST_MFX_DISPLAY_TYPE_X11;

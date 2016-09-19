@@ -135,7 +135,6 @@ struct _GstMfxDisplayPrivate
   guint par_n;
   guint par_d;
   gchar *vendor_string;
-  guint use_foreign_display : 1;
   gboolean is_opengl;
 };
 
