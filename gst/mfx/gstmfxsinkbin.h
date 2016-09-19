@@ -40,7 +40,7 @@ G_BEGIN_DECLS
 typedef struct __GstMfxSinkBin {
   /* Private */
   GstBin parent;
-  
+
   GstElement *postproc;
   GstElement *sink;
 
@@ -65,7 +65,7 @@ typedef struct __GstMfxSinkBin {
 
   guint                   keep_aspect : 1;
   GstMfxDisplayType       display_type;
-  
+
   guint                   handle_events : 1;
   guint                   fullscreen : 1;
   guint                   no_frame_drop : 1;

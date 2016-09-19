@@ -22,7 +22,7 @@
 #include "gstmfxsinkbin.h"
 
 #define GST_PLUGIN_NAME "mfxsinkbin"
-#define GST_PLUGIN_DESC "A MediaSDK based bin with a postprocess and a sink"
+#define GST_PLUGIN_DESC "A MediaSDK based bin with a postprocessor and a sink"
 
 GST_DEBUG_CATEGORY_STATIC (gst_debug_mfx_sink_bin);
 #define GST_CAT_DEFAULT gst_debug_mfx_sink_bin
@@ -44,7 +44,9 @@ enum
   PROP_SATURATION,
   PROP_BRIGHTNESS,
   PROP_CONTRAST,
+#ifndef WITH_MSS
   PROP_ROTATION,
+#endif
   N_PROPERTIES
 };
 
@@ -62,7 +64,7 @@ static const char gst_mfx_sink_bin_sink_caps_str[] =
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
 #endif
 
-static GstStaticPadTemplate gst_mfx_sink_bin_sink_factory = 
+static GstStaticPadTemplate gst_mfx_sink_bin_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
@@ -87,7 +89,7 @@ post_missing_element_message (GstMfxSinkBin * mfxsinkbin,
 }
 
 /* set property method */
-static void 
+static void
 gst_mfx_sink_bin_set_property (GObject * object,
     guint prop_id, const GValue * value, GParamSpec * pspec)
 {
@@ -110,7 +112,7 @@ gst_mfx_sink_bin_set_property (GObject * object,
           mfxsinkbin->keep_aspect, NULL);
       break;
     case PROP_NO_FRAME_DROP:
-      mfxsinkbin->no_frame_drop = g_value_get_boolean (value); 
+      mfxsinkbin->no_frame_drop = g_value_get_boolean (value);
       g_object_set (G_OBJECT (mfxsinkbin->sink), "no-frame-drop",
           mfxsinkbin->no_frame_drop, NULL);
       break;
@@ -159,11 +161,13 @@ gst_mfx_sink_bin_set_property (GObject * object,
       g_object_set (G_OBJECT (mfxsinkbin->postproc), "contrast",
           mfxsinkbin->contrast, NULL);
       break;
+#ifndef WITH_MSS
     case PROP_ROTATION:
       mfxsinkbin->angle = g_value_get_enum (value);
       g_object_set (G_OBJECT (mfxsinkbin->postproc), "rotation",
           mfxsinkbin->angle, NULL);
       break;
+#endif
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -172,7 +176,7 @@ gst_mfx_sink_bin_set_property (GObject * object,
 
 /* get property method */
 static void
-gst_mfx_sink_bin_get_property (GObject * object, 
+gst_mfx_sink_bin_get_property (GObject * object,
     guint prop_id, GValue * value, GParamSpec * pspec)
 {
   GstMfxSinkBin *mfxsinkbin = GST_MFX_SINK_BIN (object);
@@ -191,7 +195,7 @@ gst_mfx_sink_bin_get_property (GObject * object,
       g_value_set_boolean (value, mfxsinkbin->no_frame_drop);
       break;
    case PROP_WIDTH:
-      g_value_set_uint (value, mfxsinkbin->width); 
+      g_value_set_uint (value, mfxsinkbin->width);
       break;
     case PROP_HEIGHT:
       g_value_set_uint (value, mfxsinkbin->height);
@@ -217,16 +221,18 @@ gst_mfx_sink_bin_get_property (GObject * object,
     case PROP_CONTRAST:
       g_value_set_float (value, mfxsinkbin->contrast);
       break;
+#ifndef WITH_MSS
     case PROP_ROTATION:
       g_value_set_enum (value, mfxsinkbin->angle);
       break;
+#endif
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
   }
 }
 
-static void 
+static void
 gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
 {
   GObjectClass *gobject_class;
@@ -237,10 +243,10 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
 
   gobject_class->set_property = gst_mfx_sink_bin_set_property;
   gobject_class->get_property = gst_mfx_sink_bin_get_property;
-  
+
   gst_element_class_set_static_metadata (element_class,
       "MFX Sink Bin",
-      "VPP/Sink",
+      "Sink/Video",
       GST_PLUGIN_DESC,
       "Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>");
 
@@ -280,7 +286,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       "Force aspect ratio",
       "When enabled, scaling will respect original aspect ratio",
       TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
- 
+
   /**
    * GstMfxSinkBin:no-frame-drop:
    *
@@ -288,12 +294,12 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    * regardless of its lateness. This option helps to deal with slow initial
    * render times and possible frame drops when rendering the first few frames.
    */
-  g_properties[PROP_NO_FRAME_DROP] = 
+  g_properties[PROP_NO_FRAME_DROP] =
       g_param_spec_boolean ("no-frame-drop",
       "No frame drop",
       "When enabled, no frame will dropped",
       TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
- 
+
   /**
    * GstMfxSinkBin:deinterlace-mode:
    *
@@ -301,7 +307,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    * or if they should only be applied on content that has the
    * "interlaced" flag on the caps.
    */
-  g_properties[PROP_DEINTERLACE_MODE] = 
+  g_properties[PROP_DEINTERLACE_MODE] =
       g_param_spec_enum ("deinterlace-mode",
           "Deinterlace mode",
           "Deinterlace mode to use",
@@ -316,7 +322,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    * calculated from the height if aspect ration is preserved, or
    * inherited from the sink caps width
    */
-  g_properties[PROP_WIDTH] = 
+  g_properties[PROP_WIDTH] =
       g_param_spec_uint ("width",
           "Width",
           "Forced output width",
@@ -329,7 +335,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    * calculated from the width if aspect ration is preserved, or
    * inherited from the sink caps height
    */
-  g_properties[PROP_HEIGHT] = 
+  g_properties[PROP_HEIGHT] =
       g_param_spec_uint ("height",
           "Height",
           "Forced output height",
@@ -340,7 +346,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    *
    * The level of noise reduction to apply.
    */
-  g_properties[PROP_DENOISE] = 
+  g_properties[PROP_DENOISE] =
       g_param_spec_uint ("denoise",
           "Denoising Level",
           "The level of denoising to apply",
@@ -351,7 +357,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    *
    * The level of detail / edge enhancement to apply for positive values.
    */
-  g_properties[PROP_DETAIL] = 
+  g_properties[PROP_DETAIL] =
       g_param_spec_uint ("detail",
           "Detail Level",
           "The level of detail / edge enhancement to apply",
@@ -363,7 +369,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    * The color hue, expressed as a float value. Range is -180.0 to
    * 180.0. Default value is 0.0 and represents no modification.
    */
-  g_properties[PROP_HUE] = 
+  g_properties[PROP_HUE] =
       g_param_spec_float ("hue",
           "Hue",
           "The color hue value",
@@ -375,12 +381,12 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    * The color saturation, expressed as a float value. Range is 0.0 to
    * 10.0. Default value is 1.0 and represents no modification.
    */
-  g_properties[PROP_SATURATION] = 
+  g_properties[PROP_SATURATION] =
       g_param_spec_float ("saturation",
           "Saturation",
           "The color saturation value",
           0.0, 10.0, 1.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  
+
   /**
    * GstMfxSinkBin:brightness:
    *
@@ -399,19 +405,19 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
    * The color contrast, expressed as a float value. Range is 0.0 to
    * 10.0. Default value is 1.0 and represents no modification.
    */
-  g_properties[PROP_CONTRAST] = 
+  g_properties[PROP_CONTRAST] =
       g_param_spec_float ("contrast",
           "Contrast",
           "The color contrast value",
           0.0, 10.0, 1.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-#ifndef WITH_MSS
   /**
    * GstMfxSinkBin:rotation:
    *
    * The rotation angle  for the surface, expressed in GstMfxRotation.
    */
-  g_properties[PROP_ROTATION] = 
+#ifndef WITH_MSS
+  g_properties[PROP_ROTATION] =
       g_param_spec_enum ("rotation",
           "Rotation",
           "The rotation angle",
@@ -421,12 +427,12 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
 
 
   g_object_class_install_properties (gobject_class, N_PROPERTIES, g_properties);
-  
+
   gst_element_class_add_pad_template (element_class,
       gst_static_pad_template_get (&gst_mfx_sink_bin_sink_factory));
 
   GST_DEBUG_CATEGORY_INIT (gst_debug_mfx_sink_bin,
-      GST_PLUGIN_NAME, 0, GST_PLUGIN_DESC); 
+      GST_PLUGIN_NAME, 0, GST_PLUGIN_DESC);
 }
 
 static gboolean
@@ -437,7 +443,7 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
 
   /* create the VPP */
   mfxsinkbin->postproc = gst_element_factory_make ("mfxvpp", NULL);
-  if(!mfxsinkbin->postproc) {
+  if (!mfxsinkbin->postproc) {
     missing_factory = "mfxvpp";
     goto error_element_missing;
   }
@@ -446,13 +452,13 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
   mfxsinkbin->sink = gst_element_factory_make ("mfxsink", NULL);
   if(!mfxsinkbin->sink)  {
     missing_factory = "mfxsink";
-    goto error_element_missing; 
+    goto error_element_missing;
   }
 
   gst_bin_add_many (GST_BIN (mfxsinkbin), mfxsinkbin->postproc,
       mfxsinkbin->sink, NULL);
 
-  if(!gst_element_link_many (mfxsinkbin->postproc, 
+  if (!gst_element_link_many (mfxsinkbin->postproc,
       mfxsinkbin->sink, NULL))
     goto error_link_pad;
 
@@ -488,7 +494,7 @@ error_adding_pad:
   }
 }
 
-static void 
+static void
 gst_mfx_sink_bin_init (GstMfxSinkBin * mfxsinkbin)
 {
   gst_mfx_sink_bin_configure (mfxsinkbin);

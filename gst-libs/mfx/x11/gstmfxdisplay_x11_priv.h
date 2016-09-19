@@ -67,7 +67,6 @@ struct _GstMfxDisplayX11Private
   Display *x11_display;
   int      x11_screen;
   GArray  *pixel_formats;
-  guint    use_foreign_display : 1;  // Foreign native_display?
   guint    use_xrandr : 1;
   guint    synchronous : 1;
   gchar   *device_path_default;

@@ -342,11 +342,8 @@ static gboolean
 configure_notify_event_pending (GstMfxSink * sink, Window window,
     guint width, guint height)
 {
-  GstMfxDisplay *display =
-      sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL ?
-      gst_mfx_display_egl_get_parent_display (sink->display) : sink->display;
   GstMfxDisplayX11 *const x11_display =
-      GST_MFX_DISPLAY_X11 (display);
+      GST_MFX_DISPLAY_X11 (sink->display);
   ConfigureNotifyEventPendingArgs args;
   XEvent xev;
 
@@ -379,22 +376,16 @@ static gboolean
 gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
     guintptr window)
 {
-  GstMfxDisplay *display;
   Window rootwin;
   unsigned int width, height, border_width, depth;
   int x, y;
   XID xid = window;
 
-  if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
-    display = gst_mfx_display_egl_get_parent_display (sink->display);
-  else
-    display = sink->display;
-
-  gst_mfx_display_lock (display);
+  gst_mfx_display_lock (sink->display);
   XGetGeometry (gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11
-          (display)), xid, &rootwin, &x, &y, &width, &height, &border_width,
+          (sink->display)), xid, &rootwin, &x, &y, &width, &height, &border_width,
       &depth);
-  gst_mfx_display_unlock (display);
+  gst_mfx_display_unlock (sink->display);
 
   if ((width != sink->window_width || height != sink->window_height) &&
       !configure_notify_event_pending (sink, xid, width, height)) {
@@ -404,14 +395,11 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
     sink->window_height = height;
   }
 
-  if (!sink->window
-      || gst_mfx_window_x11_get_xid (GST_MFX_WINDOW_X11 (sink->window)) !=
+  if (!sink->window ||
+      gst_mfx_window_x11_get_xid (GST_MFX_WINDOW_X11 (sink->window)) !=
       xid) {
     gst_mfx_window_replace (&sink->window, NULL);
-    if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
-      sink->window = gst_mfx_window_egl_new_with_window_handle (sink->display, xid);
-    else
-      sink->window = gst_mfx_window_x11_new_with_xid (display, xid);
+    sink->window = gst_mfx_window_x11_new_with_xid (sink->display, xid);
     if (!sink->window)
       return FALSE;
   }
@@ -456,7 +444,6 @@ gst_mfxsink_backend_egl (void)
   static const GstMfxSinkBackend GstMfxSinkBackendEGL = {
     .create_window = gst_mfxsink_egl_create_window,
 #ifdef USE_X11
-    .create_window_from_handle = gst_mfxsink_x11_create_window_from_handle,
     .handle_events = gst_mfxsink_x11_handle_events,
     .pre_start_event_thread = gst_mfxsink_x11_pre_start_event_thread,
     .pre_stop_event_thread = gst_mfxsink_x11_pre_stop_event_thread,
@@ -840,7 +827,7 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
     *width_ptr = display_width;
     *height_ptr = display_height;
     gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
-       gst_event_new_reconfigure ());
+        gst_event_new_reconfigure ());
     return;
   }
 
@@ -867,9 +854,10 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
   gst_video_sink_center_rect (src_rect, dst_rect, &out_rect, scale);
   *width_ptr = out_rect.w;
   *height_ptr = out_rect.h;
+
   if (scale)
     gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
-        gst_event_new_reconfigure());
+      gst_event_new_reconfigure());
 }
 
 static gboolean
@@ -923,11 +911,12 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
     out_caps = gst_caps_make_writable (out_caps);
     s0 = gst_caps_get_structure (out_caps, 0);
     s1 = gst_structure_copy (gst_caps_get_structure (out_caps, 0));
- 
+
     gst_structure_set (s0, "width", G_TYPE_INT, sink->window_width,
         "height", G_TYPE_INT, sink->window_height, NULL);
     gst_caps_append_structure (out_caps, s1);
   }
+
   return out_caps;
 }
 
@@ -1038,8 +1027,6 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
 
   if (!gst_mfxsink_render_surface (sink, proxy, surface_rect))
     goto error;
-
-  gst_buffer_replace (&sink->video_buffer, src_buffer);
 
   ret = GST_FLOW_OK;
 done:

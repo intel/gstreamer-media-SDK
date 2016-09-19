@@ -334,10 +334,3 @@ gst_mfx_display_egl_get_context(GstMfxDisplayEGL * display)
   return ensure_context(display) ? display->egl_context : NULL;
 }
 
-GstMfxDisplay *
-gst_mfx_display_egl_get_parent_display (GstMfxDisplayEGL * display)
-{
-  g_return_val_if_fail(GST_MFX_IS_DISPLAY_EGL(display), NULL);
-
-  return display->display;
-}

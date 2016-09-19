@@ -388,7 +388,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   Display *display = gst_mfx_display_x11_get_display (x11_display);
   int x = 0, y = 0, bpp = 0;
   xcb_connection_t *xcbconn;
-  unsigned int crop_w, crop_h, width, height, border, depth, stride, size;
+  unsigned int width, height, border, depth, stride, size;
   Window root;
   xcb_pixmap_t pixmap;
 
@@ -398,13 +398,6 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 
   GST_MFX_DISPLAY_LOCK (x11_display);
   xcbconn = XGetXCBConnection (display);
-  GST_MFX_DISPLAY_UNLOCK (x11_display);
-
-  crop_w = src_rect->width - src_rect->x;
-  crop_h = src_rect->height - src_rect->y;
-
-  GST_MFX_DISPLAY_LOCK (x11_display);
-  XResizeWindow (display, GST_MFX_OBJECT_ID (window), crop_w, crop_h);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   GST_MFX_DISPLAY_LOCK (x11_display);
