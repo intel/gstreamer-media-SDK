@@ -696,6 +696,9 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
 {
   GstMfxDisplay *display = NULL;
 
+  if (sink->backend)
+    return;
+
   switch (sink->display_type_req) {
 #ifdef USE_WAYLAND
     case GST_MFX_DISPLAY_TYPE_WAYLAND:
@@ -857,7 +860,7 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
 
   if (scale)
     gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
-      gst_event_new_reconfigure());
+        gst_event_new_reconfigure());
 }
 
 static gboolean
