@@ -66,10 +66,7 @@ struct _GstMfxDisplayX11Private
   gchar   *display_name;
   Display *x11_display;
   int      x11_screen;
-  GArray  *pixel_formats;
   guint    use_xrandr : 1;
-  guint    synchronous : 1;
-  gchar   *device_path_default;
 };
 
 /**

@@ -73,22 +73,6 @@ set_display_name (GstMfxDisplayX11 * display, const gchar * display_name)
   return priv->display_name != NULL;
 }
 
-/* Set synchronous behavious on the underlying X11 display */
-static void
-set_synchronous (GstMfxDisplayX11 * display, gboolean synchronous)
-{
-  GstMfxDisplayX11Private *const priv = &display->priv;
-
-  if (priv->synchronous != synchronous) {
-    priv->synchronous = synchronous;
-    if (priv->x11_display) {
-      GST_MFX_DISPLAY_LOCK (display);
-      XSynchronize (priv->x11_display, synchronous);
-      GST_MFX_DISPLAY_UNLOCK (display);
-    }
-  }
-}
-
 /* Check for display server extensions */
 static void
 check_extensions (GstMfxDisplayX11 * display)
@@ -135,30 +119,6 @@ gst_mfx_display_x11_close_display (GstMfxDisplay * display)
   if (priv->display_name) {
     g_free (priv->display_name);
     priv->display_name = NULL;
-  }
-}
-
-static void
-gst_mfx_display_x11_sync (GstMfxDisplay * display)
-{
-  GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
-
-  if (priv->x11_display) {
-    GST_MFX_DISPLAY_LOCK (display);
-    XSync (priv->x11_display, False);
-    GST_MFX_DISPLAY_UNLOCK (display);
-  }
-}
-
-static void
-gst_mfx_display_x11_flush (GstMfxDisplay * display)
-{
-  GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
-
-  if (priv->x11_display) {
-    GST_MFX_DISPLAY_LOCK (display);
-    XFlush (priv->x11_display);
-    GST_MFX_DISPLAY_UNLOCK (display);
   }
 }
 
@@ -264,8 +224,6 @@ gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_X11;
   dpy_class->open_display = gst_mfx_display_x11_open_display;
   dpy_class->close_display = gst_mfx_display_x11_close_display;
-  dpy_class->sync = gst_mfx_display_x11_sync;
-  dpy_class->flush = gst_mfx_display_x11_flush;
   dpy_class->get_display = gst_mfx_display_x11_get_display_info;
   dpy_class->get_size = gst_mfx_display_x11_get_size;
   dpy_class->get_size_mm = gst_mfx_display_x11_get_size_mm;
@@ -318,42 +276,4 @@ gst_mfx_display_x11_get_display (GstMfxDisplayX11 * display)
   g_return_val_if_fail (GST_MFX_IS_DISPLAY_X11 (display), NULL);
 
   return GST_MFX_DISPLAY_XDISPLAY (display);
-}
-
-/**
- * gst_mfx_display_x11_get_screen:
- * @display: a #GstMfxDisplayX11
- *
- * Returns the default X11 screen that was created by
- * gst_mfx_display_x11_new() or that was bound from
- * gst_mfx_display_x11_new_with_display().
- *
- * Return value: the X11 #Display attached to @display
- */
-int
-gst_mfx_display_x11_get_screen (GstMfxDisplayX11 * display)
-{
-  g_return_val_if_fail (GST_MFX_IS_DISPLAY_X11 (display), -1);
-
-  return GST_MFX_DISPLAY_XSCREEN (display);
-}
-
-/**
- * gst_mfx_display_x11_set_synchronous:
- * @display: a #GstMfxDisplayX11
- * @synchronous: boolean value that indicates whether to enable or
- *   disable synchronization
- *
- * If @synchronous is %TRUE, gst_mfx_display_x11_set_synchronous()
- * turns on synchronous behaviour on the underlying X11
- * display. Otherwise, synchronous behaviour is disabled if
- * @synchronous is %FALSE.
- */
-void
-gst_mfx_display_x11_set_synchronous (GstMfxDisplayX11 * display,
-    gboolean synchronous)
-{
-  g_return_if_fail (GST_MFX_IS_DISPLAY_X11 (display));
-
-  set_synchronous (display, synchronous);
 }

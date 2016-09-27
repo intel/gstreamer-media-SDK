@@ -57,8 +57,6 @@ typedef gboolean(*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
 typedef void(*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
 typedef void(*GstMfxDisplayLockFunc) (GstMfxDisplay * display);
 typedef void(*GstMfxDisplayUnlockFunc) (GstMfxDisplay * display);
-typedef void(*GstMfxDisplaySyncFunc) (GstMfxDisplay * display);
-typedef void(*GstMfxDisplayFlushFunc) (GstMfxDisplay * display);
 typedef gboolean(*GstMfxDisplayGetInfoFunc) (GstMfxDisplay * display,
   GstMfxDisplayInfo * info);
 typedef void(*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
@@ -157,8 +155,6 @@ struct _GstMfxDisplay
  * @close_display: virtual function to close a display
  * @lock: (optional) virtual function to lock a display
  * @unlock: (optional) virtual function to unlock a display
- * @sync: (optional) virtual function to sync a display
- * @flush: (optional) virtual function to flush pending requests of a display
  * @get_display: virtual function to retrieve the #GstMfxDisplayInfo
  * @get_size: virtual function to retrieve the display dimensions, in pixels
  * @get_size_mm: virtual function to retrieve the display dimensions, in millimeters
@@ -184,8 +180,6 @@ struct _GstMfxDisplayClass
   GstMfxDisplayCloseFunc close_display;
   GstMfxDisplayLockFunc lock;
   GstMfxDisplayUnlockFunc unlock;
-  GstMfxDisplaySyncFunc sync;
-  GstMfxDisplayFlushFunc flush;
   GstMfxDisplayGetInfoFunc get_display;
   GstMfxDisplayGetSizeFunc get_size;
   GstMfxDisplayGetSizeMFunc get_size_mm;
@@ -207,7 +201,7 @@ gst_mfx_display_class_init(GstMfxDisplayClass * klass);
 
 GstMfxDisplay *
 gst_mfx_display_new(const GstMfxDisplayClass * klass,
-  GstMfxDisplayInitType init_type, gpointer init_value);
+    GstMfxDisplayInitType init_type, gpointer init_value);
 
 #define gst_mfx_display_ref_internal(display) \
   ((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(display)))
