@@ -128,12 +128,6 @@ gst_mfx_display_lock (GstMfxDisplay * display);
 void
 gst_mfx_display_unlock (GstMfxDisplay * display);
 
-void
-gst_mfx_display_sync (GstMfxDisplay * display);
-
-void
-gst_mfx_display_flush (GstMfxDisplay * display);
-
 GstMfxDisplayType
 gst_mfx_display_get_display_type (GstMfxDisplay * display);
 
@@ -142,12 +136,6 @@ gst_mfx_display_get_display_name (GstMfxDisplay * display);
 
 VADisplay
 gst_mfx_display_get_vadisplay (GstMfxDisplay * display);
-
-guint
-gst_mfx_display_get_width (GstMfxDisplay * display);
-
-guint
-gst_mfx_display_get_height (GstMfxDisplay * display);
 
 void
 gst_mfx_display_get_size (GstMfxDisplay * display, guint * pwidth,

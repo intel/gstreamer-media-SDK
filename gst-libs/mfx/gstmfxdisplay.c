@@ -411,52 +411,6 @@ gst_mfx_display_unlock (GstMfxDisplay * display)
 }
 
 /**
- * gst_mfx_display_sync:
- * @display: a #GstMfxDisplay
- *
- * Flushes any requests queued for the windowing system and waits until
- * all requests have been handled. This is often used for making sure
- * that the display is synchronized with the current state of the program.
- *
- * This is most useful for X11. On windowing systems where requests are
- * handled synchronously, this function will do nothing.
- */
-void
-gst_mfx_display_sync (GstMfxDisplay * display)
-{
-  GstMfxDisplayClass *klass;
-
-  g_return_if_fail (display != NULL);
-
-  klass = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (klass->sync)
-    klass->sync (display);
-  else if (klass->flush)
-    klass->flush (display);
-}
-
-/**
- * gst_mfx_display_flush:
- * @display: a #GstMfxDisplay
- *
- * Flushes any requests queued for the windowing system.
- *
- * This is most useful for X11. On windowing systems where requests
- * are handled synchronously, this function will do nothing.
- */
-void
-gst_mfx_display_flush (GstMfxDisplay * display)
-{
-  GstMfxDisplayClass *klass;
-
-  g_return_if_fail (display != NULL);
-
-  klass = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (klass->flush)
-    klass->flush (display);
-}
-
-/**
  * gst_mfx_display_get_display_type:
  * @display: a #GstMfxDisplay
  *
@@ -503,38 +457,6 @@ gst_mfx_display_get_vadisplay (GstMfxDisplay * display)
   g_return_val_if_fail (display != NULL, NULL);
 
   return GST_MFX_DISPLAY_GET_PRIVATE (display)->display;
-}
-
-/**
- * gst_mfx_display_get_width:
- * @display: a #GstMfxDisplay
- *
- * Retrieves the width of a #GstMfxDisplay.
- *
- * Return value: the width of the @display, in pixels
- */
-guint
-gst_mfx_display_get_width (GstMfxDisplay * display)
-{
-  g_return_val_if_fail (display != NULL, 0);
-
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->width;
-}
-
-/**
-* gst_mfx_display_get_height:
-* @display: a #GstMfxDisplay
-*
-* Retrieves the height of a #GstMfxDisplay
-*
-* Return value: the height of the @display, in pixels
-*/
-guint
-gst_mfx_display_get_height (GstMfxDisplay * display)
-{
-  g_return_val_if_fail (display != NULL, 0);
-
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->height;
 }
 
 /**

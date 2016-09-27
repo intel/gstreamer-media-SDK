@@ -411,14 +411,14 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
 static const inline GstMfxSinkBackend *
 gst_mfxsink_backend_x11 (void)
 {
-  static const GstMfxSinkBackend GstMfxSinkBackendEGL = {
+  static const GstMfxSinkBackend GstMfxSinkBackendX11 = {
     .create_window = gst_mfxsink_x11_create_window,
     .create_window_from_handle = gst_mfxsink_x11_create_window_from_handle,
     .handle_events = gst_mfxsink_x11_handle_events,
     .pre_start_event_thread = gst_mfxsink_x11_pre_start_event_thread,
     .pre_stop_event_thread = gst_mfxsink_x11_pre_stop_event_thread,
   };
-  return &GstMfxSinkBackendEGL;
+  return &GstMfxSinkBackendX11;
 }
 #endif // USE_X11
 
