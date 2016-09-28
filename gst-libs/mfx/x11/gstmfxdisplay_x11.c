@@ -44,20 +44,7 @@ get_default_display_name (void)
   return g_display_name;
 }
 
-/* Reconstruct a display name without our prefix */
-static const gchar *
-get_display_name (GstMfxDisplayX11 * display)
-{
-  GstMfxDisplayX11Private *const priv = &display->priv;
-  const gchar *display_name = priv->display_name;
-
-  if (!display_name || *display_name == '\0')
-    return NULL;
-  return display_name;
-}
-
-/* Mangle display name with our prefix */
-static gboolean
+static void
 set_display_name (GstMfxDisplayX11 * display, const gchar * display_name)
 {
   GstMfxDisplayX11Private *const priv = &display->priv;
@@ -67,10 +54,9 @@ set_display_name (GstMfxDisplayX11 * display, const gchar * display_name)
   if (!display_name) {
     display_name = get_default_display_name ();
     if (!display_name)
-      display_name = "";
+      return;
   }
   priv->display_name = g_strdup (display_name);
-  return priv->display_name != NULL;
 }
 
 /* Check for display server extensions */
@@ -93,10 +79,9 @@ gst_mfx_display_x11_open_display (GstMfxDisplay * base_display,
   GstMfxDisplayX11 *const display = GST_MFX_DISPLAY_X11_CAST (base_display);
   GstMfxDisplayX11Private *const priv = &display->priv;
 
-  if (!set_display_name (display, name))
-    return FALSE;
+  set_display_name (display, name);
 
-  priv->x11_display = XOpenDisplay (get_display_name (display));
+  priv->x11_display = XOpenDisplay (priv->display_name);
   if (!priv->x11_display)
     return FALSE;
 
@@ -129,7 +114,6 @@ gst_mfx_display_x11_get_display_info (GstMfxDisplay * display,
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
 
   info->native_display = priv->x11_display;
-  info->display_name = priv->display_name;
   info->display_type = GST_MFX_DISPLAY_TYPE_X11;
   return TRUE;
 }
@@ -256,7 +240,7 @@ gst_mfx_display_x11_class (void)
 GstMfxDisplay *
 gst_mfx_display_x11_new (const gchar * display_name)
 {
-  return gst_mfx_display_new (gst_mfx_display_x11_class (),
+  return gst_mfx_display_new_internal (gst_mfx_display_x11_class (),
       GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME, (gpointer) display_name);
 }
 

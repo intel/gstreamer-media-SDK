@@ -696,9 +696,6 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
 {
   GstMfxDisplay *display = NULL;
 
-  if (sink->backend)
-    return;
-
   switch (sink->display_type_req) {
 #ifdef USE_WAYLAND
     case GST_MFX_DISPLAY_TYPE_WAYLAND:
