@@ -277,7 +277,6 @@ gst_mfx_display_wayland_get_display_info (GstMfxDisplay * display,
 
   /* Otherwise, create VA display if there is none already */
   info->native_display = priv->wl_display;
-  info->display_name = priv->display_name;
   info->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
   return TRUE;
 }
@@ -378,7 +377,7 @@ gst_mfx_display_wayland_class (void)
 GstMfxDisplay *
 gst_mfx_display_wayland_new (const gchar * display_name)
 {
-  return gst_mfx_display_new (gst_mfx_display_wayland_class (),
+  return gst_mfx_display_new_internal (gst_mfx_display_wayland_class (),
       GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME, (gpointer) display_name);
 }
 

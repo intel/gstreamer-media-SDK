@@ -19,7 +19,6 @@
  */
 
 #include "gstmfxtaskaggregator.h"
-#include "gstmfxdisplay_drm.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -65,11 +64,17 @@ aggregator_create (GstMfxTaskAggregator * aggregator)
   g_return_val_if_fail (aggregator != NULL, FALSE);
 
   aggregator->cache = NULL;
-  aggregator->display = gst_mfx_display_drm_new (NULL);
+  aggregator->display = gst_mfx_display_new ();
   if (!aggregator->display)
     return FALSE;
 
+  if (!gst_mfx_display_init_vaapi (aggregator->display))
+    goto error;
+
   return TRUE;
+error:
+  gst_mfx_display_unref (aggregator->display);
+  return FALSE;
 }
 
 GstMfxTaskAggregator *

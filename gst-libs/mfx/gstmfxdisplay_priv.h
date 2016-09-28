@@ -107,24 +107,12 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
 #define GST_MFX_DISPLAY_VADISPLAY(display_) \
   (GST_MFX_DISPLAY_GET_PRIVATE (display_)->display)
 
-/**
- * GST_MFX_DISPLAY_TYPE:
- * @display: a #GstMfxDisplay
- *
- * Returns the underlying VADisplay @display type
- * This is an internal macro that does not do any run-time type check.
- */
-#undef  GST_MFX_DISPLAY_TYPE
-#define GST_MFX_DISPLAY_TYPE(display) \
-  (GST_MFX_DISPLAY_GET_PRIVATE (display)->display_type)
-
 struct _GstMfxDisplayPrivate
 {
   GRecMutex mutex;
   GstMfxDisplayType display_type;
-  gchar *display_name;
-  gchar *device_path_default;
-  VADisplay display;
+  int display_fd;
+  VADisplay va_display;
   gpointer native_display;
   guint width;
   guint height;
@@ -153,8 +141,6 @@ struct _GstMfxDisplay
  * GstMfxDisplayClass:
  * @open_display: virtual function to open a display
  * @close_display: virtual function to close a display
- * @lock: (optional) virtual function to lock a display
- * @unlock: (optional) virtual function to unlock a display
  * @get_display: virtual function to retrieve the #GstMfxDisplayInfo
  * @get_size: virtual function to retrieve the display dimensions, in pixels
  * @get_size_mm: virtual function to retrieve the display dimensions, in millimeters
@@ -178,8 +164,6 @@ struct _GstMfxDisplayClass
   GstMfxDisplayBindFunc bind_display;
   GstMfxDisplayOpenFunc open_display;
   GstMfxDisplayCloseFunc close_display;
-  GstMfxDisplayLockFunc lock;
-  GstMfxDisplayUnlockFunc unlock;
   GstMfxDisplayGetInfoFunc get_display;
   GstMfxDisplayGetSizeFunc get_size;
   GstMfxDisplayGetSizeMFunc get_size_mm;
@@ -200,7 +184,7 @@ void
 gst_mfx_display_class_init(GstMfxDisplayClass * klass);
 
 GstMfxDisplay *
-gst_mfx_display_new(const GstMfxDisplayClass * klass,
+gst_mfx_display_new_internal (const GstMfxDisplayClass * klass,
     GstMfxDisplayInitType init_type, gpointer init_value);
 
 #define gst_mfx_display_ref_internal(display) \

@@ -85,8 +85,7 @@ typedef enum
   GST_MFX_DISPLAY_TYPE_ANY = 0,
   GST_MFX_DISPLAY_TYPE_EGL,
   GST_MFX_DISPLAY_TYPE_WAYLAND,
-  GST_MFX_DISPLAY_TYPE_X11,
-  GST_MFX_DISPLAY_TYPE_DRM,
+  GST_MFX_DISPLAY_TYPE_X11
 } GstMfxDisplayType;
 
 #define GST_MFX_TYPE_DISPLAY_TYPE (gst_mfx_display_get_type())
@@ -101,16 +100,12 @@ gst_mfx_display_get_type(void);
  */
 struct _GstMfxDisplayInfo
 {
-  GstMfxDisplay *display;
   GstMfxDisplayType display_type;
-  gchar *display_name;
-  VADisplay va_display;
   gpointer native_display;
 };
 
-/* Get default device path. Actually, the first match in the DRM subsystem */
-const gchar *
-get_default_device_path (GstMfxDisplay * display);
+GstMfxDisplay *
+gst_mfx_display_new (void);
 
 GstMfxDisplay *
 gst_mfx_display_ref (GstMfxDisplay * display);
@@ -131,9 +126,6 @@ gst_mfx_display_unlock (GstMfxDisplay * display);
 GstMfxDisplayType
 gst_mfx_display_get_display_type (GstMfxDisplay * display);
 
-const gchar *
-gst_mfx_display_get_display_name (GstMfxDisplay * display);
-
 VADisplay
 gst_mfx_display_get_vadisplay (GstMfxDisplay * display);
 
@@ -144,6 +136,9 @@ gst_mfx_display_get_size (GstMfxDisplay * display, guint * pwidth,
 void
 gst_mfx_display_get_pixel_aspect_ratio (GstMfxDisplay * display,
     guint * par_n, guint * par_d);
+
+gboolean
+gst_mfx_display_init_vaapi (GstMfxDisplay * display);
 
 const gchar *
 gst_mfx_display_get_vendor_string (GstMfxDisplay * display);
