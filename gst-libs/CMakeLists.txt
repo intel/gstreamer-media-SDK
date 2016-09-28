@@ -1,6 +1,5 @@
 set(SOURCE
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdisplay.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdisplay_drm.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxfilter.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxminiobject.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxobject.c"
