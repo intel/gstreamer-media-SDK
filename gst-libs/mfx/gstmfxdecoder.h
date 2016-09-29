@@ -29,8 +29,7 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_DECODER(obj) \
-  ((GstMfxDecoder *)(obj))
+#define GST_MFX_DECODER(obj) ((GstMfxDecoder *)(obj))
 
 typedef struct _GstMfxDecoder GstMfxDecoder;
 

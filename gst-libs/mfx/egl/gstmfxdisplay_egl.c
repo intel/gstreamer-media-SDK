@@ -212,13 +212,6 @@ gst_mfx_display_egl_create_window(GstMfxDisplay * display, GstMfxID id,
   return gst_mfx_window_egl_new(display, width, height);
 }
 
-static GstMfxTexture *
-gst_mfx_display_egl_create_texture(GstMfxDisplay * display, GstMfxID id,
-  guint target, guint format, guint width, guint height)
-{
-  return gst_mfx_texture_egl_new(display, target, format, width, height);
-}
-
 static void
 gst_mfx_display_egl_class_init(GstMfxDisplayEGLClass * klass)
 {
@@ -247,8 +240,6 @@ gst_mfx_display_egl_class_init(GstMfxDisplayEGLClass * klass)
     gst_mfx_display_egl_get_visual_id;
   dpy_class->create_window = (GstMfxDisplayCreateWindowFunc)
     gst_mfx_display_egl_create_window;
-  dpy_class->create_texture = (GstMfxDisplayCreateTextureFunc)
-    gst_mfx_display_egl_create_texture;
 }
 
 static inline const GstMfxDisplayClass *

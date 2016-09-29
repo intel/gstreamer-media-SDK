@@ -24,15 +24,10 @@
 #include "gstmfxwindow_egl.h"
 #include "gstmfxwindow_priv.h"
 #include "gstmfxtexture_egl.h"
-#include "gstmfxtexture_priv.h"
 #include "gstmfxdisplay_egl_priv.h"
 
-#define GST_MFX_WINDOW_EGL(obj) \
-  ((GstMfxWindowEGL *)(obj))
-
-#define GST_MFX_WINDOW_EGL_CLASS(klass) \
-  ((GstMfxWindowEGLClass *)(klass))
-
+#define GST_MFX_WINDOW_EGL(obj) ((GstMfxWindowEGL *)(obj))
+#define GST_MFX_WINDOW_EGL_CLASS(klass) ((GstMfxWindowEGLClass *)(klass))
 #define GST_MFX_WINDOW_EGL_GET_CLASS(obj) \
   GST_MFX_WINDOW_EGL_CLASS (GST_MFX_WINDOW_GET_CLASS (obj))
 
@@ -52,7 +47,7 @@ struct _GstMfxWindowEGL
   GstMfxWindow parent_instance;
 
   GstMfxWindow *window;
-  GstMfxTexture *texture;
+  GstMfxTextureEGL *texture;
   EglWindow *egl_window;
   EglVTable *egl_vtable;
   EglProgram *render_program;
@@ -118,19 +113,19 @@ static const gchar *frag_shader_text_rgba =
 static gboolean
 ensure_texture (GstMfxWindowEGL * window, guint width, guint height)
 {
-  GstMfxTexture *texture;
+  GstMfxTextureEGL *texture;
   GstMfxDisplay *display = GST_MFX_OBJECT_DISPLAY (window);
 
   if (window->texture &&
-     GST_MFX_TEXTURE_WIDTH(window->texture) == GST_ROUND_UP_16 (width) &&
-     GST_MFX_TEXTURE_HEIGHT(window->texture) == GST_ROUND_UP_16 (height))
+     GST_MFX_TEXTURE_EGL_WIDTH(window->texture) == GST_ROUND_UP_16 (width) &&
+     GST_MFX_TEXTURE_EGL_HEIGHT(window->texture) == GST_ROUND_UP_16 (height))
      return TRUE;
 
   texture = gst_mfx_texture_egl_new (display,
       GL_TEXTURE_2D, GL_RGBA, width, height);
 
-  gst_mfx_texture_replace (&window->texture, texture);
-  gst_mfx_texture_replace (&texture, NULL);
+  gst_mfx_texture_egl_replace (&window->texture, texture);
+  gst_mfx_texture_egl_replace (&texture, NULL);
 
   return window->texture != NULL;
 }
@@ -143,7 +138,7 @@ ensure_shaders (GstMfxWindowEGL * window)
   GLuint prog_id;
 
   g_return_val_if_fail (window->texture != NULL, FALSE);
-  g_return_val_if_fail (GST_MFX_TEXTURE_FORMAT (window->texture) == GL_RGBA,
+  g_return_val_if_fail (GST_MFX_TEXTURE_EGL_FORMAT (window->texture) == GL_RGBA,
       FALSE);
 
   if (window->render_program)
@@ -271,7 +266,7 @@ gst_mfx_window_egl_destroy (GstMfxWindowEGL * window)
   egl_context_run (window->egl_window->context,
       (EglContextRunFunc) do_destroy_objects, window);
   gst_mfx_window_replace (&window->window, NULL);
-  gst_mfx_texture_replace (&window->texture, NULL);
+  gst_mfx_texture_egl_replace (&window->texture, NULL);
 }
 
 static gboolean
@@ -364,7 +359,7 @@ static gboolean
 do_render_texture (GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
     const GstMfxRectangle * dst_rect)
 {
-  const GLuint tex_id = GST_MFX_OBJECT_ID (window->texture);
+  const GLuint tex_id = GST_MFX_TEXTURE_EGL_ID (window->texture);
   EglVTable *const vtable = window->egl_vtable;
   EglProgram *program;
   GLfloat x0, y0, x1, y1;
@@ -375,8 +370,8 @@ do_render_texture (GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
   if (!ensure_shaders (window))
     return FALSE;
 
-  tex_width = GST_MFX_TEXTURE_WIDTH (window->texture);
-  tex_height = GST_MFX_TEXTURE_HEIGHT (window->texture);
+  tex_width = GST_MFX_TEXTURE_EGL_WIDTH (window->texture);
+  tex_height = GST_MFX_TEXTURE_EGL_HEIGHT (window->texture);
   win_width = dst_rect->width + dst_rect->x * 2;
   win_height = dst_rect->height + dst_rect->y * 2;
   program = window->render_program;
@@ -419,7 +414,7 @@ do_render_texture (GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
   vtable->glEnableVertexAttribArray (1);
   vtable->glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
 
-  vtable->glBindTexture (GST_MFX_TEXTURE_TARGET (window->texture), tex_id);
+  vtable->glBindTexture (GST_MFX_TEXTURE_EGL_TARGET (window->texture), tex_id);
   vtable->glUniform1i (program->uniforms[RENDER_PROGRAM_VAR_TEX0], 0);
 
   vtable->glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
@@ -441,7 +436,7 @@ do_upload_surface_unlocked (GstMfxWindowEGL * window,
 {
   if (!ensure_texture (window, src_rect->width, src_rect->height))
     return FALSE;
-  if (!gst_mfx_texture_put_surface (window->texture, proxy))
+  if (!gst_mfx_texture_egl_put_surface (window->texture, proxy))
     return FALSE;
   if (!do_render_texture (window, src_rect, dst_rect))
     return FALSE;
