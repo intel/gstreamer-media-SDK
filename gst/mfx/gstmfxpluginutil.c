@@ -175,7 +175,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     GstVideoFormat * out_format_ptr)
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
-  guint i, j, num_structures;
+  guint num_structures;
   GstCaps *caps = NULL;
   GstCaps *out_caps, *templ;
   GstStructure *structure;

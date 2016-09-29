@@ -398,7 +398,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
 
   wl_shell_surface_add_listener (priv->shell_surface,
       &shell_surface_listener, priv);
-  wl_shell_surface_set_toplevel (priv->shell_surface); 
+  wl_shell_surface_set_toplevel (priv->shell_surface);
 
   priv->poll = gst_poll_new (TRUE);
   gst_poll_fd_init (&priv->pollfd);
@@ -509,8 +509,7 @@ gst_mfx_window_wayland_class_init (GstMfxWindowWaylandClass * klass)
   window_class->unblock_cancel = gst_mfx_window_wayland_unblock_cancel;
 }
 
-#define gst_mfx_window_wayland_finalize \
-	gst_mfx_window_wayland_destroy
+#define gst_mfx_window_wayland_finalize gst_mfx_window_wayland_destroy
 
 GST_MFX_OBJECT_DEFINE_CLASS_WITH_CODE (GstMfxWindowWayland,
     gst_mfx_window_wayland, gst_mfx_window_wayland_class_init (&g_class));
