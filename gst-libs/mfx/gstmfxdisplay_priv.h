@@ -25,6 +25,7 @@
 
 #include "gstmfxdisplay.h"
 #include "gstmfxwindow.h"
+#include "gstmfxwindow_priv.h"
 #include "gstmfxminiobject.h"
 
 G_BEGIN_DECLS
@@ -54,8 +55,6 @@ typedef gboolean(*GstMfxDisplayBindFunc) (GstMfxDisplay * display,
 typedef gboolean(*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
   const gchar * name);
 typedef void(*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
-typedef void(*GstMfxDisplayLockFunc) (GstMfxDisplay * display);
-typedef void(*GstMfxDisplayUnlockFunc) (GstMfxDisplay * display);
 typedef gboolean(*GstMfxDisplayGetInfoFunc) (GstMfxDisplay * display,
   GstMfxDisplayInfo * info);
 typedef void(*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
@@ -92,16 +91,6 @@ typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
 #define GST_MFX_DISPLAY_NATIVE(display) \
   (GST_MFX_DISPLAY_GET_PRIVATE (display)->native_display)
 
-/**
-* GST_MFX_DISPLAY_VADISPLAY:
-* @display_: a #GstMfxDisplay
-*
-* Macro that evaluates to the #VADisplay of @display_.
-* This is an internal macro that does not do any run-time type check.
-*/
-#undef  GST_MFX_DISPLAY_VADISPLAY
-#define GST_MFX_DISPLAY_VADISPLAY(display_) \
-  (GST_MFX_DISPLAY_GET_PRIVATE (display_)->display)
 
 struct _GstMfxDisplayPrivate
 {
@@ -143,7 +132,6 @@ struct _GstMfxDisplay
  * @get_visual_id: (optional) virtual function to retrieve the window visual id
  * @get_colormap: (optional) virtual function to retrieve the window colormap
  * @create_window: (optional) virtual function to create a window
- * @create_texture: (optional) virtual function to create a texture
  *
  * Base class for VA displays.
  */

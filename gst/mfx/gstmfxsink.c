@@ -171,12 +171,12 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
     GstMfxWindow *window = sink->window;
 #ifdef USE_EGL
     if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
-      window = gst_mfx_window_egl_get_native_window (sink->window);
+      window = gst_mfx_window_egl_get_parent_window (sink->window);
 #endif
-    GstMfxDisplay *const display = GST_MFX_OBJECT_DISPLAY (window);
+    GstMfxDisplay *const display = window->display;
     Display *const x11_dpy =
         gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11 (display));
-    Window x11_win = gst_mfx_window_x11_get_xid (GST_MFX_WINDOW_X11 (window));
+    Window x11_win = GST_MFX_WINDOW_ID (window);
 
     /* Track MousePointer interaction */
     for (;;) {
@@ -277,15 +277,14 @@ gst_mfxsink_x11_pre_start_event_thread (GstMfxSink * sink)
     GstMfxWindow *window = sink->window;
 #ifdef USE_EGL
     if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
-      window = gst_mfx_window_egl_get_native_window (sink->window);
+      window = gst_mfx_window_egl_get_parent_window (sink->window);
 #endif
     GstMfxDisplayX11 *const display =
-        GST_MFX_DISPLAY_X11 (GST_MFX_OBJECT_DISPLAY (window));
+        GST_MFX_DISPLAY_X11 (window->display);
 
     gst_mfx_display_lock (GST_MFX_DISPLAY (display));
     XSelectInput (gst_mfx_display_x11_get_display (display),
-        gst_mfx_window_x11_get_xid (GST_MFX_WINDOW_X11 (window)),
-        x11_event_mask);
+        GST_MFX_WINDOW_ID (window), x11_event_mask);
     gst_mfx_display_unlock (GST_MFX_DISPLAY (display));
   }
   return TRUE;
@@ -298,14 +297,14 @@ gst_mfxsink_x11_pre_stop_event_thread (GstMfxSink * sink)
     GstMfxWindow *window = sink->window;
 #ifdef USE_EGL
     if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
-      window = gst_mfx_window_egl_get_native_window (sink->window);
+      window = gst_mfx_window_egl_get_parent_window (sink->window);
 #endif
     GstMfxDisplayX11 *const display =
-        GST_MFX_DISPLAY_X11 (GST_MFX_OBJECT_DISPLAY (window));
+        GST_MFX_DISPLAY_X11 (window->display);
 
     gst_mfx_display_lock (GST_MFX_DISPLAY (display));
     XSelectInput (gst_mfx_display_x11_get_display (display),
-        gst_mfx_window_x11_get_xid (GST_MFX_WINDOW_X11 (window)), 0);
+        GST_MFX_WINDOW_ID (window), 0);
     gst_mfx_display_unlock (GST_MFX_DISPLAY (display));
   }
   return TRUE;
@@ -395,9 +394,7 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
     sink->window_height = height;
   }
 
-  if (!sink->window ||
-      gst_mfx_window_x11_get_xid (GST_MFX_WINDOW_X11 (sink->window)) !=
-      xid) {
+  if (!sink->window || (Window)(GST_MFX_WINDOW_ID (sink->window)) != xid) {
     gst_mfx_window_replace (&sink->window, NULL);
     sink->window = gst_mfx_window_x11_new_with_xid (sink->display, xid);
     if (!sink->window)

@@ -24,6 +24,7 @@
 
 #include "gstmfxdisplay.h"
 #include "gstmfxwindow.h"
+#include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
 

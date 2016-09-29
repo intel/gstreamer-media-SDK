@@ -29,8 +29,7 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_DISPLAY(obj) \
-  ((GstMfxDisplay *)(obj))
+#define GST_MFX_DISPLAY(obj) ((GstMfxDisplay *)(obj))
 
 /**
  * GST_MFX_DISPLAY_GET_CLASS_TYPE:

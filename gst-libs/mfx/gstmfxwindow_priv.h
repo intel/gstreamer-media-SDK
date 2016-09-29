@@ -23,7 +23,7 @@
 #ifndef GST_MFX_WINDOW_PRIV_H
 #define GST_MFX_WINDOW_PRIV_H
 
-#include "gstmfxobject_priv.h"
+#include "gstmfxminiobject.h"
 
 G_BEGIN_DECLS
 
@@ -36,6 +36,7 @@ G_BEGIN_DECLS
 /* GstMfxWindowClass hooks */
 typedef gboolean(*GstMfxWindowCreateFunc) (GstMfxWindow * window,
     guint * width, guint * height);
+typedef gboolean(*GstMfxWindowDestroyFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowShowFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowHideFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowGetGeometryFunc) (GstMfxWindow * window,
@@ -52,6 +53,9 @@ typedef guintptr(*GstMfxWindowGetColormapFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowSetUnblockFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowSetUnblockCancelFunc) (GstMfxWindow * window);
 
+#define GST_MFX_WINDOW_ID(window) \
+  (GST_MFX_WINDOW (window)->handle)
+
 /**
  * GstMfxWindow:
  *
@@ -60,7 +64,10 @@ typedef gboolean(*GstMfxWindowSetUnblockCancelFunc) (GstMfxWindow * window);
 struct _GstMfxWindow
 {
   /*< private >*/
-  GstMfxObject parent_instance;
+  GstMfxMiniObject parent_instance;
+
+  GstMfxID handle;
+  GstMfxDisplay *display;
 
   /*< protected >*/
   guint width;
@@ -94,10 +101,11 @@ struct _GstMfxWindow
 struct _GstMfxWindowClass
 {
   /*< private >*/
-  GstMfxObjectClass parent_class;
+  GstMfxMiniObjectClass parent_class;
 
   /*< protected >*/
   GstMfxWindowCreateFunc create;
+  GstMfxWindowDestroyFunc destroy;
   GstMfxWindowShowFunc show;
   GstMfxWindowHideFunc hide;
   GstMfxWindowGetGeometryFunc get_geometry;
