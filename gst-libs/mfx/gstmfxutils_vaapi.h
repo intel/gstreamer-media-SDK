@@ -22,7 +22,6 @@
 #ifndef GST_MFX_UTILS_VAAPI_H
 #define GST_MFX_UTILS_VAAPI_H
 
-#include "gstmfxobject.h"
 #include "gstmfxdisplay.h"
 #include <gst/video/video.h>
 

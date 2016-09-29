@@ -22,6 +22,7 @@
 #define GST_MFX_DISPLAY_EGL_PRIV_H
 
 #include "gstmfxwindow.h"
+#include "gstmfxwindow_priv.h"
 #include "gstmfxdisplay_egl.h"
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxutils_egl.h"

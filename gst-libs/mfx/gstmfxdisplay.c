@@ -187,13 +187,13 @@ gst_mfx_display_destroy (GstMfxDisplay * display)
     priv->va_display = NULL;
   }
 
-  if (klass->close_display)
-    klass->close_display (display);
-
   if (priv->display_fd) {
     close (priv->display_fd);
     priv->display_fd = 0;
   }
+
+  if (klass->close_display)
+    klass->close_display (display);
 
   g_free (priv->vendor_string);
   priv->vendor_string = NULL;
@@ -299,9 +299,8 @@ void
 gst_mfx_display_class_init (GstMfxDisplayClass * klass)
 {
   GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
-  GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
 
-  GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "A MFX helper");
+  GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "MFX helper");
 
   object_class->size = sizeof (GstMfxDisplay);
   object_class->finalize = (GDestroyNotify) gst_mfx_display_finalize;
