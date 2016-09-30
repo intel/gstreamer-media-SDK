@@ -54,7 +54,7 @@ static void
 send_wmspec_change_state (GstMfxWindow * window, Atom state, gboolean add)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   XClientMessageEvent xclient;
 
   memset (&xclient, 0, sizeof (xclient));
@@ -79,15 +79,15 @@ send_wmspec_change_state (GstMfxWindow * window, Atom state, gboolean add)
 static void
 wait_event (GstMfxWindow * window, int type)
 {
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XEvent e;
   Bool got_event;
 
   for (;;) {
-    GST_MFX_DISPLAY_LOCK (window->display);
+    GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
     got_event = XCheckTypedWindowEvent (dpy, xid, type, &e);
-    GST_MFX_DISPLAY_UNLOCK (window->display);
+    GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
     if (got_event)
       break;
     g_usleep (10);
@@ -97,7 +97,7 @@ wait_event (GstMfxWindow * window, int type)
 static gboolean
 timed_wait_event (GstMfxWindow * window, int type, guint64 end_time, XEvent * e)
 {
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XEvent tmp_event;
   GTimeVal now;
@@ -107,17 +107,17 @@ timed_wait_event (GstMfxWindow * window, int type, guint64 end_time, XEvent * e)
   if (!e)
     e = &tmp_event;
 
-  GST_MFX_DISPLAY_LOCK (window->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   got_event = XCheckTypedWindowEvent (dpy, xid, type, e);
-  GST_MFX_DISPLAY_UNLOCK (window->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (got_event)
     return TRUE;
 
   do {
     g_usleep (10);
-    GST_MFX_DISPLAY_LOCK (window->display);
+    GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
     got_event = XCheckTypedWindowEvent (dpy, xid, type, e);
-    GST_MFX_DISPLAY_UNLOCK (window->display);
+    GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
     if (got_event)
       return TRUE;
     g_get_current_time (&now);
@@ -130,7 +130,7 @@ static gboolean
 gst_mfx_window_x11_show (GstMfxWindow * window)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XWindowAttributes wattr;
   gboolean has_errors;
@@ -138,7 +138,7 @@ gst_mfx_window_x11_show (GstMfxWindow * window)
   if (priv->is_mapped)
     return TRUE;
 
-  GST_MFX_DISPLAY_LOCK (window->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   x11_trap_errors ();
   if (window->use_foreign_window) {
     XGetWindowAttributes (dpy, xid, &wattr);
@@ -147,17 +147,17 @@ gst_mfx_window_x11_show (GstMfxWindow * window)
   }
   XMapWindow (dpy, xid);
   has_errors = x11_untrap_errors () != 0;
-  GST_MFX_DISPLAY_UNLOCK (window->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 
   if (!has_errors) {
     wait_event (window, MapNotify);
     if (window->use_foreign_window &&
         !(wattr.your_event_mask & StructureNotifyMask)) {
-      GST_MFX_DISPLAY_LOCK (window->display);
+      GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
       x11_trap_errors ();
       XSelectInput (dpy, xid, wattr.your_event_mask);
       has_errors = x11_untrap_errors () != 0;
-      GST_MFX_DISPLAY_UNLOCK (window->display);
+      GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
     }
     priv->is_mapped = TRUE;
 
@@ -171,7 +171,7 @@ static gboolean
 gst_mfx_window_x11_hide (GstMfxWindow * window)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XWindowAttributes wattr;
   gboolean has_errors;
@@ -179,7 +179,7 @@ gst_mfx_window_x11_hide (GstMfxWindow * window)
   if (!priv->is_mapped)
     return TRUE;
 
-  GST_MFX_DISPLAY_LOCK (window->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   x11_trap_errors ();
   if (window->use_foreign_window) {
     XGetWindowAttributes (dpy, xid, &wattr);
@@ -188,17 +188,17 @@ gst_mfx_window_x11_hide (GstMfxWindow * window)
   }
   XUnmapWindow (dpy, xid);
   has_errors = x11_untrap_errors () != 0;
-  GST_MFX_DISPLAY_UNLOCK (window->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 
   if (!has_errors) {
     wait_event (window, UnmapNotify);
     if (window->use_foreign_window &&
         !(wattr.your_event_mask & StructureNotifyMask)) {
-      GST_MFX_DISPLAY_LOCK (window->display);
+      GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
       x11_trap_errors ();
       XSelectInput (dpy, xid, wattr.your_event_mask);
       has_errors = x11_untrap_errors () != 0;
-      GST_MFX_DISPLAY_UNLOCK (window->display);
+      GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
     }
     priv->is_mapped = FALSE;
   }
@@ -209,8 +209,7 @@ static gboolean
 gst_mfx_window_x11_create (GstMfxWindow * window, guint * width, guint * height)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  GstMfxDisplay *const display = window->display;
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   Window xid = GST_MFX_WINDOW_ID (window);
   guint vid = 0;
   Colormap cmap = None;
@@ -226,31 +225,15 @@ gst_mfx_window_x11_create (GstMfxWindow * window, guint * width, guint * height)
   };
 
   if (window->use_foreign_window && xid) {
-    GST_MFX_DISPLAY_LOCK (window->display);
+    GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
     XGetWindowAttributes (dpy, xid, &wattr);
     priv->is_mapped = wattr.map_state == IsViewable;
     ok = x11_get_geometry (dpy, xid, NULL, NULL, width, height, NULL);
-    GST_MFX_DISPLAY_UNLOCK (window->display);
+    GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
     return ok;
   }
 
-  display_class = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (display_class) {
-    if (display_class->get_visual_id)
-      vid = display_class->get_visual_id (display, window);
-    if (display_class->get_colormap)
-      cmap = display_class->get_colormap (display, window);
-  }
-
-  window_class = GST_MFX_WINDOW_GET_CLASS (window);
-  if (window_class) {
-    if (window_class->get_visual_id && !vid)
-      vid = window_class->get_visual_id (window);
-    if (window_class->get_colormap && !cmap)
-      cmap = window_class->get_colormap (window);
-  }
-
-  GST_MFX_DISPLAY_LOCK (window->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   XInternAtoms (dpy,
       (char **) atom_names, G_N_ELEMENTS (atom_names), False, atoms);
   priv->atom_NET_WM_STATE = atoms[0];
@@ -259,7 +242,7 @@ gst_mfx_window_x11_create (GstMfxWindow * window, guint * width, guint * height)
   xid = x11_create_window (dpy, *width, *height, vid, cmap);
   if (xid)
     XRaiseWindow (dpy, xid);
-  GST_MFX_DISPLAY_UNLOCK (window->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 
   GST_MFX_WINDOW_ID (window) = xid;
   return xid != None;
@@ -268,13 +251,13 @@ gst_mfx_window_x11_create (GstMfxWindow * window, guint * width, guint * height)
 static void
 gst_mfx_window_x11_destroy (GstMfxWindow * window)
 {
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
 
   if (xid) {
-    GST_MFX_DISPLAY_LOCK (window->display);
+    GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
     XDestroyWindow (dpy, xid);
-    GST_MFX_DISPLAY_UNLOCK (window->display);
+    GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 
     GST_MFX_WINDOW_ID (window) = None;
   }
@@ -284,13 +267,13 @@ static gboolean
 gst_mfx_window_x11_get_geometry (GstMfxWindow * window,
     gint * px, gint * py, guint * pwidth, guint * pheight)
 {
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   gboolean success;
 
-  GST_MFX_DISPLAY_LOCK (window->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   success = x11_get_geometry (dpy, xid, px, py, pwidth, pheight, NULL);
-  GST_MFX_DISPLAY_UNLOCK (window->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
   return success;
 }
 
@@ -298,7 +281,7 @@ static gboolean
 gst_mfx_window_x11_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (window->display);
+  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XEvent e;
   guint width, height;
@@ -306,7 +289,7 @@ gst_mfx_window_x11_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
   GTimeVal now;
   guint64 end_time;
 
-  GST_MFX_DISPLAY_LOCK (window->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   x11_trap_errors ();
   if (fullscreen) {
     if (!priv->is_mapped) {
@@ -333,7 +316,7 @@ gst_mfx_window_x11_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
   }
   XSync (dpy, False);
   has_errors = x11_untrap_errors () != 0;
-  GST_MFX_DISPLAY_UNLOCK (window->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (has_errors)
     return FALSE;
 
@@ -344,7 +327,7 @@ gst_mfx_window_x11_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
     end_time = DELAY + ((guint64) now.tv_sec * 1000000 + now.tv_usec);
     while (timed_wait_event (window, ConfigureNotify, end_time, &e)) {
       if (fullscreen) {
-        gst_mfx_display_get_size (window->display,
+        gst_mfx_display_get_size (GST_MFX_WINDOW_DISPLAY (window),
             &width, &height);
         if (e.xconfigure.width == width && e.xconfigure.height == height)
           return TRUE;
@@ -366,12 +349,12 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
   if (!GST_MFX_WINDOW_ID (window))
     return FALSE;
 
-  GST_MFX_DISPLAY_LOCK (window->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   x11_trap_errors ();
   XResizeWindow (GST_MFX_DISPLAY_NATIVE (window->display),
       GST_MFX_WINDOW_ID (window), width, height);
   has_errors = x11_untrap_errors () != 0;
-  GST_MFX_DISPLAY_UNLOCK (window->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
   return !has_errors;
 }
 
@@ -382,7 +365,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 {
 #if defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT)
   GstMfxDisplayX11 *const x11_display =
-        GST_MFX_DISPLAY_X11 (window->display);
+        GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
   GstMfxPrimeBufferProxy *buffer_proxy;
 
   Display *display = gst_mfx_display_x11_get_display (x11_display);

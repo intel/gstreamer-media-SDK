@@ -64,11 +64,6 @@ typedef void(*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
 typedef GstMfxWindow *(*GstMfxDisplayCreateWindowFunc) (
   GstMfxDisplay * display, GstMfxID id, guint width, guint height);
 
-typedef guintptr(*GstMfxDisplayGetVisualIdFunc) (GstMfxDisplay * display,
-  GstMfxWindow * window);
-typedef guintptr(*GstMfxDisplayGetColormapFunc) (GstMfxDisplay * display,
-  GstMfxWindow * window);
-
 /**
 * GST_MFX_DISPLAY_GET_CLASS_TYPE:
 * @display: a #GstMfxDisplay
@@ -129,8 +124,6 @@ struct _GstMfxDisplay
  * @get_display: virtual function to retrieve the #GstMfxDisplayInfo
  * @get_size: virtual function to retrieve the display dimensions, in pixels
  * @get_size_mm: virtual function to retrieve the display dimensions, in millimeters
- * @get_visual_id: (optional) virtual function to retrieve the window visual id
- * @get_colormap: (optional) virtual function to retrieve the window colormap
  * @create_window: (optional) virtual function to create a window
  *
  * Base class for VA displays.
@@ -151,8 +144,6 @@ struct _GstMfxDisplayClass
   GstMfxDisplayGetInfoFunc get_display;
   GstMfxDisplayGetSizeFunc get_size;
   GstMfxDisplayGetSizeMFunc get_size_mm;
-  GstMfxDisplayGetVisualIdFunc get_visual_id;
-  GstMfxDisplayGetColormapFunc get_colormap;
   GstMfxDisplayCreateWindowFunc create_window;
 };
 

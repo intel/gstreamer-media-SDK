@@ -53,7 +53,7 @@ gst_mfx_window_show (GstMfxWindow * window);
 void
 gst_mfx_window_hide (GstMfxWindow * window);
 
-GstMfxID
+guintptr
 gst_mfx_window_get_handle (GstMfxWindow * window);
 
 gboolean

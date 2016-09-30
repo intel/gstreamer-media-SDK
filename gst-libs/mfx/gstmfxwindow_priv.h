@@ -48,13 +48,14 @@ typedef gboolean(*GstMfxWindowResizeFunc) (GstMfxWindow * window,
 typedef gboolean(*GstMfxWindowRenderFunc) (GstMfxWindow * window,
     GstMfxSurfaceProxy * proxy, const GstMfxRectangle * src_rect,
     const GstMfxRectangle * dst_rect);
-typedef guintptr(*GstMfxWindowGetVisualIdFunc) (GstMfxWindow * window);
-typedef guintptr(*GstMfxWindowGetColormapFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowSetUnblockFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowSetUnblockCancelFunc) (GstMfxWindow * window);
 
 #define GST_MFX_WINDOW_ID(window) \
   (GST_MFX_WINDOW (window)->handle)
+
+#define GST_MFX_WINDOW_DISPLAY(window) \
+  (GST_MFX_WINDOW (window)->display)
 
 /**
  * GstMfxWindow:
@@ -66,8 +67,8 @@ struct _GstMfxWindow
   /*< private >*/
   GstMfxMiniObject parent_instance;
 
-  GstMfxID handle;
   GstMfxDisplay *display;
+  guintptr handle;
 
   /*< protected >*/
   guint width;
@@ -112,8 +113,6 @@ struct _GstMfxWindowClass
   GstMfxWindowSetFullscreenFunc set_fullscreen;
   GstMfxWindowResizeFunc resize;
   GstMfxWindowRenderFunc render;
-  GstMfxWindowGetVisualIdFunc get_visual_id;
-  GstMfxWindowGetColormapFunc get_colormap;
   GstMfxWindowSetUnblockFunc unblock;
   GstMfxWindowSetUnblockCancelFunc unblock_cancel;
 };

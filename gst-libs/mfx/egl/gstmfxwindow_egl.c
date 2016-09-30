@@ -197,13 +197,13 @@ do_create_objects (CreateObjectsArgs * args)
 
   args->success = FALSE;
 
-  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW (window)->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (egl_context_set_current (args->egl_context, TRUE, &old_cs)) {
     args->success = do_create_objects_unlocked (window, args->width,
         args->height, args->egl_context);
     egl_context_set_current (args->egl_context, FALSE, &old_cs);
   }
-  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW (window)->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 }
 
 static gboolean
@@ -211,7 +211,7 @@ gst_mfx_window_egl_create (GstMfxWindowEGL * window,
     guint * width, guint * height)
 {
   GstMfxDisplayEGL *const display =
-      GST_MFX_DISPLAY_EGL (GST_MFX_WINDOW (window)->display);
+      GST_MFX_DISPLAY_EGL (GST_MFX_WINDOW_DISPLAY (window));
   const GstMfxDisplayClass *const native_dpy_class =
       GST_MFX_DISPLAY_GET_CLASS (display->display);
   CreateObjectsArgs args;
@@ -246,18 +246,18 @@ static void
 do_destroy_objects (GstMfxWindowEGL * window)
 {
   EglContext *const egl_context =
-      GST_MFX_DISPLAY_EGL_CONTEXT (GST_MFX_WINDOW (window)->display);
+      GST_MFX_DISPLAY_EGL_CONTEXT (GST_MFX_WINDOW_DISPLAY (window));
   EglContextState old_cs;
 
   if (!window->egl_window)
     return;
 
-  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW (window)->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (egl_context_set_current (egl_context, TRUE, &old_cs)) {
     do_destroy_objects_unlocked (window);
     egl_context_set_current (egl_context, FALSE, &old_cs);
   }
-  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW (window)->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 }
 
 static void
@@ -330,13 +330,13 @@ do_resize_window (ResizeWindowArgs * args)
   GstMfxWindowEGL *const window = args->window;
   EglContextState old_cs;
 
-  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW (window)->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (egl_context_set_current (window->egl_window->context, TRUE, &old_cs)) {
     args->success = do_resize_window_unlocked (window, args->width,
         args->height);
     egl_context_set_current (window->egl_window->context, FALSE, &old_cs);
   }
-  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW (window)->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 }
 
 static gboolean
@@ -452,13 +452,13 @@ do_upload_surface (UploadSurfaceArgs * args)
 
   args->success = FALSE;
 
-  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW (window)->display);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (egl_context_set_current (window->egl_window->context, TRUE, &old_cs)) {
     args->success = do_upload_surface_unlocked (window, args->proxy,
         args->src_rect, args->dst_rect);
     egl_context_set_current (window->egl_window->context, FALSE, &old_cs);
   }
-  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW (window)->display);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 }
 
 static gboolean

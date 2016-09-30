@@ -232,7 +232,7 @@ gst_mfx_window_hide (GstMfxWindow * window)
   GST_MFX_WINDOW_GET_CLASS (window)->hide (window);
 }
 
-GstMfxID
+guintptr
 gst_mfx_window_get_handle (GstMfxWindow * window)
 {
   g_return_if_fail (window != NULL);
