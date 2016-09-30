@@ -32,15 +32,6 @@ G_BEGIN_DECLS
 #define GST_MFX_DISPLAY(obj) ((GstMfxDisplay *)(obj))
 
 /**
- * GST_MFX_DISPLAY_GET_CLASS_TYPE:
- * @display: a #GstMfxDisplay
- *
- * Returns the #display class type
- */
-#define GST_MFX_DISPLAY_GET_CLASS_TYPE(display) \
-  gst_mfx_display_get_class_type (GST_MFX_DISPLAY (display))
-
-/**
  * GST_MFX_DISPLAY_TYPE:
  * @display: a #GstMfxDisplay
  *
@@ -76,7 +67,6 @@ G_BEGIN_DECLS
 #define GST_MFX_DISPLAY_UNLOCK(display) \
   gst_mfx_display_unlock (GST_MFX_DISPLAY (display))
 
-typedef struct _GstMfxDisplayInfo             GstMfxDisplayInfo;
 typedef struct _GstMfxDisplay                 GstMfxDisplay;
 
 typedef enum
@@ -91,17 +81,6 @@ typedef enum
 
 GType
 gst_mfx_display_get_type(void);
-
-/**
- * GstMfxDisplayInfo:
- *
- * Generic class to retrieve VA display info
- */
-struct _GstMfxDisplayInfo
-{
-  GstMfxDisplayType display_type;
-  gpointer native_display;
-};
 
 GstMfxDisplay *
 gst_mfx_display_new (void);

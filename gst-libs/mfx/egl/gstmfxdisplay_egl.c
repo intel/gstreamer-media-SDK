@@ -139,7 +139,7 @@ gst_mfx_display_egl_bind_display(GstMfxDisplayEGL * display,
   gst_mfx_display_replace(&display->display, native_display);
   gst_mfx_display_unref(native_display);
 
-  egl_display = egl_display_new(GST_MFX_DISPLAY_NATIVE(display->display));
+  egl_display = egl_display_new(GST_MFX_DISPLAY_HANDLE(display->display));
   if (!egl_display)
     return FALSE;
 
@@ -158,18 +158,6 @@ static void
 gst_mfx_display_egl_close_display(GstMfxDisplayEGL * display)
 {
   gst_mfx_display_replace(&display->display, NULL);
-}
-
-static gboolean
-gst_mfx_display_egl_get_display_info(GstMfxDisplayEGL * display,
-  GstMfxDisplayInfo * info)
-{
-  GstMfxDisplayClass *const klass =
-    GST_MFX_DISPLAY_GET_CLASS(display->display);
-
-  if (klass->get_display && !klass->get_display(display->display, info))
-    return FALSE;
-  return TRUE;
 }
 
 static void
@@ -219,7 +207,6 @@ gst_mfx_display_egl_class_init(GstMfxDisplayEGLClass * klass)
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_EGL;
   dpy_class->bind_display = gst_mfx_display_egl_bind_display;
   dpy_class->close_display = gst_mfx_display_egl_close_display;
-  dpy_class->get_display = gst_mfx_display_egl_get_display_info;
   dpy_class->get_size = gst_mfx_display_egl_get_size;
   dpy_class->get_size_mm = gst_mfx_display_egl_get_size_mm;
   dpy_class->create_window = gst_mfx_display_egl_create_window;
@@ -250,6 +237,14 @@ gst_mfx_display_egl_new(const gchar * display_name, guint gles_version)
 
   return gst_mfx_display_new_internal (gst_mfx_display_egl_class(),
     GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY, &params);
+}
+
+GstMfxDisplay *
+gst_mfx_display_egl_get_parent_display (GstMfxDisplayEGL * display)
+{
+  g_return_val_if_fail (display != NULL, NULL);
+
+  return display->display;
 }
 
 EglContext *

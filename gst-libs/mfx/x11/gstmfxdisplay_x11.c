@@ -61,13 +61,14 @@ set_display_name (GstMfxDisplayX11 * display, const gchar * display_name)
 
 /* Check for display server extensions */
 static void
-check_extensions (GstMfxDisplayX11 * display)
+check_extensions (GstMfxDisplay * display)
 {
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (display);
   int evt_base, err_base;
 
 #ifdef HAVE_XRANDR
-  priv->use_xrandr = XRRQueryExtension (priv->x11_display,
+  priv->use_xrandr = XRRQueryExtension (dpy,
       &evt_base, &err_base);
 #endif
 }
@@ -81,13 +82,13 @@ gst_mfx_display_x11_open_display (GstMfxDisplay * base_display,
 
   set_display_name (display, name);
 
-  priv->x11_display = XOpenDisplay (priv->display_name);
-  if (!priv->x11_display)
+  GST_MFX_DISPLAY_HANDLE (base_display) = XOpenDisplay (priv->display_name);
+  if (!GST_MFX_DISPLAY_HANDLE (base_display))
     return FALSE;
 
-  priv->x11_screen = DefaultScreen (priv->x11_display);
+  priv->x11_screen = DefaultScreen (GST_MFX_DISPLAY_HANDLE (base_display));
 
-  check_extensions (display);
+  check_extensions (base_display);
   return TRUE;
 }
 
@@ -95,10 +96,11 @@ static void
 gst_mfx_display_x11_close_display (GstMfxDisplay * display)
 {
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
+  Display *dpy = GST_MFX_DISPLAY_HANDLE (display);
 
-  if (priv->x11_display) {
-    XCloseDisplay (priv->x11_display);
-    priv->x11_display = NULL;
+  if (dpy) {
+    XCloseDisplay (dpy);
+    dpy = NULL;
   }
 
   if (priv->display_name) {
@@ -107,31 +109,21 @@ gst_mfx_display_x11_close_display (GstMfxDisplay * display)
   }
 }
 
-static gboolean
-gst_mfx_display_x11_get_display_info (GstMfxDisplay * display,
-    GstMfxDisplayInfo * info)
-{
-  GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
-
-  info->native_display = priv->x11_display;
-  info->display_type = GST_MFX_DISPLAY_TYPE_X11;
-  return TRUE;
-}
-
 static void
 gst_mfx_display_x11_get_size (GstMfxDisplay * display,
     guint * pwidth, guint * pheight)
 {
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (display);
 
-  if (!priv->x11_display)
+  if (!dpy)
     return;
 
   if (pwidth)
-    *pwidth = DisplayWidth (priv->x11_display, priv->x11_screen);
+    *pwidth = DisplayWidth (dpy, priv->x11_screen);
 
   if (pheight)
-    *pheight = DisplayHeight (priv->x11_display, priv->x11_screen);
+    *pheight = DisplayHeight (dpy, priv->x11_screen);
 }
 
 static void
@@ -139,13 +131,14 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
     guint * pwidth, guint * pheight)
 {
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (display);
   guint width_mm, height_mm;
 
-  if (!priv->x11_display)
+  if (!dpy)
     return;
 
-  width_mm = DisplayWidthMM (priv->x11_display, priv->x11_screen);
-  height_mm = DisplayHeightMM (priv->x11_display, priv->x11_screen);
+  width_mm = DisplayWidthMM (dpy, priv->x11_screen);
+  height_mm = DisplayHeightMM (dpy, priv->x11_screen);
 
 #ifdef HAVE_XRANDR
   /* XXX: fix up physical size if the display is rotated */
@@ -157,10 +150,10 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
     Rotation rotation;
 
     do {
-      win = DefaultRootWindow (priv->x11_display);
-      screen = XRRRootToScreen (priv->x11_display, win);
+      win = DefaultRootWindow (dpy);
+      screen = XRRRootToScreen (dpy, win);
 
-      xrr_config = XRRGetScreenInfo (priv->x11_display, win);
+      xrr_config = XRRGetScreenInfo (dpy, win);
       if (!xrr_config)
         break;
 
@@ -168,7 +161,7 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
       if (rotation == RR_Rotate_0 || rotation == RR_Rotate_180)
         break;
 
-      xrr_sizes = XRRSizes (priv->x11_display, screen, &num_xrr_sizes);
+      xrr_sizes = XRRSizes (dpy, screen, &num_xrr_sizes);
       if (!xrr_sizes || size_id >= num_xrr_sizes)
         break;
 
@@ -208,7 +201,6 @@ gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_X11;
   dpy_class->open_display = gst_mfx_display_x11_open_display;
   dpy_class->close_display = gst_mfx_display_x11_close_display;
-  dpy_class->get_display = gst_mfx_display_x11_get_display_info;
   dpy_class->get_size = gst_mfx_display_x11_get_size;
   dpy_class->get_size_mm = gst_mfx_display_x11_get_size_mm;
   dpy_class->create_window = gst_mfx_display_x11_create_window;
@@ -255,9 +247,9 @@ gst_mfx_display_x11_new (const gchar * display_name)
  * Return value: the X11 #Display attached to @display
  */
 Display *
-gst_mfx_display_x11_get_display (GstMfxDisplayX11 * display)
+gst_mfx_display_x11_get_display (GstMfxDisplay * display)
 {
   g_return_val_if_fail (GST_MFX_IS_DISPLAY_X11 (display), NULL);
 
-  return GST_MFX_DISPLAY_XDISPLAY (display);
+  return GST_MFX_DISPLAY_HANDLE (display);
 }

@@ -33,6 +33,9 @@ typedef struct _GstMfxDisplayEGL GstMfxDisplayEGL;
 GstMfxDisplay *
 gst_mfx_display_egl_new (const gchar * display_name, guint gles_version);
 
+GstMfxDisplay *
+gst_mfx_display_egl_get_parent_display (GstMfxDisplayEGL * display);
+
 G_END_DECLS
 
 #endif /* GST_MFX_DISPLAY_EGL_H */

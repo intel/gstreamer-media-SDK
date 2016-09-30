@@ -36,7 +36,7 @@ GstMfxDisplay *
 gst_mfx_display_x11_new (const gchar * display_name);
 
 Display *
-gst_mfx_display_x11_get_display (GstMfxDisplayX11 * display);
+gst_mfx_display_x11_get_display (GstMfxDisplay * display);
 
 G_END_DECLS
 

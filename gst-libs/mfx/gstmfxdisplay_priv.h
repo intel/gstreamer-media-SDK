@@ -55,8 +55,6 @@ typedef gboolean(*GstMfxDisplayBindFunc) (GstMfxDisplay * display,
 typedef gboolean(*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
   const gchar * name);
 typedef void(*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
-typedef gboolean(*GstMfxDisplayGetInfoFunc) (GstMfxDisplay * display,
-  GstMfxDisplayInfo * info);
 typedef void(*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
   guint * pwidth, guint * pheight);
 typedef void(*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
@@ -76,14 +74,14 @@ typedef GstMfxWindow *(*GstMfxDisplayCreateWindowFunc) (
   (GST_MFX_DISPLAY_GET_CLASS (display)->display_type)
 
 /**
-* GST_MFX_DISPLAY_NATIVE:
+* GST_MFX_DISPLAY_HANDLE:
 * @display: a #GstMfxDisplay
 *
 * Macro that evaluates to the native display of @display.
 * This is an internal macro that does not do any run-time type check.
 */
-#undef  GST_MFX_DISPLAY_NATIVE
-#define GST_MFX_DISPLAY_NATIVE(display) \
+#undef  GST_MFX_DISPLAY_HANDLE
+#define GST_MFX_DISPLAY_HANDLE(display) \
   (GST_MFX_DISPLAY_GET_PRIVATE (display)->native_display)
 
 
@@ -121,7 +119,6 @@ struct _GstMfxDisplay
  * GstMfxDisplayClass:
  * @open_display: virtual function to open a display
  * @close_display: virtual function to close a display
- * @get_display: virtual function to retrieve the #GstMfxDisplayInfo
  * @get_size: virtual function to retrieve the display dimensions, in pixels
  * @get_size_mm: virtual function to retrieve the display dimensions, in millimeters
  * @create_window: (optional) virtual function to create a window
@@ -141,7 +138,6 @@ struct _GstMfxDisplayClass
   GstMfxDisplayBindFunc bind_display;
   GstMfxDisplayOpenFunc open_display;
   GstMfxDisplayCloseFunc close_display;
-  GstMfxDisplayGetInfoFunc get_display;
   GstMfxDisplayGetSizeFunc get_size;
   GstMfxDisplayGetSizeMFunc get_size_mm;
   GstMfxDisplayCreateWindowFunc create_window;
