@@ -51,9 +51,11 @@ typedef gboolean(*GstMfxWindowRenderFunc) (GstMfxWindow * window,
 typedef gboolean(*GstMfxWindowSetUnblockFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowSetUnblockCancelFunc) (GstMfxWindow * window);
 
+#undef GST_MFX_WINDOW_ID
 #define GST_MFX_WINDOW_ID(window) \
   (GST_MFX_WINDOW (window)->handle)
 
+#undef GST_MFX_WINDOW_DISPLAY
 #define GST_MFX_WINDOW_DISPLAY(window) \
   (GST_MFX_WINDOW (window)->display)
 

@@ -205,9 +205,6 @@ gst_mfx_display_create (GstMfxDisplay * display,
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
   const GstMfxDisplayClass *const klass = GST_MFX_DISPLAY_GET_CLASS (display);
-  GstMfxDisplayInfo info;
-
-  memset (&info, 0, sizeof (info));
 
   switch (init_type) {
     case GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME:
@@ -221,11 +218,6 @@ gst_mfx_display_create (GstMfxDisplay * display,
     default:
       break;
   }
-
-  if (!klass->get_display || !klass->get_display (display, &info))
-    return FALSE;
-  priv->display_type = info.display_type;
-  priv->native_display = info.native_display;
 
   if (klass->get_size)
     klass->get_size (display, &priv->width, &priv->height);
@@ -389,7 +381,7 @@ gst_mfx_display_get_display_type (GstMfxDisplay * display)
 {
   g_return_val_if_fail (display != NULL, GST_MFX_DISPLAY_TYPE_ANY);
 
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->display_type;
+  return GST_MFX_DISPLAY_GET_CLASS_TYPE (display);
 }
 
 /**
@@ -506,7 +498,7 @@ gst_mfx_display_get_vendor_string (GstMfxDisplay * display)
 
   if (!ensure_vendor_string (display))
     return NULL;
-  return display->priv.vendor_string;
+  return GST_MFX_DISPLAY_GET_PRIVATE (display)->vendor_string;
 }
 
 gboolean

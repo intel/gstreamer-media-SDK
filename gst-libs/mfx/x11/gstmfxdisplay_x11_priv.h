@@ -41,30 +41,9 @@ G_BEGIN_DECLS
 typedef struct _GstMfxDisplayX11Private       GstMfxDisplayX11Private;
 typedef struct _GstMfxDisplayX11Class         GstMfxDisplayX11Class;
 
-/**
- * GST_MFX_DISPLAY_XDISPLAY:
- * @display: a #GstMfxDisplay
- *
- * Macro that evaluates to the underlying X11 #Display of @display
- */
-#undef  GST_MFX_DISPLAY_XDISPLAY
-#define GST_MFX_DISPLAY_XDISPLAY(display) \
-  GST_MFX_DISPLAY_X11_PRIVATE(display)->x11_display
-
-/**
- * GST_MFX_DISPLAY_XSCREEN:
- * @display: a #GstMfxDisplay
- *
- * Macro that evaluates to the underlying X11 screen of @display
- */
-#undef  GST_MFX_DISPLAY_XSCREEN
-#define GST_MFX_DISPLAY_XSCREEN(display) \
-  GST_MFX_DISPLAY_X11_PRIVATE(display)->x11_screen
-
 struct _GstMfxDisplayX11Private
 {
   gchar   *display_name;
-  Display *x11_display;
   int      x11_screen;
   guint    use_xrandr : 1;
 };

@@ -711,7 +711,8 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
       if (!display)
         goto display_unsupported;
       sink->backend = gst_mfxsink_backend_egl ();
-      sink->display_type = GST_MFX_DISPLAY_TYPE (display);
+      sink->display_type =
+          GST_MFX_DISPLAY_TYPE (gst_mfx_display_egl_get_parent_display (display));
       break;
 #endif
 #ifdef USE_X11

@@ -54,7 +54,7 @@ static void
 send_wmspec_change_state (GstMfxWindow * window, Atom state, gboolean add)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   XClientMessageEvent xclient;
 
   memset (&xclient, 0, sizeof (xclient));
@@ -79,7 +79,7 @@ send_wmspec_change_state (GstMfxWindow * window, Atom state, gboolean add)
 static void
 wait_event (GstMfxWindow * window, int type)
 {
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XEvent e;
   Bool got_event;
@@ -97,7 +97,7 @@ wait_event (GstMfxWindow * window, int type)
 static gboolean
 timed_wait_event (GstMfxWindow * window, int type, guint64 end_time, XEvent * e)
 {
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XEvent tmp_event;
   GTimeVal now;
@@ -130,7 +130,7 @@ static gboolean
 gst_mfx_window_x11_show (GstMfxWindow * window)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XWindowAttributes wattr;
   gboolean has_errors;
@@ -171,7 +171,7 @@ static gboolean
 gst_mfx_window_x11_hide (GstMfxWindow * window)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XWindowAttributes wattr;
   gboolean has_errors;
@@ -209,12 +209,10 @@ static gboolean
 gst_mfx_window_x11_create (GstMfxWindow * window, guint * width, guint * height)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   Window xid = GST_MFX_WINDOW_ID (window);
   guint vid = 0;
   Colormap cmap = None;
-  const GstMfxDisplayClass *display_class;
-  const GstMfxWindowClass *window_class;
   XWindowAttributes wattr;
   Atom atoms[2];
   gboolean ok;
@@ -251,7 +249,7 @@ gst_mfx_window_x11_create (GstMfxWindow * window, guint * width, guint * height)
 static void
 gst_mfx_window_x11_destroy (GstMfxWindow * window)
 {
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
 
   if (xid) {
@@ -267,7 +265,7 @@ static gboolean
 gst_mfx_window_x11_get_geometry (GstMfxWindow * window,
     gint * px, gint * py, guint * pwidth, guint * pheight)
 {
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   gboolean success;
 
@@ -281,7 +279,7 @@ static gboolean
 gst_mfx_window_x11_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
 {
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  Display *const dpy = GST_MFX_DISPLAY_NATIVE (GST_MFX_WINDOW_DISPLAY (window));
+  Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
   XEvent e;
   guint width, height;
@@ -351,7 +349,7 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
 
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   x11_trap_errors ();
-  XResizeWindow (GST_MFX_DISPLAY_NATIVE (window->display),
+  XResizeWindow (GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window)),
       GST_MFX_WINDOW_ID (window), width, height);
   has_errors = x11_untrap_errors () != 0;
   GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
