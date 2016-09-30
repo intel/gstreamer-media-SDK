@@ -457,8 +457,7 @@ gst_mfx_display_init_vaapi (GstMfxDisplay * display)
   gint major_version, minor_version;
   VAStatus status;
 
-  get_display_fd (display);
-  priv->va_display = vaGetDisplayDRM (priv->display_fd);
+  priv->va_display = vaGetDisplayDRM (get_display_fd (display));
   if (!priv->va_display)
     return FALSE;
 
@@ -515,11 +514,11 @@ gst_mfx_display_has_opengl (GstMfxDisplay * display)
 {
   g_return_val_if_fail (display != NULL, FALSE);
 
-  return display->priv.is_opengl;
+  return GST_MFX_DISPLAY_GET_PRIVATE (display)->is_opengl;
 }
 
 void
 gst_mfx_display_use_opengl (GstMfxDisplay * display)
 {
-  display->priv.is_opengl = TRUE;
+  GST_MFX_DISPLAY_GET_PRIVATE (display)->is_opengl = TRUE;
 }

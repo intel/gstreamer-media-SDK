@@ -194,15 +194,6 @@ gst_mfx_display_egl_get_size_mm(GstMfxDisplayEGL * display,
     klass->get_size_mm(display->display, width_ptr, height_ptr);
 }
 
-static guintptr
-gst_mfx_display_egl_get_visual_id(GstMfxDisplayEGL * display,
-  GstMfxWindow * window)
-{
-  if (!ensure_context(display))
-    return 0;
-  return display->egl_context->config->visual_id;
-}
-
 static GstMfxWindow *
 gst_mfx_display_egl_create_window(GstMfxDisplay * display, GstMfxID id,
   guint width, guint height)
@@ -220,26 +211,18 @@ gst_mfx_display_egl_class_init(GstMfxDisplayEGLClass * klass)
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS(klass);
 
   GST_DEBUG_CATEGORY_INIT(gst_debug_mfxdisplay_egl, "mfxdisplay_egl", 0,
-    "VA/EGL backend");
+    "EGL backend");
 
   gst_mfx_display_class_init(dpy_class);
 
   object_class->size = sizeof (GstMfxDisplayEGL);
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_EGL;
-  dpy_class->bind_display = (GstMfxDisplayBindFunc)
-    gst_mfx_display_egl_bind_display;
-  dpy_class->close_display = (GstMfxDisplayCloseFunc)
-    gst_mfx_display_egl_close_display;
-  dpy_class->get_display = (GstMfxDisplayGetInfoFunc)
-    gst_mfx_display_egl_get_display_info;
-  dpy_class->get_size = (GstMfxDisplayGetSizeFunc)
-    gst_mfx_display_egl_get_size;
-  dpy_class->get_size_mm = (GstMfxDisplayGetSizeMFunc)
-    gst_mfx_display_egl_get_size_mm;
-  dpy_class->get_visual_id = (GstMfxDisplayGetVisualIdFunc)
-    gst_mfx_display_egl_get_visual_id;
-  dpy_class->create_window = (GstMfxDisplayCreateWindowFunc)
-    gst_mfx_display_egl_create_window;
+  dpy_class->bind_display = gst_mfx_display_egl_bind_display;
+  dpy_class->close_display = gst_mfx_display_egl_close_display;
+  dpy_class->get_display = gst_mfx_display_egl_get_display_info;
+  dpy_class->get_size = gst_mfx_display_egl_get_size;
+  dpy_class->get_size_mm = gst_mfx_display_egl_get_size_mm;
+  dpy_class->create_window = gst_mfx_display_egl_create_window;
 }
 
 static inline const GstMfxDisplayClass *

@@ -2,7 +2,6 @@ set(SOURCE
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdisplay.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxfilter.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxminiobject.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxobject.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxprimebufferproxy.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxprofile.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurfacepool.c"
