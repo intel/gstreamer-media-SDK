@@ -96,11 +96,10 @@ static void
 gst_mfx_display_x11_close_display (GstMfxDisplay * display)
 {
   GstMfxDisplayX11Private *const priv = GST_MFX_DISPLAY_X11_PRIVATE (display);
-  Display *dpy = GST_MFX_DISPLAY_HANDLE (display);
 
-  if (dpy) {
-    XCloseDisplay (dpy);
-    dpy = NULL;
+  if (GST_MFX_DISPLAY_HANDLE (display)) {
+    XCloseDisplay (GST_MFX_DISPLAY_HANDLE (display));
+    GST_MFX_DISPLAY_HANDLE (display) = NULL;
   }
 
   if (priv->display_name) {
