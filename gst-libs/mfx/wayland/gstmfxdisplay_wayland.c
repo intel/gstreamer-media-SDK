@@ -48,7 +48,7 @@ get_default_display_name (void)
 }
 
 /* Mangle display name with our prefix */
-static gboolean
+static void
 set_display_name (GstMfxDisplay * display, const gchar * display_name)
 {
   GstMfxDisplayWaylandPrivate *const priv =
@@ -59,10 +59,9 @@ set_display_name (GstMfxDisplay * display, const gchar * display_name)
   if (!display_name) {
     display_name = get_default_display_name ();
     if (!display_name)
-      display_name = "";
+      return;
   }
   priv->display_name = g_strdup (display_name);
-  return priv->display_name != NULL;
 }
 
 static void
@@ -170,7 +169,7 @@ gst_mfx_display_wayland_setup (GstMfxDisplay * display)
 {
   GstMfxDisplayWaylandPrivate *const priv =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
-  struct wl_display *wl_display = GST_MFX_DISPLAY_HANDLE (display);
+  struct wl_display *const wl_display = GST_MFX_DISPLAY_HANDLE (display);
 
   wl_display_set_user_data (wl_display, priv);
   priv->registry = wl_display_get_registry (wl_display);
@@ -208,8 +207,7 @@ gst_mfx_display_wayland_open_display (GstMfxDisplay * display,
   GstMfxDisplayWaylandPrivate *const priv =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
 
-  if (!set_display_name (display, name))
-    return FALSE;
+  set_display_name (display, name);
 
   GST_MFX_DISPLAY_HANDLE (display) = wl_display_connect (name);
   if (!GST_MFX_DISPLAY_HANDLE (display))
@@ -223,7 +221,6 @@ gst_mfx_display_wayland_close_display (GstMfxDisplay * display)
 {
   GstMfxDisplayWaylandPrivate *const priv =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
-  struct wl_display *wl_display = GST_MFX_DISPLAY_HANDLE (display);
 
   if (priv->bufmgr) {
     drm_intel_bufmgr_destroy (priv->bufmgr);
@@ -257,9 +254,9 @@ gst_mfx_display_wayland_close_display (GstMfxDisplay * display)
     priv->registry = NULL;
   }
 
-  if (wl_display) {
-    wl_display_disconnect (wl_display);
-    wl_display = NULL;
+  if (GST_MFX_DISPLAY_HANDLE (display)) {
+    wl_display_disconnect (GST_MFX_DISPLAY_HANDLE (display));
+    GST_MFX_DISPLAY_HANDLE (display) = NULL;
   }
 
   if (priv->display_name) {
@@ -304,7 +301,7 @@ gst_mfx_display_wayland_get_size_mm (GstMfxDisplay * display,
 
 static GstMfxWindow *
 gst_mfx_display_wayland_create_window (GstMfxDisplay * display,
-    guint width, guint height)
+    GstMfxID id, guint width, guint height)
 {
   return gst_mfx_window_wayland_new (display, width, height);
 }
