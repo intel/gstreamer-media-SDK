@@ -87,7 +87,11 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
   g_queue_free(decoder->frames);
 
   if ((decoder->param.mfx.CodecId == MFX_CODEC_HEVC) ||
-      (decoder->param.mfx.CodecId == MFX_CODEC_VP8))
+      (decoder->param.mfx.CodecId == MFX_CODEC_VP8) ||
+#ifdef HAS_VP9
+      (decoder->param.mfx.CodecId == MFX_CODEC_VP9)
+#endif
+      )
     MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
 
   MFXVideoDECODE_Close (decoder->session);
@@ -126,6 +130,16 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 
       break;
     }
+#ifdef HAS_VP9
+    case MFX_CODEC_VP9: {
+      gchar *uid = "a922394d8d87452f878c51f2fc9b4131";
+      for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
+        sscanf (uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
+
+      break;
+    }
+#endif
     default:
       sts = MFX_ERR_NONE;
   }
