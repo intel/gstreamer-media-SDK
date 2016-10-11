@@ -53,6 +53,9 @@ static const char gst_mfxdecode_sink_caps_str[] =
         stream-format = (string) byte-stream")
     GST_CAPS_CODEC ("video/x-wmv")
     GST_CAPS_CODEC ("video/x-vp8")
+#ifdef HAS_VP9
+    GST_CAPS_CODEC ("video/x-vp9")
+#endif
     GST_CAPS_CODEC ("image/jpeg")
   ;
 
