@@ -22,6 +22,9 @@ endif()
 
 if(MFX_DECODER)
   add_definitions(-DMFX_DECODER)
+  if(MFX_VP9_DECODER)
+    add_definitions(-DHAS_VP9)
+  endif()
 endif()
 
 if(MFX_VPP)
