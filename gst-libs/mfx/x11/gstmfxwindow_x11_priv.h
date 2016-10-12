@@ -39,17 +39,6 @@ G_BEGIN_DECLS
 typedef struct _GstMfxWindowX11Private GstMfxWindowX11Private;
 typedef struct _GstMfxWindowX11Class GstMfxWindowX11Class;
 
-/**
- * GST_MFX_WINDOW_DISPLAY_X11:
- * @object: a #GstMfxWindow
- *
- * Macro that evaluates to the #GstMfxDisplayX11 the @object is bound to.
- * This is an internal macro that does not do any run-time type check
- * and requires #include "gstmfxdisplay_x11_priv.h"
- */
-#define GST_MFX_WINDOW_DISPLAY_X11(object) \
-  GST_MFX_DISPLAY_X11_CAST (GST_MFX_WINDOW_DISPLAY (object))
-
 struct _GstMfxWindowX11Private
 {
   Atom    atom_NET_WM_STATE;

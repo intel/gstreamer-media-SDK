@@ -1,16 +1,13 @@
 set(SOURCE
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdisplay.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdisplay_drm.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxfilter.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxminiobject.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxobject.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxprimebufferproxy.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxprofile.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurfacepool.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurfaceproxy.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxtaskaggregator.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxtask.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxtexture.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxutils_vaapi.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxvalue.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxwindow.c"
@@ -25,7 +22,6 @@ if(WAYLAND_RENDERER)
     set(SOURCE ${SOURCE}
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/gstmfxdisplay_wayland.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/gstmfxwindow_wayland.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/scaler-protocol.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/wayland-drm-protocol.c")
 endif()
 

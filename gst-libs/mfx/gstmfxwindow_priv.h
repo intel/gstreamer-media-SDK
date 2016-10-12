@@ -23,7 +23,7 @@
 #ifndef GST_MFX_WINDOW_PRIV_H
 #define GST_MFX_WINDOW_PRIV_H
 
-#include "gstmfxobject_priv.h"
+#include "gstmfxminiobject.h"
 
 G_BEGIN_DECLS
 
@@ -36,6 +36,7 @@ G_BEGIN_DECLS
 /* GstMfxWindowClass hooks */
 typedef gboolean(*GstMfxWindowCreateFunc) (GstMfxWindow * window,
     guint * width, guint * height);
+typedef gboolean(*GstMfxWindowDestroyFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowShowFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowHideFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowGetGeometryFunc) (GstMfxWindow * window,
@@ -47,10 +48,16 @@ typedef gboolean(*GstMfxWindowResizeFunc) (GstMfxWindow * window,
 typedef gboolean(*GstMfxWindowRenderFunc) (GstMfxWindow * window,
     GstMfxSurfaceProxy * proxy, const GstMfxRectangle * src_rect,
     const GstMfxRectangle * dst_rect);
-typedef guintptr(*GstMfxWindowGetVisualIdFunc) (GstMfxWindow * window);
-typedef guintptr(*GstMfxWindowGetColormapFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowSetUnblockFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowSetUnblockCancelFunc) (GstMfxWindow * window);
+
+#undef GST_MFX_WINDOW_ID
+#define GST_MFX_WINDOW_ID(window) \
+  (GST_MFX_WINDOW (window)->handle)
+
+#undef GST_MFX_WINDOW_DISPLAY
+#define GST_MFX_WINDOW_DISPLAY(window) \
+  (GST_MFX_WINDOW (window)->display)
 
 /**
  * GstMfxWindow:
@@ -60,13 +67,17 @@ typedef gboolean(*GstMfxWindowSetUnblockCancelFunc) (GstMfxWindow * window);
 struct _GstMfxWindow
 {
   /*< private >*/
-  GstMfxObject parent_instance;
+  GstMfxMiniObject parent_instance;
+
+  GstMfxDisplay *display;
+  guintptr handle;
 
   /*< protected >*/
   guint width;
   guint height;
   guint display_width;
   guint display_height;
+  guint use_foreign_window:1;
   guint is_fullscreen : 1;
   guint check_geometry : 1;
 };
@@ -93,25 +104,24 @@ struct _GstMfxWindow
 struct _GstMfxWindowClass
 {
   /*< private >*/
-  GstMfxObjectClass parent_class;
+  GstMfxMiniObjectClass parent_class;
 
   /*< protected >*/
   GstMfxWindowCreateFunc create;
+  GstMfxWindowDestroyFunc destroy;
   GstMfxWindowShowFunc show;
   GstMfxWindowHideFunc hide;
   GstMfxWindowGetGeometryFunc get_geometry;
   GstMfxWindowSetFullscreenFunc set_fullscreen;
   GstMfxWindowResizeFunc resize;
   GstMfxWindowRenderFunc render;
-  GstMfxWindowGetVisualIdFunc get_visual_id;
-  GstMfxWindowGetColormapFunc get_colormap;
   GstMfxWindowSetUnblockFunc unblock;
   GstMfxWindowSetUnblockCancelFunc unblock_cancel;
 };
 
 GstMfxWindow *
 gst_mfx_window_new_internal(const GstMfxWindowClass * window_class,
-  GstMfxDisplay * display, guint width, guint height);
+  GstMfxDisplay * display, GstMfxID handle, guint width, guint height);
 
 #define gst_mfx_window_ref_internal(window) \
   ((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(window)))

@@ -60,7 +60,7 @@ gst_mfx_window_ensure_size (GstMfxWindow * window)
 static gboolean
 gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
 {
-  gst_mfx_display_get_size (GST_MFX_OBJECT_DISPLAY (window),
+  gst_mfx_display_get_size (window->display,
       &window->display_width, &window->display_height);
 
   if (!GST_MFX_WINDOW_GET_CLASS (window)->create (window, &width, &height))
@@ -75,20 +75,64 @@ gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
   return TRUE;
 }
 
+static void
+gst_mfx_window_finalize (GstMfxWindow * window)
+{
+  GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS (window);
+
+
+  if (klass->destroy)
+    klass->destroy (window);
+
+  gst_mfx_display_replace (&window->display, NULL);
+}
+
+void
+gst_mfx_window_class_init (GstMfxWindowClass * klass)
+{
+  GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
+
+  GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "MFX helper");
+
+  object_class->size = sizeof (GstMfxWindow);
+  object_class->finalize = (GDestroyNotify) gst_mfx_window_finalize;
+}
+
+static inline const GstMfxWindowClass *
+gst_mfx_window_class (void)
+{
+  static GstMfxWindowClass g_class;
+  static gsize g_class_init = FALSE;
+
+  if (g_once_init_enter (&g_class_init)) {
+    gst_mfx_window_class_init (&g_class);
+    g_once_init_leave (&g_class_init, TRUE);
+  }
+  return &g_class;
+}
+
 GstMfxWindow *
 gst_mfx_window_new_internal (const GstMfxWindowClass * window_class,
-    GstMfxDisplay * display, guint width, guint height)
+    GstMfxDisplay * display, GstMfxID id, guint width, guint height)
 {
   GstMfxWindow *window;
 
-  g_return_val_if_fail (width > 0, NULL);
-  g_return_val_if_fail (height > 0, NULL);
+  if (id != GST_MFX_ID_INVALID) {
+    g_return_val_if_fail (width == 0, NULL);
+    g_return_val_if_fail (height == 0, NULL);
+  } else {
+    g_return_val_if_fail (width > 0, NULL);
+    g_return_val_if_fail (height > 0, NULL);
+  }
 
   window =
-      gst_mfx_object_new (GST_MFX_MINI_OBJECT_CLASS (window_class), display);
+      gst_mfx_mini_object_new0 (GST_MFX_MINI_OBJECT_CLASS (window_class));
   if (!window)
     return NULL;
 
+  window->display = gst_mfx_display_ref (display);
+  window->handle = id;
+  window->use_foreign_window = id != GST_MFX_ID_INVALID;
   if (!gst_mfx_window_create (window, width, height))
     goto error;
   return window;
@@ -96,31 +140,6 @@ gst_mfx_window_new_internal (const GstMfxWindowClass * window_class,
 error:
   gst_mfx_window_unref_internal (window);
   return NULL;
-}
-
-/**
- * gst_mfx_window_new:
- * @display: a #GstMfxDisplay
- * @width: the requested window width, in pixels
- * @height: the requested windo height, in pixels
- *
- * Creates a window with the specified @width and @height. The window
- * will be attached to the @display and remains invisible to the user
- * until gst_mfx_window_show () is called.
- *
- * Return value: the newly allocated #GstMfxWindow object
- */
-GstMfxWindow *
-gst_mfx_window_new (GstMfxDisplay * display, guint width, guint height)
-{
-  GstMfxDisplayClass *dpy_class;
-
-  g_return_val_if_fail (display != NULL, NULL);
-
-  dpy_class = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (G_UNLIKELY (!dpy_class->create_window))
-    return NULL;
-  return dpy_class->create_window (display, width, height);
 }
 
 /**
@@ -179,7 +198,7 @@ gst_mfx_window_get_display (GstMfxWindow * window)
 {
   g_return_val_if_fail (window != NULL, NULL);
 
-  return GST_MFX_OBJECT_DISPLAY (window);
+  return window->display;
 }
 
 /**
@@ -211,6 +230,14 @@ gst_mfx_window_hide (GstMfxWindow * window)
   g_return_if_fail (window != NULL);
 
   GST_MFX_WINDOW_GET_CLASS (window)->hide (window);
+}
+
+guintptr
+gst_mfx_window_get_handle (GstMfxWindow * window)
+{
+  g_return_if_fail (window != NULL);
+
+  return window->handle;
 }
 
 /**

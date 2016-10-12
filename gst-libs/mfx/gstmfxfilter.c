@@ -980,6 +980,8 @@ gst_mfx_filter_start (GstMfxFilter * filter)
     filter->shared_request[1]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
     gst_mfx_task_use_video_memory (filter->vpp[1]);
 
+    gst_mfx_task_frame_free (filter->vpp[1], &filter->response[1]);
+
     sts = gst_mfx_task_frame_alloc (filter->vpp[1], filter->shared_request[1],
         &filter->response[1]);
     if (MFX_ERR_NONE != sts)

@@ -29,17 +29,7 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_DISPLAY(obj) \
-  ((GstMfxDisplay *)(obj))
-
-/**
- * GST_MFX_DISPLAY_GET_CLASS_TYPE:
- * @display: a #GstMfxDisplay
- *
- * Returns the #display class type
- */
-#define GST_MFX_DISPLAY_GET_CLASS_TYPE(display) \
-  gst_mfx_display_get_class_type (GST_MFX_DISPLAY (display))
+#define GST_MFX_DISPLAY(obj) ((GstMfxDisplay *)(obj))
 
 /**
  * GST_MFX_DISPLAY_TYPE:
@@ -77,7 +67,6 @@ G_BEGIN_DECLS
 #define GST_MFX_DISPLAY_UNLOCK(display) \
   gst_mfx_display_unlock (GST_MFX_DISPLAY (display))
 
-typedef struct _GstMfxDisplayInfo             GstMfxDisplayInfo;
 typedef struct _GstMfxDisplay                 GstMfxDisplay;
 
 typedef enum
@@ -85,32 +74,16 @@ typedef enum
   GST_MFX_DISPLAY_TYPE_ANY = 0,
   GST_MFX_DISPLAY_TYPE_EGL,
   GST_MFX_DISPLAY_TYPE_WAYLAND,
-  GST_MFX_DISPLAY_TYPE_X11,
-  GST_MFX_DISPLAY_TYPE_DRM,
+  GST_MFX_DISPLAY_TYPE_X11
 } GstMfxDisplayType;
 
 #define GST_MFX_TYPE_DISPLAY_TYPE (gst_mfx_display_get_type())
 
 GType
-gst_mfx_display_type_get_type(void);
+gst_mfx_display_get_type(void);
 
-/**
- * GstMfxDisplayInfo:
- *
- * Generic class to retrieve VA display info
- */
-struct _GstMfxDisplayInfo
-{
-  GstMfxDisplay *display;
-  GstMfxDisplayType display_type;
-  gchar *display_name;
-  VADisplay va_display;
-  gpointer native_display;
-};
-
-/* Get default device path. Actually, the first match in the DRM subsystem */
-const gchar *
-get_default_device_path (GstMfxDisplay * display);
+GstMfxDisplay *
+gst_mfx_display_new (void);
 
 GstMfxDisplay *
 gst_mfx_display_ref (GstMfxDisplay * display);
@@ -128,26 +101,11 @@ gst_mfx_display_lock (GstMfxDisplay * display);
 void
 gst_mfx_display_unlock (GstMfxDisplay * display);
 
-void
-gst_mfx_display_sync (GstMfxDisplay * display);
-
-void
-gst_mfx_display_flush (GstMfxDisplay * display);
-
 GstMfxDisplayType
 gst_mfx_display_get_display_type (GstMfxDisplay * display);
 
-const gchar *
-gst_mfx_display_get_display_name (GstMfxDisplay * display);
-
 VADisplay
 gst_mfx_display_get_vadisplay (GstMfxDisplay * display);
-
-guint
-gst_mfx_display_get_width (GstMfxDisplay * display);
-
-guint
-gst_mfx_display_get_height (GstMfxDisplay * display);
 
 void
 gst_mfx_display_get_size (GstMfxDisplay * display, guint * pwidth,
@@ -156,6 +114,9 @@ gst_mfx_display_get_size (GstMfxDisplay * display, guint * pwidth,
 void
 gst_mfx_display_get_pixel_aspect_ratio (GstMfxDisplay * display,
     guint * par_n, guint * par_d);
+
+gboolean
+gst_mfx_display_init_vaapi (GstMfxDisplay * display);
 
 const gchar *
 gst_mfx_display_get_vendor_string (GstMfxDisplay * display);

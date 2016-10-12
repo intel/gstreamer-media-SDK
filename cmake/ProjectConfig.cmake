@@ -22,6 +22,9 @@ endif()
 
 if(MFX_DECODER)
   add_definitions(-DMFX_DECODER)
+  if(MFX_VP9_DECODER)
+    add_definitions(-DHAS_VP9)
+  endif()
 endif()
 
 if(MFX_VPP)
@@ -48,6 +51,10 @@ if(MFX_SINK)
       add_definitions(-DUSE_EGL)
     endif()
   endif()
+endif()
+
+if(MFX_SINK_BIN)
+  add_definitions(-DMFX_SINK_BIN)
 endif()
 
 if(MFX_H264_ENCODER)

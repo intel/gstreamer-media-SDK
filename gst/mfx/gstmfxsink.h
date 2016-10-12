@@ -52,6 +52,8 @@ typedef struct _GstMfxSinkBackend             GstMfxSinkBackend;
 
 typedef gboolean(*GstMfxSinkCreateWindowFunc) (GstMfxSink * sink,
     guint width, guint height);
+typedef gboolean(*GstMfxSinkCreateWindowFromHandleFunc) (GstMfxSink * sink,
+    guintptr window);
 typedef gboolean(*GstMfxSinkHandleEventsFunc) (GstMfxSink * sink);
 typedef gboolean(*GstMfxSinkPreStartEventThreadFunc) (GstMfxSink * sink);
 typedef gboolean(*GstMfxSinkPreStopEventThreadFunc) (GstMfxSink * sink);
@@ -63,12 +65,13 @@ typedef enum {
 
 struct _GstMfxSinkBackend
 {
-  GstMfxSinkCreateWindowFunc          create_window;
+  GstMfxSinkCreateWindowFunc              create_window;
+  GstMfxSinkCreateWindowFromHandleFunc    create_window_from_handle;
 
   /* Event threads handling */
-  GstMfxSinkHandleEventsFunc          handle_events;
-  GstMfxSinkPreStartEventThreadFunc   pre_start_event_thread;
-  GstMfxSinkPreStopEventThreadFunc    pre_stop_event_thread;
+  GstMfxSinkHandleEventsFunc              handle_events;
+  GstMfxSinkPreStartEventThreadFunc       pre_start_event_thread;
+  GstMfxSinkPreStopEventThreadFunc        pre_stop_event_thread;
 };
 
 struct _GstMfxSink
@@ -100,6 +103,7 @@ struct _GstMfxSink
   GstMfxGLAPI                gl_api;
 
   guint                      handle_events : 1;
+  guint                      foreign_window : 1;
   guint                      fullscreen : 1;
   guint                      keep_aspect : 1;
   guint                      no_frame_drop : 1;

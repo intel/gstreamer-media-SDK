@@ -60,6 +60,10 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
       "image/jpeg", NULL},
   {GST_MFX_PROFILE_VP8, MFX_CODEC_VP8,
       "video/x-vp8", NULL},
+#ifdef HAS_VP9
+  {GST_MFX_PROFILE_VP9, MFX_CODEC_VP9,
+      "video/x-vp9", NULL},
+#endif
   {GST_MFX_PROFILE_HEVC_MAIN, MFX_CODEC_HEVC,
       "video/x-h265", "main"},
   {GST_MFX_PROFILE_HEVC_MAIN10, MFX_CODEC_HEVC,

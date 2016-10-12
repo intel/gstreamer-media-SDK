@@ -28,7 +28,6 @@
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_priv.h"
 #include "wayland-drm-client-protocol.h"
-#include "scaler-client-protocol.h"
 
 G_BEGIN_DECLS
 
@@ -49,27 +48,14 @@ G_BEGIN_DECLS
 typedef struct _GstMfxDisplayWaylandPrivate   GstMfxDisplayWaylandPrivate;
 typedef struct _GstMfxDisplayWaylandClass     GstMfxDisplayWaylandClass;
 
-/**
- * GST_MFX_DISPLAY_WL_DISPLAY:
- * @display: a #GstMfxDisplay
- *
- * Macro that evaluates to the underlying Wayland #wl_display object
- * of @display
- */
-#undef  GST_MFX_DISPLAY_WL_DISPLAY
-#define GST_MFX_DISPLAY_WL_DISPLAY(display) \
-  GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display)->wl_display
-
 struct _GstMfxDisplayWaylandPrivate
 {
   gchar                 *display_name;
-  struct wl_display     *wl_display;
   struct wl_compositor  *compositor;
   struct wl_shell       *shell;
   struct wl_output      *output;
   struct wl_registry    *registry;
   struct wl_drm         *drm;
-  struct wl_scaler      *scaler;
   guint                  width;
   guint                  height;
   guint                  phys_width;
@@ -79,7 +65,6 @@ struct _GstMfxDisplayWaylandPrivate
   gchar                 *drm_device_name;
   drm_intel_bufmgr      *bufmgr;
   gboolean               is_auth;
-  guint                  use_foreign_display : 1;
 };
 
 /**

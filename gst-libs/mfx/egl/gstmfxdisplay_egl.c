@@ -139,7 +139,7 @@ gst_mfx_display_egl_bind_display(GstMfxDisplayEGL * display,
   gst_mfx_display_replace(&display->display, native_display);
   gst_mfx_display_unref(native_display);
 
-  egl_display = egl_display_new(GST_MFX_DISPLAY_NATIVE(display->display));
+  egl_display = egl_display_new(GST_MFX_DISPLAY_HANDLE(display->display));
   if (!egl_display)
     return FALSE;
 
@@ -158,60 +158,6 @@ static void
 gst_mfx_display_egl_close_display(GstMfxDisplayEGL * display)
 {
   gst_mfx_display_replace(&display->display, NULL);
-}
-
-static void
-gst_mfx_display_egl_lock(GstMfxDisplayEGL * display)
-{
-  GstMfxDisplayClass *const klass =
-    GST_MFX_DISPLAY_GET_CLASS(display->display);
-
-  if (klass->lock)
-    klass->lock(display->display);
-}
-
-static void
-gst_mfx_display_egl_unlock(GstMfxDisplayEGL * display)
-{
-  GstMfxDisplayClass *const klass =
-    GST_MFX_DISPLAY_GET_CLASS(display->display);
-
-  if (klass->unlock)
-    klass->unlock(display->display);
-}
-
-static void
-gst_mfx_display_egl_sync(GstMfxDisplayEGL * display)
-{
-  GstMfxDisplayClass *const klass =
-    GST_MFX_DISPLAY_GET_CLASS(display->display);
-
-  if (klass->sync)
-    klass->sync(display->display);
-  else if (klass->flush)
-    klass->flush(display->display);
-}
-
-static void
-gst_mfx_display_egl_flush(GstMfxDisplayEGL * display)
-{
-  GstMfxDisplayClass *const klass =
-    GST_MFX_DISPLAY_GET_CLASS(display->display);
-
-  if (klass->flush)
-    klass->flush(display->display);
-}
-
-static gboolean
-gst_mfx_display_egl_get_display_info(GstMfxDisplayEGL * display,
-  GstMfxDisplayInfo * info)
-{
-  GstMfxDisplayClass *const klass =
-    GST_MFX_DISPLAY_GET_CLASS(display->display);
-
-  if (klass->get_display && !klass->get_display(display->display, info))
-    return FALSE;
-  return TRUE;
 }
 
 static void
@@ -236,27 +182,13 @@ gst_mfx_display_egl_get_size_mm(GstMfxDisplayEGL * display,
     klass->get_size_mm(display->display, width_ptr, height_ptr);
 }
 
-static guintptr
-gst_mfx_display_egl_get_visual_id(GstMfxDisplayEGL * display,
-  GstMfxWindow * window)
-{
-  if (!ensure_context(display))
-    return 0;
-  return display->egl_context->config->visual_id;
-}
-
 static GstMfxWindow *
-gst_mfx_display_egl_create_window(GstMfxDisplay * display,
+gst_mfx_display_egl_create_window(GstMfxDisplay * display, GstMfxID id,
   guint width, guint height)
 {
+  if (id != GST_MFX_ID_INVALID)
+    return NULL;
   return gst_mfx_window_egl_new(display, width, height);
-}
-
-static GstMfxTexture *
-gst_mfx_display_egl_create_texture(GstMfxDisplay * display, GstMfxID id,
-  guint target, guint format, guint width, guint height)
-{
-  return gst_mfx_texture_egl_new(display, target, format, width, height);
 }
 
 static void
@@ -267,36 +199,17 @@ gst_mfx_display_egl_class_init(GstMfxDisplayEGLClass * klass)
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS(klass);
 
   GST_DEBUG_CATEGORY_INIT(gst_debug_mfxdisplay_egl, "mfxdisplay_egl", 0,
-    "VA/EGL backend");
+    "EGL backend");
 
   gst_mfx_display_class_init(dpy_class);
 
   object_class->size = sizeof (GstMfxDisplayEGL);
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_EGL;
-  dpy_class->bind_display = (GstMfxDisplayBindFunc)
-    gst_mfx_display_egl_bind_display;
-  dpy_class->close_display = (GstMfxDisplayCloseFunc)
-    gst_mfx_display_egl_close_display;
-  dpy_class->lock = (GstMfxDisplayLockFunc)
-    gst_mfx_display_egl_lock;
-  dpy_class->unlock = (GstMfxDisplayUnlockFunc)
-    gst_mfx_display_egl_unlock;
-  dpy_class->sync = (GstMfxDisplaySyncFunc)
-    gst_mfx_display_egl_sync;
-  dpy_class->flush = (GstMfxDisplayFlushFunc)
-    gst_mfx_display_egl_flush;
-  dpy_class->get_display = (GstMfxDisplayGetInfoFunc)
-    gst_mfx_display_egl_get_display_info;
-  dpy_class->get_size = (GstMfxDisplayGetSizeFunc)
-    gst_mfx_display_egl_get_size;
-  dpy_class->get_size_mm = (GstMfxDisplayGetSizeMFunc)
-    gst_mfx_display_egl_get_size_mm;
-  dpy_class->get_visual_id = (GstMfxDisplayGetVisualIdFunc)
-    gst_mfx_display_egl_get_visual_id;
-  dpy_class->create_window = (GstMfxDisplayCreateWindowFunc)
-    gst_mfx_display_egl_create_window;
-  dpy_class->create_texture = (GstMfxDisplayCreateTextureFunc)
-    gst_mfx_display_egl_create_texture;
+  dpy_class->bind_display = gst_mfx_display_egl_bind_display;
+  dpy_class->close_display = gst_mfx_display_egl_close_display;
+  dpy_class->get_size = gst_mfx_display_egl_get_size;
+  dpy_class->get_size_mm = gst_mfx_display_egl_get_size_mm;
+  dpy_class->create_window = gst_mfx_display_egl_create_window;
 }
 
 static inline const GstMfxDisplayClass *
@@ -322,8 +235,16 @@ gst_mfx_display_egl_new(const gchar * display_name, guint gles_version)
   params.display_type = GST_MFX_DISPLAY_TYPE_ANY;
   params.gles_version = gles_version;
 
-  return gst_mfx_display_new(gst_mfx_display_egl_class(),
+  return gst_mfx_display_new_internal (gst_mfx_display_egl_class(),
     GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY, &params);
+}
+
+GstMfxDisplay *
+gst_mfx_display_egl_get_parent_display (GstMfxDisplayEGL * display)
+{
+  g_return_val_if_fail (display != NULL, NULL);
+
+  return display->display;
 }
 
 EglContext *
@@ -332,28 +253,3 @@ gst_mfx_display_egl_get_context(GstMfxDisplayEGL * display)
   return ensure_context(display) ? display->egl_context : NULL;
 }
 
-EGLDisplay
-gst_mfx_display_egl_get_gl_display(GstMfxDisplayEGL * display)
-{
-  g_return_val_if_fail(GST_MFX_IS_DISPLAY_EGL(display), EGL_NO_DISPLAY);
-
-  return display->egl_display->base.handle.p;
-}
-
-EGLContext
-gst_mfx_display_egl_get_gl_context(GstMfxDisplayEGL * display)
-{
-  g_return_val_if_fail(GST_MFX_IS_DISPLAY_EGL(display), EGL_NO_CONTEXT);
-
-  return ensure_context(display) ? display->egl_context->base.handle.p :
-    EGL_NO_CONTEXT;
-}
-
-gboolean
-gst_mfx_display_egl_set_gl_context(GstMfxDisplayEGL * display,
-  EGLContext gl_context)
-{
-  g_return_val_if_fail(GST_MFX_IS_DISPLAY_EGL(display), FALSE);
-
-  return ensure_context_is_wrapped(display, gl_context);
-}

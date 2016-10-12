@@ -39,11 +39,8 @@ GST_DEBUG_CATEGORY (gst_debug_mfx);
 #undef gst_mfx_display_unref
 #undef gst_mfx_display_replace
 
-static VADisplay g_va_display;
-
-/* Get default device path. Actually, the first match in the DRM subsystem */
-const gchar *
-get_default_device_path (GstMfxDisplay * display)
+static int
+get_display_fd (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
   const gchar *sysnames[] = { "renderD[0-9]*", "card[0-9]*", NULL };
@@ -52,10 +49,9 @@ get_default_device_path (GstMfxDisplay * display)
   struct udev_device *device, *parent;
   struct udev_enumerate *e = NULL;
   struct udev_list_entry *l;
-  int fd;
   guint i;
 
-  if (!priv->device_path_default) {
+  if (!priv->display_fd) {
     udev = udev_new ();
     if (!udev)
       goto end;
@@ -80,18 +76,16 @@ get_default_device_path (GstMfxDisplay * display)
         }
 
         devpath = udev_device_get_devnode (device);
-        fd = open (devpath, O_RDWR | O_CLOEXEC);
-        if (fd < 0) {
+        priv->display_fd = open (devpath, O_RDWR | O_CLOEXEC);
+        if (priv->display_fd < 0) {
           udev_device_unref (device);
           continue;
         }
 
-        priv->device_path_default = g_strdup (devpath);
-        close (fd);
         udev_device_unref (device);
         break;
       }
-      if (priv->device_path_default)
+      if (priv->display_fd)
         break;
     }
   }
@@ -101,7 +95,7 @@ end:
     udev_enumerate_unref (e);
   if (udev)
     udev_unref (udev);
-  return priv->device_path_default;
+  return priv->display_fd;
 }
 
 /* GstMfxDisplayType enumerations */
@@ -186,26 +180,23 @@ static void
 gst_mfx_display_destroy (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
+  GstMfxDisplayClass *klass = GST_MFX_DISPLAY_GET_CLASS (display);
 
-  if (priv->display) {
-    vaTerminate (priv->display);
-    priv->display = NULL;
+  if (priv->va_display) {
+    vaTerminate (priv->va_display);
+    priv->va_display = NULL;
   }
 
-  if (!priv->use_foreign_display) {
-    GstMfxDisplayClass *klass = GST_MFX_DISPLAY_GET_CLASS (display);
-    if (klass->close_display)
-      klass->close_display (display);
+  if (priv->display_fd) {
+    close (priv->display_fd);
+    priv->display_fd = 0;
   }
 
-  g_free (priv->display_name);
-  priv->display_name = NULL;
+  if (klass->close_display)
+    klass->close_display (display);
 
   g_free (priv->vendor_string);
   priv->vendor_string = NULL;
-
-  g_free (priv->device_path_default);
-  priv->device_path_default = NULL;
 }
 
 static gboolean
@@ -214,64 +205,55 @@ gst_mfx_display_create (GstMfxDisplay * display,
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
   const GstMfxDisplayClass *const klass = GST_MFX_DISPLAY_GET_CLASS (display);
-  gint major_version, minor_version;
-  VAStatus status;
-  GstMfxDisplayInfo info;
-
-  memset (&info, 0, sizeof (info));
-  info.display = display;
-  info.display_type = priv->display_type;
 
   switch (init_type) {
     case GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME:
       if (klass->open_display && !klass->open_display (display, init_value))
         return FALSE;
-      goto create_display;
+      break;
     case GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY:
       if (klass->bind_display && !klass->bind_display (display, init_value))
         return FALSE;
-      // fall-through
-    create_display:
-      if (!klass->get_display || !klass->get_display (display, &info))
-        return FALSE;
-      priv->display_type = info.display_type;
-      priv->native_display = info.native_display;
-      if (klass->get_size)
-        klass->get_size (display, &priv->width, &priv->height);
-      if (klass->get_size_mm)
-        klass->get_size_mm (display, &priv->width_mm, &priv->height_mm);
-      gst_mfx_display_calculate_pixel_aspect_ratio (display);
+      break;
+    default:
       break;
   }
 
-  if (!g_va_display) {
-    int fd = open (get_default_device_path (display), O_RDWR | O_CLOEXEC);
-    g_va_display = vaGetDisplayDRM (fd);
-    if (!g_va_display)
-      return FALSE;
+  if (klass->get_size)
+    klass->get_size (display, &priv->width, &priv->height);
+  if (klass->get_size_mm)
+    klass->get_size_mm (display, &priv->width_mm, &priv->height_mm);
+  gst_mfx_display_calculate_pixel_aspect_ratio (display);
 
-    status = vaInitialize (g_va_display, &major_version, &minor_version);
-    if (!vaapi_check_status (status, "vaInitialize()"))
-      return FALSE;
-    GST_DEBUG ("VA-API version %d.%d", major_version, minor_version);
-  }
-  priv->display = g_va_display;
-
-  g_free (priv->display_name);
-  priv->display_name = g_strdup (info.display_name);
   return TRUE;
 }
 
-static void
-gst_mfx_display_lock_default (GstMfxDisplay * display)
+/**
+ * gst_mfx_display_lock:
+ * @display: a #GstMfxDisplay
+ *
+ * Locks @display. If @display is already locked by another thread,
+ * the current thread will block until @display is unlocked by the
+ * other thread.
+ */
+void
+gst_mfx_display_lock (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
 
   g_rec_mutex_lock (&priv->mutex);
 }
 
-static void
-gst_mfx_display_unlock_default (GstMfxDisplay * display)
+/**
+ * gst_mfx_display_unlock:
+ * @display: a #GstMfxDisplay
+ *
+ * Unlocks @display. If another thread is blocked in a
+ * gst_mfx_display_lock() call for @display, it will be woken and
+ * can lock @display itself.
+ */
+void
+gst_mfx_display_unlock (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
 
@@ -309,14 +291,11 @@ void
 gst_mfx_display_class_init (GstMfxDisplayClass * klass)
 {
   GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
-  GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
 
-  GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "A MFX helper");
+  GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "MFX helper");
 
   object_class->size = sizeof (GstMfxDisplay);
   object_class->finalize = (GDestroyNotify) gst_mfx_display_finalize;
-  dpy_class->lock = gst_mfx_display_lock_default;
-  dpy_class->unlock = gst_mfx_display_unlock_default;
 }
 
 static inline const GstMfxDisplayClass *
@@ -333,7 +312,7 @@ gst_mfx_display_class (void)
 }
 
 GstMfxDisplay *
-gst_mfx_display_new (const GstMfxDisplayClass * klass,
+gst_mfx_display_new_internal (const GstMfxDisplayClass * klass,
     GstMfxDisplayInitType init_type, gpointer init_value)
 {
   GstMfxDisplay *display;
@@ -351,6 +330,22 @@ gst_mfx_display_new (const GstMfxDisplayClass * klass,
 error:
   gst_mfx_display_unref_internal (display);
   return NULL;
+}
+
+GstMfxDisplay *
+gst_mfx_display_new (void)
+{
+  GstMfxDisplay *display;
+
+  display = (GstMfxDisplay *)
+      gst_mfx_mini_object_new0 (gst_mfx_display_class ());
+  if (!display)
+    return NULL;
+  gst_mfx_display_init (display);
+
+  GST_DEBUG ("creating dummy display");
+
+  return display;
 }
 
 GstMfxDisplay *
@@ -373,92 +368,6 @@ gst_mfx_display_replace (GstMfxDisplay ** old_display_ptr,
 }
 
 /**
- * gst_mfx_display_lock:
- * @display: a #GstMfxDisplay
- *
- * Locks @display. If @display is already locked by another thread,
- * the current thread will block until @display is unlocked by the
- * other thread.
- */
-void
-gst_mfx_display_lock (GstMfxDisplay * display)
-{
-  GstMfxDisplayClass *klass;
-
-  g_return_if_fail (display != NULL);
-
-  klass = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (klass->lock)
-    klass->lock (display);
-}
-
-/**
- * gst_mfx_display_unlock:
- * @display: a #GstMfxDisplay
- *
- * Unlocks @display. If another thread is blocked in a
- * gst_mfx_display_lock() call for @display, it will be woken and
- * can lock @display itself.
- */
-void
-gst_mfx_display_unlock (GstMfxDisplay * display)
-{
-  GstMfxDisplayClass *klass;
-
-  g_return_if_fail (display != NULL);
-
-  klass = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (klass->unlock)
-    klass->unlock (display);
-}
-
-/**
- * gst_mfx_display_sync:
- * @display: a #GstMfxDisplay
- *
- * Flushes any requests queued for the windowing system and waits until
- * all requests have been handled. This is often used for making sure
- * that the display is synchronized with the current state of the program.
- *
- * This is most useful for X11. On windowing systems where requests are
- * handled synchronously, this function will do nothing.
- */
-void
-gst_mfx_display_sync (GstMfxDisplay * display)
-{
-  GstMfxDisplayClass *klass;
-
-  g_return_if_fail (display != NULL);
-
-  klass = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (klass->sync)
-    klass->sync (display);
-  else if (klass->flush)
-    klass->flush (display);
-}
-
-/**
- * gst_mfx_display_flush:
- * @display: a #GstMfxDisplay
- *
- * Flushes any requests queued for the windowing system.
- *
- * This is most useful for X11. On windowing systems where requests
- * are handled synchronously, this function will do nothing.
- */
-void
-gst_mfx_display_flush (GstMfxDisplay * display)
-{
-  GstMfxDisplayClass *klass;
-
-  g_return_if_fail (display != NULL);
-
-  klass = GST_MFX_DISPLAY_GET_CLASS (display);
-  if (klass->flush)
-    klass->flush (display);
-}
-
-/**
  * gst_mfx_display_get_display_type:
  * @display: a #GstMfxDisplay
  *
@@ -472,23 +381,7 @@ gst_mfx_display_get_display_type (GstMfxDisplay * display)
 {
   g_return_val_if_fail (display != NULL, GST_MFX_DISPLAY_TYPE_ANY);
 
-  return GST_MFX_DISPLAY_TYPE (display);
-}
-
-/**
- * gst_mfx_display_get_display_type:
- * @display: a #GstMfxDisplay
- *
- * Returns the @display name.
- *
- * Return value: the display name
- */
-const gchar *
-gst_mfx_display_get_display_name (GstMfxDisplay * display)
-{
-  g_return_val_if_fail (display != NULL, NULL);
-
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->display_name;
+  return GST_MFX_DISPLAY_GET_CLASS_TYPE (display);
 }
 
 /**
@@ -504,39 +397,7 @@ gst_mfx_display_get_vadisplay (GstMfxDisplay * display)
 {
   g_return_val_if_fail (display != NULL, NULL);
 
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->display;
-}
-
-/**
- * gst_mfx_display_get_width:
- * @display: a #GstMfxDisplay
- *
- * Retrieves the width of a #GstMfxDisplay.
- *
- * Return value: the width of the @display, in pixels
- */
-guint
-gst_mfx_display_get_width (GstMfxDisplay * display)
-{
-  g_return_val_if_fail (display != NULL, 0);
-
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->width;
-}
-
-/**
-* gst_mfx_display_get_height:
-* @display: a #GstMfxDisplay
-*
-* Retrieves the height of a #GstMfxDisplay
-*
-* Return value: the height of the @display, in pixels
-*/
-guint
-gst_mfx_display_get_height (GstMfxDisplay * display)
-{
-  g_return_val_if_fail (display != NULL, 0);
-
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->height;
+  return GST_MFX_DISPLAY_GET_PRIVATE (display)->va_display;
 }
 
 /**
@@ -581,6 +442,27 @@ gst_mfx_display_get_pixel_aspect_ratio (GstMfxDisplay * display,
     *par_d = GST_MFX_DISPLAY_GET_PRIVATE (display)->par_d;
 }
 
+gboolean
+gst_mfx_display_init_vaapi (GstMfxDisplay * display)
+{
+  GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
+  gint major_version, minor_version;
+  VAStatus status;
+
+  priv->va_display = vaGetDisplayDRM (get_display_fd (display));
+  if (!priv->va_display)
+    return FALSE;
+
+  status = vaInitialize (priv->va_display, &major_version, &minor_version);
+  if (!vaapi_check_status (status, "vaInitialize()"))
+    return FALSE;
+
+  GST_DEBUG ("VA-API version %d.%d", major_version, minor_version);
+
+  return TRUE;
+}
+
+
 /* Ensures the VA driver vendor string was copied */
 static gboolean
 ensure_vendor_string (GstMfxDisplay * display)
@@ -590,7 +472,7 @@ ensure_vendor_string (GstMfxDisplay * display)
 
   GST_MFX_DISPLAY_LOCK (display);
   if (!priv->vendor_string) {
-    vendor_string = vaQueryVendorString (priv->display);
+    vendor_string = vaQueryVendorString (priv->va_display);
     if (vendor_string)
       priv->vendor_string = g_strdup (vendor_string);
   }
@@ -616,7 +498,7 @@ gst_mfx_display_get_vendor_string (GstMfxDisplay * display)
 
   if (!ensure_vendor_string (display))
     return NULL;
-  return display->priv.vendor_string;
+  return GST_MFX_DISPLAY_GET_PRIVATE (display)->vendor_string;
 }
 
 gboolean
@@ -624,11 +506,11 @@ gst_mfx_display_has_opengl (GstMfxDisplay * display)
 {
   g_return_val_if_fail (display != NULL, FALSE);
 
-  return display->priv.is_opengl;
+  return GST_MFX_DISPLAY_GET_PRIVATE (display)->is_opengl;
 }
 
 void
 gst_mfx_display_use_opengl (GstMfxDisplay * display)
 {
-  display->priv.is_opengl = TRUE;
+  GST_MFX_DISPLAY_GET_PRIVATE (display)->is_opengl = TRUE;
 }

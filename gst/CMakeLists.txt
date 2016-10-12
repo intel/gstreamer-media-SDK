@@ -39,4 +39,8 @@ if(MFX_JPEG_ENCODER)
   list(APPEND SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxenc_jpeg.c")
 endif()
 
+if(MFX_SINK_BIN)
+list(APPEND SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsinkbin.c")
+endif()
+
 set(GST_SOURCE ${SOURCE} PARENT_SCOPE)

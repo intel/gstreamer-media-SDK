@@ -26,6 +26,27 @@ G_BEGIN_DECLS
  */
 #define GST_MFX_TYPE_RATE_CONTROL gst_mfx_rate_control_get_type ()
 
+/**
+ * GST_MFX_TYPE_DEINTERLACE_MODE:
+ *
+ * A type that represents the MFX deinterlace mode.
+ *
+ * Return value: the #GType of GstMfxDeinterlaceMode
+ */
+#define GST_MFX_TYPE_DEINTERLACE_MODE \
+    gst_mfx_deinterlace_mode_get_type ()
+
+/**
+ * GST_MFX_TYPE_FRC_ALGORITHM:
+ *
+ * A type that represents the MFX frame rate conversion algorithm.
+ *
+ * Return value: the #GType of GstMfxFrcAlgorithm
+ */
+
+#define GST_MFX_TYPE_FRC_ALGORITHM \
+    gst_mfx_frc_algorithm_get_type ()
+
 GType
 gst_mfx_option_get_type (void);
 
@@ -35,6 +56,11 @@ gst_mfx_rotation_get_type (void);
 GType
 gst_mfx_rate_control_get_type (void);
 
+GType
+gst_mfx_deinterlace_mode_get_type (void);
+
+GType
+gst_mfx_frc_algorithm_get_type (void);
 /**
  * GST_MFX_POPCOUNT32:
  * @x: the value from which to compute population count

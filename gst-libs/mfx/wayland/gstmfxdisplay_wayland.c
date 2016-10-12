@@ -48,7 +48,7 @@ get_default_display_name (void)
 }
 
 /* Mangle display name with our prefix */
-static gboolean
+static void
 set_display_name (GstMfxDisplay * display, const gchar * display_name)
 {
   GstMfxDisplayWaylandPrivate *const priv =
@@ -59,10 +59,9 @@ set_display_name (GstMfxDisplay * display, const gchar * display_name)
   if (!display_name) {
     display_name = get_default_display_name ();
     if (!display_name)
-      display_name = "";
+      return;
   }
   priv->display_name = g_strdup (display_name);
-  return priv->display_name != NULL;
 }
 
 static void
@@ -157,8 +156,6 @@ registry_handle_global (void *data, struct wl_registry *registry,
   } else if (strcmp (interface, "wl_drm") == 0) {
     priv->drm = wl_registry_bind (registry, id, &wl_drm_interface, 2);
     wl_drm_add_listener (priv->drm, &drm_listener, priv);
-  } else if (strcmp (interface, "wl_scaler") == 0) {
-    priv->scaler = wl_registry_bind (registry, id, &wl_scaler_interface, 2);
   }
 }
 
@@ -172,14 +169,15 @@ gst_mfx_display_wayland_setup (GstMfxDisplay * display)
 {
   GstMfxDisplayWaylandPrivate *const priv =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
+  struct wl_display *const wl_display = GST_MFX_DISPLAY_HANDLE (display);
 
-  wl_display_set_user_data (priv->wl_display, priv);
-  priv->registry = wl_display_get_registry (priv->wl_display);
+  wl_display_set_user_data (wl_display, priv);
+  priv->registry = wl_display_get_registry (wl_display);
   wl_registry_add_listener (priv->registry, &registry_listener, priv);
-  priv->event_fd = wl_display_get_fd (priv->wl_display);
-  wl_display_roundtrip (priv->wl_display);
+  priv->event_fd = wl_display_get_fd (wl_display);
+  wl_display_roundtrip (wl_display);
   if (!priv->width || !priv->height) {
-    wl_display_roundtrip (priv->wl_display);
+    wl_display_roundtrip (wl_display);
     if (!priv->width || !priv->height) {
       GST_ERROR ("failed to determine the display size");
       return FALSE;
@@ -192,7 +190,7 @@ gst_mfx_display_wayland_setup (GstMfxDisplay * display)
   }
 
   if (!priv->is_auth) {
-    wl_display_roundtrip (priv->wl_display);
+    wl_display_roundtrip (wl_display);
   }
 
   if (!priv->shell) {
@@ -209,13 +207,11 @@ gst_mfx_display_wayland_open_display (GstMfxDisplay * display,
   GstMfxDisplayWaylandPrivate *const priv =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
 
-  if (!set_display_name (display, name))
-    return FALSE;
+  set_display_name (display, name);
 
-  priv->wl_display = wl_display_connect (name);
-  if (!priv->wl_display)
+  GST_MFX_DISPLAY_HANDLE (display) = wl_display_connect (name);
+  if (!GST_MFX_DISPLAY_HANDLE (display))
     return FALSE;
-  priv->use_foreign_display = FALSE;
 
   return gst_mfx_display_wayland_setup (display);
 }
@@ -258,30 +254,15 @@ gst_mfx_display_wayland_close_display (GstMfxDisplay * display)
     priv->registry = NULL;
   }
 
-  if (priv->wl_display) {
-    if (!priv->use_foreign_display)
-      wl_display_disconnect (priv->wl_display);
-    priv->wl_display = NULL;
+  if (GST_MFX_DISPLAY_HANDLE (display)) {
+    wl_display_disconnect (GST_MFX_DISPLAY_HANDLE (display));
+    GST_MFX_DISPLAY_HANDLE (display) = NULL;
   }
 
   if (priv->display_name) {
     g_free (priv->display_name);
     priv->display_name = NULL;
   }
-}
-
-static gboolean
-gst_mfx_display_wayland_get_display_info (GstMfxDisplay * display,
-    GstMfxDisplayInfo * info)
-{
-  GstMfxDisplayWaylandPrivate *const priv =
-      GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
-
-  /* Otherwise, create VA display if there is none already */
-  info->native_display = priv->wl_display;
-  info->display_name = priv->display_name;
-  info->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
-  return TRUE;
 }
 
 static void
@@ -320,7 +301,7 @@ gst_mfx_display_wayland_get_size_mm (GstMfxDisplay * display,
 
 static GstMfxWindow *
 gst_mfx_display_wayland_create_window (GstMfxDisplay * display,
-    guint width, guint height)
+    GstMfxID id, guint width, guint height)
 {
   return gst_mfx_window_wayland_new (display, width, height);
 }
@@ -348,7 +329,6 @@ gst_mfx_display_wayland_class_init (GstMfxDisplayWaylandClass * klass)
   dpy_class->init = gst_mfx_display_wayland_init;
   dpy_class->open_display = gst_mfx_display_wayland_open_display;
   dpy_class->close_display = gst_mfx_display_wayland_close_display;
-  dpy_class->get_display = gst_mfx_display_wayland_get_display_info;
   dpy_class->get_size = gst_mfx_display_wayland_get_size;
   dpy_class->get_size_mm = gst_mfx_display_wayland_get_size_mm;
   dpy_class->create_window = gst_mfx_display_wayland_create_window;
@@ -380,24 +360,6 @@ gst_mfx_display_wayland_class (void)
 GstMfxDisplay *
 gst_mfx_display_wayland_new (const gchar * display_name)
 {
-  return gst_mfx_display_new (gst_mfx_display_wayland_class (),
+  return gst_mfx_display_new_internal (gst_mfx_display_wayland_class (),
       GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME, (gpointer) display_name);
-}
-
-/**
- * gst_mfx_display_wayland_get_display:
- * @display: a #GstMfxDisplayWayland
- *
- * Returns the underlying Wayland #wl_display that was created by
- * gst_mfx_display_wayland_new() or that was bound from
- * gst_mfx_display_wayland_new_with_display().
- *
- * Return value: the Wayland #wl_display attached to @display
- */
-struct wl_display *
-gst_mfx_display_wayland_get_display (GstMfxDisplayWayland * display)
-{
-  g_return_val_if_fail (GST_MFX_IS_DISPLAY_WAYLAND (display), NULL);
-
-  return GST_MFX_DISPLAY_WL_DISPLAY (display);
 }

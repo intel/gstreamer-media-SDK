@@ -8,6 +8,7 @@ include(CMakeDependentOption)
 option (DEBUG "Turn on debug build." OFF)
 
 option (MFX_DECODER "Build MSDK Decoder plugin." ON)
+option (MFX_VP9_DECODER "Build MSDK Decoder plugin with VP9 support." ON)
 
 option (MFX_ENCODER "Build MSDK Encoder plugin." ON)
 CMAKE_DEPENDENT_OPTION(MFX_H264_ENCODER  "Build H.264 Encoder plugin" ON
@@ -28,6 +29,9 @@ CMAKE_DEPENDENT_OPTION(X11_RENDERER  "Build Sink plugin with X11 backend"
     ON "MFX_SINK" OFF)
 CMAKE_DEPENDENT_OPTION(EGL_RENDERER "Build Sink plugin with EGL backend"
     ON "MFX_SINK" OFF)
+
+CMAKE_DEPENDENT_OPTION (MFX_SINK_BIN "Build MSDK SINK BIN plugin."
+    ON "MFX_SINK;MFX_VPP" OFF)
 
 option (WITH_MSS "Build plugins for MSS." OFF)
 

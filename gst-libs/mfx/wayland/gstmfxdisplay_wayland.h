@@ -35,9 +35,6 @@ typedef struct _GstMfxDisplayWayland          GstMfxDisplayWayland;
 GstMfxDisplay *
 gst_mfx_display_wayland_new (const gchar * display_name);
 
-struct wl_display *
-gst_mfx_display_wayland_get_display (GstMfxDisplayWayland * display);
-
 G_END_DECLS
 
 #endif /* GST_MFX_DISPLAY_WAYLAND_H */

@@ -23,21 +23,16 @@
 #ifndef GST_MFX_WINDOW_H
 #define GST_MFX_WINDOW_H
 
-#include <gst/video/gstvideosink.h>
 #include "gstmfxtypes.h"
 #include "gstmfxdisplay.h"
 #include "gstmfxsurfaceproxy.h"
 
 G_BEGIN_DECLS
 
-#define GST_MFX_WINDOW(obj) \
-  ((GstMfxWindow *)(obj))
+#define GST_MFX_WINDOW(obj) ((GstMfxWindow *)(obj))
 
 typedef struct _GstMfxWindow GstMfxWindow;
 typedef struct _GstMfxWindowClass GstMfxWindowClass;
-
-GstMfxWindow *
-gst_mfx_window_new (GstMfxDisplay * display, guint width, guint height);
 
 GstMfxWindow *
 gst_mfx_window_ref (GstMfxWindow * window);
@@ -57,6 +52,9 @@ gst_mfx_window_show (GstMfxWindow * window);
 
 void
 gst_mfx_window_hide (GstMfxWindow * window);
+
+guintptr
+gst_mfx_window_get_handle (GstMfxWindow * window);
 
 gboolean
 gst_mfx_window_get_fullscreen (GstMfxWindow * window);

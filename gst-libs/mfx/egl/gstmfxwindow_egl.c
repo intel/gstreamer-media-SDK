@@ -24,15 +24,10 @@
 #include "gstmfxwindow_egl.h"
 #include "gstmfxwindow_priv.h"
 #include "gstmfxtexture_egl.h"
-#include "gstmfxtexture_priv.h"
 #include "gstmfxdisplay_egl_priv.h"
 
-#define GST_MFX_WINDOW_EGL(obj) \
-  ((GstMfxWindowEGL *)(obj))
-
-#define GST_MFX_WINDOW_EGL_CLASS(klass) \
-  ((GstMfxWindowEGLClass *)(klass))
-
+#define GST_MFX_WINDOW_EGL(obj) ((GstMfxWindowEGL *)(obj))
+#define GST_MFX_WINDOW_EGL_CLASS(klass) ((GstMfxWindowEGLClass *)(klass))
 #define GST_MFX_WINDOW_EGL_GET_CLASS(obj) \
   GST_MFX_WINDOW_EGL_CLASS (GST_MFX_WINDOW_GET_CLASS (obj))
 
@@ -52,7 +47,7 @@ struct _GstMfxWindowEGL
   GstMfxWindow parent_instance;
 
   GstMfxWindow *window;
-  GstMfxTexture *texture;
+  GstMfxTextureEGL *texture;
   EglWindow *egl_window;
   EglVTable *egl_vtable;
   EglProgram *render_program;
@@ -118,19 +113,19 @@ static const gchar *frag_shader_text_rgba =
 static gboolean
 ensure_texture (GstMfxWindowEGL * window, guint width, guint height)
 {
-  GstMfxTexture *texture;
-  GstMfxDisplay *display = GST_MFX_OBJECT_DISPLAY (window);
+  GstMfxTextureEGL *texture;
+  GstMfxDisplay *display = GST_MFX_WINDOW( window)->display;
 
   if (window->texture &&
-     GST_MFX_TEXTURE_WIDTH(window->texture) == GST_ROUND_UP_16 (width) &&
-     GST_MFX_TEXTURE_HEIGHT(window->texture) == GST_ROUND_UP_16 (height))
+     GST_MFX_TEXTURE_EGL_WIDTH(window->texture) == GST_ROUND_UP_16 (width) &&
+     GST_MFX_TEXTURE_EGL_HEIGHT(window->texture) == GST_ROUND_UP_16 (height))
      return TRUE;
 
   texture = gst_mfx_texture_egl_new (display,
       GL_TEXTURE_2D, GL_RGBA, width, height);
 
-  gst_mfx_texture_replace (&window->texture, texture);
-  gst_mfx_texture_replace (&texture, NULL);
+  gst_mfx_texture_egl_replace (&window->texture, texture);
+  gst_mfx_texture_egl_replace (&texture, NULL);
 
   return window->texture != NULL;
 }
@@ -143,7 +138,7 @@ ensure_shaders (GstMfxWindowEGL * window)
   GLuint prog_id;
 
   g_return_val_if_fail (window->texture != NULL, FALSE);
-  g_return_val_if_fail (GST_MFX_TEXTURE_FORMAT (window->texture) == GL_RGBA,
+  g_return_val_if_fail (GST_MFX_TEXTURE_EGL_FORMAT (window->texture) == GL_RGBA,
       FALSE);
 
   if (window->render_program)
@@ -182,7 +177,7 @@ do_create_objects_unlocked (GstMfxWindowEGL * window, guint width,
   EglVTable *egl_vtable;
 
   egl_window = egl_window_new (egl_context,
-      GSIZE_TO_POINTER (GST_MFX_OBJECT_ID (window->window)));
+      GSIZE_TO_POINTER (GST_MFX_WINDOW_ID (window->window)));
   if (!egl_window)
     return FALSE;
   window->egl_window = egl_window;
@@ -202,13 +197,13 @@ do_create_objects (CreateObjectsArgs * args)
 
   args->success = FALSE;
 
-  GST_MFX_OBJECT_LOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (egl_context_set_current (args->egl_context, TRUE, &old_cs)) {
     args->success = do_create_objects_unlocked (window, args->width,
         args->height, args->egl_context);
     egl_context_set_current (args->egl_context, FALSE, &old_cs);
   }
-  GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 }
 
 static gboolean
@@ -216,7 +211,7 @@ gst_mfx_window_egl_create (GstMfxWindowEGL * window,
     guint * width, guint * height)
 {
   GstMfxDisplayEGL *const display =
-      GST_MFX_DISPLAY_EGL (GST_MFX_OBJECT_DISPLAY (window));
+      GST_MFX_DISPLAY_EGL (GST_MFX_WINDOW_DISPLAY (window));
   const GstMfxDisplayClass *const native_dpy_class =
       GST_MFX_DISPLAY_GET_CLASS (display->display);
   CreateObjectsArgs args;
@@ -225,7 +220,7 @@ gst_mfx_window_egl_create (GstMfxWindowEGL * window,
 
   window->window =
       native_dpy_class->create_window (GST_MFX_DISPLAY (display->display),
-      *width, *height);
+      GST_MFX_ID_INVALID, *width, *height);
   if (!window->window)
     return FALSE;
 
@@ -251,18 +246,18 @@ static void
 do_destroy_objects (GstMfxWindowEGL * window)
 {
   EglContext *const egl_context =
-      GST_MFX_DISPLAY_EGL_CONTEXT (GST_MFX_OBJECT_DISPLAY (window));
+      GST_MFX_DISPLAY_EGL_CONTEXT (GST_MFX_WINDOW_DISPLAY (window));
   EglContextState old_cs;
 
   if (!window->egl_window)
     return;
 
-  GST_MFX_OBJECT_LOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (egl_context_set_current (egl_context, TRUE, &old_cs)) {
     do_destroy_objects_unlocked (window);
     egl_context_set_current (egl_context, FALSE, &old_cs);
   }
-  GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 }
 
 static void
@@ -271,7 +266,7 @@ gst_mfx_window_egl_destroy (GstMfxWindowEGL * window)
   egl_context_run (window->egl_window->context,
       (EglContextRunFunc) do_destroy_objects, window);
   gst_mfx_window_replace (&window->window, NULL);
-  gst_mfx_texture_replace (&window->texture, NULL);
+  gst_mfx_texture_egl_replace (&window->texture, NULL);
 }
 
 static gboolean
@@ -335,13 +330,13 @@ do_resize_window (ResizeWindowArgs * args)
   GstMfxWindowEGL *const window = args->window;
   EglContextState old_cs;
 
-  GST_MFX_OBJECT_LOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (egl_context_set_current (window->egl_window->context, TRUE, &old_cs)) {
     args->success = do_resize_window_unlocked (window, args->width,
         args->height);
     egl_context_set_current (window->egl_window->context, FALSE, &old_cs);
   }
-  GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 }
 
 static gboolean
@@ -364,7 +359,7 @@ static gboolean
 do_render_texture (GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
     const GstMfxRectangle * dst_rect)
 {
-  const GLuint tex_id = GST_MFX_OBJECT_ID (window->texture);
+  const GLuint tex_id = GST_MFX_TEXTURE_EGL_ID (window->texture);
   EglVTable *const vtable = window->egl_vtable;
   EglProgram *program;
   GLfloat x0, y0, x1, y1;
@@ -375,8 +370,8 @@ do_render_texture (GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
   if (!ensure_shaders (window))
     return FALSE;
 
-  tex_width = GST_MFX_TEXTURE_WIDTH (window->texture);
-  tex_height = GST_MFX_TEXTURE_HEIGHT (window->texture);
+  tex_width = GST_MFX_TEXTURE_EGL_WIDTH (window->texture);
+  tex_height = GST_MFX_TEXTURE_EGL_HEIGHT (window->texture);
   win_width = dst_rect->width + dst_rect->x * 2;
   win_height = dst_rect->height + dst_rect->y * 2;
   program = window->render_program;
@@ -419,7 +414,7 @@ do_render_texture (GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
   vtable->glEnableVertexAttribArray (1);
   vtable->glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
 
-  vtable->glBindTexture (GST_MFX_TEXTURE_TARGET (window->texture), tex_id);
+  vtable->glBindTexture (GST_MFX_TEXTURE_EGL_TARGET (window->texture), tex_id);
   vtable->glUniform1i (program->uniforms[RENDER_PROGRAM_VAR_TEX0], 0);
 
   vtable->glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
@@ -441,7 +436,7 @@ do_upload_surface_unlocked (GstMfxWindowEGL * window,
 {
   if (!ensure_texture (window, src_rect->width, src_rect->height))
     return FALSE;
-  if (!gst_mfx_texture_put_surface (window->texture, proxy))
+  if (!gst_mfx_texture_egl_put_surface (window->texture, proxy))
     return FALSE;
   if (!do_render_texture (window, src_rect, dst_rect))
     return FALSE;
@@ -457,13 +452,13 @@ do_upload_surface (UploadSurfaceArgs * args)
 
   args->success = FALSE;
 
-  GST_MFX_OBJECT_LOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (egl_context_set_current (window->egl_window->context, TRUE, &old_cs)) {
     args->success = do_upload_surface_unlocked (window, args->proxy,
         args->src_rect, args->dst_rect);
     egl_context_set_current (window->egl_window->context, FALSE, &old_cs);
   }
-  GST_MFX_OBJECT_UNLOCK_DISPLAY (window);
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 }
 
 static gboolean
@@ -480,32 +475,32 @@ gst_mfx_window_egl_render (GstMfxWindowEGL * window,
 void
 gst_mfx_window_egl_class_init (GstMfxWindowEGLClass * klass)
 {
-  GstMfxObjectClass *const object_class = GST_MFX_OBJECT_CLASS (klass);
+  GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
   GstMfxWindowClass *const window_class = GST_MFX_WINDOW_CLASS (klass);
 
-  object_class->finalize = (GstMfxObjectFinalizeFunc)
-      gst_mfx_window_egl_destroy;
-
-  window_class->create = (GstMfxWindowCreateFunc)
-      gst_mfx_window_egl_create;
-  window_class->show = (GstMfxWindowShowFunc)
-      gst_mfx_window_egl_show;
-  window_class->hide = (GstMfxWindowHideFunc)
-      gst_mfx_window_egl_hide;
-  window_class->get_geometry = (GstMfxWindowGetGeometryFunc)
-      gst_mfx_window_egl_get_geometry;
-  window_class->set_fullscreen = (GstMfxWindowSetFullscreenFunc)
-      gst_mfx_window_egl_set_fullscreen;
-  window_class->resize = (GstMfxWindowResizeFunc)
-      gst_mfx_window_egl_resize;
-  window_class->render = (GstMfxWindowRenderFunc)
-      gst_mfx_window_egl_render;
+  object_class->size = sizeof (GstMfxWindowEGL);
+  window_class->create = gst_mfx_window_egl_create;
+  window_class->destroy = gst_mfx_window_egl_destroy;
+  window_class->show = gst_mfx_window_egl_show;
+  window_class->hide = gst_mfx_window_egl_hide;
+  window_class->get_geometry = gst_mfx_window_egl_get_geometry;
+  window_class->set_fullscreen = gst_mfx_window_egl_set_fullscreen;
+  window_class->resize = gst_mfx_window_egl_resize;
+  window_class->render = gst_mfx_window_egl_render;
 }
 
-#define gst_mfx_window_egl_finalize gst_mfx_window_egl_destroy
+static inline const GstMfxWindowClass *
+gst_mfx_window_egl_class (void)
+{
+  static GstMfxWindowEGLClass g_class;
+  static gsize g_class_init = FALSE;
 
-GST_MFX_OBJECT_DEFINE_CLASS_WITH_CODE (GstMfxWindowEGL,
-    gst_mfx_window_egl, gst_mfx_window_egl_class_init (&g_class));
+  if (g_once_init_enter (&g_class_init)) {
+    gst_mfx_window_egl_class_init (&g_class);
+    g_once_init_leave (&g_class_init, TRUE);
+  }
+  return GST_MFX_WINDOW_CLASS (&g_class);
+}
 
 /**
  * gst_mfx_window_egl_new:
@@ -528,11 +523,11 @@ gst_mfx_window_egl_new (GstMfxDisplay * display, guint width, guint height)
 
   return
       gst_mfx_window_new_internal (GST_MFX_WINDOW_CLASS
-      (gst_mfx_window_egl_class ()), display, width, height);
+      (gst_mfx_window_egl_class ()), display, GST_MFX_ID_INVALID, width, height);
 }
 
 GstMfxWindow *
-gst_mfx_window_egl_get_native_window (GstMfxWindow * window)
+gst_mfx_window_egl_get_parent_window (GstMfxWindow * window)
 {
   g_return_val_if_fail (window != NULL, NULL);
 

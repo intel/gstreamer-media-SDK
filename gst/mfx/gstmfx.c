@@ -31,6 +31,9 @@
 #ifdef MFX_SINK
 #include "gstmfxsink.h"
 #endif
+#ifdef MFX_SINK_BIN
+#include "gstmfxsinkbin.h"
+#endif
 #ifdef MFX_H264_ENCODER
 #include "gstmfxenc_h264.h"
 #endif
@@ -60,7 +63,12 @@ plugin_init (GstPlugin * plugin)
 #endif
 
 #ifdef MFX_SINK
-  gst_element_register (plugin, "mfxsink", GST_RANK_PRIMARY + 1, GST_TYPE_MFXSINK);
+  gst_element_register (plugin, "mfxsink", GST_RANK_NONE, GST_TYPE_MFXSINK);
+#endif
+
+#ifdef MFX_SINK_BIN
+  gst_element_register (plugin, "mfxsinkbin",
+      GST_RANK_PRIMARY + 2, GST_TYPE_MFX_SINK_BIN);
 #endif
 
 #ifdef MFX_H264_ENCODER
@@ -87,6 +95,7 @@ plugin_init (GstPlugin * plugin)
   gst_element_register (plugin, "mfxvc1parse",
       GST_RANK_MARGINAL, GST_MFX_TYPE_VC1_PARSE);
 #endif
+
   return TRUE;
 }
 

@@ -89,11 +89,6 @@ enum
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 #define DEFAULT_FRC_ALG                 GST_MFX_FRC_NONE
 
-#define GST_MFX_TYPE_DEINTERLACE_MODE \
-    gst_mfx_deinterlace_mode_get_type ()
-#define GST_MFX_FRC_ALGORITHM \
-    gst_mfx_frc_alg_get_type ()
-
 GType
 gst_mfx_rotation_get_type (void)
 {
@@ -118,7 +113,7 @@ gst_mfx_rotation_get_type (void)
   return g_type;
 }
 
-static GType
+GType
 gst_mfx_deinterlace_mode_get_type (void)
 {
   static GType deinterlace_mode_type = 0;
@@ -140,8 +135,8 @@ gst_mfx_deinterlace_mode_get_type (void)
   return deinterlace_mode_type;
 }
 
-static GType
-gst_mfx_frc_alg_get_type (void)
+GType
+gst_mfx_frc_algorithm_get_type (void)
 {
   static GType alg = 0;
   static const GEnumValue frc_alg[] = {
@@ -220,10 +215,11 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
   /* Check if upstream MFX decoder element outputs raw native NV12 surfaces */
   if (!plugin->mapped && !plugin->sinkpad_use_dmabuf) {
-    GstMfxTask *task = gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
-    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER))
-      plugin->mapped = gst_mfx_task_has_native_decoder_output (task);
-    gst_mfx_task_unref (task);
+    if (!vpp->peer_decoder)
+      vpp->peer_decoder =
+          gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
+    if (gst_mfx_task_has_type (vpp->peer_decoder, GST_MFX_TASK_DECODER))
+      plugin->mapped = gst_mfx_task_has_native_decoder_output (vpp->peer_decoder);
   }
 
   /* If sinkpad caps indicate video memory input,
@@ -561,6 +557,11 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   fps_n = GST_VIDEO_INFO_FPS_N (&peer_vi);
   fps_d = GST_VIDEO_INFO_FPS_D (&peer_vi);
 
+  /* Update width and height from the caps */
+  if (GST_VIDEO_INFO_HEIGHT (&peer_vi) != 1 &&
+      GST_VIDEO_INFO_WIDTH (&peer_vi) != 1)
+      find_best_size(vpp, &peer_vi, &width, &height);
+
   if (vpp->format != DEFAULT_FORMAT)
     out_format = vpp->format;
 
@@ -734,11 +735,12 @@ gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
 static void
 gst_mfxpostproc_finalize (GObject * object)
 {
-  GstMfxPostproc *const postproc = GST_MFXPOSTPROC (object);
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
-  gst_mfxpostproc_destroy (postproc);
+  gst_mfxpostproc_destroy (vpp);
+  gst_mfx_task_replace(&vpp->peer_decoder, NULL);
 
-  gst_mfx_plugin_base_finalize (GST_MFX_PLUGIN_BASE (postproc));
+  gst_mfx_plugin_base_finalize (GST_MFX_PLUGIN_BASE (vpp));
   G_OBJECT_CLASS (gst_mfxpostproc_parent_class)->finalize (object);
 }
 
@@ -1057,7 +1059,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
       g_param_spec_enum ("frc-algorithm",
           "Algorithm",
           "The algorithm type",
-          GST_MFX_FRC_ALGORITHM,
+          GST_MFX_TYPE_FRC_ALGORITHM,
           DEFAULT_FRC_ALG, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
