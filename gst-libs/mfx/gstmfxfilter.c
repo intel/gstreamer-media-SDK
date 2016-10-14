@@ -24,7 +24,7 @@
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxtask.h"
 #include "gstmfxsurfacepool.h"
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 
 #include <mfxvideo.h>
 
@@ -1003,8 +1003,8 @@ gst_mfx_filter_start (GstMfxFilter * filter)
 }
 
 GstMfxFilterStatus
-gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurfaceProxy * proxy,
-    GstMfxSurfaceProxy ** out_proxy)
+gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface * surface,
+    GstMfxSurface ** out_surface)
 {
   mfxFrameSurface1 *insurf, *outsurf = NULL;
   mfxSyncPoint syncp;
@@ -1021,14 +1021,14 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurfaceProxy * proxy,
     filter->inited = TRUE;
   }
 
-  insurf = gst_mfx_surface_proxy_get_frame_surface (proxy);
+  insurf = gst_mfx_surface_get_frame_surface (surface);
 
   do {
-    *out_proxy = gst_mfx_surface_proxy_new_from_pool (filter->vpp_pool[1]);
-    if (!*out_proxy)
+    *out_surface = gst_mfx_surface_new_from_pool (filter->vpp_pool[1]);
+    if (!*out_surface)
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 
-    outsurf = gst_mfx_surface_proxy_get_frame_surface (*out_proxy);
+    outsurf = gst_mfx_surface_get_frame_surface (*out_surface);
     sts =
         MFXVideoVPP_RunFrameVPPAsync (filter->session, insurf, outsurf, NULL,
         &syncp);
@@ -1062,8 +1062,8 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurfaceProxy * proxy,
         sts = MFXVideoCORE_SyncOperation (filter->session, syncp, 1000);
       } while (MFX_WRN_IN_EXECUTION == sts);
 
-    gst_mfx_surface_proxy_replace (out_proxy,
-        gst_mfx_surface_pool_find_proxy (filter->vpp_pool[1], outsurf));
+    gst_mfx_surface_replace (out_surface,
+        gst_mfx_surface_pool_find_surface (filter->vpp_pool[1], outsurf));
   }
 
   if (more_surface)

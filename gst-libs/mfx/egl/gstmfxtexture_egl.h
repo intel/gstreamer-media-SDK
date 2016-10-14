@@ -21,7 +21,7 @@
 #ifndef GST_MFX_TEXTURE_EGL_H
 #define GST_MFX_TEXTURE_EGL_H
 
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
 
@@ -75,7 +75,7 @@ gst_mfx_texture_egl_get_height (GstMfxTextureEGL * texture);
 
 gboolean
 gst_mfx_texture_egl_put_surface (GstMfxTextureEGL * texture,
-    GstMfxSurfaceProxy * proxy);
+    GstMfxSurface * surface);
 
 G_END_DECLS
 

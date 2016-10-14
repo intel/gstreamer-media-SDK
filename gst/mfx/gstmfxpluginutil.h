@@ -26,7 +26,7 @@
 #include "gstmfxvideomemory.h"
 
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurface.h>
 
 gboolean
 gst_mfx_ensure_aggregator(GstElement * element);

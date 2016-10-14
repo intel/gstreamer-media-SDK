@@ -23,7 +23,7 @@
 #include <va/va_drmcommon.h>
 #include "sysdeps.h"
 #include "gstmfxutils_vaapi.h"
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxprimebufferproxy.h"
 
@@ -34,7 +34,7 @@ struct _GstMfxPrimeBufferProxy
 {
   /*< private > */
   GstMfxMiniObject parent_instance;
-  GstMfxSurfaceProxy *parent;
+  GstMfxSurface *parent;
   VaapiImage *image;
   VABufferInfo buf_info;
   guintptr fd;
@@ -80,9 +80,9 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
   if (!proxy->parent)
     return FALSE;
 
-  surf = GST_MFX_SURFACE_PROXY_MEMID (proxy->parent);
-  display = gst_mfx_surface_proxy_get_display (proxy->parent);
-  proxy->image = gst_mfx_surface_proxy_derive_image (proxy->parent);
+  surf = GST_MFX_SURFACE_MEMID (proxy->parent);
+  display = gst_mfx_surface_get_display (proxy->parent);
+  proxy->image = gst_mfx_surface_derive_image (proxy->parent);
   vaapi_image_get_image (proxy->image, &va_img);
 
   if (vpg_load_symbol ("vpgExtGetSurfaceHandle")) {
@@ -115,7 +115,7 @@ gst_mfx_prime_buffer_proxy_finalize (GstMfxPrimeBufferProxy * proxy)
     close (proxy->fd);
   }
   else {
-    GstMfxDisplay *display = gst_mfx_surface_proxy_get_display (proxy->parent);
+    GstMfxDisplay *display = gst_mfx_surface_get_display (proxy->parent);
     VAImage va_img;
 
     vaapi_image_get_image (proxy->image, &va_img);
@@ -126,7 +126,7 @@ gst_mfx_prime_buffer_proxy_finalize (GstMfxPrimeBufferProxy * proxy)
   }
 
   vaapi_image_replace (&proxy->image, NULL);
-  gst_mfx_surface_proxy_replace (&proxy->parent, NULL);
+  gst_mfx_surface_replace (&proxy->parent, NULL);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -140,7 +140,7 @@ gst_mfx_prime_buffer_proxy_class (void)
 }
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurfaceProxy * parent)
+gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * parent)
 {
   GstMfxPrimeBufferProxy *proxy;
 
@@ -151,7 +151,7 @@ gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurfaceProxy * parent)
   if (!proxy)
     return NULL;
 
-  proxy->parent = gst_mfx_surface_proxy_ref (parent);
+  proxy->parent = gst_mfx_surface_ref (parent);
 
   if (!gst_mfx_prime_buffer_proxy_acquire_handle (proxy))
     goto error_acquire_handle;

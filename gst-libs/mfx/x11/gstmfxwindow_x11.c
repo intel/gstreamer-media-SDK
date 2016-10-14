@@ -358,7 +358,7 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
 
 static gboolean
 gst_mfx_window_x11_render (GstMfxWindow * window,
-    GstMfxSurfaceProxy * proxy,
+    GstMfxSurface * surface,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
 #if defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT)
@@ -373,7 +373,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   Window root;
   xcb_pixmap_t pixmap;
 
-  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
+  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!buffer_proxy)
       return FALSE;
 

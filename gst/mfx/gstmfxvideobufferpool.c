@@ -260,7 +260,7 @@ gst_mfx_video_buffer_pool_reset_buffer (GstBufferPool * pool,
 {
   GstMemory *const mem = gst_buffer_peek_memory (buffer, 0);
 
-  /* Release the underlying surface proxy */
+  /* Release the underlying surface surface */
   if (GST_MFX_IS_VIDEO_MEMORY (mem))
     gst_mfx_video_memory_reset_surface (GST_MFX_VIDEO_MEMORY_CAST (mem));
 

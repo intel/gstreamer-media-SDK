@@ -5,7 +5,7 @@ set(SOURCE
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxprimebufferproxy.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxprofile.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurfacepool.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurfaceproxy.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurface.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxtaskaggregator.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxtask.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxutils_vaapi.c"

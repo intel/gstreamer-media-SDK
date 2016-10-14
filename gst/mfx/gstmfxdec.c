@@ -26,7 +26,7 @@
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
 
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurface.h>
 #include <gst-libs/mfx/gstmfxprofile.h>
 
 #define GST_PLUGIN_NAME "mfxdecode"
@@ -386,9 +386,9 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
 {
   GstMfxVideoMeta *meta;
   const GstMfxRectangle *crop_rect;
-  GstMfxSurfaceProxy *proxy;
+  GstMfxSurface *surface;
 
-  proxy = gst_video_codec_frame_get_user_data(frame);
+  surface = gst_video_codec_frame_get_user_data(frame);
 
   frame->output_buffer =
       gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
@@ -398,8 +398,8 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
   if (!meta)
     goto error_get_meta;
-  gst_mfx_video_meta_set_surface_proxy (meta, proxy);
-  crop_rect = gst_mfx_surface_proxy_get_crop_rect (proxy);
+  gst_mfx_video_meta_set_surface (meta, surface);
+  crop_rect = gst_mfx_surface_get_crop_rect (surface);
   if (crop_rect) {
     GstVideoCropMeta *const crop_meta =
       gst_buffer_add_video_crop_meta (frame->output_buffer);

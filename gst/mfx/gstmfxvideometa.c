@@ -34,13 +34,13 @@ struct _GstMfxVideoMeta
 {
   GstBuffer *buffer;
   gint ref_count;
-  GstMfxSurfaceProxy *proxy;
+  GstMfxSurface *surface;
 };
 
 static void
 gst_mfx_video_meta_finalize (GstMfxVideoMeta * meta)
 {
-  gst_mfx_surface_proxy_replace (&meta->proxy, NULL);
+  gst_mfx_surface_replace (&meta->surface, NULL);
 }
 
 static void
@@ -48,7 +48,7 @@ gst_mfx_video_meta_init (GstMfxVideoMeta * meta)
 {
   meta->buffer = NULL;
   meta->ref_count = 1;
-  meta->proxy = NULL;
+  meta->surface = NULL;
 }
 
 static inline GstMfxVideoMeta *
@@ -99,7 +99,7 @@ gst_mfx_video_meta_copy (GstMfxVideoMeta * meta)
 
   copy->buffer = NULL;
   copy->ref_count = 1;
-  copy->proxy = meta->proxy ? gst_mfx_surface_proxy_copy (meta->proxy) : NULL;
+  copy->surface = meta->surface ? gst_mfx_surface_copy (meta->surface) : NULL;
 
   return copy;
 }
@@ -159,22 +159,22 @@ gst_mfx_video_meta_replace (GstMfxVideoMeta ** old_meta_ptr,
     gst_mfx_video_meta_unref (old_meta);
 }
 
-GstMfxSurfaceProxy *
-gst_mfx_video_meta_get_surface_proxy (GstMfxVideoMeta * meta)
+GstMfxSurface *
+gst_mfx_video_meta_get_surface (GstMfxVideoMeta * meta)
 {
   g_return_val_if_fail (GST_MFX_IS_VIDEO_META (meta), NULL);
 
-  return meta->proxy;
+  return meta->surface;
 }
 
 void
-gst_mfx_video_meta_set_surface_proxy (GstMfxVideoMeta * meta,
-    GstMfxSurfaceProxy * proxy)
+gst_mfx_video_meta_set_surface (GstMfxVideoMeta * meta,
+    GstMfxSurface * surface)
 {
   g_return_if_fail (GST_MFX_IS_VIDEO_META (meta));
 
-  if (proxy)
-    gst_mfx_surface_proxy_replace (&meta->proxy, proxy);
+  if (surface)
+    gst_mfx_surface_replace (&meta->surface, surface);
 }
 
 #define GST_MFX_VIDEO_META_HOLDER(meta) \
