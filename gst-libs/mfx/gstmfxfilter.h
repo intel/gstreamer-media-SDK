@@ -22,7 +22,7 @@
 #ifndef GST_MFX_FILTER_H
 #define GST_MFX_FILTER_H
 
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 #include "gstmfxtaskaggregator.h"
 #include "video-format.h"
 
@@ -166,8 +166,8 @@ gboolean
 gst_mfx_filter_prepare (GstMfxFilter * filter);
 
 GstMfxFilterStatus
-gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
-    GstMfxSurfaceProxy ** out_proxy);
+gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface *surface,
+    GstMfxSurface ** out_surface);
 
 gboolean
 gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags);

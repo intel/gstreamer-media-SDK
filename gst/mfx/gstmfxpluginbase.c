@@ -659,7 +659,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
 {
   GstMfxVideoMeta *vmeta;
   GstVideoMeta *meta = gst_buffer_get_video_meta (outbuf);
-  GstMfxSurfaceProxy *proxy;
+  GstMfxSurface *surface;
   GstMfxPrimeBufferProxy *dmabuf_proxy;
   GstMemory *mem;
   VaapiImage *image;
@@ -674,11 +674,11 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   vmeta = gst_buffer_get_mfx_video_meta (outbuf);
   if (!vmeta)
     return FALSE;
-  proxy = gst_mfx_video_meta_get_surface_proxy (vmeta);
-  if (!proxy || gst_mfx_surface_proxy_is_mapped(proxy))
+  surface = gst_mfx_video_meta_get_surface (vmeta);
+  if (!surface || gst_mfx_surface_is_mapped(surface))
     return FALSE;
 
-  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
+  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!dmabuf_proxy)
     return FALSE;
 
@@ -701,7 +701,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   gst_buffer_replace_memory (outbuf, 0, mem);
 
 
-  image = gst_mfx_surface_proxy_derive_image (proxy);
+  image = gst_mfx_surface_derive_image (surface);
   if (!image)
     goto error_dmabuf_handle;
 

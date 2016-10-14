@@ -23,7 +23,7 @@
 #ifndef GST_MFX_DECODER_H
 #define GST_MFX_DECODER_H
 
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxprofile.h"
 

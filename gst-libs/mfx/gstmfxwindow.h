@@ -25,7 +25,7 @@
 
 #include "gstmfxtypes.h"
 #include "gstmfxdisplay.h"
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
 
@@ -83,7 +83,7 @@ gst_mfx_window_set_size (GstMfxWindow * window, guint width, guint height);
 
 gboolean
 gst_mfx_window_put_surface (GstMfxWindow * window,
-  GstMfxSurfaceProxy * proxy, const GstMfxRectangle * src_rect,
+  GstMfxSurface * surface, const GstMfxRectangle * src_rect,
   const GstMfxRectangle * dst_rect);
 
 void

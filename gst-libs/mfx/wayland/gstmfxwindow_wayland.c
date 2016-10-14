@@ -30,7 +30,7 @@
 #include "gstmfxwindow_priv.h"
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_wayland_priv.h"
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 #include "gstmfxprimebufferproxy.h"
 #include "gstmfxutils_vaapi.h"
 #include "wayland-drm-client-protocol.h"
@@ -51,7 +51,7 @@ typedef struct _FrameState FrameState;
 struct _FrameState
 {
   GstMfxWindow *window;
-  GstMfxSurfaceProxy *surface;
+  GstMfxSurface *surface;
   struct wl_callback *callback;
 };
 
@@ -217,7 +217,7 @@ error:
 
 static gboolean
 gst_mfx_window_wayland_render (GstMfxWindow * window,
-    GstMfxSurfaceProxy * surface,
+    GstMfxSurface * surface,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
   GstMfxWindowWaylandPrivate *const priv =

@@ -341,7 +341,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
   GstMfxVideoMeta *inbuf_meta, *outbuf_meta;
-  GstMfxSurfaceProxy *proxy, *out_proxy;
+  GstMfxSurface *surface, *out_surface;
   GstMfxFilterStatus status;
   GstFlowReturn ret;
   GstMfxRectangle *crop_rect = NULL;
@@ -357,9 +357,9 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     return GST_FLOW_ERROR;
 
   inbuf_meta = gst_buffer_get_mfx_video_meta (buf);
-  proxy = gst_mfx_video_meta_get_surface_proxy (inbuf_meta);
-  if (!proxy)
-    goto error_create_proxy;
+  surface = gst_mfx_video_meta_get_surface (inbuf_meta);
+  if (!surface)
+    goto error_create_surface;
 
   do {
     if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
@@ -368,7 +368,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
         goto error_create_buffer;
     }
 
-    status = gst_mfx_filter_process (vpp->filter, proxy, &out_proxy);
+    status = gst_mfx_filter_process (vpp->filter, surface, &out_surface);
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status)
       outbuf_meta = gst_buffer_get_mfx_video_meta (buf);
     else
@@ -377,8 +377,8 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     if (!outbuf_meta)
       goto error_create_meta;
 
-    gst_mfx_video_meta_set_surface_proxy (outbuf_meta, out_proxy);
-    crop_rect = gst_mfx_surface_proxy_get_crop_rect (out_proxy);
+    gst_mfx_video_meta_set_surface (outbuf_meta, out_surface);
+    crop_rect = gst_mfx_surface_get_crop_rect (out_surface);
     if (crop_rect) {
       GstVideoCropMeta *const crop_meta =
           gst_buffer_add_video_crop_meta (outbuf);
@@ -432,9 +432,9 @@ error_create_meta:
     gst_buffer_unref (buf);
     return GST_FLOW_ERROR;
   }
-error_create_proxy:
+error_create_surface:
   {
-    GST_ERROR ("failed to create surface proxy from buffer");
+    GST_ERROR ("failed to create surface surface from buffer");
     gst_buffer_unref (buf);
     return GST_FLOW_ERROR;
   }

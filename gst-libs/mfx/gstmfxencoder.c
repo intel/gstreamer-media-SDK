@@ -24,7 +24,7 @@
 #include "gstmfxfilter.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxvideometa.h"
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 #include "gstmfxtask.h"
 
 #define DEBUG 1
@@ -888,24 +888,24 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 GstMfxEncoderStatus
 gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 {
-  GstMfxSurfaceProxy *proxy, *filter_proxy;
+  GstMfxSurface *surface, *filter_surface;
   GstMfxFilterStatus filter_sts;
   mfxFrameSurface1 *insurf;
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
-  proxy = gst_video_codec_frame_get_user_data (frame);
+  surface = gst_video_codec_frame_get_user_data (frame);
 
   if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT)) {
-    filter_sts = gst_mfx_filter_process (encoder->filter, proxy, &filter_proxy);
+    filter_sts = gst_mfx_filter_process (encoder->filter, surface, &filter_surface);
     if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
       GST_ERROR ("MFX pre-processing error during encode.");
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
     }
-    proxy = filter_proxy;
+    surface = filter_surface;
   }
 
-  insurf = gst_mfx_surface_proxy_get_frame_surface (proxy);
+  insurf = gst_mfx_surface_get_frame_surface (surface);
 
   do {
     sts = MFXVideoENCODE_EncodeFrameAsync (encoder->session,

@@ -34,7 +34,7 @@
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
 
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurface.h>
 
 #define GST_PLUGIN_NAME "mfxsink"
 #define GST_PLUGIN_DESC "A MFX-based videosink"
@@ -107,10 +107,10 @@ gst_mfxsink_ensure_aggregator (GstMfxSink * sink)
 }
 
 static inline gboolean
-gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurfaceProxy * proxy,
+gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
     const GstMfxRectangle * surface_rect)
 {
-  return sink->window && gst_mfx_window_put_surface (sink->window, proxy,
+  return sink->window && gst_mfx_window_put_surface (sink->window, surface,
       surface_rect, &sink->display_rect);
 }
 
@@ -990,7 +990,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (video_sink);
   GstMfxVideoMeta *meta;
-  GstMfxSurfaceProxy *proxy;
+  GstMfxSurface *surface;
   GstMfxRectangle *surface_rect = NULL;
   GstMfxRectangle tmp_rect;
   GstFlowReturn ret;
@@ -1007,23 +1007,23 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
 
   meta = gst_buffer_get_mfx_video_meta (src_buffer);
 
-  proxy = gst_mfx_video_meta_get_surface_proxy (meta);
-  if (!proxy)
+  surface = gst_mfx_video_meta_get_surface (meta);
+  if (!surface)
     goto no_surface;
 
   GST_DEBUG ("render surface %" GST_MFX_ID_FORMAT,
-      GST_MFX_SURFACE_PROXY_MEMID (proxy));
+      GST_MFX_SURFACE_MEMID (surface));
 
   if (!surface_rect)
     surface_rect = (GstMfxRectangle *)
-        gst_mfx_surface_proxy_get_crop_rect (proxy);
+        gst_mfx_surface_get_crop_rect (surface);
 
   if (surface_rect)
     GST_DEBUG ("render rect (%d,%d), size %ux%u",
         surface_rect->x, surface_rect->y,
         surface_rect->width, surface_rect->height);
 
-  if (!gst_mfxsink_render_surface (sink, proxy, surface_rect))
+  if (!gst_mfxsink_render_surface (sink, surface, surface_rect))
     goto error;
 
   ret = GST_FLOW_OK;
@@ -1037,7 +1037,7 @@ error:
   goto done;
 
 no_surface:
-  /* No surface or surface proxy. That's very bad! */
+  /* No surface or surface surface. That's very bad! */
   GST_WARNING_OBJECT (sink, "could not get surface");
   ret = GST_FLOW_ERROR;
   goto done;
