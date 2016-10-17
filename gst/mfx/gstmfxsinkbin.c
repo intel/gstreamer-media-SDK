@@ -19,6 +19,7 @@
  */
 
 #include "gstmfxpluginutil.h"
+#include "gstmfxpluginbase.h"
 #include "gstmfxsinkbin.h"
 
 #define GST_PLUGIN_NAME "mfxsinkbin"
@@ -52,6 +53,9 @@ enum
 
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
 
+static void
+gst_mfx_sink_bin_color_balance_iface_init (GstColorBalanceInterface * iface);
+
 #define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 
@@ -70,7 +74,11 @@ GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS (gst_mfx_sink_bin_sink_caps_str));
 
-G_DEFINE_TYPE (GstMfxSinkBin, gst_mfx_sink_bin, GST_TYPE_BIN);
+G_DEFINE_TYPE_WITH_CODE (GstMfxSinkBin, gst_mfx_sink_bin,
+    GST_TYPE_BIN,
+    GST_MFX_PLUGIN_BASE_INIT_INTERFACES
+    G_IMPLEMENT_INTERFACE (GST_TYPE_COLOR_BALANCE,
+        gst_mfx_sink_bin_color_balance_iface_init));
 
 static void
 post_missing_element_message (GstMfxSinkBin * mfxsinkbin,
@@ -373,7 +381,8 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       g_param_spec_float ("hue",
           "Hue",
           "The color hue value",
-          -180.0, 180.0, 0.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+          -180.0, 180.0, 0.0,
+          GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GstMfxSinkBin:saturation:
@@ -385,7 +394,8 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       g_param_spec_float ("saturation",
           "Saturation",
           "The color saturation value",
-          0.0, 10.0, 1.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+          0.0, 10.0, 1.0,
+          GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GstMfxSinkBin:brightness:
@@ -397,7 +407,8 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       g_param_spec_float ("brightness",
           "Brightness",
           "The color brightness value",
-          -100.0, 100.0, 0.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+          -100.0, 100.0, 0.0,
+          GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GstMfxSinkBin:contrast:
@@ -409,7 +420,8 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       g_param_spec_float ("contrast",
           "Contrast",
           "The color contrast value",
-          0.0, 10.0, 1.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+          0.0, 10.0, 1.0,
+          GST_PARAM_CONTROLLABLE |  G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GstMfxSinkBin:rotation:
@@ -473,6 +485,23 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
   if (!gst_element_add_pad (GST_ELEMENT (mfxsinkbin), ghostpad))
       goto error_adding_pad;
 
+  gst_mfx_object_add_control_binding_proxy (
+      GST_OBJECT (mfxsinkbin->postproc),
+      GST_OBJECT (mfxsinkbin),
+      "contrast");
+  gst_mfx_object_add_control_binding_proxy (
+      GST_OBJECT (mfxsinkbin->postproc),
+      GST_OBJECT (mfxsinkbin),
+      "brightness");
+  gst_mfx_object_add_control_binding_proxy (
+      GST_OBJECT (mfxsinkbin->postproc),
+      GST_OBJECT (mfxsinkbin),
+      "saturation");
+  gst_mfx_object_add_control_binding_proxy (
+      GST_OBJECT (mfxsinkbin->postproc),
+      GST_OBJECT (mfxsinkbin),
+      "hue");
+
   return TRUE;
 
 error_element_missing:
@@ -498,4 +527,107 @@ static void
 gst_mfx_sink_bin_init (GstMfxSinkBin * mfxsinkbin)
 {
   gst_mfx_sink_bin_configure (mfxsinkbin);
+}
+
+enum {
+  CB_HUE = 1,
+  CB_SATURATION,
+  CB_BRIGHTNESS,
+  CB_CONTRAST
+};
+
+typedef struct {
+  guint cb_id;
+  const gchar *channel_name;
+  gfloat min_val;
+  gfloat max_val;
+} ColorBalanceMap;
+
+static const ColorBalanceMap cb_map[4] = {
+  {CB_HUE, "MFX_HUE", -180.0, 180.0},
+  {CB_SATURATION, "MFX_SATURATION", 0.0, 10.0},
+  {CB_BRIGHTNESS, "MFX_BRIGHTNESS", -100.0, 100.0},
+  {CB_CONTRAST, "MFX_CONTRAST", 0.0, 10.0}
+};
+
+static GstColorBalanceType
+gst_mfx_sink_bin_color_balance_get_type (GstColorBalance *cb)
+{
+  GstMfxSinkBin *const sinkbin = GST_MFX_SINK_BIN (cb);
+  GstColorBalance *cb_element = NULL;
+  GstColorBalanceType type = 0;
+
+  cb_element =
+      GST_COLOR_BALANCE (gst_bin_get_by_interface (GST_BIN (sinkbin),
+          GST_TYPE_COLOR_BALANCE));
+
+  if (cb_element) {
+    type = gst_color_balance_get_balance_type (cb_element);
+    gst_object_unref (cb_element);
+  }
+  return type;
+}
+
+static void 
+gst_mfx_sink_bin_color_balance_set_value (GstColorBalance * cb,
+    GstColorBalanceChannel * channel, gint value)
+{
+  GstMfxSinkBin *const sinkbin = GST_MFX_SINK_BIN (cb);
+  GstColorBalance *cb_element = NULL;
+
+  cb_element =
+      GST_COLOR_BALANCE (gst_bin_get_by_interface (GST_BIN (sinkbin),
+          GST_TYPE_COLOR_BALANCE));
+
+  if (cb_element) {
+    gst_color_balance_set_value (cb_element, channel, value);
+    gst_object_unref (cb_element);
+  }
+}
+
+
+static gint
+gst_mfx_sink_bin_color_balance_get_value (GstColorBalance *cb,
+    GstColorBalanceChannel * channel)
+{
+  GstMfxSinkBin *const sinkbin = GST_MFX_SINK_BIN (cb);
+  GstColorBalance *cb_element = NULL;
+  gint value = 0;
+
+  cb_element = 
+      GST_COLOR_BALANCE (gst_bin_get_by_interface (GST_BIN (sinkbin),
+          GST_TYPE_COLOR_BALANCE));
+
+  if (cb_element) {
+    value = gst_color_balance_get_value (cb_element, channel);
+    gst_object_unref (cb_element);
+  }
+  return value;
+}
+
+static const GList *
+gst_mfx_sink_bin_color_balance_list_channels (GstColorBalance *cb)
+{
+  GstMfxSinkBin *const sinkbin = GST_MFX_SINK_BIN (cb);
+  GstColorBalance *cb_element = NULL;
+  const GList *list = NULL;
+
+  cb_element =
+      GST_COLOR_BALANCE (gst_bin_get_by_interface (GST_BIN (sinkbin),
+          GST_TYPE_COLOR_BALANCE));
+
+  if (cb_element) {
+    list = gst_color_balance_list_channels (cb_element);
+    gst_object_unref (cb_element);
+  }
+  return list;
+}
+
+static void
+gst_mfx_sink_bin_color_balance_iface_init (GstColorBalanceInterface * iface)
+{
+  iface->list_channels = gst_mfx_sink_bin_color_balance_list_channels;
+  iface->set_value = gst_mfx_sink_bin_color_balance_set_value;
+  iface->get_value = gst_mfx_sink_bin_color_balance_get_value;
+  iface->get_balance_type = gst_mfx_sink_bin_color_balance_get_type;
 }
