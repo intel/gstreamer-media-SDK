@@ -186,32 +186,45 @@ check_supported_filters (GstMfxFilter * filter)
   /* Release the resource */
   g_slice_free (mfxExtVPPDoUse, vpp_use.AlgList);
 }
-
 static gboolean
-init_filters (GstMfxFilter * filter)
+configure_filters (GstMfxFilter * filter)
 {
   GstMfxFilterOpData *op;
   mfxExtBuffer *ext_buf;
-  guint i;
+  guint i, len;
+  len = filter->filter_op_data->len;
 
-  check_supported_filters (filter);
+  if (!filter->inited) {
+    check_supported_filters (filter);
+  }
+
+  /* If AlgList is available when filter is already initialize
+  and if current number of filter is not equal to new number of
+  filter requested, deallocate resources when resetting */
+  if (filter->vpp_use.AlgList &&
+      (len != filter->vpp_use.NumAlg)) {
+    g_slice_free1 (filter->vpp_use.AlgList,
+        (filter->vpp_use.NumAlg * sizeof (mfxU32)));
+    g_slice_free1 (filter->ext_buffer,
+        ((filter->vpp_use.NumAlg + 1) * sizeof (mfxExtBuffer *)));
+  }
+  if (!len)
+    return FALSE;
 
   memset (&filter->vpp_use, 0, sizeof (mfxExtVPPDoUse));
-
   filter->vpp_use.Header.BufferId = MFX_EXTBUFF_VPP_DOUSE;
   filter->vpp_use.Header.BufferSz = sizeof (mfxExtVPPDoUse);
-  filter->vpp_use.NumAlg = filter->filter_op_data->len;
-  filter->vpp_use.AlgList =
-      g_slice_alloc (filter->vpp_use.NumAlg * sizeof (mfxU32));
+  filter->vpp_use.NumAlg = len;
+  filter->vpp_use.AlgList = g_slice_alloc (len * sizeof (mfxU32));
   if (!filter->vpp_use.AlgList)
     return FALSE;
 
   filter->ext_buffer = g_slice_alloc (
-      (filter->vpp_use.NumAlg + 1) * sizeof (mfxExtBuffer *));
+      (len + 1) * sizeof (mfxExtBuffer *));
   if (!filter->ext_buffer)
     return FALSE;
 
-  for (i = 0; i < filter->filter_op_data->len; i++) {
+  for (i = 0; i < len; i++) {
     op = (GstMfxFilterOpData *) g_ptr_array_index (filter->filter_op_data, i);
     ext_buf = (mfxExtBuffer *) op->filter;
     filter->vpp_use.AlgList[i] = ext_buf->BufferId;
@@ -220,7 +233,7 @@ init_filters (GstMfxFilter * filter)
 
   filter->ext_buffer[0] = (mfxExtBuffer *) & filter->vpp_use;
 
-  filter->params.NumExtParam = filter->vpp_use.NumAlg + 1;
+  filter->params.NumExtParam = len + 1;
   filter->params.ExtParam = (mfxExtBuffer **) & filter->ext_buffer[0];
 
   return TRUE;
@@ -970,6 +983,19 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   return TRUE;
 }
 
+GstMfxFilterStatus
+gst_mfx_filter_reset (GstMfxFilter * filter)
+{
+  mfxStatus sts = MFX_ERR_NONE;
+  configure_filters (filter);
+  sts = MFXVideoVPP_Reset (filter->session, &filter->params);
+  if (sts < 0) {
+      GST_ERROR ("Error resetting MFX VPP %d", sts);
+      return GST_MFX_FILTER_STATUS_ERROR_OPERATION_FAILED;
+  }
+  return GST_MFX_FILTER_STATUS_SUCCESS;
+}
+
 static GstMfxFilterStatus
 gst_mfx_filter_start (GstMfxFilter * filter)
 {
@@ -992,7 +1018,7 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   if (!filter->vpp_pool[1])
     return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 
-  init_filters (filter);
+  configure_filters (filter);
 
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
   if (sts < 0) {
