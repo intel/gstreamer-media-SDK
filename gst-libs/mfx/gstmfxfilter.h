@@ -169,6 +169,9 @@ GstMfxFilterStatus
 gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface *surface,
     GstMfxSurface ** out_surface);
 
+GstMfxFilterStatus
+gst_mfx_filter_reset (GstMfxFilter * filter);
+
 gboolean
 gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags);
 
