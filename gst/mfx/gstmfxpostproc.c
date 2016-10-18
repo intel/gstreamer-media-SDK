@@ -94,6 +94,10 @@ enum
 #define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 #define DEFAULT_FRC_ALG                 GST_MFX_FRC_NONE
+#define DEFAULT_BRIGHTNESS              0.0
+#define DEFAULT_SATURATION              1.0
+#define DEFAULT_HUE                     0.0
+#define DEFAULT_CONTRAST                1.0
 
 GType
 gst_mfx_rotation_get_type (void)
@@ -185,10 +189,10 @@ typedef struct {
 } ColorBalanceMap;
 
 static const ColorBalanceMap cb_map[4] = {
-  {CB_HUE, "HUE", -180.0, 180.0},
-  {CB_SATURATION, "SATURATION", 0.0, 10.0},
-  {CB_BRIGHTNESS, "BRIGHTNESS", -100.0, 100.0},
-  {CB_CONTRAST, "CONTRAST", 0.0, 10.0}
+  {CB_HUE, "HUE", -1800.0, 1800.0},
+  {CB_SATURATION, "SATURATION", 0.0, 1000.0},
+  {CB_BRIGHTNESS, "BRIGHTNESS", -1800.0, 1800.0},
+  {CB_CONTRAST, "CONTRAST", 0.0, 1000.0}
 };
 
 static GstColorBalanceType
@@ -224,24 +228,45 @@ static void
 gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     GstColorBalanceChannel * channel, gint value)
 {
-  gint new_val;
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (cb);
-  g_return_if_fail (channel->label != NULL);
+  gfloat new_val = value;
 
-  new_val = value * (channel->max_value-channel->min_value) +
-      channel->min_value;
-
+  /* To get the right value reflected from the gtk-play
+   * color balance slider, the value must be normalized.
+   * gtk-play set's the default value for all color balance
+   * properties to 0.5. Since the default value for saturation
+   * and contrast in MediaSDK is 1.0 with range of 0 to 10 with 0.01
+   * increment, the value need to normalized to 0-1 for
+   * value less than 500 and 1-10 for value more than 500. */
 
   if (g_ascii_strcasecmp (channel->label, "HUE") == 0) {
+    new_val = (new_val / 10.0);
+
     vpp->cb_changed = vpp->hue != new_val;
     vpp->hue = new_val;
   } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
+    if (new_val < 500 )
+        new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
+    else if (new_val > 500 )
+        new_val = ((10.0 - 1.0)/(1000.0 - 500.0) * (new_val-500.0))+1.0;
+    else
+        new_val = 1.0;
+
     vpp->cb_changed = vpp->saturation != new_val;
     vpp->saturation = new_val;
   } else if (g_ascii_strcasecmp (channel->label, "BRIGHTNESS") == 0) {
+    new_val = (new_val / 10.0);
+
     vpp->cb_changed = vpp->brightness != new_val;
     vpp->brightness = new_val;
   } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
+    if (new_val < 500 )
+        new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
+    else if (new_val > 500 )
+        new_val = ((10.0 - 1.0)/(1000.0 - 500.0) * (new_val-500.0))+1.0;
+    else
+        new_val = 1.0;
+
     vpp->cb_changed = vpp->contrast != new_val;
     vpp->contrast = new_val;
   } else {
@@ -260,19 +285,28 @@ gst_mfxpostproc_color_balance_get_value (GstColorBalance *cb,
   g_return_val_if_fail (channel->label != NULL, 0);
 
   if (g_ascii_strcasecmp (channel->label, "HUE") == 0) {
-    value = vpp->hue;
+    value = vpp->hue * 10;
   } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
-    value = vpp->saturation;
+    if (vpp->saturation < 1.0)
+        value = vpp->saturation * 500.0;
+    else if (vpp->saturation > 1.0)
+	value = (vpp->saturation-1.0) *
+            ((1000.0 - 500.0) / (10 - 1)) + 500;
+    else
+        value = vpp->saturation;
   } else if (g_ascii_strcasecmp (channel->label, "BRIGHTNESS") == 0) {
-    value = vpp->brightness;
+    value = vpp->brightness * 10;
   } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
-    value = vpp->contrast;
+    if (vpp->contrast < 1.0)
+        value = vpp->contrast * 500.0;
+    else if (vpp->contrast > 1.0)
+	value = (vpp->contrast-1.0) *
+            ((1000.0 - 500.0) / (10 - 1)) + 500;
+    else
+        value = vpp->contrast;
   } else {
     g_warning ("got an unknown channel %s", channel->label);
   }
-  value = (value - channel->min_value)/
-      (channel->max_value - channel->min_value);
-
   return value;
 }
 
@@ -495,6 +529,7 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
     gst_mfx_filter_set_hue(mfxvpp->filter, mfxvpp->hue);
     gst_mfx_filter_set_brightness(mfxvpp->filter, mfxvpp->brightness);
     gst_mfx_filter_reset(mfxvpp->filter);
+    mfxvpp->cb_changed = FALSE;
   }
 }
 
@@ -1240,6 +1275,10 @@ gst_mfxpostproc_init (GstMfxPostproc * vpp)
   vpp->deinterlace_mode = DEFAULT_DEINTERLACE_MODE;
   vpp->keep_aspect = TRUE;
   vpp->alg = DEFAULT_FRC_ALG;
+  vpp->brightness = DEFAULT_BRIGHTNESS;
+  vpp->hue = DEFAULT_HUE;
+  vpp->saturation = DEFAULT_SATURATION;
+  vpp->contrast = DEFAULT_CONTRAST;
 
   gst_video_info_init (&vpp->sinkpad_info);
   gst_video_info_init (&vpp->srcpad_info);
