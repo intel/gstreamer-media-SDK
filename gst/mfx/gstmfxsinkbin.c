@@ -529,27 +529,6 @@ gst_mfx_sink_bin_init (GstMfxSinkBin * mfxsinkbin)
   gst_mfx_sink_bin_configure (mfxsinkbin);
 }
 
-enum {
-  CB_HUE = 1,
-  CB_SATURATION,
-  CB_BRIGHTNESS,
-  CB_CONTRAST
-};
-
-typedef struct {
-  guint cb_id;
-  const gchar *channel_name;
-  gfloat min_val;
-  gfloat max_val;
-} ColorBalanceMap;
-
-static const ColorBalanceMap cb_map[4] = {
-  {CB_HUE, "MFX_HUE", -180.0, 180.0},
-  {CB_SATURATION, "MFX_SATURATION", 0.0, 10.0},
-  {CB_BRIGHTNESS, "MFX_BRIGHTNESS", -100.0, 100.0},
-  {CB_CONTRAST, "MFX_CONTRAST", 0.0, 10.0}
-};
-
 static GstColorBalanceType
 gst_mfx_sink_bin_color_balance_get_type (GstColorBalance *cb)
 {
@@ -568,7 +547,7 @@ gst_mfx_sink_bin_color_balance_get_type (GstColorBalance *cb)
   return type;
 }
 
-static void 
+static void
 gst_mfx_sink_bin_color_balance_set_value (GstColorBalance * cb,
     GstColorBalanceChannel * channel, gint value)
 {
@@ -594,7 +573,7 @@ gst_mfx_sink_bin_color_balance_get_value (GstColorBalance *cb,
   GstColorBalance *cb_element = NULL;
   gint value = 0;
 
-  cb_element = 
+  cb_element =
       GST_COLOR_BALANCE (gst_bin_get_by_interface (GST_BIN (sinkbin),
           GST_TYPE_COLOR_BALANCE));
 
