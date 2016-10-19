@@ -24,6 +24,7 @@
 #include <drm/drm_fourcc.h>
 #include "gstmfxtexture_egl.h"
 #include "gstmfxutils_egl.h"
+#include "gstmfxsurface_vaapi.h"
 #include "gstmfxdisplay_egl.h"
 #include "gstmfxdisplay_egl_priv.h"
 #include "gstmfxprimebufferproxy.h"
@@ -70,14 +71,14 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
   GstMfxPrimeBufferProxy *buffer_proxy;
   VaapiImage *image;
 
-  if (!gst_mfx_surface_is_mapped (surface)) {
+  if (gst_mfx_surface_has_video_memory (surface)) {
     GLint attribs[23], *attrib;
 
     buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
     if (!buffer_proxy)
       return FALSE;
 
-    image = gst_mfx_surface_derive_image (surface);
+    image = gst_mfx_surface_vaapi_derive_image (surface);
     if (!image)
       goto error_derive_va_image;
 
@@ -121,7 +122,7 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
     texture->texture_id =
         egl_create_texture_from_data (texture->egl_context, GL_TEXTURE_2D,
         GL_BGRA_EXT, texture->width, texture->height,
-        gst_mfx_surface_get_data (surface));
+        gst_mfx_surface_get_plane (surface, 0));
     if (!texture->texture_id) {
       GST_ERROR ("failed to create texture from raw data");
       return FALSE;

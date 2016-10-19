@@ -21,6 +21,7 @@
 #include "sysdeps.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
+#include "gstmfxsurface_vaapi.h"
 #include "gstmfxminiobject.h"
 
 #define DEBUG 1
@@ -31,8 +32,8 @@ struct _GstMfxSurfacePool
   /*< private > */
   GstMfxMiniObject parent_instance;
 
-  GstMfxTask *task;
   GstMfxDisplay *display;
+  GstMfxTask *task;
   GstVideoInfo info;
   gboolean mapped;
   GQueue free_surfaces;
@@ -57,9 +58,11 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
   GstMfxSurface *surface;
 
   for (i = 0; i < num_surfaces; i++) {
-    surface = gst_mfx_surface_new_from_task (pool->task);
-    g_queue_push_tail (&pool->free_surfaces,
-        gst_mfx_surface_ref (surface));
+    surface = gst_mfx_surface_vaapi_new_from_task (pool->task);
+    if (!surface)
+      return;
+
+    g_queue_push_tail (&pool->free_surfaces, gst_mfx_surface_ref(surface));
   }
 }
 
@@ -79,8 +82,8 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
 void
 gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
 {
+  gst_mfx_display_replace(&pool->display, NULL);
   gst_mfx_task_replace (&pool->task, NULL);
-  gst_mfx_display_replace (&pool->display, NULL);
 
   g_list_free_full (pool->used_surfaces, gst_mfx_surface_unref);
   g_queue_foreach (&pool->free_surfaces,
@@ -100,12 +103,11 @@ gst_mfx_surface_pool_class (void)
 }
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new (GstMfxDisplay * display, GstVideoInfo * info,
-    gboolean mapped)
+gst_mfx_surface_pool_new (GstMfxDisplay * display,
+    GstVideoInfo * info, gboolean mapped)
 {
   GstMfxSurfacePool *pool;
 
-  g_return_val_if_fail (display != NULL, NULL);
   g_return_val_if_fail (info != NULL, NULL);
 
   pool = (GstMfxSurfacePool *)
@@ -113,9 +115,9 @@ gst_mfx_surface_pool_new (GstMfxDisplay * display, GstVideoInfo * info,
   if (!pool)
     return NULL;
 
-  pool->display = gst_mfx_display_ref (display);
-  pool->info = *info;
+  pool->display = gst_mfx_display_ref(display);
   pool->mapped = mapped;
+  pool->info = *info;
 
   gst_mfx_surface_pool_init (pool);
 
@@ -135,6 +137,7 @@ gst_mfx_surface_pool_new_with_task (GstMfxTask * task)
     return NULL;
 
   pool->task = gst_mfx_task_ref (task);
+  pool->mapped = gst_mfx_task_has_mapped_surface(task);
   gst_mfx_surface_pool_init (pool);
 
   return pool;
@@ -212,11 +215,15 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
   surface = g_queue_pop_head (&pool->free_surfaces);
   if (!surface) {
     g_mutex_unlock (&pool->mutex);
-    if (!pool->task)
-      surface =
-          gst_mfx_surface_new (pool->display, &pool->info, pool->mapped);
-    else
+    if (pool->task) {
       surface = gst_mfx_surface_new_from_task (pool->task);
+    }
+    else {
+      if (!pool->mapped)
+        surface = gst_mfx_surface_vaapi_new(pool->display, &pool->info);
+      else
+        surface = gst_mfx_surface_new(&pool->info);
+    }
 
     g_mutex_lock (&pool->mutex);
     if (!surface)
