@@ -191,7 +191,7 @@ typedef struct {
 static const ColorBalanceMap cb_map[4] = {
   {CB_HUE, "HUE", -1800.0, 1800.0},
   {CB_SATURATION, "SATURATION", 0.0, 1000.0},
-  {CB_BRIGHTNESS, "BRIGHTNESS", -1800.0, 1800.0},
+  {CB_BRIGHTNESS, "BRIGHTNESS", -1000.0, 1000.0},
   {CB_CONTRAST, "CONTRAST", 0.0, 1000.0}
 };
 
