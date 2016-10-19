@@ -290,7 +290,7 @@ gst_mfx_task_get_display (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, 0);
 
-  return task->display;
+  return gst_mfx_display_ref(task->display);
 }
 
 mfxSession

@@ -47,7 +47,7 @@ G_BEGIN_DECLS
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * parent);
+gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface);
 
 GstMfxPrimeBufferProxy *
 gst_mfx_prime_buffer_proxy_ref (GstMfxPrimeBufferProxy * proxy);

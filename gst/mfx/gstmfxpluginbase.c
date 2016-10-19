@@ -675,7 +675,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   if (!vmeta)
     return FALSE;
   surface = gst_mfx_video_meta_get_surface (vmeta);
-  if (!surface || gst_mfx_surface_is_mapped(surface))
+  if (!surface || !gst_mfx_surface_has_video_memory(surface))
     return FALSE;
 
   dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
@@ -701,7 +701,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   gst_buffer_replace_memory (outbuf, 0, mem);
 
 
-  image = gst_mfx_surface_derive_image (surface);
+  image = gst_mfx_surface_vaapi_derive_image (surface);
   if (!image)
     goto error_dmabuf_handle;
 

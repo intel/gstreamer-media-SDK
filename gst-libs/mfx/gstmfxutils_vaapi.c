@@ -149,7 +149,7 @@ error:
  *
  * Creates a new #VaapiImage from a foreign VA image. The image
  * format and dimensions will be extracted from @va_image. This
- * function is mainly used by gst_mfx_surface_derive_image () to bind
+ * function is mainly used by gst_mfx_surface_vaapi_derive_image () to bind
  * a VA image to a #VaapiImage object.
  *
  * Return value: the newly allocated #VaapiImage object

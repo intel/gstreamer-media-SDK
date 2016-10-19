@@ -25,7 +25,6 @@
 #include "gstmfxwindow_priv.h"
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxsurface.h"
-
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
