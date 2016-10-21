@@ -37,22 +37,6 @@ typedef void(*GstMfxSurfaceReleaseFunc) (GstMfxSurface * surface);
 typedef gboolean(*GstMfxSurfaceMapFunc) (GstMfxSurface * surface);
 typedef void(*GstMfxSurfaceUnmapFunc) (GstMfxSurface * surface);
 
-#undef  GST_MFX_SURFACE_ID
-#define GST_MFX_SURFACE_ID(surface) \
-  (GST_MFX_SURFACE (surface)->surface_id)
-
-#undef  GST_MFX_SURFACE_FORMAT
-#define GST_MFX_SURFACE_FORMAT(surface) \
-  (GST_MFX_SURFACE (surface)->format)
-
-#undef  GST_MFX_SURFACE_WIDTH
-#define GST_MFX_SURFACE_WIDTH(surface) \
-  (GST_MFX_SURFACE (surface)->width)
-
-#undef  GST_MFX_SURFACE_HEIGHT
-#define GST_MFX_SURFACE_HEIGHT(surface) \
-  (GST_MFX_SURFACE (surface)->height)
-
 struct _GstMfxSurface
 {
   /*< private >*/
@@ -89,7 +73,7 @@ struct _GstMfxSurfaceClass
 
 GstMfxSurface *
 gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
-  GstMfxDisplay * display, GstVideoInfo * info, GstMfxTask * task);
+    GstMfxDisplay * display, GstVideoInfo * info, GstMfxTask * task);
 
 #define gst_mfx_surface_ref_internal(surface) \
   ((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(surface)))

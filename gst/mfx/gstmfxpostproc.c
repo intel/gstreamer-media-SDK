@@ -385,7 +385,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     return FALSE;
 
   /* Check if upstream MFX decoder element outputs raw native NV12 surfaces */
-  if (!plugin->mapped && !plugin->sinkpad_use_dmabuf) {
+  if (!plugin->mapped && !plugin->sinkpad_has_dmabuf) {
     if (!vpp->peer_decoder)
       vpp->peer_decoder =
           gst_mfx_task_aggregator_get_current_task (plugin->aggregator);

@@ -234,9 +234,9 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   gboolean need_pool;
 
   if (!plugin->sinkpad_buffer_pool)
-    plugin->sinkpad_use_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
+    plugin->sinkpad_has_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
 
-  plugin->mapped = !plugin->sinkpad_use_dmabuf &&
+  plugin->mapped = !plugin->sinkpad_has_dmabuf &&
       !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
@@ -352,7 +352,7 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
     gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
         plugin->sinkpad_buffer_size, 0, 0);
 
-    if (plugin->sinkpad_use_dmabuf) {
+    if (plugin->sinkpad_has_dmabuf) {
       GstStructure *const config =
           gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
 
@@ -439,15 +439,17 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     if (params) {
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
           &gl_context, NULL) && gl_context) {
-        plugin->srcpad_use_dmabuf =
+#if GST_CHECK_VERSION(1,8,0)
+        plugin->srcpad_has_dmabuf =
             (GST_IS_GL_CONTEXT_EGL (gl_context) &&
             !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
             gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
               GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
+#endif
         gst_object_unref (gl_context);
       }
     }
-    if (!plugin->srcpad_use_dmabuf)
+    if (!plugin->srcpad_has_dmabuf)
       plugin->mapped = TRUE;
   }
 #endif
@@ -668,7 +670,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
 
   g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf), FALSE);
 
-  if (!plugin->srcpad_use_dmabuf)
+  if (!plugin->srcpad_has_dmabuf)
     return FALSE;
 
   vmeta = gst_buffer_get_mfx_video_meta (outbuf);
@@ -713,7 +715,6 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   vaapi_image_unref(image);
 
   return TRUE;
-
   /* ERRORS */
 error_dmabuf_handle:
   {
