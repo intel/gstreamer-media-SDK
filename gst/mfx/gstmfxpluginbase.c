@@ -236,7 +236,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   if (!plugin->sinkpad_buffer_pool)
     plugin->sinkpad_has_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
 
-  plugin->mapped = !plugin->sinkpad_has_dmabuf &&
+  plugin->memtype_is_system = !plugin->sinkpad_has_dmabuf &&
       !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
@@ -255,7 +255,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
 
   pool =
       gst_mfx_video_buffer_pool_new (GST_MFX_TASK_AGGREGATOR_DISPLAY
-      (plugin->aggregator), plugin->mapped);
+      (plugin->aggregator), plugin->memtype_is_system);
   if (!pool)
     goto error_create_pool;
 
@@ -433,7 +433,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       GST_VIDEO_META_API_TYPE, NULL);
 
 #ifdef HAVE_GST_GL_LIBS
-  if (!plugin->mapped && gst_query_find_allocation_meta(query,
+  if (!plugin->memtype_is_system && gst_query_find_allocation_meta(query,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
@@ -450,7 +450,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       }
     }
     if (!plugin->srcpad_has_dmabuf)
-      plugin->mapped = TRUE;
+      plugin->memtype_is_system = TRUE;
   }
 #endif
 
@@ -485,7 +485,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       gst_object_unref (pool);
     pool =
         gst_mfx_video_buffer_pool_new (GST_MFX_TASK_AGGREGATOR_DISPLAY
-        (plugin->aggregator), plugin->mapped);
+        (plugin->aggregator), plugin->memtype_is_system);
     if (!pool)
       goto error_create_pool;
 

@@ -148,7 +148,7 @@ gst_mfxenc_h265_alloc_encoder (GstMfxEnc * base)
     return base->encoder;
 
   return gst_mfx_encoder_h265_new (plugin->aggregator, &plugin->sinkpad_info,
-      plugin->mapped);
+      plugin->memtype_is_system);
 }
 
 /* h265 NAL byte stream operations */

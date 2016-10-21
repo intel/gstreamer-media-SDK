@@ -156,7 +156,7 @@ struct _GstMfxEncoder
   GstMfxTask             *encode;
   GstMfxFilter           *filter;
   GByteArray             *bitstream;
-  gboolean                mapped;
+  gboolean                memtype_is_system;
   gboolean                shared;
 
   mfxSession              session;

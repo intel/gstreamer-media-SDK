@@ -54,7 +54,7 @@ struct _GstMfxDecoder
 
   GstVideoInfo info;
   gboolean inited;
-  gboolean mapped;
+  gboolean memtype_is_system;
 };
 
 GstMfxProfile
@@ -70,9 +70,9 @@ gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder)
 {
   g_return_if_fail (decoder != NULL);
 
-  if (!decoder->mapped)
+  if (!decoder->memtype_is_system)
     gst_mfx_task_use_video_memory (decoder->decode);
-  decoder->mapped = FALSE;
+  decoder->memtype_is_system = FALSE;
 }
 
 static void
@@ -86,12 +86,11 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
   g_queue_free(decoder->frames);
 
-  if ((decoder->param.mfx.CodecId == MFX_CODEC_HEVC)
-      || (decoder->param.mfx.CodecId == MFX_CODEC_VP8)
+  if ((decoder->param.mfx.CodecId == MFX_CODEC_VP8) ||
 #ifdef HAS_VP9
-      || (decoder->param.mfx.CodecId == MFX_CODEC_VP9)
+      (decoder->param.mfx.CodecId == MFX_CODEC_VP9) ||
 #endif
-      )
+      (decoder->param.mfx.CodecId == MFX_CODEC_HEVC))
     MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
 
   MFXVideoDECODE_Close (decoder->session);
@@ -100,50 +99,35 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
 static mfxStatus
 gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 {
-  mfxStatus sts;
-  guint i, c;
+  mfxStatus sts = MFX_ERR_NONE;
 
-  switch (decoder->param.mfx.CodecId) {
-    case MFX_CODEC_HEVC: {
-      gchar *uids[] = {
+    if ((decoder->param.mfx.CodecId == MFX_CODEC_VP8) ||
+#ifdef HAS_VP9
+      (decoder->param.mfx.CodecId == MFX_CODEC_VP9) ||
+#endif
+      (decoder->param.mfx.CodecId == MFX_CODEC_HEVC)) {
+    guint i, c;
+    gchar *uids[] = {
         "33a61c0b4c27454ca8d85dde757c6f8e",
         "15dd936825ad475ea34e35f3f54217a6",
-        NULL
-      };
-      for (i = 0; uids[i]; i++) {
-        for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
-          sscanf (uids[i] + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
-        sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
-        if (MFX_ERR_NONE == sts) {
-          if (!g_strcmp0 (uids[i], "15dd936825ad475ea34e35f3f54217a6"))
-            decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-          break;
-        }
-      }
-      break;
-    }
-    case MFX_CODEC_VP8: {
-      gchar *uid = "f622394d8d87452f878c51f2fc9b4131";
-      for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
-        sscanf (uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
-      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
-
-      break;
-    }
+        "f622394d8d87452f878c51f2fc9b4131",
 #ifdef HAS_VP9
-    case MFX_CODEC_VP9: {
-      gchar *uid = "a922394d8d87452f878c51f2fc9b4131";
-      for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
-        sscanf (uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
-      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
-
-      break;
-    }
+        "a922394d8d87452f878c51f2fc9b4131",
 #endif
-    default:
-      sts = MFX_ERR_NONE;
-  }
+        NULL
+    };
 
+    for (i = 0; uids[i]; i++) {
+      for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
+        sscanf (uids[i] + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
+      if (MFX_ERR_NONE == sts) {
+        if (!g_strcmp0 (uids[i], "15dd936825ad475ea34e35f3f54217a6"))
+          decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+        break;
+      }
+    }
+  }
   return sts;
 }
 
@@ -211,12 +195,12 @@ task_init (GstMfxDecoder * decoder)
     decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
-  decoder->mapped =
+  decoder->memtype_is_system =
     !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
-  decoder->request.Type = decoder->mapped ?
+  decoder->request.Type = decoder->memtype_is_system ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
-  if (decoder->mapped &&
+  if (decoder->memtype_is_system &&
       (GST_VIDEO_INFO_FORMAT (&decoder->info) == GST_VIDEO_FORMAT_NV12))
     gst_mfx_task_ensure_native_decoder_output (decoder->decode);
 
@@ -313,14 +297,14 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   GstVideoFormat out_format = GST_VIDEO_INFO_FORMAT (&decoder->info);
   GstVideoFormat vformat;
   mfxStatus sts = MFX_ERR_NONE;
-  gboolean mapped = gst_mfx_task_has_mapped_surface(decoder->decode);
+  gboolean memtype_is_system = gst_mfx_task_has_mapped_surface(decoder->decode);
 
-  if (mapped)
+  if (memtype_is_system)
     decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
 
   /* This makes sure no CSC happens with native mapped NV12 surfaces */
-  if (out_format == GST_VIDEO_FORMAT_NV12 && mapped)
-    decoder->mapped = TRUE;
+  if (out_format == GST_VIDEO_FORMAT_NV12 && memtype_is_system)
+    decoder->memtype_is_system = TRUE;
 
   sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
       &decoder->param);
@@ -347,9 +331,9 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       gst_video_format_from_mfx_fourcc(decoder->param.mfx.FrameInfo.FourCC);
 
   if (!gst_mfx_task_has_native_decoder_output(decoder->decode) &&
-      (out_format != vformat || mapped != decoder->mapped)) {
+      (out_format != vformat || memtype_is_system != decoder->memtype_is_system)) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
-        decoder->decode, GST_MFX_TASK_VPP_IN, mapped, decoder->mapped);
+        decoder->decode, GST_MFX_TASK_VPP_IN, memtype_is_system, decoder->memtype_is_system);
 
     if (!decoder->filter)
       return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;

@@ -126,7 +126,7 @@ gst_mfxenc_mpeg2_alloc_encoder (GstMfxEnc * base)
     return base->encoder;
 
   return gst_mfx_encoder_mpeg2_new (plugin->aggregator, &plugin->sinkpad_info,
-      plugin->mapped);
+      plugin->memtype_is_system);
 }
 
 static void
