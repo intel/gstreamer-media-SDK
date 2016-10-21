@@ -41,7 +41,7 @@ struct _GstMfxVideoBufferPoolPrivate
   guint has_video_meta:1;
   guint has_video_alignment:1;
   guint use_dmabuf_memory:1;
-  gboolean mapped;
+  gboolean memtype_is_system;
 };
 
 #define GST_MFX_VIDEO_BUFFER_POOL_GET_PRIVATE(obj) \
@@ -120,7 +120,7 @@ gst_mfx_video_buffer_pool_set_config (GstBufferPool * pool,
       allocator = gst_dmabuf_allocator_new ();
     else
       allocator = gst_mfx_video_allocator_new (priv->display, new_vip,
-          priv->mapped);
+          priv->memtype_is_system);
 
     if (!allocator)
       goto error_create_allocator;
@@ -301,7 +301,7 @@ gst_mfx_video_buffer_pool_init (GstMfxVideoBufferPool * pool)
 }
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new (GstMfxDisplay * display, gboolean mapped)
+gst_mfx_video_buffer_pool_new (GstMfxDisplay * display, gboolean memtype_is_system)
 {
   GstMfxVideoBufferPool *pool =
       g_object_new (GST_MFX_TYPE_VIDEO_BUFFER_POOL, NULL);
@@ -309,7 +309,7 @@ gst_mfx_video_buffer_pool_new (GstMfxDisplay * display, gboolean mapped)
       GST_MFX_VIDEO_BUFFER_POOL (pool)->priv;
 
   priv->display = gst_mfx_display_ref (display);
-  priv->mapped = mapped;
+  priv->memtype_is_system = memtype_is_system;
 
   return GST_BUFFER_POOL_CAST (pool);
 }

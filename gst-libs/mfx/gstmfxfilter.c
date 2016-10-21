@@ -328,13 +328,13 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
 
   /* Initialize input VPP surface pool when vpp input task is set */
   if (filter->vpp[0]) {
-    gboolean mapped = !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
+    gboolean memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
 
     filter->shared_request[0]->NumFrameSuggested += request[0].NumFrameSuggested;
     filter->shared_request[0]->NumFrameMin =
         filter->shared_request[0]->NumFrameSuggested;
 
-    if (!mapped) {
+    if (!memtype_is_system) {
       gst_mfx_task_use_video_memory (filter->vpp[0]);
       gst_mfx_task_set_request (filter->vpp[0], filter->shared_request[0]);
 
@@ -385,11 +385,11 @@ gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags)
 
 static void
 gst_mfx_filter_init (GstMfxFilter * filter,
-    GstMfxTaskAggregator * aggregator, gboolean mapped_in, gboolean mapped_out)
+    GstMfxTaskAggregator * aggregator, gboolean is_system_in, gboolean is_system_out)
 {
-  filter->params.IOPattern |= mapped_in ?
+  filter->params.IOPattern |= is_system_in ?
       MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
-  filter->params.IOPattern |= mapped_out ?
+  filter->params.IOPattern |= is_system_out ?
       MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   filter->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   filter->inited = FALSE;
@@ -439,7 +439,7 @@ gst_mfx_filter_class (void)
 
 GstMfxFilter *
 gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
-    gboolean mapped_in, gboolean mapped_out)
+    gboolean is_system_in, gboolean is_system_out)
 {
   GstMfxFilter *filter;
 
@@ -450,14 +450,14 @@ gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
   if (!filter)
     return NULL;
 
-  gst_mfx_filter_init (filter, aggregator, mapped_in, mapped_out);
+  gst_mfx_filter_init (filter, aggregator, is_system_in, is_system_out);
   return filter;
 }
 
 GstMfxFilter *
 gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task, GstMfxTaskType type,
-    gboolean mapped_in, gboolean mapped_out)
+    gboolean is_system_in, gboolean is_system_out)
 {
   GstMfxFilter *filter;
 
@@ -474,7 +474,7 @@ gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
 
   gst_mfx_task_set_task_type (task, gst_mfx_task_get_task_type (task) | type);
 
-  gst_mfx_filter_init (filter, aggregator, mapped_in, mapped_out);
+  gst_mfx_filter_init (filter, aggregator, is_system_in, is_system_out);
   return filter;
 }
 
@@ -1000,9 +1000,9 @@ static GstMfxFilterStatus
 gst_mfx_filter_start (GstMfxFilter * filter)
 {
   mfxStatus sts = MFX_ERR_NONE;
-  gboolean mapped = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
+  gboolean memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 
-  if (!mapped) {
+  if (!memtype_is_system) {
     filter->shared_request[1]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
     gst_mfx_task_use_video_memory (filter->vpp[1]);
 

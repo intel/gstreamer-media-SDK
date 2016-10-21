@@ -121,7 +121,7 @@ gst_mfxenc_jpeg_alloc_encoder (GstMfxEnc * base)
     return base->encoder;
 
   return gst_mfx_encoder_jpeg_new (plugin->aggregator, &plugin->sinkpad_info,
-      plugin->mapped);
+      plugin->memtype_is_system);
 }
 
 static void
