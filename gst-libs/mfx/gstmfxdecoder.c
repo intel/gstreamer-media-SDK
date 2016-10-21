@@ -365,11 +365,6 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 
     gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
 
-    /* assuming a reasonable async depth value to prevent stuttering
-     * when decoder is used with playbin and various sinks such as
-     * glimagesink, xvimagesink and cluttersink. */
-    gst_mfx_filter_set_async_depth (decoder->filter, 6);
-
     if (out_format != vformat)
       gst_mfx_filter_set_format (decoder->filter, out_format);
 

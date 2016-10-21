@@ -35,7 +35,7 @@
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAT_DEFAULT mfxdec_debug
 
-#define DEFAULT_ASYNC_DEPTH 4
+#define DEFAULT_ASYNC_DEPTH 8
 
 /* Default templates */
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
