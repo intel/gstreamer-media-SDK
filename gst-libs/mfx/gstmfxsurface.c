@@ -179,7 +179,8 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
 {
   mfxFrameInfo *info = &surface->surface.Info;
 
-  surface->format = gst_video_format_from_mfx_fourcc (info->FourCC);
+  surface->format = surface->format ? surface->format :
+      gst_video_format_from_mfx_fourcc (info->FourCC);
   surface->width = info->Width;
   surface->height = info->Height;
 
@@ -201,6 +202,7 @@ gst_mfx_surface_create(GstMfxSurface * surface, GstVideoInfo * info,
     surface->surface.Info = req->Info;
   }
   else if (info) {
+    surface->format = GST_VIDEO_INFO_FORMAT(info);
     gst_mfx_surface_derive_mfx_frame_info(surface, info);
   }
 
