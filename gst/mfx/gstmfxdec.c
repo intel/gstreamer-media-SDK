@@ -435,7 +435,6 @@ static GstFlowReturn
 gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 {
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
-  GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vdec);
   GstMfxDecoderStatus sts;
   GstFlowReturn ret = GST_FLOW_OK;
   GstVideoCodecFrame *out_frame = NULL;
