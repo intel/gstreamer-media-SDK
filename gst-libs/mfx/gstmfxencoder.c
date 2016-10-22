@@ -32,7 +32,7 @@
 
 #define DEFAULT_ENCODER_PRESET      GST_MFX_ENCODER_PRESET_MEDIUM
 #define DEFAULT_QUANTIZER           21
-#define DEFAULT_ASYNC_DEPTH         8
+#define DEFAULT_ASYNC_DEPTH         10
 
 /* Helper function to create a new encoder property object */
 static GstMfxEncoderPropData *
