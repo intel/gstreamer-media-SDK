@@ -402,8 +402,8 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
       break;
   }
 
-  width = src_rect->width;
-  height = src_rect->height;
+  width = GST_ROUND_UP_8 (src_rect->width);
+  height = GST_ROUND_UP_8 (src_rect->height);
   stride = width * bpp / 8;
   size = GST_ROUND_UP_N (stride * height, 4096);
 
