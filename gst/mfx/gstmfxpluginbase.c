@@ -432,6 +432,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   has_video_meta = gst_query_find_allocation_meta (query,
       GST_VIDEO_META_API_TYPE, NULL);
 
+#if GST_CHECK_VERSION(1,8,0)
 #ifdef HAVE_GST_GL_LIBS
   if (!plugin->memtype_is_system && gst_query_find_allocation_meta(query,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
@@ -439,19 +440,19 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     if (params) {
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
           &gl_context, NULL) && gl_context) {
-#if GST_CHECK_VERSION(1,8,0)
+
         plugin->srcpad_has_dmabuf =
             (GST_IS_GL_CONTEXT_EGL (gl_context) &&
             !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
             gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
               GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
-#endif
         gst_object_unref (gl_context);
       }
     }
     if (!plugin->srcpad_has_dmabuf)
       plugin->memtype_is_system = TRUE;
   }
+#endif
 #endif
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
@@ -655,6 +656,7 @@ error_copy_buffer:
   }
 }
 
+#if GST_CHECK_VERSION(1,8,0)
 gboolean
 gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
     GstBuffer * outbuf)
@@ -722,3 +724,4 @@ error_dmabuf_handle:
     return FALSE;
   }
 }
+#endif

@@ -179,8 +179,6 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
 {
   mfxFrameInfo *info = &surface->surface.Info;
 
-  surface->format = surface->format ? surface->format :
-      gst_video_format_from_mfx_fourcc (info->FourCC);
   surface->width = info->Width;
   surface->height = info->Height;
 
@@ -200,16 +198,17 @@ gst_mfx_surface_create(GstMfxSurface * surface, GstVideoInfo * info,
     if (!req)
       return FALSE;
     surface->surface.Info = req->Info;
+    surface->format = gst_video_format_from_mfx_fourcc (req->Info.FourCC);
   }
   else if (info) {
-    surface->format = GST_VIDEO_INFO_FORMAT(info);
     gst_mfx_surface_derive_mfx_frame_info(surface, info);
+    surface->format = GST_VIDEO_INFO_FORMAT(info);
   }
 
   if (!GST_MFX_SURFACE_GET_CLASS(surface)->allocate(surface, task))
     return FALSE;
-  gst_mfx_surface_init_properties(surface);
 
+  gst_mfx_surface_init_properties(surface);
   return TRUE;
 }
 
@@ -219,7 +218,6 @@ gst_mfx_surface_finalize (GstMfxSurface * surface)
   GstMfxSurfaceClass *klass = GST_MFX_SURFACE_GET_CLASS(surface);
   if (klass->release)
     klass->release(surface);
-
   gst_mfx_display_replace(&surface->display, NULL);
 }
 

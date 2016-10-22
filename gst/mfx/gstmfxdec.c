@@ -411,9 +411,10 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
     }
   }
 
+#if GST_CHECK_VERSION(1,8,0)
   gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (mfxdec),
       frame->output_buffer);
-
+#endif
   return gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
   /* ERRORS */
 error_create_buffer:

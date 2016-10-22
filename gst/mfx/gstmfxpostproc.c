@@ -612,11 +612,12 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
   } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
 
+#if GST_CHECK_VERSION(1,8,0)
   gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp),
       outbuf);
+#endif // GST_CHECK_VERSION
 
   gst_buffer_unref (buf);
-
   return GST_FLOW_OK;
   /* ERRORS */
 error_create_buffer:
