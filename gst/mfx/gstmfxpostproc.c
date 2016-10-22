@@ -244,6 +244,7 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
 
     vpp->cb_changed = vpp->hue != new_val;
     vpp->hue = new_val;
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
   } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
     if (new_val < 500 )
         new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
@@ -254,11 +255,13 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
 
     vpp->cb_changed = vpp->saturation != new_val;
     vpp->saturation = new_val;
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
   } else if (g_ascii_strcasecmp (channel->label, "BRIGHTNESS") == 0) {
     new_val = (new_val / 10.0);
 
     vpp->cb_changed = vpp->brightness != new_val;
     vpp->brightness = new_val;
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
   } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
     if (new_val < 500 )
         new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
@@ -269,6 +272,7 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
 
     vpp->cb_changed = vpp->contrast != new_val;
     vpp->contrast = new_val;
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
   } else {
     g_warning ("got an unknown channel %s", channel->label);
     return;
