@@ -910,8 +910,10 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
     s0 = gst_caps_get_structure (out_caps, 0);
     s1 = gst_structure_copy (gst_caps_get_structure (out_caps, 0));
 
-    gst_structure_set (s0, "width", G_TYPE_INT, sink->window_width,
-        "height", G_TYPE_INT, sink->window_height, NULL);
+    gst_structure_set (s0,
+        "width", G_TYPE_INT, GST_ROUND_UP_8 (sink->display_rect.width),
+        "height", G_TYPE_INT, GST_ROUND_UP_8 (sink->display_rect.height),
+        NULL);
     gst_caps_append_structure (out_caps, s1);
   }
 
