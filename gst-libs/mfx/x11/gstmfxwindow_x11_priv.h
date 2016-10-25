@@ -46,6 +46,7 @@ struct _GstMfxWindowX11Private
 
   guint   is_mapped : 1;
   guint   fullscreen_on_map : 1;
+  xcb_connection_t *xcbconn;
 };
 
 /**

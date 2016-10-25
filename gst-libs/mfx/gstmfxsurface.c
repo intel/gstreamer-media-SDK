@@ -178,6 +178,7 @@ static void
 gst_mfx_surface_init_properties(GstMfxSurface * surface)
 {
   mfxFrameInfo *info = &surface->surface.Info;
+  mfxFrameData *ptr = &surface->surface.Data;
 
   surface->width = info->Width;
   surface->height = info->Height;
@@ -186,6 +187,23 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   surface->crop_rect.y = info->CropY;
   surface->crop_rect.width = info->CropW;
   surface->crop_rect.height = info->CropH;
+
+#ifndef WITH_MSS
+  /* Full color range */
+  surface->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
+  surface->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
+  surface->siginfo.TransferMatrix = MFX_TRANSFERMATRIX_UNKNOWN;
+  surface->siginfo.NominalRange = MFX_NOMINALRANGE_0_255;
+
+  if (NULL == surface->ext_buf) {
+    surface->ext_buf = g_slice_alloc (sizeof (mfxExtBuffer *));
+    if (NULL != surface->ext_buf) {
+      surface->ext_buf[0] = (mfxExtBuffer *) &surface->siginfo;
+      ptr->NumExtParam = 1;
+      ptr->ExtParam = &surface->ext_buf[0];
+    }
+  }
+#endif
 }
 
 static gboolean
@@ -216,6 +234,9 @@ static void
 gst_mfx_surface_finalize (GstMfxSurface * surface)
 {
   GstMfxSurfaceClass *klass = GST_MFX_SURFACE_GET_CLASS(surface);
+
+  if (surface->ext_buf)
+    g_slice_free (mfxExtBuffer *, surface->ext_buf);
   if (klass->release)
     klass->release(surface);
   gst_mfx_display_replace(&surface->display, NULL);
