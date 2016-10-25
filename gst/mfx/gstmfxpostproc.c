@@ -346,7 +346,7 @@ find_best_size (GstMfxPostproc * postproc, GstVideoInfo * vip,
     width = postproc->width;
     height = postproc->height;
   } else if (postproc->keep_aspect) {
-    const gdouble ratio = (gdouble) width / height;
+    const gdouble ratio = (gdouble) 1920 / 1080;
     if (postproc->width) {
       width = postproc->width;
       height = postproc->width / ratio;
@@ -827,6 +827,8 @@ gst_mfxpostproc_transform_caps (GstBaseTransform * trans,
 static gboolean
 gst_mfxpostproc_create (GstMfxPostproc * vpp)
 {
+  guint width, height;
+
   if (!gst_mfxpostproc_ensure_filter (vpp))
     return FALSE;
 
@@ -896,6 +898,8 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
   gboolean caps_changed = FALSE;
+  guint width, height;
+
 
   if (!gst_mfxpostproc_update_sink_caps (vpp, caps, &caps_changed))
     return FALSE;
@@ -909,6 +913,7 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
     if (!gst_mfx_plugin_base_set_caps (GST_MFX_PLUGIN_BASE (vpp),
             caps, out_caps))
       return FALSE;
+
     if (!gst_mfxpostproc_create (vpp))
       return FALSE;
   }

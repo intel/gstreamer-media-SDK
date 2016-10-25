@@ -402,26 +402,36 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
       break;
   }
 
-  width = GST_ROUND_UP_8 (src_rect->width);
-  height = GST_ROUND_UP_8 (src_rect->height);
+  width = GST_ROUND_UP_8 (dst_rect->width);
+  height = GST_ROUND_UP_8 (dst_rect->height);
   stride = width * bpp / 8;
   size = GST_ROUND_UP_N (stride * height, 4096);
 
+  GST_MFX_DISPLAY_LOCK (x11_display);
   pixmap = xcb_generate_id (xcbconn);
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
+
+  GST_MFX_DISPLAY_LOCK (x11_display);
   xcb_dri3_pixmap_from_buffer (xcbconn, pixmap, root, size,
       width, height, stride, depth, bpp,
       GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
   if (!pixmap)
     return FALSE;
 
   GST_MFX_DISPLAY_LOCK (x11_display);
   xcb_present_pixmap (xcbconn, GST_MFX_WINDOW_ID (window), pixmap,
-      0, 0, 0, 0, 0, None, None, None, XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0,
+      0, 0, 0, dst_rect->x, dst_rect->y, None, None, None, XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0,
       NULL);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
+  GST_MFX_DISPLAY_LOCK (x11_display);
   xcb_free_pixmap (xcbconn, pixmap);
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
+
+  GST_MFX_DISPLAY_LOCK (x11_display);
   xcb_flush (xcbconn);
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
 #else
