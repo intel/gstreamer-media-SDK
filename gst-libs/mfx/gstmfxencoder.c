@@ -24,7 +24,7 @@
 #include "gstmfxfilter.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxvideometa.h"
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 #include "gstmfxtask.h"
 
 #define DEBUG 1
@@ -32,7 +32,7 @@
 
 #define DEFAULT_ENCODER_PRESET      GST_MFX_ENCODER_PRESET_MEDIUM
 #define DEFAULT_QUANTIZER           21
-#define DEFAULT_ASYNC_DEPTH         4
+#define DEFAULT_ASYNC_DEPTH         10
 
 /* Helper function to create a new encoder property object */
 static GstMfxEncoderPropData *
@@ -428,17 +428,17 @@ init_encoder_task (GstMfxEncoder * encoder)
 
 static gboolean
 gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
-    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean mapped)
+    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean memtype_is_system)
 {
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
-  if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !mapped) {
+  if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !memtype_is_system) {
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
 
     if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER) &&
         gst_mfx_task_has_native_decoder_output (task)) {
-      mapped = TRUE;
+      memtype_is_system = TRUE;
 
       init_encoder_task (encoder);
       gst_mfx_task_unref (task);
@@ -463,7 +463,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   encoder->bs.Data = encoder->bitstream->data;
 
   encoder->info = *info;
-  encoder->mapped = mapped;
+  encoder->memtype_is_system = memtype_is_system;
 
   return TRUE;
 }
@@ -471,7 +471,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 /* Base encoder initialization (internal) */
 static gboolean
 gst_mfx_encoder_init (GstMfxEncoder * encoder,
-    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean mapped)
+    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean memtype_is_system)
 {
   GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
 
@@ -488,7 +488,7 @@ gst_mfx_encoder_init (GstMfxEncoder * encoder,
 
 #undef CHECK_VTABLE_HOOK
 
-  if (!gst_mfx_encoder_init_properties (encoder, aggregator, info, mapped))
+  if (!gst_mfx_encoder_init_properties (encoder, aggregator, info, memtype_is_system))
     return FALSE;
   if (!klass->init (encoder))
     return FALSE;
@@ -528,7 +528,7 @@ gst_mfx_encoder_finalize (GstMfxEncoder * encoder)
 
 GstMfxEncoder *
 gst_mfx_encoder_new (const GstMfxEncoderClass * klass,
-    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean mapped)
+    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean memtype_is_system)
 {
   GstMfxEncoder *encoder;
 
@@ -538,7 +538,7 @@ gst_mfx_encoder_new (const GstMfxEncoderClass * klass,
   if (!encoder)
      return NULL;
 
-  if (!gst_mfx_encoder_init (encoder, aggregator, info, mapped))
+  if (!gst_mfx_encoder_init (encoder, aggregator, info, memtype_is_system))
      goto error;
 
   return encoder;
@@ -811,11 +811,11 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   mfxStatus sts = MFX_ERR_NONE;
   mfxFrameAllocRequest *request;
   mfxFrameAllocRequest enc_request;
-  gboolean mapped = FALSE;
+  gboolean memtype_is_system = FALSE;
 
   /* Use input system memory with SW HEVC encoder */
   if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7"))
-    mapped = TRUE;
+    memtype_is_system = TRUE;
 
   memset (&enc_request, 0, sizeof (mfxFrameAllocRequest));
 
@@ -825,13 +825,13 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
       &encoder->params);
   if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
     GST_WARNING ("Partial acceleration %d", sts);
-    mapped = TRUE;
+    memtype_is_system = TRUE;
   }
   else if (sts == MFX_WRN_INCOMPATIBLE_VIDEO_PARAM) {
     GST_WARNING ("Incompatible video params detected %d", sts);
   }
 
-  if (mapped) {
+  if (memtype_is_system) {
     encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
   }
   else {
@@ -858,9 +858,9 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   }
 
   if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
-      encoder->mapped) {
+      encoder->memtype_is_system) {
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
-        encoder->encode, GST_MFX_TASK_VPP_OUT, encoder->mapped, mapped);
+        encoder->encode, GST_MFX_TASK_VPP_OUT, encoder->memtype_is_system, memtype_is_system);
 
     request->NumFrameSuggested += (1 - encoder->params.AsyncDepth);
 
@@ -888,24 +888,24 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 GstMfxEncoderStatus
 gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 {
-  GstMfxSurfaceProxy *proxy, *filter_proxy;
+  GstMfxSurface *surface, *filter_surface;
   GstMfxFilterStatus filter_sts;
   mfxFrameSurface1 *insurf;
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
-  proxy = gst_video_codec_frame_get_user_data (frame);
+  surface = gst_video_codec_frame_get_user_data (frame);
 
   if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT)) {
-    filter_sts = gst_mfx_filter_process (encoder->filter, proxy, &filter_proxy);
+    filter_sts = gst_mfx_filter_process (encoder->filter, surface, &filter_surface);
     if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
       GST_ERROR ("MFX pre-processing error during encode.");
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
     }
-    proxy = filter_proxy;
+    surface = filter_surface;
   }
 
-  insurf = gst_mfx_surface_proxy_get_frame_surface (proxy);
+  insurf = gst_mfx_surface_get_frame_surface (surface);
 
   do {
     sts = MFXVideoENCODE_EncodeFrameAsync (encoder->session,

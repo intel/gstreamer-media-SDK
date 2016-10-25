@@ -26,7 +26,7 @@
 #include <gst/video/video.h>
 
 #include <gst-libs/mfx/gstmfxdisplay.h>
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurface.h>
 #include <gst-libs/mfx/gstmfxsurfacepool.h>
 #include <gst-libs/mfx/gstmfxutils_vaapi.h>
 
@@ -56,12 +56,12 @@ void
 gst_mfx_video_meta_replace (GstMfxVideoMeta ** old_meta_ptr,
     GstMfxVideoMeta * new_meta);
 
-GstMfxSurfaceProxy *
-gst_mfx_video_meta_get_surface_proxy (GstMfxVideoMeta * meta);
+GstMfxSurface *
+gst_mfx_video_meta_get_surface (GstMfxVideoMeta * meta);
 
 void
-gst_mfx_video_meta_set_surface_proxy (GstMfxVideoMeta * meta,
-  GstMfxSurfaceProxy * proxy);
+gst_mfx_video_meta_set_surface (GstMfxVideoMeta * meta,
+  GstMfxSurface * surface);
 
 GstMfxVideoMeta *
 gst_buffer_get_mfx_video_meta (GstBuffer * buffer);

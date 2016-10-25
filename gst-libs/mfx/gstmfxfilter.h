@@ -22,7 +22,7 @@
 #ifndef GST_MFX_FILTER_H
 #define GST_MFX_FILTER_H
 
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 #include "gstmfxtaskaggregator.h"
 #include "video-format.h"
 
@@ -145,12 +145,12 @@ typedef enum {
 
 GstMfxFilter *
 gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
-    gboolean mapped_in, gboolean mapped_out);
+    gboolean is_system_in, gboolean is_system_out);
 
 GstMfxFilter *
 gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task, GstMfxTaskType type,
-    gboolean mapped_in, gboolean mapped_out);
+    gboolean is_system_in, gboolean is_system_out);
 
 GstMfxFilter *
 gst_mfx_filter_ref (GstMfxFilter * filter);
@@ -166,8 +166,11 @@ gboolean
 gst_mfx_filter_prepare (GstMfxFilter * filter);
 
 GstMfxFilterStatus
-gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurfaceProxy *proxy,
-    GstMfxSurfaceProxy ** out_proxy);
+gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface *surface,
+    GstMfxSurface ** out_surface);
+
+GstMfxFilterStatus
+gst_mfx_filter_reset (GstMfxFilter * filter);
 
 gboolean
 gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags);

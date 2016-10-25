@@ -24,6 +24,7 @@
 #include <drm/drm_fourcc.h>
 #include "gstmfxtexture_egl.h"
 #include "gstmfxutils_egl.h"
+#include "gstmfxsurface_vaapi.h"
 #include "gstmfxdisplay_egl.h"
 #include "gstmfxdisplay_egl_priv.h"
 #include "gstmfxprimebufferproxy.h"
@@ -56,28 +57,28 @@ struct _GstMfxTextureEGL
 typedef struct
 {
   GstMfxTextureEGL *texture;
-  GstMfxSurfaceProxy *proxy;
+  GstMfxSurface *surface;
   const GstMfxRectangle *crop_rect;
   gboolean success;             /* result */
 } UploadSurfaceArgs;
 
 static gboolean
 do_bind_texture_unlocked (GstMfxTextureEGL * texture,
-    GstMfxSurfaceProxy * proxy)
+    GstMfxSurface * surface)
 {
   EglContext *const ctx = texture->egl_context;
   EglVTable *const vtable = egl_context_get_vtable (ctx, FALSE);
   GstMfxPrimeBufferProxy *buffer_proxy;
   VaapiImage *image;
 
-  if (!gst_mfx_surface_proxy_is_mapped (proxy)) {
+  if (gst_mfx_surface_has_video_memory (surface)) {
     GLint attribs[23], *attrib;
 
-    buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
+    buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
     if (!buffer_proxy)
       return FALSE;
 
-    image = gst_mfx_surface_proxy_derive_image (proxy);
+    image = gst_mfx_surface_vaapi_derive_image (surface);
     if (!image)
       goto error_derive_va_image;
 
@@ -121,7 +122,7 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
     texture->texture_id =
         egl_create_texture_from_data (texture->egl_context, GL_TEXTURE_2D,
         GL_BGRA_EXT, texture->width, texture->height,
-        gst_mfx_surface_proxy_get_data (proxy));
+        gst_mfx_surface_get_plane (surface, 0));
     if (!texture->texture_id) {
       GST_ERROR ("failed to create texture from raw data");
       return FALSE;
@@ -153,7 +154,7 @@ do_bind_texture (UploadSurfaceArgs * args)
 
   GST_MFX_DISPLAY_LOCK (texture->display);
   if (egl_context_set_current (texture->egl_context, TRUE, &old_cs)) {
-    args->success = do_bind_texture_unlocked (texture, args->proxy);
+    args->success = do_bind_texture_unlocked (texture, args->surface);
     egl_context_set_current (texture->egl_context, FALSE, &old_cs);
   }
   GST_MFX_DISPLAY_UNLOCK (texture->display);
@@ -355,9 +356,9 @@ gst_mfx_texture_egl_get_height (GstMfxTextureEGL * texture)
 
 gboolean
 gst_mfx_texture_egl_put_surface (GstMfxTextureEGL * texture,
-    GstMfxSurfaceProxy * proxy)
+    GstMfxSurface * surface)
 {
-  UploadSurfaceArgs args = { texture, proxy };
+  UploadSurfaceArgs args = { texture, surface };
 
   return egl_context_run (texture->egl_context,
       (EglContextRunFunc) do_bind_texture, &args) && args.success;

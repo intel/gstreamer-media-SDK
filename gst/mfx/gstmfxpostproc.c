@@ -23,6 +23,7 @@
 
 #include "gst-libs/mfx/sysdeps.h"
 #include <gst/video/video.h>
+#include <gst/video/colorbalance.h>
 
 #include "gstmfxpostproc.h"
 #include "gstmfxpluginutil.h"
@@ -34,6 +35,9 @@
 
 GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxpostproc);
 #define GST_CAT_DEFAULT gst_debug_mfxpostproc
+
+static void
+gst_mfxpostproc_color_balance_iface_init (GstColorBalanceInterface * iface);
 
 /* Default templates */
 static const char gst_mfxpostproc_sink_caps_str[] =
@@ -62,8 +66,10 @@ GST_STATIC_PAD_TEMPLATE ("src",
 
 G_DEFINE_TYPE_WITH_CODE (GstMfxPostproc,
     gst_mfxpostproc,
-    GST_TYPE_BASE_TRANSFORM, GST_MFX_PLUGIN_BASE_INIT_INTERFACES);
-
+    GST_TYPE_BASE_TRANSFORM,
+    GST_MFX_PLUGIN_BASE_INIT_INTERFACES
+    G_IMPLEMENT_INTERFACE (GST_TYPE_COLOR_BALANCE,
+        gst_mfxpostproc_color_balance_iface_init));
 
 enum
 {
@@ -88,6 +94,10 @@ enum
 #define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 #define DEFAULT_FRC_ALG                 GST_MFX_FRC_NONE
+#define DEFAULT_BRIGHTNESS              0.0
+#define DEFAULT_SATURATION              1.0
+#define DEFAULT_HUE                     0.0
+#define DEFAULT_CONTRAST                1.0
 
 GType
 gst_mfx_rotation_get_type (void)
@@ -159,6 +169,171 @@ gst_mfx_frc_algorithm_get_type (void)
   return alg;
 }
 
+
+/* ------------------------------------------------------------------------ */
+/* --- GstColorBalance implementation                                   --- */
+/* ------------------------------------------------------------------------ */
+
+enum {
+  CB_HUE = 1,
+  CB_SATURATION,
+  CB_BRIGHTNESS,
+  CB_CONTRAST
+};
+
+typedef struct {
+  guint cb_id;
+  const gchar *channel_name;
+  gfloat min_val;
+  gfloat max_val;
+} ColorBalanceMap;
+
+static const ColorBalanceMap cb_map[4] = {
+  {CB_HUE, "HUE", -1800.0, 1800.0},
+  {CB_SATURATION, "SATURATION", 0.0, 1000.0},
+  {CB_BRIGHTNESS, "BRIGHTNESS", -1000.0, 1000.0},
+  {CB_CONTRAST, "CONTRAST", 0.0, 1000.0}
+};
+
+static GstColorBalanceType
+gst_mfxpostproc_color_balance_get_type (GstColorBalance *cb)
+{
+  return GST_COLOR_BALANCE_HARDWARE;
+}
+
+static void
+cb_channels_init (GstMfxPostproc * vpp)
+{
+  GstColorBalanceChannel *channel;
+  guint i;
+  for (i = 0; i < G_N_ELEMENTS(cb_map); i++) {
+    channel = g_object_new (GST_TYPE_COLOR_BALANCE_CHANNEL, NULL);
+    channel->label = g_strdup (cb_map[i].channel_name);
+    channel->min_value = cb_map[i].min_val;
+    channel->max_value = cb_map[i].max_val;
+    vpp->channels = g_list_prepend (vpp->channels, channel);
+  }
+}
+
+static void
+cb_channels_finalize (GstMfxPostproc * vpp)
+{
+  if (vpp->channels) {
+    g_list_free_full (vpp->channels, g_object_unref);
+    vpp->channels = NULL;
+  }
+}
+
+static void
+gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
+    GstColorBalanceChannel * channel, gint value)
+{
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (cb);
+  gfloat new_val = value;
+
+  /* To get the right value reflected from the gtk-play
+   * color balance slider, the value must be normalized.
+   * gtk-play set's the default value for all color balance
+   * properties to 0.5. Since the default value for saturation
+   * and contrast in MediaSDK is 1.0 with range of 0 to 10 with 0.01
+   * increment, the value need to normalized to 0-1 for
+   * value less than 500 and 1-10 for value more than 500. */
+
+  if (g_ascii_strcasecmp (channel->label, "HUE") == 0) {
+    new_val = (new_val / 10.0);
+
+    vpp->cb_changed = vpp->hue != new_val;
+    vpp->hue = new_val;
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+  } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
+    if (new_val < 500 )
+        new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
+    else if (new_val > 500 )
+        new_val = ((10.0 - 1.0)/(1000.0 - 500.0) * (new_val-500.0))+1.0;
+    else
+        new_val = 1.0;
+
+    vpp->cb_changed = vpp->saturation != new_val;
+    vpp->saturation = new_val;
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+  } else if (g_ascii_strcasecmp (channel->label, "BRIGHTNESS") == 0) {
+    new_val = (new_val / 10.0);
+
+    vpp->cb_changed = vpp->brightness != new_val;
+    vpp->brightness = new_val;
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+  } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
+    if (new_val < 500 )
+        new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
+    else if (new_val > 500 )
+        new_val = ((10.0 - 1.0)/(1000.0 - 500.0) * (new_val-500.0))+1.0;
+    else
+        new_val = 1.0;
+
+    vpp->cb_changed = vpp->contrast != new_val;
+    vpp->contrast = new_val;
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+  } else {
+    g_warning ("got an unknown channel %s", channel->label);
+    return;
+  }
+}
+
+static gint
+gst_mfxpostproc_color_balance_get_value (GstColorBalance *cb,
+    GstColorBalanceChannel * channel)
+{
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (cb);
+  gint value = 0;
+
+  g_return_val_if_fail (channel->label != NULL, 0);
+
+  if (g_ascii_strcasecmp (channel->label, "HUE") == 0) {
+    value = vpp->hue * 10;
+  } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
+    if (vpp->saturation < 1.0)
+        value = vpp->saturation * 500.0;
+    else if (vpp->saturation > 1.0)
+	value = (vpp->saturation-1.0) *
+            ((1000.0 - 500.0) / (10 - 1)) + 500;
+    else
+        value = vpp->saturation;
+  } else if (g_ascii_strcasecmp (channel->label, "BRIGHTNESS") == 0) {
+    value = vpp->brightness * 10;
+  } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
+    if (vpp->contrast < 1.0)
+        value = vpp->contrast * 500.0;
+    else if (vpp->contrast > 1.0)
+	value = (vpp->contrast-1.0) *
+            ((1000.0 - 500.0) / (10 - 1)) + 500;
+    else
+        value = vpp->contrast;
+  } else {
+    g_warning ("got an unknown channel %s", channel->label);
+  }
+  return value;
+}
+
+static const GList *
+gst_mfxpostproc_color_balance_list_channels (GstColorBalance *cb)
+{
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (cb);
+
+  if (!vpp->channels)
+    cb_channels_init (vpp);
+
+  return vpp->channels;
+}
+
+static void
+gst_mfxpostproc_color_balance_iface_init (GstColorBalanceInterface * iface)
+{
+  iface->list_channels = gst_mfxpostproc_color_balance_list_channels;
+  iface->set_value = gst_mfxpostproc_color_balance_set_value;
+  iface->get_value = gst_mfxpostproc_color_balance_get_value;
+  iface->get_balance_type = gst_mfxpostproc_color_balance_get_type;
+}
+
 static void
 find_best_size (GstMfxPostproc * postproc, GstVideoInfo * vip,
     guint * width_ptr, guint * height_ptr)
@@ -204,7 +379,7 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
-  gboolean srcpad_mapped =
+  gboolean srcpad_has_raw_caps =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
 
   if (vpp->filter)
@@ -214,24 +389,25 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     return FALSE;
 
   /* Check if upstream MFX decoder element outputs raw native NV12 surfaces */
-  if (!plugin->mapped && !plugin->sinkpad_use_dmabuf) {
+  if (!plugin->memtype_is_system && !plugin->sinkpad_has_dmabuf) {
     if (!vpp->peer_decoder)
       vpp->peer_decoder =
           gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
     if (gst_mfx_task_has_type (vpp->peer_decoder, GST_MFX_TASK_DECODER))
-      plugin->mapped = gst_mfx_task_has_native_decoder_output (vpp->peer_decoder);
+      plugin->memtype_is_system =
+          gst_mfx_task_has_native_decoder_output (vpp->peer_decoder);
   }
 
   /* If sinkpad caps indicate video memory input,
-   * srcpad should not be mapped for vid-to-vid vpp */
-  if (!plugin->mapped && srcpad_mapped)
-    srcpad_mapped = FALSE;
+   * srcpad should be mapped for vid-to-vid vpp */
+  if (!plugin->memtype_is_system && srcpad_has_raw_caps)
+    srcpad_has_raw_caps = FALSE;
 
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
-      plugin->mapped, srcpad_mapped);
+      plugin->memtype_is_system, srcpad_has_raw_caps);
   if (!vpp->filter)
     return FALSE;
   return TRUE;
@@ -335,13 +511,40 @@ error_create_buffer:
   }
 }
 
+static void
+gst_mfxpostproc_before_transform (GstBaseTransform * trans,
+    GstBuffer * buf)
+{
+  GstMfxPostproc *mfxvpp = GST_MFXPOSTPROC (trans);
+  GstClockTime timestamp, stream_time;
+
+  timestamp = GST_BUFFER_TIMESTAMP (buf);
+  stream_time =
+      gst_segment_to_stream_time (&trans->segment, GST_FORMAT_TIME, timestamp);
+
+  GST_DEBUG_OBJECT (mfxvpp, "sync to %" GST_TIME_FORMAT,
+      GST_TIME_ARGS (timestamp));
+
+  if (GST_CLOCK_TIME_IS_VALID (stream_time))
+    gst_object_sync_values (GST_OBJECT (mfxvpp), stream_time);
+
+  if (mfxvpp->cb_changed) {
+    gst_mfx_filter_set_saturation(mfxvpp->filter, mfxvpp->saturation);
+    gst_mfx_filter_set_contrast(mfxvpp->filter, mfxvpp->contrast);
+    gst_mfx_filter_set_hue(mfxvpp->filter, mfxvpp->hue);
+    gst_mfx_filter_set_brightness(mfxvpp->filter, mfxvpp->brightness);
+    gst_mfx_filter_reset(mfxvpp->filter);
+    mfxvpp->cb_changed = FALSE;
+  }
+}
+
 static GstFlowReturn
 gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     GstBuffer * outbuf)
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
   GstMfxVideoMeta *inbuf_meta, *outbuf_meta;
-  GstMfxSurfaceProxy *proxy, *out_proxy;
+  GstMfxSurface *surface, *out_surface;
   GstMfxFilterStatus status;
   GstFlowReturn ret;
   GstMfxRectangle *crop_rect = NULL;
@@ -357,9 +560,9 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     return GST_FLOW_ERROR;
 
   inbuf_meta = gst_buffer_get_mfx_video_meta (buf);
-  proxy = gst_mfx_video_meta_get_surface_proxy (inbuf_meta);
-  if (!proxy)
-    goto error_create_proxy;
+  surface = gst_mfx_video_meta_get_surface (inbuf_meta);
+  if (!surface)
+    goto error_create_surface;
 
   do {
     if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
@@ -368,7 +571,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
         goto error_create_buffer;
     }
 
-    status = gst_mfx_filter_process (vpp->filter, proxy, &out_proxy);
+    status = gst_mfx_filter_process (vpp->filter, surface, &out_surface);
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status)
       outbuf_meta = gst_buffer_get_mfx_video_meta (buf);
     else
@@ -377,8 +580,8 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     if (!outbuf_meta)
       goto error_create_meta;
 
-    gst_mfx_video_meta_set_surface_proxy (outbuf_meta, out_proxy);
-    crop_rect = gst_mfx_surface_proxy_get_crop_rect (out_proxy);
+    gst_mfx_video_meta_set_surface (outbuf_meta, out_surface);
+    crop_rect = gst_mfx_surface_get_crop_rect (out_surface);
     if (crop_rect) {
       GstVideoCropMeta *const crop_meta =
           gst_buffer_add_video_crop_meta (outbuf);
@@ -413,11 +616,12 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
   } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
 
+#if GST_CHECK_VERSION(1,8,0)
   gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp),
       outbuf);
+#endif // GST_CHECK_VERSION
 
   gst_buffer_unref (buf);
-
   return GST_FLOW_OK;
   /* ERRORS */
 error_create_buffer:
@@ -432,9 +636,9 @@ error_create_meta:
     gst_buffer_unref (buf);
     return GST_FLOW_ERROR;
   }
-error_create_proxy:
+error_create_surface:
   {
-    GST_ERROR ("failed to create surface proxy from buffer");
+    GST_ERROR ("failed to create surface surface from buffer");
     gst_buffer_unref (buf);
     return GST_FLOW_ERROR;
   }
@@ -882,6 +1086,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   trans_class->query = gst_mfxpostproc_query;
   trans_class->propose_allocation = gst_mfxpostproc_propose_allocation;
   trans_class->decide_allocation = gst_mfxpostproc_decide_allocation;
+  trans_class->before_transform = gst_mfxpostproc_before_transform;
 
   gst_element_class_set_static_metadata (element_class,
       "MFX video postprocessing",
@@ -993,7 +1198,8 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
       g_param_spec_float ("hue",
           "Hue",
           "The color hue value",
-          -180.0, 180.0, 0.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          -180.0, 180.0, 0.0, GST_PARAM_CONTROLLABLE |
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:saturation:
@@ -1006,7 +1212,8 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
       g_param_spec_float ("saturation",
           "Saturation",
           "The color saturation value",
-          0.0, 10.0, 1.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          0.0, 10.0, 1.0, GST_PARAM_CONTROLLABLE |
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:brightness:
@@ -1019,7 +1226,8 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
       g_param_spec_float ("brightness",
           "Brightness",
           "The color brightness value",
-          -100.0, 100.0, 0.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          -100.0, 100.0, 0.0, GST_PARAM_CONTROLLABLE |
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:contrast:
@@ -1032,7 +1240,8 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
       g_param_spec_float ("contrast",
           "Contrast",
           "The color contrast value",
-          0.0, 10.0, 1.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          0.0, 10.0, 1.0, GST_PARAM_CONTROLLABLE |
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 #ifndef WITH_MSS
   /**
@@ -1072,6 +1281,10 @@ gst_mfxpostproc_init (GstMfxPostproc * vpp)
   vpp->deinterlace_mode = DEFAULT_DEINTERLACE_MODE;
   vpp->keep_aspect = TRUE;
   vpp->alg = DEFAULT_FRC_ALG;
+  vpp->brightness = DEFAULT_BRIGHTNESS;
+  vpp->hue = DEFAULT_HUE;
+  vpp->saturation = DEFAULT_SATURATION;
+  vpp->contrast = DEFAULT_CONTRAST;
 
   gst_video_info_init (&vpp->sinkpad_info);
   gst_video_info_init (&vpp->srcpad_info);

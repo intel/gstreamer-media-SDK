@@ -32,7 +32,8 @@
 
 #include <gst-libs/mfx/gstmfxdisplay.h>
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurface.h>
+#include <gst-libs/mfx/gstmfxsurface_vaapi.h>
 #include <gst-libs/mfx/gstmfxprimebufferproxy.h>
 #include <gst-libs/mfx/gstmfxsurfacepool.h>
 #include <gst-libs/mfx/gstmfxutils_vaapi.h>
@@ -76,7 +77,6 @@ typedef struct _GstMfxVideoAllocatorClass   GstMfxVideoAllocatorClass;
 typedef enum
 {
     GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE = 1,
-    GST_MFX_VIDEO_MEMORY_MAP_TYPE_LINEAR,
     GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR
 } GstMfxVideoMemoryMapType;
 
@@ -91,14 +91,14 @@ struct _GstMfxVideoMemory
   GstMemory            parent_instance;
 
   /*< private >*/
-  GstMfxSurfaceProxy  *proxy;
+  GstMfxSurface       *surface;
   const GstVideoInfo  *image_info;
   VaapiImage          *image;
   GstMfxVideoMeta     *meta;
   guint                map_type;
   gint                 map_count;
   gpointer             data;
-  gboolean             mapped;
+  gboolean             new_copy;
 };
 
 GstMemory *

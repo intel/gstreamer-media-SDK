@@ -234,9 +234,9 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   gboolean need_pool;
 
   if (!plugin->sinkpad_buffer_pool)
-    plugin->sinkpad_use_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
+    plugin->sinkpad_has_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
 
-  plugin->mapped = !plugin->sinkpad_use_dmabuf &&
+  plugin->memtype_is_system = !plugin->sinkpad_has_dmabuf &&
       !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
@@ -255,7 +255,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
 
   pool =
       gst_mfx_video_buffer_pool_new (GST_MFX_TASK_AGGREGATOR_DISPLAY
-      (plugin->aggregator), plugin->mapped);
+      (plugin->aggregator), plugin->memtype_is_system);
   if (!pool)
     goto error_create_pool;
 
@@ -352,7 +352,7 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
     gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
         plugin->sinkpad_buffer_size, 0, 0);
 
-    if (plugin->sinkpad_use_dmabuf) {
+    if (plugin->sinkpad_has_dmabuf) {
       GstStructure *const config =
           gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
 
@@ -432,14 +432,16 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   has_video_meta = gst_query_find_allocation_meta (query,
       GST_VIDEO_META_API_TYPE, NULL);
 
+#if GST_CHECK_VERSION(1,8,0)
 #ifdef HAVE_GST_GL_LIBS
-  if (!plugin->mapped && gst_query_find_allocation_meta(query,
+  if (!plugin->memtype_is_system && gst_query_find_allocation_meta(query,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
           &gl_context, NULL) && gl_context) {
-        plugin->srcpad_use_dmabuf =
+
+        plugin->srcpad_has_dmabuf =
             (GST_IS_GL_CONTEXT_EGL (gl_context) &&
             !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
             gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
@@ -447,9 +449,10 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
         gst_object_unref (gl_context);
       }
     }
-    if (!plugin->srcpad_use_dmabuf)
-      plugin->mapped = TRUE;
+    if (!plugin->srcpad_has_dmabuf)
+      plugin->memtype_is_system = TRUE;
   }
+#endif
 #endif
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
@@ -483,7 +486,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       gst_object_unref (pool);
     pool =
         gst_mfx_video_buffer_pool_new (GST_MFX_TASK_AGGREGATOR_DISPLAY
-        (plugin->aggregator), plugin->mapped);
+        (plugin->aggregator), plugin->memtype_is_system);
     if (!pool)
       goto error_create_pool;
 
@@ -653,13 +656,14 @@ error_copy_buffer:
   }
 }
 
+#if GST_CHECK_VERSION(1,8,0)
 gboolean
 gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
     GstBuffer * outbuf)
 {
   GstMfxVideoMeta *vmeta;
   GstVideoMeta *meta = gst_buffer_get_video_meta (outbuf);
-  GstMfxSurfaceProxy *proxy;
+  GstMfxSurface *surface;
   GstMfxPrimeBufferProxy *dmabuf_proxy;
   GstMemory *mem;
   VaapiImage *image;
@@ -668,17 +672,17 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
 
   g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf), FALSE);
 
-  if (!plugin->srcpad_use_dmabuf)
+  if (!plugin->srcpad_has_dmabuf)
     return FALSE;
 
   vmeta = gst_buffer_get_mfx_video_meta (outbuf);
   if (!vmeta)
     return FALSE;
-  proxy = gst_mfx_video_meta_get_surface_proxy (vmeta);
-  if (!proxy || gst_mfx_surface_proxy_is_mapped(proxy))
+  surface = gst_mfx_video_meta_get_surface (vmeta);
+  if (!surface || !gst_mfx_surface_has_video_memory(surface))
     return FALSE;
 
-  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (proxy);
+  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!dmabuf_proxy)
     return FALSE;
 
@@ -701,7 +705,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   gst_buffer_replace_memory (outbuf, 0, mem);
 
 
-  image = gst_mfx_surface_proxy_derive_image (proxy);
+  image = gst_mfx_surface_vaapi_derive_image (surface);
   if (!image)
     goto error_dmabuf_handle;
 
@@ -713,7 +717,6 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   vaapi_image_unref(image);
 
   return TRUE;
-
   /* ERRORS */
 error_dmabuf_handle:
   {
@@ -721,3 +724,4 @@ error_dmabuf_handle:
     return FALSE;
   }
 }
+#endif

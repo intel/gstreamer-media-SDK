@@ -21,7 +21,7 @@
 #ifndef GST_MFX_SURFACE_POOL_H
 #define GST_MFX_SURFACE_POOL_H
 
-#include "gstmfxsurfaceproxy.h"
+#include "gstmfxsurface.h"
 #include "gstmfxtask.h"
 #include <glib.h>
 
@@ -47,11 +47,11 @@ void
 gst_mfx_surface_pool_replace (GstMfxSurfacePool ** old_pool_ptr,
     GstMfxSurfacePool * new_pool);
 
-GstMfxSurfaceProxy *
+GstMfxSurface *
 gst_mfx_surface_pool_get_surface (GstMfxSurfacePool * pool);
 
-GstMfxSurfaceProxy *
-gst_mfx_surface_pool_find_proxy (GstMfxSurfacePool * pool,
+GstMfxSurface *
+gst_mfx_surface_pool_find_surface (GstMfxSurfacePool * pool,
     mfxFrameSurface1 * surface);
 
 G_END_DECLS

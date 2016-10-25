@@ -389,7 +389,7 @@ gst_mfxenc_handle_frame (GstVideoEncoder * venc, GstVideoCodecFrame * frame)
   GstMfxEnc *const encode = GST_MFXENC_CAST (venc);
   GstMfxEncoderStatus status;
   GstMfxVideoMeta *meta;
-  GstMfxSurfaceProxy *proxy;
+  GstMfxSurface *surface;
   GstFlowReturn ret;
   GstBuffer *buf;
 
@@ -405,12 +405,12 @@ gst_mfxenc_handle_frame (GstVideoEncoder * venc, GstVideoCodecFrame * frame)
   if (!meta)
     goto error_buffer_no_meta;
 
-  proxy = gst_mfx_video_meta_get_surface_proxy (meta);
-  if (!proxy)
-    goto error_buffer_no_surface_proxy;
+  surface = gst_mfx_video_meta_get_surface (meta);
+  if (!surface)
+    goto error_buffer_no_surface;
 
   gst_video_codec_frame_set_user_data (frame,
-      gst_mfx_surface_proxy_ref (proxy), gst_mfx_surface_proxy_unref);
+      gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
 
   status = gst_mfx_encoder_encode (encode->encoder, frame);
   if (status < GST_MFX_ENCODER_STATUS_SUCCESS)
@@ -437,9 +437,9 @@ error_buffer_no_meta:
     gst_video_codec_frame_unref (frame);
     return GST_FLOW_ERROR;
   }
-error_buffer_no_surface_proxy:
+error_buffer_no_surface:
   {
-    GST_ERROR ("failed to get VA surface proxy");
+    GST_ERROR ("failed to get VA surface");
     gst_video_codec_frame_unref (frame);
     return GST_FLOW_ERROR;
   }

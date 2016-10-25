@@ -121,9 +121,9 @@ struct _GstMfxPluginBase
   GstPadQueryFunction   srcpad_query;
   GstPadQueryFunction   sinkpad_query;
 
-  gboolean              mapped;
-  gboolean              sinkpad_use_dmabuf;
-  gboolean              srcpad_use_dmabuf;
+  gboolean              memtype_is_system;
+  gboolean              sinkpad_has_dmabuf;
+  gboolean              srcpad_has_dmabuf;
   GstAllocator         *dmabuf_allocator;
 
   GstMfxTaskAggregator *aggregator;

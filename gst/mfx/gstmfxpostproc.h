@@ -26,7 +26,7 @@
 
 #include "gstmfxpluginbase.h"
 
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurface.h>
 #include <gst-libs/mfx/gstmfxsurfacepool.h>
 #include <gst-libs/mfx/gstmfxfilter.h>
 #include <gst-libs/mfx/gstmfxvalue.h>
@@ -111,10 +111,13 @@ struct _GstMfxPostproc
   guint                   detail_level;
 
   /* Color balance filter values */
+  GList                   *channels;
+
   gfloat                  hue;
   gfloat                  saturation;
   gfloat                  brightness;
   gfloat                  contrast;
+  gboolean                cb_changed;
 
     /* FRC */
   GstMfxFrcAlgorithm      alg;

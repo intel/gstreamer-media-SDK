@@ -26,7 +26,7 @@
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxpluginutil.h"
 
-#include <gst-libs/mfx/gstmfxsurfaceproxy.h>
+#include <gst-libs/mfx/gstmfxsurface.h>
 #include <gst-libs/mfx/gstmfxprofile.h>
 
 #define GST_PLUGIN_NAME "mfxdecode"
@@ -35,7 +35,7 @@
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAT_DEFAULT mfxdec_debug
 
-#define DEFAULT_ASYNC_DEPTH 4
+#define DEFAULT_ASYNC_DEPTH 10
 
 /* Default templates */
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
@@ -61,7 +61,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_SURFACE_CAPS ";"
-  GST_VIDEO_CAPS_MAKE ("{ BGRA, NV12 }");
+  GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
 
 enum
 {
@@ -215,7 +215,7 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!gst_mfx_plugin_base_set_caps (plugin, NULL, mfxdec->srcpad_caps))
     return FALSE;
 
-  if (!(plugin->mapped &&
+  if (!(plugin->memtype_is_system &&
       (GST_VIDEO_INFO_FORMAT(&plugin->srcpad_info) == GST_VIDEO_FORMAT_NV12)))
     gst_mfx_decoder_use_video_memory (mfxdec->decoder);
 
@@ -282,7 +282,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
 
-  plugin->mapped =
+  plugin->memtype_is_system =
       gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
@@ -386,9 +386,9 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
 {
   GstMfxVideoMeta *meta;
   const GstMfxRectangle *crop_rect;
-  GstMfxSurfaceProxy *proxy;
+  GstMfxSurface *surface;
 
-  proxy = gst_video_codec_frame_get_user_data(frame);
+  surface = gst_video_codec_frame_get_user_data(frame);
 
   frame->output_buffer =
       gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
@@ -398,8 +398,8 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
   if (!meta)
     goto error_get_meta;
-  gst_mfx_video_meta_set_surface_proxy (meta, proxy);
-  crop_rect = gst_mfx_surface_proxy_get_crop_rect (proxy);
+  gst_mfx_video_meta_set_surface (meta, surface);
+  crop_rect = gst_mfx_surface_get_crop_rect (surface);
   if (crop_rect) {
     GstVideoCropMeta *const crop_meta =
       gst_buffer_add_video_crop_meta (frame->output_buffer);
@@ -411,9 +411,10 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
     }
   }
 
+#if GST_CHECK_VERSION(1,8,0)
   gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (mfxdec),
       frame->output_buffer);
-
+#endif
   return gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
   /* ERRORS */
 error_create_buffer:
@@ -434,7 +435,6 @@ static GstFlowReturn
 gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 {
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
-  GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vdec);
   GstMfxDecoderStatus sts;
   GstFlowReturn ret = GST_FLOW_OK;
   GstVideoCodecFrame *out_frame = NULL;

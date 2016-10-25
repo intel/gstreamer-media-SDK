@@ -261,7 +261,11 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
   GstElement *element = NULL;
   GstCaps *caps = NULL, *templ = NULL;
   gchar *element_name = NULL;
-  gboolean mapped = FALSE;
+#if GST_CHECK_VERSION(1,8,0)
+  gboolean has_raw_caps = FALSE;
+#else
+  gboolean has_raw_caps = TRUE;
+#endif
 
   while (1) {
     peer_sinkpad = gst_pad_get_peer (srcpad);
@@ -283,15 +287,17 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
     else {
       element_name = gst_element_get_name (element);
       if (GST_IS_BASE_TRANSFORM (element)) {
-        /* Check if next downstream element is mfxvpp, because vid-to-sys
-         * vpp in-out doesn't work correctly. In that case, set decode
-         * output to sys for sys-to-sys vpp in-out */
-        if (strncmp (element_name, "mfxpostproc", 11) == 0) {
+        if ((strncmp (element_name, "mfxpostproc", 11) == 0) ||
+            (strncmp (element_name, "capsfilter", 10) == 0)) {
           continue;
         }
 
         if (strncmp (element_name, "gluploadelement", 15) == 0)
           goto cleanup;
+
+        if (gst_caps_has_mfx_surface (caps))
+          has_raw_caps = FALSE;
+        goto cleanup;
       }
 
       templ = gst_pad_get_pad_template_caps (peer_sinkpad);
@@ -300,9 +306,9 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
           gst_caps_is_any (templ))
         continue;
 
-      if (!gst_caps_has_mfx_surface (caps))
-        mapped = TRUE;
-      break;
+      if (gst_caps_has_mfx_surface (caps))
+        has_raw_caps = FALSE;
+      goto cleanup;
     }
   }
 
@@ -311,7 +317,7 @@ cleanup:
     g_clear_object (&element);
   gst_caps_replace (&caps, NULL);
 
-  return mapped;
+  return has_raw_caps;
 }
 
 void
