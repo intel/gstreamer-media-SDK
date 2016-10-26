@@ -461,9 +461,9 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
   }
 
   /* create the sink */
-  mfxsinkbin->sink = gst_element_factory_make ("mfxsink", NULL);
+  mfxsinkbin->sink = gst_element_factory_make ("mfxsinkelement", NULL);
   if(!mfxsinkbin->sink)  {
-    missing_factory = "mfxsink";
+    missing_factory = "mfxsinkelement";
     goto error_element_missing;
   }
 
