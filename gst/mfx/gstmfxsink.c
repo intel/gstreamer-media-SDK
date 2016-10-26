@@ -797,6 +797,7 @@ gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height)
   GST_DEBUG ("render rect (%d,%d):%ux%u",
       display_rect->x, display_rect->y,
       display_rect->width, display_rect->height);
+
   return TRUE;
 }
 
@@ -824,8 +825,6 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
   if (sink->fullscreen) {
     *width_ptr = display_width;
     *height_ptr = display_height;
-    gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
-        gst_event_new_reconfigure ());
     return;
   }
 
@@ -848,14 +847,9 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
   dst_rect.y = 0;
   dst_rect.w = display_width;
   dst_rect.h = display_height;
-  scale = (src_rect.w > dst_rect.w || src_rect.h > dst_rect.h);
   gst_video_sink_center_rect (src_rect, dst_rect, &out_rect, scale);
   *width_ptr = out_rect.w;
   *height_ptr = out_rect.h;
-
-  if (scale)
-    gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
-        gst_event_new_reconfigure());
 }
 
 static gboolean
@@ -903,17 +897,15 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
   else
     out_caps = gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
 
-  if ((sink->fullscreen || (sink->video_height > sink->window_height) ||
-      (sink->video_width > sink->window_width)) && sink->window) {
+  if (sink->window) {
     GstStructure *s0, *s1;
+    GstMfxRectangle *rect = &sink->display_rect;
     out_caps = gst_caps_make_writable (out_caps);
     s0 = gst_caps_get_structure (out_caps, 0);
     s1 = gst_structure_copy (gst_caps_get_structure (out_caps, 0));
 
-    gst_structure_set (s0,
-        "width", G_TYPE_INT, GST_ROUND_UP_8 (sink->display_rect.width),
-        "height", G_TYPE_INT, GST_ROUND_UP_8 (sink->display_rect.height),
-        NULL);
+    gst_structure_set (s0, "width", G_TYPE_INT, GST_ROUND_UP_32 (rect->width),
+        "height", G_TYPE_INT, GST_ROUND_UP_32 (rect->height), NULL);
     gst_caps_append_structure (out_caps, s1);
   }
 
@@ -951,14 +943,22 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   if (!gst_mfx_plugin_base_set_caps (plugin, caps, NULL))
     return FALSE;
 
-  sink->video_width = GST_VIDEO_INFO_WIDTH (vip);
-  sink->video_height = GST_VIDEO_INFO_HEIGHT (vip);
-  sink->video_par_n = GST_VIDEO_INFO_PAR_N (vip);
-  sink->video_par_d = GST_VIDEO_INFO_PAR_D (vip);
+  if (!sink->video_width)
+    sink->video_width = GST_VIDEO_INFO_WIDTH (vip);
+  if (!sink->video_height)
+    sink->video_height = GST_VIDEO_INFO_HEIGHT (vip);
+  if (!sink->video_par_n)
+    sink->video_par_n = GST_VIDEO_INFO_PAR_N (vip);
+  if (!sink->video_par_d)
+    sink->video_par_d = GST_VIDEO_INFO_PAR_D (vip);
   GST_DEBUG ("video pixel-aspect-ratio %d/%d",
       sink->video_par_n, sink->video_par_d);
 
   gst_caps_replace (&sink->caps, caps);
+
+  if (!sink->window_width)
+    gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
+        gst_event_new_reconfigure());
 
   gst_mfxsink_ensure_window_size (sink, &win_width, &win_height);
   if (sink->window) {
