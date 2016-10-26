@@ -57,6 +57,8 @@ struct _GstMfxSurface
   guint16 pitches[3];
   gboolean mapped;
   gboolean has_video_memory;
+  mfxExtVPPVideoSignalInfo siginfo;
+  mfxExtBuffer **ext_buf;
 };
 
 struct _GstMfxSurfaceClass
