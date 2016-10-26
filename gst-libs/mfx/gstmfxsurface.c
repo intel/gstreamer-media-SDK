@@ -188,6 +188,7 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   surface->crop_rect.width = info->CropW;
   surface->crop_rect.height = info->CropH;
 
+#ifndef WITH_MSS
   /* Full color range */
   surface->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
   surface->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
@@ -202,6 +203,7 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
       ptr->ExtParam = &surface->ext_buf[0];
     }
   }
+#endif
 }
 
 static gboolean
