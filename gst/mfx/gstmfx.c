@@ -54,49 +54,53 @@
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
+  gboolean ret = FALSE;
 #ifdef MFX_DECODER
-  gst_element_register (plugin, "mfxdecode", GST_RANK_PRIMARY + 3, GST_TYPE_MFXDEC);
+  ret |= gst_element_register (plugin, "mfxdecode",
+      GST_RANK_PRIMARY + 3, GST_TYPE_MFXDEC);
 #endif
 
 #ifdef MFX_VPP
-  gst_element_register (plugin, "mfxvpp", GST_RANK_NONE, GST_TYPE_MFXPOSTPROC);
+  ret |= gst_element_register (plugin, "mfxvpp",
+      GST_RANK_NONE, GST_TYPE_MFXPOSTPROC);
 #endif
 
 #ifdef MFX_SINK
-  gst_element_register (plugin, "mfxsink", GST_RANK_NONE, GST_TYPE_MFXSINK);
+  ret |= gst_element_register (plugin, "mfxsinkelement",
+      GST_RANK_NONE, GST_TYPE_MFXSINK);
 #endif
 
 #ifdef MFX_SINK_BIN
-  gst_element_register (plugin, "mfxsinkbin",
+  ret |= gst_element_register (plugin, "mfxsink",
       GST_RANK_PRIMARY + 2, GST_TYPE_MFX_SINK_BIN);
 #endif
 
 #ifdef MFX_H264_ENCODER
-  gst_element_register (plugin, "mfxh264enc",
+  ret |= gst_element_register (plugin, "mfxh264enc",
       GST_RANK_NONE, GST_TYPE_MFXENC_H264);
 #endif
 
 #ifdef MFX_H265_ENCODER
-  gst_element_register (plugin, "mfxhevcenc",
+  ret |= gst_element_register (plugin, "mfxhevcenc",
       GST_RANK_NONE, GST_TYPE_MFXENC_H265);
 #endif
 
 #ifdef MFX_MPEG2_ENCODER
-  gst_element_register (plugin, "mfxmpeg2enc",
+  ret |= gst_element_register (plugin, "mfxmpeg2enc",
       GST_RANK_NONE, GST_TYPE_MFXENC_MPEG2);
 #endif
 
 #ifdef MFX_JPEG_ENCODER
-  gst_element_register (plugin, "mfxjpegenc",
+  ret |= gst_element_register (plugin, "mfxjpegenc",
       GST_RANK_NONE, GST_TYPE_MFXENC_JPEG);
 #endif
 
 #ifdef MFX_VC1_PARSER
-  gst_element_register (plugin, "mfxvc1parse",
+  ret |= gst_element_register (plugin, "mfxvc1parse",
       GST_RANK_MARGINAL, GST_MFX_TYPE_VC1_PARSE);
 #endif
 
-  return TRUE;
+  return ret;
 }
 
 

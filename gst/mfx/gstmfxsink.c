@@ -847,6 +847,7 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
   dst_rect.y = 0;
   dst_rect.w = display_width;
   dst_rect.h = display_height;
+  scale = (src_rect.w > dst_rect.w || src_rect.h > dst_rect.h);
   gst_video_sink_center_rect (src_rect, dst_rect, &out_rect, scale);
   *width_ptr = out_rect.w;
   *height_ptr = out_rect.h;
@@ -904,8 +905,8 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
     s0 = gst_caps_get_structure (out_caps, 0);
     s1 = gst_structure_copy (gst_caps_get_structure (out_caps, 0));
 
-    gst_structure_set (s0, "width", G_TYPE_INT, GST_ROUND_UP_32 (rect->width),
-        "height", G_TYPE_INT, GST_ROUND_UP_32 (rect->height), NULL);
+    gst_structure_set (s0, "width", G_TYPE_INT, GST_ROUND_UP_16 (rect->width),
+        "height", G_TYPE_INT, GST_ROUND_UP_16 (rect->height), NULL);
     gst_caps_append_structure (out_caps, s1);
   }
 
@@ -956,7 +957,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
 
   gst_caps_replace (&sink->caps, caps);
 
-  if (!sink->window_width)
+  if (!sink->window)
     gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
         gst_event_new_reconfigure());
 
