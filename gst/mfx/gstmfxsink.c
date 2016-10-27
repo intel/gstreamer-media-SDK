@@ -898,7 +898,7 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
   else
     out_caps = gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
 
-  if (sink->window) {
+  if (sink->window && sink->display_type_req != GST_MFX_DISPLAY_TYPE_EGL) {
     GstStructure *s0, *s1;
     GstMfxRectangle *rect = &sink->display_rect;
     out_caps = gst_caps_make_writable (out_caps);
