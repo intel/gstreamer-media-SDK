@@ -14,8 +14,10 @@ Intel(R) Media SDK.
   * 'mfxdecode' is used to decode H.264 AVC, MPEG-2, HEVC, VC-1, VP8 and
     JPEG videos using the underlying hardware capabilities. 
 
-  * 'mfxsink' is used to render the decoded frame to a Wayland / X11
+  * 'mfxsinkelement' is used to render the decoded frame to a Wayland / X11
     display.
+
+  * 'mfxsink' is a bin element which contains mfxvpp and mfxsinkelement.
 
   * 'mfxvpp' is used to do video processing on decoded or RAW video frames.
 
@@ -58,6 +60,8 @@ Software requirements
     Media Server Studio 2016 Professional R1 (Haswell / Broadwell)
   * GStreamer 1.6.x (up to including GStreamer 1.8):
   * GStreamer-Plugins-Base 1.6.x (up to including GStreamer 1.8):
+  * libudev
+  * libdrm
   * CMake
   
   * Renderers:
@@ -67,7 +71,7 @@ Software requirements
 
 Hardware requirements
 
-  * Intel Apollo Lake
+  * Intel Apollolake
   * Intel Braswell
   * Intel Haswell / Broadwell
 
@@ -107,11 +111,6 @@ Usage
 -----
 
  - Please refer to README.example_usage for usage instructions.
-
-To do
------
-
-  * Playbin and text overlay support for decode and VPP plugins.
 
 
 Acknowledgements
