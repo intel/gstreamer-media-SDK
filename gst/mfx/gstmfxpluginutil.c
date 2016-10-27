@@ -269,8 +269,10 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
 
   while (1) {
     peer_sinkpad = gst_pad_get_peer (srcpad);
-    if (!peer_sinkpad)
+    if (!peer_sinkpad) {
+      has_raw_caps = FALSE;
       goto cleanup;
+    }
 
     caps = gst_pad_get_allowed_caps (peer_sinkpad);
     gst_object_unref (peer_sinkpad);
