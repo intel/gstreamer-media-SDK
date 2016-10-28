@@ -282,8 +282,12 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
 
+  plugin->memtype_is_system =
+      gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
+
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      gst_mfx_profile_from_caps (caps), &info, mfxdec->async_depth);
+      gst_mfx_profile_from_caps (caps), &info, mfxdec->async_depth,
+      plugin->memtype_is_system);
   if (!mfxdec->decoder)
     return FALSE;
 
