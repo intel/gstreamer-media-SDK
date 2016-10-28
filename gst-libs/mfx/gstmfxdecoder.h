@@ -70,7 +70,8 @@ typedef enum {
 
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
-    GstMfxProfile profile, GstVideoInfo * info, mfxU16 async_depth);
+    GstMfxProfile profile, GstVideoInfo * info, mfxU16 async_depth,
+    gboolean memtype_is_system);
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder);
