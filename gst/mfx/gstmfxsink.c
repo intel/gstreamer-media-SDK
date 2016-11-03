@@ -943,7 +943,8 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   if (!gst_mfxsink_ensure_aggregator (sink))
     return FALSE;
 
-  gst_mfxsink_set_render_backend (sink);
+  if (!sink->backend)
+    gst_mfxsink_set_render_backend (sink);
 
   if (!gst_mfx_plugin_base_set_caps (plugin, caps, NULL))
     return FALSE;
