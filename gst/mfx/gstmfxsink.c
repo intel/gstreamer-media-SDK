@@ -80,6 +80,7 @@ enum
   PROP_FORCE_ASPECT_RATIO,
   PROP_NO_FRAME_DROP,
   PROP_GL_API,
+  PROP_FULL_COLOR_RANGE,
   N_PROPERTIES
 };
 
@@ -847,6 +848,7 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
   dst_rect.y = 0;
   dst_rect.w = display_width;
   dst_rect.h = display_height;
+  scale = (src_rect.w > dst_rect.w || src_rect.h > dst_rect.h);
   gst_video_sink_center_rect (src_rect, dst_rect, &out_rect, scale);
   *width_ptr = out_rect.w;
   *height_ptr = out_rect.h;
@@ -895,9 +897,12 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
         gst_mfx_video_format_new_template_caps_with_features
         (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
   else
-    out_caps = gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
+    out_caps = sink->full_color_range ?
+        gst_mfx_video_format_new_template_caps_with_features
+        (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE) :
+        gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
 
-  if (sink->window) {
+  if (sink->window && sink->display_type_req != GST_MFX_DISPLAY_TYPE_EGL) {
     GstStructure *s0, *s1;
     GstMfxRectangle *rect = &sink->display_rect;
     out_caps = gst_caps_make_writable (out_caps);
@@ -938,7 +943,8 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   if (!gst_mfxsink_ensure_aggregator (sink))
     return FALSE;
 
-  gst_mfxsink_set_render_backend (sink);
+  if (!sink->backend)
+    gst_mfxsink_set_render_backend (sink);
 
   if (!gst_mfx_plugin_base_set_caps (plugin, caps, NULL))
     return FALSE;
@@ -956,7 +962,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
 
   gst_caps_replace (&sink->caps, caps);
 
-  if (!sink->window_width)
+  if (!sink->window)
     gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
         gst_event_new_reconfigure());
 
@@ -1107,6 +1113,9 @@ gst_mfxsink_set_property (GObject * object,
     case PROP_NO_FRAME_DROP:
       sink->no_frame_drop = g_value_get_boolean (value);
       break;
+    case PROP_FULL_COLOR_RANGE:
+      sink->full_color_range = g_value_get_boolean (value);
+      break;
     case PROP_GL_API:
       sink->gl_api = g_value_get_enum (value);
       break;
@@ -1137,6 +1146,9 @@ gst_mfxsink_get_property (GObject * object,
       break;
     case PROP_NO_FRAME_DROP:
       g_value_set_boolean (value, sink->no_frame_drop);
+      break;
+    case PROP_FULL_COLOR_RANGE:
+      g_value_set_boolean (value, sink->full_color_range);
       break;
     case PROP_GL_API:
       g_value_set_enum (value, sink->gl_api);
@@ -1263,6 +1275,17 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
       "No frame drop",
       "Render all decoded frames when enabled, ignoring timestamp lateness",
       TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GstMfxSink:full-color-range:
+   *
+   * When enabled, all decoded frames will be in RGB 0-255.
+   */
+  g_properties[PROP_FULL_COLOR_RANGE] =
+      g_param_spec_boolean ("full-color-range",
+      "Full color range",
+      "Decoded frames will be in RGB 0-255",
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 #ifdef USE_EGL
   /**
    * GstMfxSink:gl-api:
@@ -1294,5 +1317,6 @@ gst_mfxsink_init (GstMfxSink * sink)
   sink->handle_events = TRUE;
   sink->keep_aspect = TRUE;
   sink->no_frame_drop = TRUE;
+  sink->full_color_range = FALSE;
   gst_video_info_init (&sink->video_info);
 }

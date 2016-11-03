@@ -389,8 +389,8 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   if (window->width == width && window->height == height) {
-    guint x = (width - src_rect->width) / 2;
-    guint y = (height - src_rect->height) / 2;
+    x = (width - src_rect->width) / 2;
+    y = (height - src_rect->height) / 2;
 
     switch (depth) {
       case 8:

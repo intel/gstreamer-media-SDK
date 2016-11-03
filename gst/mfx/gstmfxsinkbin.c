@@ -36,6 +36,7 @@ enum
   PROP_FULLSCREEN,
   PROP_FORCE_ASPECT_RATIO,
   PROP_NO_FRAME_DROP,
+  PROP_FULL_COLOR_RANGE,
   PROP_WIDTH,
   PROP_HEIGHT,
   PROP_DEINTERLACE_MODE,
@@ -124,6 +125,11 @@ gst_mfx_sink_bin_set_property (GObject * object,
       g_object_set (G_OBJECT (mfxsinkbin->sink), "no-frame-drop",
           mfxsinkbin->no_frame_drop, NULL);
       break;
+    case PROP_FULL_COLOR_RANGE:
+      mfxsinkbin->full_color_range = g_value_get_boolean (value);
+      g_object_set (G_OBJECT (mfxsinkbin->sink), "full-color-range",
+          mfxsinkbin->full_color_range, NULL);
+      break;
    case PROP_WIDTH:
       mfxsinkbin->width = g_value_get_uint (value);
       g_object_set (G_OBJECT (mfxsinkbin->postproc), "width",
@@ -201,6 +207,9 @@ gst_mfx_sink_bin_get_property (GObject * object,
       break;
     case PROP_NO_FRAME_DROP:
       g_value_set_boolean (value, mfxsinkbin->no_frame_drop);
+      break;
+    case PROP_FULL_COLOR_RANGE:
+      g_value_set_boolean (value, mfxsinkbin->full_color_range);
       break;
    case PROP_WIDTH:
       g_value_set_uint (value, mfxsinkbin->width);
@@ -307,6 +316,17 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       "No frame drop",
       "When enabled, no frame will dropped",
       TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GstMfxSinkBin:full-color-range:
+   *
+   * When enabled, all decoded frames will be in RGB 0-255.
+   */
+  g_properties[PROP_FULL_COLOR_RANGE] =
+      g_param_spec_boolean ("full-color-range",
+      "Full color range",
+      "Decoded frames will be in RGB 0-255",
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GstMfxSinkBin:deinterlace-mode:
@@ -461,9 +481,9 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
   }
 
   /* create the sink */
-  mfxsinkbin->sink = gst_element_factory_make ("mfxsink", NULL);
+  mfxsinkbin->sink = gst_element_factory_make ("mfxsinkelement", NULL);
   if(!mfxsinkbin->sink)  {
-    missing_factory = "mfxsink";
+    missing_factory = "mfxsinkelement";
     goto error_element_missing;
   }
 
@@ -484,23 +504,6 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
   gst_object_unref (pad);
   if (!gst_element_add_pad (GST_ELEMENT (mfxsinkbin), ghostpad))
       goto error_adding_pad;
-
-  gst_mfx_object_add_control_binding_proxy (
-      GST_OBJECT (mfxsinkbin->postproc),
-      GST_OBJECT (mfxsinkbin),
-      "contrast");
-  gst_mfx_object_add_control_binding_proxy (
-      GST_OBJECT (mfxsinkbin->postproc),
-      GST_OBJECT (mfxsinkbin),
-      "brightness");
-  gst_mfx_object_add_control_binding_proxy (
-      GST_OBJECT (mfxsinkbin->postproc),
-      GST_OBJECT (mfxsinkbin),
-      "saturation");
-  gst_mfx_object_add_control_binding_proxy (
-      GST_OBJECT (mfxsinkbin->postproc),
-      GST_OBJECT (mfxsinkbin),
-      "hue");
 
   return TRUE;
 
@@ -563,7 +566,6 @@ gst_mfx_sink_bin_color_balance_set_value (GstColorBalance * cb,
     gst_object_unref (cb_element);
   }
 }
-
 
 static gint
 gst_mfx_sink_bin_color_balance_get_value (GstColorBalance *cb,

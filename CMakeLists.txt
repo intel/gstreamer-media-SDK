@@ -8,6 +8,7 @@ include(CMakeDependentOption)
 option (DEBUG "Turn on debug build." OFF)
 
 option (MFX_DECODER "Build MSDK Decoder plugin." ON)
+option (MFX_VP9_DECODER "Build MSDK Decoder plugin with VP9 support." ON)
 
 option (MFX_ENCODER "Build MSDK Encoder plugin." ON)
 CMAKE_DEPENDENT_OPTION(MFX_H264_ENCODER  "Build H.264 Encoder plugin" ON
@@ -55,7 +56,7 @@ configure_file (
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++ -Wall -fstack-protector-all -fPIE")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++ -Wall -fPIE")
 set(CMAKE_C_RELEASE_FLAGS "${CMAKE_C_RELEASE_FLAGS} -D_FORTITY_SOURCE=2")
 
 include_directories(

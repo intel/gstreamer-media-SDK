@@ -24,7 +24,6 @@
 #include <gst-libs/mfx/gstmfxvalue.h>
 #include <gst-libs/mfx/gstmfxfilter.h>
 #include <gst-libs/mfx/gstmfxdisplay.h>
-#include <gst-libs/mfx/gstmfxcontrolbindingproxy.h>
 
 G_BEGIN_DECLS
 
@@ -70,6 +69,7 @@ typedef struct __GstMfxSinkBin {
   guint                   handle_events : 1;
   guint                   fullscreen : 1;
   guint                   no_frame_drop : 1;
+  guint                   full_color_range : 1;
 } GstMfxSinkBin;
 
 typedef struct __GstMfxSinkBinClass {

@@ -261,11 +261,7 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
   GstElement *element = NULL;
   GstCaps *caps = NULL, *templ = NULL;
   gchar *element_name = NULL;
-#if GST_CHECK_VERSION(1,8,0)
   gboolean has_raw_caps = FALSE;
-#else
-  gboolean has_raw_caps = TRUE;
-#endif
 
   while (1) {
     peer_sinkpad = gst_pad_get_peer (srcpad);
@@ -273,15 +269,21 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
       goto cleanup;
 
     caps = gst_pad_get_allowed_caps (peer_sinkpad);
-    gst_object_unref (peer_sinkpad);
 
     element = gst_pad_get_parent_element (peer_sinkpad);
+    gst_object_unref (peer_sinkpad);
+
     if (!element)
       goto cleanup;
     srcpad = gst_element_get_static_pad (element, "src");
 
     if (GST_IS_BIN (element) &&
         gst_bin_get_by_name (element, "gluploadelement0")) {
+#if GST_CHECK_VERSION(1,8,0)
+      has_raw_caps = g_strcmp0(getenv("GST_GL_PLATFORM"), "egl");
+#else
+      has_raw_caps = TRUE;
+#endif
       goto cleanup;
     }
     else {
@@ -292,11 +294,17 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
           continue;
         }
 
-        if (strncmp (element_name, "gluploadelement", 15) == 0)
+        if (strncmp (element_name, "gluploadelement", 15) == 0) {
+#if GST_CHECK_VERSION(1,8,0)
+          has_raw_caps = g_strcmp0(getenv("GST_GL_PLATFORM"), "egl");
+#else
+          has_raw_caps = TRUE;
+#endif
           goto cleanup;
+        }
 
-        if (gst_caps_has_mfx_surface (caps))
-          has_raw_caps = FALSE;
+        if (!gst_caps_has_mfx_surface (caps))
+          has_raw_caps = TRUE;
         goto cleanup;
       }
 
@@ -306,8 +314,8 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
           gst_caps_is_any (templ))
         continue;
 
-      if (gst_caps_has_mfx_surface (caps))
-        has_raw_caps = FALSE;
+      if (!gst_caps_has_mfx_surface (caps))
+        has_raw_caps = TRUE;
       goto cleanup;
     }
   }
