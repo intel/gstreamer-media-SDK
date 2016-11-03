@@ -505,23 +505,6 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
   if (!gst_element_add_pad (GST_ELEMENT (mfxsinkbin), ghostpad))
       goto error_adding_pad;
 
-  gst_mfx_object_add_control_binding_proxy (
-      GST_OBJECT (mfxsinkbin->postproc),
-      GST_OBJECT (mfxsinkbin),
-      "contrast");
-  gst_mfx_object_add_control_binding_proxy (
-      GST_OBJECT (mfxsinkbin->postproc),
-      GST_OBJECT (mfxsinkbin),
-      "brightness");
-  gst_mfx_object_add_control_binding_proxy (
-      GST_OBJECT (mfxsinkbin->postproc),
-      GST_OBJECT (mfxsinkbin),
-      "saturation");
-  gst_mfx_object_add_control_binding_proxy (
-      GST_OBJECT (mfxsinkbin->postproc),
-      GST_OBJECT (mfxsinkbin),
-      "hue");
-
   return TRUE;
 
 error_element_missing:
@@ -583,7 +566,6 @@ gst_mfx_sink_bin_color_balance_set_value (GstColorBalance * cb,
     gst_object_unref (cb_element);
   }
 }
-
 
 static gint
 gst_mfx_sink_bin_color_balance_get_value (GstColorBalance *cb,

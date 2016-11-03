@@ -12,7 +12,6 @@ set(SOURCE
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxutils_vaapi.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxvalue.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxwindow.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxcontrolbindingproxy.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/video-format.c")
 
 if(MFX_DECODER)

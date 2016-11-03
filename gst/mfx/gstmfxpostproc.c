@@ -572,6 +572,10 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     }
 
     status = gst_mfx_filter_process (vpp->filter, surface, &out_surface);
+    if (GST_MFX_FILTER_STATUS_SUCCESS != status &&
+        GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status)
+      goto error_process_vpp;
+
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status)
       outbuf_meta = gst_buffer_get_mfx_video_meta (buf);
     else
@@ -593,7 +597,6 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
       }
     }
 
-
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_DATA == status)
       return GST_BASE_TRANSFORM_FLOW_DROPPED;
 
@@ -609,10 +612,6 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
       } else
         gst_buffer_copy_into (outbuf, inbuf, GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
     }
-
-    if (GST_MFX_FILTER_STATUS_SUCCESS != status &&
-        GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status)
-      goto error_process_vpp;
 
   } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
 

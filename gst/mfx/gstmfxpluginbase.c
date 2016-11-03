@@ -234,7 +234,8 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   gboolean need_pool;
 
   if (!plugin->sinkpad_buffer_pool)
-    plugin->sinkpad_has_dmabuf = has_dmabuf_capable_peer (plugin, plugin->sinkpad);
+    plugin->sinkpad_has_dmabuf =
+        has_dmabuf_capable_peer (plugin, plugin->sinkpad);
 
   plugin->memtype_is_system = !plugin->sinkpad_has_dmabuf &&
       !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
