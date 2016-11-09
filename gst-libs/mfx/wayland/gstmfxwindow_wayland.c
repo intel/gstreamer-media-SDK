@@ -239,7 +239,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     return FALSE;
 
   fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy);
-  vaapi_image = GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE (buffer_proxy);
+  vaapi_image = gst_mfx_prime_buffer_proxy_get_vaapi_image (buffer_proxy);
   num_planes = vaapi_image_get_plane_count (vaapi_image);
 
   for (i = 0; i < num_planes; i++) {
@@ -254,10 +254,10 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   }
 
   if (!drm_format)
-    return FALSE;
+    goto error;
 
   if (!display_priv->drm)
-    return FALSE;
+    goto error;
 
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   buffer =
@@ -269,7 +269,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (!buffer) {
     GST_ERROR ("No wl_buffer created\n");
-    return FALSE;
+    goto error;
   }
 
   if (!gst_mfx_window_wayland_sync (window)) {
@@ -279,7 +279,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   frame = frame_state_new (window);
   if (!frame)
-    return FALSE;
+    goto error;
   g_atomic_pointer_set (&priv->last_frame, frame);
   g_atomic_int_inc (&priv->num_frames_pending);
 
@@ -304,8 +304,16 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 
+  vaapi_image_unref (vaapi_image);
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
+
   return TRUE;
+error:
+  {
+    vaapi_image_unref (vaapi_image);
+    gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
+    return FALSE;
+  }
 }
 
 static gboolean

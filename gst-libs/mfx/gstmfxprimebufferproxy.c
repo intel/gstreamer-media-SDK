@@ -83,6 +83,10 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
   surf = GST_MFX_SURFACE_ID (proxy->surface);
   display = gst_mfx_surface_vaapi_get_display (proxy->surface);
   proxy->image = gst_mfx_surface_vaapi_derive_image (proxy->surface);
+  if (!proxy->image) {
+    GST_ERROR("Could not derive image.");
+    return FALSE;
+  }
   vaapi_image_get_image (proxy->image, &va_img);
 
   if (vpg_load_symbol ("vpgExtGetSurfaceHandle")) {

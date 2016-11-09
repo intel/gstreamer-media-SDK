@@ -705,18 +705,13 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   gst_buffer_add_parent_buffer_meta (outbuf, buf);
   gst_buffer_replace_memory (outbuf, 0, mem);
 
-
-  image = gst_mfx_surface_vaapi_derive_image (surface);
-  if (!image)
-    goto error_dmabuf_handle;
-
+  image = gst_mfx_prime_buffer_proxy_get_vaapi_image (dmabuf_proxy);
   for (i = 0; i < vaapi_image_get_plane_count (image); i++) {
     meta->offset[i] = vaapi_image_get_offset (image, i);
     meta->stride[i] = vaapi_image_get_pitch (image, i);
   }
 
   vaapi_image_unref(image);
-
   return TRUE;
   /* ERRORS */
 error_dmabuf_handle:

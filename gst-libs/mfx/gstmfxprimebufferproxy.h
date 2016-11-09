@@ -41,9 +41,6 @@ G_BEGIN_DECLS
 #define GST_MFX_PRIME_BUFFER_PROXY_SIZE(buf) \
   gst_mfx_prime_buffer_proxy_get_size (GST_MFX_PRIME_BUFFER_PROXY (buf))
 
-#define GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE(buf) \
-  gst_mfx_prime_buffer_proxy_get_vaapi_image (GST_MFX_PRIME_BUFFER_PROXY(buf))
-
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 
 GstMfxPrimeBufferProxy *
