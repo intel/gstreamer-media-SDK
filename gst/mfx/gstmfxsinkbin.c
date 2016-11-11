@@ -335,7 +335,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       g_param_spec_boolean ("no-frame-drop",
       "No frame drop",
       "When enabled, no frame will dropped",
-      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GstMfxSinkBin:full-color-range:
@@ -506,6 +506,14 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
     missing_factory = "mfxsinkelement";
     goto error_element_missing;
   }
+
+  /* The default value of this property in sinkbin is different
+   * than the default value of this property in sinkelement.
+   * The sinkbin property value must reflected in sinkelement.
+   * Hence, initialize with the default value for sinkbin in
+   * sinkelement. */
+  g_object_set (G_OBJECT (mfxsinkbin->sink), "no-frame-drop",
+      mfxsinkbin->no_frame_drop, NULL);
 
   gst_bin_add_many (GST_BIN (mfxsinkbin), mfxsinkbin->postproc,
       mfxsinkbin->sink, NULL);
