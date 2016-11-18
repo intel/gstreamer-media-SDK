@@ -279,17 +279,6 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
   /* Property */
 
   /**
-   * GstMfxSinkBin:show-preroll-frame
-   *
-   * Allow to show preroll frame
-   */
-
-  g_properties[PROP_SHOW_PREROLL_FRAME] =
-      g_param_spec_boolean ("show-preroll-frame",
-        "show preroll frame",
-        "Enable show preroll frame",
-        FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  /**
    * GstMfxSinkBin:display:
    *
    * The type of display to use.

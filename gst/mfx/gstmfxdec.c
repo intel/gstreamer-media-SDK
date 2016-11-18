@@ -357,9 +357,12 @@ static gboolean
 gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
+  GstMfxProfile profile = gst_mfx_decoder_get_profile(mfxdec->decoder);
 
-  /* There could be issues if we avoid the reset_full () while doing
-   * seeking: we have to reset the internal state */
+  if (profile == GST_MFX_PROFILE_VC1_SIMPLE ||
+      profile == GST_MFX_PROFILE_VC1_MAIN ||
+      profile == GST_MFX_PROFILE_VC1_ADVANCED)
+    return TRUE;
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE);
 }
 

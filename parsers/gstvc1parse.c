@@ -663,8 +663,7 @@ gst_vc1_parse_update_caps (GstMfxVC1Parse * vc1parse)
   caps = gst_caps_new_simple ("video/x-wmv", "wmvversion", G_TYPE_INT, 3, NULL);
 
   stream_format = stream_format_to_string (vc1parse->output_stream_format);
-  gst_caps_set_simple (caps, "header-format", G_TYPE_STRING, header_format,
-      "stream-format", G_TYPE_STRING, stream_format, NULL);
+  gst_caps_set_simple (caps, "stream-format", G_TYPE_STRING, stream_format, NULL);
 
   /* Must have this here from somewhere */
   g_assert (vc1parse->width != 0 && vc1parse->height != 0);
@@ -1372,6 +1371,17 @@ gst_vc1_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
   if (!vc1parse->sent_codec_tag) {
     GstTagList *taglist;
     GstCaps *caps;
+
+    caps = gst_pad_get_current_caps (GST_BASE_PARSE_SRC_PAD (parse));
+    if (G_UNLIKELY (caps == NULL)) {
+      if (GST_PAD_IS_FLUSHING (GST_BASE_PARSE_SRC_PAD (parse))) {
+        GST_INFO_OBJECT (parse, "Src pad is flushing");
+        return GST_FLOW_FLUSHING;
+      } else {
+        GST_INFO_OBJECT (parse, "Src pad is not negotiated!");
+        return GST_FLOW_NOT_NEGOTIATED;
+      }
+    }
 
     taglist = gst_tag_list_new_empty ();
 
