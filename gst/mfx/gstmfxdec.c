@@ -43,8 +43,7 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 /* *INDENT-OFF* */
 static const char gst_mfxdecode_sink_caps_str[] =
     GST_CAPS_CODEC ("video/mpeg, \
-        mpegversion = 2, \
-        systemstream = (boolean) false")
+        mpegversion = 2")
     GST_CAPS_CODEC ("video/x-h264, \
         alignment = (string) au, \
         stream-format = (string) byte-stream")
@@ -302,8 +301,6 @@ gst_mfxdec_destroy (GstMfxDec * mfxdec)
 {
   gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
 
-  mfxdec->active = FALSE;
-
   gst_mfxdec_release (gst_object_ref (mfxdec));
 }
 
@@ -313,10 +310,12 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
 {
   GstMfxProfile profile;
 
-  if (!hard && mfxdec->decoder) {
+  if (mfxdec->decoder && !hard) {
     profile = gst_mfx_profile_from_caps (caps);
-    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder))
+    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder)) {
+      gst_mfx_decoder_reset (mfxdec->decoder);
       return TRUE;
+    }
   }
 
   gst_mfxdec_destroy (mfxdec);
@@ -357,13 +356,13 @@ static gboolean
 gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
-  GstMfxProfile profile = gst_mfx_decoder_get_profile(mfxdec->decoder);
+  GstMfxProfile profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
+  gboolean hard = FALSE;
 
-  if (profile == GST_MFX_PROFILE_VC1_SIMPLE ||
-      profile == GST_MFX_PROFILE_VC1_MAIN ||
-      profile == GST_MFX_PROFILE_VC1_ADVANCED)
-    return TRUE;
-  return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE);
+  if (gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2)
+    hard = TRUE;
+
+  return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
 }
 
 static gboolean
@@ -378,7 +377,7 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
     return FALSE;
   if (!gst_mfx_plugin_base_set_caps (plugin, mfxdec->sinkpad_caps, NULL))
     return FALSE;
-  if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, FALSE))
+  if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE))
     return FALSE;
 
   return TRUE;

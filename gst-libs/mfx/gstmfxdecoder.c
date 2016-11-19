@@ -84,7 +84,7 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
   gst_mfx_task_aggregator_unref (decoder->aggregator);
   gst_mfx_task_replace (&decoder->decode, NULL);
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
-  g_queue_free(decoder->frames);
+  g_queue_free_full (decoder->frames, gst_video_codec_frame_unref);
 
   if ((decoder->param.mfx.CodecId == MFX_CODEC_VP8) ||
 #ifdef HAS_VP9
@@ -393,6 +393,17 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   }
 
   return ret;
+}
+
+void
+gst_mfx_decoder_reset (GstMfxDecoder * decoder)
+{
+  if (decoder->param.mfx.CodecId != MFX_CODEC_VC1)
+    MFXVideoDECODE_Reset(decoder->session, &decoder->param);
+
+  /* Flush pending frames */
+  while (!g_queue_is_empty(decoder->frames))
+    gst_video_codec_frame_unref(g_queue_pop_head(decoder->frames));
 }
 
 static gint
