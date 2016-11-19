@@ -465,9 +465,17 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, &decoder->bs,
         insurf, &outsurf, &syncp);
 
+    if (!decoder->bs.DataLength)
+      break;
+
+    if (sts == MFX_ERR_MORE_DATA)
+      if (decoder->num_decoded_frames)
+        gst_video_codec_frame_unref (g_queue_pop_head (decoder->frames));
+
     if (MFX_WRN_DEVICE_BUSY == sts)
       g_usleep (500);
-  } while (MFX_WRN_DEVICE_BUSY == sts || MFX_ERR_MORE_SURFACE == sts);
+  } while (MFX_WRN_DEVICE_BUSY == sts || MFX_ERR_MORE_SURFACE == sts ||
+           MFX_ERR_MORE_DATA == sts || sts > 0);
 
   if (sts != MFX_ERR_NONE &&
       sts != MFX_ERR_MORE_DATA &&
@@ -477,9 +485,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     goto end;
   }
 
-  if (sts == MFX_ERR_MORE_DATA || sts > 0) {
-    if (decoder->num_decoded_frames)
-      gst_video_codec_frame_unref (g_queue_pop_head (decoder->frames));
+  if (sts == MFX_ERR_MORE_DATA) {
     ret = GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
     goto end;
   }
