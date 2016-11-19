@@ -42,6 +42,8 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
       "video/mpeg, mpegversion=2", "simple"},
   {GST_MFX_PROFILE_MPEG2_MAIN, MFX_CODEC_MPEG2,
       "video/mpeg, mpegversion=2", "main"},
+  {GST_MFX_PROFILE_MPEG2_HIGH, MFX_CODEC_MPEG2,
+      "video/mpeg, mpegversion=2", "high"},
   {GST_MFX_PROFILE_AVC_BASELINE, MFX_CODEC_AVC,
       "video/x-h264", "baseline"},
   {GST_MFX_PROFILE_AVC_CONSTRAINED_BASELINE, MFX_CODEC_AVC,

@@ -54,7 +54,6 @@ struct _GstMfxDec {
   guint                async_depth;
 
   GstVideoCodecState  *input_state;
-  volatile gboolean    active;
   volatile gboolean    do_renego;
 };
 
