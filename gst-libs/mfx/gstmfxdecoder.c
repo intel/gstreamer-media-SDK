@@ -475,6 +475,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     insurf = gst_mfx_surface_get_frame_surface (surface);
     sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, &decoder->bs,
         insurf, &outsurf, &syncp);
+    GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
 
     if (sts != MFX_ERR_NONE &&
         sts != MFX_ERR_MORE_DATA &&
@@ -507,6 +508,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
         do {
           sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
+          GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
         } while (MFX_WRN_IN_EXECUTION == sts);
 
       surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
@@ -528,7 +530,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       g_queue_push_head(decoder->decoded_frames, out_frame);
 
       decoder->num_decoded_frames++;
-      GST_DEBUG ("decoded frame number : %ld", decoder->num_decoded_frames);
+      GST_LOG ("decoded frame number : %ld", decoder->num_decoded_frames);
 
       if (g_queue_get_length(decoder->frames) == 0) {
         ret = GST_MFX_DECODER_STATUS_SUCCESS;
@@ -568,7 +570,7 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
     insurf = gst_mfx_surface_get_frame_surface (surface);
     sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, NULL,
         insurf, &outsurf, &syncp);
-
+    GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
     if (sts == MFX_WRN_DEVICE_BUSY)
       g_usleep (500);
   } while (MFX_WRN_DEVICE_BUSY == sts);
@@ -576,6 +578,7 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
   if (sts == MFX_ERR_NONE) {
     do {
       sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
+      GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
     } while (MFX_WRN_IN_EXECUTION == sts);
 
     surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
@@ -595,7 +598,7 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
         gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
 
     decoder->num_decoded_frames++;
-    GST_DEBUG("decoded frame number : %ld", decoder->num_decoded_frames);
+    GST_LOG ("decoded frame number : %ld", decoder->num_decoded_frames);
     ret = GST_MFX_DECODER_STATUS_SUCCESS;
   } else {
     ret = GST_MFX_DECODER_STATUS_FLUSHED;
