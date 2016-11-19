@@ -445,6 +445,15 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   if (!gst_mfxdec_negotiate (mfxdec))
       goto not_negotiated;
 
+  GST_LOG ("Received new data of size %" G_GSIZE_FORMAT
+      ", dts %" GST_TIME_FORMAT
+      ", pts:%" GST_TIME_FORMAT
+      ", dur:%" GST_TIME_FORMAT,
+      gst_buffer_get_size (frame->input_buffer),
+      GST_TIME_ARGS (frame->dts),
+      GST_TIME_ARGS (frame->pts),
+      GST_TIME_ARGS (frame->duration));
+
   sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
   while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
