@@ -357,10 +357,10 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
   GstMfxProfile profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
-  gboolean hard = FALSE;
+  gboolean hard = TRUE;
 
-  if (gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2)
-    hard = TRUE;
+  if (gst_mfx_profile_get_codec(profile) == MFX_CODEC_VC1)
+    hard = FALSE;
 
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
 }
@@ -445,14 +445,18 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   if (!gst_mfxdec_negotiate (mfxdec))
       goto not_negotiated;
 
-  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, &out_frame);
+  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
+
+  while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
+    ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+    if (ret != GST_FLOW_OK)
+      break;
+  }
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
-      ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
-      break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
-      ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+      ret = GST_FLOW_OK;
       break;
     case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:
     case GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER:
