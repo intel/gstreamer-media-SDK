@@ -65,7 +65,8 @@ static const char gst_mfxdecode_src_caps_str[] =
 enum
 {
   PROP_0,
-  PROP_ASYNC_DEPTH
+  PROP_ASYNC_DEPTH,
+  PROP_LIVE_MODE
 };
 
 static GstStaticPadTemplate sink_template_factory =
@@ -237,6 +238,9 @@ gst_mfxdec_set_property (GObject * object, guint prop_id,
   case PROP_ASYNC_DEPTH:
     dec->async_depth = g_value_get_uint (value);
     break;
+  case PROP_LIVE_MODE:
+    dec->live_stream = g_value_get_boolean (value);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     break;
@@ -255,6 +259,9 @@ gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
   switch (prop_id) {
   case PROP_ASYNC_DEPTH:
     g_value_set_uint (value, dec->async_depth);
+    break;
+  case PROP_LIVE_MODE:
+    g_value_set_boolean (value, dec->live_stream);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -465,6 +472,14 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
     case GST_MFX_DECODER_STATUS_SUCCESS:
+      if (mfxdec->live_stream) {
+        do {
+          sts = gst_mfx_decoder_flush (mfxdec->decoder, &out_frame);
+          if (GST_MFX_DECODER_STATUS_FLUSHED == sts)
+            break;
+          ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+        } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
+      }
       ret = GST_FLOW_OK;
       break;
     case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:
@@ -588,6 +603,13 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
       "Number of async operations before explicit sync",
       0, 20, DEFAULT_ASYNC_DEPTH,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property (gobject_class, PROP_LIVE_MODE,
+  g_param_spec_boolean ("live-mode",
+      "Live Streaming Mode",
+      "Live streaming mode (not recommended)",
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
 
   gst_element_class_add_pad_template (element_class,
       gst_static_pad_template_get (&src_template_factory));
