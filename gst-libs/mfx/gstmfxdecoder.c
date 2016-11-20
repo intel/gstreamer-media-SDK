@@ -43,12 +43,11 @@ struct _GstMfxDecoder
   GstMfxFilter *filter;
   GByteArray *bitstream;
 
-  GQueue *frames;
+  GQueue *pending_frames;
   GQueue *decoded_frames;
-  guint32 num_decoded_frames;
 
   mfxSession session;
-  mfxVideoParam param;
+  mfxVideoParam params;
   mfxBitstream bs;
   mfxPluginUID plugin_uid;
   mfxFrameAllocRequest request;
@@ -94,13 +93,13 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
   gst_mfx_task_aggregator_unref (decoder->aggregator);
   gst_mfx_task_replace (&decoder->decode, NULL);
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
-  g_queue_free_full (decoder->frames, gst_video_codec_frame_unref);
+  g_queue_free_full (decoder->pending_frames, gst_video_codec_frame_unref);
 
-  if ((decoder->param.mfx.CodecId == MFX_CODEC_VP8) ||
+  if ((decoder->params.mfx.CodecId == MFX_CODEC_VP8) ||
 #ifdef HAS_VP9
-      (decoder->param.mfx.CodecId == MFX_CODEC_VP9) ||
+      (decoder->params.mfx.CodecId == MFX_CODEC_VP9) ||
 #endif
-      (decoder->param.mfx.CodecId == MFX_CODEC_HEVC))
+      (decoder->params.mfx.CodecId == MFX_CODEC_HEVC))
     MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
 
   MFXVideoDECODE_Close (decoder->session);
@@ -112,7 +111,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
   mfxStatus sts;
   guint i, c;
 
-  switch (decoder->param.mfx.CodecId) {
+  switch (decoder->params.mfx.CodecId) {
     case MFX_CODEC_HEVC: {
       gchar *uids[] = {
         "33a61c0b4c27454ca8d85dde757c6f8e",
@@ -125,7 +124,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
         sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
         if (MFX_ERR_NONE == sts) {
           if (!g_strcmp0 (uids[i], "15dd936825ad475ea34e35f3f54217a6"))
-            decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+            decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
           break;
         }
       }
@@ -159,7 +158,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 static void
 gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
 {
-  mfxFrameInfo *frame_info = &decoder->param.mfx.FrameInfo;
+  mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
   frame_info->FourCC = MFX_FOURCC_NV12;
@@ -187,7 +186,7 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
           GST_ROUND_UP_16 (decoder->info.height) :
           GST_ROUND_UP_32 (decoder->info.height);
 
-  decoder->param.mfx.CodecProfile =
+  decoder->params.mfx.CodecProfile =
       gst_mfx_profile_get_codec_profile(decoder->profile);
 }
 
@@ -211,17 +210,17 @@ task_init (GstMfxDecoder * decoder)
   if (sts < 0)
     return FALSE;
 
-  sts = MFXVideoDECODE_QueryIOSurf (decoder->session, &decoder->param,
+  sts = MFXVideoDECODE_QueryIOSurf (decoder->session, &decoder->params,
       &decoder->request);
   if (sts < 0) {
     GST_ERROR ("Unable to query decode allocation request %d", sts);
     return FALSE;
   } else if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
-    decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+    decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
   decoder->memtype_is_system =
-    !!(decoder->param.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+    !!(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   decoder->request.Type = decoder->memtype_is_system ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
@@ -241,18 +240,18 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
 {
   decoder->info = *info;
   decoder->profile = profile;
-  decoder->param.mfx.CodecId = gst_mfx_profile_get_codec(profile);
-  decoder->param.AsyncDepth = async_depth;
+  decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
+  decoder->params.AsyncDepth = async_depth;
   decoder->memtype_is_system = memtype_is_system;
-  decoder->param.IOPattern = memtype_is_system ?
+  decoder->params.IOPattern = memtype_is_system ?
       MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   decoder->inited = FALSE;
   decoder->bs.MaxLength = 1024 * 16;
   decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
   if (!decoder->bitstream)
     return FALSE;
-  decoder->frames = g_queue_new();
-  if (!decoder->frames)
+  decoder->pending_frames = g_queue_new();
+  if (!decoder->pending_frames)
     return FALSE;
   decoder->decoded_frames = g_queue_new();
   if (!decoder->decoded_frames)
@@ -332,14 +331,14 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   gboolean memtype_is_system = gst_mfx_task_has_mapped_surface(decoder->decode);
 
   if (memtype_is_system)
-    decoder->param.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+    decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
 
   /* This makes sure no CSC happens with native mapped NV12 surfaces */
   if (out_format == GST_VIDEO_FORMAT_NV12 && memtype_is_system)
     decoder->memtype_is_system = TRUE;
 
   sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
-      &decoder->param);
+      &decoder->params);
   if (MFX_ERR_MORE_DATA == sts) {
     return GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
   } else if (sts < 0) {
@@ -347,20 +346,20 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
   }
 
-  if ((decoder->param.mfx.CodecId == MFX_CODEC_JPEG) &&
-      (decoder->param.mfx.JPEGChromaFormat == MFX_CHROMAFORMAT_YUV444))
+  if ((decoder->params.mfx.CodecId == MFX_CODEC_JPEG) &&
+      (decoder->params.mfx.JPEGChromaFormat == MFX_CHROMAFORMAT_YUV444))
   {
     decoder->request.Info.FourCC =
-        decoder->param.mfx.FrameInfo.FourCC = MFX_FOURCC_RGB4;
+        decoder->params.mfx.FrameInfo.FourCC = MFX_FOURCC_RGB4;
     decoder->request.Info.ChromaFormat =
-        decoder->param.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV444;
-    decoder->param.mfx.JPEGColorFormat = MFX_JPEG_COLORFORMAT_RGB;
+        decoder->params.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV444;
+    decoder->params.mfx.JPEGColorFormat = MFX_JPEG_COLORFORMAT_RGB;
 
     gst_mfx_task_set_request (decoder->decode, &decoder->request);
   }
 
   vformat =
-      gst_video_format_from_mfx_fourcc(decoder->param.mfx.FrameInfo.FourCC);
+      gst_video_format_from_mfx_fourcc(decoder->params.mfx.FrameInfo.FourCC);
 
   if (!gst_mfx_task_has_native_decoder_output(decoder->decode) &&
       (out_format != vformat || memtype_is_system != decoder->memtype_is_system)) {
@@ -374,7 +373,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
         MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE |
         MFX_MEMTYPE_EXPORT_FRAME;
 
-    decoder->request.NumFrameSuggested += (1 - decoder->param.AsyncDepth);
+    decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
 
     gst_mfx_filter_set_request (decoder->filter, &decoder->request,
         GST_MFX_TASK_VPP_IN);
@@ -393,7 +392,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
   }
 
-  sts = MFXVideoDECODE_Init (decoder->session, &decoder->param);
+  sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
   if (sts < 0) {
     GST_ERROR ("Error initializing the MFX video decoder %d", sts);
     return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
@@ -412,8 +411,8 @@ void
 gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 {
   /* Flush pending frames */
-  while (!g_queue_is_empty(decoder->frames))
-    gst_video_codec_frame_unref(g_queue_pop_head(decoder->frames));
+  while (!g_queue_is_empty(decoder->pending_frames))
+    gst_video_codec_frame_unref(g_queue_pop_head(decoder->pending_frames));
 }
 
 static gint
@@ -439,9 +438,9 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   GstVideoCodecFrame *out_frame;
 
   /* Save frames for later synchronization with decoded MFX surfaces */
-  g_queue_push_head (decoder->frames, gst_video_codec_frame_ref(frame));
+  g_queue_push_head (decoder->pending_frames, gst_video_codec_frame_ref(frame));
   /* Ensure that frames are sorted according to presentation timestamps */
-  g_queue_sort (decoder->frames, sort_pts, NULL);
+  g_queue_sort (decoder->pending_frames, sort_pts, NULL);
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
     GST_ERROR ("Failed to map input buffer");
@@ -477,26 +476,27 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         insurf, &outsurf, &syncp);
     GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
 
+    if (MFX_ERR_MORE_SURFACE == sts || sts > 0) {
+      if (MFX_WRN_DEVICE_BUSY == sts)
+        g_usleep (500);
+      continue;
+    }
+
     if (sts != MFX_ERR_NONE &&
         sts != MFX_ERR_MORE_DATA &&
-        sts != MFX_ERR_MORE_SURFACE &&
-        sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
+        sts != MFX_ERR_MORE_SURFACE) {
       GST_ERROR ("Status %d : Error during MFX decoding", sts);
       ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
       break;
     }
 
     if (sts == MFX_ERR_MORE_DATA) {
-      if (decoder->num_decoded_frames)
-        gst_video_codec_frame_unref (g_queue_pop_head (decoder->frames));
       ret = GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
+      if (!decoder->bs.DataLength ||
+          decoder->params.mfx.CodecId == MFX_CODEC_VC1)
+        break;
+      gst_video_codec_frame_unref (g_queue_pop_head (decoder->pending_frames));
     }
-
-    if (!decoder->bs.DataLength)
-      break;
-
-    if (MFX_ERR_MORE_SURFACE == sts)
-      continue;
 
     if (syncp) {
       if (!decoder->bitstream->len) {
@@ -523,25 +523,20 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         }
         surface = filter_surface;
       }
-      out_frame = g_queue_pop_tail (decoder->frames);
+      out_frame = g_queue_pop_tail (decoder->pending_frames);
       gst_video_codec_frame_set_user_data(out_frame,
           gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
 
       g_queue_push_head(decoder->decoded_frames, out_frame);
 
-      decoder->num_decoded_frames++;
-      GST_LOG ("decoded frame number : %ld", decoder->num_decoded_frames);
+      GST_LOG ("decoded frame : %ld", out_frame->system_frame_number);
 
-      if (g_queue_get_length(decoder->frames) == 0) {
+      if (g_queue_get_length(decoder->pending_frames) == 0) {
         ret = GST_MFX_DECODER_STATUS_SUCCESS;
         break;
       }
     }
-
-    if (MFX_WRN_DEVICE_BUSY == sts)
-      g_usleep (500);
-
-  } while (MFX_ERR_MORE_DATA == sts || MFX_ERR_NONE == sts || sts > 0);
+  } while (MFX_ERR_MORE_DATA == sts || MFX_ERR_NONE == sts);
 
 
 
@@ -593,12 +588,11 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
       }
       surface = filter_surface;
     }
-    *out_frame = g_queue_pop_tail (decoder->frames);
+    *out_frame = g_queue_pop_tail (decoder->pending_frames);
     gst_video_codec_frame_set_user_data(*out_frame,
         gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
 
-    decoder->num_decoded_frames++;
-    GST_LOG ("decoded frame number : %ld", decoder->num_decoded_frames);
+    GST_LOG ("decoded frame : %ld", (*out_frame)->system_frame_number);
     ret = GST_MFX_DECODER_STATUS_SUCCESS;
   } else {
     ret = GST_MFX_DECODER_STATUS_FLUSHED;
