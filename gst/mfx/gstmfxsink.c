@@ -1274,7 +1274,7 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
       g_param_spec_boolean ("no-frame-drop",
       "No frame drop",
       "Render all decoded frames when enabled, ignoring timestamp lateness",
-      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GstMfxSink:full-color-range:

@@ -499,11 +499,9 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     }
 
     if (syncp) {
-      if (!decoder->bitstream->len) {
-        decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
-            decoder->bs.DataOffset);
-        decoder->bs.DataOffset = 0;
-      }
+      decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
+          decoder->bs.DataOffset);
+      decoder->bs.DataOffset = 0;
 
       if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
         do {
@@ -531,14 +529,12 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
       GST_LOG ("decoded frame : %ld", out_frame->system_frame_number);
 
-      if (g_queue_get_length(decoder->pending_frames) == 0) {
+      if (!decoder->bitstream->len) {
         ret = GST_MFX_DECODER_STATUS_SUCCESS;
         break;
       }
     }
   } while (MFX_ERR_MORE_DATA == sts || MFX_ERR_NONE == sts);
-
-
 
 end:
   gst_buffer_unmap (frame->input_buffer, &minfo);
