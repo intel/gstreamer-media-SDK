@@ -32,7 +32,7 @@ G_BEGIN_DECLS
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new (GstMfxDisplay * display, GstVideoInfo * info,
-    gboolean mapped);
+    gboolean memtype_is_system);
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new_with_task (GstMfxTask * task);

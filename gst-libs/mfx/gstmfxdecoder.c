@@ -328,7 +328,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   GstVideoFormat out_format = GST_VIDEO_INFO_FORMAT (&decoder->info);
   GstVideoFormat vformat;
   mfxStatus sts = MFX_ERR_NONE;
-  gboolean memtype_is_system = gst_mfx_task_has_mapped_surface(decoder->decode);
+  gboolean memtype_is_system = !gst_mfx_task_has_video_memory (decoder->decode);
 
   if (memtype_is_system)
     decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
@@ -410,6 +410,12 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 void
 gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 {
+  MFXVideoDECODE_Reset (decoder->session, &decoder->params);
+
+  g_byte_array_remove_range (decoder->bitstream, 0,
+      decoder->bitstream->len);
+  memset(&decoder->bs, 0, sizeof(mfxBitstream));
+
   /* Flush pending frames */
   while (!g_queue_is_empty(decoder->pending_frames))
     gst_video_codec_frame_unref(g_queue_pop_head(decoder->pending_frames));
@@ -426,7 +432,7 @@ sort_pts (gconstpointer frame1, gconstpointer frame2, gpointer data)
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame)
+    GstVideoCodecFrame * frame, gboolean live_mode)
 {
   GstMapInfo minfo;
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
@@ -493,16 +499,16 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     if (sts == MFX_ERR_MORE_DATA) {
       ret = GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
       if (!decoder->bs.DataLength ||
-          decoder->params.mfx.CodecId == MFX_CODEC_VC1)
+          decoder->params.mfx.CodecId == MFX_CODEC_VC1) {
+        decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
+          decoder->bs.DataOffset);
+        decoder->bs.DataOffset = 0;
         break;
+      }
       gst_video_codec_frame_unref (g_queue_pop_head (decoder->pending_frames));
     }
 
-    if (syncp) {
-      decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
-          decoder->bs.DataOffset);
-      decoder->bs.DataOffset = 0;
-
+    if (syncp && sts == MFX_ERR_NONE) {
       if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
         do {
           sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
@@ -529,8 +535,11 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
       GST_LOG ("decoded frame : %ld", out_frame->system_frame_number);
 
-      if (!decoder->bitstream->len) {
+      if (!live_mode) {
         ret = GST_MFX_DECODER_STATUS_SUCCESS;
+        decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
+          decoder->bs.DataOffset);
+        decoder->bs.DataOffset = 0;
         break;
       }
     }
