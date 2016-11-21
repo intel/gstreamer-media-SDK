@@ -88,7 +88,7 @@ void
 gst_mfx_task_use_video_memory (GstMfxTask * task);
 
 gboolean
-gst_mfx_task_has_mapped_surface (GstMfxTask * task);
+gst_mfx_task_has_video_memory (GstMfxTask * task);
 
 void
 gst_mfx_task_ensure_native_decoder_output (GstMfxTask * task);

@@ -49,7 +49,7 @@ struct _GstMfxTask
   mfxFrameAllocRequest request;
   mfxSession session;
   guint task_type;
-  gboolean use_video_memory;
+  gboolean has_video_memory;
   gboolean use_native_output;
 };
 
@@ -399,15 +399,15 @@ gst_mfx_task_use_video_memory (GstMfxTask * task)
 
   MFXVideoCORE_SetFrameAllocator (task->session, &frame_allocator);
 
-  task->use_video_memory = TRUE;
+  task->has_video_memory = TRUE;
 }
 
 gboolean
-gst_mfx_task_has_mapped_surface (GstMfxTask * task)
+gst_mfx_task_has_video_memory (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return !task->use_video_memory;
+  return task->has_video_memory;
 }
 
 static void
@@ -443,7 +443,7 @@ gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   MFXVideoCORE_SetHandle (task->session, MFX_HANDLE_VA_DISPLAY,
       GST_MFX_DISPLAY_VADISPLAY (task->display));
 
-  task->use_video_memory = FALSE;
+  task->has_video_memory = FALSE;
 }
 
 GstMfxTask *

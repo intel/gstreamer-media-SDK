@@ -98,7 +98,7 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame);
+    GstVideoCodecFrame * frame, gboolean live_mode);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_flush (GstMfxDecoder * decoder,

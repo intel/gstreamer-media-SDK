@@ -35,7 +35,7 @@ struct _GstMfxSurfacePool
   GstMfxDisplay *display;
   GstMfxTask *task;
   GstVideoInfo info;
-  gboolean mapped;
+  gboolean memtype_is_system;
   GQueue free_surfaces;
   GList *used_surfaces;
   guint used_count;
@@ -75,7 +75,7 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
   g_queue_init (&pool->free_surfaces);
   g_mutex_init (&pool->mutex);
 
-  if (pool->task && !gst_mfx_task_has_mapped_surface(pool->task))
+  if (pool->task && gst_mfx_task_has_video_memory (pool->task))
     gst_mfx_surface_pool_add_surfaces(pool);
 }
 
@@ -104,7 +104,7 @@ gst_mfx_surface_pool_class (void)
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new (GstMfxDisplay * display,
-    GstVideoInfo * info, gboolean mapped)
+    GstVideoInfo * info, gboolean memtype_is_system)
 {
   GstMfxSurfacePool *pool;
 
@@ -116,7 +116,7 @@ gst_mfx_surface_pool_new (GstMfxDisplay * display,
     return NULL;
 
   pool->display = gst_mfx_display_ref(display);
-  pool->mapped = mapped;
+  pool->memtype_is_system = memtype_is_system;
   pool->info = *info;
 
   gst_mfx_surface_pool_init (pool);
@@ -137,7 +137,7 @@ gst_mfx_surface_pool_new_with_task (GstMfxTask * task)
     return NULL;
 
   pool->task = gst_mfx_task_ref (task);
-  pool->mapped = gst_mfx_task_has_mapped_surface(task);
+  pool->memtype_is_system = !gst_mfx_task_has_video_memory (task);
   gst_mfx_surface_pool_init (pool);
 
   return pool;
@@ -219,7 +219,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
       surface = gst_mfx_surface_new_from_task (pool->task);
     }
     else {
-      if (!pool->mapped)
+      if (!pool->memtype_is_system)
         surface = gst_mfx_surface_vaapi_new(pool->display, &pool->info);
       else
         surface = gst_mfx_surface_new(&pool->info);
