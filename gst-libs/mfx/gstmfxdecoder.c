@@ -505,7 +505,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         decoder->bs.DataOffset = 0;
         break;
       }
-      gst_video_codec_frame_unref (g_queue_pop_head (decoder->pending_frames));
     }
 
     if (syncp && sts == MFX_ERR_NONE) {

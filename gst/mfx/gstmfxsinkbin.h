@@ -70,7 +70,6 @@ typedef struct __GstMfxSinkBin {
   guint                   fullscreen : 1;
   guint                   no_frame_drop : 1;
   guint                   full_color_range : 1;
-  guint                   show_preroll_frame : 1;
 } GstMfxSinkBin;
 
 typedef struct __GstMfxSinkBinClass {
