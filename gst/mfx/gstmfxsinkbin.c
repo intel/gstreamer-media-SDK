@@ -32,7 +32,6 @@ enum
 {
   PROP_0,
 
-  PROP_SHOW_PREROLL_FRAME,
   PROP_DISPLAY_TYPE,
   PROP_FULLSCREEN,
   PROP_FORCE_ASPECT_RATIO,
@@ -106,11 +105,6 @@ gst_mfx_sink_bin_set_property (GObject * object,
   GstMfxSinkBin *mfxsinkbin = GST_MFX_SINK_BIN (object);
 
   switch (prop_id) {
-    case PROP_SHOW_PREROLL_FRAME:
-      mfxsinkbin->show_preroll_frame = g_value_get_boolean (value);
-      g_object_set (G_OBJECT (mfxsinkbin->sink), "show-preroll-frame",
-          mfxsinkbin->show_preroll_frame, NULL);
-      break;
     case PROP_DISPLAY_TYPE:
       mfxsinkbin->display_type = g_value_get_enum (value);
       g_object_set (G_OBJECT (mfxsinkbin->sink), "display",
@@ -202,9 +196,6 @@ gst_mfx_sink_bin_get_property (GObject * object,
   GstMfxSinkBin *mfxsinkbin = GST_MFX_SINK_BIN (object);
 
   switch (prop_id) {
-    case PROP_SHOW_PREROLL_FRAME:
-      g_value_set_boolean (value, mfxsinkbin->show_preroll_frame);
-      break;
     case PROP_DISPLAY_TYPE:
       g_value_set_enum (value, mfxsinkbin->display_type);
       break;
