@@ -35,6 +35,7 @@ enum
   PROP_DISPLAY_TYPE,
   PROP_FULLSCREEN,
   PROP_FORCE_ASPECT_RATIO,
+  PROP_SHOW_PREROLL_FRAME,
   PROP_NO_FRAME_DROP,
   PROP_FULL_COLOR_RANGE,
   PROP_WIDTH,
@@ -125,6 +126,11 @@ gst_mfx_sink_bin_set_property (GObject * object,
       g_object_set (G_OBJECT (mfxsinkbin->sink), "no-frame-drop",
           mfxsinkbin->no_frame_drop, NULL);
       break;
+    case PROP_SHOW_PREROLL_FRAME:
+      mfxsinkbin->show_preroll_frame = g_value_get_boolean (value);
+      g_object_set (G_OBJECT (mfxsinkbin->sink), "show-preroll-frame",
+          mfxsinkbin->show_preroll_frame, NULL);
+      break;
     case PROP_FULL_COLOR_RANGE:
       mfxsinkbin->full_color_range = g_value_get_boolean (value);
       g_object_set (G_OBJECT (mfxsinkbin->sink), "full-color-range",
@@ -207,6 +213,9 @@ gst_mfx_sink_bin_get_property (GObject * object,
       break;
     case PROP_NO_FRAME_DROP:
       g_value_set_boolean (value, mfxsinkbin->no_frame_drop);
+      break;
+    case PROP_SHOW_PREROLL_FRAME:
+      g_value_set_boolean (value, mfxsinkbin->show_preroll_frame);
       break;
     case PROP_FULL_COLOR_RANGE:
       g_value_set_boolean (value, mfxsinkbin->full_color_range);
@@ -315,6 +324,18 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       g_param_spec_boolean ("no-frame-drop",
       "No frame drop",
       "When enabled, no frame will dropped",
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * GstMfxSinkBin:show-preroll-frame:
+   *
+   * When enabled, show video frames during preroll.
+   *
+   */
+  g_properties[PROP_SHOW_PREROLL_FRAME] =
+      g_param_spec_boolean ("show-preroll-frame",
+      "Show preroll frame",
+      "When enabled, show video frames during preroll.",
       FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
