@@ -508,6 +508,8 @@ gst_mfx_window_wayland_class_init (GstMfxWindowWaylandClass * klass)
   GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
   GstMfxWindowClass *const window_class = GST_MFX_WINDOW_CLASS (klass);
 
+  gst_mfx_window_class_init (&klass->parent_class);
+
   object_class->size = sizeof (GstMfxWindowWayland);
   window_class->create = gst_mfx_window_wayland_create;
   window_class->destroy = gst_mfx_window_wayland_destroy;
