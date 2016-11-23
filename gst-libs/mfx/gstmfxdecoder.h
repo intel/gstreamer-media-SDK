@@ -90,6 +90,9 @@ gboolean
 gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
     GstVideoCodecFrame ** out_frame);
 
+GstVideoInfo *
+gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder);
+
 void
 gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder);
 
