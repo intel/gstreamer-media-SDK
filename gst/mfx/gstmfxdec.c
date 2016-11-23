@@ -189,12 +189,6 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   return TRUE;
 }
 
-static void
-gst_mfxdec_release (GstMfxDec * mfxdec)
-{
-  gst_object_unref (mfxdec);
-}
-
 static gboolean
 gst_mfxdec_negotiate (GstMfxDec * mfxdec)
 {
@@ -307,15 +301,6 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   return TRUE;
 }
 
-
-static void
-gst_mfxdec_destroy (GstMfxDec * mfxdec)
-{
-  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
-
-  gst_mfxdec_release (gst_object_ref (mfxdec));
-}
-
 static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
   gboolean hard)
@@ -329,8 +314,8 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
       return TRUE;
     }
   }
+  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
 
-  gst_mfxdec_destroy (mfxdec);
   return gst_mfxdec_create (mfxdec, caps);
 }
 
@@ -358,7 +343,7 @@ gst_mfxdec_close (GstVideoDecoder * vdec)
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
 
   gst_mfxdec_input_state_replace (mfxdec, NULL);
-  gst_mfxdec_destroy (mfxdec);
+  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (mfxdec));
 
   return TRUE;
@@ -369,9 +354,11 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
   GstMfxProfile profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
+  GstVideoInfo *info = gst_mfx_decoder_get_video_info (mfxdec->decoder);
   gboolean hard = FALSE;
 
-  if (gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2)
+  if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED ||
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2)
     hard = TRUE;
 
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
@@ -389,7 +376,7 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
     return FALSE;
   if (!gst_mfx_plugin_base_set_caps (plugin, mfxdec->sinkpad_caps, NULL))
     return FALSE;
-  if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE))
+  if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, FALSE))
     return FALSE;
 
   return TRUE;
@@ -468,15 +455,17 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
   sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, mfxdec->live_mode);
 
-  while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
-    ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
-    if (ret != GST_FLOW_OK)
-      break;
-  }
+
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
     case GST_MFX_DECODER_STATUS_SUCCESS:
+      while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
+        ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+        if (ret != GST_FLOW_OK)
+          break;
+      }
+
       if (mfxdec->live_mode) {
         do {
           sts = gst_mfx_decoder_flush (mfxdec->decoder, &out_frame);
@@ -485,7 +474,6 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
           ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
         } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
       }
-      ret = GST_FLOW_OK;
       break;
     case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:
     case GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER:

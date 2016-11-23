@@ -54,6 +54,7 @@ struct _GstMfxDecoder
 
   GstVideoInfo info;
   gboolean inited;
+  gboolean first_frame_decoded;
   gboolean memtype_is_system;
 };
 
@@ -72,6 +73,14 @@ gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
   *out_frame = g_queue_pop_tail (decoder->decoded_frames);
 
   return *out_frame ? TRUE : FALSE;
+}
+
+GstVideoInfo *
+gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder)
+{
+  g_return_val_if_fail (decoder != NULL, NULL);
+
+  return &decoder->info;
 }
 
 void
@@ -410,15 +419,18 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 void
 gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 {
-  MFXVideoDECODE_Reset (decoder->session, &decoder->params);
+  if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED)
+    return;
 
-  g_byte_array_remove_range (decoder->bitstream, 0,
-      decoder->bitstream->len);
-  memset(&decoder->bs, 0, sizeof(mfxBitstream));
+  MFXVideoDECODE_Reset (decoder->session, &decoder->params);
 
   /* Flush pending frames */
   while (!g_queue_is_empty(decoder->pending_frames))
     gst_video_codec_frame_unref(g_queue_pop_head(decoder->pending_frames));
+
+  g_byte_array_remove_range (decoder->bitstream, 0,
+      decoder->bitstream->len);
+  memset(&decoder->bs, 0, sizeof(mfxBitstream));
 }
 
 static gint
@@ -515,6 +527,30 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         } while (MFX_WRN_IN_EXECUTION == sts);
 
       surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
+
+      /* Update stream properties if they have interlaced frames */
+      if (outsurf->Info.PicStruct == MFX_PICSTRUCT_PROGRESSIVE) {
+        if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
+          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+      }
+      else {
+        /* Check if stream has progressive frames first.
+         * If it does then it should be a mixed interlaced stream */
+        if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE &&
+            decoder->first_frame_decoded)
+          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
+        else {
+          if (!decoder->first_frame_decoded)
+            decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
+        }
+
+        if (outsurf->Info.PicStruct == MFX_PICSTRUCT_FIELD_TFF)
+          GST_VIDEO_INFO_FLAG_SET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+        else if (outsurf->Info.PicStruct == MFX_PICSTRUCT_FIELD_BFF)
+          GST_VIDEO_INFO_FLAG_UNSET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+      }
+
+      decoder->first_frame_decoded = TRUE;
 
       if (gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_VPP_IN)) {
         filter_sts = gst_mfx_filter_process (decoder->filter, surface,
