@@ -867,8 +867,17 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
 
+  /* Reset the values */
+  sink->video_width = 0;
+  sink->video_height = 0;
+  sink->window_height = 0;
+  sink->window_width = 0;
+  sink->video_par_n = 0;
+  sink->video_par_d = 0;
+
   gst_buffer_replace (&sink->video_buffer, NULL);
   gst_mfx_window_replace (&sink->window, NULL);
+  gst_mfx_display_replace (&sink->display, NULL);
 
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (sink));
   return TRUE;
@@ -943,8 +952,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   if (!gst_mfxsink_ensure_aggregator (sink))
     return FALSE;
 
-  if (!sink->backend)
-    gst_mfxsink_set_render_backend (sink);
+  gst_mfxsink_set_render_backend (sink);
 
   if (!gst_mfx_plugin_base_set_caps (plugin, caps, NULL))
     return FALSE;
