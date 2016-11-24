@@ -47,6 +47,7 @@ struct _GstMfxTask
   GstMfxDisplay *display;
   GList *saved_responses;
   mfxFrameAllocRequest request;
+  mfxVideoParam params;
   mfxSession session;
   guint task_type;
   gboolean has_video_memory;
@@ -408,6 +409,22 @@ gst_mfx_task_has_video_memory (GstMfxTask * task)
   g_return_val_if_fail (task != NULL, FALSE);
 
   return task->has_video_memory;
+}
+
+void
+gst_mfx_task_set_video_params (GstMfxTask * task, mfxVideoParam * params)
+{
+  g_return_if_fail (task != NULL);
+
+  task->params = *params;
+}
+
+mfxVideoParam *
+gst_mfx_task_get_video_params (GstMfxTask * task)
+{
+  g_return_val_if_fail (task != NULL, NULL);
+
+  return &task->params;
 }
 
 static void

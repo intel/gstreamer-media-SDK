@@ -199,7 +199,7 @@ configure_filters (GstMfxFilter * filter)
     check_supported_filters (filter);
   }
 
-  /* If AlgList is available when filter is already initialize
+  /* If AlgList is available when filter is already initialized
   and if current number of filter is not equal to new number of
   filter requested, deallocate resources when resetting */
   if (filter->vpp_use.AlgList &&
@@ -240,7 +240,7 @@ configure_filters (GstMfxFilter * filter)
   return TRUE;
 }
 
-static gboolean
+static void
 init_params (GstMfxFilter * filter)
 {
   filter->params.vpp.In = filter->frame_info;
@@ -278,7 +278,7 @@ init_params (GstMfxFilter * filter)
     filter->params.vpp.Out.FrameRateExtD = filter->fps_d;
   }
 
-  return TRUE;
+  configure_filters (filter);
 }
 
 gboolean
@@ -303,8 +303,10 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     }
   }
 
-  if (!init_params (filter))
-    return FALSE;
+  init_params (filter);
+
+  /* Save mfxVideoParam configuration in VPP_OUT task for VPP pass-through */
+  //gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   sts =
       MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, &request);
@@ -329,7 +331,8 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
 
   /* Initialize input VPP surface pool when vpp input task is set */
   if (filter->vpp[0]) {
-    gboolean memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
+    gboolean memtype_is_system =
+        !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
 
     filter->shared_request[0]->NumFrameSuggested += request[0].NumFrameSuggested;
     filter->shared_request[0]->NumFrameMin =
@@ -386,7 +389,8 @@ gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags)
 
 static void
 gst_mfx_filter_init (GstMfxFilter * filter,
-    GstMfxTaskAggregator * aggregator, gboolean is_system_in, gboolean is_system_out)
+    GstMfxTaskAggregator * aggregator,
+    gboolean is_system_in, gboolean is_system_out)
 {
   filter->params.IOPattern |= is_system_in ?
       MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
@@ -1172,8 +1176,6 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   filter->vpp_pool[1] = gst_mfx_surface_pool_new_with_task (filter->vpp[1]);
   if (!filter->vpp_pool[1])
     return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
-
-  configure_filters (filter);
 
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
   if (sts < 0) {

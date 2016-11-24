@@ -78,6 +78,7 @@ get_image_data (GstMfxVideoMemory * mem)
   if ((width == aligned_width && height == aligned_height && !mem->image) ||
       GST_VIDEO_INFO_N_PLANES (mem->image_info) == 1) {
     mem->data = gst_mfx_surface_get_plane (mem->surface, 0);
+    mem->new_copy = FALSE;
     return TRUE;
   } else {
     return copy_image (mem);
@@ -214,6 +215,7 @@ gst_mfx_video_memory_new (GstAllocator * base_allocator, GstMfxVideoMeta * meta)
   mem->meta = meta ? gst_mfx_video_meta_ref (meta) : NULL;
   mem->map_type = 0;
   mem->map_count = 0;
+  mem->new_copy = FALSE;
 
   return GST_MEMORY_CAST (mem);
 }

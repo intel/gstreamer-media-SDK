@@ -540,7 +540,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
             decoder->first_frame_decoded)
           decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
         else {
-          if (!decoder->first_frame_decoded)
+          if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
             decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
         }
 
