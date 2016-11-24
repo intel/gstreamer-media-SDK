@@ -120,6 +120,13 @@ gst_mfx_surface_vaapi_map(GstMfxSurface * surface)
     surface->planes[i] = vaapi_image_get_plane(vaapi_surface->image, i);
     surface->pitches[i] = vaapi_image_get_pitch(vaapi_surface->image, i);
   }
+  if (num_planes == 1)
+    vaapi_image_get_size(vaapi_surface->image, &surface->width, &surface->height);
+  else {
+    surface->width = surface->pitches[0];
+    surface->height =
+        vaapi_image_get_offset(vaapi_surface->image, 1) / surface->width;
+  }
 
   return TRUE;
 }
@@ -146,7 +153,7 @@ gst_mfx_surface_vaapi_class_init(GstMfxSurfaceClass * klass)
 
   GST_DEBUG_CATEGORY_INIT(gst_debug_mfx, "mfx", 0, "MFX helper");
 
-  object_class->size = sizeof(GstMfxSurface);
+  object_class->size = sizeof(GstMfxSurfaceVaapi);
   surface_class->allocate = gst_mfx_surface_vaapi_allocate;
   surface_class->release = gst_mfx_surface_vaapi_release;
   surface_class->map = gst_mfx_surface_vaapi_map;

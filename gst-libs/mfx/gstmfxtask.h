@@ -91,6 +91,12 @@ gboolean
 gst_mfx_task_has_video_memory (GstMfxTask * task);
 
 void
+gst_mfx_task_set_video_params (GstMfxTask * task, mfxVideoParam * params);
+
+mfxVideoParam *
+gst_mfx_task_get_video_params (GstMfxTask * task);
+
+void
 gst_mfx_task_ensure_native_decoder_output (GstMfxTask * task);
 
 gboolean
