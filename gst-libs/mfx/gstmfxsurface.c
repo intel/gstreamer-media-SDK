@@ -452,9 +452,9 @@ gst_mfx_surface_map(GstMfxSurface * surface)
 
   if (gst_mfx_surface_has_video_memory(surface) && !surface->mapped)
     if (klass->map)
-      surface->mapped = klass->map(surface);
+      return (surface->mapped = klass->map(surface));
 
-  return surface->mapped;
+  return TRUE;
 }
 
 void
