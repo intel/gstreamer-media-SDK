@@ -531,13 +531,6 @@ gst_mfx_filter_set_format (GstMfxFilter * filter, GstVideoFormat fmt)
   return TRUE;
 }
 
-GstVideoFormat
-gst_mfx_filter_get_format (GstMfxFilter * filter)
-{
-  g_return_val_if_fail (filter != NULL, GST_VIDEO_FORMAT_UNKNOWN);
-  return filter->fourcc;
-}
-
 gboolean
 gst_mfx_filter_set_size (GstMfxFilter * filter, mfxU16 width, mfxU16 height)
 {
@@ -545,17 +538,6 @@ gst_mfx_filter_set_size (GstMfxFilter * filter, mfxU16 width, mfxU16 height)
 
   filter->width = width;
   filter->height = height;
-
-  return TRUE;
-}
-
-gboolean
-gst_mfx_filter_get_size (GstMfxFilter *filter,
-    mfxU16 * width, mfxU16 * height)
-{
-  g_return_val_if_fail (filter != NULL, FALSE);
-  *width = filter->width;
-  *height = filter->height;
 
   return TRUE;
 }
@@ -679,19 +661,6 @@ gst_mfx_filter_set_saturation (GstMfxFilter * filter, gfloat value)
   return TRUE;
 }
 
-gfloat
-gst_mfx_filter_get_saturation (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPProcAmp *ext_procamp;
-
-  g_return_val_if_fail (filter != NULL, -1.0);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_PROCAMP);
-  g_return_val_if_fail (op != NULL, -1.0);
-  ext_procamp = (mfxExtVPPProcAmp *) op->filter;
-  return ext_procamp->Saturation;
-}
-
 gboolean
 gst_mfx_filter_set_brightness (GstMfxFilter * filter, gfloat value)
 {
@@ -722,19 +691,6 @@ gst_mfx_filter_set_brightness (GstMfxFilter * filter, gfloat value)
   ext_procamp->Brightness = value;
 
   return TRUE;
-}
-
-gfloat
-gst_mfx_filter_get_brightness (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPProcAmp *ext_procamp;
-
-  g_return_val_if_fail (filter != NULL, 101.0);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_PROCAMP);
-  g_return_val_if_fail (op != NULL, 101.0);
-  ext_procamp = (mfxExtVPPProcAmp *) op->filter;
-  return ext_procamp->Brightness;
 }
 
 gboolean
@@ -769,19 +725,6 @@ gst_mfx_filter_set_contrast (GstMfxFilter * filter, gfloat value)
   return TRUE;
 }
 
-gfloat
-gst_mfx_filter_get_contrast (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPProcAmp *ext_procamp;
-
-  g_return_val_if_fail (filter != NULL, -1.0);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_PROCAMP);
-  g_return_val_if_fail (op != NULL, -1.0);
-  ext_procamp = (mfxExtVPPProcAmp *) op->filter;
-  return ext_procamp->Contrast;
-}
-
 gboolean
 gst_mfx_filter_set_hue (GstMfxFilter * filter, gfloat value)
 {
@@ -812,19 +755,6 @@ gst_mfx_filter_set_hue (GstMfxFilter * filter, gfloat value)
   ext_procamp->Hue = value;
 
   return TRUE;
-}
-
-gfloat
-gst_mfx_filter_get_hue (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPProcAmp *ext_procamp;
-
-  g_return_val_if_fail (filter != NULL, 181.0);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_PROCAMP);
-  g_return_val_if_fail (op != NULL, 181.0);
-  ext_procamp = (mfxExtVPPProcAmp *) op->filter;
-  return ext_procamp->Hue;
 }
 
 gboolean
@@ -858,19 +788,6 @@ gst_mfx_filter_set_denoising_level (GstMfxFilter * filter, guint level)
   return TRUE;
 }
 
-guint
-gst_mfx_filter_get_denoising_level (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPDenoise *ext_denoise;
-
-  g_return_val_if_fail (filter != NULL, -1.0);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_DENOISE);
-  g_return_val_if_fail (op != NULL, -1.0);
-  ext_denoise = (mfxExtVPPDenoise *) op->filter;
-  return ext_denoise->DenoiseFactor;
-}
-
 gboolean
 gst_mfx_filter_set_detail_level (GstMfxFilter * filter, guint level)
 {
@@ -899,19 +816,6 @@ gst_mfx_filter_set_detail_level (GstMfxFilter * filter, guint level)
   ext_detail->DetailFactor = level;
 
   return TRUE;
-}
-
-guint
-gst_mfx_filter_get_detail_level (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPDetail *ext_detail;
-
-  g_return_val_if_fail (filter != NULL, -1.0);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_DETAIL);
-  g_return_val_if_fail (op != NULL, -1.0);
-  ext_detail = (mfxExtVPPDetail *) op->filter;
-  return ext_detail->DetailFactor;
 }
 
 gboolean
@@ -944,19 +848,6 @@ gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle)
   ext_rotation->Angle = angle;
 
   return TRUE;
-}
-
-GstMfxRotation
-gst_mfx_filter_get_rotation (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPRotation *ext_rotation;
-
-  g_return_val_if_fail (filter != NULL, GST_MFX_ROTATION_0);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_ROTATION);
-  g_return_val_if_fail (op != NULL, GST_MFX_ROTATION_0);
-  ext_rotation = (mfxExtVPPRotation *) op->filter;
-  return ext_rotation->Angle;
 }
 
 gboolean
@@ -1009,19 +900,6 @@ gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter,
   return TRUE;
 }
 
-GstMfxDeinterlaceMode
-gst_mfx_filter_get_deinterlace_mode (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPDeinterlacing *ext_deinterlacing;
-
-  g_return_val_if_fail (filter != NULL, GST_MFX_DEINTERLACE_MODE_NONE);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_DEINTERLACING);
-  g_return_val_if_fail (op != NULL, GST_MFX_DEINTERLACE_MODE_NONE);
-  ext_deinterlacing = (mfxExtVPPDeinterlacing *) op->filter;
-  return ext_deinterlacing->Mode;
-}
-
 gboolean
 gst_mfx_filter_set_framerate (GstMfxFilter * filter,
     guint16 fps_n, guint16 fps_d)
@@ -1036,31 +914,12 @@ gst_mfx_filter_set_framerate (GstMfxFilter * filter,
 }
 
 gboolean
-gst_mfx_filter_get_framerate (GstMfxFilter * filter,
-    guint16 * fps_n, guint16 * fps_d)
-{
-  g_return_val_if_fail (filter != NULL, FALSE);
-
-  *fps_n = filter->fps_n;
-  *fps_d = filter->fps_d;
-
-  return TRUE;
-}
-
-gboolean
 gst_mfx_filter_set_async_depth (GstMfxFilter * filter, mfxU16 async_depth)
 {
   g_return_val_if_fail (async_depth <= 20, FALSE);
 
   filter->params.AsyncDepth = async_depth;
   return TRUE;
-}
-
-guint16
-gst_mfx_filter_get_async_depth (GstMfxFilter * filter)
-{
-  g_return_val_if_fail (filter != NULL, FALSE);
-  return filter->params.AsyncDepth;
 }
 
 gboolean
@@ -1126,19 +985,6 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   ext_frc = (mfxExtVPPFrameRateConversion *) op->filter;
   ext_frc->Algorithm = mode;
   return TRUE;
-}
-
-GstMfxFrcAlgorithm
-gst_mfx_filter_get_frc_algorithm (GstMfxFilter * filter)
-{
-  GstMfxFilterOpData *op;
-  mfxExtVPPFrameRateConversion *ext_frc;
-
-  g_return_val_if_fail (filter != NULL, GST_MFX_FRC_NONE);
-  op = find_filter_op_data (filter, GST_MFX_FILTER_FRAMERATE_CONVERSION);
-  g_return_val_if_fail (op != NULL, GST_MFX_FRC_NONE);
-  ext_frc = (mfxExtVPPFrameRateConversion *) op->filter;
-  return ext_frc->Algorithm;
 }
 
 GstMfxFilterStatus

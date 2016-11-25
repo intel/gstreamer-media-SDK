@@ -33,8 +33,6 @@ G_BEGIN_DECLS
 #define GST_MFX_TASK_AGGREGATOR (obj) \
   ((GstMfxTaskAggregator *) (obj))
 
-#define GST_MFX_TASK_AGGREGATOR_DISPLAY(aggregator) \
-    gst_mfx_task_aggregator_get_display (aggregator)
 
 GstMfxTaskAggregator *
 gst_mfx_task_aggregator_new (void);

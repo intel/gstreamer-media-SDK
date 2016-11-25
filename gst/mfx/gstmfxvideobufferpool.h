@@ -71,7 +71,8 @@ struct _GstMfxVideoBufferPoolClass
 GType gst_mfx_video_buffer_pool_get_type (void);
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new (GstMfxDisplay * display, gboolean memtype_is_system);
+gst_mfx_video_buffer_pool_new (GstMfxTaskAggregator * aggregator,
+    gboolean memtype_is_system);
 
 G_END_DECLS
 
