@@ -100,9 +100,9 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
 
   g_byte_array_unref (decoder->bitstream);
   gst_mfx_task_aggregator_unref (decoder->aggregator);
-  gst_mfx_task_replace (&decoder->decode, NULL);
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
   g_queue_free_full (decoder->pending_frames, gst_video_codec_frame_unref);
+  gst_mfx_task_replace (&decoder->decode, NULL);
 
   if ((decoder->params.mfx.CodecId == MFX_CODEC_VP8) ||
 #ifdef HAS_VP9

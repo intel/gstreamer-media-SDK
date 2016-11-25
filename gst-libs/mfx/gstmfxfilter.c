@@ -415,10 +415,10 @@ gst_mfx_filter_finalize (GstMfxFilter * filter)
     if (!filter->vpp[i] || (filter->vpp[i] &&
             gst_mfx_task_has_type (filter->vpp[i], GST_MFX_TASK_DECODER)))
       continue;
-    gst_mfx_task_frame_free (filter->vpp[i], &filter->response[i]);
-    gst_mfx_task_replace (&filter->vpp[i], NULL);
     gst_mfx_surface_pool_replace (&filter->vpp_pool[i], NULL);
     g_slice_free (mfxFrameAllocRequest, filter->shared_request[i]);
+    gst_mfx_task_frame_free (filter->vpp[i], &filter->response[i]);
+    gst_mfx_task_replace (&filter->vpp[i], NULL);
   }
 
   /* Free allocated memory for filters */

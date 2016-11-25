@@ -430,9 +430,9 @@ gst_mfx_task_get_video_params (GstMfxTask * task)
 static void
 gst_mfx_task_finalize (GstMfxTask * task)
 {
-  MFXClose (task->session);
-  g_list_free_full (task->saved_responses, g_free);
   gst_mfx_display_replace (&task->display, NULL);
+  g_list_free_full (task->saved_responses, g_free);
+  MFXClose (task->session);
 }
 
 
