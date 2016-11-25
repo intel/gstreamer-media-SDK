@@ -42,10 +42,8 @@ struct _GstMfxTaskAggregator
 static void
 gst_mfx_task_aggregator_finalize (GstMfxTaskAggregator * aggregator)
 {
-  g_list_free (aggregator->cache);
+  g_list_free_full(aggregator->cache, gst_mfx_task_unref);
   gst_mfx_display_unref (aggregator->display);
-
-  //MFXClose (aggregator->parent_session);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -124,7 +122,7 @@ gst_mfx_task_aggregator_get_display (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, 0);
 
-  return aggregator->display;
+  return gst_mfx_display_ref (aggregator->display);
 }
 
 mfxSession
@@ -203,5 +201,5 @@ gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
   g_return_if_fail (aggregator != NULL);
   g_return_if_fail (task != NULL);
 
-  aggregator->cache = g_list_prepend (aggregator->cache, task);
+  aggregator->cache = g_list_prepend (aggregator->cache, gst_mfx_task_ref(task));
 }

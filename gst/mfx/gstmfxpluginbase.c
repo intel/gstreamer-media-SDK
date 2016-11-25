@@ -257,8 +257,8 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   }
 
   pool =
-      gst_mfx_video_buffer_pool_new (GST_MFX_TASK_AGGREGATOR_DISPLAY
-      (plugin->aggregator), plugin->memtype_is_system);
+      gst_mfx_video_buffer_pool_new (plugin->aggregator,
+        plugin->memtype_is_system);
   if (!pool)
     goto error_create_pool;
 
@@ -488,8 +488,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     if (pool)
       gst_object_unref (pool);
     pool =
-        gst_mfx_video_buffer_pool_new (GST_MFX_TASK_AGGREGATOR_DISPLAY
-        (plugin->aggregator), plugin->memtype_is_system);
+        gst_mfx_video_buffer_pool_new (plugin->aggregator,
+          plugin->memtype_is_system);
     if (!pool)
       goto error_create_pool;
 
@@ -706,6 +706,8 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   gst_buffer_prepend_memory (buf, gst_buffer_get_memory (outbuf, 0));
   gst_buffer_add_parent_buffer_meta (outbuf, buf);
   gst_buffer_replace_memory (outbuf, 0, mem);
+
+  gst_buffer_unref (buf);
 
   image = gst_mfx_prime_buffer_proxy_get_vaapi_image (dmabuf_proxy);
   for (i = 0; i < vaapi_image_get_plane_count (image); i++) {

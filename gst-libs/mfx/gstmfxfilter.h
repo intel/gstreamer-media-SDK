@@ -229,46 +229,5 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter *filter,
 gboolean
 gst_mfx_filter_set_async_depth (GstMfxFilter * filter, mfxU16 async_depth);
 
-/* Getters */
-GstVideoFormat
-gst_mfx_filter_get_format (GstMfxFilter * filter);
-
-gboolean
-gst_mfx_filter_get_size (GstMfxFilter * filter,
-    mfxU16 * width, mfxU16 * height);
-
-guint
-gst_mfx_filter_get_denoising_level (GstMfxFilter * filter);
-
-guint
-gst_mfx_filter_get_detail_level (GstMfxFilter * filter);
-
-gfloat
-gst_mfx_filter_get_hue (GstMfxFilter * filter);
-
-gfloat
-gst_mfx_filter_get_saturation (GstMfxFilter * filter);
-
-gfloat
-gst_mfx_filter_get_brightness (GstMfxFilter * filter);
-
-gfloat
-gst_mfx_filter_get_contrast (GstMfxFilter * filter);
-
-GstMfxRotation
-gst_mfx_filter_get_rotation (GstMfxFilter * filter);
-
-GstMfxDeinterlaceMode
-gst_mfx_filter_get_deinterlace_mode (GstMfxFilter *filter);
-
-gboolean
-gst_mfx_filter_get_framerate (GstMfxFilter *filter,
-    guint16 * fps_n, guint16 * fps_d);
-
-GstMfxFrcAlgorithm
-gst_mfx_filter_get_frc_algorithm (GstMfxFilter *filter);
-
-guint16
-gst_mfx_filter_get_async_depth (GstMfxFilter * filter);
 
 #endif /* GST_MFX_FILTER_H */
