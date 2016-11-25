@@ -211,7 +211,7 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
     vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
         response_data->surfaces, num_surfaces);
 
-    gusleep (500);
+    g_usleep (500);
     GST_MFX_DISPLAY_UNLOCK (task->display);
 
     g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
