@@ -886,6 +886,7 @@ static void
 gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
 {
   gst_mfx_filter_replace (&vpp->filter, NULL);
+  gst_mfx_task_replace(&vpp->peer_decoder, NULL);
   cb_channels_finalize (vpp);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
@@ -944,7 +945,6 @@ gst_mfxpostproc_finalize (GObject * object)
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
   gst_mfxpostproc_destroy (vpp);
-  gst_mfx_task_replace(&vpp->peer_decoder, NULL);
 
   gst_mfx_plugin_base_finalize (GST_MFX_PLUGIN_BASE (vpp));
   G_OBJECT_CLASS (gst_mfxpostproc_parent_class)->finalize (object);
