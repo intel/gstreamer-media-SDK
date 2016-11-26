@@ -245,12 +245,16 @@ task_init (GstMfxDecoder * decoder)
 static gboolean
 gst_mfx_decoder_init (GstMfxDecoder * decoder,
     GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-    GstVideoInfo * info, mfxU16 async_depth, gboolean memtype_is_system)
+    GstVideoInfo * info, mfxU16 async_depth, gboolean memtype_is_system,
+    gboolean live_mode)
 {
   decoder->info = *info;
   decoder->profile = profile;
   decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
   decoder->params.AsyncDepth = async_depth;
+  if (live_mode)
+    decoder->params.mfx.DecodedOrder = 1;
+
   decoder->memtype_is_system = memtype_is_system;
   decoder->params.IOPattern = memtype_is_system ?
       MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
@@ -286,7 +290,7 @@ gst_mfx_decoder_class (void)
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     GstMfxProfile profile, GstVideoInfo * info, mfxU16 async_depth,
-    gboolean memtype_is_system)
+    gboolean memtype_is_system, gboolean live_mode)
 {
   GstMfxDecoder *decoder;
 
@@ -297,7 +301,7 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     goto error;
 
   if (!gst_mfx_decoder_init (decoder, aggregator, profile, info,
-            async_depth, memtype_is_system))
+            async_depth, memtype_is_system, live_mode))
     goto error;
 
   return decoder;
