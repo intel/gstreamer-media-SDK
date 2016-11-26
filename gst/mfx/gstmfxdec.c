@@ -453,7 +453,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       GST_TIME_ARGS (frame->pts),
       GST_TIME_ARGS (frame->duration));
 
-  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, mfxdec->live_mode);
+  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
 
 
