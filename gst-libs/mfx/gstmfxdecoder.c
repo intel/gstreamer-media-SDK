@@ -56,6 +56,7 @@ struct _GstMfxDecoder
   gboolean inited;
   gboolean first_frame_decoded;
   gboolean memtype_is_system;
+  gboolean live_mode;
 };
 
 GstMfxProfile
@@ -252,7 +253,8 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
   decoder->profile = profile;
   decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
   decoder->params.AsyncDepth = async_depth;
-  if (live_mode)
+  decoder->live_mode = live_mode;
+  if (decoder->live_mode)
     decoder->params.mfx.DecodedOrder = 1;
 
   decoder->memtype_is_system = memtype_is_system;
@@ -448,7 +450,7 @@ sort_pts (gconstpointer frame1, gconstpointer frame2, gpointer data)
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame, gboolean live_mode)
+    GstVideoCodecFrame * frame)
 {
   GstMapInfo minfo;
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
@@ -574,7 +576,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
       GST_LOG ("decoded frame : %ld", out_frame->system_frame_number);
 
-      if (!live_mode) {
+      if (!decoder->live_mode) {
         ret = GST_MFX_DECODER_STATUS_SUCCESS;
         decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
           decoder->bs.DataOffset);
