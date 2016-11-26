@@ -56,6 +56,17 @@ sync_output_surface (gconstpointer surface, gconstpointer surf)
 }
 
 static void
+release_surfaces (gpointer surface, gpointer pool)
+{
+  GstMfxSurface *_surface = (GstMfxSurface *) surface;
+  GstMfxSurfacePool *_pool = (GstMfxSurfacePool *) pool;
+
+  mfxFrameSurface1 *surf = gst_mfx_surface_get_frame_surface (_surface);
+  if (surf && !surf->Data.Locked)
+    gst_mfx_surface_pool_put_surface (_pool, _surface);
+}
+
+static void
 gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
 {
   guint i, num_surfaces = gst_mfx_task_get_num_surfaces(pool->task);
@@ -87,10 +98,9 @@ void
 gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
 {
   GstMfxSurface *surface;
-  guint i, num_used_surfaces = g_list_length(pool->used_surfaces);
 
-  for (i = 0; i < num_used_surfaces; i++) {
-    surface = g_list_nth (pool->used_surfaces, i);
+  while (g_list_length(pool->used_surfaces)) {
+    surface = g_list_nth_data (pool->used_surfaces, 0);
     gst_mfx_surface_pool_put_surface(pool, surface);
   }
 
@@ -206,17 +216,6 @@ gst_mfx_surface_pool_put_surface (GstMfxSurfacePool * pool,
   g_mutex_lock (&pool->mutex);
   gst_mfx_surface_pool_put_surface_unlocked (pool, surface);
   g_mutex_unlock (&pool->mutex);
-}
-
-static void
-release_surfaces (gpointer surface, gpointer pool)
-{
-  GstMfxSurface *_surface = (GstMfxSurface *) surface;
-  GstMfxSurfacePool *_pool = (GstMfxSurfacePool *) pool;
-
-  mfxFrameSurface1 *surf = gst_mfx_surface_get_frame_surface (_surface);
-  if (surf && !surf->Data.Locked)
-    gst_mfx_surface_pool_put_surface (_pool, _surface);
 }
 
 static GstMfxSurface *
