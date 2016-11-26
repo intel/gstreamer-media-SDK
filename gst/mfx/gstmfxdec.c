@@ -288,7 +288,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
       profile, &info, mfxdec->async_depth,
-      plugin->memtype_is_system);
+      plugin->memtype_is_system, mfxdec->live_mode);
   if (!mfxdec->decoder)
     return FALSE;
 
