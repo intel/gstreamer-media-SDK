@@ -45,7 +45,7 @@ gst_mfx_task_aggregator_finalize (GstMfxTaskAggregator * aggregator)
   g_list_free (aggregator->cache);
   gst_mfx_display_unref (aggregator->display);
 
-  MFXClose (aggregator->parent_session);
+  //MFXClose (aggregator->parent_session);
 }
 
 static inline const GstMfxMiniObjectClass *

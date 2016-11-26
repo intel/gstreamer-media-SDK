@@ -60,7 +60,7 @@ find_response (gconstpointer response_data, gconstpointer response)
   ResponseData *_response_data = (ResponseData *) response_data;
   mfxFrameAllocResponse *_response = (mfxFrameAllocResponse *) response;
 
-  return _response->mids != _response_data->mids;
+  return _response_data ? _response->mids != _response_data->mids : -1;
 }
 
 mfxStatus
@@ -210,8 +210,6 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
     GST_MFX_DISPLAY_LOCK (task->display);
     vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
         response_data->surfaces, num_surfaces);
-
-    g_usleep (500);
     GST_MFX_DISPLAY_UNLOCK (task->display);
 
     g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
@@ -432,7 +430,7 @@ gst_mfx_task_get_video_params (GstMfxTask * task)
 static void
 gst_mfx_task_finalize (GstMfxTask * task)
 {
-  gst_mfx_display_replace (&task->display, NULL);
+  gst_mfx_display_unref (task->display);
   g_list_free_full (task->saved_responses, g_free);
   MFXClose (task->session);
 }

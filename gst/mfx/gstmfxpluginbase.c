@@ -45,8 +45,10 @@ plugin_set_aggregator (GstElement * element, GstContext * context)
   GstElementClass *element_class = GST_ELEMENT_CLASS (plugin_parent_class);
   GstMfxTaskAggregator *aggregator = NULL;
 
-  if (gst_mfx_video_context_get_aggregator (context, &aggregator))
+  if (gst_mfx_video_context_get_aggregator (context, &aggregator)) {
     gst_mfx_task_aggregator_replace (&plugin->aggregator, aggregator);
+    gst_mfx_task_aggregator_unref (aggregator);
+  }
 
   if (element_class->set_context)
     element_class->set_context (element, context);
