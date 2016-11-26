@@ -58,7 +58,6 @@ struct _GstMfxFilter
   GstMfxTask *vpp[2];
   GstMfxSurfacePool *vpp_pool[2];
   gboolean inited;
-  gboolean is_passthrough;
 
   mfxSession session;
   mfxVideoParam params;
@@ -1147,6 +1146,13 @@ gst_mfx_filter_reset (GstMfxFilter * filter)
 {
   mfxStatus sts = MFX_ERR_NONE;
   configure_filters (filter);
+
+  /* If filter is not initialized and reset
+   * is called by before_transform method,
+   * return GST_MFX_FILTER_STATUS_SUCCESS */
+  if (!filter->inited)
+    return GST_MFX_FILTER_STATUS_SUCCESS;
+
   sts = MFXVideoVPP_Reset (filter->session, &filter->params);
   if (sts < 0) {
       GST_ERROR ("Error resetting MFX VPP %d", sts);
