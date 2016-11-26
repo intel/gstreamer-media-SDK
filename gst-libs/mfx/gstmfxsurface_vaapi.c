@@ -153,6 +153,8 @@ gst_mfx_surface_vaapi_class_init(GstMfxSurfaceClass * klass)
 
   GST_DEBUG_CATEGORY_INIT(gst_debug_mfx, "mfx", 0, "MFX helper");
 
+  gst_mfx_surface_class_init (&klass->parent_class);
+
   object_class->size = sizeof(GstMfxSurfaceVaapi);
   surface_class->allocate = gst_mfx_surface_vaapi_allocate;
   surface_class->release = gst_mfx_surface_vaapi_release;
@@ -194,7 +196,7 @@ gst_mfx_surface_vaapi_get_display(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, NULL);
 
-  return surface->display;
+  return gst_mfx_display_ref (surface->display);
 }
 
 VaapiImage *

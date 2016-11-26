@@ -42,6 +42,10 @@ struct _GstMfxSurfacePool
   GMutex mutex;
 };
 
+static void
+gst_mfx_surface_pool_put_surface (GstMfxSurfacePool * pool,
+    GstMfxSurface * surface);
+
 static gint
 sync_output_surface (gconstpointer surface, gconstpointer surf)
 {
@@ -62,7 +66,7 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
     if (!surface)
       return;
 
-    g_queue_push_tail (&pool->free_surfaces, gst_mfx_surface_ref(surface));
+    g_queue_push_tail (&pool->free_surfaces, surface);
   }
 }
 
@@ -82,14 +86,22 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
 void
 gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
 {
-  gst_mfx_display_replace(&pool->display, NULL);
-  gst_mfx_task_replace (&pool->task, NULL);
+  GstMfxSurface *surface;
+  guint i, num_used_surfaces = g_list_length(pool->used_surfaces);
 
-  g_list_free_full (pool->used_surfaces, gst_mfx_surface_unref);
+  for (i = 0; i < num_used_surfaces; i++) {
+    surface = g_list_nth (pool->used_surfaces, i);
+    gst_mfx_surface_pool_put_surface(pool, surface);
+  }
+
+  g_list_free (pool->used_surfaces);
   g_queue_foreach (&pool->free_surfaces,
       (GFunc) gst_mfx_surface_unref, NULL);
   g_queue_clear (&pool->free_surfaces);
   g_mutex_clear (&pool->mutex);
+
+  gst_mfx_display_replace(&pool->display, NULL);
+  gst_mfx_task_replace (&pool->task, NULL);
 }
 
 static inline const GstMfxMiniObjectClass *

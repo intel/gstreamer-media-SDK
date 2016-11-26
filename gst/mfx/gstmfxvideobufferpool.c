@@ -54,7 +54,7 @@ gst_mfx_video_buffer_pool_finalize (GObject * object)
   GstMfxVideoBufferPoolPrivate *const priv =
       GST_MFX_VIDEO_BUFFER_POOL (object)->priv;
 
-  gst_mfx_display_replace (&priv->display, NULL);
+  gst_mfx_display_unref (priv->display);
   g_clear_object (&priv->allocator);
 
   G_OBJECT_CLASS (gst_mfx_video_buffer_pool_parent_class)->finalize (object);
