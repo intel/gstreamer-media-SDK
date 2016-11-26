@@ -243,8 +243,11 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     new_val = (new_val / 10.0);
 
     vpp->cb_changed = vpp->hue != new_val;
-    vpp->hue = new_val;
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+    if (vpp->hue != new_val) {
+      vpp->hue = new_val;
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+      vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_HUE;
+    }
   } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
     if (new_val < 500 )
         new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
@@ -253,15 +256,19 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     else
         new_val = 1.0;
 
-    vpp->cb_changed = vpp->saturation != new_val;
-    vpp->saturation = new_val;
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+    if (vpp->saturation != new_val) {
+      vpp->saturation = new_val;
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+      vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_SATURATION;
+    }
   } else if (g_ascii_strcasecmp (channel->label, "BRIGHTNESS") == 0) {
     new_val = (new_val / 10.0);
 
-    vpp->cb_changed = vpp->brightness != new_val;
-    vpp->brightness = new_val;
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+    if (vpp->brightness != new_val) {
+      vpp->brightness = new_val;
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+      vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+    }
   } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
     if (new_val < 500 )
         new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
@@ -270,9 +277,11 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     else
         new_val = 1.0;
 
-    vpp->cb_changed = vpp->contrast != new_val;
-    vpp->contrast = new_val;
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+    if (vpp->contrast != new_val) {
+      vpp->contrast = new_val;
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+      vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+    }
   } else {
     g_warning ("got an unknown channel %s", channel->label);
     return;
@@ -516,25 +525,18 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
     GstBuffer * buf)
 {
   GstMfxPostproc *mfxvpp = GST_MFXPOSTPROC (trans);
-  GstClockTime timestamp, stream_time;
-
-  timestamp = GST_BUFFER_TIMESTAMP (buf);
-  stream_time =
-      gst_segment_to_stream_time (&trans->segment, GST_FORMAT_TIME, timestamp);
-
-  GST_DEBUG_OBJECT (mfxvpp, "sync to %" GST_TIME_FORMAT,
-      GST_TIME_ARGS (timestamp));
-
-  if (GST_CLOCK_TIME_IS_VALID (stream_time))
-    gst_object_sync_values (GST_OBJECT (mfxvpp), stream_time);
 
   if (mfxvpp->cb_changed) {
-    gst_mfx_filter_set_saturation(mfxvpp->filter, mfxvpp->saturation);
-    gst_mfx_filter_set_contrast(mfxvpp->filter, mfxvpp->contrast);
-    gst_mfx_filter_set_hue(mfxvpp->filter, mfxvpp->hue);
-    gst_mfx_filter_set_brightness(mfxvpp->filter, mfxvpp->brightness);
+    if (mfxvpp->cb_changed & GST_MFX_POSTPROC_FLAG_SATURATION)
+      gst_mfx_filter_set_saturation(mfxvpp->filter, mfxvpp->saturation);
+    else if (mfxvpp->cb_changed & GST_MFX_POSTPROC_FLAG_CONTRAST)
+      gst_mfx_filter_set_contrast(mfxvpp->filter, mfxvpp->contrast);
+    else if (mfxvpp->cb_changed & GST_MFX_POSTPROC_FLAG_HUE)
+      gst_mfx_filter_set_hue(mfxvpp->filter, mfxvpp->hue);
+    else if (mfxvpp->cb_changed & GST_MFX_POSTPROC_FLAG_BRIGHTNESS)
+      gst_mfx_filter_set_brightness(mfxvpp->filter, mfxvpp->brightness);
     gst_mfx_filter_reset(mfxvpp->filter);
-    mfxvpp->cb_changed = FALSE;
+    mfxvpp->cb_changed = 0;
   }
 }
 
@@ -884,6 +886,7 @@ static void
 gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
 {
   gst_mfx_filter_replace (&vpp->filter, NULL);
+  cb_channels_finalize (vpp);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (vpp));
@@ -980,20 +983,32 @@ gst_mfxpostproc_set_property (GObject * object,
       vpp->flags |= GST_MFX_POSTPROC_FLAG_DETAIL;
       break;
     case PROP_HUE:
-      vpp->hue = g_value_get_float (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+      if (vpp->hue != g_value_get_float (value)) {
+        vpp->hue = g_value_get_float (value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+        vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_HUE;
+      }
       break;
     case PROP_SATURATION:
-      vpp->saturation = g_value_get_float (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+      if (vpp->hue != g_value_get_float (value)) {
+        vpp->saturation = g_value_get_float (value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+        vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_SATURATION;
+      }
       break;
     case PROP_BRIGHTNESS:
-      vpp->brightness = g_value_get_float (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+      if (vpp->brightness != g_value_get_float (value)) {
+        vpp->brightness = g_value_get_float (value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+        vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+      }
       break;
     case PROP_CONTRAST:
-      vpp->contrast = g_value_get_float (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+      if (vpp->contrast != g_value_get_float (value)) {
+        vpp->contrast = g_value_get_float (value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+        vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+      }
       break;
     case PROP_ROTATION:
       vpp->angle = g_value_get_enum (value);

@@ -117,7 +117,7 @@ struct _GstMfxPostproc
   gfloat                  saturation;
   gfloat                  brightness;
   gfloat                  contrast;
-  gboolean                cb_changed;
+  guint                  cb_changed;
 
     /* FRC */
   GstMfxFrcAlgorithm      alg;
