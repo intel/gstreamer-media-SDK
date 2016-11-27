@@ -209,9 +209,7 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!gst_mfx_plugin_base_set_caps (plugin, NULL, mfxdec->srcpad_caps))
     return FALSE;
 
-  if (!(plugin->memtype_is_system &&
-      (GST_VIDEO_INFO_FORMAT(&plugin->srcpad_info) == GST_VIDEO_FORMAT_NV12)))
-    gst_mfx_decoder_use_video_memory (mfxdec->decoder);
+  gst_mfx_decoder_use_video_memory (mfxdec->decoder, !plugin->memtype_is_system);
 
   mfxdec->do_renego = FALSE;
 
@@ -287,8 +285,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
       gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      profile, &info, mfxdec->async_depth,
-      plugin->memtype_is_system, mfxdec->live_mode);
+      profile, &info, mfxdec->async_depth, plugin->memtype_is_system,
+      mfxdec->live_mode);
   if (!mfxdec->decoder)
     return FALSE;
 

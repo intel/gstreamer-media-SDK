@@ -97,10 +97,7 @@ mfxVideoParam *
 gst_mfx_task_get_video_params (GstMfxTask * task);
 
 void
-gst_mfx_task_ensure_native_decoder_output (GstMfxTask * task);
-
-gboolean
-gst_mfx_task_has_native_decoder_output (GstMfxTask * task);
+gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task);
 
 GstMfxDisplay *
 gst_mfx_task_get_display (GstMfxTask * task);

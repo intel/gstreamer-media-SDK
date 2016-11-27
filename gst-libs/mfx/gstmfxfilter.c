@@ -302,6 +302,9 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     }
   }
 
+  if (filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+    gst_mfx_task_ensure_memtype_is_system (filter->vpp[1]);
+
   init_params (filter);
 
   /* Save mfxVideoParam configuration in VPP_OUT task for VPP pass-through */
@@ -338,6 +341,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
         filter->shared_request[0]->NumFrameSuggested;
 
     if (!memtype_is_system) {
+      filter->shared_request[0]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
       gst_mfx_task_use_video_memory (filter->vpp[0]);
       gst_mfx_task_set_request (filter->vpp[0], filter->shared_request[0]);
 

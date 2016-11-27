@@ -51,8 +51,7 @@ struct _GstMfxTask
   mfxVideoParam params;
   mfxSession session;
   guint task_type;
-  gboolean has_video_memory;
-  gboolean use_native_output;
+  gboolean memtype_is_system;
 };
 
 static gint
@@ -372,19 +371,11 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
 }
 
 void
-gst_mfx_task_ensure_native_decoder_output (GstMfxTask * task)
+gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task)
 {
   g_return_if_fail (task != NULL);
 
-  task->use_native_output = TRUE;
-}
-
-gboolean
-gst_mfx_task_has_native_decoder_output (GstMfxTask * task)
-{
-  g_return_val_if_fail (task != NULL, FALSE);
-
-  return task->use_native_output;
+  task->memtype_is_system = TRUE;
 }
 
 void
@@ -400,8 +391,7 @@ gst_mfx_task_use_video_memory (GstMfxTask * task)
   };
 
   MFXVideoCORE_SetFrameAllocator (task->session, &frame_allocator);
-
-  task->has_video_memory = TRUE;
+  task->memtype_is_system = FALSE;
 }
 
 gboolean
@@ -409,7 +399,7 @@ gst_mfx_task_has_video_memory (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return task->has_video_memory;
+  return !task->memtype_is_system;
 }
 
 void
@@ -463,7 +453,7 @@ gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   MFXVideoCORE_SetHandle (task->session, MFX_HANDLE_VA_DISPLAY,
       GST_MFX_DISPLAY_VADISPLAY (task->display));
 
-  task->has_video_memory = FALSE;
+  task->memtype_is_system = FALSE;
 }
 
 GstMfxTask *
