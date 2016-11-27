@@ -437,7 +437,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
 
     if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER) &&
-        gst_mfx_task_has_native_decoder_output (task)) {
+        !gst_mfx_task_has_video_memory (task)) {
       memtype_is_system = TRUE;
 
       init_encoder_task (encoder);
@@ -515,15 +515,16 @@ gst_mfx_encoder_finalize (GstMfxEncoder * encoder)
 
   g_byte_array_unref (encoder->bitstream);
   gst_mfx_task_aggregator_unref (encoder->aggregator);
-  gst_mfx_task_replace (&encoder->encode, NULL);
 
   if (encoder->properties) {
     g_ptr_array_unref (encoder->properties);
     encoder->properties = NULL;
   }
 
-  gst_mfx_filter_replace (&encoder->filter, NULL);
   MFXVideoENCODE_Close (encoder->session);
+
+  gst_mfx_filter_replace (&encoder->filter, NULL);
+  gst_mfx_task_replace (&encoder->encode, NULL);
 }
 
 GstMfxEncoder *

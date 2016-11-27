@@ -85,13 +85,21 @@ gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder)
 }
 
 void
-gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder)
+gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder,
+    gboolean memtype_is_video)
 {
   g_return_if_fail (decoder != NULL);
 
-  if (!decoder->memtype_is_system)
+  if (!decoder->memtype_is_system && memtype_is_video) {
+    decoder->memtype_is_system = FALSE;
+    decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
     gst_mfx_task_use_video_memory (decoder->decode);
-  decoder->memtype_is_system = FALSE;
+  }
+  else {
+    decoder->memtype_is_system = TRUE;
+    decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+    gst_mfx_task_ensure_memtype_is_system(decoder->decode);
+  }
 }
 
 static void
@@ -110,7 +118,6 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
 #endif
       (decoder->params.mfx.CodecId == MFX_CODEC_HEVC))
     MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
-
   MFXVideoDECODE_Close (decoder->session);
 
   gst_mfx_task_replace (&decoder->decode, NULL);
@@ -235,9 +242,8 @@ task_init (GstMfxDecoder * decoder)
   decoder->request.Type = decoder->memtype_is_system ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
-  if (decoder->memtype_is_system &&
-      (GST_VIDEO_INFO_FORMAT (&decoder->info) == GST_VIDEO_FORMAT_NV12))
-    gst_mfx_task_ensure_native_decoder_output (decoder->decode);
+  if (decoder->memtype_is_system)
+    gst_mfx_task_ensure_memtype_is_system (decoder->decode);
 
   gst_mfx_task_set_request (decoder->decode, &decoder->request);
 
@@ -247,20 +253,20 @@ task_init (GstMfxDecoder * decoder)
 static gboolean
 gst_mfx_decoder_init (GstMfxDecoder * decoder,
     GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-    GstVideoInfo * info, mfxU16 async_depth, gboolean memtype_is_system,
-    gboolean live_mode)
+    GstVideoInfo * info, mfxU16 async_depth,
+    gboolean memtype_is_system, gboolean live_mode)
 {
   decoder->info = *info;
   decoder->profile = profile;
   decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
-  decoder->params.AsyncDepth = async_depth;
+  decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
   decoder->live_mode = live_mode;
   if (decoder->live_mode)
     decoder->params.mfx.DecodedOrder = 1;
 
   decoder->memtype_is_system = memtype_is_system;
   decoder->params.IOPattern = memtype_is_system ?
-      MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+    MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   decoder->inited = FALSE;
   decoder->bs.MaxLength = 1024 * 16;
   decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
@@ -346,13 +352,6 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
   gboolean memtype_is_system = !gst_mfx_task_has_video_memory (decoder->decode);
 
-  if (memtype_is_system)
-    decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-
-  /* This makes sure no CSC happens with native mapped NV12 surfaces */
-  if (out_format == GST_VIDEO_FORMAT_NV12 && memtype_is_system)
-    decoder->memtype_is_system = TRUE;
-
   sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
       &decoder->params);
   if (MFX_ERR_MORE_DATA == sts) {
@@ -363,8 +362,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   }
 
   if ((decoder->params.mfx.CodecId == MFX_CODEC_JPEG) &&
-      (decoder->params.mfx.JPEGChromaFormat == MFX_CHROMAFORMAT_YUV444))
-  {
+      (decoder->params.mfx.JPEGChromaFormat == MFX_CHROMAFORMAT_YUV444)) {
     decoder->request.Info.FourCC =
         decoder->params.mfx.FrameInfo.FourCC = MFX_FOURCC_RGB4;
     decoder->request.Info.ChromaFormat =
@@ -377,8 +375,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   vformat =
       gst_video_format_from_mfx_fourcc(decoder->params.mfx.FrameInfo.FourCC);
 
-  if (!gst_mfx_task_has_native_decoder_output(decoder->decode) &&
-      (out_format != vformat || memtype_is_system != decoder->memtype_is_system)) {
+  if  (out_format != vformat) {
+    decoder->memtype_is_system = memtype_is_system;
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
         decoder->decode, GST_MFX_TASK_VPP_IN, memtype_is_system, decoder->memtype_is_system);
 
@@ -398,6 +396,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 
     if (out_format != vformat)
       gst_mfx_filter_set_format (decoder->filter, out_format);
+
+    gst_mfx_filter_set_async_depth(decoder->filter, decoder->params.AsyncDepth);
 
     if (!gst_mfx_filter_prepare (decoder->filter))
       return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;

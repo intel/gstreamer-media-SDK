@@ -378,12 +378,6 @@ find_best_size (GstMfxPostproc * postproc, GstVideoInfo * vip,
   *height_ptr = height;
 }
 
-static inline gboolean
-gst_mfxpostproc_ensure_aggregator (GstMfxPostproc * vpp)
-{
-  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (vpp));
-}
-
 static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
@@ -394,7 +388,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (vpp->filter)
     return TRUE;
 
-  if (!gst_mfxpostproc_ensure_aggregator (plugin))
+  if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
   /* If the task aggregator changes, it indicates a new video track */
@@ -411,8 +405,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
     if (gst_mfx_task_has_type (peer_decoder, GST_MFX_TASK_DECODER))
       vpp->sinkpad_caps_memtype =
-          gst_mfx_task_has_native_decoder_output (peer_decoder) ?
-            MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
+          gst_mfx_task_has_video_memory (peer_decoder) ?
+            MFX_IOPATTERN_IN_VIDEO_MEMORY : MFX_IOPATTERN_IN_SYSTEM_MEMORY;
 
     gst_mfx_task_unref (peer_decoder);
   }
