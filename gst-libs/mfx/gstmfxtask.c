@@ -45,6 +45,7 @@ struct _GstMfxTask
   GstMfxMiniObject parent_instance;
 
   GstMfxDisplay *display;
+  GstMfxTaskAggregator *aggregator;
   GList *saved_responses;
   mfxFrameAllocRequest request;
   mfxVideoParam params;
@@ -430,6 +431,8 @@ gst_mfx_task_get_video_params (GstMfxTask * task)
 static void
 gst_mfx_task_finalize (GstMfxTask * task)
 {
+  gst_mfx_task_aggregator_remove_task (task->aggregator, task);
+  gst_mfx_task_aggregator_unref (task->aggregator);
   gst_mfx_display_unref (task->display);
   g_list_free_full (task->saved_responses, g_free);
   MFXClose (task->session);
@@ -453,6 +456,7 @@ gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   task->task_type |= type_flags;
   task->display = gst_mfx_task_aggregator_get_display(aggregator);
   task->session = session;
+  task->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
   gst_mfx_task_aggregator_add_task (aggregator, task);
 

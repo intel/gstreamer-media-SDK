@@ -42,7 +42,7 @@ struct _GstMfxTaskAggregator
 static void
 gst_mfx_task_aggregator_finalize (GstMfxTaskAggregator * aggregator)
 {
-  g_list_free_full(aggregator->cache, gst_mfx_task_unref);
+  g_list_free(aggregator->cache);
   gst_mfx_display_unref (aggregator->display);
 }
 
@@ -201,5 +201,21 @@ gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
   g_return_if_fail (aggregator != NULL);
   g_return_if_fail (task != NULL);
 
-  aggregator->cache = g_list_prepend (aggregator->cache, gst_mfx_task_ref(task));
+  aggregator->cache = g_list_prepend (aggregator->cache, task);
+}
+
+void
+gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
+    GstMfxTask * task)
+{
+  GList *elem;
+
+  g_return_if_fail (aggregator != NULL);
+  g_return_if_fail (task != NULL);
+
+  elem = g_list_find (aggregator->cache, task);
+  if (!elem)
+    return;
+
+  aggregator->cache = g_list_delete_link (aggregator->cache, elem);
 }

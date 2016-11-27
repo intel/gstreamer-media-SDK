@@ -92,7 +92,7 @@ struct _GstMfxPostproc
   GstMfxPluginBase        parent_instance;
 
   GstMfxFilter           *filter;
-  GstMfxTask             *peer_decoder;
+  GstMfxTaskAggregator   *current_aggregator;
   GstVideoFormat          format;        /* output video format */
   guint                   width;
   guint                   height;
@@ -129,6 +129,7 @@ struct _GstMfxPostproc
   GstMfxRotation          angle;
 
   guint                   keep_aspect : 1;
+  mfxU16                  sinkpad_caps_memtype;
 };
 
 struct _GstMfxPostprocClass
