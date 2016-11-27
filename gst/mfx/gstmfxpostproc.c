@@ -388,7 +388,7 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
-  gboolean srcpad_has_raw_caps =
+  gboolean sinkpad_has_raw_caps, srcpad_has_raw_caps =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
 
   if (vpp->filter)
@@ -397,26 +397,44 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!gst_mfxpostproc_ensure_aggregator (plugin))
     return FALSE;
 
-  /* Check if upstream MFX decoder element outputs raw native NV12 surfaces */
-  if (!plugin->memtype_is_system && !plugin->sinkpad_has_dmabuf) {
-    if (!vpp->peer_decoder)
-      vpp->peer_decoder =
-          gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
-    if (gst_mfx_task_has_type (vpp->peer_decoder, GST_MFX_TASK_DECODER))
-      plugin->memtype_is_system =
-          gst_mfx_task_has_native_decoder_output (vpp->peer_decoder);
+  /* If the task aggregator changes, it indicates a new video track */
+  if (vpp->current_aggregator != plugin->aggregator) {
+    vpp->sinkpad_caps_memtype = 0;
+    vpp->current_aggregator = plugin->aggregator;
   }
+
+  /* Check if upstream MFX decoder element outputs raw NV12 surfaces */
+  if (!plugin->memtype_is_system && !plugin->sinkpad_has_dmabuf &&
+      !vpp->sinkpad_caps_memtype) {
+    GstMfxTask *peer_decoder =
+        gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
+
+    if (gst_mfx_task_has_type (peer_decoder, GST_MFX_TASK_DECODER))
+      vpp->sinkpad_caps_memtype =
+          gst_mfx_task_has_native_decoder_output (peer_decoder) ?
+            MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
+
+    gst_mfx_task_unref (peer_decoder);
+  }
+
+  if (!vpp->sinkpad_caps_memtype) {
+    vpp->sinkpad_caps_memtype = plugin->memtype_is_system ?
+      MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
+  }
+
+  sinkpad_has_raw_caps =
+      (vpp->sinkpad_caps_memtype == MFX_IOPATTERN_IN_SYSTEM_MEMORY);
 
   /* If sinkpad caps indicate video memory input,
    * srcpad should be mapped for vid-to-vid vpp */
-  if (!plugin->memtype_is_system && srcpad_has_raw_caps)
+  if (!sinkpad_has_raw_caps && srcpad_has_raw_caps)
     srcpad_has_raw_caps = FALSE;
 
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
-      plugin->memtype_is_system, srcpad_has_raw_caps);
+      sinkpad_has_raw_caps, srcpad_has_raw_caps);
   if (!vpp->filter)
     return FALSE;
   return TRUE;
@@ -886,7 +904,6 @@ static void
 gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
 {
   gst_mfx_filter_replace (&vpp->filter, NULL);
-  gst_mfx_task_replace(&vpp->peer_decoder, NULL);
   cb_channels_finalize (vpp);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
