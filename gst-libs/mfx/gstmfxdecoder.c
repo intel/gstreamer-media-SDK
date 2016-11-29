@@ -90,7 +90,10 @@ gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder,
 {
   g_return_if_fail (decoder != NULL);
 
-  if (!decoder->memtype_is_system && memtype_is_video) {
+  if (decoder->memtype_is_system)
+    return;
+
+  if (memtype_is_video) {
     decoder->memtype_is_system = FALSE;
     decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
     gst_mfx_task_use_video_memory (decoder->decode);
@@ -350,7 +353,6 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   GstVideoFormat out_format = GST_VIDEO_INFO_FORMAT (&decoder->info);
   GstVideoFormat vformat;
   mfxStatus sts = MFX_ERR_NONE;
-  gboolean memtype_is_system = !gst_mfx_task_has_video_memory (decoder->decode);
 
   sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
       &decoder->params);
@@ -376,9 +378,9 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       gst_video_format_from_mfx_fourcc(decoder->params.mfx.FrameInfo.FourCC);
 
   if  (out_format != vformat) {
-    decoder->memtype_is_system = memtype_is_system;
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
-        decoder->decode, GST_MFX_TASK_VPP_IN, memtype_is_system, decoder->memtype_is_system);
+        decoder->decode, GST_MFX_TASK_VPP_IN,
+        decoder->memtype_is_system, decoder->memtype_is_system);
 
     if (!decoder->filter)
       return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
@@ -536,25 +538,27 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
 
       /* Update stream properties if they have interlaced frames */
-      if (outsurf->Info.PicStruct == MFX_PICSTRUCT_PROGRESSIVE) {
-        if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
-          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
-      }
-      else {
-        /* Check if stream has progressive frames first.
-         * If it does then it should be a mixed interlaced stream */
-        if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE &&
-            decoder->first_frame_decoded)
-          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
-        else {
+      switch (outsurf->Info.PicStruct) {
+        case MFX_PICSTRUCT_PROGRESSIVE:
           if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
-            decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
-        }
-
-        if (outsurf->Info.PicStruct == MFX_PICSTRUCT_FIELD_TFF)
+            decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+          break;
+        case MFX_PICSTRUCT_FIELD_TFF:
           GST_VIDEO_INFO_FLAG_SET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
-        else if (outsurf->Info.PicStruct == MFX_PICSTRUCT_FIELD_BFF)
+        case MFX_PICSTRUCT_FIELD_BFF:
           GST_VIDEO_INFO_FLAG_UNSET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+          /* Check if stream has progressive frames first.
+           * If it does then it should be a mixed interlaced stream */
+          if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE &&
+              decoder->first_frame_decoded)
+            decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
+          else {
+            if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
+              decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
+          }
+          break;
+        default:
+          break;
       }
 
       decoder->first_frame_decoded = TRUE;
