@@ -1,3 +1,12 @@
+Version 1.1.0
+* Implemented GstColorBalance interface on mfxvpp.
+* Renamed mfxsink to mfxsinkelement.
+* Implemented mfxsink which is a bin plugin consist of mfxsinkelement and mfxvpp.
+* Fixed memory leak issues in mfxsinkelement and mfxdecode.
+* Implemented video seeking.
+* Added VP9 decode support.
+* Supports playback via gst-play-1.0 and playbin element.
+
 Version 1.0.0
 * Added X11 rendering with DRI3 backend.
 * Implemented decoder flushing mechanism after video finish decoding,
