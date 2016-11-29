@@ -41,7 +41,7 @@ under the terms of the GNU Lesser General Public License v2.1+
 Features
 --------
 
- - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC, and VP8 Videos
+ - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC, VP8 and VP9 Videos
  - Support rendering using Wayland
  - Support rendering using X11 with DRI3 backend
  - Support rendering using EGL
@@ -56,7 +56,7 @@ Requirements
 
 Software requirements
 
-  * MediaSDK 2016 R1 for Yocto Embedded or
+  * MediaSDK 2017 MR1 for Yocto Embedded or
     Media Server Studio 2016 Professional R1 (Haswell / Broadwell)
   * GStreamer 1.6.x (up to including GStreamer 1.8):
   * GStreamer-Plugins-Base 1.6.x (up to including GStreamer 1.8):
@@ -95,6 +95,12 @@ To build the plugin for Media Server Studio, please follow the command below:
 
 	cmake .. -DWITH_MSS=ON
 		
+
+Only MediaSDK 2017 MR1 For Embedded supports VP9 decode. To disable VP9 decode
+for other version of MediaSDK, please follow the command below:
+
+	cmake .. -DMFX_VP9_DECODER=OFF
+
 
 Next step is to compile the GStreamer-MSDK plugins:
 

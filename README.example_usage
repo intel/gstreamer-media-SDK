@@ -10,7 +10,7 @@ Encode:
 gst-launch-1.0 filesrc location=<raw input> ! videoparse width=<w> height=<h> format={nv12,yv12,uyvy,yuy2,bgra,i420,bgrx} ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
 
 Colorspace conversion:
-gst-launch-1.0 filesrc location=<raw input> ! videoparse width=<w> height=<h> format={nv12,yv12,uyvy,yuy2,bgra,i420,bgrx} ! mfxvpp ! 'video/x-raw(memory:MFXSurface),format={NV12,BGRA}' ! mfxsink
+gst-launch-1.0 filesrc location=<raw input> ! videoparse width=<w> height=<h> format={nv12,yv12,uyvy,yuy2,bgra,i420,bgrx} ! mfxvpp ! 'video/x-raw(memory:MFXSurface),format={NV12,BGRA}' ! mfxsinkelement
 
 Transcode:
 gst-launch-1.0 filesrc location=<input> ! <pipelines> ! mfxdecode ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
@@ -37,9 +37,9 @@ Multi-window decode:
 gst-launch-1.0 filesrc location=<video> ! <pipeline> ! mfxdecode ! tee name=tp tp. ! queue ! mfxsink  tp. ! queue ! mfxsink
 
 VPP	   :
-decode 	   : gst-launch-1.0 filesrc location=<input> ! <pipelines> ! mfxdecode ! mfxvpp <options> ! mfxsink
+decode 	   : gst-launch-1.0 filesrc location=<input> ! <pipelines> ! mfxdecode ! mfxvpp <options> ! mfxsinkelement
 encode	   : gst-launch-1.0 filesrc location=<raw input> ! videoparse width=<w> height=<h> format={nv12,yv12,uyvy,yuy2,bgra,i420,bgrx} ! mfxvpp <options> ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
 transcode  : gst-launch-1.0 filesrc location=<input> ! <pipelines> ! mfxdecode ! mfxvpp <options> ! mfx{h264,hevc,mpeg2,jpeg}enc ! filesink location=<output>
-multi-view : gst-launch-1.0 filesrc location=<video> ! <pipeline> ! mfxdecode ! tee name=tp tp. ! queue ! mfxvpp <options> ! mfxsink  tp. ! queue ! mfxvpp <options> ! mfxsink
+multi-view : gst-launch-1.0 filesrc location=<video> ! <pipeline> ! mfxdecode ! tee name=tp tp. ! queue ! mfxvpp <options> ! mfxsinkelement  tp. ! queue ! mfxvpp <options> ! mfxsinkelement
 
 <options> includes: width=<w> height=<h> deinterlace-mode={bob,adi,adi-noref} rotation={90,180,270} denoise={0-100} detail={0-100} etc
