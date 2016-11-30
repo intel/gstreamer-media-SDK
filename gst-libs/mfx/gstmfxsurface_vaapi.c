@@ -97,8 +97,10 @@ static void
 gst_mfx_surface_vaapi_release(GstMfxSurface * surface)
 {
   GST_MFX_DISPLAY_LOCK(surface->display);
-  vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(surface->display),
-    &surface->surface_id, 1);
+  /* Don't destroy the underlying VASurface if originally from the task allocator*/
+  if (!surface->task)
+    vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(surface->display),
+      &surface->surface_id, 1);
   GST_MFX_DISPLAY_UNLOCK(surface->display);
 }
 

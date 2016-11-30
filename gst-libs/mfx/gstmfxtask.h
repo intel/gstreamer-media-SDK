@@ -48,7 +48,8 @@ typedef enum {
   GST_MFX_TASK_DECODER = (1 << 0),
   GST_MFX_TASK_VPP_IN = (1 << 1),
   GST_MFX_TASK_VPP_OUT = (1 << 2),
-  GST_MFX_TASK_ENCODER = (1 << 3),
+  GST_MFX_TASK_VPP_PASSTHROUGH = (1 << 3),
+  GST_MFX_TASK_ENCODER = (1 << 4),
 } GstMfxTaskType;
 
 GstMfxTask *
@@ -57,7 +58,7 @@ gst_mfx_task_new (GstMfxTaskAggregator * aggregator,
 
 GstMfxTask *
 gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
-    mfxSession session, guint type_flags);
+    mfxSession session, guint type_flags, gboolean is_joined);
 
 GstMfxTask *
 gst_mfx_task_ref (GstMfxTask * task);

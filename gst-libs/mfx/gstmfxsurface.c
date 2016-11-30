@@ -211,6 +211,8 @@ gst_mfx_surface_create(GstMfxSurface * surface, GstVideoInfo * info,
     GstMfxTask * task)
 {
   if (task) {
+    surface->task = gst_mfx_task_ref (task);
+
     mfxFrameAllocRequest *req;
     req = gst_mfx_task_get_request(task);
     if (!req)
@@ -240,6 +242,7 @@ gst_mfx_surface_finalize (GstMfxSurface * surface)
   if (klass->release)
     klass->release(surface);
   gst_mfx_display_replace(&surface->display, NULL);
+  gst_mfx_task_replace (&surface->task, NULL);
 }
 
 void

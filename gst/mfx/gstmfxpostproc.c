@@ -378,6 +378,17 @@ find_best_size (GstMfxPostproc * postproc, GstVideoInfo * vip,
   *height_ptr = height;
 }
 
+static void
+gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
+{
+  //gst_mfx_task_replace(&vpp->vpp_task, NULL);
+  gst_mfx_filter_replace (&vpp->filter, NULL);
+  cb_channels_finalize (vpp);
+  gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
+  gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
+  gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (vpp));
+}
+
 static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
@@ -391,24 +402,114 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
-  /* If the task aggregator changes, it indicates a new video track */
-  if (vpp->current_aggregator != plugin->aggregator) {
-    vpp->sinkpad_caps_memtype = 0;
-    vpp->current_aggregator = plugin->aggregator;
-  }
-
   /* Check if upstream MFX decoder element outputs raw NV12 surfaces */
   if (!plugin->memtype_is_system && !plugin->sinkpad_has_dmabuf &&
       !vpp->sinkpad_caps_memtype) {
-    GstMfxTask *peer_decoder =
+    GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
+    mfxVideoParam *params = gst_mfx_task_get_video_params (task);
 
-    if (gst_mfx_task_has_type (peer_decoder, GST_MFX_TASK_DECODER))
+    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
+      vpp->previous_task_info = gst_mfx_task_get_request(task)->Info;
       vpp->sinkpad_caps_memtype =
-          gst_mfx_task_has_video_memory (peer_decoder) ?
+          gst_mfx_task_has_video_memory (task) ?
             MFX_IOPATTERN_IN_VIDEO_MEMORY : MFX_IOPATTERN_IN_SYSTEM_MEMORY;
+    }
+#if 0
+    else if (gst_mfx_task_has_type (task, GST_MFX_TASK_VPP_OUT)) {
+      mfxExtBuffer **buf = params->ExtParam;
+      guint i;
 
-    gst_mfx_task_unref (peer_decoder);
+      for (i = 0; i < params->NumExtParam; i++) {
+        switch ((buf[i])->BufferId) {
+          case MFX_EXTBUFF_VPP_PROCAMP: {
+            mfxExtVPPProcAmp *procamp = buf[i];
+
+            if (procamp->Brightness != DEFAULT_BRIGHTNESS &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_BRIGHTNESS)) {
+              vpp->brightness = procamp->Brightness;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+            }
+            if (procamp->Contrast != DEFAULT_CONTRAST &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_CONTRAST)) {
+              vpp->contrast = procamp->Contrast;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+            }
+            if (procamp->Hue != DEFAULT_HUE &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_HUE)) {
+              vpp->hue = procamp->Hue;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+            }
+            if (procamp->Saturation != DEFAULT_SATURATION &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_SATURATION)) {
+              vpp->saturation = procamp->Saturation;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+            }
+            break;
+          }
+          case MFX_EXTBUFF_VPP_DENOISE: {
+            mfxExtVPPDenoise *denoise = buf[i];
+
+            if (denoise->DenoiseFactor &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE)) {
+              vpp->denoise_level = denoise->DenoiseFactor;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_DENOISE;
+            }
+            break;
+          }
+          case MFX_EXTBUFF_VPP_DETAIL: {
+            mfxExtVPPDetail *detail = buf[i];
+
+            if (detail->DetailFactor &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_DETAIL)) {
+              vpp->detail_level = detail->DetailFactor;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_DETAIL;
+            }
+            break;
+          }
+          case MFX_EXTBUFF_VPP_ROTATION: {
+            mfxExtVPPRotation *rotation = buf[i];
+
+            if (rotation->Angle &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_ROTATION)) {
+              vpp->angle = rotation->Angle;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_ROTATION;
+            }
+            break;
+          }
+          case MFX_EXTBUFF_VPP_DEINTERLACING: {
+            mfxExtVPPDeinterlacing *deinterlace = buf[i];
+
+            if (deinterlace->Mode &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)) {
+              vpp->deinterlace_mode = deinterlace->Mode;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
+            }
+            break;
+          }
+          case MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION: {
+            mfxExtVPPFrameRateConversion *frc = buf[i];
+
+            if (frc->Algorithm &&
+                !(vpp->flags & GST_MFX_POSTPROC_FLAG_FRC)) {
+              vpp->alg = frc->Algorithm;
+              vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+              vpp->fps_n = params->vpp.Out.FrameRateExtN;
+              vpp->fps_d = params->vpp.Out.FrameRateExtD;
+            }
+            break;
+          }
+          default:
+            break;
+        }
+      }
+      gst_mfx_task_set_task_type (task,
+        gst_mfx_task_get_task_type (task) | GST_MFX_TASK_VPP_PASSTHROUGH);
+
+      vpp->previous_task_info = params->mfx.FrameInfo;
+    }
+#endif
+    gst_mfx_task_unref (task);
   }
 
   if (!vpp->sinkpad_caps_memtype) {
@@ -431,6 +532,9 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       sinkpad_has_raw_caps, srcpad_has_raw_caps);
   if (!vpp->filter)
     return FALSE;
+
+  //vpp->vpp_task = gst_mfx_filter_get_task (vpp->filter, GST_MFX_TASK_VPP_OUT);
+
   return TRUE;
 }
 
@@ -536,19 +640,28 @@ static void
 gst_mfxpostproc_before_transform (GstBaseTransform * trans,
     GstBuffer * buf)
 {
-  GstMfxPostproc *mfxvpp = GST_MFXPOSTPROC (trans);
+  GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
+#if 0
+  if (gst_base_transform_is_passthrough (trans))
+    return;
 
-  if (mfxvpp->cb_changed) {
-    if (mfxvpp->cb_changed & GST_MFX_POSTPROC_FLAG_SATURATION)
-      gst_mfx_filter_set_saturation(mfxvpp->filter, mfxvpp->saturation);
-    else if (mfxvpp->cb_changed & GST_MFX_POSTPROC_FLAG_CONTRAST)
-      gst_mfx_filter_set_contrast(mfxvpp->filter, mfxvpp->contrast);
-    else if (mfxvpp->cb_changed & GST_MFX_POSTPROC_FLAG_HUE)
-      gst_mfx_filter_set_hue(mfxvpp->filter, mfxvpp->hue);
-    else if (mfxvpp->cb_changed & GST_MFX_POSTPROC_FLAG_BRIGHTNESS)
-      gst_mfx_filter_set_brightness(mfxvpp->filter, mfxvpp->brightness);
-    gst_mfx_filter_reset(mfxvpp->filter);
-    mfxvpp->cb_changed = 0;
+  if (gst_mfx_task_has_type(vpp->vpp_task, GST_MFX_TASK_VPP_PASSTHROUGH) ||
+      !vpp->flags) {
+    gst_base_transform_set_passthrough (trans, TRUE);
+    return;
+  }
+#endif
+  if (vpp->cb_changed) {
+    if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_SATURATION)
+      gst_mfx_filter_set_saturation(vpp->filter, vpp->saturation);
+    if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_CONTRAST)
+      gst_mfx_filter_set_contrast(vpp->filter, vpp->contrast);
+    if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_HUE)
+      gst_mfx_filter_set_hue(vpp->filter, vpp->hue);
+    if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_BRIGHTNESS)
+      gst_mfx_filter_set_brightness(vpp->filter, vpp->brightness);
+    gst_mfx_filter_reset(vpp->filter);
+    vpp->cb_changed = 0;
   }
 }
 
@@ -564,6 +677,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstMfxRectangle *crop_rect = NULL;
   GstBuffer *buf, *buf2;
   GstClockTime timestamp;
+  GstMfxTask *task;
 
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
 
@@ -824,6 +938,7 @@ static GstCaps *
 gst_mfxpostproc_transform_caps (GstBaseTransform * trans,
     GstPadDirection direction, GstCaps * caps, GstCaps * filter)
 {
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
   GstCaps *out_caps;
 
   caps = gst_mfxpostproc_transform_caps_impl (trans, direction, caps);
@@ -843,7 +958,19 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   if (!gst_mfxpostproc_ensure_filter (vpp))
     return FALSE;
 
-  gst_mfx_filter_set_frame_info (vpp->filter, &vpp->sinkpad_info);
+  //if (!vpp->previous_task_info.CropW) {
+    gst_mfx_filter_set_frame_info (vpp->filter, &vpp->sinkpad_info);
+  /*}
+  else {
+    if ( vpp->previous_task_info.FourCC !=
+        gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&vpp->sinkpad_info))) {
+      vpp->previous_task_info.FourCC =
+          gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&vpp->sinkpad_info));
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
+    }
+    gst_mfx_filter_copy_frame_info (vpp->filter, &vpp->previous_task_info);
+  }*/
+
 
   if (!gst_mfx_filter_set_size (vpp->filter,
           GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
@@ -891,17 +1018,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
           gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d)))
     return FALSE;
 
-  return gst_mfx_filter_prepare (vpp->filter);
-}
-
-static void
-gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
-{
-  gst_mfx_filter_replace (&vpp->filter, NULL);
-  cb_channels_finalize (vpp);
-  gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
-  gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
-  gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (vpp));
+  return  gst_mfx_filter_prepare (vpp->filter);
 }
 
 static gboolean
@@ -910,6 +1027,9 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
   gboolean caps_changed = FALSE;
+
+  //if (gst_mfx_task_has_type(vpp->vpp_task, GST_MFX_TASK_VPP_PASSTHROUGH))
+    //gst_base_transform_set_passthrough (trans, TRUE);
 
   if (!gst_mfxpostproc_update_sink_caps (vpp, caps, &caps_changed))
     return FALSE;
@@ -923,6 +1043,7 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
     if (!gst_mfx_plugin_base_set_caps (GST_MFX_PLUGIN_BASE (vpp),
             caps, out_caps))
       return FALSE;
+
     if (!gst_mfxpostproc_create (vpp))
       return FALSE;
   }
@@ -950,12 +1071,22 @@ gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
       direction, query);
 }
 
+static gboolean
+gst_mfxpostproc_stop (GstBaseTransform * trans)
+{
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+
+  //gst_base_transform_set_passthrough (GST_BASE_TRANSFORM (vpp), FALSE);
+  vpp->sinkpad_caps_memtype = 0;
+
+  gst_mfxpostproc_destroy (vpp);
+  return TRUE;
+}
+
 static void
 gst_mfxpostproc_finalize (GObject * object)
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
-
-  gst_mfxpostproc_destroy (vpp);
 
   gst_mfx_plugin_base_finalize (GST_MFX_PLUGIN_BASE (vpp));
   G_OBJECT_CLASS (gst_mfxpostproc_parent_class)->finalize (object);
@@ -1108,6 +1239,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   trans_class->transform_caps = gst_mfxpostproc_transform_caps;
   trans_class->transform = gst_mfxpostproc_transform;
   trans_class->set_caps = gst_mfxpostproc_set_caps;
+  trans_class->stop = gst_mfxpostproc_stop;
   trans_class->query = gst_mfxpostproc_query;
   trans_class->propose_allocation = gst_mfxpostproc_propose_allocation;
   trans_class->decide_allocation = gst_mfxpostproc_decide_allocation;

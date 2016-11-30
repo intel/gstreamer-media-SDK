@@ -92,7 +92,7 @@ struct _GstMfxPostproc
   GstMfxPluginBase        parent_instance;
 
   GstMfxFilter           *filter;
-  GstMfxTaskAggregator   *current_aggregator;
+  //GstMfxTask             *vpp_task;
   GstVideoFormat          format;        /* output video format */
   guint                   width;
   guint                   height;
@@ -117,7 +117,7 @@ struct _GstMfxPostproc
   gfloat                  saturation;
   gfloat                  brightness;
   gfloat                  contrast;
-  guint                  cb_changed;
+  guint                   cb_changed;
 
     /* FRC */
   GstMfxFrcAlgorithm      alg;
@@ -129,7 +129,9 @@ struct _GstMfxPostproc
   GstMfxRotation          angle;
 
   guint                   keep_aspect : 1;
+
   mfxU16                  sinkpad_caps_memtype;
+  mfxFrameInfo            previous_task_info;
 };
 
 struct _GstMfxPostprocClass

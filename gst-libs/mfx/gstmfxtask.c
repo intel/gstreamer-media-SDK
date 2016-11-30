@@ -52,6 +52,7 @@ struct _GstMfxTask
   mfxSession session;
   guint task_type;
   gboolean memtype_is_system;
+  gboolean is_joined;
 };
 
 static gint
@@ -421,11 +422,14 @@ gst_mfx_task_get_video_params (GstMfxTask * task)
 static void
 gst_mfx_task_finalize (GstMfxTask * task)
 {
+  if (task->is_joined) {
+    MFXDisjoinSession (task->session);
+    MFXClose (task->session);
+  }
   gst_mfx_task_aggregator_remove_task (task->aggregator, task);
   gst_mfx_task_aggregator_unref (task->aggregator);
   gst_mfx_display_unref (task->display);
   g_list_free_full (task->saved_responses, g_free);
-  MFXClose (task->session);
 }
 
 
@@ -441,8 +445,9 @@ gst_mfx_task_class (void)
 
 static void
 gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
-    mfxSession session, guint type_flags)
+    mfxSession session, guint type_flags, gboolean is_joined)
 {
+  task->is_joined = is_joined;
   task->task_type |= type_flags;
   task->display = gst_mfx_task_aggregator_get_display(aggregator);
   task->session = session;
@@ -460,19 +465,21 @@ GstMfxTask *
 gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
 {
   mfxSession session;
+  gboolean is_joined;
 
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  session = gst_mfx_task_aggregator_create_session (aggregator);
+  session = gst_mfx_task_aggregator_create_session (aggregator, &is_joined);
   if (!session)
     return NULL;
 
-  return gst_mfx_task_new_with_session (aggregator, session, type_flags);
+  return
+    gst_mfx_task_new_with_session (aggregator, session, type_flags, is_joined);
 }
 
 GstMfxTask *
 gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
-    mfxSession session, guint type_flags)
+    mfxSession session, guint type_flags, gboolean is_joined)
 {
   GstMfxTask *task;
 
@@ -483,7 +490,7 @@ gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
   if (!task)
     return NULL;
 
-  gst_mfx_task_init (task, aggregator, session, type_flags);
+  gst_mfx_task_init (task, aggregator, session, type_flags, is_joined);
 
   return task;
 }

@@ -116,18 +116,18 @@ typedef enum {
 
 typedef enum {
   GST_MFX_DEINTERLACE_MODE_NONE = 0,
-  GST_MFX_DEINTERLACE_MODE_BOB,
-  GST_MFX_DEINTERLACE_MODE_ADVANCED,
-  GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF,
+  GST_MFX_DEINTERLACE_MODE_BOB = MFX_DEINTERLACING_BOB,
+  GST_MFX_DEINTERLACE_MODE_ADVANCED = MFX_DEINTERLACING_ADVANCED,
+  GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF = MFX_DEINTERLACING_ADVANCED_NOREF,
 } GstMfxDeinterlaceMode;
 
 typedef enum {
     GST_MFX_FRC_NONE,
-    GST_MFX_FRC_PRESERVE_TIMESTAMP,
-    GST_MFX_FRC_DISTRIBUTED_TIMESTAMP,
-    GST_MFX_FRC_FRAME_INTERPOLATION,
-    GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
-    GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
+    GST_MFX_FRC_PRESERVE_TIMESTAMP = MFX_FRCALGM_PRESERVE_TIMESTAMP,
+    GST_MFX_FRC_DISTRIBUTED_TIMESTAMP = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP,
+    GST_MFX_FRC_FRAME_INTERPOLATION =  MFX_FRCALGM_FRAME_INTERPOLATION,
+    GST_MFX_FRC_FI_PRESERVE_TIMESTAMP = MFX_FRCALGM_PRESERVE_TIMESTAMP || MFX_FRCALGM_FRAME_INTERPOLATION,
+    GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP || MFX_FRCALGM_FRAME_INTERPOLATION,
 } GstMfxFrcAlgorithm;
 
 /**
@@ -179,6 +179,9 @@ gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags);
 GstMfxSurfacePool *
 gst_mfx_filter_get_pool (GstMfxFilter * filter, guint flags);
 
+GstMfxFilter *
+gst_mfx_filter_get_task (GstMfxFilter * filter, guint flags);
+
 void
 gst_mfx_filter_set_request (GstMfxFilter * filter,
     mfxFrameAllocRequest * request, guint flags);
@@ -186,6 +189,9 @@ gst_mfx_filter_set_request (GstMfxFilter * filter,
 /* Setters */
 void
 gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info);
+
+void
+gst_mfx_filter_copy_frame_info  (GstMfxFilter * filter, mfxFrameInfo * info);
 
 gboolean
 gst_mfx_filter_set_format (GstMfxFilter * filter, GstVideoFormat fmt);
@@ -215,8 +221,7 @@ gboolean
 gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle);
 
 gboolean
-gst_mfx_filter_set_deinterlace_mode (GstMfxFilter *filter,
-    GstMfxDeinterlaceMode mode);
+gst_mfx_filter_set_deinterlace_mode (GstMfxFilter *filter, mfxU16 mode);
 
 gboolean
 gst_mfx_filter_set_framerate (GstMfxFilter *filter,
