@@ -861,7 +861,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
       encoder->memtype_is_system) {
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
-        encoder->encode, GST_MFX_TASK_VPP_OUT, encoder->memtype_is_system, memtype_is_system);
+        encoder->encode, GST_MFX_TASK_VPP_OUT,
+        encoder->memtype_is_system, memtype_is_system);
 
     request->NumFrameSuggested += (1 - encoder->params.AsyncDepth);
 

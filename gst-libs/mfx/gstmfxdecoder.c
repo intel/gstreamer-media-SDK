@@ -545,8 +545,10 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
           break;
         case MFX_PICSTRUCT_FIELD_TFF:
           GST_VIDEO_INFO_FLAG_SET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+          goto update;
         case MFX_PICSTRUCT_FIELD_BFF:
           GST_VIDEO_INFO_FLAG_UNSET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+update:
           /* Check if stream has progressive frames first.
            * If it does then it should be a mixed interlaced stream */
           if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE &&

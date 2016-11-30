@@ -164,6 +164,7 @@ gst_mfx_window_x11_show (GstMfxWindow * window)
     if (priv->fullscreen_on_map)
       gst_mfx_window_set_fullscreen (window, TRUE);
   }
+
   return !has_errors;
 }
 
@@ -336,23 +337,34 @@ gst_mfx_window_x11_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
       }
     }
   }
+
   return FALSE;
 }
 
 static gboolean
 gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
 {
+  GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
+  GstMfxDisplayX11 *const x11_display =
+        GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
+  Display *display = gst_mfx_display_x11_get_display (x11_display);
   gboolean has_errors;
 
   if (!GST_MFX_WINDOW_ID (window))
     return FALSE;
 
-  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+  GST_MFX_DISPLAY_LOCK (x11_display);
   x11_trap_errors ();
-  XResizeWindow (GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window)),
-      GST_MFX_WINDOW_ID (window), width, height);
+  XResizeWindow (display, GST_MFX_WINDOW_ID (window), width, height);
   has_errors = x11_untrap_errors () != 0;
-  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
+
+  GST_MFX_DISPLAY_LOCK (x11_display);
+  x11_trap_errors ();
+  XClearWindow (display, GST_MFX_WINDOW_ID (window));
+  has_errors = x11_untrap_errors () != 0;
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
+
   return !has_errors;
 }
 
@@ -388,46 +400,39 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
       &width, &height, &border, &depth);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
-  if (window->width == width && window->height == height) {
-    x = (width - src_rect->width) / 2;
-    y = (height - src_rect->height) / 2;
+  x = (width - src_rect->width) / 2;
+  y = (height - src_rect->height) / 2;
 
-    switch (depth) {
-      case 8:
-        bpp = 8;
-        break;
-      case 15:
-      case 16:
-        bpp = 16;
-        break;
-      case 24:
-      case 32:
-        bpp = 32;
-        break;
-      default:
-        break;
-    }
-    stride = src_rect->width * bpp / 8;
-    size = GST_ROUND_UP_N (stride * src_rect->height, 4096);
-
-    pixmap = xcb_generate_id (priv->xcbconn);
-    xcb_dri3_pixmap_from_buffer (priv->xcbconn, pixmap, root, size,
-        src_rect->width, src_rect->height, stride, depth, bpp,
-        GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
-    if (!pixmap)
-      return FALSE;
-
-    xcb_present_pixmap (priv->xcbconn, GST_MFX_WINDOW_ID (window), pixmap,
-        0, 0, 0, x, y, None, None, None,
-        XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0, NULL);
-    xcb_free_pixmap (priv->xcbconn, pixmap);
-    xcb_flush (priv->xcbconn);
+  switch (depth) {
+    case 8:
+      bpp = 8;
+      break;
+    case 15:
+    case 16:
+      bpp = 16;
+      break;
+    case 24:
+    case 32:
+      bpp = 32;
+      break;
+    default:
+      break;
   }
-  else {
-    GST_MFX_DISPLAY_LOCK (x11_display);
-    XClearWindow (display, GST_MFX_WINDOW_ID (window));
-    GST_MFX_DISPLAY_UNLOCK (x11_display);
-  }
+  stride = src_rect->width * bpp / 8;
+  size = GST_ROUND_UP_N (stride * src_rect->height, 4096);
+
+  pixmap = xcb_generate_id (priv->xcbconn);
+  xcb_dri3_pixmap_from_buffer (priv->xcbconn, pixmap, root, size,
+      src_rect->width, src_rect->height, stride, depth, bpp,
+      GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
+  if (!pixmap)
+    return FALSE;
+
+  xcb_present_pixmap (priv->xcbconn, GST_MFX_WINDOW_ID (window), pixmap,
+      0, 0, 0, x, y, None, None, None,
+      XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0, NULL);
+  xcb_free_pixmap (priv->xcbconn, pixmap);
+  xcb_flush (priv->xcbconn);
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
 #else
