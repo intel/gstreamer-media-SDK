@@ -43,34 +43,6 @@ typedef struct __GstMfxSinkBin {
 
   GstElement *postproc;
   GstElement *sink;
-
-  guint                   width;
-  guint                   height;
-
-  /* Deinterlacing */
-  GstMfxDeinterlaceMode   deinterlace_mode;
-
-  /* Basic filter values */
-  guint                   denoise_level;
-  guint                   detail_level;
-
-  /* Color balance filter values */
-  gfloat                  hue;
-  gfloat                  saturation;
-  gfloat                  brightness;
-  gfloat                  contrast;
-
-  /* Rotation angle */
-  GstMfxRotation          angle;
-
-  guint                   keep_aspect : 1;
-  GstMfxDisplayType       display_type;
-
-  guint                   handle_events : 1;
-  guint                   fullscreen : 1;
-  guint                   no_frame_drop : 1;
-  guint                   full_color_range : 1;
-  guint                   show_preroll_frame : 1;
 } GstMfxSinkBin;
 
 typedef struct __GstMfxSinkBinClass {
