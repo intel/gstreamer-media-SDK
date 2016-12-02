@@ -676,7 +676,6 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstMfxRectangle *crop_rect = NULL;
   GstBuffer *buf, *buf2;
   GstClockTime timestamp;
-  GstMfxTask *task;
 
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
 

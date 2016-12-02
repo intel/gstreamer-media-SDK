@@ -135,7 +135,11 @@ gst_mfx_plugin_base_close (GstMfxPluginBase * plugin)
   gst_caps_replace (&plugin->sinkpad_caps, NULL);
   plugin->sinkpad_caps_changed = FALSE;
   gst_video_info_init (&plugin->sinkpad_info);
-
+  if (plugin->sinkpad_buffer_pool) {
+    //gst_object_unref (&plugin->sinkpad_buffer_pool);
+    //plugin->sinkpad_buffer_pool = NULL;
+    g_clear_object (&plugin->sinkpad_buffer_pool);
+  }
   g_clear_object (&plugin->srcpad_buffer_pool);
 
   gst_caps_replace (&plugin->srcpad_caps, NULL);

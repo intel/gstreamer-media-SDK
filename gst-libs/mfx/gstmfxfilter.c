@@ -1104,8 +1104,8 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface * surface,
         sts = MFXVideoCORE_SyncOperation (filter->session, syncp, 1000);
       } while (MFX_WRN_IN_EXECUTION == sts);
 
-    gst_mfx_surface_replace (out_surface,
-        gst_mfx_surface_pool_find_surface (filter->vpp_pool[1], outsurf));
+    *out_surface =
+        gst_mfx_surface_pool_find_surface (filter->vpp_pool[1], outsurf);
   }
 
   if (more_surface)
