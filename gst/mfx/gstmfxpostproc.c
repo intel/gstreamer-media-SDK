@@ -242,7 +242,6 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
   if (g_ascii_strcasecmp (channel->label, "HUE") == 0) {
     new_val = (new_val / 10.0);
 
-    vpp->cb_changed = vpp->hue != new_val;
     if (vpp->hue != new_val) {
       vpp->hue = new_val;
       vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
