@@ -279,7 +279,8 @@ init_params (GstMfxFilter * filter)
   }
   if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
     filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
-    filter->params.vpp.Out.Height = GST_ROUND_UP_16 (filter->frame_info.CropH);
+    filter->params.vpp.Out.Height =
+        GST_ROUND_UP_16 (filter->params.vpp.Out.CropH);
   }
   if (filter->filter_op & GST_MFX_FILTER_FRAMERATE_CONVERSION &&
       (filter->fps_n && filter->fps_d)) {
