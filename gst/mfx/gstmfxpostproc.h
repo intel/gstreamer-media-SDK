@@ -92,7 +92,6 @@ struct _GstMfxPostproc
   GstMfxPluginBase        parent_instance;
 
   GstMfxFilter           *filter;
-  //GstMfxTask             *vpp_task;
   GstVideoFormat          format;        /* output video format */
   guint                   width;
   guint                   height;
@@ -111,7 +110,7 @@ struct _GstMfxPostproc
   guint                   detail_level;
 
   /* Color balance filter values */
-  GList                   *channels;
+  GList                  *channels;
 
   gfloat                  hue;
   gfloat                  saturation;
@@ -129,9 +128,9 @@ struct _GstMfxPostproc
   GstMfxRotation          angle;
 
   guint                   keep_aspect : 1;
+  guint                   fixed_transform : 1;
 
   mfxU16                  sinkpad_caps_memtype;
-  mfxFrameInfo            previous_task_info;
 };
 
 struct _GstMfxPostprocClass

@@ -48,8 +48,7 @@ typedef enum {
   GST_MFX_TASK_DECODER = (1 << 0),
   GST_MFX_TASK_VPP_IN = (1 << 1),
   GST_MFX_TASK_VPP_OUT = (1 << 2),
-  GST_MFX_TASK_VPP_PASSTHROUGH = (1 << 3),
-  GST_MFX_TASK_ENCODER = (1 << 4),
+  GST_MFX_TASK_ENCODER = (1 << 3),
 } GstMfxTaskType;
 
 GstMfxTask *

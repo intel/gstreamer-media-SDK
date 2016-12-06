@@ -179,9 +179,6 @@ gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags);
 GstMfxSurfacePool *
 gst_mfx_filter_get_pool (GstMfxFilter * filter, guint flags);
 
-GstMfxFilter *
-gst_mfx_filter_get_task (GstMfxFilter * filter, guint flags);
-
 void
 gst_mfx_filter_set_request (GstMfxFilter * filter,
     mfxFrameAllocRequest * request, guint flags);
