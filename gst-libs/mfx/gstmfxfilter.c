@@ -534,13 +534,6 @@ gst_mfx_filter_get_pool (GstMfxFilter * filter, guint flags)
               GST_MFX_TASK_VPP_OUT)]);
 }
 
-GstMfxFilter *
-gst_mfx_filter_get_task (GstMfxFilter * filter, guint flags)
-{
-  return gst_mfx_task_ref (filter->vpp[!!(flags &
-              GST_MFX_TASK_VPP_OUT)]);
-}
-
 gboolean
 gst_mfx_filter_set_format (GstMfxFilter * filter, GstVideoFormat fmt)
 {

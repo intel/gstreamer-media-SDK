@@ -78,6 +78,7 @@ enum
   PROP_FORMAT,
   PROP_WIDTH,
   PROP_HEIGHT,
+  PROP_FIXED_TRANSFORM,
   PROP_FORCE_ASPECT_RATIO,
   PROP_DEINTERLACE_MODE,
   PROP_DENOISE,
@@ -343,32 +344,32 @@ gst_mfxpostproc_color_balance_iface_init (GstColorBalanceInterface * iface)
 }
 
 static void
-find_best_size (GstMfxPostproc * postproc, GstVideoInfo * vip,
+find_best_size (GstMfxPostproc * vpp, GstVideoInfo * vip,
     guint * width_ptr, guint * height_ptr)
 {
   guint width, height;
 
   width = GST_VIDEO_INFO_WIDTH (vip);
   height = GST_VIDEO_INFO_HEIGHT (vip);
-  if (postproc->width && postproc->height) {
-    width = postproc->width;
-    height = postproc->height;
-  } else if (postproc->keep_aspect) {
+  if (vpp->width && vpp->height) {
+    width = vpp->width;
+    height = vpp->height;
+  } else if (vpp->keep_aspect) {
     const gdouble ratio = (gdouble) width / height;
-    if (postproc->width) {
-      width = postproc->width;
-      height = postproc->width / ratio;
-    } else if (postproc->height) {
-      height = postproc->height;
-      width = postproc->height * ratio;
+    if (vpp->width) {
+      width = vpp->width;
+      height = vpp->width / ratio;
+    } else if (vpp->height) {
+      height = vpp->height;
+      width = vpp->height * ratio;
     }
-  } else if (postproc->width)
-    width = postproc->width;
-  else if (postproc->height)
-    height = postproc->height;
+  } else if (vpp->width)
+    width = vpp->width;
+  else if (vpp->height)
+    height = vpp->height;
 
-  if (GST_MFX_ROTATION_90 == postproc->angle ||
-      GST_MFX_ROTATION_270 == postproc->angle) {
+  if (GST_MFX_ROTATION_90 == vpp->angle ||
+      GST_MFX_ROTATION_270 == vpp->angle) {
     width = width ^ height;
     height = width ^ height;
     width = width ^ height;
@@ -380,12 +381,10 @@ find_best_size (GstMfxPostproc * postproc, GstVideoInfo * vip,
 static void
 gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
 {
-  //gst_mfx_task_replace(&vpp->vpp_task, NULL);
   gst_mfx_filter_replace (&vpp->filter, NULL);
   cb_channels_finalize (vpp);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
-  gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (vpp));
 }
 
 static gboolean
@@ -406,108 +405,12 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       !vpp->sinkpad_caps_memtype) {
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
-    mfxVideoParam *params = gst_mfx_task_get_video_params (task);
 
     if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
-      vpp->previous_task_info = gst_mfx_task_get_request(task)->Info;
       vpp->sinkpad_caps_memtype =
           gst_mfx_task_has_video_memory (task) ?
             MFX_IOPATTERN_IN_VIDEO_MEMORY : MFX_IOPATTERN_IN_SYSTEM_MEMORY;
     }
-#if 0
-    else if (gst_mfx_task_has_type (task, GST_MFX_TASK_VPP_OUT)) {
-      mfxExtBuffer **buf = params->ExtParam;
-      guint i;
-
-      for (i = 0; i < params->NumExtParam; i++) {
-        switch ((buf[i])->BufferId) {
-          case MFX_EXTBUFF_VPP_PROCAMP: {
-            mfxExtVPPProcAmp *procamp = buf[i];
-
-            if (procamp->Brightness != DEFAULT_BRIGHTNESS &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_BRIGHTNESS)) {
-              vpp->brightness = procamp->Brightness;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
-            }
-            if (procamp->Contrast != DEFAULT_CONTRAST &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_CONTRAST)) {
-              vpp->contrast = procamp->Contrast;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
-            }
-            if (procamp->Hue != DEFAULT_HUE &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_HUE)) {
-              vpp->hue = procamp->Hue;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
-            }
-            if (procamp->Saturation != DEFAULT_SATURATION &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_SATURATION)) {
-              vpp->saturation = procamp->Saturation;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
-            }
-            break;
-          }
-          case MFX_EXTBUFF_VPP_DENOISE: {
-            mfxExtVPPDenoise *denoise = buf[i];
-
-            if (denoise->DenoiseFactor &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE)) {
-              vpp->denoise_level = denoise->DenoiseFactor;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_DENOISE;
-            }
-            break;
-          }
-          case MFX_EXTBUFF_VPP_DETAIL: {
-            mfxExtVPPDetail *detail = buf[i];
-
-            if (detail->DetailFactor &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_DETAIL)) {
-              vpp->detail_level = detail->DetailFactor;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_DETAIL;
-            }
-            break;
-          }
-          case MFX_EXTBUFF_VPP_ROTATION: {
-            mfxExtVPPRotation *rotation = buf[i];
-
-            if (rotation->Angle &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_ROTATION)) {
-              vpp->angle = rotation->Angle;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_ROTATION;
-            }
-            break;
-          }
-          case MFX_EXTBUFF_VPP_DEINTERLACING: {
-            mfxExtVPPDeinterlacing *deinterlace = buf[i];
-
-            if (deinterlace->Mode &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)) {
-              vpp->deinterlace_mode = deinterlace->Mode;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
-            }
-            break;
-          }
-          case MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION: {
-            mfxExtVPPFrameRateConversion *frc = buf[i];
-
-            if (frc->Algorithm &&
-                !(vpp->flags & GST_MFX_POSTPROC_FLAG_FRC)) {
-              vpp->alg = frc->Algorithm;
-              vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
-              vpp->fps_n = params->vpp.Out.FrameRateExtN;
-              vpp->fps_d = params->vpp.Out.FrameRateExtD;
-            }
-            break;
-          }
-          default:
-            break;
-        }
-      }
-      gst_mfx_task_set_task_type (task,
-        gst_mfx_task_get_task_type (task) | GST_MFX_TASK_VPP_PASSTHROUGH);
-
-      vpp->previous_task_info = params->mfx.FrameInfo;
-    }
-#endif
     gst_mfx_task_unref (task);
   }
 
@@ -531,8 +434,6 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       sinkpad_has_raw_caps, srcpad_has_raw_caps);
   if (!vpp->filter)
     return FALSE;
-
-  //vpp->vpp_task = gst_mfx_filter_get_task (vpp->filter, GST_MFX_TASK_VPP_OUT);
 
   return TRUE;
 }
@@ -601,13 +502,13 @@ gst_mfxpostproc_update_sink_caps (GstMfxPostproc * vpp, GstCaps * caps,
 }
 
 static GstBuffer *
-create_output_buffer (GstMfxPostproc * postproc)
+create_output_buffer (GstMfxPostproc * vpp)
 {
   GstBuffer *outbuf;
   GstFlowReturn ret;
 
   GstBufferPool *const pool =
-      GST_MFX_PLUGIN_BASE (postproc)->srcpad_buffer_pool;
+      GST_MFX_PLUGIN_BASE (vpp)->srcpad_buffer_pool;
 
   g_return_val_if_fail (pool != NULL, NULL);
 
@@ -640,16 +541,18 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
     GstBuffer * buf)
 {
   GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
-#if 0
-  if (gst_base_transform_is_passthrough (trans))
-    return;
 
-  if (gst_mfx_task_has_type(vpp->vpp_task, GST_MFX_TASK_VPP_PASSTHROUGH) ||
-      !vpp->flags) {
+  /*if (!vpp->flags && vpp->fixed_transform &&
+      (vpp->hue == DEFAULT_HUE ||
+       vpp->contrast == DEFAULT_CONTRAST ||
+       vpp->saturation == DEFAULT_SATURATION ||
+       vpp->brightness == DEFAULT_BRIGHTNESS)) {
     gst_base_transform_set_passthrough (trans, TRUE);
-    return;
   }
-#endif
+  else {
+    gst_base_transform_set_passthrough (trans, FALSE);
+  }*/
+
   if (vpp->cb_changed) {
     if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_SATURATION)
       gst_mfx_filter_set_saturation(vpp->filter, vpp->saturation);
@@ -673,8 +576,8 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstMfxSurface *surface, *out_surface;
   GstMfxFilterStatus status;
   GstFlowReturn ret;
+  GstBuffer *buf;
   GstMfxRectangle *crop_rect = NULL;
-  GstBuffer *buf, *buf2;
   GstClockTime timestamp;
 
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
@@ -861,6 +764,9 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     return gst_caps_ref (vpp->allowed_srcpad_caps);
   }
 
+  if (vpp->fixed_transform)
+    gst_pad_check_reconfigure (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
+
   /* Generate the expected src pad caps, from the current fixated
    * sink pad caps */
   if (!gst_video_info_from_caps (&vi, caps))
@@ -956,19 +862,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   if (!gst_mfxpostproc_ensure_filter (vpp))
     return FALSE;
 
-  //if (!vpp->previous_task_info.CropW) {
-    gst_mfx_filter_set_frame_info (vpp->filter, &vpp->sinkpad_info);
-  /*}
-  else {
-    if ( vpp->previous_task_info.FourCC !=
-        gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&vpp->sinkpad_info))) {
-      vpp->previous_task_info.FourCC =
-          gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&vpp->sinkpad_info));
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
-    }
-    gst_mfx_filter_copy_frame_info (vpp->filter, &vpp->previous_task_info);
-  }*/
-
+  gst_mfx_filter_set_frame_info (vpp->filter, &vpp->sinkpad_info);
 
   if (!gst_mfx_filter_set_size (vpp->filter,
           GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
@@ -1026,16 +920,13 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
   gboolean caps_changed = FALSE;
 
-  //if (gst_mfx_task_has_type(vpp->vpp_task, GST_MFX_TASK_VPP_PASSTHROUGH))
-    //gst_base_transform_set_passthrough (trans, TRUE);
-
   if (!gst_mfxpostproc_update_sink_caps (vpp, caps, &caps_changed))
     return FALSE;
 
   if (!gst_mfxpostproc_update_src_caps (vpp, out_caps, &caps_changed))
     return FALSE;
 
-  if (caps_changed) {
+  if (caps_changed || !vpp->fixed_transform) {
     gst_mfxpostproc_destroy (vpp);
 
     if (!gst_mfx_plugin_base_set_caps (GST_MFX_PLUGIN_BASE (vpp),
@@ -1048,6 +939,27 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
 
   return TRUE;
 }
+
+/*static gboolean
+gst_mfxpostproc_src_event(GstBaseTransform * trans, GstEvent *event)
+{
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+  gboolean success = TRUE;
+
+  GST_DEBUG("handle src event '%s'", GST_EVENT_TYPE_NAME(event));
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_RECONFIGURE:
+      vpp->fixed_transform = FALSE;
+      gst_event_unref (event);
+      break;
+    default:
+      success =
+          GST_BASE_TRANSFORM_CLASS (gst_mfxpostproc_parent_class)->src_event (trans,
+          event);
+  }
+  return success;
+}*/
 
 static gboolean
 gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
@@ -1074,10 +986,14 @@ gst_mfxpostproc_stop (GstBaseTransform * trans)
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
 
-  //gst_base_transform_set_passthrough (GST_BASE_TRANSFORM (vpp), FALSE);
   vpp->sinkpad_caps_memtype = 0;
+  gst_video_info_init (&vpp->sinkpad_info);
+  gst_video_info_init (&vpp->srcpad_info);
 
+  //gst_base_transform_set_passthrough (GST_BASE_TRANSFORM (vpp), FALSE);
   gst_mfxpostproc_destroy (vpp);
+  gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (vpp));
+
   return TRUE;
 }
 
@@ -1106,6 +1022,9 @@ gst_mfxpostproc_set_property (GObject * object,
       break;
     case PROP_HEIGHT:
       vpp->height = g_value_get_uint (value);
+      break;
+    case PROP_FIXED_TRANSFORM:
+      vpp->fixed_transform = g_value_get_boolean (value);
       break;
     case PROP_FORCE_ASPECT_RATIO:
       vpp->keep_aspect = g_value_get_boolean (value);
@@ -1169,47 +1088,50 @@ static void
 gst_mfxpostproc_get_property (GObject * object,
     guint prop_id, GValue * value, GParamSpec * pspec)
 {
-  GstMfxPostproc *const postproc = GST_MFXPOSTPROC (object);
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
   switch (prop_id) {
     case PROP_FORMAT:
-      g_value_set_enum (value, postproc->format);
+      g_value_set_enum (value, vpp->format);
       break;
     case PROP_WIDTH:
-      g_value_set_uint (value, postproc->width);
+      g_value_set_uint (value, vpp->width);
       break;
     case PROP_HEIGHT:
-      g_value_set_uint (value, postproc->height);
+      g_value_set_uint (value, vpp->height);
+      break;
+    case PROP_FIXED_TRANSFORM:
+      g_value_set_boolean (value, vpp->fixed_transform);
       break;
     case PROP_FORCE_ASPECT_RATIO:
-      g_value_set_boolean (value, postproc->keep_aspect);
+      g_value_set_boolean (value, vpp->keep_aspect);
       break;
     case PROP_DEINTERLACE_MODE:
-      g_value_set_enum (value, postproc->deinterlace_mode);
+      g_value_set_enum (value, vpp->deinterlace_mode);
       break;
     case PROP_DENOISE:
-      g_value_set_uint (value, postproc->denoise_level);
+      g_value_set_uint (value, vpp->denoise_level);
       break;
     case PROP_DETAIL:
-      g_value_set_uint (value, postproc->detail_level);
+      g_value_set_uint (value, vpp->detail_level);
       break;
     case PROP_HUE:
-      g_value_set_float (value, postproc->hue);
+      g_value_set_float (value, vpp->hue);
       break;
     case PROP_SATURATION:
-      g_value_set_float (value, postproc->saturation);
+      g_value_set_float (value, vpp->saturation);
       break;
     case PROP_BRIGHTNESS:
-      g_value_set_float (value, postproc->brightness);
+      g_value_set_float (value, vpp->brightness);
       break;
     case PROP_CONTRAST:
-      g_value_set_float (value, postproc->contrast);
+      g_value_set_float (value, vpp->contrast);
       break;
     case PROP_ROTATION:
-      g_value_set_enum (value, postproc->angle);
+      g_value_set_enum (value, vpp->angle);
       break;
     case PROP_FRAMERATE_CONVERSION:
-      g_value_set_enum (value, postproc->alg);
+      g_value_set_enum (value, vpp->alg);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1237,6 +1159,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   trans_class->transform_caps = gst_mfxpostproc_transform_caps;
   trans_class->transform = gst_mfxpostproc_transform;
   trans_class->set_caps = gst_mfxpostproc_set_caps;
+  //trans_class->src_event = gst_mfxpostproc_src_event;
   trans_class->stop = gst_mfxpostproc_stop;
   trans_class->query = gst_mfxpostproc_query;
   trans_class->propose_allocation = gst_mfxpostproc_propose_allocation;
@@ -1303,6 +1226,14 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           "Height",
           "Forced output height",
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property
+      (object_class,
+      PROP_FIXED_TRANSFORM,
+      g_param_spec_boolean ("fixed-transform",
+          "Fixed transform",
+          "When enabled, transform is fixed once filter properties are set",
+          TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:force-aspect-ratio:
@@ -1434,6 +1365,7 @@ gst_mfxpostproc_init (GstMfxPostproc * vpp)
 
   vpp->format = DEFAULT_FORMAT;
   vpp->deinterlace_mode = DEFAULT_DEINTERLACE_MODE;
+  vpp->fixed_transform = TRUE;
   vpp->keep_aspect = TRUE;
   vpp->alg = DEFAULT_FRC_ALG;
   vpp->brightness = DEFAULT_BRIGHTNESS;

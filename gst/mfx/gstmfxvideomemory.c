@@ -92,8 +92,7 @@ new_surface (GstMfxVideoMemory * mem)
       GST_MFX_VIDEO_ALLOCATOR_CAST (GST_MEMORY_CAST (mem)->allocator);
 
   return
-      gst_mfx_surface_new_from_pool (GST_MFX_SURFACE_POOL
-      (allocator->surface_pool));
+      gst_mfx_surface_new_from_pool (allocator->surface_pool);
 }
 
 static gboolean
@@ -108,7 +107,8 @@ ensure_surface (GstMfxVideoMemory * mem)
     mem->surface = new_surface (mem);
     if (!mem->surface)
       return FALSE;
-    gst_mfx_video_meta_set_surface (mem->meta, mem->surface);
+    gst_mfx_video_meta_set_surface (mem->meta,
+      gst_mfx_surface_ref (mem->surface));
   }
 
   return TRUE;

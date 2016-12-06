@@ -611,8 +611,10 @@ gst_mfxsink_reconfigure_window (GstMfxSink * sink)
           sink->window_width, sink->window_height, win_width, win_height);
       sink->window_width = win_width;
       sink->window_height = win_height;
+
       gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
           gst_event_new_reconfigure ());
+
       return TRUE;
     }
   }
@@ -912,15 +914,13 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
         gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
 
   if (sink->window && sink->display_type_req != GST_MFX_DISPLAY_TYPE_EGL) {
-    GstStructure *s0, *s1;
+    GstStructure *s0;
     GstMfxRectangle *rect = &sink->display_rect;
     out_caps = gst_caps_make_writable (out_caps);
     s0 = gst_caps_get_structure (out_caps, 0);
-    s1 = gst_structure_copy (gst_caps_get_structure (out_caps, 0));
 
     gst_structure_set (s0, "width", G_TYPE_INT, GST_ROUND_UP_16 (rect->width),
         "height", G_TYPE_INT, GST_ROUND_UP_16 (rect->height), NULL);
-    gst_caps_append_structure (out_caps, s1);
   }
 
   return out_caps;

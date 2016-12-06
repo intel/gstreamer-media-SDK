@@ -479,6 +479,8 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
     goto error_element_missing;
   }
 
+  g_object_set (G_OBJECT (mfxsinkbin->postproc), "fixed-transform", FALSE, NULL);
+
   /* create the sink */
   mfxsinkbin->sink = gst_element_factory_make ("mfxsinkelement", NULL);
   if(!mfxsinkbin->sink)  {
