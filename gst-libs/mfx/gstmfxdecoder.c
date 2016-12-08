@@ -505,7 +505,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
     if (MFX_ERR_MORE_SURFACE == sts || sts > 0) {
       if (MFX_WRN_DEVICE_BUSY == sts)
-        g_usleep (500);
+        g_usleep (100);
       continue;
     }
 
@@ -528,7 +528,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       }
     }
 
-    if (syncp && sts == MFX_ERR_NONE) {
+    if (syncp) {
       if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
         do {
           sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);

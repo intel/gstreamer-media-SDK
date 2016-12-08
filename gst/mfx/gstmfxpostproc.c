@@ -78,7 +78,6 @@ enum
   PROP_FORMAT,
   PROP_WIDTH,
   PROP_HEIGHT,
-  PROP_FIXED_TRANSFORM,
   PROP_FORCE_ASPECT_RATIO,
   PROP_DEINTERLACE_MODE,
   PROP_DENOISE,
@@ -542,7 +541,7 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
 {
   GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
 
-  /*if (!vpp->flags && vpp->fixed_transform &&
+  if (!vpp->flags &&
       (vpp->hue == DEFAULT_HUE ||
        vpp->contrast == DEFAULT_CONTRAST ||
        vpp->saturation == DEFAULT_SATURATION ||
@@ -551,7 +550,7 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
   }
   else {
     gst_base_transform_set_passthrough (trans, FALSE);
-  }*/
+  }
 
   if (vpp->cb_changed) {
     if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_SATURATION)
@@ -764,9 +763,6 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     return gst_caps_ref (vpp->allowed_srcpad_caps);
   }
 
-  if (vpp->fixed_transform)
-    gst_pad_check_reconfigure (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
-
   /* Generate the expected src pad caps, from the current fixated
    * sink pad caps */
   if (!gst_video_info_from_caps (&vi, caps))
@@ -926,7 +922,7 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
   if (!gst_mfxpostproc_update_src_caps (vpp, out_caps, &caps_changed))
     return FALSE;
 
-  if (caps_changed || !vpp->fixed_transform) {
+  if (caps_changed) {
     gst_mfxpostproc_destroy (vpp);
 
     if (!gst_mfx_plugin_base_set_caps (GST_MFX_PLUGIN_BASE (vpp),
@@ -939,27 +935,6 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
 
   return TRUE;
 }
-
-/*static gboolean
-gst_mfxpostproc_src_event(GstBaseTransform * trans, GstEvent *event)
-{
-  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
-  gboolean success = TRUE;
-
-  GST_DEBUG("handle src event '%s'", GST_EVENT_TYPE_NAME(event));
-
-  switch (GST_EVENT_TYPE (event)) {
-    case GST_EVENT_RECONFIGURE:
-      vpp->fixed_transform = FALSE;
-      gst_event_unref (event);
-      break;
-    default:
-      success =
-          GST_BASE_TRANSFORM_CLASS (gst_mfxpostproc_parent_class)->src_event (trans,
-          event);
-  }
-  return success;
-}*/
 
 static gboolean
 gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
@@ -990,7 +965,7 @@ gst_mfxpostproc_stop (GstBaseTransform * trans)
   gst_video_info_init (&vpp->sinkpad_info);
   gst_video_info_init (&vpp->srcpad_info);
 
-  //gst_base_transform_set_passthrough (GST_BASE_TRANSFORM (vpp), FALSE);
+  gst_base_transform_set_passthrough (GST_BASE_TRANSFORM (vpp), FALSE);
   gst_mfxpostproc_destroy (vpp);
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (vpp));
 
@@ -1022,9 +997,6 @@ gst_mfxpostproc_set_property (GObject * object,
       break;
     case PROP_HEIGHT:
       vpp->height = g_value_get_uint (value);
-      break;
-    case PROP_FIXED_TRANSFORM:
-      vpp->fixed_transform = g_value_get_boolean (value);
       break;
     case PROP_FORCE_ASPECT_RATIO:
       vpp->keep_aspect = g_value_get_boolean (value);
@@ -1100,9 +1072,6 @@ gst_mfxpostproc_get_property (GObject * object,
     case PROP_HEIGHT:
       g_value_set_uint (value, vpp->height);
       break;
-    case PROP_FIXED_TRANSFORM:
-      g_value_set_boolean (value, vpp->fixed_transform);
-      break;
     case PROP_FORCE_ASPECT_RATIO:
       g_value_set_boolean (value, vpp->keep_aspect);
       break;
@@ -1159,7 +1128,6 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   trans_class->transform_caps = gst_mfxpostproc_transform_caps;
   trans_class->transform = gst_mfxpostproc_transform;
   trans_class->set_caps = gst_mfxpostproc_set_caps;
-  //trans_class->src_event = gst_mfxpostproc_src_event;
   trans_class->stop = gst_mfxpostproc_stop;
   trans_class->query = gst_mfxpostproc_query;
   trans_class->propose_allocation = gst_mfxpostproc_propose_allocation;
@@ -1226,14 +1194,6 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           "Height",
           "Forced output height",
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-  g_object_class_install_property
-      (object_class,
-      PROP_FIXED_TRANSFORM,
-      g_param_spec_boolean ("fixed-transform",
-          "Fixed transform",
-          "When enabled, transform is fixed once filter properties are set",
-          TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:force-aspect-ratio:
@@ -1365,7 +1325,6 @@ gst_mfxpostproc_init (GstMfxPostproc * vpp)
 
   vpp->format = DEFAULT_FORMAT;
   vpp->deinterlace_mode = DEFAULT_DEINTERLACE_MODE;
-  vpp->fixed_transform = TRUE;
   vpp->keep_aspect = TRUE;
   vpp->alg = DEFAULT_FRC_ALG;
   vpp->brightness = DEFAULT_BRIGHTNESS;
