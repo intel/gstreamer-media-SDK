@@ -44,8 +44,9 @@ struct _GstMfxWindowX11Private
   Atom    atom_NET_WM_STATE;
   Atom    atom_NET_WM_STATE_FULLSCREEN;
 
-  guint   is_mapped : 1;
-  guint   fullscreen_on_map : 1;
+  guint is_mapped : 1;
+  guint fullscreen_on_map : 1;
+  Picture picture;
   xcb_connection_t *xcbconn;
 };
 

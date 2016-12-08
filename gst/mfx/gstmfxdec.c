@@ -453,8 +453,6 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
   sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
-
-
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
     case GST_MFX_DECODER_STATUS_SUCCESS:

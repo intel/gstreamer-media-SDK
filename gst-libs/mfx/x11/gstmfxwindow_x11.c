@@ -30,8 +30,10 @@
 #endif
 
 #ifdef HAVE_XCBPRESENT
-#include <xcb/present.h>
+# include <xcb/present.h>
 #endif
+
+# include <X11/extensions/Xrender.h>
 
 #include <X11/Xlib.h>
 
@@ -374,10 +376,16 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   GstMfxPrimeBufferProxy *buffer_proxy;
 
   Display *display = gst_mfx_display_x11_get_display (x11_display);
+  const Window win = GST_MFX_WINDOW_ID (window);
+  Window root;
   int x = 0, y = 0, bpp = 0;
   unsigned int width, height, border, depth, stride, size;
-  Window root;
-  xcb_pixmap_t pixmap;
+  Pixmap pixmap;
+  Picture picture;
+  XRenderPictFormat *pic_fmt;
+  XWindowAttributes wattr;
+  int fmt, op;
+  gboolean success = FALSE;
 
   if (!priv->xcbconn) {
     GST_MFX_DISPLAY_LOCK (x11_display);
@@ -390,22 +398,21 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     return FALSE;
 
   GST_MFX_DISPLAY_LOCK (x11_display);
-  XGetGeometry (display, GST_MFX_WINDOW_ID (window), &root, &x, &y,
+  XGetGeometry (display, win, &root, &x, &y,
       &width, &height, &border, &depth);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
-  if (width != window->width ||
-      height != window->height) {
+  /* Ensure Picture for window is created */
+  if (!priv->picture) {
     GST_MFX_DISPLAY_LOCK (x11_display);
-    XClearWindow (display, GST_MFX_WINDOW_ID (window));
+    XGetWindowAttributes (display, win, &wattr);
+    pic_fmt = XRenderFindVisualFormat (display, wattr.visual);
+    if (pic_fmt)
+      priv->picture = XRenderCreatePicture (display, win, pic_fmt, 0, NULL);
     GST_MFX_DISPLAY_UNLOCK (x11_display);
-
-    window->width = width;
-    window->height = height;
+    if (!priv->picture)
+      return FALSE;
   }
-
-  x = (width - src_rect->width) / 2;
-  y = (height - src_rect->height) / 2;
 
   switch (depth) {
     case 8:
@@ -416,8 +423,17 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
       bpp = 16;
       break;
     case 24:
+      fmt = PictStandardRGB24;
+      op = PictOpSrc;
+      goto get_pic_fmt;
     case 32:
+      fmt = PictStandardARGB32;
+      op = PictOpOver;
+get_pic_fmt:
       bpp = 32;
+      GST_MFX_DISPLAY_LOCK (x11_display);
+      pic_fmt = XRenderFindStandardFormat (display, fmt);
+      GST_MFX_DISPLAY_UNLOCK (x11_display);
       break;
     default:
       break;
@@ -427,17 +443,43 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 
   GST_MFX_DISPLAY_LOCK (x11_display);
   pixmap = xcb_generate_id (priv->xcbconn);
-
-  xcb_dri3_pixmap_from_buffer (priv->xcbconn, pixmap, root, size,
+  xcb_dri3_pixmap_from_buffer (priv->xcbconn, pixmap, win, size,
       src_rect->width, src_rect->height, stride, depth, bpp,
       GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
   if (!pixmap)
     return FALSE;
 
-  xcb_present_pixmap (priv->xcbconn, GST_MFX_WINDOW_ID (window), pixmap,
-      0, 0, 0, x, y, None, None, None,
-      XCB_PRESENT_OPTION_NONE, 0, 0, 0, 0, NULL);
-  xcb_free_pixmap (priv->xcbconn, pixmap);
+  do {
+    const double sx = (double) src_rect->width / dst_rect->width;
+    const double sy = (double) src_rect->height / dst_rect->height;
+    XTransform xform;
+
+    picture = XRenderCreatePicture (display, pixmap, pic_fmt, 0, NULL);
+    if (!picture)
+      break;
+
+    xform.matrix[0][0] = XDoubleToFixed (sx);
+    xform.matrix[0][1] = XDoubleToFixed (0.0);
+    xform.matrix[0][2] = XDoubleToFixed (src_rect->x);
+    xform.matrix[1][0] = XDoubleToFixed (0.0);
+    xform.matrix[1][1] = XDoubleToFixed (sy);
+    xform.matrix[1][2] = XDoubleToFixed (src_rect->y);
+    xform.matrix[2][0] = XDoubleToFixed (0.0);
+    xform.matrix[2][1] = XDoubleToFixed (0.0);
+    xform.matrix[2][2] = XDoubleToFixed (1.0);
+    XRenderSetPictureTransform (display, picture, &xform);
+
+    XRenderComposite (display, op, picture, None, priv->picture,
+        0, 0, 0, 0, dst_rect->x, dst_rect->y,
+        dst_rect->width, dst_rect->height);
+    XSync (display, False);
+    success = TRUE;
+  } while (0);
+
+  if (picture)
+    XRenderFreePicture (display, picture);
+  XFreePixmap (display, pixmap);
+
   xcb_flush (priv->xcbconn);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
@@ -445,7 +487,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 #else
   GST_ERROR("Unable to render the video.\n");
 #endif
-  return TRUE;
+  return success;
 }
 
 void
