@@ -93,6 +93,7 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_shell_surface *shell_surface;
   struct wl_surface *surface;
   struct wl_region *opaque_region;
+  struct wl_viewport *viewport;
   struct wl_event_queue *event_queue;
 #ifdef USE_EGL
   struct wl_egl_window *egl_window;
@@ -412,6 +413,13 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
       &shell_surface_listener, priv);
   wl_shell_surface_set_toplevel (priv->shell_surface);
 
+  if (priv_display->scaler) {
+    GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+    priv->viewport =
+        wl_scaler_get_viewport (priv_display->scaler, priv->surface);
+    GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
+  }
+
   priv->poll = gst_poll_new (TRUE);
   gst_poll_fd_init (&priv->pollfd);
 
@@ -437,6 +445,16 @@ gst_mfx_window_wayland_destroy (GstMfxWindow * window)
 
   /* Wait for the last frame to complete redraw */
   gst_mfx_window_wayland_sync (window);
+
+  if (priv->last_frame) {
+    frame_state_free (priv->last_frame);
+    priv->last_frame = NULL;
+  }
+
+  if (priv->viewport) {
+    wl_viewport_destroy (priv->viewport);
+    priv->viewport = NULL;
+  }
 
   if (priv->shell_surface) {
     wl_shell_surface_destroy (priv->shell_surface);
