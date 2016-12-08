@@ -23,7 +23,8 @@ if(WAYLAND_RENDERER)
     set(SOURCE ${SOURCE}
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/gstmfxdisplay_wayland.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/gstmfxwindow_wayland.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/wayland-drm-protocol.c")
+        "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/wayland-drm-protocol.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/scaler-protocol.c")
 endif()
 
 if(X11_RENDERER)
