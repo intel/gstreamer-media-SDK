@@ -252,8 +252,16 @@ gst_mfx_window_x11_create (GstMfxWindow * window, guint * width, guint * height)
 static void
 gst_mfx_window_x11_destroy (GstMfxWindow * window)
 {
+  GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
   Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
+
+  if (priv->picture) {
+    GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+    XRenderFreePicture (dpy, priv->picture);
+    GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
+    priv->picture = None;
+  }
 
   if (xid) {
     if (!window->use_foreign_window) {
@@ -384,6 +392,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   Picture picture;
   XRenderPictFormat *pic_fmt;
   XWindowAttributes wattr;
+  XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
   int fmt, op;
   gboolean success = FALSE;
 
@@ -413,6 +422,11 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     if (!priv->picture)
       return FALSE;
   }
+
+  GST_MFX_DISPLAY_LOCK (x11_display);
+  XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
+      0, 0, width, height);
+  GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   switch (depth) {
     case 8:
