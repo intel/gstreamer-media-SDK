@@ -243,6 +243,14 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   vaapi_image = gst_mfx_prime_buffer_proxy_get_vaapi_image (buffer_proxy);
   num_planes = vaapi_image_get_plane_count (vaapi_image);
 
+  if ((dst_rect->height != src_rect->height) ||
+          (dst_rect->width != dst_rect->width)) {
+      if (priv->viewport) {
+        wl_viewport_set_destination (priv->viewport,
+            dst_rect->width, dst_rect->height);
+      }
+  }
+
   for (i = 0; i < num_planes; i++) {
     offsets[i] = vaapi_image_get_offset (vaapi_image, i);
     pitches[i] = vaapi_image_get_pitch (vaapi_image, i);
