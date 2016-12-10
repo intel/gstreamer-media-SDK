@@ -25,6 +25,8 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib-xcb.h>
 
+# include <X11/extensions/Xrender.h>
+
 #ifdef HAVE_XCBDRI3
 #include <xcb/dri3.h>
 #endif
@@ -32,8 +34,6 @@
 #ifdef HAVE_XCBPRESENT
 # include <xcb/present.h>
 #endif
-
-# include <X11/extensions/Xrender.h>
 
 #include <X11/Xlib.h>
 
@@ -423,11 +423,6 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
       return FALSE;
   }
 
-  GST_MFX_DISPLAY_LOCK (x11_display);
-  XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
-      0, 0, width, height);
-  GST_MFX_DISPLAY_UNLOCK (x11_display);
-
   switch (depth) {
     case 8:
       bpp = 8;
@@ -483,6 +478,8 @@ get_pic_fmt:
     xform.matrix[2][2] = XDoubleToFixed (1.0);
     XRenderSetPictureTransform (display, picture, &xform);
 
+    XRenderSetPictureFilter (display, picture, FilterNearest, 0, 0);
+
     XRenderComposite (display, op, picture, None, priv->picture,
         0, 0, 0, 0, dst_rect->x, dst_rect->y,
         dst_rect->width, dst_rect->height);
@@ -493,6 +490,15 @@ get_pic_fmt:
   if (picture)
     XRenderFreePicture (display, picture);
   XFreePixmap (display, pixmap);
+
+  if (width != window->width || height != window->height) {
+    XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
+        0, 0, width, height);
+
+    window->width = width;
+    window->height = height;
+  }
+
 
   xcb_flush (priv->xcbconn);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
