@@ -437,7 +437,8 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   while (!g_queue_is_empty(decoder->pending_frames))
     gst_video_codec_frame_unref(g_queue_pop_head(decoder->pending_frames));
 
-  g_byte_array_remove_range (decoder->bitstream, 0,
+  if (decoder->bitstream->len)
+    g_byte_array_remove_range (decoder->bitstream, 0,
       decoder->bitstream->len);
   memset(&decoder->bs, 0, sizeof(mfxBitstream));
 }

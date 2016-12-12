@@ -128,8 +128,6 @@ struct _GstMfxPostproc
   GstMfxRotation          angle;
 
   guint                   keep_aspect : 1;
-  guint                   fixed_transform : 1;
-
   mfxU16                  sinkpad_caps_memtype;
 };
 

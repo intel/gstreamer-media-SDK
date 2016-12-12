@@ -258,6 +258,12 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
 
   if (priv->picture) {
     GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+    if (window->use_foreign_window) {
+      XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
+
+      XRenderFillRectangle (dpy, PictOpClear, priv->picture, &color_black,
+          0, 0, window->width, window->height);
+    }
     XRenderFreePicture (dpy, priv->picture);
     GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
     priv->picture = None;
@@ -357,6 +363,7 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
 {
   GstMfxDisplayX11 *const x11_display =
         GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
+  GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
   Display *display = gst_mfx_display_x11_get_display (x11_display);
   gboolean has_errors;
 
@@ -367,6 +374,13 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
   x11_trap_errors ();
   XResizeWindow (display, GST_MFX_WINDOW_ID (window), width, height);
   has_errors = x11_untrap_errors () != 0;
+
+  if (priv->picture) {
+    XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
+
+    XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
+        0, 0, width, height);
+  }
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   return !has_errors;
@@ -392,7 +406,6 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   Picture picture;
   XRenderPictFormat *pic_fmt;
   XWindowAttributes wattr;
-  XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
   int fmt, op;
   gboolean success = FALSE;
 
@@ -411,7 +424,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
       &width, &height, &border, &depth);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
-  /* Ensure Picture for window is created */
+  /* Ensure Picture for window created */
   if (!priv->picture) {
     GST_MFX_DISPLAY_LOCK (x11_display);
     XGetWindowAttributes (display, win, &wattr);
@@ -447,7 +460,7 @@ get_pic_fmt:
     default:
       break;
   }
-  stride = src_rect->width * bpp / 8;
+  stride = GST_ROUND_UP_16 (src_rect->width) * bpp / 8;
   size = GST_ROUND_UP_N (stride * src_rect->height, 4096);
 
   GST_MFX_DISPLAY_LOCK (x11_display);
@@ -478,7 +491,7 @@ get_pic_fmt:
     xform.matrix[2][2] = XDoubleToFixed (1.0);
     XRenderSetPictureTransform (display, picture, &xform);
 
-    XRenderSetPictureFilter (display, picture, FilterNearest, 0, 0);
+    XRenderSetPictureFilter (display, picture, FilterBilinear, 0, 0);
 
     XRenderComposite (display, op, picture, None, priv->picture,
         0, 0, 0, 0, dst_rect->x, dst_rect->y,
@@ -490,17 +503,7 @@ get_pic_fmt:
   if (picture)
     XRenderFreePicture (display, picture);
   XFreePixmap (display, pixmap);
-
-  if (width != window->width || height != window->height) {
-    XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
-        0, 0, width, height);
-
-    window->width = width;
-    window->height = height;
-  }
-
-
-  xcb_flush (priv->xcbconn);
+  XFlush (display);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);

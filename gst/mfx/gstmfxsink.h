@@ -85,7 +85,6 @@ struct _GstMfxSink
   GstMfxWindow              *window;
   guint                      window_width;
   guint                      window_height;
-  GstBuffer                 *video_buffer;
   guint                      video_width;
   guint                      video_height;
   gint                       video_par_n;
