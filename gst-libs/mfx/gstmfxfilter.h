@@ -187,9 +187,6 @@ gst_mfx_filter_set_request (GstMfxFilter * filter,
 void
 gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info);
 
-void
-gst_mfx_filter_copy_frame_info  (GstMfxFilter * filter, mfxFrameInfo * info);
-
 gboolean
 gst_mfx_filter_set_format (GstMfxFilter * filter, GstVideoFormat fmt);
 
