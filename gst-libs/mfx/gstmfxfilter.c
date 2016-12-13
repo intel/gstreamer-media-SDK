@@ -155,14 +155,6 @@ gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info)
       GST_ROUND_UP_16 (info->height) : GST_ROUND_UP_32 (info->height);
 }
 
-void
-gst_mfx_filter_copy_frame_info  (GstMfxFilter * filter, mfxFrameInfo * info)
-{
-  g_return_if_fail (filter != NULL);
-
-  filter->frame_info = *info;
-}
-
 static void
 check_supported_filters (GstMfxFilter * filter)
 {
