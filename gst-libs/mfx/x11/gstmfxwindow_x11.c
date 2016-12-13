@@ -25,7 +25,9 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib-xcb.h>
 
-# include <X11/extensions/Xrender.h>
+#ifdef HAVE_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
 
 #ifdef HAVE_XCBDRI3
 #include <xcb/dri3.h>
@@ -256,6 +258,7 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
   Display *const dpy = GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   const Window xid = GST_MFX_WINDOW_ID (window);
 
+#ifdef HAVE_XRENDER
   if (priv->picture) {
     GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
     if (window->use_foreign_window) {
@@ -268,6 +271,7 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
     GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
     priv->picture = None;
   }
+#endif
 
   if (xid) {
     if (!window->use_foreign_window) {
@@ -391,7 +395,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GstMfxSurface * surface,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
-#if defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT)
+#if defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT) && defined(HAVE_XRENDER)
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
   GstMfxDisplayX11 *const x11_display =
         GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
