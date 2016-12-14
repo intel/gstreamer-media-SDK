@@ -379,12 +379,14 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
   XResizeWindow (display, GST_MFX_WINDOW_ID (window), width, height);
   has_errors = x11_untrap_errors () != 0;
 
+#if defined(HAVE_XRENDER)
   if (priv->picture) {
     XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
 
     XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
         0, 0, width, height);
   }
+#endif
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   return !has_errors;
@@ -411,7 +413,6 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   XRenderPictFormat *pic_fmt;
   XWindowAttributes wattr;
   int fmt, op;
-  gboolean success = FALSE;
 
   if (!priv->xcbconn) {
     GST_MFX_DISPLAY_LOCK (x11_display);
@@ -501,7 +502,6 @@ get_pic_fmt:
         0, 0, 0, 0, dst_rect->x, dst_rect->y,
         dst_rect->width, dst_rect->height);
     XSync (display, False);
-    success = TRUE;
   } while (0);
 
   if (picture)
@@ -511,10 +511,11 @@ get_pic_fmt:
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
+  return TRUE;
 #else
   GST_ERROR("Unable to render the video.\n");
+  return FALSE;
 #endif
-  return success;
 }
 
 void
