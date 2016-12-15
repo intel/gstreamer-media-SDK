@@ -186,6 +186,12 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
   frame_info->FourCC = MFX_FOURCC_NV12;
+#ifndef WITH_MSS
+  if (decoder->params.mfx.CodecId == MFX_CODEC_JPEG) {
+    frame_info->FourCC = MFX_FOURCC_RGB4;
+    frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV444;
+  }
+#endif
 
   frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ?
       (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
@@ -361,24 +367,15 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   GstVideoFormat vformat;
   mfxStatus sts = MFX_ERR_NONE;
 
-  sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
-      &decoder->params);
-  if (MFX_ERR_MORE_DATA == sts) {
-    return GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
-  } else if (sts < 0) {
-    GST_ERROR ("Decode header error %d\n", sts);
-    return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
-  }
-
-  if ((decoder->params.mfx.CodecId == MFX_CODEC_JPEG) &&
-      (decoder->params.mfx.JPEGChromaFormat == MFX_CHROMAFORMAT_YUV444)) {
-    decoder->request.Info.FourCC =
-        decoder->params.mfx.FrameInfo.FourCC = MFX_FOURCC_RGB4;
-    decoder->request.Info.ChromaFormat =
-        decoder->params.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV444;
-    decoder->params.mfx.JPEGColorFormat = MFX_JPEG_COLORFORMAT_RGB;
-
-    gst_mfx_task_set_request (decoder->decode, &decoder->request);
+  if (decoder->params.mfx.CodecId != MFX_CODEC_JPEG) {
+    sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
+        &decoder->params);
+    if (MFX_ERR_MORE_DATA == sts) {
+      return GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
+    } else if (sts < 0) {
+      GST_ERROR ("Decode header error %d\n", sts);
+      return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
+    }
   }
 
   vformat =

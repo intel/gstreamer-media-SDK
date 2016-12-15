@@ -46,7 +46,7 @@ struct _GstMfxWindowX11Private
 
   guint is_mapped : 1;
   guint fullscreen_on_map : 1;
-#if defined(HAVE_XRENDER)
+#ifdef HAVE_XRENDER
   Picture picture;
 #endif
   xcb_connection_t *xcbconn;
