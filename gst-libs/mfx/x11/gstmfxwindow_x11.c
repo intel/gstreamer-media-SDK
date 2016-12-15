@@ -379,7 +379,7 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
   XResizeWindow (display, GST_MFX_WINDOW_ID (window), width, height);
   has_errors = x11_untrap_errors () != 0;
 
-#if defined(HAVE_XRENDER)
+#ifdef HAVE_XRENDER
   if (priv->picture) {
     XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
 
