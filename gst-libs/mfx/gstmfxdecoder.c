@@ -402,10 +402,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
         GST_MFX_TASK_VPP_IN);
 
     gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
-
-    if (out_format != vformat)
-      gst_mfx_filter_set_format (decoder->filter, out_format);
-
+    gst_mfx_filter_set_format (decoder->filter, out_format);
     gst_mfx_filter_set_async_depth(decoder->filter, decoder->params.AsyncDepth);
 
     if (!gst_mfx_filter_prepare (decoder->filter))
