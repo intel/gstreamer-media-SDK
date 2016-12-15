@@ -324,7 +324,10 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     filter->shared_request[0]->NumFrameMin =
         filter->shared_request[0]->NumFrameSuggested;
 
-    if (!memtype_is_system) {
+    if (memtype_is_system) {
+      gst_mfx_task_ensure_memtype_is_system (filter->vpp[0]);
+    }
+    else {
       filter->shared_request[0]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
       gst_mfx_task_use_video_memory (filter->vpp[0]);
       gst_mfx_task_set_request (filter->vpp[0], filter->shared_request[0]);
@@ -404,9 +407,8 @@ gst_mfx_filter_init (GstMfxFilter * filter,
     }
   }
 
-  if (filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+  if (filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY)
     gst_mfx_task_ensure_memtype_is_system (filter->vpp[1]);
-
 
   /* Initialize the array of operation data */
   filter->filter_op_data = g_ptr_array_new_with_free_func (free_filter_op_data);
