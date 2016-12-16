@@ -473,6 +473,8 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
     default:
       ret = GST_FLOW_ERROR;
   }
+
+  gst_video_codec_frame_unref (frame);
   return ret;
 
 error_decode:

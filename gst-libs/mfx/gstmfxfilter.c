@@ -315,7 +315,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
 
   gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
 
-  /* Initialize input VPP surface pool when vpp input task is set */
+  /* Initialize input VPP surface pool for shared VPP-decode task */
   if (filter->vpp[0]) {
     gboolean memtype_is_system =
         !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
@@ -324,10 +324,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     filter->shared_request[0]->NumFrameMin =
         filter->shared_request[0]->NumFrameSuggested;
 
-    if (memtype_is_system) {
-      gst_mfx_task_ensure_memtype_is_system (filter->vpp[0]);
-    }
-    else {
+    if (!memtype_is_system) {
       filter->shared_request[0]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
       gst_mfx_task_use_video_memory (filter->vpp[0]);
       gst_mfx_task_set_request (filter->vpp[0], filter->shared_request[0]);
