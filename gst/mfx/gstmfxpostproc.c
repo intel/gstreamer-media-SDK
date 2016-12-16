@@ -866,7 +866,8 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
     return FALSE;
 
   if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FORMAT) &&
-      !gst_mfx_filter_set_format (vpp->filter, vpp->format))
+      !gst_mfx_filter_set_format (vpp->filter,
+          gst_video_format_to_mfx_fourcc (vpp->format)))
     return FALSE;
 
   if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE) &&

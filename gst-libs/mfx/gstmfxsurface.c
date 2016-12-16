@@ -115,9 +115,20 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface)
     ptr->A = ptr->B + 3;
 
     break;
+  case MFX_FOURCC_P010:
+    surface->data_size = frame_size * 3;
+    surface->data = g_slice_alloc(surface->data_size + offset);
+    if (!surface->data)
+      goto error;
+    ptr->Pitch = surface->pitches[0] = surface->pitches[1] = info->Width * 2;
+
+    surface->planes[0] = ptr->Y = surface->data + offset;
+    surface->planes[1] = ptr->UV = ptr->Y + frame_size * 2;
+
+    break;
   default:
-    error:
-      GST_ERROR("Failed to create surface surface.");
+error:
+      GST_ERROR("Failed to create surface.");
       success = FALSE;
       break;
   }

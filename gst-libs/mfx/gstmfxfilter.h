@@ -188,7 +188,7 @@ void
 gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info);
 
 gboolean
-gst_mfx_filter_set_format (GstMfxFilter * filter, GstVideoFormat fmt);
+gst_mfx_filter_set_format (GstMfxFilter * filter, mfxU32 fourcc);
 
 gboolean
 gst_mfx_filter_set_size (GstMfxFilter * filter, mfxU16 width, mfxU16 height);

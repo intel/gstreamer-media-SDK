@@ -872,7 +872,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     gst_mfx_filter_set_frame_info (encoder->filter, &encoder->info);
 
     if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12)
-      gst_mfx_filter_set_format (encoder->filter, GST_VIDEO_FORMAT_NV12);
+      gst_mfx_filter_set_format (encoder->filter, MFX_FOURCC_NV12);
 
     if (!gst_mfx_filter_prepare (encoder->filter))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;

@@ -530,12 +530,12 @@ gst_mfx_filter_get_pool (GstMfxFilter * filter, guint flags)
 }
 
 gboolean
-gst_mfx_filter_set_format (GstMfxFilter * filter, GstVideoFormat fmt)
+gst_mfx_filter_set_format (GstMfxFilter * filter, mfxU32 fourcc)
 {
   g_return_val_if_fail (filter != NULL, FALSE);
 
-  if (GST_VIDEO_FORMAT_NV12 == fmt || GST_VIDEO_FORMAT_BGRA == fmt)
-    filter->fourcc = gst_video_format_to_mfx_fourcc (fmt);
+  if (MFX_FOURCC_NV12 == fourcc || MFX_FOURCC_RGB4 == fourcc)
+    filter->fourcc = fourcc;
   else
     return FALSE;
 
