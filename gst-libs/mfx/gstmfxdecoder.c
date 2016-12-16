@@ -366,7 +366,11 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   mfxU32 output_fourcc, decoded_fourcc;
   mfxStatus sts = MFX_ERR_NONE;
 
-  if (decoder->params.mfx.CodecId != MFX_CODEC_JPEG) {
+  /* We already filled in the mfxVideoParam structure for decoder initialization
+   * by reading in the parsed GstVideoInfo, but this is still needed for VC1 AP
+   * and HEVC for additional parsed information for successful initiation */
+  if (decoder->params.mfx.CodecId == MFX_CODEC_VC1 ||
+      decoder->params.mfx.CodecId == MFX_CODEC_HEVC) {
     sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
         &decoder->params);
     if (MFX_ERR_MORE_DATA == sts) {
@@ -381,8 +385,11 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
   decoded_fourcc = decoder->params.mfx.FrameInfo.FourCC;
 
-  decoder->request.Info = decoder->params.mfx.FrameInfo;
-  gst_mfx_task_set_request (decoder->decode, &decoder->request);
+  /* Make sure that the output decoded format is updated for the decode task */
+  if (decoded_fourcc != decoder->request.Info.FourCC) {
+    decoder->request.Info = decoder->params.mfx.FrameInfo;
+    gst_mfx_task_set_request (decoder->decode, &decoder->request);
+  }
 
   if  (output_fourcc != decoded_fourcc) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
@@ -457,7 +464,7 @@ new_frame (GstMfxDecoder * decoder)
   if (!decoder->duration) {
     mfxFrameInfo *info = &decoder->request.Info;
     decoder->duration =
-        (info->FrameRateExtD / (gfloat)info->FrameRateExtN) * 1000000000;
+        (info->FrameRateExtD / (gdouble)info->FrameRateExtN) * 1000000000;
   }
   frame->duration = decoder->duration;
   frame->presentation_frame_number = decoder->current_frame_num++;
