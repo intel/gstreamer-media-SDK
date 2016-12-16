@@ -363,8 +363,7 @@ static GstMfxDecoderStatus
 gst_mfx_decoder_start (GstMfxDecoder * decoder)
 {
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
-  GstVideoFormat out_format = GST_VIDEO_INFO_FORMAT (&decoder->info);
-  GstVideoFormat vformat;
+  mfxU32 output_fourcc, decoded_fourcc;
   mfxStatus sts = MFX_ERR_NONE;
 
   if (decoder->params.mfx.CodecId != MFX_CODEC_JPEG) {
@@ -378,10 +377,14 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     }
   }
 
-  vformat =
-      gst_video_format_from_mfx_fourcc(decoder->params.mfx.FrameInfo.FourCC);
+  output_fourcc =
+      gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
+  decoded_fourcc = decoder->params.mfx.FrameInfo.FourCC;
 
-  if  (out_format != vformat) {
+  decoder->request.Info = decoder->params.mfx.FrameInfo;
+  gst_mfx_task_set_request (decoder->decode, &decoder->request);
+
+  if  (output_fourcc != decoded_fourcc) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
         decoder->decode, GST_MFX_TASK_VPP_IN,
         decoder->memtype_is_system, decoder->memtype_is_system);
@@ -399,7 +402,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
         GST_MFX_TASK_VPP_IN);
 
     gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
-    gst_mfx_filter_set_format (decoder->filter, out_format);
+    gst_mfx_filter_set_format (decoder->filter, output_fourcc);
     gst_mfx_filter_set_async_depth(decoder->filter, decoder->params.AsyncDepth);
 
     if (!gst_mfx_filter_prepare (decoder->filter))
