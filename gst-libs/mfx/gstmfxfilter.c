@@ -291,7 +291,6 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
 
   init_params (filter);
 
-  /* Save mfxVideoParam configuration in VPP_OUT task for VPP pass-through */
   gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   sts =
@@ -1004,6 +1003,10 @@ gst_mfx_filter_start (GstMfxFilter * filter)
 {
   mfxStatus sts = MFX_ERR_NONE;
   gboolean memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
+
+  /* Get updated async depth if modified by peer MFX element*/
+  filter->params.AsyncDepth =
+      gst_mfx_task_get_video_params (filter->vpp[1])->AsyncDepth;
 
   if (!memtype_is_system) {
     filter->shared_request[1]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;

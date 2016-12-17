@@ -494,8 +494,8 @@ get_pic_fmt:
     xform.matrix[2][0] = XDoubleToFixed (0.0);
     xform.matrix[2][1] = XDoubleToFixed (0.0);
     xform.matrix[2][2] = XDoubleToFixed (1.0);
-    XRenderSetPictureTransform (display, picture, &xform);
 
+    XRenderSetPictureTransform (display, picture, &xform);
     XRenderSetPictureFilter (display, picture, FilterBilinear, 0, 0);
 
     XRenderComposite (display, op, picture, None, priv->picture,
@@ -507,7 +507,6 @@ get_pic_fmt:
   if (picture)
     XRenderFreePicture (display, picture);
   XFreePixmap (display, pixmap);
-  XFlush (display);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
