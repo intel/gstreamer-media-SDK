@@ -72,8 +72,11 @@ gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
     GstVideoCodecFrame ** out_frame)
 {
   *out_frame = g_queue_pop_tail (&decoder->decoded_frames);
+  if (!*out_frame)
+    return FALSE;
 
-  return *out_frame ? TRUE : FALSE;
+  gst_video_codec_frame_unref (*out_frame);
+  return TRUE;
 }
 
 GstVideoInfo *
@@ -263,6 +266,8 @@ task_init (GstMfxDecoder * decoder)
     gst_mfx_task_ensure_memtype_is_system (decoder->decode);
 
   gst_mfx_task_set_request (decoder->decode, &decoder->request);
+  gst_mfx_task_set_video_params (decoder->decode, &decoder->params);
+
   return TRUE;
 
 error:
@@ -395,17 +400,16 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       GST_ERROR ("Decode header error %d\n", sts);
       return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
     }
+    /* Make sure that the output decoded format is updated for the decode task */
+    if (decoded_fourcc != decoder->request.Info.FourCC) {
+      decoder->request.Info = decoder->params.mfx.FrameInfo;
+      gst_mfx_task_set_request (decoder->decode, &decoder->request);
+    }
   }
 
   output_fourcc =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
   decoded_fourcc = decoder->params.mfx.FrameInfo.FourCC;
-
-  /* Make sure that the output decoded format is updated for the decode task */
-  if (decoded_fourcc != decoder->request.Info.FourCC) {
-    decoder->request.Info = decoder->params.mfx.FrameInfo;
-    gst_mfx_task_set_request (decoder->decode, &decoder->request);
-  }
 
   if  (output_fourcc != decoded_fourcc) {
     decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
@@ -436,6 +440,10 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     if (!decoder->pool)
       return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
   }
+
+  /* Get updated async depth if modified by peer MFX element*/
+  decoder->params.AsyncDepth =
+      gst_mfx_task_get_video_params (decoder->decode)->AsyncDepth;
 
   sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
   if (sts < 0) {

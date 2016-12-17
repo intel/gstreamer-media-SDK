@@ -32,7 +32,7 @@
 
 #define DEFAULT_ENCODER_PRESET      GST_MFX_ENCODER_PRESET_MEDIUM
 #define DEFAULT_QUANTIZER           21
-#define DEFAULT_ASYNC_DEPTH         16
+#define DEFAULT_ASYNC_DEPTH         4
 
 /* Helper function to create a new encoder property object */
 static GstMfxEncoderPropData *
@@ -436,8 +436,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
 
-    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER) &&
-        !gst_mfx_task_has_video_memory (task)) {
+    if (!gst_mfx_task_has_video_memory (task)) {
       memtype_is_system = TRUE;
 
       init_encoder_task (encoder);
@@ -447,6 +446,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
       gst_mfx_task_replace(&encoder->encode, task);
       encoder->session = gst_mfx_task_get_session (encoder->encode);
       gst_mfx_task_set_task_type(encoder->encode, GST_MFX_TASK_ENCODER);
+
       encoder->shared = TRUE;
     }
   }
@@ -753,6 +753,11 @@ set_extended_coding_options (GstMfxEncoder * encoder)
 static void
 gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 {
+  if (encoder->shared) {
+    mfxVideoParam *params = gst_mfx_task_get_video_params (encoder->encode);
+    params->AsyncDepth = encoder->async_depth;
+  }
+
   encoder->params.mfx.CodecProfile = encoder->profile;
   encoder->params.AsyncDepth = encoder->async_depth;
 
