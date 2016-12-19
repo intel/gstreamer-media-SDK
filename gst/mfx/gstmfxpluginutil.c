@@ -253,7 +253,7 @@ gst_caps_has_mfx_surface (GstCaps * caps)
   return _gst_caps_has_feature (caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 }
 
-/* Workaround function to check if srcpad should be mapped or not */
+/* Workaround function to check if srcpad caps should be raw or not */
 gboolean
 gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
 {

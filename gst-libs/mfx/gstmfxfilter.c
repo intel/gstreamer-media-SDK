@@ -392,8 +392,6 @@ gst_mfx_filter_init (GstMfxFilter * filter,
       if (!filter->vpp[1])
         return FALSE;
       filter->session = gst_mfx_task_get_session (filter->vpp[1]);
-      gst_mfx_task_aggregator_set_current_task (filter->aggregator,
-          filter->vpp[1]);
     }
     else {
       /* is_joined is FALSE since parent task will take care of
@@ -401,6 +399,8 @@ gst_mfx_filter_init (GstMfxFilter * filter,
       filter->vpp[1] = gst_mfx_task_new_with_session (filter->aggregator,
           filter->session, GST_MFX_TASK_VPP_OUT, FALSE);
     }
+    gst_mfx_task_aggregator_set_current_task (filter->aggregator,
+        filter->vpp[1]);
   }
 
   if (filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY)
@@ -1004,9 +1004,11 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   mfxStatus sts = MFX_ERR_NONE;
   gboolean memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 
-  /* Get updated async depth if modified by peer MFX element*/
+  /* Get updated video params if modified by peer MFX element*/
   filter->params.AsyncDepth =
       gst_mfx_task_get_video_params (filter->vpp[1])->AsyncDepth;
+  filter->params.IOPattern =
+      gst_mfx_task_get_video_params (filter->vpp[1])->IOPattern;
 
   if (!memtype_is_system) {
     filter->shared_request[1]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;

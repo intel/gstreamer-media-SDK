@@ -50,7 +50,6 @@ struct _GstMfxDecoder
   mfxVideoParam params;
   mfxBitstream bs;
   mfxPluginUID plugin_uid;
-  mfxFrameAllocRequest request;
 
   GstVideoInfo info;
   gboolean inited;
@@ -97,9 +96,7 @@ gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder,
     return;
 
   if (memtype_is_video) {
-    decoder->memtype_is_system = FALSE;
     decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-    gst_mfx_task_use_video_memory (decoder->decode);
   }
   else {
     decoder->memtype_is_system = TRUE;
@@ -191,7 +188,10 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-  frame_info->FourCC = MFX_FOURCC_NV12;
+  if (decoder->profile == GST_MFX_PROFILE_HEVC_MAIN10)
+    frame_info->FourCC = MFX_FOURCC_P010;
+  else
+    frame_info->FourCC = MFX_FOURCC_NV12;
 #ifndef WITH_MSS
   if (decoder->params.mfx.CodecId == MFX_CODEC_JPEG) {
     frame_info->FourCC = MFX_FOURCC_RGB4;
@@ -230,6 +230,8 @@ static gboolean
 task_init (GstMfxDecoder * decoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
+  mfxU32 output_fourcc, decoded_fourcc;
+  mfxFrameAllocRequest request;
 
   decoder->decode = gst_mfx_task_new (decoder->aggregator,
       GST_MFX_TASK_DECODER);
@@ -245,33 +247,81 @@ task_init (GstMfxDecoder * decoder)
   sts = gst_mfx_decoder_configure_plugins (decoder);
   if (sts < 0) {
     GST_ERROR ("Unable to load plugin %d", sts);
-    goto error;
+    goto error_load_plugin;
   }
 
   sts = MFXVideoDECODE_QueryIOSurf (decoder->session, &decoder->params,
-      &decoder->request);
+      &request);
   if (sts < 0) {
     GST_ERROR ("Unable to query decode allocation request %d", sts);
-    goto error;
+    goto error_query_request;
   } else if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
     decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
   decoder->memtype_is_system =
     !!(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
-  decoder->request.Type = decoder->memtype_is_system ?
+  request.Type = decoder->memtype_is_system ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
   if (decoder->memtype_is_system)
     gst_mfx_task_ensure_memtype_is_system (decoder->decode);
 
-  gst_mfx_task_set_request (decoder->decode, &decoder->request);
+  gst_mfx_task_set_request (decoder->decode, &request);
   gst_mfx_task_set_video_params (decoder->decode, &decoder->params);
 
+  output_fourcc =
+      gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
+  decoded_fourcc = decoder->params.mfx.FrameInfo.FourCC;
+
+  if (output_fourcc != decoded_fourcc) {
+    decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
+        decoder->decode, GST_MFX_TASK_VPP_IN,
+        decoder->memtype_is_system, decoder->memtype_is_system);
+
+    if (!decoder->filter) {
+      GST_ERROR ("Unable to initialize filter.");
+      goto error_filter_init;
+    }
+
+    request.Type |=
+        MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE |
+        MFX_MEMTYPE_EXPORT_FRAME;
+
+    request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
+
+    gst_mfx_filter_set_request (decoder->filter, &request,
+        GST_MFX_TASK_VPP_IN);
+
+    gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
+    gst_mfx_filter_set_format (decoder->filter, output_fourcc);
+    gst_mfx_filter_set_async_depth(decoder->filter, decoder->params.AsyncDepth);
+
+    if (!gst_mfx_filter_prepare (decoder->filter)) {
+      GST_ERROR ("Unable to set up filter for color space conversion.");
+      goto error_prepare_filter;
+    }
+
+    decoder->pool = gst_mfx_filter_get_pool (decoder->filter,
+        GST_MFX_TASK_VPP_IN);
+    if (!decoder->pool) {
+      GST_ERROR ("Error requesting shared decoder / filter surface pool.");
+      goto error_no_pool;
+    }
+  }
   return TRUE;
 
-error:
+error_load_plugin:
+error_query_request:
+error_filter_init:
   {
+    gst_mfx_task_unref (decoder->decode);
+    return FALSE;
+  }
+error_prepare_filter:
+error_no_pool:
+  {
+    gst_mfx_filter_unref (decoder->filter);
     gst_mfx_task_unref (decoder->decode);
     return FALSE;
   }
@@ -384,14 +434,12 @@ static GstMfxDecoderStatus
 gst_mfx_decoder_start (GstMfxDecoder * decoder)
 {
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
-  mfxU32 output_fourcc, decoded_fourcc;
   mfxStatus sts = MFX_ERR_NONE;
 
   /* We already filled in the mfxVideoParam structure for decoder initialization
    * by reading in the parsed GstVideoInfo, but this is still needed for VC1 AP
-   * and HEVC for additional parsed information for successful initiation */
-  if (decoder->params.mfx.CodecId == MFX_CODEC_VC1 ||
-      decoder->params.mfx.CodecId == MFX_CODEC_HEVC) {
+   * for additional parsed information for successful initiation */
+  if (decoder->params.mfx.CodecId == MFX_CODEC_VC1) {
     sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
         &decoder->params);
     if (MFX_ERR_MORE_DATA == sts) {
@@ -400,50 +448,18 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       GST_ERROR ("Decode header error %d\n", sts);
       return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
     }
-    /* Make sure that the output decoded format is updated for the decode task */
-    if (decoded_fourcc != decoder->request.Info.FourCC) {
-      decoder->request.Info = decoder->params.mfx.FrameInfo;
-      gst_mfx_task_set_request (decoder->decode, &decoder->request);
-    }
   }
 
-  output_fourcc =
-      gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
-  decoded_fourcc = decoder->params.mfx.FrameInfo.FourCC;
-
-  if  (output_fourcc != decoded_fourcc) {
-    decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
-        decoder->decode, GST_MFX_TASK_VPP_IN,
-        decoder->memtype_is_system, decoder->memtype_is_system);
-
-    if (!decoder->filter)
-      return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
-
-    decoder->request.Type |=
-        MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE |
-        MFX_MEMTYPE_EXPORT_FRAME;
-
-    decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
-
-    gst_mfx_filter_set_request (decoder->filter, &decoder->request,
-        GST_MFX_TASK_VPP_IN);
-
-    gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
-    gst_mfx_filter_set_format (decoder->filter, output_fourcc);
-    gst_mfx_filter_set_async_depth(decoder->filter, decoder->params.AsyncDepth);
-
-    if (!gst_mfx_filter_prepare (decoder->filter))
-      return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
-
-    decoder->pool = gst_mfx_filter_get_pool (decoder->filter,
-        GST_MFX_TASK_VPP_IN);
-    if (!decoder->pool)
-      return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
-  }
-
-  /* Get updated async depth if modified by peer MFX element*/
+  /* Get updated video params if modified by peer MFX element*/
   decoder->params.AsyncDepth =
-      gst_mfx_task_get_video_params (decoder->decode)->AsyncDepth;
+    gst_mfx_task_get_video_params (decoder->decode)->AsyncDepth;
+  decoder->params.IOPattern =
+    gst_mfx_task_get_video_params (decoder->decode)->IOPattern;
+
+  if (decoder->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY) {
+    decoder->memtype_is_system = FALSE;
+    gst_mfx_task_use_video_memory (decoder->decode);
+  }
 
   sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
   if (sts < 0) {

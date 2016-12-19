@@ -432,7 +432,8 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 {
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
-  if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) && !memtype_is_system) {
+  if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12)
+      && !memtype_is_system) {
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
 
@@ -443,11 +444,9 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
       gst_mfx_task_unref (task);
     }
     else {
+      encoder->shared = TRUE;
       gst_mfx_task_replace(&encoder->encode, task);
       encoder->session = gst_mfx_task_get_session (encoder->encode);
-      gst_mfx_task_set_task_type(encoder->encode, GST_MFX_TASK_ENCODER);
-
-      encoder->shared = TRUE;
     }
   }
   else {
@@ -753,11 +752,6 @@ set_extended_coding_options (GstMfxEncoder * encoder)
 static void
 gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 {
-  if (encoder->shared) {
-    mfxVideoParam *params = gst_mfx_task_get_video_params (encoder->encode);
-    params->AsyncDepth = encoder->async_depth;
-  }
-
   encoder->params.mfx.CodecProfile = encoder->profile;
   encoder->params.AsyncDepth = encoder->async_depth;
 
@@ -839,6 +833,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 
   if (memtype_is_system) {
     encoder->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
+    gst_mfx_task_ensure_memtype_is_system (encoder->encode);
   }
   else {
     encoder->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
@@ -853,16 +848,34 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   }
 
   if (encoder->shared) {
+    mfxVideoParam *params = gst_mfx_task_get_video_params (encoder->encode);
+    params->IOPattern &= 0b11;
+    params->IOPattern |= memtype_is_system ?
+        MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+
     request = gst_mfx_task_get_request(encoder->encode);
+
+    /* Re-calculate suggested number of allocated frames for shared task if
+     * async-depth of shared task doesn't match with the encoder async-depth */
+    if (params->AsyncDepth != encoder->async_depth) {
+      params->AsyncDepth = encoder->async_depth;
+      if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT))
+        request->NumFrameSuggested = encoder->async_depth;
+      else if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_DECODER))
+        MFXVideoDECODE_QueryIOSurf (encoder->session, params, request);
+    }
     request->NumFrameSuggested +=
         (enc_request.NumFrameSuggested - encoder->params.AsyncDepth + 1);
     request->NumFrameMin = request->NumFrameSuggested;
+
+    gst_mfx_task_set_task_type (encoder->encode, GST_MFX_TASK_ENCODER);
   }
   else {
     request = &enc_request;
     gst_mfx_task_set_request(encoder->encode, request);
   }
 
+  /* Need to use filter to avoid stuttering when encoding raw NV12 surfaces */
   if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
       encoder->memtype_is_system) {
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
@@ -875,7 +888,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
         GST_MFX_TASK_VPP_OUT);
 
     gst_mfx_filter_set_frame_info (encoder->filter, &encoder->info);
-
+    gst_mfx_filter_set_async_depth (encoder->filter, encoder->async_depth);
     if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12)
       gst_mfx_filter_set_format (encoder->filter, MFX_FOURCC_NV12);
 
@@ -903,7 +916,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
   surface = gst_video_codec_frame_get_user_data (frame);
 
-  if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT)) {
+  if (!encoder->shared &&
+      gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT)) {
     filter_sts = gst_mfx_filter_process (encoder->filter, surface, &filter_surface);
     if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
       GST_ERROR ("MFX pre-processing error during encode.");
