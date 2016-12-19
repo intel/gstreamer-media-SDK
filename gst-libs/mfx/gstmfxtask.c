@@ -78,7 +78,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   ResponseData *response_data;
 
   if (task->task_type & GST_MFX_TASK_DECODER) {
-    GList *l = g_list_first (task->saved_responses);
+    GList *l = g_list_last (task->saved_responses);
     if (l) {
       response_data = l->data;
       *resp = *response_data->response;

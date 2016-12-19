@@ -390,8 +390,10 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
-  gboolean sinkpad_has_raw_caps, srcpad_has_raw_caps =
+  gboolean srcpad_has_raw_caps =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
+
+  plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
 
   if (vpp->filter)
     return TRUE;
@@ -400,37 +402,26 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     return FALSE;
 
   /* Check if upstream MFX decoder element outputs raw NV12 surfaces */
-  if (!plugin->memtype_is_system && !plugin->sinkpad_has_dmabuf &&
-      !vpp->sinkpad_caps_memtype) {
+  if (!plugin->sinkpad_caps_is_raw) {
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
 
-    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
-      vpp->sinkpad_caps_memtype =
-          gst_mfx_task_has_video_memory (task) ?
-            MFX_IOPATTERN_IN_VIDEO_MEMORY : MFX_IOPATTERN_IN_SYSTEM_MEMORY;
+    if (task) {
+      plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
+      gst_mfx_task_unref (task);
     }
-    gst_mfx_task_unref (task);
   }
-
-  if (!vpp->sinkpad_caps_memtype) {
-    vpp->sinkpad_caps_memtype = plugin->memtype_is_system ?
-      MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
-  }
-
-  sinkpad_has_raw_caps =
-      (vpp->sinkpad_caps_memtype == MFX_IOPATTERN_IN_SYSTEM_MEMORY);
 
   /* If sinkpad caps indicate video memory input,
    * srcpad should be mapped for vid-to-vid vpp */
-  if (!sinkpad_has_raw_caps && srcpad_has_raw_caps)
+  if (!plugin->sinkpad_caps_is_raw && srcpad_has_raw_caps)
     srcpad_has_raw_caps = FALSE;
 
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
-      sinkpad_has_raw_caps, srcpad_has_raw_caps);
+      plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
   if (!vpp->filter)
     return FALSE;
 
@@ -962,7 +953,6 @@ gst_mfxpostproc_stop (GstBaseTransform * trans)
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
 
-  vpp->sinkpad_caps_memtype = 0;
   gst_video_info_init (&vpp->sinkpad_info);
   gst_video_info_init (&vpp->srcpad_info);
 
