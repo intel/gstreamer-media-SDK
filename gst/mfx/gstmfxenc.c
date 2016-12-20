@@ -45,12 +45,6 @@ enum
   PROP_BASE,
 };
 
-static inline gboolean
-ensure_aggregator (GstMfxEnc * encode)
-{
-  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (encode));
-}
-
 static gboolean
 gst_mfxenc_sink_query (GstVideoEncoder * encoder, GstQuery * query)
 {
@@ -323,7 +317,7 @@ ensure_encoder (GstMfxEnc * encode)
 static gboolean
 gst_mfxenc_open (GstVideoEncoder * venc)
 {
-  return ensure_aggregator (GST_MFXENC_CAST (venc));
+  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (venc));
 }
 
 static gboolean
