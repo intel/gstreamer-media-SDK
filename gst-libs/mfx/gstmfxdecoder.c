@@ -521,7 +521,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   /* Ensure that frames are sorted according to presentation timestamps */
   g_queue_sort (&decoder->pending_frames, sort_pts, NULL);
 
-  if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READWRITE)) {
+  if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
     GST_ERROR ("Failed to map input buffer");
     return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
   }
