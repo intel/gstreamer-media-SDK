@@ -303,14 +303,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
         MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
-  if (filter->shared_request[1]) {
-    filter->shared_request[1]->NumFrameSuggested += request[1].NumFrameSuggested;
-    filter->shared_request[1]->NumFrameMin =
-        filter->shared_request[1]->NumFrameSuggested;
-  }
-  else {
-    filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
-  }
+  filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
 
   gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
 
@@ -1009,6 +1002,9 @@ gst_mfx_filter_start (GstMfxFilter * filter)
       gst_mfx_task_get_video_params (filter->vpp[1])->AsyncDepth;
   filter->params.IOPattern =
       gst_mfx_task_get_video_params (filter->vpp[1])->IOPattern;
+
+  memcpy (filter->shared_request[1], gst_mfx_task_get_request (filter->vpp[1]),
+      sizeof(mfxFrameAllocRequest));
 
   if (!memtype_is_system) {
     filter->shared_request[1]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;

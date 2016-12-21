@@ -281,6 +281,11 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
 
+  /* live streaming configuration cannot be used with VC1 or MPEG2 */
+  if (gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2 ||
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_VC1)
+    mfxdec->live_mode = FALSE;
+
   plugin->srcpad_caps_is_raw =
       gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
