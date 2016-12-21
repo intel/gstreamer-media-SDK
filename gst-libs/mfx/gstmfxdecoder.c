@@ -275,39 +275,42 @@ task_init (GstMfxDecoder * decoder)
   decoded_fourcc = decoder->params.mfx.FrameInfo.FourCC;
 
   if (output_fourcc != decoded_fourcc) {
-    decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
-        decoder->decode, GST_MFX_TASK_VPP_IN,
+    decoder->filter = gst_mfx_filter_new (decoder->aggregator,
         decoder->memtype_is_system, decoder->memtype_is_system);
+
+    /*decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
+        decoder->decode, GST_MFX_TASK_VPP_IN,
+        decoder->memtype_is_system, decoder->memtype_is_system);*/
 
     if (!decoder->filter) {
       GST_ERROR ("Unable to initialize filter.");
       goto error_filter_init;
     }
 
-    request.Type |=
+    /*request.Type |=
         MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE |
         MFX_MEMTYPE_EXPORT_FRAME;
 
-    request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
+    request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);*/
 
     gst_mfx_filter_set_request (decoder->filter, &request,
         GST_MFX_TASK_VPP_IN);
 
     gst_mfx_filter_set_frame_info (decoder->filter, &decoder->info);
     gst_mfx_filter_set_format (decoder->filter, output_fourcc);
-    gst_mfx_filter_set_async_depth(decoder->filter, decoder->params.AsyncDepth);
+    //gst_mfx_filter_set_async_depth(decoder->filter, decoder->params.AsyncDepth);
 
     if (!gst_mfx_filter_prepare (decoder->filter)) {
       GST_ERROR ("Unable to set up filter for color space conversion.");
       goto error_prepare_filter;
     }
 
-    decoder->pool = gst_mfx_filter_get_pool (decoder->filter,
+    /*decoder->pool = gst_mfx_filter_get_pool (decoder->filter,
         GST_MFX_TASK_VPP_IN);
     if (!decoder->pool) {
       GST_ERROR ("Error requesting shared decoder / filter surface pool.");
       goto error_no_pool;
-    }
+    }*/
   }
   return TRUE;
 
@@ -336,11 +339,6 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
   decoder->info = *info;
   decoder->profile = profile;
   decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
-  /* live streaming configuration cannot be used with VC1 or MPEG2 */
-  if (decoder->params.mfx.CodecId == MFX_CODEC_MPEG2 ||
-      decoder->params.mfx.CodecId == MFX_CODEC_VC1)
-    live_mode = FALSE;
-
   decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
   decoder->live_mode = live_mode;
   if (decoder->live_mode) {
@@ -467,11 +465,11 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
   }
 
-  if (!decoder->pool) {
+  //if (!decoder->pool) {
     decoder->pool = gst_mfx_surface_pool_new_with_task (decoder->decode);
     if (!decoder->pool)
       return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
-  }
+  //}
 
   return ret;
 }
@@ -616,7 +614,8 @@ update:
 
       decoder->first_frame_decoded = TRUE;
 
-      if (gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_VPP_IN)) {
+      //if (gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_VPP_IN)) {
+      if (decoder->filter) {
         filter_sts = gst_mfx_filter_process (decoder->filter, surface,
             &filter_surface);
         if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
@@ -682,7 +681,8 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
 
     surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
 
-    if (gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_VPP_IN)) {
+    //if (gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_VPP_IN)) {
+    if (decoder->filter) {
       filter_sts = gst_mfx_filter_process (decoder->filter, surface,
           &filter_surface);
 
