@@ -303,7 +303,14 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
         MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
-  filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
+  if (filter->shared_request[1]) {
+    filter->shared_request[1]->NumFrameSuggested += request[1].NumFrameSuggested;
+    filter->shared_request[1]->NumFrameMin =
+        filter->shared_request[1]->NumFrameSuggested;
+  }
+  else {
+    filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
+  }
 
   gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
 
