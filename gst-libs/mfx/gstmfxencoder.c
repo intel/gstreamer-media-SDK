@@ -428,7 +428,8 @@ init_encoder_task (GstMfxEncoder * encoder)
 
 static gboolean
 gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
-    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean memtype_is_system)
+    GstMfxTaskAggregator * aggregator, GstVideoInfo * info,
+    gboolean memtype_is_system)
 {
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
@@ -445,7 +446,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
     }
     else {
       encoder->shared = TRUE;
-      gst_mfx_task_replace(&encoder->encode, task);
+      encoder->encode = task;
       encoder->session = gst_mfx_task_get_session (encoder->encode);
     }
   }
