@@ -40,6 +40,9 @@ gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height);
 GstMfxWindow *
 gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid);
 
+void
+gst_mfx_window_x11_clear (GstMfxWindow * window);
+
 G_END_DECLS
 
 #endif /* GST_MFX_WINDOW_X11_H */

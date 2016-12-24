@@ -261,12 +261,6 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
 #ifdef HAVE_XRENDER
   if (priv->picture) {
     GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
-    if (window->use_foreign_window) {
-      XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
-
-      XRenderFillRectangle (dpy, PictOpClear, priv->picture, &color_black,
-          0, 0, window->width, window->height);
-    }
     XRenderFreePicture (dpy, priv->picture);
     GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
     priv->picture = None;
@@ -595,4 +589,24 @@ gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid)
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW_CLASS
       (gst_mfx_window_x11_class ()), display, xid, 0, 0);
+}
+
+void
+gst_mfx_window_x11_clear (GstMfxWindow * window)
+{
+#ifdef HAVE_XRENDER
+  GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
+  GstMfxDisplayX11 *const x11_display =
+        GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
+  Display *display = gst_mfx_display_x11_get_display (x11_display);
+
+  if (priv->picture) {
+    XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
+
+    GST_MFX_DISPLAY_LOCK (x11_display);
+    XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
+        0, 0, window->width, window->height);
+    GST_MFX_DISPLAY_UNLOCK (x11_display);
+  }
+#endif
 }

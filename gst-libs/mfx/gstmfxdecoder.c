@@ -477,8 +477,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 void
 gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 {
-  if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED ||
-      decoder->params.mfx.CodecId == MFX_CODEC_JPEG)
+  if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED)
     return;
 
   MFXVideoDECODE_Reset (decoder->session, &decoder->params);

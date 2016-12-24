@@ -357,7 +357,8 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
   gboolean hard = FALSE;
 
   if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED ||
-      gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2)
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2 ||
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_JPEG)
     hard = TRUE;
 
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);

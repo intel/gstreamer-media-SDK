@@ -77,7 +77,7 @@ struct _GstMfxWindow
   guint height;
   guint display_width;
   guint display_height;
-  guint use_foreign_window:1;
+  guint use_foreign_window;
   guint is_fullscreen : 1;
   guint check_geometry : 1;
 };

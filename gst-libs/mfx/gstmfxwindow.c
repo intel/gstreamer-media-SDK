@@ -513,3 +513,11 @@ gst_mfx_window_unblock_cancel (GstMfxWindow * window)
 
   return TRUE;
 }
+
+gboolean
+gst_mfx_window_is_foreign (GstMfxWindow * window)
+{
+  g_return_val_if_fail (window != NULL, FALSE);
+
+  return window->use_foreign_window;
+}
