@@ -247,6 +247,8 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
       has_events = XCheckWindowEvent (x11_dpy, x11_win,
           StructureNotifyMask | ExposureMask, &e);
       gst_mfx_display_unlock (display);
+      if (!has_events)
+        break;
       switch (e.type) {
         case Expose:
         case ConfigureNotify:
@@ -255,8 +257,6 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
         default:
           break;
       }
-      if (!has_events)
-        break;
     }
   }
   return TRUE;
@@ -396,8 +396,9 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
     if (!sink->window)
       return FALSE;
   }
-
+  gst_mfx_window_x11_clear (sink->window);
   gst_mfxsink_set_event_handling (sink, sink->handle_events);
+
   return TRUE;
 }
 
@@ -715,7 +716,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
       sink->display_type = GST_MFX_DISPLAY_TYPE_X11;
       break;
 #endif
-    display_unsupported:
+display_unsupported:
     default:
       GST_ERROR ("display type %s not supported",
           get_display_type_name (sink->display_type_req));
@@ -857,7 +858,10 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
 
-  gst_mfx_window_replace (&sink->window, NULL);
+  if (!gst_mfx_window_is_foreign (sink->window)) {
+    gst_mfx_window_replace (&sink->window, NULL);
+    gst_mfx_display_replace (&sink->display, NULL);
+  }
 
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (sink));
   return TRUE;
@@ -1032,7 +1036,9 @@ gst_mfxsink_destroy (GstMfxSink * sink)
 {
   gst_mfxsink_set_event_handling (sink, FALSE);
 
+  gst_mfx_window_replace (&sink->window, NULL);
   gst_mfx_display_replace (&sink->display, NULL);
+
   gst_caps_replace (&sink->caps, NULL);
   g_free (sink->display_name);
 }
