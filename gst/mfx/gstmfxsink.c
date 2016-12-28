@@ -102,12 +102,6 @@ static gboolean
 gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height);
 
 static inline gboolean
-gst_mfxsink_ensure_aggregator (GstMfxSink * sink)
-{
-  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (sink));
-}
-
-static inline gboolean
 gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
     const GstMfxRectangle * surface_rect)
 {
@@ -858,7 +852,7 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
 
-  if (!gst_mfx_window_is_foreign (sink->window)) {
+  if (!sink->foreign_window) {
     gst_mfx_window_replace (&sink->window, NULL);
     gst_mfx_display_replace (&sink->display, NULL);
   }
@@ -921,7 +915,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   GstVideoInfo *const vip = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO (sink);
   guint win_width, win_height;
 
-  if (!gst_mfxsink_ensure_aggregator (sink))
+  if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
   gst_mfxsink_set_render_backend (sink);

@@ -95,9 +95,6 @@ gst_mfx_window_unblock (GstMfxWindow * window);
 gboolean
 gst_mfx_window_unblock_cancel (GstMfxWindow * window);
 
-gboolean
-gst_mfx_window_is_foreign (GstMfxWindow * window);
-
 G_END_DECLS
 
 #endif /* GST_MFX_WINDOW_H */
