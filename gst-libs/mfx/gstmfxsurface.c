@@ -43,7 +43,7 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface)
 
   frame_size = info->Width * info->Height;
 
-#ifdef WITH_MSS
+#ifdef WITH_MSS_2016
   offset = 1;
 #endif
 
@@ -199,7 +199,7 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   surface->crop_rect.width = info->CropW;
   surface->crop_rect.height = info->CropH;
 
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   /* Full color range */
   surface->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
   surface->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
@@ -321,7 +321,7 @@ gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
   return surface;
 
 error:
-  gst_mfx_surface_unref_internal(display);
+  gst_mfx_surface_unref_internal(surface);
   return NULL;
 }
 

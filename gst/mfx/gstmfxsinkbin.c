@@ -57,7 +57,7 @@ enum
   PROP_SATURATION,
   PROP_BRIGHTNESS,
   PROP_CONTRAST,
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   PROP_ROTATION,
 #endif
   N_PROPERTIES
@@ -84,7 +84,7 @@ gst_mfx_sink_bin_color_balance_iface_init (GstColorBalanceInterface * iface);
 /* Default templates */
 static const char gst_mfx_sink_bin_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
-#ifdef WITH_MSS
+#ifdef WITH_MSS_2016
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
 #else
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
@@ -181,7 +181,7 @@ gst_mfx_sink_bin_set_property (GObject * object,
       break;
 
     case PROP_DEINTERLACE_MODE:
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
     case PROP_ROTATION:
 #endif
       g_object_set (G_OBJECT (mfxsinkbin->postproc),
@@ -246,7 +246,7 @@ gst_mfx_sink_bin_get_property (GObject * object,
     case PROP_SATURATION:
     case PROP_BRIGHTNESS:
     case PROP_CONTRAST:
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
     case PROP_ROTATION:
 #endif
       if (mfxsinkbin->postproc) {
@@ -447,7 +447,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           0.0, 10.0, 1.0,
           GST_PARAM_CONTROLLABLE |  G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   g_properties[PROP_ROTATION] =
       g_param_spec_enum ("rotation",
           "Rotation",

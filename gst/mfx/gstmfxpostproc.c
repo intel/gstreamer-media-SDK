@@ -42,7 +42,7 @@ gst_mfxpostproc_color_balance_iface_init (GstColorBalanceInterface * iface);
 /* Default templates */
 static const char gst_mfxpostproc_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
-#ifdef WITH_MSS
+#ifdef WITH_MSS_2016
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
 #else
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
@@ -1280,7 +1280,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           0.0, 10.0, 1.0, GST_PARAM_CONTROLLABLE |
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   /**
    * GstMfxPostproc:rotation:
    *
