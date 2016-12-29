@@ -192,7 +192,7 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
     frame_info->FourCC = MFX_FOURCC_P010;
   else
     frame_info->FourCC = MFX_FOURCC_NV12;
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   if (decoder->params.mfx.CodecId == MFX_CODEC_JPEG) {
     frame_info->FourCC = MFX_FOURCC_RGB4;
     frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV444;

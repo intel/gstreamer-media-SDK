@@ -33,7 +33,7 @@ CMAKE_DEPENDENT_OPTION(EGL_RENDERER "Build Sink plugin with EGL backend"
 CMAKE_DEPENDENT_OPTION (MFX_SINK_BIN "Build MSDK SINK BIN plugin."
     ON "MFX_SINK;MFX_VPP" OFF)
 
-option (WITH_MSS "Build plugins for MSS." OFF)
+option (WITH_MSS_2016 "Build plugins for MSS." OFF)
 
 option (MFX_VC1_PARSER "Build VC1 AP Parser plugin" ON)
 

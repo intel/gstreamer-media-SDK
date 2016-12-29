@@ -86,18 +86,18 @@ command to configure the build.
 	cd build
 	cmake ..
 
-To make a debug build, please follow the command below:
+To make a debug build:
 
 	cmake .. -DDEBUG=ON
 		
 
-To build the plugin for Media Server Studio, please follow the command below:
+To build the plugins for Media Server Studio 2016 Linux Edition:
 
-	cmake .. -DWITH_MSS=ON
+	cmake .. -DWITH_MSS_2016=ON
 		
 
 Only MediaSDK 2017 MR1 For Embedded supports VP9 decode. To disable VP9 decode
-for other version of MediaSDK, please follow the command below:
+for other version of Media SDK:
 
 	cmake .. -DMFX_VP9_DECODER=OFF
 
