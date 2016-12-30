@@ -115,13 +115,13 @@ struct _GstMfxPluginBase
   GstPad               *srcpad;
   GstCaps              *srcpad_caps;
   gboolean              srcpad_caps_changed;
+  gboolean              srcpad_caps_is_raw;
   GstVideoInfo          srcpad_info;
   GstBufferPool        *srcpad_buffer_pool;
 
   GstPadQueryFunction   srcpad_query;
   GstPadQueryFunction   sinkpad_query;
 
-  gboolean              memtype_is_system;
   gboolean              sinkpad_has_dmabuf;
   gboolean              srcpad_has_dmabuf;
   GstAllocator         *dmabuf_allocator;

@@ -35,7 +35,7 @@
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAT_DEFAULT mfxdec_debug
 
-#define DEFAULT_ASYNC_DEPTH 10
+#define DEFAULT_ASYNC_DEPTH 16
 
 /* Default templates */
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
@@ -43,8 +43,7 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 /* *INDENT-OFF* */
 static const char gst_mfxdecode_sink_caps_str[] =
     GST_CAPS_CODEC ("video/mpeg, \
-        mpegversion = 2, \
-        systemstream = (boolean) false")
+        mpegversion = 2")
     GST_CAPS_CODEC ("video/x-h264, \
         alignment = (string) au, \
         stream-format = (string) byte-stream")
@@ -66,7 +65,8 @@ static const char gst_mfxdecode_src_caps_str[] =
 enum
 {
   PROP_0,
-  PROP_ASYNC_DEPTH
+  PROP_ASYNC_DEPTH,
+  PROP_LIVE_MODE
 };
 
 static GstStaticPadTemplate sink_template_factory =
@@ -189,12 +189,6 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   return TRUE;
 }
 
-static void
-gst_mfxdec_release (GstMfxDec * mfxdec)
-{
-  gst_object_unref (mfxdec);
-}
-
 static gboolean
 gst_mfxdec_negotiate (GstMfxDec * mfxdec)
 {
@@ -215,9 +209,7 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!gst_mfx_plugin_base_set_caps (plugin, NULL, mfxdec->srcpad_caps))
     return FALSE;
 
-  if (!(plugin->memtype_is_system &&
-      (GST_VIDEO_INFO_FORMAT(&plugin->srcpad_info) == GST_VIDEO_FORMAT_NV12)))
-    gst_mfx_decoder_use_video_memory (mfxdec->decoder);
+  gst_mfx_decoder_use_video_memory (mfxdec->decoder, !plugin->srcpad_caps_is_raw);
 
   mfxdec->do_renego = FALSE;
 
@@ -238,6 +230,9 @@ gst_mfxdec_set_property (GObject * object, guint prop_id,
   case PROP_ASYNC_DEPTH:
     dec->async_depth = g_value_get_uint (value);
     break;
+  case PROP_LIVE_MODE:
+    dec->live_mode = g_value_get_boolean (value);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     break;
@@ -257,6 +252,9 @@ gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
   case PROP_ASYNC_DEPTH:
     g_value_set_uint (value, dec->async_depth);
     break;
+  case PROP_LIVE_MODE:
+    g_value_set_boolean (value, dec->live_mode);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     break;
@@ -274,6 +272,7 @@ static gboolean
 gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
+  GstMfxProfile profile = gst_mfx_profile_from_caps (caps);
   GstVideoInfo info;
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
@@ -282,12 +281,17 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
 
-  plugin->memtype_is_system =
+  /* live streaming configuration cannot be used with VC1 or MPEG2 */
+  if (gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2 ||
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_VC1)
+    mfxdec->live_mode = FALSE;
+
+  plugin->srcpad_caps_is_raw =
       gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      gst_mfx_profile_from_caps (caps), &info, mfxdec->async_depth,
-      plugin->memtype_is_system);
+      profile, &info, mfxdec->async_depth, plugin->srcpad_caps_is_raw,
+      mfxdec->live_mode);
   if (!mfxdec->decoder)
     return FALSE;
 
@@ -296,30 +300,21 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   return TRUE;
 }
 
-
-static void
-gst_mfxdec_destroy (GstMfxDec * mfxdec)
-{
-  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
-
-  mfxdec->active = FALSE;
-
-  gst_mfxdec_release (gst_object_ref (mfxdec));
-}
-
 static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
   gboolean hard)
 {
   GstMfxProfile profile;
 
-  if (!hard && mfxdec->decoder) {
+  if (mfxdec->decoder && !hard) {
     profile = gst_mfx_profile_from_caps (caps);
-    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder))
+    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder)) {
+      gst_mfx_decoder_reset (mfxdec->decoder);
       return TRUE;
+    }
   }
+  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
 
-  gst_mfxdec_destroy (mfxdec);
   return gst_mfxdec_create (mfxdec, caps);
 }
 
@@ -347,7 +342,7 @@ gst_mfxdec_close (GstVideoDecoder * vdec)
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
 
   gst_mfxdec_input_state_replace (mfxdec, NULL);
-  gst_mfxdec_destroy (mfxdec);
+  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (mfxdec));
 
   return TRUE;
@@ -357,10 +352,16 @@ static gboolean
 gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
+  GstMfxProfile profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
+  GstVideoInfo *info = gst_mfx_decoder_get_video_info (mfxdec->decoder);
+  gboolean hard = FALSE;
 
-  /* There could be issues if we avoid the reset_full () while doing
-   * seeking: we have to reset the internal state */
-  return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE);
+  if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED ||
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2 ||
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_JPEG)
+    hard = TRUE;
+
+  return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
 }
 
 static gboolean
@@ -443,14 +444,34 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   if (!gst_mfxdec_negotiate (mfxdec))
       goto not_negotiated;
 
-  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, &out_frame);
+  GST_LOG ("Received new data of size %" G_GSIZE_FORMAT
+      ", dts %" GST_TIME_FORMAT
+      ", pts:%" GST_TIME_FORMAT
+      ", dur:%" GST_TIME_FORMAT,
+      gst_buffer_get_size (frame->input_buffer),
+      GST_TIME_ARGS (frame->dts),
+      GST_TIME_ARGS (frame->pts),
+      GST_TIME_ARGS (frame->duration));
+
+  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
-      ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
-      break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
-      ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+      while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
+        ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+        if (ret != GST_FLOW_OK)
+          break;
+      }
+
+      /*if (mfxdec->live_mode) {
+        do {
+          sts = gst_mfx_decoder_flush (mfxdec->decoder, &out_frame);
+          if (GST_MFX_DECODER_STATUS_FLUSHED == sts)
+            break;
+          ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+        } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
+      }*/
       break;
     case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:
     case GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER:
@@ -458,8 +479,6 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
     default:
       ret = GST_FLOW_ERROR;
   }
-
-  gst_video_codec_frame_unref (frame);
   return ret;
 
 error_decode:
@@ -574,6 +593,13 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
       0, 20, DEFAULT_ASYNC_DEPTH,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  g_object_class_install_property (gobject_class, PROP_LIVE_MODE,
+  g_param_spec_boolean ("live-mode",
+      "Live Streaming Mode",
+      "Live streaming mode (not recommended)",
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+
   gst_element_class_add_pad_template (element_class,
       gst_static_pad_template_get (&src_template_factory));
   gst_element_class_add_pad_template (element_class,
@@ -600,6 +626,7 @@ static void
 gst_mfxdec_init (GstMfxDec *mfxdec)
 {
   mfxdec->async_depth = DEFAULT_ASYNC_DEPTH;
+  mfxdec->live_mode = FALSE;
 
   gst_video_decoder_set_packetized (GST_VIDEO_DECODER (mfxdec), TRUE);
   gst_video_decoder_set_needs_format (GST_VIDEO_DECODER (mfxdec), TRUE);

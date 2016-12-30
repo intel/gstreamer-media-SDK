@@ -93,6 +93,7 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_shell_surface *shell_surface;
   struct wl_surface *surface;
   struct wl_region *opaque_region;
+  struct wl_viewport *viewport;
   struct wl_event_queue *event_queue;
 #ifdef USE_EGL
   struct wl_egl_window *egl_window;
@@ -239,8 +240,16 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     return FALSE;
 
   fd = GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy);
-  vaapi_image = GST_MFX_PRIME_BUFFER_PROXY_VAAPI_IMAGE (buffer_proxy);
+  vaapi_image = gst_mfx_prime_buffer_proxy_get_vaapi_image (buffer_proxy);
   num_planes = vaapi_image_get_plane_count (vaapi_image);
+
+  if ((dst_rect->height != src_rect->height) ||
+          (dst_rect->width != dst_rect->width)) {
+      if (priv->viewport) {
+        wl_viewport_set_destination (priv->viewport,
+            dst_rect->width, dst_rect->height);
+      }
+  }
 
   for (i = 0; i < num_planes; i++) {
     offsets[i] = vaapi_image_get_offset (vaapi_image, i);
@@ -254,10 +263,10 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   }
 
   if (!drm_format)
-    return FALSE;
+    goto error;
 
   if (!display_priv->drm)
-    return FALSE;
+    goto error;
 
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   buffer =
@@ -269,7 +278,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
   if (!buffer) {
     GST_ERROR ("No wl_buffer created\n");
-    return FALSE;
+    goto error;
   }
 
   if (!gst_mfx_window_wayland_sync (window)) {
@@ -279,7 +288,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   frame = frame_state_new (window);
   if (!frame)
-    return FALSE;
+    goto error;
   g_atomic_pointer_set (&priv->last_frame, frame);
   g_atomic_int_inc (&priv->num_frames_pending);
 
@@ -304,8 +313,16 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 
+  vaapi_image_unref (vaapi_image);
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
+
   return TRUE;
+error:
+  {
+    vaapi_image_unref (vaapi_image);
+    gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
+    return FALSE;
+  }
 }
 
 static gboolean
@@ -404,6 +421,13 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
       &shell_surface_listener, priv);
   wl_shell_surface_set_toplevel (priv->shell_surface);
 
+  if (priv_display->scaler) {
+    GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+    priv->viewport =
+        wl_scaler_get_viewport (priv_display->scaler, priv->surface);
+    GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
+  }
+
   priv->poll = gst_poll_new (TRUE);
   gst_poll_fd_init (&priv->pollfd);
 
@@ -429,6 +453,16 @@ gst_mfx_window_wayland_destroy (GstMfxWindow * window)
 
   /* Wait for the last frame to complete redraw */
   gst_mfx_window_wayland_sync (window);
+
+  if (priv->last_frame) {
+    frame_state_free (priv->last_frame);
+    priv->last_frame = NULL;
+  }
+
+  if (priv->viewport) {
+    wl_viewport_destroy (priv->viewport);
+    priv->viewport = NULL;
+  }
 
   if (priv->shell_surface) {
     wl_shell_surface_destroy (priv->shell_surface);
@@ -499,6 +533,8 @@ gst_mfx_window_wayland_class_init (GstMfxWindowWaylandClass * klass)
 {
   GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
   GstMfxWindowClass *const window_class = GST_MFX_WINDOW_CLASS (klass);
+
+  gst_mfx_window_class_init (&klass->parent_class);
 
   object_class->size = sizeof (GstMfxWindowWayland);
   window_class->create = gst_mfx_window_wayland_create;

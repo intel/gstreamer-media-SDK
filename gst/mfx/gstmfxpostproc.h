@@ -92,7 +92,6 @@ struct _GstMfxPostproc
   GstMfxPluginBase        parent_instance;
 
   GstMfxFilter           *filter;
-  GstMfxTask             *peer_decoder;
   GstVideoFormat          format;        /* output video format */
   guint                   width;
   guint                   height;
@@ -111,13 +110,13 @@ struct _GstMfxPostproc
   guint                   detail_level;
 
   /* Color balance filter values */
-  GList                   *channels;
+  GList                  *channels;
 
   gfloat                  hue;
   gfloat                  saturation;
   gfloat                  brightness;
   gfloat                  contrast;
-  gboolean                cb_changed;
+  guint                   cb_changed;
 
     /* FRC */
   GstMfxFrcAlgorithm      alg;

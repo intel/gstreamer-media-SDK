@@ -42,10 +42,9 @@ struct _GstMfxTaskAggregator
 static void
 gst_mfx_task_aggregator_finalize (GstMfxTaskAggregator * aggregator)
 {
-  g_list_free (aggregator->cache);
-  gst_mfx_display_unref (aggregator->display);
-
   MFXClose (aggregator->parent_session);
+  g_list_free(aggregator->cache);
+  gst_mfx_display_unref (aggregator->display);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -124,11 +123,12 @@ gst_mfx_task_aggregator_get_display (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, 0);
 
-  return aggregator->display;
+  return gst_mfx_display_ref (aggregator->display);
 }
 
 mfxSession
-gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator)
+gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
+    gboolean * is_joined)
 {
   mfxIMPL impl;
   mfxStatus sts;
@@ -168,10 +168,14 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator)
 
   GST_INFO ("Initialized internal MFX session using %s implementation", desc);
 
-  if (!aggregator->parent_session)
+  if (!aggregator->parent_session) {
     aggregator->parent_session = session;
-  else
+    *is_joined = FALSE;
+  }
+  else {
     sts = MFXJoinSession (aggregator->parent_session, session);
+    *is_joined = TRUE;
+  }
 
   return session;
 }
@@ -204,4 +208,20 @@ gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
   g_return_if_fail (task != NULL);
 
   aggregator->cache = g_list_prepend (aggregator->cache, task);
+}
+
+void
+gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
+    GstMfxTask * task)
+{
+  GList *elem;
+
+  g_return_if_fail (aggregator != NULL);
+  g_return_if_fail (task != NULL);
+
+  elem = g_list_find (aggregator->cache, task);
+  if (!elem)
+    return;
+
+  aggregator->cache = g_list_delete_link (aggregator->cache, elem);
 }

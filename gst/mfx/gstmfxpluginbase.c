@@ -45,8 +45,10 @@ plugin_set_aggregator (GstElement * element, GstContext * context)
   GstElementClass *element_class = GST_ELEMENT_CLASS (plugin_parent_class);
   GstMfxTaskAggregator *aggregator = NULL;
 
-  if (gst_mfx_video_context_get_aggregator (context, &aggregator))
+  if (gst_mfx_video_context_get_aggregator (context, &aggregator)) {
     gst_mfx_task_aggregator_replace (&plugin->aggregator, aggregator);
+    gst_mfx_task_aggregator_unref (aggregator);
+  }
 
   if (element_class->set_context)
     element_class->set_context (element, context);
@@ -133,7 +135,10 @@ gst_mfx_plugin_base_close (GstMfxPluginBase * plugin)
   gst_caps_replace (&plugin->sinkpad_caps, NULL);
   plugin->sinkpad_caps_changed = FALSE;
   gst_video_info_init (&plugin->sinkpad_info);
-
+  if (plugin->sinkpad_buffer_pool) {
+    gst_object_unref (plugin->sinkpad_buffer_pool);
+    plugin->sinkpad_buffer_pool = NULL;
+  }
   g_clear_object (&plugin->srcpad_buffer_pool);
 
   gst_caps_replace (&plugin->srcpad_caps, NULL);
@@ -237,7 +242,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
     plugin->sinkpad_has_dmabuf =
         has_dmabuf_capable_peer (plugin, plugin->sinkpad);
 
-  plugin->memtype_is_system = !plugin->sinkpad_has_dmabuf &&
+  plugin->sinkpad_caps_is_raw = !plugin->sinkpad_has_dmabuf &&
       !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
@@ -255,8 +260,8 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   }
 
   pool =
-      gst_mfx_video_buffer_pool_new (GST_MFX_TASK_AGGREGATOR_DISPLAY
-      (plugin->aggregator), plugin->memtype_is_system);
+      gst_mfx_video_buffer_pool_new (plugin->aggregator,
+        plugin->sinkpad_caps_is_raw);
   if (!pool)
     goto error_create_pool;
 
@@ -435,7 +440,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 
 #if GST_CHECK_VERSION(1,8,0)
 #ifdef HAVE_GST_GL_LIBS
-  if (!plugin->memtype_is_system && gst_query_find_allocation_meta(query,
+  if (!plugin->srcpad_caps_is_raw && gst_query_find_allocation_meta(query,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
@@ -451,7 +456,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       }
     }
     if (!plugin->srcpad_has_dmabuf)
-      plugin->memtype_is_system = TRUE;
+      plugin->srcpad_caps_is_raw = TRUE;
   }
 #endif
 #endif
@@ -486,8 +491,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     if (pool)
       gst_object_unref (pool);
     pool =
-        gst_mfx_video_buffer_pool_new (GST_MFX_TASK_AGGREGATOR_DISPLAY
-        (plugin->aggregator), plugin->memtype_is_system);
+        gst_mfx_video_buffer_pool_new (plugin->aggregator,
+          plugin->srcpad_caps_is_raw);
     if (!pool)
       goto error_create_pool;
 
@@ -705,18 +710,15 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   gst_buffer_add_parent_buffer_meta (outbuf, buf);
   gst_buffer_replace_memory (outbuf, 0, mem);
 
+  gst_buffer_unref (buf);
 
-  image = gst_mfx_surface_vaapi_derive_image (surface);
-  if (!image)
-    goto error_dmabuf_handle;
-
+  image = gst_mfx_prime_buffer_proxy_get_vaapi_image (dmabuf_proxy);
   for (i = 0; i < vaapi_image_get_plane_count (image); i++) {
     meta->offset[i] = vaapi_image_get_offset (image, i);
     meta->stride[i] = vaapi_image_get_pitch (image, i);
   }
 
   vaapi_image_unref(image);
-
   return TRUE;
   /* ERRORS */
 error_dmabuf_handle:

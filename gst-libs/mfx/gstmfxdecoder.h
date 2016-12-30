@@ -71,7 +71,7 @@ typedef enum {
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     GstMfxProfile profile, GstVideoInfo * info, mfxU16 async_depth,
-    gboolean memtype_is_system);
+    gboolean memtype_is_system, gboolean live_mode);
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder);
@@ -86,12 +86,23 @@ gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
 GstMfxProfile
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder);
 
+gboolean
+gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
+    GstVideoCodecFrame ** out_frame);
+
+GstVideoInfo *
+gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder);
+
 void
-gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder);
+gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder,
+    gboolean memtype_is_video);
+
+void
+gst_mfx_decoder_reset (GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame, GstVideoCodecFrame ** out_frame);
+    GstVideoCodecFrame * frame);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_flush (GstMfxDecoder * decoder,

@@ -45,12 +45,14 @@ struct _GstMfxTask
   GstMfxMiniObject parent_instance;
 
   GstMfxDisplay *display;
+  GstMfxTaskAggregator *aggregator;
   GList *saved_responses;
   mfxFrameAllocRequest request;
+  mfxVideoParam params;
   mfxSession session;
   guint task_type;
-  gboolean use_video_memory;
-  gboolean use_native_output;
+  gboolean memtype_is_system;
+  gboolean is_joined;
 };
 
 static gint
@@ -59,7 +61,7 @@ find_response (gconstpointer response_data, gconstpointer response)
   ResponseData *_response_data = (ResponseData *) response_data;
   mfxFrameAllocResponse *_response = (mfxFrameAllocResponse *) response;
 
-  return _response->mids != _response_data->mids;
+  return _response_data ? _response->mids != _response_data->mids : -1;
 }
 
 mfxStatus
@@ -76,7 +78,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   ResponseData *response_data;
 
   if (task->task_type & GST_MFX_TASK_DECODER) {
-    GList *l = g_list_first (task->saved_responses);
+    GList *l = g_list_last (task->saved_responses);
     if (l) {
       response_data = l->data;
       *resp = *response_data->response;
@@ -370,19 +372,11 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
 }
 
 void
-gst_mfx_task_ensure_native_decoder_output (GstMfxTask * task)
+gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task)
 {
   g_return_if_fail (task != NULL);
 
-  task->use_native_output = TRUE;
-}
-
-gboolean
-gst_mfx_task_has_native_decoder_output (GstMfxTask * task)
-{
-  g_return_val_if_fail (task != NULL, FALSE);
-
-  return task->use_native_output;
+  task->memtype_is_system = TRUE;
 }
 
 void
@@ -398,24 +392,44 @@ gst_mfx_task_use_video_memory (GstMfxTask * task)
   };
 
   MFXVideoCORE_SetFrameAllocator (task->session, &frame_allocator);
-
-  task->use_video_memory = TRUE;
+  task->memtype_is_system = FALSE;
 }
 
 gboolean
-gst_mfx_task_has_mapped_surface (GstMfxTask * task)
+gst_mfx_task_has_video_memory (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return !task->use_video_memory;
+  return !task->memtype_is_system;
+}
+
+void
+gst_mfx_task_set_video_params (GstMfxTask * task, mfxVideoParam * params)
+{
+  g_return_if_fail (task != NULL);
+
+  task->params = *params;
+}
+
+mfxVideoParam *
+gst_mfx_task_get_video_params (GstMfxTask * task)
+{
+  g_return_val_if_fail (task != NULL, NULL);
+
+  return &task->params;
 }
 
 static void
 gst_mfx_task_finalize (GstMfxTask * task)
 {
-  MFXClose (task->session);
+  if (task->is_joined) {
+    MFXDisjoinSession (task->session);
+    MFXClose (task->session);
+  }
+  gst_mfx_task_aggregator_remove_task (task->aggregator, task);
+  gst_mfx_task_aggregator_unref (task->aggregator);
+  gst_mfx_display_unref (task->display);
   g_list_free_full (task->saved_responses, g_free);
-  gst_mfx_display_replace (&task->display, NULL);
 }
 
 
@@ -431,38 +445,41 @@ gst_mfx_task_class (void)
 
 static void
 gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
-    mfxSession session, guint type_flags)
+    mfxSession session, guint type_flags, gboolean is_joined)
 {
+  task->is_joined = is_joined;
   task->task_type |= type_flags;
-  task->display =
-      gst_mfx_display_ref (GST_MFX_TASK_AGGREGATOR_DISPLAY (aggregator));
+  task->display = gst_mfx_task_aggregator_get_display(aggregator);
   task->session = session;
+  task->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
   gst_mfx_task_aggregator_add_task (aggregator, task);
 
   MFXVideoCORE_SetHandle (task->session, MFX_HANDLE_VA_DISPLAY,
       GST_MFX_DISPLAY_VADISPLAY (task->display));
 
-  task->use_video_memory = FALSE;
+  task->memtype_is_system = FALSE;
 }
 
 GstMfxTask *
 gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
 {
   mfxSession session;
+  gboolean is_joined;
 
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  session = gst_mfx_task_aggregator_create_session (aggregator);
+  session = gst_mfx_task_aggregator_create_session (aggregator, &is_joined);
   if (!session)
     return NULL;
 
-  return gst_mfx_task_new_with_session (aggregator, session, type_flags);
+  return
+    gst_mfx_task_new_with_session (aggregator, session, type_flags, is_joined);
 }
 
 GstMfxTask *
 gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
-    mfxSession session, guint type_flags)
+    mfxSession session, guint type_flags, gboolean is_joined)
 {
   GstMfxTask *task;
 
@@ -473,7 +490,7 @@ gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
   if (!task)
     return NULL;
 
-  gst_mfx_task_init (task, aggregator, session, type_flags);
+  gst_mfx_task_init (task, aggregator, session, type_flags, is_joined);
 
   return task;
 }

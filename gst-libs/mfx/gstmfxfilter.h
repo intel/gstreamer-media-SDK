@@ -115,18 +115,19 @@ typedef enum {
 } GstMfxFilterType;
 
 typedef enum {
-  GST_MFX_DEINTERLACE_MODE_BOB = 1,
-  GST_MFX_DEINTERLACE_MODE_ADVANCED,
-  GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF,
+  GST_MFX_DEINTERLACE_MODE_NONE = 0,
+  GST_MFX_DEINTERLACE_MODE_BOB = MFX_DEINTERLACING_BOB,
+  GST_MFX_DEINTERLACE_MODE_ADVANCED = MFX_DEINTERLACING_ADVANCED,
+  GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF = MFX_DEINTERLACING_ADVANCED_NOREF,
 } GstMfxDeinterlaceMode;
 
 typedef enum {
     GST_MFX_FRC_NONE,
-    GST_MFX_FRC_PRESERVE_TIMESTAMP,
-    GST_MFX_FRC_DISTRIBUTED_TIMESTAMP,
-    GST_MFX_FRC_FRAME_INTERPOLATION,
-    GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
-    GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
+    GST_MFX_FRC_PRESERVE_TIMESTAMP = MFX_FRCALGM_PRESERVE_TIMESTAMP,
+    GST_MFX_FRC_DISTRIBUTED_TIMESTAMP = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP,
+    GST_MFX_FRC_FRAME_INTERPOLATION =  MFX_FRCALGM_FRAME_INTERPOLATION,
+    GST_MFX_FRC_FI_PRESERVE_TIMESTAMP = MFX_FRCALGM_PRESERVE_TIMESTAMP || MFX_FRCALGM_FRAME_INTERPOLATION,
+    GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP || MFX_FRCALGM_FRAME_INTERPOLATION,
 } GstMfxFrcAlgorithm;
 
 /**
@@ -182,11 +183,15 @@ void
 gst_mfx_filter_set_request (GstMfxFilter * filter,
     mfxFrameAllocRequest * request, guint flags);
 
+/* Setters */
 void
 gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info);
 
 gboolean
-gst_mfx_filter_set_format (GstMfxFilter * filter, GstVideoFormat fmt);
+gst_mfx_filter_set_format (GstMfxFilter * filter, mfxU32 fourcc);
+
+gboolean
+gst_mfx_filter_set_size (GstMfxFilter * filter, mfxU16 width, mfxU16 height);
 
 gboolean
 gst_mfx_filter_set_denoising_level (GstMfxFilter * filter, guint level);
@@ -210,8 +215,7 @@ gboolean
 gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle);
 
 gboolean
-gst_mfx_filter_set_deinterlace_mode (GstMfxFilter *filter,
-    GstMfxDeinterlaceMode mode);
+gst_mfx_filter_set_deinterlace_mode (GstMfxFilter *filter, mfxU16 mode);
 
 gboolean
 gst_mfx_filter_set_framerate (GstMfxFilter *filter,
@@ -223,5 +227,6 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter *filter,
 
 gboolean
 gst_mfx_filter_set_async_depth (GstMfxFilter * filter, mfxU16 async_depth);
+
 
 #endif /* GST_MFX_FILTER_H */

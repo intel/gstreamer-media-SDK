@@ -78,9 +78,7 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
     if (!buffer_proxy)
       return FALSE;
 
-    image = gst_mfx_surface_vaapi_derive_image (surface);
-    if (!image)
-      goto error_derive_va_image;
+    image = gst_mfx_prime_buffer_proxy_get_vaapi_image(buffer_proxy);
 
     texture->width = vaapi_image_get_width (image);
     texture->height = vaapi_image_get_height (image);
@@ -105,7 +103,7 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
         EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer) NULL, attribs);
     if (!texture->egl_image) {
       GST_ERROR ("failed to import VA buffer (RGBA) into EGL image");
-      goto error_create_egl_image;
+      goto error;
     }
 
     texture->texture_id =
@@ -113,7 +111,7 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
         texture->gl_target, texture->egl_image);
     if (!texture->texture_id) {
       GST_ERROR ("failed to create texture from EGL image");
-      goto error_create_texture;
+      goto error;
     }
 
     gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
@@ -130,16 +128,10 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
   }
 
   return TRUE;
-error_derive_va_image:
+error:
   {
-    gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
-    return FALSE;
-  }
-error_create_egl_image:
-error_create_texture:
-  {
-    gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
     vaapi_image_unref (image);
+    gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
     return FALSE;
   }
 }

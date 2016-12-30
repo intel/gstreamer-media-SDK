@@ -54,7 +54,7 @@ gst_mfx_video_buffer_pool_finalize (GObject * object)
   GstMfxVideoBufferPoolPrivate *const priv =
       GST_MFX_VIDEO_BUFFER_POOL (object)->priv;
 
-  gst_mfx_display_replace (&priv->display, NULL);
+  gst_mfx_display_unref (priv->display);
   g_clear_object (&priv->allocator);
 
   G_OBJECT_CLASS (gst_mfx_video_buffer_pool_parent_class)->finalize (object);
@@ -301,14 +301,15 @@ gst_mfx_video_buffer_pool_init (GstMfxVideoBufferPool * pool)
 }
 
 GstBufferPool *
-gst_mfx_video_buffer_pool_new (GstMfxDisplay * display, gboolean memtype_is_system)
+gst_mfx_video_buffer_pool_new (GstMfxTaskAggregator * aggregator,
+    gboolean memtype_is_system)
 {
   GstMfxVideoBufferPool *pool =
       g_object_new (GST_MFX_TYPE_VIDEO_BUFFER_POOL, NULL);
   GstMfxVideoBufferPoolPrivate *const priv =
       GST_MFX_VIDEO_BUFFER_POOL (pool)->priv;
 
-  priv->display = gst_mfx_display_ref (display);
+  priv->display = gst_mfx_task_aggregator_get_display (aggregator);
   priv->memtype_is_system = memtype_is_system;
 
   return GST_BUFFER_POOL_CAST (pool);

@@ -102,12 +102,6 @@ static gboolean
 gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height);
 
 static inline gboolean
-gst_mfxsink_ensure_aggregator (GstMfxSink * sink)
-{
-  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (sink));
-}
-
-static inline gboolean
 gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
     const GstMfxRectangle * surface_rect)
 {
@@ -163,7 +157,7 @@ x11_keycode_to_keysym (Display * dpy, unsigned int kc)
 static gboolean
 gst_mfxsink_x11_handle_events (GstMfxSink * sink)
 {
-  gboolean has_events, do_expose = FALSE;
+  gboolean has_events;
   guint pointer_x = 0, pointer_y = 0;
   gboolean pointer_moved = FALSE;
   XEvent e;
@@ -251,18 +245,13 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
         break;
       switch (e.type) {
         case Expose:
-          do_expose = TRUE;
-          break;
         case ConfigureNotify:
-          if (gst_mfxsink_reconfigure_window (sink))
-            do_expose = TRUE;
+          gst_mfxsink_reconfigure_window (sink);
           break;
         default:
           break;
       }
     }
-    if (do_expose)
-      gst_mfxsink_video_overlay_expose (GST_VIDEO_OVERLAY (sink));
   }
   return TRUE;
 }
@@ -401,8 +390,9 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
     if (!sink->window)
       return FALSE;
   }
-
+  gst_mfx_window_x11_clear (sink->window);
   gst_mfxsink_set_event_handling (sink, sink->handle_events);
+
   return TRUE;
 }
 
@@ -516,10 +506,7 @@ gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay)
 {
   GstMfxSink *const sink = GST_MFXSINK (overlay);
 
-  if (sink->video_buffer) {
-    gst_mfxsink_reconfigure_window (sink);
-    gst_mfxsink_show_frame (GST_VIDEO_SINK_CAST (sink), sink->video_buffer);
-  }
+  gst_mfxsink_reconfigure_window (sink);
 }
 
 static void
@@ -611,8 +598,6 @@ gst_mfxsink_reconfigure_window (GstMfxSink * sink)
           sink->window_width, sink->window_height, win_width, win_height);
       sink->window_width = win_width;
       sink->window_height = win_height;
-      gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
-          gst_event_new_reconfigure ());
       return TRUE;
     }
   }
@@ -725,7 +710,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
       sink->display_type = GST_MFX_DISPLAY_TYPE_X11;
       break;
 #endif
-    display_unsupported:
+display_unsupported:
     default:
       GST_ERROR ("display type %s not supported",
           get_display_type_name (sink->display_type_req));
@@ -867,8 +852,10 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
 
-  gst_buffer_replace (&sink->video_buffer, NULL);
-  gst_mfx_window_replace (&sink->window, NULL);
+  if (!sink->foreign_window) {
+    gst_mfx_window_replace (&sink->window, NULL);
+    gst_mfx_display_replace (&sink->display, NULL);
+  }
 
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (sink));
   return TRUE;
@@ -902,18 +889,6 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
         (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE) :
         gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
 
-  if (sink->window && sink->display_type_req != GST_MFX_DISPLAY_TYPE_EGL) {
-    GstStructure *s0, *s1;
-    GstMfxRectangle *rect = &sink->display_rect;
-    out_caps = gst_caps_make_writable (out_caps);
-    s0 = gst_caps_get_structure (out_caps, 0);
-    s1 = gst_structure_copy (gst_caps_get_structure (out_caps, 0));
-
-    gst_structure_set (s0, "width", G_TYPE_INT, GST_ROUND_UP_16 (rect->width),
-        "height", G_TYPE_INT, GST_ROUND_UP_16 (rect->height), NULL);
-    gst_caps_append_structure (out_caps, s1);
-  }
-
   return out_caps;
 }
 
@@ -940,31 +915,22 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   GstVideoInfo *const vip = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO (sink);
   guint win_width, win_height;
 
-  if (!gst_mfxsink_ensure_aggregator (sink))
+  if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
-  if (!sink->backend)
-    gst_mfxsink_set_render_backend (sink);
+  gst_mfxsink_set_render_backend (sink);
 
   if (!gst_mfx_plugin_base_set_caps (plugin, caps, NULL))
     return FALSE;
 
-  if (!sink->video_width)
-    sink->video_width = GST_VIDEO_INFO_WIDTH (vip);
-  if (!sink->video_height)
-    sink->video_height = GST_VIDEO_INFO_HEIGHT (vip);
-  if (!sink->video_par_n)
-    sink->video_par_n = GST_VIDEO_INFO_PAR_N (vip);
-  if (!sink->video_par_d)
-    sink->video_par_d = GST_VIDEO_INFO_PAR_D (vip);
+  sink->video_width = GST_VIDEO_INFO_WIDTH (vip);
+  sink->video_height = GST_VIDEO_INFO_HEIGHT (vip);
+  sink->video_par_n = GST_VIDEO_INFO_PAR_N (vip);
+  sink->video_par_d = GST_VIDEO_INFO_PAR_D (vip);
   GST_DEBUG ("video pixel-aspect-ratio %d/%d",
       sink->video_par_n, sink->video_par_d);
 
   gst_caps_replace (&sink->caps, caps);
-
-  if (!sink->window)
-    gst_pad_push_event (GST_MFX_PLUGIN_BASE_SINK_PAD (sink),
-        gst_event_new_reconfigure());
 
   gst_mfxsink_ensure_window_size (sink, &win_width, &win_height);
   if (sink->window) {
@@ -1003,16 +969,6 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
   GstMfxRectangle tmp_rect;
   GstFlowReturn ret;
 
-  GstVideoCropMeta *const crop_meta =
-      gst_buffer_get_video_crop_meta (src_buffer);
-  if (crop_meta) {
-    surface_rect = &tmp_rect;
-    surface_rect->x = crop_meta->x;
-    surface_rect->y = crop_meta->y;
-    surface_rect->width = crop_meta->width;
-    surface_rect->height = crop_meta->height;
-  }
-
   meta = gst_buffer_get_mfx_video_meta (src_buffer);
 
   surface = gst_mfx_video_meta_get_surface (meta);
@@ -1022,14 +978,12 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
   GST_DEBUG ("render surface %" GST_MFX_ID_FORMAT,
       GST_MFX_SURFACE_ID (surface));
 
-  if (!surface_rect)
-    surface_rect = (GstMfxRectangle *)
-        gst_mfx_surface_get_crop_rect (surface);
+  surface_rect = (GstMfxRectangle *)
+      gst_mfx_surface_get_crop_rect (surface);
 
-  if (surface_rect)
-    GST_DEBUG ("render rect (%d,%d), size %ux%u",
-        surface_rect->x, surface_rect->y,
-        surface_rect->width, surface_rect->height);
+  GST_DEBUG ("render rect (%d,%d), size %ux%u",
+      surface_rect->x, surface_rect->y,
+      surface_rect->width, surface_rect->height);
 
   if (!gst_mfxsink_render_surface (sink, surface, surface_rect))
     goto error;
@@ -1076,7 +1030,9 @@ gst_mfxsink_destroy (GstMfxSink * sink)
 {
   gst_mfxsink_set_event_handling (sink, FALSE);
 
-  gst_buffer_replace (&sink->video_buffer, NULL);
+  gst_mfx_window_replace (&sink->window, NULL);
+  gst_mfx_display_replace (&sink->display, NULL);
+
   gst_caps_replace (&sink->caps, NULL);
   g_free (sink->display_name);
 }
@@ -1274,7 +1230,7 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
       g_param_spec_boolean ("no-frame-drop",
       "No frame drop",
       "Render all decoded frames when enabled, ignoring timestamp lateness",
-      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * GstMfxSink:full-color-range:
@@ -1316,7 +1272,7 @@ gst_mfxsink_init (GstMfxSink * sink)
   sink->video_par_d = 1;
   sink->handle_events = TRUE;
   sink->keep_aspect = TRUE;
-  sink->no_frame_drop = TRUE;
+  sink->no_frame_drop = FALSE;
   sink->full_color_range = FALSE;
   gst_video_info_init (&sink->video_info);
 }

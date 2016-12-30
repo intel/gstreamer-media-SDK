@@ -35,6 +35,7 @@ struct _GstMfxPrimeBufferProxy
   /*< private > */
   GstMfxMiniObject parent_instance;
   GstMfxSurface *surface;
+  GstMfxDisplay *display;
   VaapiImage *image;
   VABufferInfo buf_info;
   guintptr fd;
@@ -81,23 +82,27 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
     return FALSE;
 
   surf = GST_MFX_SURFACE_ID (proxy->surface);
-  display = gst_mfx_surface_vaapi_get_display (proxy->surface);
+  proxy->display = gst_mfx_surface_vaapi_get_display (proxy->surface);
   proxy->image = gst_mfx_surface_vaapi_derive_image (proxy->surface);
+  if (!proxy->image) {
+    GST_ERROR("Could not derive image.");
+    return FALSE;
+  }
   vaapi_image_get_image (proxy->image, &va_img);
 
   if (vpg_load_symbol ("vpgExtGetSurfaceHandle")) {
-    GST_MFX_DISPLAY_LOCK (display);
-    va_status = g_va_get_surface_handle (GST_MFX_DISPLAY_VADISPLAY (display),
+    GST_MFX_DISPLAY_LOCK (proxy->display);
+    va_status = g_va_get_surface_handle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
         &surf, &proxy->fd);
-    GST_MFX_DISPLAY_UNLOCK (display);
+    GST_MFX_DISPLAY_UNLOCK (proxy->display);
     if (!vaapi_check_status (va_status, "vpgExtGetSurfaceHandle ()"))
       return FALSE;
   } else {
     proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
-    GST_MFX_DISPLAY_LOCK (display);
-    va_status = vaAcquireBufferHandle (GST_MFX_DISPLAY_VADISPLAY (display),
+    GST_MFX_DISPLAY_LOCK (proxy->display);
+    va_status = vaAcquireBufferHandle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
         va_img.buf, &proxy->buf_info);
-    GST_MFX_DISPLAY_UNLOCK (display);
+    GST_MFX_DISPLAY_UNLOCK (proxy->display);
     if (!vaapi_check_status (va_status, "vaAcquireBufferHandle ()"))
       return FALSE;
     proxy->fd = proxy->buf_info.handle;
@@ -115,18 +120,18 @@ gst_mfx_prime_buffer_proxy_finalize (GstMfxPrimeBufferProxy * proxy)
     close (proxy->fd);
   }
   else {
-    GstMfxDisplay *display = gst_mfx_surface_vaapi_get_display (proxy->surface);
     VAImage va_img;
 
     vaapi_image_get_image (proxy->image, &va_img);
 
-    GST_MFX_DISPLAY_LOCK (display);
-    vaReleaseBufferHandle (GST_MFX_DISPLAY_VADISPLAY (display), va_img.buf);
-    GST_MFX_DISPLAY_UNLOCK (display);
+    GST_MFX_DISPLAY_LOCK (proxy->display);
+    vaReleaseBufferHandle (GST_MFX_DISPLAY_VADISPLAY (proxy->display), va_img.buf);
+    GST_MFX_DISPLAY_UNLOCK (proxy->display);
   }
 
   vaapi_image_replace (&proxy->image, NULL);
   gst_mfx_surface_replace (&proxy->surface, NULL);
+  gst_mfx_display_unref (proxy->display);
 }
 
 static inline const GstMfxMiniObjectClass *

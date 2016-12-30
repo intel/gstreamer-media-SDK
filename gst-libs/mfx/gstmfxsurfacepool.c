@@ -35,12 +35,16 @@ struct _GstMfxSurfacePool
   GstMfxDisplay *display;
   GstMfxTask *task;
   GstVideoInfo info;
-  gboolean mapped;
+  gboolean memtype_is_system;
   GQueue free_surfaces;
   GList *used_surfaces;
   guint used_count;
   GMutex mutex;
 };
+
+static void
+gst_mfx_surface_pool_put_surface (GstMfxSurfacePool * pool,
+    GstMfxSurface * surface);
 
 static gint
 sync_output_surface (gconstpointer surface, gconstpointer surf)
@@ -49,6 +53,17 @@ sync_output_surface (gconstpointer surface, gconstpointer surf)
   mfxFrameSurface1 *_surf = (mfxFrameSurface1 *) surf;
 
   return _surf != GST_MFX_SURFACE_FRAME_SURFACE (_surface);
+}
+
+static void
+release_surfaces (gpointer surface, gpointer pool)
+{
+  GstMfxSurface *_surface = (GstMfxSurface *) surface;
+  GstMfxSurfacePool *_pool = (GstMfxSurfacePool *) pool;
+
+  mfxFrameSurface1 *surf = gst_mfx_surface_get_frame_surface (_surface);
+  if (surf && !surf->Data.Locked)
+    gst_mfx_surface_pool_put_surface (_pool, _surface);
 }
 
 static void
@@ -62,7 +77,7 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
     if (!surface)
       return;
 
-    g_queue_push_tail (&pool->free_surfaces, gst_mfx_surface_ref(surface));
+    g_queue_push_tail (&pool->free_surfaces, surface);
   }
 }
 
@@ -75,21 +90,28 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
   g_queue_init (&pool->free_surfaces);
   g_mutex_init (&pool->mutex);
 
-  if (pool->task && !gst_mfx_task_has_mapped_surface(pool->task))
+  if (pool->task && gst_mfx_task_has_video_memory (pool->task))
     gst_mfx_surface_pool_add_surfaces(pool);
 }
 
 void
 gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
 {
-  gst_mfx_display_replace(&pool->display, NULL);
-  gst_mfx_task_replace (&pool->task, NULL);
+  GstMfxSurface *surface;
 
-  g_list_free_full (pool->used_surfaces, gst_mfx_surface_unref);
+  while (g_list_length(pool->used_surfaces)) {
+    surface = g_list_nth_data (pool->used_surfaces, 0);
+    gst_mfx_surface_pool_put_surface(pool, surface);
+  }
+
+  g_list_free (pool->used_surfaces);
   g_queue_foreach (&pool->free_surfaces,
       (GFunc) gst_mfx_surface_unref, NULL);
   g_queue_clear (&pool->free_surfaces);
   g_mutex_clear (&pool->mutex);
+
+  gst_mfx_display_replace(&pool->display, NULL);
+  gst_mfx_task_replace (&pool->task, NULL);
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -104,7 +126,7 @@ gst_mfx_surface_pool_class (void)
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new (GstMfxDisplay * display,
-    GstVideoInfo * info, gboolean mapped)
+    GstVideoInfo * info, gboolean memtype_is_system)
 {
   GstMfxSurfacePool *pool;
 
@@ -116,7 +138,7 @@ gst_mfx_surface_pool_new (GstMfxDisplay * display,
     return NULL;
 
   pool->display = gst_mfx_display_ref(display);
-  pool->mapped = mapped;
+  pool->memtype_is_system = memtype_is_system;
   pool->info = *info;
 
   gst_mfx_surface_pool_init (pool);
@@ -137,7 +159,7 @@ gst_mfx_surface_pool_new_with_task (GstMfxTask * task)
     return NULL;
 
   pool->task = gst_mfx_task_ref (task);
-  pool->mapped = gst_mfx_task_has_mapped_surface(task);
+  pool->memtype_is_system = !gst_mfx_task_has_video_memory (task);
   gst_mfx_surface_pool_init (pool);
 
   return pool;
@@ -196,17 +218,6 @@ gst_mfx_surface_pool_put_surface (GstMfxSurfacePool * pool,
   g_mutex_unlock (&pool->mutex);
 }
 
-static void
-release_surfaces (gpointer surface, gpointer pool)
-{
-  GstMfxSurface *_surface = (GstMfxSurface *) surface;
-  GstMfxSurfacePool *_pool = (GstMfxSurfacePool *) pool;
-
-  mfxFrameSurface1 *surf = gst_mfx_surface_get_frame_surface (_surface);
-  if (surf && !surf->Data.Locked)
-    gst_mfx_surface_pool_put_surface (_pool, _surface);
-}
-
 static GstMfxSurface *
 gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
 {
@@ -219,7 +230,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
       surface = gst_mfx_surface_new_from_task (pool->task);
     }
     else {
-      if (!pool->mapped)
+      if (!pool->memtype_is_system)
         surface = gst_mfx_surface_vaapi_new(pool->display, &pool->info);
       else
         surface = gst_mfx_surface_new(&pool->info);

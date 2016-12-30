@@ -31,10 +31,21 @@ GST_DEBUG_CATEGORY_STATIC (gst_debug_mfx_sink_bin);
 enum
 {
   PROP_0,
-
+  PROP_FORCE_ASPECT_RATIO,
+  PROP_SYNC,
+  PROP_MAX_LATENESS,
+  PROP_QOS,
+  PROP_ASYNC,
+  PROP_TS_OFFSET,
+  PROP_ENABLE_LAST_SAMPLE,
+  PROP_LAST_SAMPLE,
+  PROP_BLOCKSIZE,
+  PROP_RENDER_DELAY,
+  PROP_THROTTLE_TIME,
+  PROP_MAX_BITRATE,
   PROP_DISPLAY_TYPE,
   PROP_FULLSCREEN,
-  PROP_FORCE_ASPECT_RATIO,
+  PROP_SHOW_PREROLL_FRAME,
   PROP_NO_FRAME_DROP,
   PROP_FULL_COLOR_RANGE,
   PROP_WIDTH,
@@ -46,7 +57,7 @@ enum
   PROP_SATURATION,
   PROP_BRIGHTNESS,
   PROP_CONTRAST,
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   PROP_ROTATION,
 #endif
   N_PROPERTIES
@@ -59,11 +70,21 @@ gst_mfx_sink_bin_color_balance_iface_init (GstColorBalanceInterface * iface);
 
 #define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
+#define DEFAULT_SYNC                    TRUE
+#define DEFAULT_QOS                     TRUE
+#define DEFAULT_ASYNC                   TRUE
+#define DEFAULT_TS_OFFSET               0
+#define DEFAULT_ENABLE_LAST_SAMPLE      TRUE
+#define DEFAULT_BLOCKSIZE               4096
+#define DEFAULT_RENDER_DELAY            0
+#define DEFAULT_THROTTLE_TIME           0
+#define DEFAULT_MAX_BITRATE             0
+#define DEFAULT_MAX_LATENESS            20000000
 
 /* Default templates */
 static const char gst_mfx_sink_bin_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
-#ifdef WITH_MSS
+#ifdef WITH_MSS_2016
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
 #else
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
@@ -105,83 +126,78 @@ gst_mfx_sink_bin_set_property (GObject * object,
   GstMfxSinkBin *mfxsinkbin = GST_MFX_SINK_BIN (object);
 
   switch (prop_id) {
+    /* Sink */
     case PROP_DISPLAY_TYPE:
-      mfxsinkbin->display_type = g_value_get_enum (value);
-      g_object_set (G_OBJECT (mfxsinkbin->sink), "display",
-          mfxsinkbin->display_type, NULL);
+      g_object_set (G_OBJECT (mfxsinkbin->sink),
+          pspec->name,
+          g_value_get_enum (value),
+          NULL);
       break;
+    case PROP_MAX_LATENESS:
+    case PROP_TS_OFFSET:
+      g_object_set (G_OBJECT (mfxsinkbin->sink),
+          pspec->name,
+          g_value_get_int64 (value),
+          NULL);
+      break;
+    case PROP_BLOCKSIZE:
+      g_object_set (G_OBJECT (mfxsinkbin->sink),
+          pspec->name,
+          g_value_get_uint (value),
+          NULL);
+      break;
+    case PROP_RENDER_DELAY:
+    case PROP_THROTTLE_TIME:
+    case PROP_MAX_BITRATE:
+      g_object_set (G_OBJECT (mfxsinkbin->sink),
+          pspec->name,
+          g_value_get_uint64 (value),
+          NULL);
+      break;
+    case PROP_ENABLE_LAST_SAMPLE:
+    case PROP_ASYNC:
+    case PROP_SYNC:
+    case PROP_QOS:
     case PROP_FULLSCREEN:
-      mfxsinkbin->fullscreen = g_value_get_boolean (value);
-      g_object_set (G_OBJECT (mfxsinkbin->sink), "fullscreen",
-          mfxsinkbin->fullscreen, NULL);
-      break;
     case PROP_FORCE_ASPECT_RATIO:
-      mfxsinkbin->keep_aspect = g_value_get_boolean (value);
-      g_object_set (G_OBJECT (mfxsinkbin->sink), "force-aspect-ratio",
-          mfxsinkbin->keep_aspect, NULL);
-      break;
     case PROP_NO_FRAME_DROP:
-      mfxsinkbin->no_frame_drop = g_value_get_boolean (value);
-      g_object_set (G_OBJECT (mfxsinkbin->sink), "no-frame-drop",
-          mfxsinkbin->no_frame_drop, NULL);
-      break;
+    case PROP_SHOW_PREROLL_FRAME:
     case PROP_FULL_COLOR_RANGE:
-      mfxsinkbin->full_color_range = g_value_get_boolean (value);
-      g_object_set (G_OBJECT (mfxsinkbin->sink), "full-color-range",
-          mfxsinkbin->full_color_range, NULL);
+      g_object_set (G_OBJECT (mfxsinkbin->sink),
+          pspec->name,
+          g_value_get_boolean (value),
+          NULL);
       break;
-   case PROP_WIDTH:
-      mfxsinkbin->width = g_value_get_uint (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "width",
-          mfxsinkbin->width, NULL);
-      break;
+
+    /* VPP */
+    case PROP_WIDTH:
     case PROP_HEIGHT:
-      mfxsinkbin->height = g_value_get_uint (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "height",
-          mfxsinkbin->height, NULL);
-      break;
-    case PROP_DEINTERLACE_MODE:
-      mfxsinkbin->deinterlace_mode = g_value_get_enum (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "deinterlace-mode",
-          mfxsinkbin->deinterlace_mode, NULL);
-      break;
     case PROP_DENOISE:
-      mfxsinkbin->denoise_level = g_value_get_uint (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "denoise",
-          mfxsinkbin->denoise_level, NULL);
-      break;
     case PROP_DETAIL:
-      mfxsinkbin->detail_level = g_value_get_uint (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "detail",
-          mfxsinkbin->detail_level, NULL);
+      g_object_set (G_OBJECT (mfxsinkbin->postproc),
+          pspec->name,
+          g_value_get_uint (value),
+          NULL);
+      break;
+
+    case PROP_DEINTERLACE_MODE:
+#ifndef WITH_MSS_2016
+    case PROP_ROTATION:
+#endif
+      g_object_set (G_OBJECT (mfxsinkbin->postproc),
+          pspec->name,
+          g_value_get_enum (value),
+          NULL);
       break;
     case PROP_HUE:
-      mfxsinkbin->hue = g_value_get_float (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "hue",
-          mfxsinkbin->hue, NULL);
-      break;
     case PROP_SATURATION:
-      mfxsinkbin->saturation = g_value_get_float (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "saturation",
-          mfxsinkbin->saturation, NULL);
-      break;
     case PROP_BRIGHTNESS:
-      mfxsinkbin->brightness = g_value_get_float (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "brightness",
-	  mfxsinkbin->brightness, NULL);
-      break;
     case PROP_CONTRAST:
-      mfxsinkbin->contrast = g_value_get_float (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "contrast",
-          mfxsinkbin->contrast, NULL);
+      g_object_set (G_OBJECT (mfxsinkbin->postproc),
+          pspec->name,
+          g_value_get_float (value),
+          NULL);
       break;
-#ifndef WITH_MSS
-    case PROP_ROTATION:
-      mfxsinkbin->angle = g_value_get_enum (value);
-      g_object_set (G_OBJECT (mfxsinkbin->postproc), "rotation",
-          mfxsinkbin->angle, NULL);
-      break;
-#endif
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -196,53 +212,49 @@ gst_mfx_sink_bin_get_property (GObject * object,
   GstMfxSinkBin *mfxsinkbin = GST_MFX_SINK_BIN (object);
 
   switch (prop_id) {
+    /* Sink */
     case PROP_DISPLAY_TYPE:
-      g_value_set_enum (value, mfxsinkbin->display_type);
-      break;
+    case PROP_SYNC:
+    case PROP_MAX_LATENESS:
+    case PROP_QOS:
+    case PROP_ASYNC:
+    case PROP_TS_OFFSET:
+    case PROP_ENABLE_LAST_SAMPLE:
+    case PROP_LAST_SAMPLE:
+    case PROP_BLOCKSIZE:
+    case PROP_RENDER_DELAY:
+    case PROP_THROTTLE_TIME:
+    case PROP_MAX_BITRATE:
     case PROP_FULLSCREEN:
-      g_value_set_boolean (value, mfxsinkbin->fullscreen);
-      break;
     case PROP_FORCE_ASPECT_RATIO:
-      g_value_set_boolean (value, mfxsinkbin->keep_aspect);
-      break;
     case PROP_NO_FRAME_DROP:
-      g_value_set_boolean (value, mfxsinkbin->no_frame_drop);
-      break;
+    case PROP_SHOW_PREROLL_FRAME:
     case PROP_FULL_COLOR_RANGE:
-      g_value_set_boolean (value, mfxsinkbin->full_color_range);
+      if (mfxsinkbin->sink) {
+        g_object_get_property (G_OBJECT (mfxsinkbin->sink),
+            pspec->name,
+            value);
+      }
       break;
-   case PROP_WIDTH:
-      g_value_set_uint (value, mfxsinkbin->width);
-      break;
+    /* VPP */
+    case PROP_WIDTH:
     case PROP_HEIGHT:
-      g_value_set_uint (value, mfxsinkbin->height);
-      break;
     case PROP_DEINTERLACE_MODE:
-      g_value_set_enum (value, mfxsinkbin->deinterlace_mode);
-      break;
     case PROP_DENOISE:
-      g_value_set_uint (value, mfxsinkbin->denoise_level);
-      break;
     case PROP_DETAIL:
-      g_value_set_uint (value, mfxsinkbin->detail_level);
-      break;
     case PROP_HUE:
-      g_value_set_float (value, mfxsinkbin->hue);
-      break;
     case PROP_SATURATION:
-      g_value_set_float (value, mfxsinkbin->saturation);
-      break;
     case PROP_BRIGHTNESS:
-      g_value_set_float (value, mfxsinkbin->brightness);
-      break;
     case PROP_CONTRAST:
-      g_value_set_float (value, mfxsinkbin->contrast);
-      break;
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
     case PROP_ROTATION:
-      g_value_set_enum (value, mfxsinkbin->angle);
-      break;
 #endif
+      if (mfxsinkbin->postproc) {
+        g_object_get_property (G_OBJECT (mfxsinkbin->postproc),
+            pspec->name,
+            value);
+      }
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -268,12 +280,74 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       "Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>");
 
   /* Property */
+  g_properties[PROP_FORCE_ASPECT_RATIO] =
+      g_param_spec_boolean ("force-aspect-ratio",
+      "Force aspect ratio",
+      "When enabled, scaling will respect original aspect ratio",
+      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:display:
-   *
-   * The type of display to use.
-   */
+  /* base sink */
+  g_properties[PROP_SYNC] = g_param_spec_boolean ("sync",
+      "Sync",
+      "Sync on the clock",
+      DEFAULT_SYNC, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_MAX_LATENESS] =
+      g_param_spec_int64 ("max-lateness",
+      "Max Lateness",
+      "Maximum number of nanoseconds that a buffer can be late before it "
+      "is dropped (-1 unlimited)",
+      -1, G_MAXINT64,
+      DEFAULT_MAX_LATENESS, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_QOS] =
+      g_param_spec_boolean ("qos",
+      "Qos",
+      "Generate Quality-of-Service events upstream",
+      DEFAULT_QOS, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_ASYNC] =
+      g_param_spec_boolean ("async", "Async",
+      "Go asynchronously to PAUSED",
+      DEFAULT_ASYNC, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_TS_OFFSET] = g_param_spec_int64 ("ts-offset", "TS Offset",
+      "Timestamp offset in nanoseconds",
+      G_MININT64, G_MAXINT64,
+      DEFAULT_TS_OFFSET, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_ENABLE_LAST_SAMPLE] =
+  g_param_spec_boolean ("enable-last-sample", "Enable Last Buffer",
+      "Enable the last-sample property",
+      DEFAULT_ENABLE_LAST_SAMPLE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_LAST_SAMPLE] =
+      g_param_spec_boxed ("last-sample", "Last Sample",
+      "The last sample received in the sink",
+      GST_TYPE_SAMPLE, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_BLOCKSIZE] =
+      g_param_spec_uint ("blocksize", "Block size",
+      "Size in bytes to pull per buffer (0 = default)", 0, G_MAXUINT,
+      DEFAULT_BLOCKSIZE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_RENDER_DELAY] =
+      g_param_spec_uint64 ("render-delay", "Render Delay",
+      "Additional render delay of the sink in nanoseconds", 0, G_MAXUINT64,
+      DEFAULT_RENDER_DELAY, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_THROTTLE_TIME] =
+      g_param_spec_uint64 ("throttle-time", "Throttle time",
+      "The time to keep between rendered buffers (0 = disabled)", 0,
+      G_MAXUINT64,
+      DEFAULT_THROTTLE_TIME, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_MAX_BITRATE] =
+      g_param_spec_uint64 ("max-bitrate", "Max Bitrate",
+      "The maximum bits per second to render (0 = disabled)", 0,
+      G_MAXUINT64,
+      DEFAULT_MAX_BITRATE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
   g_properties[PROP_DISPLAY_TYPE] =
       g_param_spec_enum ("display",
       "display type",
@@ -281,60 +355,38 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       GST_MFX_TYPE_DISPLAY_TYPE,
       GST_MFX_DISPLAY_TYPE_ANY, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:fullscreen:
-   *
-   * Selects whether fullscreen mode is enabled or not.
-   */
   g_properties[PROP_FULLSCREEN] =
       g_param_spec_boolean ("fullscreen",
       "Fullscreen",
       "Requests window in fullscreen state",
       FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:force-aspect-ratio:
-   *
-   * When enabled, scaling respects video aspect ratio; when disabled,
-   * the video is distorted to fit the window.
-   */
   g_properties[PROP_FORCE_ASPECT_RATIO] =
       g_param_spec_boolean ("force-aspect-ratio",
       "Force aspect ratio",
       "When enabled, scaling will respect original aspect ratio",
       TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:no-frame-drop:
-   *
-   * When enabled, all decoded frames arriving at the sink will be rendered
-   * regardless of its lateness. This option helps to deal with slow initial
-   * render times and possible frame drops when rendering the first few frames.
-   */
   g_properties[PROP_NO_FRAME_DROP] =
       g_param_spec_boolean ("no-frame-drop",
       "No frame drop",
       "When enabled, no frame will dropped",
-      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:full-color-range:
-   *
-   * When enabled, all decoded frames will be in RGB 0-255.
-   */
+  g_properties[PROP_SHOW_PREROLL_FRAME] =
+      g_param_spec_boolean ("show-preroll-frame",
+      "Show preroll frame",
+      "When enabled, show video frames during preroll.",
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
   g_properties[PROP_FULL_COLOR_RANGE] =
       g_param_spec_boolean ("full-color-range",
       "Full color range",
       "Decoded frames will be in RGB 0-255",
       FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:deinterlace-mode:
-   *
-   * This selects whether the deinterlacing should always be applied
-   * or if they should only be applied on content that has the
-   * "interlaced" flag on the caps.
-   */
+
+  /* mfxvpp properties */
   g_properties[PROP_DEINTERLACE_MODE] =
       g_param_spec_enum ("deinterlace-mode",
           "Deinterlace mode",
@@ -343,60 +395,30 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           GST_MFX_DEINTERLACE_MODE_BOB,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:width:
-   *
-   * The forced output width in pixels. If set to zero, the width is
-   * calculated from the height if aspect ration is preserved, or
-   * inherited from the sink caps width
-   */
   g_properties[PROP_WIDTH] =
       g_param_spec_uint ("width",
           "Width",
           "Forced output width",
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:height:
-   *
-   * The forced output height in pixels. If set to zero, the height is
-   * calculated from the width if aspect ration is preserved, or
-   * inherited from the sink caps height
-   */
   g_properties[PROP_HEIGHT] =
       g_param_spec_uint ("height",
           "Height",
           "Forced output height",
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:denoise:
-   *
-   * The level of noise reduction to apply.
-   */
   g_properties[PROP_DENOISE] =
       g_param_spec_uint ("denoise",
           "Denoising Level",
           "The level of denoising to apply",
           0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:detail:
-   *
-   * The level of detail / edge enhancement to apply for positive values.
-   */
   g_properties[PROP_DETAIL] =
       g_param_spec_uint ("detail",
           "Detail Level",
           "The level of detail / edge enhancement to apply",
           0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:hue:
-   *
-   * The color hue, expressed as a float value. Range is -180.0 to
-   * 180.0. Default value is 0.0 and represents no modification.
-   */
   g_properties[PROP_HUE] =
       g_param_spec_float ("hue",
           "Hue",
@@ -404,12 +426,6 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           -180.0, 180.0, 0.0,
           GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:saturation:
-   *
-   * The color saturation, expressed as a float value. Range is 0.0 to
-   * 10.0. Default value is 1.0 and represents no modification.
-   */
   g_properties[PROP_SATURATION] =
       g_param_spec_float ("saturation",
           "Saturation",
@@ -417,12 +433,6 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           0.0, 10.0, 1.0,
           GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:brightness:
-   *
-   * The color brightness, expressed as a float value. Range is -100.0
-   * to 100.0. Default value is 0.0 and represents no modification.
-   */
   g_properties[PROP_BRIGHTNESS] =
       g_param_spec_float ("brightness",
           "Brightness",
@@ -430,12 +440,6 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           -100.0, 100.0, 0.0,
           GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:contrast:
-   *
-   * The color contrast, expressed as a float value. Range is 0.0 to
-   * 10.0. Default value is 1.0 and represents no modification.
-   */
   g_properties[PROP_CONTRAST] =
       g_param_spec_float ("contrast",
           "Contrast",
@@ -443,12 +447,7 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           0.0, 10.0, 1.0,
           GST_PARAM_CONTROLLABLE |  G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSinkBin:rotation:
-   *
-   * The rotation angle  for the surface, expressed in GstMfxRotation.
-   */
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   g_properties[PROP_ROTATION] =
       g_param_spec_enum ("rotation",
           "Rotation",

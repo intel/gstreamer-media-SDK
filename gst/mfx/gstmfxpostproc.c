@@ -42,7 +42,7 @@ gst_mfxpostproc_color_balance_iface_init (GstColorBalanceInterface * iface);
 /* Default templates */
 static const char gst_mfxpostproc_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
-#ifdef WITH_MSS
+#ifdef WITH_MSS_2016
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
 #else
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
@@ -242,9 +242,11 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
   if (g_ascii_strcasecmp (channel->label, "HUE") == 0) {
     new_val = (new_val / 10.0);
 
-    vpp->cb_changed = vpp->hue != new_val;
-    vpp->hue = new_val;
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+    if (vpp->hue != new_val) {
+      vpp->hue = new_val;
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+      vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_HUE;
+    }
   } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
     if (new_val < 500 )
         new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
@@ -253,15 +255,19 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     else
         new_val = 1.0;
 
-    vpp->cb_changed = vpp->saturation != new_val;
-    vpp->saturation = new_val;
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+    if (vpp->saturation != new_val) {
+      vpp->saturation = new_val;
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+      vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_SATURATION;
+    }
   } else if (g_ascii_strcasecmp (channel->label, "BRIGHTNESS") == 0) {
     new_val = (new_val / 10.0);
 
-    vpp->cb_changed = vpp->brightness != new_val;
-    vpp->brightness = new_val;
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+    if (vpp->brightness != new_val) {
+      vpp->brightness = new_val;
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+      vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+    }
   } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
     if (new_val < 500 )
         new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
@@ -270,9 +276,11 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     else
         new_val = 1.0;
 
-    vpp->cb_changed = vpp->contrast != new_val;
-    vpp->contrast = new_val;
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+    if (vpp->contrast != new_val) {
+      vpp->contrast = new_val;
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+      vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+    }
   } else {
     g_warning ("got an unknown channel %s", channel->label);
     return;
@@ -335,32 +343,32 @@ gst_mfxpostproc_color_balance_iface_init (GstColorBalanceInterface * iface)
 }
 
 static void
-find_best_size (GstMfxPostproc * postproc, GstVideoInfo * vip,
+find_best_size (GstMfxPostproc * vpp, GstVideoInfo * vip,
     guint * width_ptr, guint * height_ptr)
 {
   guint width, height;
 
   width = GST_VIDEO_INFO_WIDTH (vip);
   height = GST_VIDEO_INFO_HEIGHT (vip);
-  if (postproc->width && postproc->height) {
-    width = postproc->width;
-    height = postproc->height;
-  } else if (postproc->keep_aspect) {
+  if (vpp->width && vpp->height) {
+    width = vpp->width;
+    height = vpp->height;
+  } else if (vpp->keep_aspect) {
     const gdouble ratio = (gdouble) width / height;
-    if (postproc->width) {
-      width = postproc->width;
-      height = postproc->width / ratio;
-    } else if (postproc->height) {
-      height = postproc->height;
-      width = postproc->height * ratio;
+    if (vpp->width) {
+      width = vpp->width;
+      height = vpp->width / ratio;
+    } else if (vpp->height) {
+      height = vpp->height;
+      width = vpp->height * ratio;
     }
-  } else if (postproc->width)
-    width = postproc->width;
-  else if (postproc->height)
-    height = postproc->height;
+  } else if (vpp->width)
+    width = vpp->width;
+  else if (vpp->height)
+    height = vpp->height;
 
-  if (GST_MFX_ROTATION_90 == postproc->angle ||
-      GST_MFX_ROTATION_270 == postproc->angle) {
+  if (GST_MFX_ROTATION_90 == vpp->angle ||
+      GST_MFX_ROTATION_270 == vpp->angle) {
     width = width ^ height;
     height = width ^ height;
     width = width ^ height;
@@ -369,10 +377,13 @@ find_best_size (GstMfxPostproc * postproc, GstVideoInfo * vip,
   *height_ptr = height;
 }
 
-static inline gboolean
-gst_mfxpostproc_ensure_aggregator (GstMfxPostproc * vpp)
+static void
+gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
 {
-  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (vpp));
+  gst_mfx_filter_replace (&vpp->filter, NULL);
+  cb_channels_finalize (vpp);
+  gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
+  gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
 }
 
 static gboolean
@@ -382,34 +393,38 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   gboolean srcpad_has_raw_caps =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
 
+  plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
+
   if (vpp->filter)
     return TRUE;
 
-  if (!gst_mfxpostproc_ensure_aggregator (plugin))
+  if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
-  /* Check if upstream MFX decoder element outputs raw native NV12 surfaces */
-  if (!plugin->memtype_is_system && !plugin->sinkpad_has_dmabuf) {
-    if (!vpp->peer_decoder)
-      vpp->peer_decoder =
-          gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
-    if (gst_mfx_task_has_type (vpp->peer_decoder, GST_MFX_TASK_DECODER))
-      plugin->memtype_is_system =
-          gst_mfx_task_has_native_decoder_output (vpp->peer_decoder);
+  /* Check if upstream MFX decoder element outputs raw NV12 surfaces */
+  if (!plugin->sinkpad_caps_is_raw) {
+    GstMfxTask *task =
+        gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
+
+    if (task) {
+      plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
+      gst_mfx_task_unref (task);
+    }
   }
 
   /* If sinkpad caps indicate video memory input,
    * srcpad should be mapped for vid-to-vid vpp */
-  if (!plugin->memtype_is_system && srcpad_has_raw_caps)
+  if (!plugin->sinkpad_caps_is_raw && srcpad_has_raw_caps)
     srcpad_has_raw_caps = FALSE;
 
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
-      plugin->memtype_is_system, srcpad_has_raw_caps);
+      plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
   if (!vpp->filter)
     return FALSE;
+
   return TRUE;
 }
 
@@ -477,13 +492,13 @@ gst_mfxpostproc_update_sink_caps (GstMfxPostproc * vpp, GstCaps * caps,
 }
 
 static GstBuffer *
-create_output_buffer (GstMfxPostproc * postproc)
+create_output_buffer (GstMfxPostproc * vpp)
 {
   GstBuffer *outbuf;
   GstFlowReturn ret;
 
   GstBufferPool *const pool =
-      GST_MFX_PLUGIN_BASE (postproc)->srcpad_buffer_pool;
+      GST_MFX_PLUGIN_BASE (vpp)->srcpad_buffer_pool;
 
   g_return_val_if_fail (pool != NULL, NULL);
 
@@ -515,26 +530,30 @@ static void
 gst_mfxpostproc_before_transform (GstBaseTransform * trans,
     GstBuffer * buf)
 {
-  GstMfxPostproc *mfxvpp = GST_MFXPOSTPROC (trans);
-  GstClockTime timestamp, stream_time;
+  GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
 
-  timestamp = GST_BUFFER_TIMESTAMP (buf);
-  stream_time =
-      gst_segment_to_stream_time (&trans->segment, GST_FORMAT_TIME, timestamp);
+  if (!vpp->flags &&
+      (vpp->hue == DEFAULT_HUE ||
+       vpp->contrast == DEFAULT_CONTRAST ||
+       vpp->saturation == DEFAULT_SATURATION ||
+       vpp->brightness == DEFAULT_BRIGHTNESS)) {
+    gst_base_transform_set_passthrough (trans, TRUE);
+  }
+  else {
+    gst_base_transform_set_passthrough (trans, FALSE);
+  }
 
-  GST_DEBUG_OBJECT (mfxvpp, "sync to %" GST_TIME_FORMAT,
-      GST_TIME_ARGS (timestamp));
-
-  if (GST_CLOCK_TIME_IS_VALID (stream_time))
-    gst_object_sync_values (GST_OBJECT (mfxvpp), stream_time);
-
-  if (mfxvpp->cb_changed) {
-    gst_mfx_filter_set_saturation(mfxvpp->filter, mfxvpp->saturation);
-    gst_mfx_filter_set_contrast(mfxvpp->filter, mfxvpp->contrast);
-    gst_mfx_filter_set_hue(mfxvpp->filter, mfxvpp->hue);
-    gst_mfx_filter_set_brightness(mfxvpp->filter, mfxvpp->brightness);
-    gst_mfx_filter_reset(mfxvpp->filter);
-    mfxvpp->cb_changed = FALSE;
+  if (vpp->cb_changed) {
+    if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_SATURATION)
+      gst_mfx_filter_set_saturation(vpp->filter, vpp->saturation);
+    if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_CONTRAST)
+      gst_mfx_filter_set_contrast(vpp->filter, vpp->contrast);
+    if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_HUE)
+      gst_mfx_filter_set_hue(vpp->filter, vpp->hue);
+    if (vpp->cb_changed & GST_MFX_POSTPROC_FLAG_BRIGHTNESS)
+      gst_mfx_filter_set_brightness(vpp->filter, vpp->brightness);
+    gst_mfx_filter_reset(vpp->filter);
+    vpp->cb_changed = 0;
   }
 }
 
@@ -547,8 +566,8 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstMfxSurface *surface, *out_surface;
   GstMfxFilterStatus status;
   GstFlowReturn ret;
+  GstBuffer *buf;
   GstMfxRectangle *crop_rect = NULL;
-  GstBuffer *buf, *buf2;
   GstClockTime timestamp;
 
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
@@ -810,6 +829,7 @@ static GstCaps *
 gst_mfxpostproc_transform_caps (GstBaseTransform * trans,
     GstPadDirection direction, GstCaps * caps, GstCaps * filter)
 {
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
   GstCaps *out_caps;
 
   caps = gst_mfxpostproc_transform_caps_impl (trans, direction, caps);
@@ -837,7 +857,8 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
     return FALSE;
 
   if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FORMAT) &&
-      !gst_mfx_filter_set_format (vpp->filter, vpp->format))
+      !gst_mfx_filter_set_format (vpp->filter,
+          gst_video_format_to_mfx_fourcc (vpp->format)))
     return FALSE;
 
   if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE) &&
@@ -877,16 +898,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
           gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d)))
     return FALSE;
 
-  return gst_mfx_filter_prepare (vpp->filter);
-}
-
-static void
-gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
-{
-  gst_mfx_filter_replace (&vpp->filter, NULL);
-  gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
-  gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
-  gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (vpp));
+  return  gst_mfx_filter_prepare (vpp->filter);
 }
 
 static gboolean
@@ -908,6 +920,7 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
     if (!gst_mfx_plugin_base_set_caps (GST_MFX_PLUGIN_BASE (vpp),
             caps, out_caps))
       return FALSE;
+
     if (!gst_mfxpostproc_create (vpp))
       return FALSE;
   }
@@ -935,13 +948,25 @@ gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
       direction, query);
 }
 
+static gboolean
+gst_mfxpostproc_stop (GstBaseTransform * trans)
+{
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+
+  gst_video_info_init (&vpp->sinkpad_info);
+  gst_video_info_init (&vpp->srcpad_info);
+
+  gst_base_transform_set_passthrough (GST_BASE_TRANSFORM (vpp), FALSE);
+  gst_mfxpostproc_destroy (vpp);
+  gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (vpp));
+
+  return TRUE;
+}
+
 static void
 gst_mfxpostproc_finalize (GObject * object)
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
-
-  gst_mfxpostproc_destroy (vpp);
-  gst_mfx_task_replace(&vpp->peer_decoder, NULL);
 
   gst_mfx_plugin_base_finalize (GST_MFX_PLUGIN_BASE (vpp));
   G_OBJECT_CLASS (gst_mfxpostproc_parent_class)->finalize (object);
@@ -980,20 +1005,32 @@ gst_mfxpostproc_set_property (GObject * object,
       vpp->flags |= GST_MFX_POSTPROC_FLAG_DETAIL;
       break;
     case PROP_HUE:
-      vpp->hue = g_value_get_float (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+      if (vpp->hue != g_value_get_float (value)) {
+        vpp->hue = g_value_get_float (value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_HUE;
+        vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_HUE;
+      }
       break;
     case PROP_SATURATION:
-      vpp->saturation = g_value_get_float (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+      if (vpp->hue != g_value_get_float (value)) {
+        vpp->saturation = g_value_get_float (value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
+        vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_SATURATION;
+      }
       break;
     case PROP_BRIGHTNESS:
-      vpp->brightness = g_value_get_float (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+      if (vpp->brightness != g_value_get_float (value)) {
+        vpp->brightness = g_value_get_float (value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+        vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+      }
       break;
     case PROP_CONTRAST:
-      vpp->contrast = g_value_get_float (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+      if (vpp->contrast != g_value_get_float (value)) {
+        vpp->contrast = g_value_get_float (value);
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+        vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_CONTRAST;
+      }
       break;
     case PROP_ROTATION:
       vpp->angle = g_value_get_enum (value);
@@ -1014,47 +1051,47 @@ static void
 gst_mfxpostproc_get_property (GObject * object,
     guint prop_id, GValue * value, GParamSpec * pspec)
 {
-  GstMfxPostproc *const postproc = GST_MFXPOSTPROC (object);
+  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
   switch (prop_id) {
     case PROP_FORMAT:
-      g_value_set_enum (value, postproc->format);
+      g_value_set_enum (value, vpp->format);
       break;
     case PROP_WIDTH:
-      g_value_set_uint (value, postproc->width);
+      g_value_set_uint (value, vpp->width);
       break;
     case PROP_HEIGHT:
-      g_value_set_uint (value, postproc->height);
+      g_value_set_uint (value, vpp->height);
       break;
     case PROP_FORCE_ASPECT_RATIO:
-      g_value_set_boolean (value, postproc->keep_aspect);
+      g_value_set_boolean (value, vpp->keep_aspect);
       break;
     case PROP_DEINTERLACE_MODE:
-      g_value_set_enum (value, postproc->deinterlace_mode);
+      g_value_set_enum (value, vpp->deinterlace_mode);
       break;
     case PROP_DENOISE:
-      g_value_set_uint (value, postproc->denoise_level);
+      g_value_set_uint (value, vpp->denoise_level);
       break;
     case PROP_DETAIL:
-      g_value_set_uint (value, postproc->detail_level);
+      g_value_set_uint (value, vpp->detail_level);
       break;
     case PROP_HUE:
-      g_value_set_float (value, postproc->hue);
+      g_value_set_float (value, vpp->hue);
       break;
     case PROP_SATURATION:
-      g_value_set_float (value, postproc->saturation);
+      g_value_set_float (value, vpp->saturation);
       break;
     case PROP_BRIGHTNESS:
-      g_value_set_float (value, postproc->brightness);
+      g_value_set_float (value, vpp->brightness);
       break;
     case PROP_CONTRAST:
-      g_value_set_float (value, postproc->contrast);
+      g_value_set_float (value, vpp->contrast);
       break;
     case PROP_ROTATION:
-      g_value_set_enum (value, postproc->angle);
+      g_value_set_enum (value, vpp->angle);
       break;
     case PROP_FRAMERATE_CONVERSION:
-      g_value_set_enum (value, postproc->alg);
+      g_value_set_enum (value, vpp->alg);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1082,6 +1119,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   trans_class->transform_caps = gst_mfxpostproc_transform_caps;
   trans_class->transform = gst_mfxpostproc_transform;
   trans_class->set_caps = gst_mfxpostproc_set_caps;
+  trans_class->stop = gst_mfxpostproc_stop;
   trans_class->query = gst_mfxpostproc_query;
   trans_class->propose_allocation = gst_mfxpostproc_propose_allocation;
   trans_class->decide_allocation = gst_mfxpostproc_decide_allocation;
@@ -1242,7 +1280,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           0.0, 10.0, 1.0, GST_PARAM_CONTROLLABLE |
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   /**
    * GstMfxPostproc:rotation:
    *

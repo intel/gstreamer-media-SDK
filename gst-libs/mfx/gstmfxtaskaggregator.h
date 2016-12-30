@@ -33,14 +33,9 @@ G_BEGIN_DECLS
 #define GST_MFX_TASK_AGGREGATOR (obj) \
   ((GstMfxTaskAggregator *) (obj))
 
-#define GST_MFX_TASK_AGGREGATOR_DISPLAY(aggregator) \
-    gst_mfx_task_aggregator_get_display (aggregator)
 
 GstMfxTaskAggregator *
 gst_mfx_task_aggregator_new (void);
-
-mfxSession
-gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator);
 
 GstMfxTask *
 gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator);
@@ -65,6 +60,14 @@ gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
 
 GstMfxDisplay *
 gst_mfx_task_aggregator_get_display (GstMfxTaskAggregator * aggregator);
+
+mfxSession
+gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
+    gboolean * is_joined);
+
+void
+gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
+    GstMfxTask * task);
 
 
 G_END_DECLS

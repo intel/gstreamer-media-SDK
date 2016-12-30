@@ -28,6 +28,7 @@
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_priv.h"
 #include "wayland-drm-client-protocol.h"
+#include "scaler-client-protocol.h"
 
 G_BEGIN_DECLS
 
@@ -56,6 +57,7 @@ struct _GstMfxDisplayWaylandPrivate
   struct wl_output      *output;
   struct wl_registry    *registry;
   struct wl_drm         *drm;
+  struct wl_scaler      *scaler;
   guint                  width;
   guint                  height;
   guint                  phys_width;

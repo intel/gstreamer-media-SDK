@@ -96,10 +96,13 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
 static void
 gst_mfx_surface_vaapi_release(GstMfxSurface * surface)
 {
-  GST_MFX_DISPLAY_LOCK(surface->display);
-  vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(surface->display),
-    &surface->surface_id, 1);
-  GST_MFX_DISPLAY_UNLOCK(surface->display);
+  /* Don't destroy the underlying VASurface if originally from the task allocator*/
+  if (!surface->task) {
+    GST_MFX_DISPLAY_LOCK(surface->display);
+    vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(surface->display),
+        &surface->surface_id, 1);
+    GST_MFX_DISPLAY_UNLOCK(surface->display);
+  }
 }
 
 static gboolean
@@ -119,6 +122,13 @@ gst_mfx_surface_vaapi_map(GstMfxSurface * surface)
   for (i = 0; i < num_planes; i++) {
     surface->planes[i] = vaapi_image_get_plane(vaapi_surface->image, i);
     surface->pitches[i] = vaapi_image_get_pitch(vaapi_surface->image, i);
+  }
+  if (num_planes == 1)
+    vaapi_image_get_size(vaapi_surface->image, &surface->width, &surface->height);
+  else {
+    surface->width = surface->pitches[0];
+    surface->height =
+        vaapi_image_get_offset(vaapi_surface->image, 1) / surface->width;
   }
 
   return TRUE;
@@ -146,7 +156,9 @@ gst_mfx_surface_vaapi_class_init(GstMfxSurfaceClass * klass)
 
   GST_DEBUG_CATEGORY_INIT(gst_debug_mfx, "mfx", 0, "MFX helper");
 
-  object_class->size = sizeof(GstMfxSurface);
+  gst_mfx_surface_class_init (&klass->parent_class);
+
+  object_class->size = sizeof(GstMfxSurfaceVaapi);
   surface_class->allocate = gst_mfx_surface_vaapi_allocate;
   surface_class->release = gst_mfx_surface_vaapi_release;
   surface_class->map = gst_mfx_surface_vaapi_map;
@@ -187,7 +199,7 @@ gst_mfx_surface_vaapi_get_display(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, NULL);
 
-  return surface->display;
+  return gst_mfx_display_ref (surface->display);
 }
 
 VaapiImage *

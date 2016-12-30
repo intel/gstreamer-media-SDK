@@ -57,7 +57,7 @@ gst_mfx_task_new (GstMfxTaskAggregator * aggregator,
 
 GstMfxTask *
 gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
-    mfxSession session, guint type_flags);
+    mfxSession session, guint type_flags, gboolean is_joined);
 
 GstMfxTask *
 gst_mfx_task_ref (GstMfxTask * task);
@@ -88,13 +88,16 @@ void
 gst_mfx_task_use_video_memory (GstMfxTask * task);
 
 gboolean
-gst_mfx_task_has_mapped_surface (GstMfxTask * task);
+gst_mfx_task_has_video_memory (GstMfxTask * task);
 
 void
-gst_mfx_task_ensure_native_decoder_output (GstMfxTask * task);
+gst_mfx_task_set_video_params (GstMfxTask * task, mfxVideoParam * params);
 
-gboolean
-gst_mfx_task_has_native_decoder_output (GstMfxTask * task);
+mfxVideoParam *
+gst_mfx_task_get_video_params (GstMfxTask * task);
+
+void
+gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task);
 
 GstMfxDisplay *
 gst_mfx_task_get_display (GstMfxTask * task);

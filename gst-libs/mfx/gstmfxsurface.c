@@ -43,7 +43,7 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface)
 
   frame_size = info->Width * info->Height;
 
-#ifdef WITH_MSS
+#ifdef WITH_MSS_2016
   offset = 1;
 #endif
 
@@ -115,9 +115,20 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface)
     ptr->A = ptr->B + 3;
 
     break;
+  case MFX_FOURCC_P010:
+    surface->data_size = frame_size * 3;
+    surface->data = g_slice_alloc(surface->data_size + offset);
+    if (!surface->data)
+      goto error;
+    ptr->Pitch = surface->pitches[0] = surface->pitches[1] = info->Width * 2;
+
+    surface->planes[0] = ptr->Y = surface->data + offset;
+    surface->planes[1] = ptr->UV = ptr->Y + frame_size * 2;
+
+    break;
   default:
-    error:
-      GST_ERROR("Failed to create surface surface.");
+error:
+      GST_ERROR("Failed to create surface.");
       success = FALSE;
       break;
   }
@@ -188,7 +199,7 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   surface->crop_rect.width = info->CropW;
   surface->crop_rect.height = info->CropH;
 
-#ifndef WITH_MSS
+#ifndef WITH_MSS_2016
   /* Full color range */
   surface->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
   surface->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
@@ -211,12 +222,12 @@ gst_mfx_surface_create(GstMfxSurface * surface, GstVideoInfo * info,
     GstMfxTask * task)
 {
   if (task) {
-    mfxFrameAllocRequest *req;
-    req = gst_mfx_task_get_request(task);
+    mfxFrameAllocRequest *req = gst_mfx_task_get_request(task);
     if (!req)
       return FALSE;
     surface->surface.Info = req->Info;
     surface->format = gst_video_format_from_mfx_fourcc (req->Info.FourCC);
+    surface->task = gst_mfx_task_ref (task);
   }
   else if (info) {
     gst_mfx_surface_derive_mfx_frame_info(surface, info);
@@ -240,6 +251,7 @@ gst_mfx_surface_finalize (GstMfxSurface * surface)
   if (klass->release)
     klass->release(surface);
   gst_mfx_display_replace(&surface->display, NULL);
+  gst_mfx_task_replace (&surface->task, NULL);
 }
 
 void
@@ -309,7 +321,7 @@ gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
   return surface;
 
 error:
-  gst_mfx_surface_unref_internal(display);
+  gst_mfx_surface_unref_internal(surface);
   return NULL;
 }
 

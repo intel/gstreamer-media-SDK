@@ -43,6 +43,7 @@ struct _GstMfxSurface
   GstMfxMiniObject parent_instance;
 
   GstMfxDisplay *display;
+  GstMfxTask *task;
   GstMfxMemoryId mem_id;
   GstMfxID surface_id;
 
