@@ -45,6 +45,7 @@ struct _GstMfxCompositeFilter
 
   mfxExtBuffer *ext_buffer;
   mfxExtVPPComposite composite;
+  guint num_rect;
 };
 
 static void
