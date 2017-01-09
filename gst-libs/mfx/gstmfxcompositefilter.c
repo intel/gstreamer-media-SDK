@@ -42,7 +42,7 @@ struct _GstMfxCompositeFilter
   mfxFrameInfo frame_info;
   mfxVideoParam params;
 
-  mfxExtBuffer **ext_buffer;
+  mfxExtBuffer *ext_buffer;
   mfxExtVPPComposite composite;
 };
 
@@ -62,24 +62,61 @@ static gboolean
 configure_composite_filter (GstMfxCompositeFilter * filter,
   GstMfxSubpictureComposition * composition)
 {
-  memset (&filter->composite, 0, sizeof (mfxExtVPPComposite));
+  g_return_val_if_fail (filter != NULL, FALSE);
+  g_return_val_if_fail (composition != NULL, FALSE);
 
-  filter->composite.Header.BufferId = MFX_EXTBUFF_VPP_COMPOSITE;
-  filter->composite.Header.BufferSz = sizeof (mfxExtVPPComposite);
+  guint num_rect = 0;
+  GstMfxSubpicture *subpicture = NULL;
 
+  if (!filter->inited) {
+    memset (&filter->composite, 0, sizeof (mfxExtVPPComposite));
+    filter->composite.Header.BufferId = MFX_EXTBUFF_VPP_COMPOSITE;
+    filter->composite.Header.BufferSz = sizeof (mfxExtVPPComposite);
+  }
 
-  /* TODO - fill in subpicture info in composite filter structure */
+  num_rect = gst_mfx_subpicture_composition_get_num_subpictures (composition);
 
+  if (filter->num_rect != num_rect &&
+          filter->composite.InputStream) {
+    g_slice_free1(((num_rect+1)*sizeof (mfxVPPCompInputStream)),
+        filter->composite.InputStream);
+  }
 
+  filter->num_rect = num_rect;
 
-  filter->ext_buffer = g_slice_alloc (sizeof (mfxExtBuffer *));
-  if (!filter->ext_buffer)
-    return FALSE;
+  /* Set number of input stream to composed
+   * Input Stream = Number of rectangle + number of base surface*/
+  filter->composite.NumInputStream = num_rect + 1;
 
-  filter->ext_buffer[0] = (mfxExtBuffer *) & filter->composite;
+  if(!filter->composite.InputStream) {
+    filter->compsite.InputStream =
+        g_slice_alloc (filter->composite.NumInputStream *
+        sizeof (mfxVPPCompInputStream));
+    if (!filter->composite.InputStream)
+      return FALSE;
+  }
 
+  /* Fill the base picture */
+  filter->composite.InputStream[0].DstX = filter->frame_info.CropX;
+  filter->composite.InputStream[0].DstY = filter->frame_info.CropY;
+  filter->composite.InputStream[0].CropW = filter->frame_info.CropW;
+  filter->composite.InputStream[0].CropH = filter->frame_info.CropH;
+
+  /* Fill the subpicture info */
+  for (guint i=1; i < filter->composite.NumInputStream; i++) {
+    subp = gst_mfx_subpicture_composition_get_subpicture (composition, i);
+    if (!subp)
+      return FALSE;
+    filter->composite.InputStream[i].DstX = subp->sub_rect.x;
+    filter->composite.InputStream[i].DstY = subp->sub_rect.y;
+    filter->composite.InputStream[i].CropH = subp->sub_rect.height;
+    filter->composite.InputStream[i].CropW = subp->sub_rect.width;
+    filter->composite.InputStream[i].PixelAlphaEnable = 1;
+  }
+
+  filter->ext_buffer = (mfxExtBuffer *) &filter->composite;
   filter->params.NumExtParam = 1;
-  filter->params.ExtParam = (mfxExtBuffer **) & filter->ext_buffer[0];
+  filter->params.ExtParam = &filter->ext_buffer;
 
   return TRUE;
 }
