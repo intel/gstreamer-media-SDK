@@ -46,7 +46,6 @@ struct _GstMfxCompositeFilter
   mfxExtVPPComposite composite;
 };
 
-
 static void
 gst_mfx_composite_filter_finalize (GstMfxCompositeFilter * filter)
 {
@@ -118,6 +117,30 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
   filter->params.NumExtParam = 1;
   filter->params.ExtParam = &filter->ext_buffer;
 
+  return TRUE;
+}
+
+static gboolean
+gst_mfx_composite_filter_reset (GstMfxCompositeFilter * filter,
+    GstMfxSubpictureComposition * composition)
+{
+
+  g_return_val_if_fail (filter != NULL, FALSE);
+  g_return_val_if_fail (composition != NULL, FALSE);
+
+  mfxStatus sts = MFX_ERR_NONE;
+
+  if (!filter->inited)
+    return TRUE;
+
+  if (!configure_composite_filter (filter, composition))
+      return FALSE;
+
+  sts = MFXVideoVPP_Reset (filter->session, &filter->params);
+  if (sts < 0) {
+      GST_ERROR ("Error resetting MFX VPP %d", sts);
+      return FALSE;
+  }
   return TRUE;
 }
 
