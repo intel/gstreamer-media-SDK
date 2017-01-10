@@ -67,7 +67,7 @@ gst_mfx_subpicture_composition_get_base_surface (GstMfxSubpictureComposition * c
 guint
 gst_mfx_subpicture_composition_get_num_subpictures(GstMfxSubpictureComposition * composition);
 
-GstMfxSurface *
+GstMfxSubpicture *
 gst_mfx_subpicture_composition_get_subpicture(GstMfxSubpictureComposition * composition,
   guint index);
 
