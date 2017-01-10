@@ -12,7 +12,9 @@ set(SOURCE
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxutils_vaapi.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxvalue.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxwindow.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/video-format.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/video-format.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxcompositefilter.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsubpicturecomposition.c")
 
 if(MFX_DECODER)
     set(SOURCE ${SOURCE}
