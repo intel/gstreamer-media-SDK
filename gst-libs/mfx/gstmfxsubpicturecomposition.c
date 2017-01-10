@@ -28,15 +28,6 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-typedef struct _GstMfxSubpicture GstMfxSubpicture;
-
-struct _GstMfxSubpicture
-{
-  GstMfxSurface *surface;
-  gfloat global_alpha;
-  GstMfxRectangle sub_rect;
-};
-
 struct _GstMfxSubpictureComposition
 {
   /*< private > */
@@ -214,7 +205,7 @@ gst_mfx_subpicture_composition_replace(
 }
 
 GstMfxSurface *
-gst_mfx_subpicture_composition_get_surface(
+gst_mfx_subpicture_composition_get_subpicture(
   GstMfxSubpictureComposition * composition, guint index)
 {
   GstMfxSubpicture *subpicture;
@@ -223,7 +214,7 @@ gst_mfx_subpicture_composition_get_surface(
 
   subpicture = g_ptr_array_index(composition->subpictures, index);
 
-  return subpicture->surface;
+  return subpicture;
 }
 
 void
@@ -241,19 +232,6 @@ gst_mfx_subpicture_composition_add_surface(GstMfxSubpictureComposition * composi
   subpicture->global_alpha = global_alpha;
 
   g_ptr_array_add (composition->subpictures, subpicture);
-}
-
-gfloat
-gst_mfx_subpicture_composition_get_global_alpha(
-  GstMfxSubpictureComposition * composition, guint index)
-{
-  GstMfxSubpicture *subpicture;
-
-  g_return_val_if_fail(composition != NULL, 1.0);
-
-  subpicture = g_ptr_array_index(composition->subpictures, index);
-
-  return subpicture->global_alpha;
 }
 
 guint

@@ -42,6 +42,13 @@ gst_mfxpostproc_color_balance_iface_init (GstColorBalanceInterface * iface);
 /* Default templates */
 static const char gst_mfxpostproc_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
+        GST_CAPS_FEATURE_MEMORY_MFX_SURFACE ","
+            GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
+        "{ NV12, YV12, I420, YUY2, BGRA, BGRx }") ";"
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
+        GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
+        "{ NV12, YV12, I420, YUY2, BGRA, BGRx }") ";"
 #ifdef WITH_MSS_2016
     GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
 #else

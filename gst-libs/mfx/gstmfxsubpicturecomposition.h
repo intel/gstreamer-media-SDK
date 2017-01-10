@@ -33,6 +33,14 @@ G_BEGIN_DECLS
     ((GstMfxSubpictureComposition *)(obj))
 
 typedef struct _GstMfxSubpictureComposition GstMfxSubpictureComposition;
+typedef struct _GstMfxSubpicture GstMfxSubpicture;
+
+struct _GstMfxSubpicture
+{
+  GstMfxSurface *surface;
+  gfloat global_alpha;
+  GstMfxRectangle sub_rect;
+};
 
 GstMfxSubpictureComposition *
 gst_mfx_subpicture_composition_new (GstMfxDisplay * display,
@@ -58,11 +66,7 @@ guint
 gst_mfx_subpicture_composition_get_num_subpictures(GstMfxSubpictureComposition * composition);
 
 GstMfxSurface *
-gst_mfx_subpicture_composition_get_surface(GstMfxSubpictureComposition * composition,
-  guint index);
-
-gfloat
-gst_mfx_subpicture_composition_get_global_alpha(GstMfxSubpictureComposition * composition,
+gst_mfx_subpicture_composition_get_subpicture(GstMfxSubpictureComposition * composition,
   guint index);
 
 G_END_DECLS
