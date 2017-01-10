@@ -26,6 +26,7 @@
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxtask.h"
 #include "gstmfxsurface.h"
+#include "gstmfxsurface_vaapi.h"
 #include "gstmfxsubpicturecomposition.h"
 
 
@@ -71,6 +72,9 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
     memset (&filter->composite, 0, sizeof (mfxExtVPPComposite));
     filter->composite.Header.BufferId = MFX_EXTBUFF_VPP_COMPOSITE;
     filter->composite.Header.BufferSz = sizeof (mfxExtVPPComposite);
+    filter->composite.Y = 0x10;
+    filter->composite.U = 0x80;
+    filter->composite.V = 0x80;
   }
 
   num_rect = gst_mfx_subpicture_composition_get_num_subpictures (composition);
@@ -88,7 +92,7 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
   filter->composite.NumInputStream = num_rect + 1;
 
   if(!filter->composite.InputStream) {
-    filter->compsite.InputStream =
+    filter->composite.InputStream =
         g_slice_alloc (filter->composite.NumInputStream *
         sizeof (mfxVPPCompInputStream));
     if (!filter->composite.InputStream)
@@ -98,18 +102,18 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
   /* Fill the base picture */
   filter->composite.InputStream[0].DstX = filter->frame_info.CropX;
   filter->composite.InputStream[0].DstY = filter->frame_info.CropY;
-  filter->composite.InputStream[0].CropW = filter->frame_info.CropW;
-  filter->composite.InputStream[0].CropH = filter->frame_info.CropH;
+  filter->composite.InputStream[0].DstW = filter->frame_info.CropW;
+  filter->composite.InputStream[0].DstH = filter->frame_info.CropH;
 
   /* Fill the subpicture info */
   for (guint i=1; i < filter->composite.NumInputStream; i++) {
-    subp = gst_mfx_subpicture_composition_get_subpicture (composition, i);
-    if (!subp)
+    subpicture = gst_mfx_subpicture_composition_get_subpicture (composition, i-1);
+    if (!subpicture)
       return FALSE;
-    filter->composite.InputStream[i].DstX = subp->sub_rect.x;
-    filter->composite.InputStream[i].DstY = subp->sub_rect.y;
-    filter->composite.InputStream[i].CropH = subp->sub_rect.height;
-    filter->composite.InputStream[i].CropW = subp->sub_rect.width;
+    filter->composite.InputStream[i].DstX = subpicture->sub_rect.x;
+    filter->composite.InputStream[i].DstY = subpicture->sub_rect.y;
+    filter->composite.InputStream[i].DstH = subpicture->sub_rect.height;
+    filter->composite.InputStream[i].DstW = subpicture->sub_rect.width;
     filter->composite.InputStream[i].PixelAlphaEnable = 1;
   }
 
@@ -155,6 +159,7 @@ gst_mfx_composite_filter_init (GstMfxCompositeFilter * filter,
       MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   filter->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   filter->inited = FALSE;
+  filter->num_rect = 0;
 
   filter->vpp =
       gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
@@ -254,9 +259,10 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
     GST_MFX_SURFACE_WIDTH (base_surface), GST_MFX_SURFACE_HEIGHT (base_surface));
 
   /* Output surface for composed surface */
-  if (filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY)
+  if (filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY) {
     filter->out_surface = gst_mfx_surface_vaapi_new (display, &info);
-  else
+    gst_mfx_task_use_video_memory (filter->vpp);
+  } else
     filter->out_surface = gst_mfx_surface_new (&info);
 
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
@@ -274,6 +280,7 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
   GstMfxSubpictureComposition * composition, GstMfxSurface ** out_surface)
 {
   GstMfxSurface *surface;
+  GstMfxSubpicture *subpicture = NULL;
   mfxFrameSurface1 *insurf, *outsurf = NULL;
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
@@ -281,6 +288,11 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
 
   num_subpictures =
       gst_mfx_subpicture_composition_get_num_subpictures (composition);
+
+  /* Reset filter for every frame because subpicture dimension
+   * and position will be different for every frame. */
+  if (!gst_mfx_composite_filter_reset (filter, composition))
+      return FALSE;
 
   if (!filter->inited) {
     if (!gst_mfx_composite_filter_start (filter, composition))
@@ -292,19 +304,48 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
   surface = gst_mfx_subpicture_composition_get_base_surface(composition);
   insurf = gst_mfx_surface_get_frame_surface (surface);
 
-  sts =
-      MFXVideoVPP_RunFrameVPPAsync (filter->session, insurf, outsurf, NULL,
+  /* Get output surface */
+  outsurf = gst_mfx_surface_get_frame_surface (filter->out_surface);
+  do {
+    sts =
+        MFXVideoVPP_RunFrameVPPAsync (filter->session,
+        insurf,
+        outsurf,
+        NULL,
         &syncp);
 
-  /* Composition call with subpictures */
-  for (i = 0; i < num_subpictures; i++) {
-    surface = gst_mfx_subpicture_composition_get_subpicture (composition, i);
-    insurf = gst_mfx_surface_get_frame_surface (surface);
+    if (MFX_WRN_DEVICE_BUSY == sts)
+        g_usleep (500);
+  } while (MFX_WRN_DEVICE_BUSY == sts);
 
-    sts =
-        MFXVideoVPP_RunFrameVPPAsync (filter->session, insurf, outsurf, NULL,
-          &syncp);
+  if (MFX_ERR_MORE_DATA == sts) {
+    for (i = 0; i < num_subpictures; i++) {
+      subpicture =
+          gst_mfx_subpicture_composition_get_subpicture (composition, i);
+      insurf = gst_mfx_surface_get_frame_surface (subpicture->surface);
+
+      do {
+        sts =
+            MFXVideoVPP_RunFrameVPPAsync (filter->session,
+            insurf,
+            outsurf,
+            NULL,
+            &syncp);
+
+        if (MFX_WRN_DEVICE_BUSY == sts)
+            g_usleep (500);
+      } while (MFX_WRN_DEVICE_BUSY == sts);
+    }
   }
+
+  if (MFX_ERR_NONE != sts)
+    return FALSE;
+
+  do {
+    sts = MFXVideoCORE_SyncOperation (filter->session, syncp, 1000);
+  } while (MFX_WRN_IN_EXECUTION == sts);
+
+  *out_surface = filter->out_surface;
 
   return TRUE;
 }
