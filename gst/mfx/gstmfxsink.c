@@ -1003,7 +1003,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
     if (!sink->composite_filter)
       sink->composite_filter =
         gst_mfx_composite_filter_new (plugin->aggregator,
-            gst_mfx_surface_has_video_memory (surface), FALSE);
+            !gst_mfx_surface_has_video_memory (surface), FALSE);
 
     composition = gst_mfx_subpicture_composition_new (display,
         overlay, FALSE);
