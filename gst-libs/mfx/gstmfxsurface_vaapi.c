@@ -86,7 +86,7 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
       return FALSE;
 
     surface->mem_id.mid = &surface->surface_id;
-    surface->mem_id.info = &frame_info;
+    surface->mem_id.info = frame_info;
     surface->surface.Data.MemId = &surface->mem_id;
 
     return TRUE;
