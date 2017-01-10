@@ -188,6 +188,7 @@ check_supported_filters (GstMfxFilter * filter)
   /* Release the resource */
   g_slice_free (mfxExtVPPDoUse, vpp_use.AlgList);
 }
+
 static gboolean
 configure_filters (GstMfxFilter * filter)
 {

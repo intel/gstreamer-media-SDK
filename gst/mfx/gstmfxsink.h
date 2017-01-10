@@ -28,6 +28,7 @@
 
 #include <gst-libs/mfx/gstmfxdisplay.h>
 #include <gst-libs/mfx/gstmfxwindow.h>
+#include <gst-libs/mfx/gstmfxcompositefilter.h>
 
 G_BEGIN_DECLS
 
@@ -93,6 +94,8 @@ struct _GstMfxSink
   GstMfxRectangle            display_rect;
   GThread                   *event_thread;
   volatile gboolean          event_thread_cancel;
+
+  GstMfxCompositeFilter     *composite_filter;
 
   GstMfxDisplay             *display;
   GstMfxDisplayType          display_type;
