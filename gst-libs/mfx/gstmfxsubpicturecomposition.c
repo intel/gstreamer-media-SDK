@@ -1,24 +1,24 @@
 /*
-*  gstmfxsubpicturecomposition.c - MFX subpicture composition abstraction
-*
-*  Copyright (C) 2017 Intel Corporation
-*    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
-*
-*  This library is free software; you can redistribute it and/or
-*  modify it under the terms of the GNU Lesser General Public License
-*  as published by the Free Software Foundation; either version 2.1
-*  of the License, or (at your option) any later version.
-*
-*  This library is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-*  Lesser General Public License for more details.
-*
-*  You should have received a copy of the GNU Lesser General Public
-*  License along with this library; if not, write to the Free
-*  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-*  Boston, MA 02110-1301 USA
-*/
+ *  gstmfxsubpicturecomposition.c - MFX subpicture composition abstraction
+ *
+ *  Copyright (C) 2017 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
 
 #include "sysdeps.h"
 #include "gstmfxsubpicturecomposition.h"
@@ -34,6 +34,7 @@ struct _GstMfxSubpictureComposition
   GstMfxMiniObject parent_instance;
 
   GPtrArray *subpictures;
+  GstMfxSurface *base_surface;
 };
 
 static void
@@ -156,8 +157,7 @@ gst_mfx_subpicture_composition_class(void)
 
 GstMfxSubpictureComposition *
 gst_mfx_subpicture_composition_new(GstMfxDisplay * display,
-  GstVideoOverlayComposition * overlay,
-  GstVideoInfo * info, gboolean memtype_is_system)
+  GstVideoOverlayComposition * overlay, gboolean memtype_is_system)
 {
   GstMfxSubpictureComposition *composition;
 
@@ -218,20 +218,21 @@ gst_mfx_subpicture_composition_get_subpicture(
 }
 
 void
-gst_mfx_subpicture_composition_add_surface(GstMfxSubpictureComposition * composition,
-  GstMfxSurface * surface, gfloat global_alpha)
+gst_mfx_subpicture_composition_add_base_surface (
+  GstMfxSubpictureComposition * composition, GstMfxSurface * surface)
 {
-  GstMfxSubpicture *subpicture;
-
   g_return_if_fail(composition != NULL);
   g_return_if_fail(surface != NULL);
 
-  subpicture = g_slice_new0(GstMfxSubpicture);
+  gst_mfx_surface_replace (&composition->base_surface, surface);
+}
 
-  subpicture->surface = gst_mfx_surface_ref(surface);
-  subpicture->global_alpha = global_alpha;
-
-  g_ptr_array_add (composition->subpictures, subpicture);
+GstMfxSurface *
+gst_mfx_subpicture_composition_get_base_surface (
+  GstMfxSubpictureComposition * composition)
+{
+  g_return_val_if_fail(composition != NULL, NULL);
+  return composition->base_surface;
 }
 
 guint
