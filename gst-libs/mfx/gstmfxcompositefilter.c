@@ -35,6 +35,7 @@ struct _GstMfxCompositeFilter
   GstMfxMiniObject parent_instance;
   GstMfxTaskAggregator *aggregator;
   GstMfxTask *vpp;
+  GstMfxSurface *out_surface;
   gboolean inited;
 
   mfxSession session;
@@ -173,8 +174,13 @@ static gboolean
 gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
   GstMfxSubpictureComposition * composition)
 {
-  GstMfxSurface * base_surface;
+  GstMfxSurface *base_surface;
+  GstMfxDisplay *display =
+      gst_mfx_task_aggregator_get_display (filter->aggregator);
   mfxStatus sts = MFX_ERR_NONE;
+  GstVideoInfo info;
+
+  gst_video_info_init(&info);
 
   base_surface = gst_mfx_subpicture_composition_get_base_surface (composition);
   filter->frame_info = gst_mfx_surface_get_frame_surface (base_surface)->Info;
@@ -184,11 +190,22 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
     return FALSE;
   }
 
+  gst_video_info_set_format(&info, GST_MFX_SURFACE_FORMAT (base_surface),
+    GST_MFX_SURFACE_WIDTH (base_surface), GST_MFX_SURFACE_HEIGHT (base_surface));
+
+  /* Output surface for composed surface */
+  if (filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY)
+    filter->out_surface = gst_mfx_surface_vaapi_new (display, &info);
+  else
+    filter->out_surface = gst_mfx_surface_new (&info);
+
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
   if (sts < 0) {
     GST_ERROR ("Error initializing MFX VPP %d", sts);
     return FALSE;
   }
+
+  gst_mfx_display_replace (&display, NULL);
   return TRUE;
 }
 

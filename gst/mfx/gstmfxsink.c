@@ -858,6 +858,8 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
     gst_mfx_display_replace (&sink->display, NULL);
   }
 
+  gst_mfx_composite_filter_replace (&sink->composite_filter, NULL);
+
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (sink));
   return TRUE;
 }
@@ -964,6 +966,7 @@ static GstFlowReturn
 gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (video_sink);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (sink);
   GstMfxVideoMeta *meta;
   GstMfxSurface *surface, *composite_surface = NULL;
   GstMfxRectangle *surface_rect = NULL;
@@ -992,18 +995,25 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
       surface_rect->width, surface_rect->height);
 
   if (cmeta) {
+    GstMfxDisplay *display =
+        gst_mfx_task_aggregator_get_display (plugin->aggregator);
+
     overlay = cmeta->overlay;
 
     if (!sink->composite_filter)
       sink->composite_filter =
-        gst_mfx_composite_filter_new (GST_MFX_PLUGIN_BASE (sink)->aggregator,
+        gst_mfx_composite_filter_new (plugin->aggregator,
             gst_mfx_surface_has_video_memory (surface), FALSE);
 
-    composition = gst_mfx_subpicture_composition_new (sink->display,
+    composition = gst_mfx_subpicture_composition_new (display,
         overlay, FALSE);
+
+    gst_mfx_subpicture_composition_add_base_surface (composition, surface);
 
     gst_mfx_composite_filter_apply_composition (sink->composite_filter,
         composition, &composite_surface);
+
+    gst_mfx_display_replace (&display, NULL);
   }
 
   if (!gst_mfxsink_render_surface (sink,

@@ -204,7 +204,7 @@ gst_mfx_subpicture_composition_replace(
     GST_MFX_MINI_OBJECT(new_composition));
 }
 
-GstMfxSurface *
+GstMfxSubpicture *
 gst_mfx_subpicture_composition_get_subpicture(
   GstMfxSubpictureComposition * composition, guint index)
 {
