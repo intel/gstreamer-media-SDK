@@ -84,20 +84,26 @@ create_subpicture (GstMfxSubpictureComposition * composition,
   if (!subpicture->surface)
     return FALSE;
 
-  if (!gst_mfx_surface_map(subpicture->surface))
-    goto error;
-  memcpy(gst_mfx_surface_get_plane(subpicture->surface, 0), data, map_info.size);
-  gst_mfx_surface_unmap(subpicture->surface);
-
   gst_video_overlay_rectangle_get_render_rectangle(rect,
     (gint *)& subpicture->sub_rect.x, (gint *)& subpicture->sub_rect.y,
     &subpicture->sub_rect.width, &subpicture->sub_rect.height);
 
-  /* ensure that the overlay is not bigger than the surface */
-  subpicture->sub_rect.y =
-      MIN(subpicture->sub_rect.y, GST_MFX_SURFACE_HEIGHT(subpicture->surface));
-  subpicture->sub_rect.width =
-      MIN(subpicture->sub_rect.width, GST_MFX_SURFACE_WIDTH(subpicture->surface));
+  if (!gst_mfx_surface_map(subpicture->surface))
+    goto error;
+  if (subpicture->sub_rect.width == GST_MFX_SURFACE_WIDTH (subpicture->surface) &&
+      subpicture->sub_rect.height == GST_MFX_SURFACE_HEIGHT (subpicture->surface)) {
+    memcpy(gst_mfx_surface_get_plane(subpicture->surface, 0), data, map_info.size);
+  }
+  else {
+    guint8 *plane = gst_mfx_surface_get_plane(subpicture->surface, 0);
+    guint i;
+
+    for (i = 0; i < subpicture->sub_rect.height; i++)
+      memcpy(plane + i * GST_MFX_SURFACE_WIDTH (subpicture->surface) * 4,
+          data + i * subpicture->sub_rect.width * 4,
+          subpicture->sub_rect.width * 4);
+  }
+  gst_mfx_surface_unmap(subpicture->surface);
 
   gst_video_meta_unmap(vmeta, 0, &map_info);
 
