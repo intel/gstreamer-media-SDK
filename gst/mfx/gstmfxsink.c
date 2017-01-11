@@ -35,6 +35,7 @@
 #include "gstmfxvideomemory.h"
 
 #include <gst-libs/mfx/gstmfxsurface.h>
+#include <gst-libs/mfx/gstmfxsubpicturecomposition.h>
 
 #define GST_PLUGIN_NAME "mfxsink"
 #define GST_PLUGIN_DESC "A MFX-based videosink"
@@ -857,6 +858,8 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
     gst_mfx_display_replace (&sink->display, NULL);
   }
 
+  gst_mfx_composite_filter_replace (&sink->composite_filter, NULL);
+
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (sink));
   return TRUE;
 }
@@ -963,11 +966,17 @@ static GstFlowReturn
 gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (video_sink);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (sink);
   GstMfxVideoMeta *meta;
-  GstMfxSurface *surface;
+  GstMfxSurface *surface, *composite_surface = NULL;
   GstMfxRectangle *surface_rect = NULL;
   GstMfxRectangle tmp_rect;
   GstFlowReturn ret;
+
+  GstVideoOverlayCompositionMeta *const cmeta =
+      gst_buffer_get_video_overlay_composition_meta (src_buffer);
+  GstVideoOverlayComposition *overlay = NULL;
+  GstMfxSubpictureComposition *composition = NULL;
 
   meta = gst_buffer_get_mfx_video_meta (src_buffer);
 
@@ -985,11 +994,35 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
       surface_rect->x, surface_rect->y,
       surface_rect->width, surface_rect->height);
 
-  if (!gst_mfxsink_render_surface (sink, surface, surface_rect))
+  if (cmeta) {
+    GstMfxDisplay *display =
+        gst_mfx_task_aggregator_get_display (plugin->aggregator);
+
+    overlay = cmeta->overlay;
+
+    if (!sink->composite_filter)
+      sink->composite_filter =
+        gst_mfx_composite_filter_new (plugin->aggregator,
+            !gst_mfx_surface_has_video_memory (surface), FALSE);
+
+    composition = gst_mfx_subpicture_composition_new (display,
+        overlay, FALSE);
+
+    gst_mfx_subpicture_composition_add_base_surface (composition, surface);
+
+    gst_mfx_composite_filter_apply_composition (sink->composite_filter,
+        composition, &composite_surface);
+
+    gst_mfx_display_replace (&display, NULL);
+  }
+
+  if (!gst_mfxsink_render_surface (sink,
+        composite_surface ? composite_surface : surface, surface_rect))
     goto error;
 
   ret = GST_FLOW_OK;
 done:
+  gst_mfx_subpicture_composition_replace (&composition, NULL);
   return ret;
 
 error:

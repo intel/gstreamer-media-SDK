@@ -463,15 +463,6 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
         if (ret != GST_FLOW_OK)
           break;
       }
-
-      /*if (mfxdec->live_mode) {
-        do {
-          sts = gst_mfx_decoder_flush (mfxdec->decoder, &out_frame);
-          if (GST_MFX_DECODER_STATUS_FLUSHED == sts)
-            break;
-          ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
-        } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
-      }*/
       break;
     case GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED:
     case GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER:
