@@ -52,11 +52,14 @@ static void
 gst_mfx_composite_filter_finalize (GstMfxCompositeFilter * filter)
 {
   /* Free allocated memory for filters */
-  g_slice_free1 ((sizeof (mfxExtBuffer *) * filter->params.NumExtParam),
+  g_slice_free1 ((sizeof (mfxExtBuffer *)),
       filter->ext_buffer);
+  gst_mfx_surface_replace (&filter->out_surface, NULL);
   gst_mfx_task_aggregator_unref (filter->aggregator);
 
   MFXVideoVPP_Close (filter->session);
+
+  gst_mfx_task_replace(&filter->vpp, NULL);
 }
 
 static gboolean
@@ -259,12 +262,13 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
   gst_video_info_set_format(&info, GST_MFX_SURFACE_FORMAT (base_surface),
     GST_MFX_SURFACE_WIDTH (base_surface), GST_MFX_SURFACE_HEIGHT (base_surface));
 
-  /* Output surface for composed surface */
+  /* Allocate output surface for final composition */
   if (filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY) {
     filter->out_surface = gst_mfx_surface_vaapi_new (display, &info);
     gst_mfx_task_use_video_memory (filter->vpp);
-  } else
+  } else {
     filter->out_surface = gst_mfx_surface_new (&info);
+  }
 
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
   if (sts < 0) {
