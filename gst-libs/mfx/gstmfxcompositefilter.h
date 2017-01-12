@@ -26,7 +26,7 @@
 
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 #include <gst-libs/mfx/gstmfxsurface.h>
-#include <gst-libs/mfx/gstmfxsubpicturecomposition.h>
+#include <gst-libs/mfx/gstmfxsurfacecomposition.h>
 
 G_BEGIN_DECLS
 
@@ -37,7 +37,7 @@ typedef struct _GstMfxCompositeFilter GstMfxCompositeFilter;
 
 GstMfxCompositeFilter *
 gst_mfx_composite_filter_new(GstMfxTaskAggregator * aggregator,
-  gboolean is_system_in, gboolean is_system_out);
+  gboolean memtype_is_system);
 
 GstMfxCompositeFilter *
 gst_mfx_composite_filter_ref(GstMfxCompositeFilter * filter);
@@ -51,7 +51,7 @@ gst_mfx_composite_filter_replace(GstMfxCompositeFilter ** old_filter_ptr,
 
 gboolean
 gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
-  GstMfxSubpictureComposition * composition, GstMfxSurface ** out_surface);
+  GstMfxSurfaceComposition * composition, GstMfxSurface ** out_surface);
 
 G_END_DECLS
 

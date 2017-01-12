@@ -50,7 +50,8 @@ static const char gst_mfxdecode_sink_caps_str[] =
     GST_CAPS_CODEC ("video/x-h265, \
         alignment = (string) au, \
         stream-format = (string) byte-stream")
-    GST_CAPS_CODEC ("video/x-wmv")
+    GST_CAPS_CODEC ("video/x-wmv, \
+        wmvversion = 3")
     GST_CAPS_CODEC ("video/x-vp8")
 #ifdef HAS_VP9
     GST_CAPS_CODEC ("video/x-vp9")
