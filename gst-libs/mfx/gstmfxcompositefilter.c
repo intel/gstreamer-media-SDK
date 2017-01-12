@@ -131,11 +131,10 @@ static gboolean
 gst_mfx_composite_filter_reset (GstMfxCompositeFilter * filter,
     GstMfxSurfaceComposition * composition)
 {
+  mfxStatus sts = MFX_ERR_NONE;
 
   g_return_val_if_fail (filter != NULL, FALSE);
   g_return_val_if_fail (composition != NULL, FALSE);
-
-  mfxStatus sts = MFX_ERR_NONE;
 
   if (!filter->inited)
     return TRUE;
@@ -145,13 +144,13 @@ gst_mfx_composite_filter_reset (GstMfxCompositeFilter * filter,
 
   sts = MFXVideoVPP_Reset (filter->session, &filter->params);
   if (sts < 0) {
-      GST_ERROR ("Error resetting MFX VPP %d", sts);
-      return FALSE;
+    GST_ERROR ("Error resetting MFX VPP %d", sts);
+    return FALSE;
   }
   return TRUE;
 }
 
-static void
+static gboolean
 gst_mfx_composite_filter_init (GstMfxCompositeFilter * filter,
     GstMfxTaskAggregator * aggregator, gboolean memtype_is_system)
 {
@@ -169,7 +168,10 @@ gst_mfx_composite_filter_init (GstMfxCompositeFilter * filter,
       gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
   if (!filter->vpp)
     return FALSE;
+
   filter->session = gst_mfx_task_get_session (filter->vpp);
+
+  return TRUE;
 }
 
 static inline const GstMfxMiniObjectClass *
@@ -195,8 +197,13 @@ gst_mfx_composite_filter_new (GstMfxTaskAggregator * aggregator,
   if (!filter)
     return NULL;
 
-  gst_mfx_composite_filter_init (filter, aggregator, memtype_is_system);
+  if (!gst_mfx_composite_filter_init (filter, aggregator, memtype_is_system))
+    goto error;
+
   return filter;
+error:
+  gst_mfx_mini_object_unref(filter);
+  return NULL;
 }
 
 GstMfxCompositeFilter *
@@ -296,7 +303,7 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
   /* Reset filter for every frame because subpicture dimension
    * and position will be different for every frame. */
   if (!gst_mfx_composite_filter_reset (filter, composition))
-      return FALSE;
+    return FALSE;
 
   if (!filter->inited) {
     if (!gst_mfx_composite_filter_start (filter, composition))
