@@ -169,7 +169,7 @@ gst_mfx_surface_composition_new (GstMfxSurface * base_surface,
   GstMfxSurfaceComposition *composition;
 
   g_return_val_if_fail(base_surface != NULL, NULL);
-  g_return_val_if_fail(composition != NULL, NULL);
+  g_return_val_if_fail(overlay != NULL, NULL);
 
   composition = gst_mfx_mini_object_new0(gst_mfx_surface_composition_class());
   if (!composition)
