@@ -29,10 +29,10 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_SUBPICTURE_COMPOSITION(obj) \
-    ((GstMfxSubpictureComposition *)(obj))
+#define GST_MFX_SURFACE_COMPOSITION(obj) \
+    ((GstMfxSurfaceComposition *)(obj))
 
-typedef struct _GstMfxSubpictureComposition GstMfxSubpictureComposition;
+typedef struct _GstMfxSurfaceComposition GstMfxSurfaceComposition;
 typedef struct _GstMfxSubpicture GstMfxSubpicture;
 
 struct _GstMfxSubpicture
@@ -42,33 +42,29 @@ struct _GstMfxSubpicture
   GstMfxRectangle sub_rect;
 };
 
-GstMfxSubpictureComposition *
-gst_mfx_subpicture_composition_new (GstMfxDisplay * display,
-  GstVideoOverlayComposition * overlay, gboolean memtype_is_system);
+GstMfxSurfaceComposition *
+gst_mfx_surface_composition_new (GstMfxSurface * base_surface,
+  GstVideoOverlayComposition * overlay);
 
-GstMfxSubpictureComposition *
-gst_mfx_subpicture_composition_ref (GstMfxSubpictureComposition * composition);
-
-void
-gst_mfx_subpicture_composition_unref(GstMfxSubpictureComposition * composition);
+GstMfxSurfaceComposition *
+gst_mfx_surface_composition_ref (GstMfxSurfaceComposition * composition);
 
 void
-gst_mfx_subpicture_composition_replace(
-  GstMfxSubpictureComposition ** old_composition_ptr,
-  GstMfxSubpictureComposition * new_composition);
+gst_mfx_surface_composition_unref(GstMfxSurfaceComposition * composition);
 
 void
-gst_mfx_subpicture_composition_add_base_surface (GstMfxSubpictureComposition * composition,
-  GstMfxSurface * surface);
+gst_mfx_surface_composition_replace(
+  GstMfxSurfaceComposition ** old_composition_ptr,
+  GstMfxSurfaceComposition * new_composition);
 
 GstMfxSurface *
-gst_mfx_subpicture_composition_get_base_surface (GstMfxSubpictureComposition * composition);
+gst_mfx_surface_composition_get_base_surface (GstMfxSurfaceComposition * composition);
 
 guint
-gst_mfx_subpicture_composition_get_num_subpictures(GstMfxSubpictureComposition * composition);
+gst_mfx_surface_composition_get_num_subpictures(GstMfxSurfaceComposition * composition);
 
 GstMfxSubpicture *
-gst_mfx_subpicture_composition_get_subpicture(GstMfxSubpictureComposition * composition,
+gst_mfx_surface_composition_get_subpicture(GstMfxSurfaceComposition * composition,
   guint index);
 
 G_END_DECLS

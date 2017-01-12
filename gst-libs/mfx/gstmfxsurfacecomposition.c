@@ -21,20 +21,21 @@
  */
 
 #include "sysdeps.h"
-#include "gstmfxsubpicturecomposition.h"
+#include "gstmfxsurfacecomposition.h"
 #include "gstmfxsurface.h"
 #include "gstmfxsurface_vaapi.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-struct _GstMfxSubpictureComposition
+struct _GstMfxSurfaceComposition
 {
   /*< private > */
   GstMfxMiniObject parent_instance;
 
   GPtrArray *subpictures;
   GstMfxSurface *base_surface;
+  GstMfxDisplay *display;
 };
 
 static void
@@ -45,9 +46,8 @@ destroy_subpicture (GstMfxSubpicture * subpicture)
 }
 
 static gboolean
-create_subpicture (GstMfxSubpictureComposition * composition,
-  GstMfxDisplay * display, GstVideoOverlayRectangle * rect,
-  gboolean memtype_is_system)
+create_subpicture (GstMfxSurfaceComposition * composition,
+  GstVideoOverlayRectangle * rect)
 {
   GstMfxSubpicture *subpicture;
   GstBuffer *buffer;
@@ -77,8 +77,8 @@ create_subpicture (GstMfxSubpictureComposition * composition,
 
   subpicture = g_slice_new0(GstMfxSubpicture);
 
-  if (!memtype_is_system)
-    subpicture->surface = gst_mfx_surface_vaapi_new(display, &info);
+  if (gst_mfx_surface_has_video_memory (composition->base_surface))
+    subpicture->surface = gst_mfx_surface_vaapi_new (composition->display, &info);
   else
     subpicture->surface = gst_mfx_surface_new(&info);
   if (!subpicture->surface)
@@ -118,9 +118,8 @@ error:
 
 static gboolean
 gst_mfx_create_surfaces_from_composition(
-  GstMfxSubpictureComposition * composition,
-  GstVideoOverlayComposition * overlay,
-  GstMfxDisplay * display, gboolean memtype_is_system)
+  GstMfxSurfaceComposition * composition,
+  GstVideoOverlayComposition * overlay)
 {
   guint n, nb_rectangles;
 
@@ -137,7 +136,7 @@ gst_mfx_create_surfaces_from_composition(
     if (!GST_IS_VIDEO_OVERLAY_RECTANGLE(rect))
       continue;
 
-    if (!create_subpicture(composition, display, rect, memtype_is_system)) {
+    if (!create_subpicture(composition, rect)) {
       GST_WARNING("could not create subpicture %p", rect);
       return FALSE;
     }
@@ -146,37 +145,41 @@ gst_mfx_create_surfaces_from_composition(
 }
 
 void
-gst_mfx_subpicture_composition_finalize(GstMfxSubpictureComposition * composition)
+gst_mfx_surface_composition_finalize(GstMfxSurfaceComposition * composition)
 {
+  gst_mfx_display_replace (&composition->display, NULL);
+  gst_mfx_surface_unref (composition->base_surface);
   g_ptr_array_free (composition->subpictures, TRUE);
 }
 
 static inline const GstMfxMiniObjectClass *
-gst_mfx_subpicture_composition_class(void)
+gst_mfx_surface_composition_class(void)
 {
   static const GstMfxMiniObjectClass GstMfxSubpictureCompositionClass = {
-    sizeof(GstMfxSubpictureComposition),
-    (GDestroyNotify)gst_mfx_subpicture_composition_finalize
+    sizeof(GstMfxSurfaceComposition),
+    (GDestroyNotify)gst_mfx_surface_composition_finalize
   };
   return &GstMfxSubpictureCompositionClass;
 }
 
-GstMfxSubpictureComposition *
-gst_mfx_subpicture_composition_new(GstMfxDisplay * display,
-  GstVideoOverlayComposition * overlay, gboolean memtype_is_system)
+GstMfxSurfaceComposition *
+gst_mfx_surface_composition_new (GstMfxSurface * base_surface,
+  GstVideoOverlayComposition * overlay)
 {
-  GstMfxSubpictureComposition *composition;
+  GstMfxSurfaceComposition *composition;
 
+  g_return_val_if_fail(base_surface != NULL, NULL);
   g_return_val_if_fail(composition != NULL, NULL);
 
-  composition = gst_mfx_mini_object_new0(gst_mfx_subpicture_composition_class());
+  composition = gst_mfx_mini_object_new0(gst_mfx_surface_composition_class());
   if (!composition)
     return NULL;
 
+  composition->base_surface = gst_mfx_surface_ref (base_surface);
+  composition->display = gst_mfx_surface_vaapi_get_display (base_surface);
   composition->subpictures =
       g_ptr_array_new_with_free_func((GDestroyNotify)destroy_subpicture);
-  if (!gst_mfx_create_surfaces_from_composition(composition,
-      overlay, display, memtype_is_system))
+  if (!gst_mfx_create_surfaces_from_composition(composition, overlay))
     goto error;
 
   return composition;
@@ -185,8 +188,8 @@ error:
   return NULL;
 }
 
-GstMfxSubpictureComposition *
-gst_mfx_subpicture_composition_ref (GstMfxSubpictureComposition * composition)
+GstMfxSurfaceComposition *
+gst_mfx_surface_composition_ref (GstMfxSurfaceComposition * composition)
 {
   g_return_val_if_fail(composition != NULL, NULL);
 
@@ -194,15 +197,15 @@ gst_mfx_subpicture_composition_ref (GstMfxSubpictureComposition * composition)
 }
 
 void
-gst_mfx_subpicture_composition_unref(GstMfxSubpictureComposition * composition)
+gst_mfx_surface_composition_unref(GstMfxSurfaceComposition * composition)
 {
   gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(composition));
 }
 
 void
-gst_mfx_subpicture_composition_replace(
-  GstMfxSubpictureComposition ** old_composition_ptr,
-  GstMfxSubpictureComposition * new_composition)
+gst_mfx_surface_composition_replace(
+  GstMfxSurfaceComposition ** old_composition_ptr,
+  GstMfxSurfaceComposition * new_composition)
 {
   g_return_if_fail(old_composition_ptr != NULL);
 
@@ -211,8 +214,8 @@ gst_mfx_subpicture_composition_replace(
 }
 
 GstMfxSubpicture *
-gst_mfx_subpicture_composition_get_subpicture(
-  GstMfxSubpictureComposition * composition, guint index)
+gst_mfx_surface_composition_get_subpicture(
+  GstMfxSurfaceComposition * composition, guint index)
 {
   GstMfxSubpicture *subpicture;
 
@@ -223,27 +226,17 @@ gst_mfx_subpicture_composition_get_subpicture(
   return subpicture;
 }
 
-void
-gst_mfx_subpicture_composition_add_base_surface (
-  GstMfxSubpictureComposition * composition, GstMfxSurface * surface)
-{
-  g_return_if_fail(composition != NULL);
-  g_return_if_fail(surface != NULL);
-
-  gst_mfx_surface_replace (&composition->base_surface, surface);
-}
-
 GstMfxSurface *
-gst_mfx_subpicture_composition_get_base_surface (
-  GstMfxSubpictureComposition * composition)
+gst_mfx_surface_composition_get_base_surface (
+  GstMfxSurfaceComposition * composition)
 {
   g_return_val_if_fail(composition != NULL, NULL);
   return composition->base_surface;
 }
 
 guint
-gst_mfx_subpicture_composition_get_num_subpictures(
-  GstMfxSubpictureComposition * composition)
+gst_mfx_surface_composition_get_num_subpictures(
+  GstMfxSurfaceComposition * composition)
 {
   return composition->subpictures->len;
 }
