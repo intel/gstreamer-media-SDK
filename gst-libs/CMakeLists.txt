@@ -14,7 +14,7 @@ set(SOURCE
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxwindow.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/video-format.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxcompositefilter.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsubpicturecomposition.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxsurfacecomposition.c")
 
 if(MFX_DECODER)
     set(SOURCE ${SOURCE}
