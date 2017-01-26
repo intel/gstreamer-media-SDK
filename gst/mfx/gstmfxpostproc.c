@@ -599,7 +599,8 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
     status = gst_mfx_filter_process (vpp->filter, surface, &out_surface);
     if (GST_MFX_FILTER_STATUS_SUCCESS != status &&
-        GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status)
+        GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status &&
+        GST_MFX_FILTER_STATUS_ERROR_MORE_DATA != status)
       goto error_process_vpp;
 
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status)
