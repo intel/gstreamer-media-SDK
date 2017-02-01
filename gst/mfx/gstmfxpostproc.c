@@ -424,6 +424,10 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!plugin->sinkpad_caps_is_raw && srcpad_has_raw_caps)
     srcpad_has_raw_caps = FALSE;
 
+  /* Prevent passthrough mode if input / output memory types don't match */
+  if (plugin->sinkpad_caps_is_raw && !srcpad_has_raw_caps)
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
+
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
 
