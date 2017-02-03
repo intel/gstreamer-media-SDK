@@ -54,8 +54,13 @@ struct _GstMfxDecoder
   GstVideoInfo info;
   gboolean inited;
   gboolean first_frame_decoded;
+  gboolean frame_rate_changed;
   gboolean memtype_is_system;
   gboolean live_mode;
+
+  GstClockTime current_pts;
+  GstClockTime pts_offset;
+  GstClockTime duration;
 };
 
 GstMfxProfile
@@ -486,10 +491,28 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   while (!g_queue_is_empty(&decoder->pending_frames))
     gst_video_codec_frame_unref(g_queue_pop_head(&decoder->pending_frames));
 
+  decoder->pts_offset = 0;
+  decoder->current_pts = 0;
+
   if (decoder->bitstream->len)
     g_byte_array_remove_range (decoder->bitstream, 0,
       decoder->bitstream->len);
   memset(&decoder->bs, 0, sizeof(mfxBitstream));
+}
+
+static void
+calculate_new_pts (GstMfxDecoder * decoder, GstVideoCodecFrame *frame)
+{
+  if (!decoder->pts_offset)
+    decoder->pts_offset = frame->pts;
+
+  if (!decoder->duration) {
+    decoder->duration =
+        (decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
+  }
+  frame->duration = decoder->duration;
+  frame->pts = decoder->current_pts + decoder->pts_offset;
+  decoder->current_pts += decoder->duration;
 }
 
 static gint
@@ -595,7 +618,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         case MFX_PICSTRUCT_FIELD_TFF:
           GST_VIDEO_INFO_FLAG_SET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
           goto update;
-        case MFX_PICSTRUCT_FIELD_BFF:
+        case MFX_PICSTRUCT_FIELD_BFF:{
           GST_VIDEO_INFO_FLAG_UNSET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
 update:
           /* Check if stream has progressive frames first.
@@ -607,7 +630,18 @@ update:
             if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
               decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
           }
+
+          gdouble frame_rate;
+
+          gst_util_fraction_to_double (decoder->info.fps_n, decoder->info.fps_d, &frame_rate);
+
+          if (!decoder->frame_rate_changed && ((int)(frame_rate + 0.5) == 60)) {
+            decoder->info.fps_n /= 2;
+            decoder->frame_rate_changed = TRUE;
+          }
+
           break;
+        }
         default:
           break;
       }
@@ -625,7 +659,12 @@ update:
         }
         surface = filter_surface;
       }
+
       out_frame = g_queue_pop_tail (&decoder->pending_frames);
+
+      if (decoder->frame_rate_changed)
+        calculate_new_pts (decoder, out_frame);
+
       gst_video_codec_frame_set_user_data(out_frame,
           gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
 
@@ -692,7 +731,11 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder,
       }
       surface = filter_surface;
     }
-   *out_frame = g_queue_pop_tail (&decoder->pending_frames);
+    *out_frame = g_queue_pop_tail (&decoder->pending_frames);
+
+    if (decoder->frame_rate_changed)
+      calculate_new_pts (decoder, *out_frame);
+
     gst_video_codec_frame_set_user_data(*out_frame,
         gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
 
