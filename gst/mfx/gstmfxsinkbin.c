@@ -84,11 +84,7 @@ gst_mfx_sink_bin_color_balance_iface_init (GstColorBalanceInterface * iface);
 /* Default templates */
 static const char gst_mfx_sink_bin_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
-#ifdef WITH_MSS_2016
-    GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
-#else
-    GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
-#endif
+    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static GstStaticPadTemplate gst_mfx_sink_bin_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",

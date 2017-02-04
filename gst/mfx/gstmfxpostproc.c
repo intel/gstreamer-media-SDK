@@ -48,12 +48,8 @@ static const char gst_mfxpostproc_sink_caps_str[] =
         "{ NV12, YV12, I420, YUY2, BGRA, BGRx }") ";"
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
         GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
-        "{ NV12, YV12, I420, YUY2, BGRA, BGRx }") ";"
-#ifdef WITH_MSS_2016
-    GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
-#else
-    GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
-#endif
+        GST_MFX_SUPPORTED_INPUT_FORMATS) ";"
+    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxpostproc_src_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
@@ -425,11 +421,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     srcpad_has_raw_caps = FALSE;
 
   /* Prevent passthrough mode if input / output memory types don't match */
-  if (plugin->sinkpad_caps_is_raw && !srcpad_has_raw_caps)
+  if (plugin->sinkpad_caps_is_raw != !srcpad_has_raw_caps)
     vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
-
-  gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
-  gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
       plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
@@ -702,40 +695,31 @@ gst_mfxpostproc_decide_allocation (GstBaseTransform * trans, GstQuery * query)
 static gboolean
 ensure_allowed_sinkpad_caps (GstMfxPostproc * vpp)
 {
-  GstCaps *out_caps;
-
   if (vpp->allowed_sinkpad_caps)
     return TRUE;
 
-  out_caps = gst_static_pad_template_get_caps (&gst_mfxpostproc_sink_factory);
-
-  if (!out_caps) {
+  vpp->allowed_sinkpad_caps =
+      gst_static_pad_template_get_caps (&gst_mfxpostproc_sink_factory);
+  if (!vpp->allowed_sinkpad_caps) {
     GST_ERROR_OBJECT (vpp, "failed to create MFX sink caps");
     return FALSE;
   }
-
-  vpp->allowed_sinkpad_caps = out_caps;
-
   return TRUE;
 }
 
 static gboolean
 ensure_allowed_srcpad_caps (GstMfxPostproc * vpp)
 {
-  GstCaps *out_caps;
-
   if (vpp->allowed_srcpad_caps)
     return TRUE;
 
   /* Create initial caps from pad template */
-  out_caps = gst_caps_from_string (gst_mfxpostproc_src_caps_str);
-  if (!out_caps) {
-    GST_ERROR ("failed to create MFX src caps");
+  vpp->allowed_srcpad_caps =
+      gst_caps_from_string (gst_mfxpostproc_src_caps_str);
+  if (!vpp->allowed_srcpad_caps) {
+    GST_ERROR_OBJECT (vpp, "failed to create MFX src caps");
     return FALSE;
   }
-
-  vpp->allowed_srcpad_caps = out_caps;
-
   return TRUE;
 }
 

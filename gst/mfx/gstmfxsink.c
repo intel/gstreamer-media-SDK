@@ -881,15 +881,14 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
     }
   }
 
-  if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL ||
-      sink->display_type_req == GST_MFX_DISPLAY_TYPE_X11)
+  if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_X11 ||
+      sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL ||
+      sink->full_color_range)
     out_caps =
         gst_mfx_video_format_new_template_caps_with_features
         (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
   else
-    out_caps = sink->full_color_range ?
-        gst_mfx_video_format_new_template_caps_with_features
-        (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE) :
+    out_caps =
         gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
 
   return out_caps;

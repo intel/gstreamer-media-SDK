@@ -177,7 +177,7 @@ check_supported_filters (GstMfxFilter * filter)
     if (MFX_ERR_NONE == sts)
       filter->supported_filters |= m->type;
     else
-      g_print ("%s is not supported in this platform!\n", m->desc);
+      g_warning ("%s is not supported in this platform!\n", m->desc);
   }
 
   /* Release the resource */
@@ -244,14 +244,6 @@ init_params (GstMfxFilter * filter)
 
   filter->params.vpp.In = filter->frame_info;
 
-  /* Setup special double frame rate deinterlace mode */
-  gst_util_fraction_to_double (filter->params.vpp.In.FrameRateExtN,
-    filter->params.vpp.In.FrameRateExtD, &frame_rate);
-  if ((filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_TFF ||
-        filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_BFF) &&
-      (int)(frame_rate + 0.5) == 60)
-    filter->params.vpp.In.FrameRateExtN /= 2;
-
   /* Aligned frame dimensions may differ between input and output surfaces
    * so we sanitize the input frame dimensions, since output frame dimensions
    * could have certain alignment requirements used in HEVC HW encoding */
@@ -276,6 +268,14 @@ init_params (GstMfxFilter * filter)
     filter->params.vpp.Out.Height = GST_ROUND_UP_16 (filter->height);
   }
   if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
+    /* Setup special double frame rate deinterlace mode */
+    gst_util_fraction_to_double (filter->params.vpp.In.FrameRateExtN,
+      filter->params.vpp.In.FrameRateExtD, &frame_rate);
+    if ((filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_TFF ||
+          filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_BFF) &&
+        (int)(frame_rate + 0.5) == 60)
+    filter->params.vpp.In.FrameRateExtN /= 2;
+
     filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
     filter->params.vpp.Out.Height =
         GST_ROUND_UP_16 (filter->params.vpp.Out.CropH);

@@ -226,7 +226,6 @@ gst_mfxdec_set_property (GObject * object, guint prop_id,
   g_return_if_fail (GST_IS_MFXDEC (object));
   dec = GST_MFXDEC (object);
 
-  GST_DEBUG_OBJECT (object, "gst_mfx_dec_set_property");
   switch (prop_id) {
   case PROP_ASYNC_DEPTH:
     dec->async_depth = g_value_get_uint (value);
@@ -284,8 +283,11 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   /* live streaming configuration cannot be used with VC1 or MPEG2 */
   if (gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2 ||
-      gst_mfx_profile_get_codec(profile) == MFX_CODEC_VC1)
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_VC1) {
+    GST_WARNING_OBJECT (mfxdec,
+        "Live streaming mode for MPEG2 and VC1 formats is unsupported");
     mfxdec->live_mode = FALSE;
+  }
 
   plugin->srcpad_caps_is_raw =
       gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
@@ -445,7 +447,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   if (!gst_mfxdec_negotiate (mfxdec))
       goto not_negotiated;
 
-  GST_LOG ("Received new data of size %" G_GSIZE_FORMAT
+  GST_LOG_OBJECT (mfxdec, "Received new data of size %" G_GSIZE_FORMAT
       ", dts %" GST_TIME_FORMAT
       ", pts:%" GST_TIME_FORMAT
       ", dur:%" GST_TIME_FORMAT,
@@ -475,7 +477,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
 error_decode:
   {
-    GST_ERROR ("MFX decode error %d", sts);
+    GST_ERROR_OBJECT (mfxdec, "MFX decode error %d", sts);
     gst_video_decoder_drop_frame (vdec, frame);
     return GST_FLOW_NOT_SUPPORTED;
   }
