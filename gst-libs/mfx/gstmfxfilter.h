@@ -185,7 +185,11 @@ gst_mfx_filter_set_request (GstMfxFilter * filter,
 
 /* Setters */
 void
-gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info);
+gst_mfx_filter_set_frame_info (GstMfxFilter * filter, mfxFrameInfo * info);
+
+void
+gst_mfx_filter_set_frame_info_from_gst_video_info (GstMfxFilter * filter,
+    GstVideoInfo * info);
 
 gboolean
 gst_mfx_filter_set_format (GstMfxFilter * filter, mfxU32 fourcc);

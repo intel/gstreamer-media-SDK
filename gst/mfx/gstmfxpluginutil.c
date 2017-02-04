@@ -289,10 +289,8 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
     else {
       element_name = gst_element_get_name (element);
       if (GST_IS_BASE_TRANSFORM (element)) {
-        if ((strncmp (element_name, "mfxpostproc", 11) == 0) ||
-            (strncmp (element_name, "capsfilter", 10) == 0)) {
+        if (strncmp (element_name, "mfxpostproc", 11) == 0)
           continue;
-        }
 
         if (strncmp (element_name, "gluploadelement", 15) == 0) {
 #if GST_CHECK_VERSION(1,8,0)

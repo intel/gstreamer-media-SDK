@@ -1,3 +1,6 @@
+Version 1.2.0
+* Implemented Video Overlay Composition.
+
 Version 1.1.0
 * Implemented GstColorBalance interface on mfxvpp.
 * Renamed mfxsink to mfxsinkelement.

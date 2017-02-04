@@ -496,10 +496,14 @@ gst_mfxdec_finish (GstVideoDecoder *vdec)
   GstFlowReturn ret = GST_FLOW_OK;
 
   do {
-    sts = gst_mfx_decoder_flush (mfxdec->decoder, &out_frame);
+    sts = gst_mfx_decoder_flush (mfxdec->decoder);
     if (GST_MFX_DECODER_STATUS_FLUSHED == sts)
       break;
-    ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+    while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
+      ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
+      if (ret != GST_FLOW_OK)
+        break;
+    }
   } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
   return ret;
 }

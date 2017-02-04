@@ -244,7 +244,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   num_planes = vaapi_image_get_plane_count (vaapi_image);
 
   if ((dst_rect->height != src_rect->height) ||
-          (dst_rect->width != dst_rect->width)) {
+          (dst_rect->width != src_rect->width)) {
       if (priv->viewport) {
         wl_viewport_set_destination (priv->viewport,
             dst_rect->width, dst_rect->height);

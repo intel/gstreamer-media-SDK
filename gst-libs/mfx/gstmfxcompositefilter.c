@@ -65,11 +65,11 @@ static gboolean
 configure_composite_filter (GstMfxCompositeFilter * filter,
   GstMfxSurfaceComposition * composition)
 {
+  GstMfxSubpicture *subpicture = NULL;
+  guint num_rect = 0;
+
   g_return_val_if_fail (filter != NULL, FALSE);
   g_return_val_if_fail (composition != NULL, FALSE);
-
-  guint num_rect = 0;
-  GstMfxSubpicture *subpicture = NULL;
 
   if (!filter->inited) {
     memset (&filter->composite, 0, sizeof (mfxExtVPPComposite));
@@ -82,8 +82,7 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
 
   num_rect = gst_mfx_surface_composition_get_num_subpictures (composition);
 
-  if (filter->num_rect != num_rect &&
-          filter->composite.InputStream) {
+  if (filter->num_rect != num_rect && filter->composite.InputStream) {
     g_slice_free1(((num_rect+1)*sizeof (mfxVPPCompInputStream)),
         filter->composite.InputStream);
   }
@@ -326,7 +325,7 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
         &syncp);
 
     if (MFX_WRN_DEVICE_BUSY == sts)
-        g_usleep (500);
+        g_usleep (100);
   } while (MFX_WRN_DEVICE_BUSY == sts);
 
   if (MFX_ERR_MORE_DATA == sts) {

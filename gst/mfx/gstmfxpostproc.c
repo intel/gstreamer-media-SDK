@@ -424,6 +424,10 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!plugin->sinkpad_caps_is_raw && srcpad_has_raw_caps)
     srcpad_has_raw_caps = FALSE;
 
+  /* Prevent passthrough mode if input / output memory types don't match */
+  if (plugin->sinkpad_caps_is_raw && !srcpad_has_raw_caps)
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
+
   gst_caps_replace (&vpp->allowed_srcpad_caps, NULL);
   gst_caps_replace (&vpp->allowed_sinkpad_caps, NULL);
 
@@ -599,7 +603,8 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
     status = gst_mfx_filter_process (vpp->filter, surface, &out_surface);
     if (GST_MFX_FILTER_STATUS_SUCCESS != status &&
-        GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status)
+        GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status &&
+        GST_MFX_FILTER_STATUS_ERROR_MORE_DATA != status)
       goto error_process_vpp;
 
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status)
@@ -856,7 +861,8 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   if (!gst_mfxpostproc_ensure_filter (vpp))
     return FALSE;
 
-  gst_mfx_filter_set_frame_info (vpp->filter, &vpp->sinkpad_info);
+  gst_mfx_filter_set_frame_info_from_gst_video_info (vpp->filter,
+      &vpp->sinkpad_info);
 
   if (!gst_mfx_filter_set_size (vpp->filter,
           GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
