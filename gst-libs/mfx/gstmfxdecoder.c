@@ -58,7 +58,6 @@ struct _GstMfxDecoder
   gboolean enable_deinterlace;
   gboolean can_double_deinterlace;
   gboolean memtype_is_system;
-  gboolean live_mode;
 
   GstClockTime current_pts;
   GstClockTime duration;
@@ -343,8 +342,7 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
   decoder->profile = profile;
   decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
   decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
-  decoder->live_mode = live_mode;
-  if (decoder->live_mode) {
+  if (live_mode) {
     decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
     decoder->params.mfx.DecodedOrder = 1;
   }
@@ -603,110 +601,100 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         insurf, &outsurf, &syncp);
     GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
 
-    if (MFX_ERR_MORE_SURFACE == sts || sts > 0) {
-      if (MFX_WRN_DEVICE_BUSY == sts)
-        g_usleep (100);
-      continue;
-    }
+    if (MFX_WRN_DEVICE_BUSY == sts)
+      g_usleep (100);
+  } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
-    if (sts != MFX_ERR_NONE &&
-        sts != MFX_ERR_MORE_DATA &&
-        sts != MFX_ERR_MORE_SURFACE) {
-      GST_ERROR ("Status %d : Error during MFX decoding", sts);
-      ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
-      break;
-    }
+  if (sts == MFX_ERR_MORE_DATA) {
+    ret = GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
+    goto end;
+  }
 
-    if (sts == MFX_ERR_MORE_DATA) {
-      ret = GST_MFX_DECODER_STATUS_ERROR_NO_DATA;
-      if (!decoder->live_mode || !decoder->bs.DataLength) {
-        decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
-          decoder->bs.DataOffset);
-        decoder->bs.DataOffset = 0;
+  if (sts != MFX_ERR_NONE &&
+      sts != MFX_ERR_MORE_DATA) {
+    GST_ERROR ("Status %d : Error during MFX decoding", sts);
+    ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+    goto end;
+  }
+
+
+  if (syncp) {
+    if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
+      do {
+        sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
+        GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
+      } while (MFX_WRN_IN_EXECUTION == sts);
+
+    surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
+
+    /* Update stream properties if they have interlaced frames */
+    switch (outsurf->Info.PicStruct) {
+      case MFX_PICSTRUCT_PROGRESSIVE:
+        if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
+          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+        break;
+      case MFX_PICSTRUCT_FIELD_TFF:
+        GST_VIDEO_INFO_FLAG_SET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+        goto update;
+      case MFX_PICSTRUCT_FIELD_BFF:{
+        GST_VIDEO_INFO_FLAG_UNSET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+update:
+        /* Check if stream has progressive frames first.
+         * If it does then it should be a mixed interlaced stream */
+        if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE &&
+            decoder->num_decoded_frames)
+          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
+        else {
+          if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
+            decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
+        }
+        gdouble frame_rate;
+
+        gst_util_fraction_to_double (decoder->info.fps_n,
+          decoder->info.fps_d, &frame_rate);
+        if ((int)(frame_rate + 0.5) == 60)
+          decoder->can_double_deinterlace = TRUE;
+        decoder->enable_deinterlace = TRUE;
+
         break;
       }
+      default:
+        break;
     }
 
-    if (syncp) {
-      if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
-        do {
-          sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
-          GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
-        } while (MFX_WRN_IN_EXECUTION == sts);
-
-      surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
-
-      /* Update stream properties if they have interlaced frames */
-      switch (outsurf->Info.PicStruct) {
-        case MFX_PICSTRUCT_PROGRESSIVE:
-          if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
-            decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
-          break;
-        case MFX_PICSTRUCT_FIELD_TFF:
-          GST_VIDEO_INFO_FLAG_SET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
-          goto update;
-        case MFX_PICSTRUCT_FIELD_BFF:{
-          GST_VIDEO_INFO_FLAG_UNSET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
-update:
-          /* Check if stream has progressive frames first.
-           * If it does then it should be a mixed interlaced stream */
-          if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE &&
-              decoder->num_decoded_frames)
-            decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
-          else {
-            if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
-              decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
-          }
-          gdouble frame_rate;
-
-          gst_util_fraction_to_double (decoder->info.fps_n,
-            decoder->info.fps_d, &frame_rate);
-          if ((int)(frame_rate + 0.5) == 60)
-            decoder->can_double_deinterlace = TRUE;
-          decoder->enable_deinterlace = TRUE;
-
-          break;
-        }
-        default:
-          break;
-      }
-
+    if ((decoder->enable_csc || decoder->enable_deinterlace) &&
+        !decoder->filter) {
       decoder->frame_info = &outsurf->Info;
 
-      if ((decoder->enable_csc || decoder->enable_deinterlace) &&
-          !decoder->filter) {
-        if (!gst_mfx_decoder_init_filter (decoder)) {
-          ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
-          goto end;
-        }
-      }
-
-      if (decoder->filter) {
-        do {
-          filter_sts = gst_mfx_filter_process (decoder->filter, surface,
-            &filter_surface);
-          queue_decoded_surface (decoder, filter_surface, out_frame);
-        } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == filter_sts);
-
-        if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
-          GST_ERROR ("MFX post-processing error while decoding.");
-          ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
-          goto end;
-        }
-      }
-      else {
-        queue_decoded_surface (decoder, surface, out_frame);
-      }
-
-      if (!decoder->live_mode) {
-        ret = GST_MFX_DECODER_STATUS_SUCCESS;
-        decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
-          decoder->bs.DataOffset);
-        decoder->bs.DataOffset = 0;
-        break;
+      if (!gst_mfx_decoder_init_filter (decoder)) {
+        ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+        goto end;
       }
     }
-  } while (MFX_ERR_MORE_DATA == sts || MFX_ERR_NONE == sts);
+
+    if (decoder->filter) {
+      do {
+        filter_sts = gst_mfx_filter_process (decoder->filter, surface,
+          &filter_surface);
+        queue_decoded_surface (decoder, filter_surface, out_frame);
+      } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == filter_sts);
+
+      if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
+        GST_ERROR ("MFX post-processing error while decoding.");
+        ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+        goto end;
+      }
+    }
+    else {
+      queue_decoded_surface (decoder, surface, out_frame);
+    }
+
+    decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
+      decoder->bs.DataOffset);
+    decoder->bs.DataOffset = 0;
+
+    ret = GST_MFX_DECODER_STATUS_SUCCESS;
+  }
 
 end:
   gst_buffer_unmap (frame->input_buffer, &minfo);
