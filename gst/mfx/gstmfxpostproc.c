@@ -861,7 +861,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   if (!gst_mfxpostproc_ensure_filter (vpp))
     return FALSE;
 
-  gst_mfx_filter_set_frame_info (vpp->filter, &vpp->sinkpad_info);
+  gst_mfx_filter_set_frame_info_from_gst_video_info (vpp->filter, &vpp->sinkpad_info);
 
   if (!gst_mfx_filter_set_size (vpp->filter,
           GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
