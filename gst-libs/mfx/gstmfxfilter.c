@@ -111,23 +111,18 @@ gst_mfx_filter_set_request (GstMfxFilter * filter,
 }
 
 void
-gst_mfx_filter_set_frame_info (GstMfxFilter * filter, GstVideoInfo * info)
+gst_mfx_filter_set_frame_info (GstMfxFilter * filter, mfxFrameInfo * info)
 {
-  guint i;
-
   g_return_if_fail (filter != NULL);
 
-  for (i = 0; i < 2; i++) {
-    if (filter->shared_request[i]) {
-      filter->frame_info = filter->shared_request[i]->Info;
-      /* Input fourcc may differ with shared encoder input request */
-      if (i) {
-        filter->frame_info.FourCC =
-            gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (info));
-      }
-      return;
-    }
-  }
+  filter->frame_info = *info;
+}
+
+void
+gst_mfx_filter_set_frame_info_from_gst_video_info (GstMfxFilter * filter,
+    GstVideoInfo * info)
+{
+  g_return_if_fail (filter != NULL);
 
   filter->frame_info.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
   filter->frame_info.FourCC =
@@ -245,7 +240,17 @@ configure_filters (GstMfxFilter * filter)
 static void
 init_params (GstMfxFilter * filter)
 {
+  gdouble frame_rate;
+
   filter->params.vpp.In = filter->frame_info;
+
+  /* Setup special double frame rate deinterlace mode */
+  gst_util_fraction_to_double (filter->params.vpp.In.FrameRateExtN,
+    filter->params.vpp.In.FrameRateExtD, &frame_rate);
+  if ((filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_TFF ||
+        filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_BFF) &&
+      (int)(frame_rate + 0.5) == 60)
+    filter->params.vpp.In.FrameRateExtN /= 2;
 
   /* Aligned frame dimensions may differ between input and output surfaces
    * so we sanitize the input frame dimensions, since output frame dimensions

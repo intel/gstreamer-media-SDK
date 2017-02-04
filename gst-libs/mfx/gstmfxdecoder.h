@@ -105,8 +105,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     GstVideoCodecFrame * frame);
 
 GstMfxDecoderStatus
-gst_mfx_decoder_flush (GstMfxDecoder * decoder,
-    GstVideoCodecFrame ** out_frame);
+gst_mfx_decoder_flush (GstMfxDecoder * decoder);
 
 G_END_DECLS
 

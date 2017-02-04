@@ -879,6 +879,10 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   /* Need to use filter to avoid stuttering when encoding raw NV12 surfaces */
   if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
       encoder->memtype_is_system) {
+    mfxFrameInfo frame_info = request->Info;
+    frame_info.FourCC =
+        gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&encoder->info));
+
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
         encoder->encode, GST_MFX_TASK_VPP_OUT,
         encoder->memtype_is_system, memtype_is_system);
@@ -888,7 +892,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     gst_mfx_filter_set_request (encoder->filter, request,
         GST_MFX_TASK_VPP_OUT);
 
-    gst_mfx_filter_set_frame_info (encoder->filter, &encoder->info);
+    gst_mfx_filter_set_frame_info (encoder->filter, &frame_info);
     gst_mfx_filter_set_async_depth (encoder->filter, encoder->async_depth);
     if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12)
       gst_mfx_filter_set_format (encoder->filter, MFX_FOURCC_NV12);
