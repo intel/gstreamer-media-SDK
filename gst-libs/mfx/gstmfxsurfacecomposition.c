@@ -114,6 +114,7 @@ create_subpicture (GstMfxSurfaceComposition * composition,
   return TRUE;
 error:
   destroy_subpicture (subpicture);
+  return FALSE;
 }
 
 static gboolean
@@ -217,13 +218,8 @@ GstMfxSubpicture *
 gst_mfx_surface_composition_get_subpicture(
   GstMfxSurfaceComposition * composition, guint index)
 {
-  GstMfxSubpicture *subpicture;
-
   g_return_val_if_fail(composition != NULL, NULL);
-
-  subpicture = g_ptr_array_index(composition->subpictures, index);
-
-  return subpicture;
+  return g_ptr_array_index(composition->subpictures, index);
 }
 
 GstMfxSurface *
