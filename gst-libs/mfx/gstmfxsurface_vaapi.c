@@ -110,13 +110,17 @@ gst_mfx_surface_vaapi_map(GstMfxSurface * surface)
 {
   GstMfxSurfaceVaapi *vaapi_surface = GST_MFX_SURFACE_VAAPI(surface);
   guint i, num_planes;
+  gboolean success = TRUE;
 
   vaapi_surface->image = gst_mfx_surface_vaapi_derive_image(vaapi_surface);
   if (!vaapi_surface->image)
     return FALSE;
 
-  if (!vaapi_image_map(vaapi_surface->image))
-    return FALSE;
+  if (!vaapi_image_map(vaapi_surface->image)) {
+    GST_ERROR ("Failed to map VA surface.");
+    success = FALSE;
+    goto done;
+  }
 
   num_planes = vaapi_image_get_plane_count(vaapi_surface->image);
   for (i = 0; i < num_planes; i++) {
@@ -131,7 +135,9 @@ gst_mfx_surface_vaapi_map(GstMfxSurface * surface)
         vaapi_image_get_offset(vaapi_surface->image, 1) / surface->width;
   }
 
-  return TRUE;
+done:
+  vaapi_image_unref (vaapi_surface->image);
+  return success;
 }
 
 static void
