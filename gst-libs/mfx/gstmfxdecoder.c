@@ -559,9 +559,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
   if (!decoder->can_double_deinterlace) {
     /* Save frames for later synchronization with decoded MFX surfaces */
-    g_queue_push_head (&decoder->pending_frames, gst_video_codec_frame_ref(frame));
-    /* Ensure that frames are sorted according to presentation timestamps */
-    g_queue_sort (&decoder->pending_frames, sort_pts, NULL);
+    g_queue_insert_sorted (&decoder->pending_frames,
+      gst_video_codec_frame_ref(frame), sort_pts, NULL);
   }
 
   if (!decoder->pts_offset)
@@ -616,7 +615,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
     goto end;
   }
-
 
   if (syncp) {
     if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))

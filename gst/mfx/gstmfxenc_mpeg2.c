@@ -40,11 +40,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_mfx_mpeg2_encode_debug);
 
 static const char gst_mfxenc_mpeg2_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
-#ifdef WITH_MSS_2016
-    GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, YUY2, BGRA, BGRx }");
-#else
-    GST_VIDEO_CAPS_MAKE ("{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }");
-#endif
+    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxenc_mpeg2_src_caps_str[] = GST_CODEC_CAPS;
 
