@@ -249,8 +249,6 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
   GstMfxSurfaceComposition * composition)
 {
   GstMfxSurface *base_surface;
-  GstMfxDisplay *display =
-      gst_mfx_task_aggregator_get_display (filter->aggregator);
   mfxStatus sts = MFX_ERR_NONE;
   GstVideoInfo info;
 
@@ -269,19 +267,23 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
 
   /* Allocate output surface for final composition */
   if (filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY) {
+    GstMfxDisplay *display =
+        gst_mfx_surface_vaapi_get_display (base_surface);
     filter->out_surface = gst_mfx_surface_vaapi_new (display, &info);
+    gst_mfx_display_unref (display);
+
     gst_mfx_task_use_video_memory (filter->vpp);
   } else {
     filter->out_surface = gst_mfx_surface_new (&info);
   }
+  if (!filter->out_surface)
+    return FALSE;
 
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
   if (sts < 0) {
     GST_ERROR ("Error initializing MFX VPP %d", sts);
     return FALSE;
   }
-
-  gst_mfx_display_replace (&display, NULL);
   return TRUE;
 }
 
@@ -319,10 +321,10 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
   do {
     sts =
         MFXVideoVPP_RunFrameVPPAsync (filter->session,
-        insurf,
-        outsurf,
-        NULL,
-        &syncp);
+          insurf,
+          outsurf,
+          NULL,
+          &syncp);
 
     if (MFX_WRN_DEVICE_BUSY == sts)
         g_usleep (100);
@@ -337,10 +339,10 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
       do {
         sts =
             MFXVideoVPP_RunFrameVPPAsync (filter->session,
-            insurf,
-            outsurf,
-            NULL,
-            &syncp);
+              insurf,
+              outsurf,
+              NULL,
+              &syncp);
 
         if (MFX_WRN_DEVICE_BUSY == sts)
             g_usleep (500);

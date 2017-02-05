@@ -35,7 +35,6 @@ struct _GstMfxSurfaceComposition
 
   GPtrArray *subpictures;
   GstMfxSurface *base_surface;
-  GstMfxDisplay *display;
 };
 
 static void
@@ -77,10 +76,15 @@ create_subpicture (GstMfxSurfaceComposition * composition,
 
   subpicture = g_slice_new0(GstMfxSubpicture);
 
-  if (gst_mfx_surface_has_video_memory (composition->base_surface))
-    subpicture->surface = gst_mfx_surface_vaapi_new (composition->display, &info);
-  else
+  if (gst_mfx_surface_has_video_memory (composition->base_surface)) {
+    GstMfxDisplay *display =
+        gst_mfx_surface_vaapi_get_display (composition->base_surface);
+    subpicture->surface = gst_mfx_surface_vaapi_new (display, &info);
+    gst_mfx_display_unref (display);
+  }
+  else {
     subpicture->surface = gst_mfx_surface_new(&info);
+  }
   if (!subpicture->surface)
     return FALSE;
 
@@ -148,7 +152,6 @@ gst_mfx_create_surfaces_from_composition(
 void
 gst_mfx_surface_composition_finalize(GstMfxSurfaceComposition * composition)
 {
-  gst_mfx_display_replace (&composition->display, NULL);
   gst_mfx_surface_unref (composition->base_surface);
   g_ptr_array_free (composition->subpictures, TRUE);
 }
@@ -177,7 +180,6 @@ gst_mfx_surface_composition_new (GstMfxSurface * base_surface,
     return NULL;
 
   composition->base_surface = gst_mfx_surface_ref (base_surface);
-  composition->display = gst_mfx_surface_vaapi_get_display (base_surface);
   composition->subpictures =
       g_ptr_array_new_with_free_func((GDestroyNotify)destroy_subpicture);
   if (!gst_mfx_create_surfaces_from_composition(composition, overlay))
