@@ -210,7 +210,8 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!gst_mfx_plugin_base_set_caps (plugin, NULL, mfxdec->srcpad_caps))
     return FALSE;
 
-  gst_mfx_decoder_use_video_memory (mfxdec->decoder, !plugin->srcpad_caps_is_raw);
+  gst_mfx_decoder_should_use_video_memory (mfxdec->decoder,
+    !plugin->srcpad_caps_is_raw);
 
   mfxdec->do_renego = FALSE;
 

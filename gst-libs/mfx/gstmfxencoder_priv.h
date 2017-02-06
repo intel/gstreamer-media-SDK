@@ -161,6 +161,7 @@ struct _GstMfxEncoder
 
   mfxSession              session;
   mfxVideoParam           params;
+  mfxFrameInfo            frame_info;
   mfxBitstream            bs;
   mfxU32                  codec;
   gchar           			 *plugin_uid;

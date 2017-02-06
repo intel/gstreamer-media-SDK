@@ -94,7 +94,7 @@ GstVideoInfo *
 gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder);
 
 void
-gst_mfx_decoder_use_video_memory (GstMfxDecoder * decoder,
+gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
     gboolean memtype_is_video);
 
 void
