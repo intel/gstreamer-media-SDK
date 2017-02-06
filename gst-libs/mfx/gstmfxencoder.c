@@ -409,10 +409,15 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
           GST_ROUND_UP_16 (encoder->info.height) :
           GST_ROUND_UP_32 (encoder->info.height);
     }
+
+    if (!encoder->frame_info.FourCC) {
+      encoder->frame_info = encoder->params.mfx.FrameInfo;
+      encoder->frame_info.FourCC =
+          gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&encoder->info));
+    }
   }
   else {
-    mfxFrameAllocRequest *request = gst_mfx_task_get_request(encoder->encode);
-    encoder->params.mfx.FrameInfo = request->Info;
+    encoder->params.mfx.FrameInfo = encoder->frame_info;
   }
 }
 
@@ -437,9 +442,17 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
       && !memtype_is_system) {
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
+    mfxVideoParam *params = gst_mfx_task_get_video_params (task);
 
-    if (!gst_mfx_task_has_video_memory (task)) {
-      memtype_is_system = TRUE;
+    encoder->frame_info = params->mfx.FrameInfo;
+
+    if (!gst_mfx_task_has_video_memory (task) ||
+        encoder->frame_info.FourCC != MFX_FOURCC_NV12) {
+      if (!gst_mfx_task_has_video_memory (task))
+        memtype_is_system = TRUE;
+
+      gst_mfx_task_set_task_type (task,
+        gst_mfx_task_get_task_type (task) | GST_MFX_TASK_VPP_IN);
 
       init_encoder_task (encoder);
       gst_mfx_task_unref (task);
@@ -877,12 +890,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   }
 
   /* Need to use filter to avoid stuttering when encoding raw NV12 surfaces */
-  if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12 ||
+  if (encoder->frame_info.FourCC != MFX_FOURCC_NV12 ||
       encoder->memtype_is_system) {
-    mfxFrameInfo frame_info = request->Info;
-    frame_info.FourCC =
-        gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&encoder->info));
-
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
         encoder->encode, GST_MFX_TASK_VPP_OUT,
         encoder->memtype_is_system, memtype_is_system);
@@ -892,9 +901,9 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     gst_mfx_filter_set_request (encoder->filter, request,
         GST_MFX_TASK_VPP_OUT);
 
-    gst_mfx_filter_set_frame_info (encoder->filter, &frame_info);
+    gst_mfx_filter_set_frame_info (encoder->filter, &encoder->frame_info);
     gst_mfx_filter_set_async_depth (encoder->filter, encoder->async_depth);
-    if (GST_VIDEO_INFO_FORMAT (&encoder->info) != GST_VIDEO_FORMAT_NV12)
+    if (encoder->frame_info.FourCC != MFX_FOURCC_NV12)
       gst_mfx_filter_set_format (encoder->filter, MFX_FOURCC_NV12);
 
     if (!gst_mfx_filter_prepare (encoder->filter))
@@ -921,8 +930,7 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
   surface = gst_video_codec_frame_get_user_data (frame);
 
-  if (!encoder->shared &&
-      gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT)) {
+  if (encoder->filter) {
     filter_sts = gst_mfx_filter_process (encoder->filter, surface, &filter_surface);
     if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
       GST_ERROR ("MFX pre-processing error during encode.");
@@ -953,7 +961,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
     return GST_MFX_ENCODER_STATUS_MORE_DATA;
 
   if (sts != MFX_ERR_NONE &&
-      sts != MFX_ERR_MORE_BITSTREAM && sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
+      sts != MFX_ERR_MORE_BITSTREAM &&
+      sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
     GST_ERROR ("Error during MFX encoding.");
     return GST_MFX_ENCODER_STATUS_ERROR_UNKNOWN;
   }

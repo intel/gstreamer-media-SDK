@@ -45,7 +45,7 @@ static const char gst_mfxpostproc_sink_caps_str[] =
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
         GST_CAPS_FEATURE_MEMORY_MFX_SURFACE ","
             GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
-        "{ NV12, YV12, I420, YUY2, BGRA, BGRx }") ";"
+        "{ NV12, BGRA }") ";"
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
         GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
         GST_MFX_SUPPORTED_INPUT_FORMATS) ";"
@@ -421,7 +421,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     srcpad_has_raw_caps = FALSE;
 
   /* Prevent passthrough mode if input / output memory types don't match */
-  if (plugin->sinkpad_caps_is_raw != !srcpad_has_raw_caps)
+  if (plugin->sinkpad_caps_is_raw != srcpad_has_raw_caps)
     vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
