@@ -25,8 +25,8 @@ Features
  - Support rendering using Wayland renderer
  - Support rendering using X11 renderer with DRI3 backend
  - Support X11 / Wayland rendering using EGL renderer
- - Support VPP acceleration of dynamic procamp control during playback
- - Support for subtitles (text overlay) via MFX VPP subcomposition
+ - Support VPP acceleration of dynamic procamp control during video playback
+ - Support for subtitles (text overlay) via MFX VPP surface composition
  - Support all Media SDK postprocessing capabilities as exposed by the MSDK API
  - Encode / transcode video into H.264, HEVC, MPEG-2 and JPEG formats
 
@@ -96,6 +96,12 @@ Usage
 
 Please refer to README.USAGE for examples on how to accomplish various
 video-related tasks with the GStreamer-MSDK plugins.
+
+
+TODO
+----
+
+ - Microsoft Visual Studio support for Windows 10 enablement
 
 
 License
