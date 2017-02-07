@@ -1,0 +1,158 @@
+Introduction
+============
+
+This document serves as a starting guide on effectively using the GStreamer Media SDK plugins
+for your custom GStreamer application, by demonstrating a considerable number of examples for common use cases.
+Also, some useful commandline-based utilities will be shown to facilitate the usage of these plugins.
+
+
+Available GStreamer MSDK plugins
+================================
+
+Plugin name        | Description
+------------------------------------------------------------------------
+mfxdecode          | Media SDK Decoder Plugin (supports H.264, H265, MPEG2, MJPEG, VC1, VP8 and VP9 decoding)
+mfxvpp             | Media SDK VPP Plugin
+mfxh264enc         | Media SDK H264 Encoder Plugin
+mfxhevcenc         | Media SDK H265 Encoder Plugin (supports HEVC Main Profile only)
+mfxmpeg2enc        | Media SDK MPEG2 Encoder Plugin
+mfxjpegenc         | Media SDK JPEG Encoder Plugin
+mfxsink            | X11 / Wayland / EGL Renderer Plugin (mfxvpp + mfxsinkelement GstBin element)
+mfxsinkelement     | Standalone X11 / EGL / Wayland Renderer Plugin
+mfxvc1parse        | Custom VC1 Parser Plugin for Media SDK VC1 decoding
+
+
+GStreamer Debugging Tips
+========================
+
+To list the configurable properties of an MFX plugin listed above (in this case, mfxvpp):
+
+gst-inspect-1.0 mfxvpp
+
+To view debug, log or error messages for a GStreamer pipeline using the MFX plugins:
+
+export GST_DEBUG=mfx*:<log_level>,mfxsink:<log_level>
+
+before executing the GStreamer pipeline. For this particular case,
+we are logging the runtime debug output of mfxsink and its associated gst-libs.
+<log_level> represents a GStreamer debug value from 1 to 8.
+
+To view running frame rate statistics on the terminal when decoding, encoding or rendering,
+run the following command first:
+
+export GST_DEBUG=fpsdisplaysink:6
+
+Some GStreamer pipelines to demonstrate performance tracking of MFX plugins:
+
+# Track mfxsink rendering performance
+gst-launch-1.0 filesrc location=input.mkv ! matroskademux ! h265parse ! mfxdecode ! \
+  fpsdisplaysink video-sink=mfxsink text-overlay=false signal-fps-measurements=true
+
+# Track HEVC mfxdecode performance
+gst-launch-1.0 filesrc location=input.mkv ! matroskademux ! h265parse ! mfxdecode ! \
+  fpsdisplaysink video-sink=fakesink text-overlay=false signal-fps-measurements=true sync=false
+  
+  
+Example GStreamer Pipelines
+===========================
+
+# Video playback with audio and subtitles (from GStreamer 1.8 onwards)
+gst-play-1.0 /path/to/video.mp4
+
+# Full screen video playback using playbin with VPP rotation and EGL rendering 
+gst-launch-1.0 playbin uri=file:///path/to/video.mp4 \
+  video-filter="mfxvpp rotation=90" video-sink="mfxsink display=egl fullscreen=true"
+
+# Basic H264 decode with OSD frame rate tracking
+gst-launch-1.0 filesrc location=input.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
+  fpsdisplaysink video-sink=mfxsink
+
+# Basic MPEG2 decode
+gst-launch-1.0 filesrc location=input.mpg ! tsdemux ! mpegvideoparse ! mfxdecode ! mfxsinkelement
+
+# Basic HEVC decode
+gst-launch-1.0 filesrc location=input.mkv ! matroskademux ! h265parse ! mfxdecode ! mfxsinkelement
+
+# Basic JPEG decode
+gst-launch-1.0 filesrc location=input.avi ! avidemux ! mfxdecode ! mfxsinkelement
+
+# Basic VC1 decode
+gst-launch-1.0 filesrc location=input.wmv ! asfdemux ! mfxvc1parse ! mfxdecode ! mfxsinkelement
+
+# Basic VP8 / VP9 decode
+gst-launch-1.0 filesrc location=input.webm ! matroskademux ! mfxdecode ! mfxsinkelement
+
+# H264 raw file encode
+gst-launch-1.0 filesrc location=raw.yuv ! \
+  videoparse width=<width> height=<height> format=<format> ! \
+  mfxh264enc ! matroskamux ! filesink location=/path/to/output.mkv sync=false
+
+# Trancode an H264 video to an HEVC video
+gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
+  mfxhevcenc ! matroskamux ! filesink location=/path/to/output.mkv sync=false
+
+# Video preview with transcoding
+gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
+  tee name=tp tp. ! queue ! mfxsink  tp. ! queue ! \
+  mfxmpeg2enc ! mpegtsmux ! filesink location=/path/to/output.mpg
+
+# Simultaneous camera preview using dma-buffer sharing and H264 encoding
+gst-launch-1.0 v4l2src io-mode=5 ! video/x-raw, width=1280, height=720 ! mfxvpp ! \
+  tee name=tp ! queue ! mfxsink tp. ! mfxh264enc ! video/x-h264, profile=baseline ! \
+  matroskamux ! filesink location=/path/to/output.mkv
+  
+# RTP sender (H264)
+gst-launch-1.0 v4l2src io-mode=5 ! mfxh264enc ! \
+  'video/x-h264, stream-format=byte-stream, profile=baseline' ! \
+  rtph264pay pt=96 ! udpsink host=<ip> port=<port>
+
+# RTP receiver (H264)
+gst-launch-1.0 -v udpsrc port=<port> caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264" ! \
+  rtph264depay ! h264parse ! mfxdecode ! mfxsink
+
+# Multi-window decode:
+gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
+  tee name=tp tp. ! queue ! mfxsink  tp. ! queue ! mfxsink
+
+# VPP postprocessing after decode (gst-inspect-1.0 mfxvpp for <options>)
+gst-launch-1.0 filesrc location=video.mkv ! matroskademux ! h265parse ! mfxdecode ! \
+  mfxvpp <options> ! mfxsinkelement
+
+# VPP postprocessing during transcoding (gst-inspect-1.0 mfxvpp for <options>)
+gst-launch-1.0 filesrc location=video.mpg ! mpegpsdemux ! mpegvideoparse ! mfxdecode ! \
+  mfxvpp <options> ! mfxhevcenc ! matroskamux ! filesink location=/path/to/output.mkv sync=false
+
+
+Optimized Usage with GL Plugins
+===============================
+
+The GStreamer Media SDK plugins include optimized support for GL plugins by enabling zero-copy
+EGL-based rendering using dma-buffer sharing feature. This dma-buffer optimization has been introduced
+since GStreamer version 1.8, and hence only works from this version onwards.
+To enable this feature, run the following command before executing the GStreamer pipeline:
+
+export GST_GL_PLATFORM=egl
+
+To demonstrate optimized zero-copy rendering with glimagesink and mfxdecode,
+
+gst-launch-1.0 filesrc location=input.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
+  fpsdisplaysink video-sink=glimagesink
+
+For a more useful real-world example of video playback with glimagesink,
+
+gst-play-1.0 /path/to/video.mp4 --videosink=glimagesink
+
+Finally, we demonstrate a complex pipeline that creates a running video wall of 4 video streams while
+ensuring all frames are processed in video memory for full performance.
+
+gst-launch-1.0 glvideomixer name=m
+  sink_0::xpos=0 sink_0::ypos=0 sink_0::width=960 sink_0::height=540
+  sink_1::xpos=960 sink_1::ypos=0 sink_1::width=960 sink_1::height=540
+  sink_2::xpos=0 sink_2::ypos=540 sink_2::width=960 sink_2::height=540
+  sink_3::xpos=960 sink_3::ypos=540 sink_3::width=960 sink_3::height=540 ! glimagesink \
+  v4l2src io-mode=5 ! mfxvpp ! m.sink_0 \
+  filesrc location=video1.mp4 ! qtdemux ! h264parse ! mfxdecode ! mfxvpp brightness=-90 ! m.sink_1 \
+  filesrc location=video2.mpg ! mpegpsdemux ! mpegvideoparse ! mfxdecode ! m.sink_2 \
+  filesrc location=video3.mkv ! matroskademux ! h265parse ! mfxdecode ! mfxvpp contrast=3 ! m.sink_3
+  
+  
