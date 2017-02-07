@@ -44,7 +44,7 @@ function(FindGstreamer libs)
 
   if(GSTREAMER_GL_FOUND)
     list(APPEND GST_LIBS ${GSTREAMER_GL_LIBRARIES})
-    include_directories (${GSTREAMER_GL_INCLUDE_LIBRARIES})
+    include_directories (${GSTREAMER_GL_INCLUDE_DIRS})
     add_definitions(-DHAVE_GST_GL_LIBS)
   endif()
   set(${libs} ${GST_LIBS} PARENT_SCOPE)
