@@ -1,5 +1,5 @@
 Version 1.2.0
-* Implemented Video Overlay Composition.
+* Implemented text overlay support with MFX VPP surface composition.
 
 Version 1.1.0
 * Implemented GstColorBalance interface on mfxvpp.
