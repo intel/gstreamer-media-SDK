@@ -35,15 +35,15 @@ Requirements
 **Software requirements**
 
   * Media Server Studio 2016 Community / Professional Edition (Haswell / Broadwell)
-    Media Server Studio 2017 Community / Professional Edition (Broadwell / Skylake)
-    Media SDK 2017 for Yocto Embedded Edition (Apollo Lake)
+    Media Server Studio 2017 Community / Professional Edition (Broadwell / Skylake)  
+    Media SDK 2017 for Yocto Embedded Edition (Apollo Lake)  
   * GStreamer 1.6.x (tested up to GStreamer 1.10.x)
   * gst-plugins-* 1.6.x (tested up to GStreamer 1.10.x)
   * CMake
  
   * Renderers:
-    Wayland (>=1.7)
-    X11 (DRI 3)
+    Wayland (>=1.7)  
+    X11 (DRI 3)  
     EGL
 
 **Hardware requirements**
