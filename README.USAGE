@@ -93,12 +93,12 @@ gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
 
 # Video preview with transcoding
 gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
-  tee name=tp tp. ! queue ! mfxsink  tp. ! queue ! \
+  tee name=tp tp. ! queue ! mfxsinkelement  tp. ! queue ! \
   mfxmpeg2enc ! mpegtsmux ! filesink location=/path/to/output.mpg
 
 # Simultaneous camera preview using dma-buffer sharing and H264 encoding
 gst-launch-1.0 v4l2src io-mode=5 ! video/x-raw, width=<w>, height=<h> ! mfxvpp ! \
-  tee name=tp ! queue ! mfxsinkelement tp. ! mfxh264enc ! video/x-h264, profile=baseline ! \
+  tee name=tp ! queue ! mfxsinkelement tp. ! mfxh264enc ! 'video/x-h264, profile=baseline' ! \
   matroskamux ! filesink location=/path/to/output.mkv
   
 # RTP sender (H264)
@@ -142,8 +142,8 @@ For a more useful real-world example of video playback with glimagesink,
 
   gst-play-1.0 /path/to/video.mp4 --videosink=glimagesink
 
-Finally, we demonstrate a complex pipeline that creates a running video wall of 4 video streams while
-ensuring all frames are processed in video memory for full performance.
+Finally, we demonstrate a complex pipeline that creates a video wall running 4 video streams concurrently
+while ensuring all frames are processed in video memory for full performance.
 
   gst-launch-1.0 glvideomixer name=m
     sink_0::xpos=0 sink_0::ypos=0 sink_0::width=960 sink_0::height=540
