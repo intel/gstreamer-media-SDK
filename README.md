@@ -1,14 +1,13 @@
 GStreamer-MSDK
 ==============
-  GStreamer plugins for Intel(R) Media SDK
+GStreamer plugins for Intel&reg; Media SDK
 
 
 Overview
 --------
-
-GStreamer-MSDK consists of a collection of GStreamer plugins for Intel(R) Media SDK.
-This allows users to use Intel(R) Media SDK (MSDK) in their GStreamer-based applications
-with minimal knowledge of the MSDK API.
+GStreamer-MSDK consists of a collection of GStreamer plugins for Intel&reg; Media SDK (MSDK).
+This allows users to use MSDK in their GStreamer-based applications with minimal knowledge of 
+the MSDK API.
 
 GStreamer-MSDK includes plugins to perform decode, encode, video postprocessing (VPP)
 and high performance rendering. Please refer to README.USAGE for more information about these
@@ -17,7 +16,6 @@ plugins and their usage.
 
 Features
 --------
-
  - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC, VP8 and VP9 videos
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
@@ -34,28 +32,27 @@ Features
 Requirements
 ------------
 
-Software requirements
+**Software requirements**
 
-  * Media Server Studio 2016 Community / Professional Edition (Haswell / Broadwell)
-	Media Server Studio 2017 Community / Professional Edition (Broadwell / Skylake)
-	MediaSDK 2017 MR1 for Yocto Embedded Edition (Apollo Lake)
+  * Media Server Studio 2016 Community / Professional Edition (Haswell / Broadwell)  
+    Media Server Studio 2017 Community / Professional Edition (Broadwell / Skylake)  
+    Media SDK 2017 for Yocto Embedded Edition (Apollo Lake)
   * GStreamer 1.6.x (tested up to GStreamer 1.10.x)
   * gst-plugins-* 1.6.x (tested up to GStreamer 1.10.x)
   * CMake
-  
-  * Renderers:
-      Wayland (>=1.7)
-      X11 (DRI 3)
-      EGL
+ 
+  * Renderers:  
+    Wayland (>=1.7)  
+    X11 (DRI 3)  
+    EGL
 
-Hardware requirements
+**Hardware requirements**
 
+  * Intel Haswell / Broadwell / Skylake with Intel HD / Iris Pro graphics
   * Intel Apollo Lake
-  * Intel Haswell / Broadwell /Skylake with Intel HD / Iris Pro graphics
 
 Compiling
 ---------
-
 GStreamer-MSDK uses the CMake build tool to build the plugins.
 Create a build directory within the source directory and run the CMake
 command to configure the build.
@@ -74,7 +71,7 @@ To build the plugins for Media Server Studio 2016 Linux Edition:
 	cmake .. -DWITH_MSS_2016=ON
 		
 
-Only MediaSDK 2017 MR1 For Embedded supports VP9 decode. To disable VP9 decode
+Only MediaSDK 2017 For Embedded supports VP9 decode. To disable VP9 decode
 for other version of Media SDK:
 
 	cmake .. -DMFX_VP9_DECODER=OFF
@@ -93,27 +90,23 @@ The plugins will be installed in the /usr/lib/gstreamer-1.0 directory.
 
 Usage
 -----
-
 Please refer to README.USAGE for examples on how to accomplish various
 video-related tasks with the GStreamer-MSDK plugins.
 
 
 TODO
 ----
-
- - Microsoft Visual Studio support for Windows 10 enablement
+ - Microsoft&reg; Visual Studio support for Windows 10 enablement
 
 
 License
 -------
-
-GStreamer Media SDK libraries and plugins are available under the
+GStreamer-MSDK libraries and plugins are available under the
 terms of the GNU Lesser General Public License v2.1+.
 
 
 Acknowledgements
 ----------------
-
-This project is heavily based on the well-established GStreamer VAAPI architecture,hence we would
+This project is heavily based on the well-established GStreamer VAAPI architecture, hence we would
 like to publicly thank the GStreamer VAAPI developers for their hard work and contributions.
 
