@@ -108,6 +108,9 @@ gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
     decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
     gst_mfx_task_ensure_memtype_is_system(decoder->decode);
   }
+
+  gst_mfx_task_get_video_params(decoder->decode)->IOPattern =
+      decoder->params.IOPattern;
 }
 
 static void

@@ -410,7 +410,9 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
           GST_ROUND_UP_32 (encoder->info.height);
     }
 
-    if (!encoder->frame_info.FourCC) {
+    if (encoder->frame_info.FourCC != MFX_FOURCC_NV12 &&
+        encoder->frame_info.FourCC != MFX_FOURCC_RGB4 &&
+        encoder->frame_info.FourCC != MFX_FOURCC_P010) {
       encoder->frame_info = encoder->params.mfx.FrameInfo;
       encoder->frame_info.FourCC =
           gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&encoder->info));
