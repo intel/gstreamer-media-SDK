@@ -267,6 +267,7 @@ gst_mfxdec_decide_allocation (GstVideoDecoder * vdec, GstQuery * query)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
 
+  /* First check to determine if video memory can still be used at this point */
   plugin->srcpad_caps_is_raw =
       !gst_mfx_decoder_should_use_video_memory (GST_MFXDEC(vdec)->decoder, TRUE);
 

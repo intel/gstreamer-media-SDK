@@ -127,8 +127,8 @@ Optimized Usage with GL Plugins
 ===============================
 
 The GStreamer Media SDK plugins include optimized support for GL plugins by enabling zero-copy
-EGL texture transfers using dma-buffer sharing feature. This dma-buffer optimization has been
-introduced since GStreamer version 1.8, and hence only works from this version onwards.
+EGL texture transfers using dma-buffer sharing feature. This dma-buffer sharing optimization
+has been introduced since GStreamer version 1.8, and hence only works from this version onwards.
 To enable this feature, run the following command before executing the GStreamer pipeline:
 
   export GST_GL_PLATFORM=egl

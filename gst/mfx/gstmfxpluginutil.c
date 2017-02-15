@@ -253,7 +253,8 @@ gst_caps_has_mfx_surface (GstCaps * caps)
   return _gst_caps_has_feature (caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 }
 
-/* Workaround function to check if srcpad caps should be raw or not */
+/* This is a temporary workaround function for mfxvpp to determine the output
+ * memory type. This doesn't work very well with playbin though */
 gboolean
 gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
 {

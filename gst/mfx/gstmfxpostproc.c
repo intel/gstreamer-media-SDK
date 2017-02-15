@@ -412,6 +412,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     if (task) {
       plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
 
+      /* This ensures that the prior peer MFX task outputs to system memory,
+       * since VPP only works well with a sys-in / sys-out configuration */
       if (srcpad_has_raw_caps) {
         mfxVideoParam *params = gst_mfx_task_get_video_params (task);
         params->IOPattern &= 0b11;
@@ -422,12 +424,12 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     }
   }
 
-  /* If sinkpad caps indicate video memory input,
-   * srcpad should be mapped for vid-to-vid vpp */
+  /* If sinkpad caps indicate video memory input, srcpad caps should also
+   * indicate video memory output for correct vid-in / vid-out configuration */
   if (!plugin->sinkpad_caps_is_raw && srcpad_has_raw_caps)
     srcpad_has_raw_caps = FALSE;
 
-  /* Prevent passthrough mode if input / output memory types don't match */
+  /* Prevent pass-through mode if input / output memory types don't match */
   if (plugin->sinkpad_caps_is_raw != srcpad_has_raw_caps)
     vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
 
