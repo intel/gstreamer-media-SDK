@@ -361,8 +361,7 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
   gboolean hard = FALSE;
 
   if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED ||
-      gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2 ||
-      gst_mfx_profile_get_codec(profile) == MFX_CODEC_JPEG)
+      gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2)
     hard = TRUE;
 
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
@@ -460,7 +459,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
   switch (sts) {
-    case GST_MFX_DECODER_STATUS_ERROR_NO_DATA:
+    case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
     case GST_MFX_DECODER_STATUS_SUCCESS:
       while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
         ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
