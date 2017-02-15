@@ -101,6 +101,9 @@ gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
 
   g_return_if_fail (decoder != NULL);
 
+  /* The decoder may be forced to use system memory by a following peer
+   * MFX VPP task, or due to decoder limitations for that particular
+   * codec. In that case, return FALSE to confirm the use of system memory */
   params = gst_mfx_task_get_video_params (decoder->decode);
   if (params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY) {
     decoder->memtype_is_system = TRUE;
@@ -421,8 +424,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
 
   /* We already filled in the mfxVideoParam structure for decoder initialization
-   * by reading in the parsed GstVideoInfo, but this is still needed for VC1 AP
-   * for additional parsed information for successful initiation */
+   * by reading in the GstVideoInfo, but this is still needed for VC1 AP
+   * to initalize additional structures for successful initialization */
   if (decoder->params.mfx.CodecId == MFX_CODEC_VC1) {
     sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
         &decoder->params);
@@ -642,7 +645,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     decoder->bs.Data = decoder->bitstream->data;
   }
 
-  /* Initialize the MFX decoder session */
   if (G_UNLIKELY (!decoder->inited)) {
     ret = gst_mfx_decoder_start (decoder);
     if (GST_MFX_DECODER_STATUS_SUCCESS == ret)
@@ -688,7 +690,9 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
     surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
 
-    /* Update stream properties if they have interlaced frames */
+    /* Update stream properties if they have interlaced frames. An interlaced H264
+     * can only be detected after decoding the first frame, hence the delayed VPP
+     * initialization */
     switch (outsurf->Info.PicStruct) {
       case MFX_PICSTRUCT_PROGRESSIVE:
         if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
@@ -723,6 +727,10 @@ update:
         break;
     }
 
+    /* Re-initialize shared decoder / VPP task with shared surface pool and
+     * MFX session. This re-initialization can only occur if no other peer
+     * MFX task from a downstream element marked the decoder task with
+     * another task type at this point. */
     if ((decoder->enable_csc || decoder->enable_deinterlace) &&
         (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER) &&
         !decoder->filter) {

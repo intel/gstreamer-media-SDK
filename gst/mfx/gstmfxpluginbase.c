@@ -458,6 +458,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 #endif
 #endif
 
+  /* Final check to determine if system or video memory should be used for
+   * the output of the decoder or VPP task */
   if (!plugin->srcpad_has_dmabuf && !gst_query_find_allocation_meta(query,
       GST_MFX_VIDEO_META_API_TYPE, &idx))
     plugin->srcpad_caps_is_raw = TRUE;

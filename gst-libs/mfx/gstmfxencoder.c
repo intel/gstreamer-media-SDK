@@ -443,6 +443,9 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
 
+    /* This could be a potentially shared task, so get the mfxFrameInfo
+     * from the current task to initialize the new encoder
+     * or shared VPP / encoder task */
     if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
       mfxVideoParam *params = gst_mfx_task_get_video_params (task);
       encoder->frame_info = params->mfx.FrameInfo;
@@ -461,6 +464,10 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
       if (!gst_mfx_task_has_video_memory (task))
         memtype_is_system = TRUE;
 
+      /* If this is a peer decoder task, then mark the type as a VPP task
+       * that is later on shared with the encoder task. This prevents
+       * the decoder module from invoking its own VPP task which cannot
+       * be shared by the encoder */
       gst_mfx_task_set_task_type (task,
         gst_mfx_task_get_task_type (task) | GST_MFX_TASK_VPP_IN);
 
