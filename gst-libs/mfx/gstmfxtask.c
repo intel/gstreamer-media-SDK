@@ -77,7 +77,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   mfxU16 num_surfaces;
   ResponseData *response_data;
 
-  if (task->task_type & GST_MFX_TASK_DECODER) {
+  if (task->saved_responses && task->task_type & GST_MFX_TASK_DECODER) {
     GList *l = g_list_last (task->saved_responses);
     if (l) {
       response_data = l->data;
@@ -233,6 +233,8 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
   g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId),
       response_data->mem_ids);
   g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
+
+  task->saved_responses = g_list_delete_link (task->saved_responses, l);
 
   return MFX_ERR_NONE;
 }
