@@ -411,6 +411,13 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
     if (task) {
       plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
+
+      if (srcpad_has_raw_caps) {
+        mfxVideoParam *params = gst_mfx_task_get_video_params (task);
+        params->IOPattern &= 0b11;
+        params->IOPattern |= MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+        plugin->sinkpad_caps_is_raw = TRUE;
+      }
       gst_mfx_task_unref (task);
     }
   }
