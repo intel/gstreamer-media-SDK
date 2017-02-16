@@ -265,8 +265,13 @@ gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
 static gboolean
 gst_mfxdec_decide_allocation (GstVideoDecoder * vdec, GstQuery * query)
 {
-  return gst_mfx_plugin_base_decide_allocation (GST_MFX_PLUGIN_BASE (vdec),
-    query);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
+
+  /* First check to determine if video memory can still be used at this point */
+  plugin->srcpad_caps_is_raw =
+      !gst_mfx_decoder_should_use_video_memory (GST_MFXDEC(vdec)->decoder, TRUE);
+
+  return gst_mfx_plugin_base_decide_allocation (plugin, query);
 }
 
 static gboolean
@@ -290,12 +295,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
     mfxdec->live_mode = FALSE;
   }
 
-  plugin->srcpad_caps_is_raw =
-      gst_mfx_query_peer_has_raw_caps (GST_VIDEO_DECODER_SRC_PAD (mfxdec));
-
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      profile, &info, mfxdec->async_depth, plugin->srcpad_caps_is_raw,
-      mfxdec->live_mode);
+      profile, &info, mfxdec->async_depth, mfxdec->live_mode);
   if (!mfxdec->decoder)
     return FALSE;
 

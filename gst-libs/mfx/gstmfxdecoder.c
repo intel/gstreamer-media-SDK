@@ -93,14 +93,23 @@ gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder)
   return &decoder->info;
 }
 
-void
+gboolean
 gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
     gboolean memtype_is_video)
 {
+  mfxVideoParam *params;
+
   g_return_if_fail (decoder != NULL);
 
-  if (decoder->memtype_is_system)
-    return;
+  /* The decoder may be forced to use system memory by a following peer
+   * MFX VPP task, or due to decoder limitations for that particular
+   * codec. In that case, return FALSE to confirm the use of system memory */
+  params = gst_mfx_task_get_video_params (decoder->decode);
+  if (params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY) {
+    decoder->memtype_is_system = TRUE;
+    gst_mfx_task_ensure_memtype_is_system (decoder->decode);
+    return FALSE;
+  }
 
   if (memtype_is_video) {
     decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
@@ -108,16 +117,17 @@ gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
   else {
     decoder->memtype_is_system = TRUE;
     decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-    gst_mfx_task_ensure_memtype_is_system(decoder->decode);
+    gst_mfx_task_ensure_memtype_is_system (decoder->decode);
   }
 
   if (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER)
-    gst_mfx_task_get_video_params(decoder->decode)->IOPattern =
-        decoder->params.IOPattern;
+    params->IOPattern = decoder->params.IOPattern;
+
+  return !!(params->IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 }
 
 static void
-destroy_decoder (GstMfxDecoder * decoder)
+close_decoder (GstMfxDecoder * decoder)
 {
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
 
@@ -146,7 +156,7 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
       (decoder->params.mfx.CodecId == MFX_CODEC_HEVC))
     MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
 
-  destroy_decoder (decoder);
+  close_decoder (decoder);
 
   gst_mfx_task_replace (&decoder->decode, NULL);
 }
@@ -316,8 +326,7 @@ error_no_pool:
 static gboolean
 gst_mfx_decoder_init (GstMfxDecoder * decoder,
     GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-    GstVideoInfo * info, mfxU16 async_depth,
-    gboolean memtype_is_system, gboolean live_mode)
+    GstVideoInfo * info, mfxU16 async_depth, gboolean live_mode)
 {
   decoder->info = *info;
   decoder->profile = profile;
@@ -328,9 +337,7 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
     decoder->params.mfx.DecodedOrder = 1;
   }
 
-  decoder->memtype_is_system = memtype_is_system;
-  decoder->params.IOPattern = memtype_is_system ?
-    MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+  decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   decoder->inited = FALSE;
   decoder->bs.MaxLength = 1024 * 16;
   decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
@@ -366,7 +373,7 @@ gst_mfx_decoder_class (void)
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     GstMfxProfile profile, GstVideoInfo * info, mfxU16 async_depth,
-    gboolean memtype_is_system, gboolean live_mode)
+    gboolean live_mode)
 {
   GstMfxDecoder *decoder;
 
@@ -377,7 +384,7 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     goto error;
 
   if (!gst_mfx_decoder_init (decoder, aggregator, profile, info,
-            async_depth, memtype_is_system, live_mode))
+            async_depth, live_mode))
     goto error;
 
   return decoder;
@@ -417,8 +424,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
 
   /* We already filled in the mfxVideoParam structure for decoder initialization
-   * by reading in the parsed GstVideoInfo, but this is still needed for VC1 AP
-   * for additional parsed information for successful initiation */
+   * by reading in the GstVideoInfo, but this is still needed for VC1 AP
+   * to initalize additional structures for successful initialization */
   if (decoder->params.mfx.CodecId == MFX_CODEC_VC1) {
     sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
         &decoder->params);
@@ -508,7 +515,7 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
 {
   mfxStatus sts;
 
-  destroy_decoder(decoder);
+  close_decoder(decoder);
 
   decoder->params.mfx.FrameInfo = *info;
 
@@ -638,7 +645,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     decoder->bs.Data = decoder->bitstream->data;
   }
 
-  /* Initialize the MFX decoder session */
   if (G_UNLIKELY (!decoder->inited)) {
     ret = gst_mfx_decoder_start (decoder);
     if (GST_MFX_DECODER_STATUS_SUCCESS == ret)
@@ -684,7 +690,9 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
     surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
 
-    /* Update stream properties if they have interlaced frames */
+    /* Update stream properties if they have interlaced frames. An interlaced H264
+     * can only be detected after decoding the first frame, hence the delayed VPP
+     * initialization */
     switch (outsurf->Info.PicStruct) {
       case MFX_PICSTRUCT_PROGRESSIVE:
         if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
@@ -719,6 +727,10 @@ update:
         break;
     }
 
+    /* Re-initialize shared decoder / VPP task with shared surface pool and
+     * MFX session. This re-initialization can only occur if no other peer
+     * MFX task from a downstream element marked the decoder task with
+     * another task type at this point. */
     if ((decoder->enable_csc || decoder->enable_deinterlace) &&
         (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER) &&
         !decoder->filter) {

@@ -422,11 +422,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   gboolean update_pool = FALSE;
   gboolean has_video_meta = FALSE;
   gboolean has_video_alignment = FALSE;
-#ifdef HAVE_GST_GL_LIBS
   GstStructure *params;
-  GstObject *gl_context;
   guint idx;
-#endif
 
   g_return_val_if_fail (plugin->aggregator != NULL, FALSE);
 
@@ -444,9 +441,9 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
+      GstObject *gl_context;
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
           &gl_context, NULL) && gl_context) {
-
         plugin->srcpad_has_dmabuf =
             (GST_IS_GL_CONTEXT_EGL (gl_context) &&
             !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
@@ -461,6 +458,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 #endif
 #endif
 
+  /* Final check to determine if system or video memory should be used for
+   * the output of the decoder or VPP task */
   if (!plugin->srcpad_has_dmabuf && !gst_query_find_allocation_meta(query,
       GST_MFX_VIDEO_META_API_TYPE, &idx))
     plugin->srcpad_caps_is_raw = TRUE;

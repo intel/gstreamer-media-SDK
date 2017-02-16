@@ -410,9 +410,7 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
           GST_ROUND_UP_32 (encoder->info.height);
     }
 
-    if (encoder->frame_info.FourCC != MFX_FOURCC_NV12 &&
-        encoder->frame_info.FourCC != MFX_FOURCC_RGB4 &&
-        encoder->frame_info.FourCC != MFX_FOURCC_P010) {
+    if (!encoder->frame_info.FourCC) {
       encoder->frame_info = encoder->params.mfx.FrameInfo;
       encoder->frame_info.FourCC =
           gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&encoder->info));
@@ -440,29 +438,41 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 {
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
 
-  if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12)
-      && !memtype_is_system) {
+  if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) &&
+      !memtype_is_system) {
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
-    mfxVideoParam *params = gst_mfx_task_get_video_params (task);
 
-    encoder->frame_info = params->mfx.FrameInfo;
+    /* This could be a potentially shared task, so get the mfxFrameInfo
+     * from the current task to initialize the new encoder
+     * or shared VPP / encoder task */
+    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
+      mfxVideoParam *params = gst_mfx_task_get_video_params (task);
+      encoder->frame_info = params->mfx.FrameInfo;
+    }
+    else {
+      encoder->frame_info = gst_mfx_task_get_request (task)->Info;
+    }
 
-    if (!gst_mfx_task_has_video_memory (task) ||
-        encoder->frame_info.FourCC != MFX_FOURCC_NV12) {
+    if (gst_mfx_task_has_video_memory (task) &&
+        encoder->frame_info.FourCC == MFX_FOURCC_NV12) {
+      encoder->shared = TRUE;
+      encoder->encode = task;
+      encoder->session = gst_mfx_task_get_session (encoder->encode);
+    }
+    else {
       if (!gst_mfx_task_has_video_memory (task))
         memtype_is_system = TRUE;
 
+      /* If this is a peer decoder task, then mark the type as a VPP task
+       * that is later on shared with the encoder task. This prevents
+       * the decoder module from invoking its own VPP task which cannot
+       * be shared by the encoder */
       gst_mfx_task_set_task_type (task,
         gst_mfx_task_get_task_type (task) | GST_MFX_TASK_VPP_IN);
 
       init_encoder_task (encoder);
       gst_mfx_task_unref (task);
-    }
-    else {
-      encoder->shared = TRUE;
-      encoder->encode = task;
-      encoder->session = gst_mfx_task_get_session (encoder->encode);
     }
   }
   else {
