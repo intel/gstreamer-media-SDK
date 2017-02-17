@@ -44,6 +44,8 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface)
   frame_size = info->Width * info->Height;
 
 #ifdef WITH_MSS_2016
+  /* This offset value is required for Haswell when using MFX surfaces in
+   * system memory. Don't ask me why... */
   offset = 1;
 #endif
 
