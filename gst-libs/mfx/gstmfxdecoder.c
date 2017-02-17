@@ -730,8 +730,7 @@ update:
      * MFX task from a downstream element marked the decoder task with
      * another task type at this point. */
     if ((decoder->enable_csc || decoder->enable_deinterlace) &&
-        (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER) &&
-        !decoder->filter) {
+        (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER)) {
       if (!gst_mfx_decoder_reinit (decoder, &outsurf->Info))
         ret = GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
       else
