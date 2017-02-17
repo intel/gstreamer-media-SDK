@@ -46,9 +46,11 @@ static const char gst_mfxdecode_sink_caps_str[] =
         mpegversion = 2")
     GST_CAPS_CODEC ("video/x-h264, \
         alignment = (string) au, \
+        profile = (string) { constrained-baseline, baseline, main, high }, \
         stream-format = (string) byte-stream")
     GST_CAPS_CODEC ("video/x-h265, \
         alignment = (string) au, \
+        profile = (string) main, \
         stream-format = (string) byte-stream")
     GST_CAPS_CODEC ("video/x-wmv, \
         wmvversion = 3")
@@ -461,6 +463,8 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
+      ret = GST_FLOW_OK;
+      break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
       while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
         ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
@@ -486,7 +490,7 @@ not_negotiated:
   {
     GST_ERROR_OBJECT (mfxdec, "not negotiated");
     gst_video_decoder_drop_frame (vdec, frame);
-    return GST_FLOW_NOT_SUPPORTED;
+    return GST_FLOW_NOT_NEGOTIATED;
   }
 }
 
