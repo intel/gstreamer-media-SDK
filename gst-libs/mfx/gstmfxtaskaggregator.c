@@ -131,6 +131,7 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
     gboolean * is_joined)
 {
   mfxIMPL impl;
+  mfxVersion version;
   mfxStatus sts;
   mfxSession session;
   const char *desc;
@@ -142,7 +143,7 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
   //init_params.GPUCopy = MFX_GPUCOPY_ON;
   init_params.Implementation = MFX_IMPL_AUTO_ANY;
   init_params.Version.Major = 1;
-  init_params.Version.Minor = 15;
+  init_params.Version.Minor = 17;
 
   sts = MFXInitEx (init_params, &session);
   if (sts < 0) {
@@ -150,7 +151,11 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
     return NULL;
   }
 
-  sts = MFXQueryIMPL (session, &impl);
+  MFXQueryVersion (session, &version);
+
+  GST_INFO ("Using Media SDK API version %d.%d", version.Major, version.Minor);
+
+  MFXQueryIMPL (session, &impl);
 
   switch (MFX_IMPL_BASETYPE (impl)) {
     case MFX_IMPL_SOFTWARE:
