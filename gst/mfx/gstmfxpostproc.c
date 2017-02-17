@@ -286,7 +286,6 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     }
   } else {
     g_warning ("got an unknown channel %s", channel->label);
-    return;
   }
 }
 
@@ -488,7 +487,6 @@ video_info_update (GstCaps * caps, GstVideoInfo * info,
     *caps_changed_ptr = TRUE;
     *info = vi;
   }
-
   return TRUE;
 }
 
@@ -498,10 +496,7 @@ gst_mfxpostproc_update_sink_caps (GstMfxPostproc * vpp, GstCaps * caps,
 {
   GST_INFO_OBJECT (vpp, "new sink caps = %" GST_PTR_FORMAT, caps);
 
-  if (!video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr))
-    return FALSE;
-
-  return TRUE;
+  return video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr);
 }
 
 static GstBuffer *
@@ -686,13 +681,9 @@ static gboolean
 gst_mfxpostproc_propose_allocation (GstBaseTransform * trans,
     GstQuery * decide_query, GstQuery * query)
 {
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (trans);
-
-  if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
-    return FALSE;
-  return TRUE;
+  return gst_mfx_plugin_base_propose_allocation (GST_MFX_PLUGIN_BASE (trans),
+      query);
 }
-
 
 static gboolean
 gst_mfxpostproc_decide_allocation (GstBaseTransform * trans, GstQuery * query)
