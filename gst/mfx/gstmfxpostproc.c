@@ -395,8 +395,6 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   gboolean srcpad_has_raw_caps =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
 
-  plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
-
   if (vpp->filter)
     return TRUE;
 
@@ -431,6 +429,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   /* Prevent pass-through mode if input / output memory types don't match */
   if (plugin->sinkpad_caps_is_raw != srcpad_has_raw_caps)
     vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
+
+  plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
       plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
