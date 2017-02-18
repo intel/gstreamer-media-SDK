@@ -96,6 +96,7 @@ struct _GstMfxPostproc
   guint                   width;
   guint                   height;
   guint                   flags;
+  guint                   async_depth;
 
   GstCaps                *allowed_sinkpad_caps;
   GstVideoInfo            sinkpad_info;

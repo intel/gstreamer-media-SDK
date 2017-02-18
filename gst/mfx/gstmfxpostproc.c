@@ -78,6 +78,7 @@ enum
 {
   PROP_0,
 
+  PROP_ASYNC_DEPTH,
   PROP_FORMAT,
   PROP_WIDTH,
   PROP_HEIGHT,
@@ -93,6 +94,7 @@ enum
   PROP_FRAMERATE_CONVERSION,
 };
 
+#define DEFAULT_ASYNC_DEPTH             0
 #define DEFAULT_FORMAT                  GST_VIDEO_FORMAT_NV12
 #define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
@@ -848,6 +850,9 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   gst_mfx_filter_set_frame_info_from_gst_video_info (vpp->filter,
       &vpp->sinkpad_info);
 
+  if (vpp->async_depth)
+    gst_mfx_filter_set_async_depth (vpp->filter, vpp->async_depth);
+
   if (!gst_mfx_filter_set_size (vpp->filter,
           GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
           GST_VIDEO_INFO_HEIGHT (&vpp->srcpad_info)))
@@ -977,6 +982,9 @@ gst_mfxpostproc_set_property (GObject * object,
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
   switch (prop_id) {
+    case PROP_ASYNC_DEPTH:
+      vpp->async_depth = g_value_get_uint (value);
+      break;
     case PROP_FORMAT:
       vpp->format = g_value_get_enum (value);
       break;
@@ -1051,6 +1059,9 @@ gst_mfxpostproc_get_property (GObject * object,
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
   switch (prop_id) {
+    case PROP_ASYNC_DEPTH:
+      g_value_set_uint (value, vpp->async_depth);
+      break;
     case PROP_FORMAT:
       g_value_set_enum (value, vpp->format);
       break;
@@ -1135,6 +1146,13 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   /* src pad */
   pad_template = gst_static_pad_template_get (&gst_mfxpostproc_src_factory);
   gst_element_class_add_pad_template (element_class, pad_template);
+
+  g_object_class_install_property (object_class,
+      PROP_ASYNC_DEPTH,
+      g_param_spec_uint ("async-depth", "Asynchronous Depth",
+          "Number of async operations before explicit sync",
+          0, 20, DEFAULT_ASYNC_DEPTH,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:deinterlace-mode:
@@ -1311,6 +1329,7 @@ gst_mfxpostproc_init (GstMfxPostproc * vpp)
 {
   gst_mfx_plugin_base_init (GST_MFX_PLUGIN_BASE (vpp), GST_CAT_DEFAULT);
 
+  vpp->async_depth = DEFAULT_ASYNC_DEPTH;
   vpp->format = DEFAULT_FORMAT;
   vpp->deinterlace_mode = DEFAULT_DEINTERLACE_MODE;
   vpp->keep_aspect = TRUE;
