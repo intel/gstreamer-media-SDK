@@ -482,8 +482,9 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
     goto error_element_missing;
   }
 
-  gst_bin_add_many (GST_BIN (mfxsinkbin), mfxsinkbin->postproc,
-      mfxsinkbin->sink, NULL);
+  gst_bin_add_many (GST_BIN (mfxsinkbin),
+    mfxsinkbin->postproc,
+    mfxsinkbin->sink, NULL);
 
   if (!gst_element_link_many (mfxsinkbin->postproc,
       mfxsinkbin->sink, NULL))
