@@ -330,7 +330,9 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
   decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
   if (live_mode) {
     decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
-    decoder->params.mfx.DecodedOrder = 1;
+    /* This is for a special fix for Android Auto / Apple Carplay issues */
+    if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
+      decoder->params.mfx.DecodedOrder = 1;
   }
 
   decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
