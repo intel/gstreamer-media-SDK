@@ -151,10 +151,7 @@ gst_mfx_plugin_base_ensure_aggregator (GstMfxPluginBase * plugin)
 {
   gst_mfx_task_aggregator_replace (&plugin->aggregator, NULL);
 
-  if (!gst_mfx_ensure_aggregator (GST_ELEMENT (plugin)))
-    return FALSE;
-
-  return TRUE;
+  return gst_mfx_ensure_aggregator (GST_ELEMENT (plugin));
 }
 
 /* Checks whether the supplied pad peer element supports DMABUF sharing */
