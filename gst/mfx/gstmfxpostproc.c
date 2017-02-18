@@ -394,6 +394,8 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
+  gboolean sinkpad_has_raw_caps =
+      !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
   gboolean srcpad_has_raw_caps =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
 
@@ -403,21 +405,21 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
-  /* Check if upstream MFX decoder element outputs raw NV12 surfaces */
-  if (!plugin->sinkpad_caps_is_raw) {
+  if (!plugin->sinkpad_has_dmabuf) {
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
 
     if (task) {
-      plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
-
-      /* This ensures that the prior peer MFX task outputs to system memory,
-       * since VPP only works well with a sys-in / sys-out configuration */
-      if (srcpad_has_raw_caps) {
+      if (sinkpad_has_raw_caps || srcpad_has_raw_caps) {
+        /* This ensures that the prior peer MFX task outputs to system memory,
+         * since VPP only works correctly with a sys-in / sys-out configuration */
         mfxVideoParam *params = gst_mfx_task_get_video_params (task);
         params->IOPattern &= 0b11;
         params->IOPattern |= MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
         plugin->sinkpad_caps_is_raw = TRUE;
+      }
+      else {
+        plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
       }
       gst_mfx_task_unref (task);
     }
