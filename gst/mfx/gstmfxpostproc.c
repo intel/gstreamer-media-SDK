@@ -78,6 +78,7 @@ enum
 {
   PROP_0,
 
+  PROP_ASYNC_DEPTH,
   PROP_FORMAT,
   PROP_WIDTH,
   PROP_HEIGHT,
@@ -93,6 +94,7 @@ enum
   PROP_FRAMERATE_CONVERSION,
 };
 
+#define DEFAULT_ASYNC_DEPTH             0
 #define DEFAULT_FORMAT                  GST_VIDEO_FORMAT_NV12
 #define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
@@ -286,7 +288,6 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     }
   } else {
     g_warning ("got an unknown channel %s", channel->label);
-    return;
   }
 }
 
@@ -393,10 +394,10 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
+  gboolean sinkpad_has_raw_caps =
+      !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
   gboolean srcpad_has_raw_caps =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
-
-  plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
 
   if (vpp->filter)
     return TRUE;
@@ -404,21 +405,21 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
-  /* Check if upstream MFX decoder element outputs raw NV12 surfaces */
-  if (!plugin->sinkpad_caps_is_raw) {
+  if (!plugin->sinkpad_has_dmabuf) {
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
 
     if (task) {
-      plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
-
-      /* This ensures that the prior peer MFX task outputs to system memory,
-       * since VPP only works well with a sys-in / sys-out configuration */
-      if (srcpad_has_raw_caps) {
+      if (sinkpad_has_raw_caps || srcpad_has_raw_caps) {
+        /* This ensures that the prior peer MFX task outputs to system memory,
+         * since VPP only works correctly with a sys-in / sys-out configuration */
         mfxVideoParam *params = gst_mfx_task_get_video_params (task);
         params->IOPattern &= 0b11;
         params->IOPattern |= MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
         plugin->sinkpad_caps_is_raw = TRUE;
+      }
+      else {
+        plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
       }
       gst_mfx_task_unref (task);
     }
@@ -432,6 +433,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   /* Prevent pass-through mode if input / output memory types don't match */
   if (plugin->sinkpad_caps_is_raw != srcpad_has_raw_caps)
     vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
+
+  plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
       plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
@@ -488,7 +491,6 @@ video_info_update (GstCaps * caps, GstVideoInfo * info,
     *caps_changed_ptr = TRUE;
     *info = vi;
   }
-
   return TRUE;
 }
 
@@ -498,10 +500,7 @@ gst_mfxpostproc_update_sink_caps (GstMfxPostproc * vpp, GstCaps * caps,
 {
   GST_INFO_OBJECT (vpp, "new sink caps = %" GST_PTR_FORMAT, caps);
 
-  if (!video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr))
-    return FALSE;
-
-  return TRUE;
+  return video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr);
 }
 
 static GstBuffer *
@@ -686,13 +685,9 @@ static gboolean
 gst_mfxpostproc_propose_allocation (GstBaseTransform * trans,
     GstQuery * decide_query, GstQuery * query)
 {
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (trans);
-
-  if (!gst_mfx_plugin_base_propose_allocation (plugin, query))
-    return FALSE;
-  return TRUE;
+  return gst_mfx_plugin_base_propose_allocation (GST_MFX_PLUGIN_BASE (trans),
+      query);
 }
-
 
 static gboolean
 gst_mfxpostproc_decide_allocation (GstBaseTransform * trans, GstQuery * query)
@@ -857,6 +852,9 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   gst_mfx_filter_set_frame_info_from_gst_video_info (vpp->filter,
       &vpp->sinkpad_info);
 
+  if (vpp->async_depth)
+    gst_mfx_filter_set_async_depth (vpp->filter, vpp->async_depth);
+
   if (!gst_mfx_filter_set_size (vpp->filter,
           GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
           GST_VIDEO_INFO_HEIGHT (&vpp->srcpad_info)))
@@ -986,6 +984,9 @@ gst_mfxpostproc_set_property (GObject * object,
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
   switch (prop_id) {
+    case PROP_ASYNC_DEPTH:
+      vpp->async_depth = g_value_get_uint (value);
+      break;
     case PROP_FORMAT:
       vpp->format = g_value_get_enum (value);
       break;
@@ -1060,6 +1061,9 @@ gst_mfxpostproc_get_property (GObject * object,
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (object);
 
   switch (prop_id) {
+    case PROP_ASYNC_DEPTH:
+      g_value_set_uint (value, vpp->async_depth);
+      break;
     case PROP_FORMAT:
       g_value_set_enum (value, vpp->format);
       break;
@@ -1144,6 +1148,13 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   /* src pad */
   pad_template = gst_static_pad_template_get (&gst_mfxpostproc_src_factory);
   gst_element_class_add_pad_template (element_class, pad_template);
+
+  g_object_class_install_property (object_class,
+      PROP_ASYNC_DEPTH,
+      g_param_spec_uint ("async-depth", "Asynchronous Depth",
+          "Number of async operations before explicit sync",
+          0, 20, DEFAULT_ASYNC_DEPTH,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:deinterlace-mode:
@@ -1320,6 +1331,7 @@ gst_mfxpostproc_init (GstMfxPostproc * vpp)
 {
   gst_mfx_plugin_base_init (GST_MFX_PLUGIN_BASE (vpp), GST_CAT_DEFAULT);
 
+  vpp->async_depth = DEFAULT_ASYNC_DEPTH;
   vpp->format = DEFAULT_FORMAT;
   vpp->deinterlace_mode = DEFAULT_DEINTERLACE_MODE;
   vpp->keep_aspect = TRUE;

@@ -187,18 +187,14 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
       break;
     }
     case MFX_CODEC_VP8: {
-      gchar *uid = "f622394d8d87452f878c51f2fc9b4131";
-      for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
-        sscanf (uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+      decoder->plugin_uid = MFX_PLUGINID_VP8D_HW;
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
 
       break;
     }
 #ifdef HAS_VP9
     case MFX_CODEC_VP9: {
-      gchar *uid = "a922394d8d87452f878c51f2fc9b4131";
-      for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
-        sscanf (uid + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+      decoder->plugin_uid = MFX_PLUGINID_VP9D_HW;
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
 
       break;
