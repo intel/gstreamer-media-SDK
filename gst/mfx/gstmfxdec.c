@@ -289,14 +289,6 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
 
-  /* live streaming configuration cannot be used with VC1 or MPEG2 */
-  if (gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2 ||
-      gst_mfx_profile_get_codec(profile) == MFX_CODEC_VC1) {
-    GST_WARNING_OBJECT (mfxdec,
-        "Live streaming mode for MPEG2 and VC1 formats is unsupported");
-    mfxdec->live_mode = FALSE;
-  }
-
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
       profile, &info, mfxdec->async_depth, mfxdec->live_mode);
   if (!mfxdec->decoder)
