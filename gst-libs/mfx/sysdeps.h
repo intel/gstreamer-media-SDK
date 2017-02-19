@@ -34,5 +34,11 @@
 
 
 #include <gst/gst.h>
+#include <mfxvideo.h>
+
+#define	MFX_CHECK_VERSION(major,minor)	\
+    (MFX_VERSION_MAJOR > major || \
+     (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR > minor) || \
+     (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR == minor))
 
 #endif /* SYSDEPS_H */

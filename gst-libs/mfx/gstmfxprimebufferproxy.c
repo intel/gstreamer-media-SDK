@@ -21,7 +21,9 @@
 
 #include <gmodule.h>
 #include <va/va_drmcommon.h>
+
 #include "sysdeps.h"
+
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxsurface_vaapi.h"
 #include "gstmfxtaskaggregator.h"

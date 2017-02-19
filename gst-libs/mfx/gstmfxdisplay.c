@@ -21,7 +21,7 @@
  */
 
 #include "sysdeps.h"
-#include <string.h>
+
 #include <fcntl.h>
 #include <libudev.h>
 #include <xf86drm.h>

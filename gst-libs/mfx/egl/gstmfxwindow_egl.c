@@ -21,6 +21,7 @@
  */
 
 #include "sysdeps.h"
+
 #include "gstmfxwindow_egl.h"
 #include "gstmfxwindow_priv.h"
 #include "gstmfxtexture_egl.h"

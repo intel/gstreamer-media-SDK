@@ -20,13 +20,12 @@
  */
 
 #include "sysdeps.h"
+
 #include "gstmfxfilter.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxtask.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
-
-#include <mfxvideo.h>
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -1038,6 +1037,10 @@ gst_mfx_filter_start (GstMfxFilter * filter)
     GST_ERROR ("Error initializing MFX VPP %d", sts);
     return GST_MFX_FILTER_STATUS_ERROR_OPERATION_FAILED;
   }
+
+  GST_INFO ("Initialized MFX VPP output task using %s memory",
+    memtype_is_system ? "system" : "video");
+
   return GST_MFX_FILTER_STATUS_SUCCESS;
 }
 

@@ -928,6 +928,9 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
+  GST_INFO ("Initialized MFX encoder task using input %s memory surfaces",
+    memtype_is_system ? "system" : "video");
+
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 

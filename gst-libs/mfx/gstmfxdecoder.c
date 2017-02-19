@@ -45,7 +45,6 @@ struct _GstMfxDecoder
 
   GQueue decoded_frames;
   GQueue pending_frames;
-  guint num_decoded_frames;
 
   mfxSession session;
   mfxVideoParam params;
@@ -456,6 +455,9 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   if (!decoder->pool)
     return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 
+  GST_INFO ("Initialized MFX decoder task using %s memory",
+    decoder->memtype_is_system ? "system" : "video");
+
   return ret;
 }
 
@@ -595,7 +597,8 @@ queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface,
       gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
   g_queue_push_head(&decoder->decoded_frames, out_frame);
 
-  GST_LOG ("decoded frame : %ld", decoder->num_decoded_frames++);
+  GST_LOG ("decoded frame : %ld",
+    GST_MFX_SURFACE_FRAME_SURFACE (surface)->Data.FrameOrder);
 }
 
 static gint
@@ -730,8 +733,7 @@ update:
      * MFX task from a downstream element marked the decoder task with
      * another task type at this point. */
     if ((decoder->enable_csc || decoder->enable_deinterlace) &&
-        (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER) &&
-        !decoder->filter) {
+        (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER)) {
       if (!gst_mfx_decoder_reinit (decoder, &outsurf->Info))
         ret = GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
       else

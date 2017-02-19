@@ -23,10 +23,8 @@
  */
 
 #include "sysdeps.h"
-#include <unistd.h>
+
 #include <fcntl.h>
-#include <string.h>
-#include <drm.h>
 #include <xf86drm.h>
 #include <intel_bufmgr.h>
 #include "gstmfxdisplay_priv.h"
@@ -104,7 +102,7 @@ drm_handle_device (void *data, struct wl_drm *drm, const char *device)
   drm_magic_t magic;
   priv->drm_fd = open (priv->drm_device_name, O_RDWR | O_CLOEXEC);
   if (-1 == priv->drm_fd) {
-    g_printf ("Error: Could not open %s\n", priv->drm_device_name);
+    GST_ERROR ("Error: Could not open %s\n", priv->drm_device_name);
     return;
   }
   drmGetMagic (priv->drm_fd, &magic);

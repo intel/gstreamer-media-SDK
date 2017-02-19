@@ -21,9 +21,7 @@
  */
 
 #include "sysdeps.h"
-#include <string.h>
-#include <gst/gstbuffer.h>
-#include "gst-libs/mfx/sysdeps.h"
+
 #include "gstmfxprofile.h"
 
 typedef struct _GstMfxProfileMap GstMfxProfileMap;
