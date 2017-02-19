@@ -92,7 +92,7 @@ gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder)
   return &decoder->info;
 }
 
-gboolean
+void
 gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
     gboolean memtype_is_video)
 {
@@ -102,12 +102,12 @@ gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
 
   /* The decoder may be forced to use system memory by a following peer
    * MFX VPP task, or due to decoder limitations for that particular
-   * codec. In that case, return FALSE to confirm the use of system memory */
+   * codec. In that case, return to confirm the use of system memory */
   params = gst_mfx_task_get_video_params (decoder->decode);
   if (params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY) {
     decoder->memtype_is_system = TRUE;
     gst_mfx_task_ensure_memtype_is_system (decoder->decode);
-    return FALSE;
+    return;
   }
 
   if (memtype_is_video) {
@@ -122,7 +122,7 @@ gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
   if (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER)
     params->IOPattern = decoder->params.IOPattern;
 
-  return !!(params->IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
+  return;
 }
 
 static void
