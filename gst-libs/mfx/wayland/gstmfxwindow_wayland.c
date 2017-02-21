@@ -23,7 +23,7 @@
  */
 
 #include "sysdeps.h"
-#include <string.h>
+
 #include <wayland-client.h>
 #include <wayland-egl.h>
 #include "gstmfxwindow_wayland.h"

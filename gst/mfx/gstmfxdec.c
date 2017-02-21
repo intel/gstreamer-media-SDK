@@ -212,6 +212,8 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!gst_mfx_plugin_base_set_caps (plugin, NULL, mfxdec->srcpad_caps))
     return FALSE;
 
+  /* Final check to determine if system or video memory should be used for
+   * the output of the decoder or VPP task */
   gst_mfx_decoder_should_use_video_memory (mfxdec->decoder,
     !plugin->srcpad_caps_is_raw);
 
@@ -267,13 +269,8 @@ gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
 static gboolean
 gst_mfxdec_decide_allocation (GstVideoDecoder * vdec, GstQuery * query)
 {
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
-
-  /* First check to determine if video memory can still be used at this point */
-  plugin->srcpad_caps_is_raw =
-      !gst_mfx_decoder_should_use_video_memory (GST_MFXDEC(vdec)->decoder, TRUE);
-
-  return gst_mfx_plugin_base_decide_allocation (plugin, query);
+  return gst_mfx_plugin_base_decide_allocation (GST_MFX_PLUGIN_BASE (vdec),
+            query);
 }
 
 static gboolean
