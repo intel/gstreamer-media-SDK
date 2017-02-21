@@ -51,7 +51,6 @@ typedef struct _FrameState FrameState;
 struct _FrameState
 {
   GstMfxWindow *window;
-  GstMfxSurface *surface;
   struct wl_callback *callback;
 };
 
@@ -65,7 +64,6 @@ frame_state_new (GstMfxWindow * window)
     return NULL;
 
   frame->window = window;
-  frame->surface = NULL;
   frame->callback = NULL;
   return frame;
 }
@@ -75,10 +73,6 @@ frame_state_free (FrameState * frame)
 {
   if (!frame)
     return;
-
-  if (frame->surface) {
-    frame->surface = NULL;
-  }
 
   if (frame->callback) {
     wl_callback_destroy (frame->callback);
@@ -95,6 +89,7 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_region *opaque_region;
   struct wl_viewport *viewport;
   struct wl_event_queue *event_queue;
+  GThread *thread;
 #ifdef USE_EGL
   struct wl_egl_window *egl_window;
 #endif
@@ -105,6 +100,7 @@ struct _GstMfxWindowWaylandPrivate
   guint fullscreen_on_show:1;
   guint sync_failed:1;
   volatile guint num_frames_pending;
+  gboolean redraw_pending;
 };
 
 /**
@@ -129,6 +125,7 @@ frame_done_callback (void *data, struct wl_callback *callback, uint32_t time)
 
   g_atomic_pointer_compare_and_exchange (&priv->last_frame, frame, NULL);
   g_atomic_int_dec_and_test (&priv->num_frames_pending);
+  priv->redraw_pending = FALSE;
 }
 
 static const struct wl_callback_listener frame_callback_listener = {
@@ -165,8 +162,8 @@ gst_mfx_window_wayland_show (GstMfxWindow * window)
   return TRUE;
 }
 
-static gboolean
-gst_mfx_window_wayland_sync (GstMfxWindow * window)
+static gpointer
+gst_mfx_window_wayland_thread_run (gpointer window)
 {
   GstMfxWindowWaylandPrivate *const priv =
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window);
@@ -174,7 +171,7 @@ gst_mfx_window_wayland_sync (GstMfxWindow * window)
       GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
 
   if (priv->sync_failed)
-    return FALSE;
+    return NULL;
 
   if (priv->pollfd.fd < 0) {
     priv->pollfd.fd = wl_display_get_fd (wl_display);
@@ -182,7 +179,7 @@ gst_mfx_window_wayland_sync (GstMfxWindow * window)
     gst_poll_fd_ctl_read (priv->poll, &priv->pollfd, TRUE);
   }
 
-  while (g_atomic_int_get (&priv->num_frames_pending) > 0) {
+  while (1) {
     while (wl_display_prepare_read_queue (wl_display, priv->event_queue) < 0) {
       if (wl_display_dispatch_queue_pending (wl_display, priv->event_queue) < 0)
         goto error;
@@ -198,22 +195,21 @@ gst_mfx_window_wayland_sync (GstMfxWindow * window)
         goto again;
       if (saved_errno == EBUSY) {       /* closing */
         wl_display_cancel_read (wl_display);
-        return FALSE;
+        return NULL;
       }
       goto error;
     }
-
     if (wl_display_read_events (wl_display) < 0)
       goto error;
     if (wl_display_dispatch_queue_pending (wl_display, priv->event_queue) < 0)
       goto error;
   }
-  return TRUE;
 
+  return NULL;
 error:
   priv->sync_failed = TRUE;
   GST_ERROR ("Error on dispatching events: %s", g_strerror (errno));
-  return FALSE;
+  return NULL;
 }
 
 static gboolean
@@ -234,6 +230,12 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   guint32 drm_format = 0;
   gint offsets[3] = { 0 }, pitches[3] = { 0 }, num_planes = 0, i = 0;
   VaapiImage *vaapi_image;
+
+  /* Drop frames if haven't receive callback */
+  /*if (priv->redraw_pending) {
+    GST_DEBUG ("Skip redrawing due to pending_redraw is set to TRUE");
+    return TRUE;
+  }*/
 
   buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!buffer_proxy)
@@ -281,16 +283,12 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     goto error;
   }
 
-  if (!gst_mfx_window_wayland_sync (window)) {
-    wl_buffer_destroy (buffer);
-    return !priv->sync_failed;
-  }
-
   frame = frame_state_new (window);
   if (!frame)
     goto error;
   g_atomic_pointer_set (&priv->last_frame, frame);
   g_atomic_int_inc (&priv->num_frames_pending);
+  priv->redraw_pending = TRUE;
 
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   wl_surface_attach (priv->surface, buffer, 0, 0);
@@ -308,7 +306,6 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   wl_callback_add_listener (frame->callback, &frame_callback_listener, frame);
 
   wl_surface_commit (priv->surface);
-  wl_display_dispatch_queue (display, priv->event_queue);
   wl_display_flush (display);
 
   GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
@@ -389,6 +386,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (GST_MFX_WINDOW_DISPLAY (window));
   struct wl_display *const wl_display =
       GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
+  GError *err = NULL;
 
   GST_DEBUG ("create window, size %ux%u", *width, *height);
 
@@ -441,6 +439,14 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
     GST_MFX_WINDOW_ID (window) = priv->egl_window;
   }
 #endif
+  priv->thread = g_thread_try_new ("wayland-thread",
+      gst_mfx_window_wayland_thread_run,
+      window,
+      &err);
+  if (err)
+    return FALSE;
+
+  priv->redraw_pending = FALSE;
   priv->is_shown = TRUE;
   return TRUE;
 }
@@ -451,8 +457,11 @@ gst_mfx_window_wayland_destroy (GstMfxWindow * window)
   GstMfxWindowWaylandPrivate *const priv =
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window);
 
-  /* Wait for the last frame to complete redraw */
-  gst_mfx_window_wayland_sync (window);
+  gst_poll_set_flushing (priv->poll, TRUE);
+  if (priv->thread) {
+    g_thread_join (priv->thread);
+    priv->thread = NULL;
+  }
 
   if (priv->last_frame) {
     frame_state_free (priv->last_frame);
