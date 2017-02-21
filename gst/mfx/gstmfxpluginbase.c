@@ -434,7 +434,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 
 #if GST_CHECK_VERSION(1,8,0)
 #ifdef HAVE_GST_GL_LIBS
-  if (!plugin->srcpad_caps_is_raw && gst_query_find_allocation_meta(query,
+  if (gst_query_find_allocation_meta(query,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
@@ -449,17 +449,12 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
         gst_object_unref (gl_context);
       }
     }
-    if (!plugin->srcpad_has_dmabuf)
-      plugin->srcpad_caps_is_raw = TRUE;
   }
 #endif
 #endif
 
-  /* Final check to determine if system or video memory should be used for
-   * the output of the decoder or VPP task */
-  if (!plugin->srcpad_has_dmabuf && !gst_query_find_allocation_meta(query,
-      GST_MFX_VIDEO_META_API_TYPE, &idx))
-    plugin->srcpad_caps_is_raw = TRUE;
+  if (!plugin->srcpad_has_dmabuf)
+    plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     goto error_ensure_aggregator;

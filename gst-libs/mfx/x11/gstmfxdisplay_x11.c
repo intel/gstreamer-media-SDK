@@ -21,7 +21,7 @@
  */
 
 #include "sysdeps.h"
-#include <string.h>
+
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxdisplay_x11.h"
 #include "gstmfxdisplay_x11_priv.h"

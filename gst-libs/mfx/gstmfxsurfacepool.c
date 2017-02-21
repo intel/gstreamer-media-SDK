@@ -19,6 +19,7 @@
  */
 
 #include "sysdeps.h"
+
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
 #include "gstmfxsurface_vaapi.h"

@@ -18,6 +18,8 @@
 *  Boston, MA 02110-1301 USA
 */
 
+#include "sysdeps.h"
+
 #include "gstmfxsurface.h"
 #include "gstmfxsurface_priv.h"
 #include "gstmfxsurfacepool.h"
@@ -201,7 +203,7 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   surface->crop_rect.width = info->CropW;
   surface->crop_rect.height = info->CropH;
 
-#ifndef WITH_MSS_2016
+#if MFX_CHECK_VERSION(1,19)
   /* Full color range */
   surface->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
   surface->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);

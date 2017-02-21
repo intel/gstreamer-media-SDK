@@ -24,7 +24,6 @@
 #define GST_MFX_UTILS_H264_H
 
 #include <gst/gstvalue.h>
-#include <mfxvideo.h>
 
 G_BEGIN_DECLS
 

@@ -20,13 +20,12 @@
  */
 
 #include "sysdeps.h"
+
 #include "gstmfxfilter.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxtask.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
-
-#include <mfxvideo.h>
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
