@@ -870,9 +870,14 @@ gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter, mfxU16 mode)
   guint16 alg;
 
   g_return_val_if_fail (filter != NULL, FALSE);
-  g_return_val_if_fail (MFX_DEINTERLACING_BOB == mode ||
-      MFX_DEINTERLACING_ADVANCED == mode ||
-      MFX_DEINTERLACING_ADVANCED_NOREF == mode, FALSE);
+  g_return_val_if_fail (MFX_DEINTERLACING_BOB == mode
+      || MFX_DEINTERLACING_ADVANCED == mode
+      || MFX_DEINTERLACING_ADVANCED_NOREF == mode
+#if MFX_CHECK_VERSION(1,19)
+      || MFX_DEINTERLACING_ADVANCED_SCD == mode
+      || MFX_DEINTERLACING_FIELD_WEAVING == mode
+#endif // MFX_CHECK_VERSION
+      , FALSE);
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_DEINTERLACING);
   if (NULL == op) {
