@@ -18,8 +18,6 @@
 *  Boston, MA 02110-1301 USA
 */
 
-#include "sysdeps.h"
-
 #include "gstmfxsurface.h"
 #include "gstmfxsurface_priv.h"
 #include "gstmfxsurfacepool.h"

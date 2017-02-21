@@ -140,6 +140,12 @@ gst_mfx_deinterlace_mode_get_type (void)
         "Advanced deinterlacing", "adi"},
     {GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF,
         "Advanced deinterlacing with no reference", "adi-noref"},
+#if MFX_CHECK_VERSION(1,19)
+    {GST_MFX_DEINTERLACE_MODE_ADVANCED_SCD,
+        "Advanced deinterlacing with scene change detection", "adi-scd"},
+    {GST_MFX_DEINTERLACE_MODE_FIELD_WEAVING,
+        "Field weaving", "weave"},
+#endif // MFX_CHECK_VERSION
     {0, NULL, NULL},
   };
 

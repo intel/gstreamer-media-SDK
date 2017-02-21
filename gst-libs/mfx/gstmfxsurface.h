@@ -21,6 +21,8 @@
 #ifndef GST_MFX_SURFACE_H
 #define GST_MFX_SURFACE_H
 
+#include "sysdeps.h"
+
 #include <gst/video/video.h>
 #include "gstmfxdisplay.h"
 #include "gstmfxtask.h"
