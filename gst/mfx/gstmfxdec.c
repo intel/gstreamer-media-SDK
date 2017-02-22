@@ -344,10 +344,13 @@ static gboolean
 gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
+  GstMfxProfile profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
   GstVideoInfo *info = gst_mfx_decoder_get_video_info (mfxdec->decoder);
   gboolean hard = FALSE;
 
-  if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED)
+  /* Seems like MPEG2 can only reliably seek with hard resets */
+  if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED
+      || gst_mfx_profile_get_codec(profile) == MFX_CODEC_MPEG2)
     hard = TRUE;
 
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
