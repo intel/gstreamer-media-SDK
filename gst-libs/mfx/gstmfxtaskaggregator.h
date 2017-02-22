@@ -69,6 +69,10 @@ void
 gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task);
 
+void
+gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
+    gboolean memtype_is_system);
+
 
 G_END_DECLS
 
