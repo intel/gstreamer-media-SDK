@@ -523,3 +523,5 @@ gst_mfx_task_replace (GstMfxTask ** old_task_ptr, GstMfxTask * new_task)
   gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_task_ptr,
       GST_MFX_MINI_OBJECT (new_task));
 }
+
+
