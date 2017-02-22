@@ -338,7 +338,7 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
   decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
   if (live_mode) {
     decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
-    /* This is for a special fix for Android Auto / Apple Carplay issues */
+    /* This is a special fix for Android Auto / Apple Carplay issues */
     if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
       decoder->params.mfx.DecodedOrder = 1;
   }
@@ -469,8 +469,6 @@ init_filter (GstMfxDecoder * decoder)
   mfxU32 output_fourcc =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
 
-  gst_mfx_filter_replace (&decoder->filter, NULL);
-
   decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
     decoder->decode, GST_MFX_TASK_VPP_IN,
     decoder->memtype_is_system, decoder->memtype_is_system);
@@ -524,12 +522,11 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
   if (info)
     decoder->params.mfx.FrameInfo = *info;
 
-  if (decoder->enable_csc || decoder->enable_deinterlace)
-    if (!init_filter(decoder))
-      return FALSE;
-
-  if (!init_decoder(decoder))
+  if (!init_filter (decoder))
     return FALSE;
+
+  if (!init_decoder (decoder))
+    goto error;
 
   memset(&decoder->bs, 0, sizeof(mfxBitstream));
 
@@ -560,13 +557,7 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
     decoder->current_pts = 0;
   }
 
-  if (MFX_CODEC_MPEG2 == decoder->params.mfx.CodecId) {
-    /* Seems like MPEG2 can only reliably seek with hard resets */
-    gst_mfx_decoder_reinit (decoder, NULL);
-  }
-  else {
-    MFXVideoDECODE_Reset (decoder->session, &decoder->params);
-  }
+  MFXVideoDECODE_Reset (decoder->session, &decoder->params);
 
   if (decoder->bitstream->len)
     g_byte_array_remove_range (decoder->bitstream, 0,
@@ -677,7 +668,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       g_usleep (100);
   } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
-  if (sts == MFX_ERR_MORE_DATA) {
+  if (MFX_ERR_MORE_DATA == sts) {
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
