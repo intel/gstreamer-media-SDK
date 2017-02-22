@@ -1012,13 +1012,15 @@ static GstMfxFilterStatus
 gst_mfx_filter_start (GstMfxFilter * filter)
 {
   mfxStatus sts = MFX_ERR_NONE;
-  gboolean memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
+  gboolean memtype_is_system;
 
   /* Get updated video params if modified by peer MFX element*/
   filter->params.AsyncDepth =
       gst_mfx_task_get_video_params (filter->vpp[1])->AsyncDepth;
   filter->params.IOPattern =
       gst_mfx_task_get_video_params (filter->vpp[1])->IOPattern;
+
+  memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 
   memcpy (filter->shared_request[1], gst_mfx_task_get_request (filter->vpp[1]),
       sizeof(mfxFrameAllocRequest));

@@ -486,6 +486,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   if (!encoder->bitstream)
     return FALSE;
   encoder->bs.Data = encoder->bitstream->data;
+  encoder->async_depth = DEFAULT_ASYNC_DEPTH;
 
   encoder->info = *info;
   encoder->memtype_is_system = memtype_is_system;
@@ -875,18 +876,18 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 
   if (encoder->shared) {
     mfxVideoParam *params = gst_mfx_task_get_video_params (encoder->encode);
-    params->IOPattern &= 0b11;
-    params->IOPattern |= memtype_is_system ?
-        MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+
+    gst_mfx_task_aggregator_update_peer_memtypes (encoder->aggregator,
+      memtype_is_system);
 
     request = gst_mfx_task_get_request(encoder->encode);
 
     /* Re-calculate suggested number of allocated frames for shared task if
      * async-depth of shared task doesn't match with the encoder async-depth */
-    if (params->AsyncDepth != encoder->async_depth) {
-      params->AsyncDepth = encoder->async_depth;
+    if (params->AsyncDepth != encoder->params.AsyncDepth) {
+      params->AsyncDepth = encoder->params.AsyncDepth;
       if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT))
-        request->NumFrameSuggested = encoder->async_depth;
+        request->NumFrameSuggested = encoder->params.AsyncDepth;
       else if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_DECODER))
         MFXVideoDECODE_QueryIOSurf (encoder->session, params, request);
     }
@@ -927,6 +928,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     GST_ERROR ("Error initializing the MFX video encoder %d", sts);
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
+
 
   GST_INFO ("Initialized MFX encoder task using input %s memory surfaces",
     memtype_is_system ? "system" : "video");
