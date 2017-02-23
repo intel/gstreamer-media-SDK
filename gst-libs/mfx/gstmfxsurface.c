@@ -201,7 +201,7 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   surface->crop_rect.width = info->CropW;
   surface->crop_rect.height = info->CropH;
 
-#if MFX_CHECK_VERSION(1,19)
+#if MSDK_CHECK_VERSION(1,19)
   /* Full color range */
   surface->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
   surface->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);

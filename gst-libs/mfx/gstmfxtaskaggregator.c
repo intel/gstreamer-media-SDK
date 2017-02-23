@@ -254,7 +254,8 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
             MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
       }
       else {
-        params->IOPattern &= 0b11;
+        params->IOPattern &=
+            MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_IN_VIDEO_MEMORY;
         params->IOPattern |= MFX_IOPATTERN_OUT_VIDEO_MEMORY;
       }
     }

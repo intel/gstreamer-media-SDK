@@ -220,8 +220,7 @@ gst_mfx_texture_egl_init (GstMfxTextureEGL * texture, GstMfxDisplay * display,
 static void
 gst_mfx_texture_egl_finalize (GstMfxTextureEGL * texture)
 {
-  egl_context_run (texture->egl_context,
-      (EglContextRunFunc) do_destroy_texture, texture);
+  gst_mfx_texture_egl_destroy (texture);
 
   gst_mfx_display_unref (texture->display);
 }
