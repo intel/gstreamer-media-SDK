@@ -304,15 +304,7 @@ task_init (GstMfxDecoder * decoder)
 
 error_load_plugin:
 error_query_request:
-error_filter_init:
   {
-    gst_mfx_task_unref (decoder->decode);
-    return FALSE;
-  }
-error_prepare_filter:
-error_no_pool:
-  {
-    gst_mfx_filter_unref (decoder->filter);
     gst_mfx_task_unref (decoder->decode);
     return FALSE;
   }
