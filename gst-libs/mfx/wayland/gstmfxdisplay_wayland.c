@@ -204,9 +204,6 @@ static gboolean
 gst_mfx_display_wayland_open_display (GstMfxDisplay * display,
     const gchar * name)
 {
-  GstMfxDisplayWaylandPrivate *const priv =
-      GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
-
   set_display_name (display, name);
 
   GST_MFX_DISPLAY_HANDLE (display) = wl_display_connect (name);

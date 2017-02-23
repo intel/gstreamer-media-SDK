@@ -53,7 +53,7 @@ create_subpicture (GstMfxSurfaceComposition * composition,
   GstBuffer *buffer;
   GstVideoMeta *vmeta;
   guint8 *data;
-  guint width, height, stride;
+  guint stride;
   GstMapInfo map_info;
   GstVideoInfo info;
 
