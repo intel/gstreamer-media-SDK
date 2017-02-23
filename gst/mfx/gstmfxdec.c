@@ -163,16 +163,12 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
       &format);
 
-  if (feature == GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED)
+  if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
     return FALSE;
 
-  switch (feature) {
-  case GST_MFX_CAPS_FEATURE_MFX_SURFACE:
+  if (GST_MFX_CAPS_FEATURE_MFX_SURFACE == feature) {
     features =
         gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
-    break;
-  default:
-    break;
   }
 
   state = gst_video_decoder_set_output_state (vdec, format,
@@ -213,7 +209,7 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
     return FALSE;
 
   /* Final check to determine if system or video memory should be used for
-   * the output of the decoder or VPP task */
+   * the output of the decoder */
   gst_mfx_decoder_should_use_video_memory (mfxdec->decoder,
     !plugin->srcpad_caps_is_raw);
 
@@ -468,7 +464,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       ret = GST_FLOW_ERROR;
   }
   return ret;
-
+  /* ERRORS */
 error_decode:
   {
     GST_ERROR_OBJECT (mfxdec, "MFX decode error %d", sts);
