@@ -378,7 +378,7 @@ gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags)
   return (filter->supported_filters & flags) != 0;
 }
 
-static void
+static gboolean
 gst_mfx_filter_init (GstMfxFilter * filter,
     GstMfxTaskAggregator * aggregator,
     gboolean is_system_in, gboolean is_system_out)
@@ -394,8 +394,6 @@ gst_mfx_filter_init (GstMfxFilter * filter,
     if (!filter->session) {
       filter->vpp[1] =
           gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
-      if (!filter->vpp[1])
-        return FALSE;
       filter->session = gst_mfx_task_get_session (filter->vpp[1]);
     }
     else {
@@ -404,6 +402,8 @@ gst_mfx_filter_init (GstMfxFilter * filter,
       filter->vpp[1] = gst_mfx_task_new_with_session (filter->aggregator,
           filter->session, GST_MFX_TASK_VPP_OUT, FALSE);
     }
+    if (!filter->vpp[1])
+      return FALSE;
     gst_mfx_task_aggregator_set_current_task (filter->aggregator,
         filter->vpp[1]);
   }
@@ -416,6 +416,8 @@ gst_mfx_filter_init (GstMfxFilter * filter,
 
   /* Initialize the filter flag */
   filter->filter_op = GST_MFX_FILTER_NONE;
+
+  return TRUE;
 }
 
 static void
@@ -466,8 +468,14 @@ gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
   if (!filter)
     return NULL;
 
-  gst_mfx_filter_init (filter, aggregator, is_system_in, is_system_out);
+  if (!gst_mfx_filter_init (filter, aggregator, is_system_in, is_system_out))
+    goto error;
+
   return filter;
+
+error:
+  gst_mfx_mini_object_unref (filter);
+  return NULL;
 }
 
 GstMfxFilter *
@@ -490,8 +498,14 @@ gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
 
   gst_mfx_task_set_task_type (task, gst_mfx_task_get_task_type (task) | type);
 
-  gst_mfx_filter_init (filter, aggregator, is_system_in, is_system_out);
+  if (!gst_mfx_filter_init (filter, aggregator, is_system_in, is_system_out))
+    goto error;
+
   return filter;
+
+error:
+  gst_mfx_mini_object_unref (filter);
+  return NULL;
 }
 
 
@@ -867,16 +881,15 @@ gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter, mfxU16 mode)
 {
   GstMfxFilterOpData *op;
   mfxExtVPPDeinterlacing *ext_deinterlacing;
-  guint16 alg;
 
   g_return_val_if_fail (filter != NULL, FALSE);
   g_return_val_if_fail (MFX_DEINTERLACING_BOB == mode
       || MFX_DEINTERLACING_ADVANCED == mode
       || MFX_DEINTERLACING_ADVANCED_NOREF == mode
-#if MFX_CHECK_VERSION(1,19)
+#if MSDK_CHECK_VERSION(1,19)
       || MFX_DEINTERLACING_ADVANCED_SCD == mode
       || MFX_DEINTERLACING_FIELD_WEAVING == mode
-#endif // MFX_CHECK_VERSION
+#endif // MSDK_CHECK_VERSION
       , FALSE);
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_DEINTERLACING);

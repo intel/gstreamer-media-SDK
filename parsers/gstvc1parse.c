@@ -145,24 +145,6 @@ header_format_to_string (VC1HeaderFormat header_format)
   return header_formats[header_format].str;
 }
 
-static VC1HeaderFormat
-header_format_from_string (const gchar * header_format)
-{
-  gint i;
-
-  for (i = 0; i < G_N_ELEMENTS (header_formats); i++) {
-    if (strcmp (header_formats[i].str, header_format) == 0)
-      return header_formats[i].en;
-  }
-  return -1;
-}
-
-static const gchar *
-parse_format_to_string (GstVC1ParseFormat format)
-{
-  return parse_formats[format].str;
-}
-
 static GstStaticPadTemplate sinktemplate = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
@@ -654,7 +636,7 @@ gst_vc1_parse_update_caps (GstMfxVC1Parse * vc1parse)
 {
   GstCaps *caps;
   GstVC1Profile profile = -1;
-  const gchar *stream_format, *header_format;
+  const gchar *stream_format;
 
   if (gst_pad_has_current_caps (GST_BASE_PARSE_SRC_PAD (vc1parse))
       && !vc1parse->update_caps)
