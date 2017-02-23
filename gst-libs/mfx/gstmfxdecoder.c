@@ -125,6 +125,23 @@ gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
   return;
 }
 
+static gboolean
+init_decoder (GstMfxDecoder * decoder)
+{
+  mfxStatus sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
+  if (sts < 0) {
+    GST_ERROR ("Error re-initializing the MFX video decoder %d", sts);
+    return FALSE;
+  }
+
+  if (!decoder->pool) {
+    decoder->pool = gst_mfx_surface_pool_new_with_task (decoder->decode);
+    if (!decoder->pool)
+      return FALSE;
+  }
+  return TRUE;
+}
+
 static void
 close_decoder (GstMfxDecoder * decoder)
 {
@@ -437,15 +454,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     gst_mfx_task_use_video_memory (decoder->decode);
   }
 
-  sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
-  if (sts < 0) {
-    GST_ERROR ("Error initializing the MFX video decoder %d", sts);
+  if (!init_decoder(decoder))
     return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
-  }
-
-  decoder->pool = gst_mfx_surface_pool_new_with_task (decoder->decode);
-  if (!decoder->pool)
-    return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
 
   GST_INFO ("Initialized MFX decoder task using %s memory",
     decoder->memtype_is_system ? "system" : "video");
@@ -458,6 +468,8 @@ init_filter (GstMfxDecoder * decoder)
 {
   mfxU32 output_fourcc =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
+
+  gst_mfx_filter_replace (&decoder->filter, NULL);
 
   decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
     decoder->decode, GST_MFX_TASK_VPP_IN,
@@ -509,16 +521,15 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
 
   close_decoder(decoder);
 
-  decoder->params.mfx.FrameInfo = *info;
+  if (info)
+    decoder->params.mfx.FrameInfo = *info;
 
-  if (!init_filter(decoder))
+  if (decoder->enable_csc || decoder->enable_deinterlace)
+    if (!init_filter(decoder))
+      return FALSE;
+
+  if (!init_decoder(decoder))
     return FALSE;
-
-  sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
-  if (sts < 0) {
-    GST_ERROR ("Error re-initializing the MFX video decoder %d", sts);
-    goto error;
-  }
 
   memset(&decoder->bs, 0, sizeof(mfxBitstream));
 
@@ -536,8 +547,6 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED)
     return;
 
-  MFXVideoDECODE_Reset (decoder->session, &decoder->params);
-
   /* Flush pending frames */
   if (!decoder->can_double_deinterlace) {
     while (!g_queue_is_empty(&decoder->pending_frames))
@@ -549,6 +558,14 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 
     decoder->pts_offset = 0;
     decoder->current_pts = 0;
+  }
+
+  if (MFX_CODEC_MPEG2 == decoder->params.mfx.CodecId) {
+    /* Seems like MPEG2 can only reliably seek with hard resets */
+    gst_mfx_decoder_reinit (decoder, NULL);
+  }
+  else {
+    MFXVideoDECODE_Reset (decoder->session, &decoder->params);
   }
 
   if (decoder->bitstream->len)
