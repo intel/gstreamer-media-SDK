@@ -1039,7 +1039,7 @@ gst_mfx_filter_start (GstMfxFilter * filter)
       sizeof(mfxFrameAllocRequest));
 
   if (!memtype_is_system) {
-    filter->shared_request[1]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+    filter->shared_request[1]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET;
     gst_mfx_task_use_video_memory (filter->vpp[1]);
 
     sts = gst_mfx_task_frame_alloc (filter->vpp[1], filter->shared_request[1],

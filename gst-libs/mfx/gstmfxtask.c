@@ -88,7 +88,9 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
 
   memset (resp, 0, sizeof (mfxFrameAllocResponse));
 
-  if (!(req->Type & MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET)) {
+  if (!(req->Type
+      & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET
+        | MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
     GST_ERROR ("Unsupported surface type: %d\n", req->Type);
     return MFX_ERR_UNSUPPORTED;
   }
