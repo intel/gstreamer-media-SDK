@@ -71,10 +71,9 @@ To build the plugins for Media Server Studio 2016 Linux Edition:
 	cmake .. -DWITH_MSS_2016=ON
 		
 
-Only MediaSDK 2017 For Embedded supports VP9 decode. To disable VP9 decode
-for other version of Media SDK:
+Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 decode support:
 
-	cmake .. -DMFX_VP9_DECODER=OFF
+	cmake .. -DMFX_VP9_DECODER=ON
 
 
 Next step is to compile the GStreamer-MSDK plugins:
@@ -86,6 +85,10 @@ To install the plugins:
 	make install
 
 The plugins will be installed in the /usr/lib/gstreamer-1.0 directory.
+
+To uninstall the plugins:
+
+	make uninstall
 
 
 Usage
