@@ -851,8 +851,8 @@ gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle)
   mfxExtVPPRotation *ext_rotation;
 
   g_return_val_if_fail (filter != NULL, FALSE);
-  g_return_val_if_fail ((angle == 0 ||
-          angle == 90 || angle == 180 || angle == 270), FALSE);
+  g_return_val_if_fail (angle == 0 ||
+    angle == 90 || angle == 180 || angle == 270, FALSE);
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_ROTATION);
   if (NULL == op) {
@@ -877,18 +877,19 @@ gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle)
 }
 
 gboolean
-gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter, mfxU16 mode)
+gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter,
+    GstMfxDeinterlaceMode mode)
 {
   GstMfxFilterOpData *op;
   mfxExtVPPDeinterlacing *ext_deinterlacing;
 
   g_return_val_if_fail (filter != NULL, FALSE);
-  g_return_val_if_fail (MFX_DEINTERLACING_BOB == mode
-      || MFX_DEINTERLACING_ADVANCED == mode
-      || MFX_DEINTERLACING_ADVANCED_NOREF == mode
+  g_return_val_if_fail (GST_MFX_DEINTERLACE_MODE_BOB == mode
+      || GST_MFX_DEINTERLACE_MODE_ADVANCED == mode
+      || GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF == mode
 #if MSDK_CHECK_VERSION(1,19)
-      || MFX_DEINTERLACING_ADVANCED_SCD == mode
-      || MFX_DEINTERLACING_FIELD_WEAVING == mode
+      || GST_MFX_DEINTERLACE_MODE_ADVANCED_SCD == mode
+      || GST_MFX_DEINTERLACE_MODE_FIELD_WEAVING == mode
 #endif // MSDK_CHECK_VERSION
       , FALSE);
 
@@ -941,45 +942,18 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
 {
   GstMfxFilterOpData *op;
   mfxExtVPPFrameRateConversion *ext_frc;
-  guint16 mode;
 
   g_return_val_if_fail (filter != NULL, FALSE);
-  g_return_val_if_fail (GST_MFX_FRC_NONE == alg ||
-      GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
-      GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg, FALSE);
-  /*g_return_val_if_fail (GST_MFX_FRC_NONE == alg||
-      GST_MFX_FRC_PRESERVE_TIMESTAMP == alg ||
-      GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg ||
-      GST_MFX_FRC_FRAME_INTERPOLATION == alg ||
-      GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg ||
-      GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg,
-      FALSE); */
+  g_return_val_if_fail (
+      GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
+      || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
+#if 0
+      || GST_MFX_FRC_FRAME_INTERPOLATION == alg
+      || GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg
+      || GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg
+#endif // 0
+      , FALSE);
 
-  switch (alg) {
-    case GST_MFX_FRC_NONE:
-      mode = 0;
-      break;
-    case GST_MFX_FRC_PRESERVE_TIMESTAMP:
-      mode = MFX_FRCALGM_PRESERVE_TIMESTAMP;
-      break;
-    case GST_MFX_FRC_DISTRIBUTED_TIMESTAMP:
-      mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP;
-      break;
-    /*case GST_MFX_FRC_FRAME_INTERPOLATION:
-      mode = MFX_FRCALGM_FRAME_INTERPOLATION;
-      break;
-      case GST_MFX_FRC_FI_PRESERVE_TIMESTAMP:
-      mode = MFX_FRCALGM_PRESERVE_TIMESTAMP ||
-      MFX_FRCALGM_FRAME_INTERPOLATION;
-      break;
-      case GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP:
-      mode = MFX_FRCALGM_DISTRIBUTED_TIMESTAMP ||
-      MFX_FRCALGM_FRAME_INTERPOLATION;
-      break; */
-    default:
-      mode = 0;
-      break;
-  }
   op = find_filter_op_data (filter, GST_MFX_FILTER_FRAMERATE_CONVERSION);
   if (NULL == op) {
     op = g_slice_alloc (sizeof (GstMfxFilterOpData));
@@ -997,7 +971,7 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   }
 
   ext_frc = (mfxExtVPPFrameRateConversion *) op->filter;
-  ext_frc->Algorithm = mode;
+  ext_frc->Algorithm = alg;
   return TRUE;
 }
 
@@ -1039,7 +1013,6 @@ gst_mfx_filter_start (GstMfxFilter * filter)
       sizeof(mfxFrameAllocRequest));
 
   if (!memtype_is_system) {
-    filter->shared_request[1]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET;
     gst_mfx_task_use_video_memory (filter->vpp[1]);
 
     sts = gst_mfx_task_frame_alloc (filter->vpp[1], filter->shared_request[1],
