@@ -56,7 +56,7 @@ configure_file (
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lstdc++ -Wall -fPIE")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=gnu99 -Wall -fPIE")
 set(CMAKE_C_RELEASE_FLAGS "${CMAKE_C_RELEASE_FLAGS} -D_FORTITY_SOURCE=2")
 
 include_directories(
@@ -94,6 +94,7 @@ target_link_libraries(gstmfx
     ${BASE_LIBRARIES}
     ${SINK_BACKEND}
     ${PARSER}
+    stdc++
     libmfx)
 
 # Add uninstall target. Taken from the KDE4 scripts
