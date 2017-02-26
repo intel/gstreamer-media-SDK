@@ -97,6 +97,9 @@ mfxVideoParam *
 gst_mfx_task_get_video_params (GstMfxTask * task);
 
 void
+gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params);
+
+void
 gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task);
 
 GstMfxDisplay *

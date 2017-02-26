@@ -427,6 +427,13 @@ gst_mfx_task_get_video_params (GstMfxTask * task)
   return &task->params;
 }
 
+void
+gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params)
+{
+  params->AsyncDepth = task->params.AsyncDepth;
+  params->IOPattern = task->params.IOPattern;
+}
+
 static void
 gst_mfx_task_finalize (GstMfxTask * task)
 {
