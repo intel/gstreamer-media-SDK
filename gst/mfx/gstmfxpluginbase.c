@@ -179,16 +179,12 @@ has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
     if (!element)
       break;
 
-    if (GST_IS_PUSH_SRC (element)) {
-      element_name = gst_element_get_name (element);
-      if (!element_name)
-        break;
+    element_name = gst_element_get_name (element);
+    if (!element_name)
+      break;
 
-      if ((sscanf (element_name, "v4l2src%d", &v) != 1)
-          && (sscanf (element_name, "camerasrc%d", &v) != 1))
-        break;
-
-      v = 0;
+    if (strstr (element_name, "v4l2src")
+        || strstr (element_name, "camerasrc")) {
       g_object_get (element, "io-mode", &v, NULL);
       if (strncmp (element_name, "camerasrc", 9) == 0)
         is_dmabuf_capable = v == 3;
@@ -196,8 +192,7 @@ has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
         is_dmabuf_capable = v == 5;     /* "dmabuf-import" enum value */
       break;
     } else if (GST_IS_BASE_TRANSFORM (element)) {
-      element_name = gst_element_get_name (element);
-      if (!element_name || sscanf (element_name, "capsfilter%d", &v) != 1)
+      if (sscanf (element_name, "capsfilter%d", &v) != 1)
         break;
 
       pad = gst_element_get_static_pad (element, "sink");
