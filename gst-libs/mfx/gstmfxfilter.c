@@ -944,8 +944,7 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   mfxExtVPPFrameRateConversion *ext_frc;
 
   g_return_val_if_fail (filter != NULL, FALSE);
-  g_return_val_if_fail (
-      GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
+  g_return_val_if_fail (GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
       || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
 #if 0
       || GST_MFX_FRC_FRAME_INTERPOLATION == alg
@@ -1002,10 +1001,7 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   gboolean memtype_is_system;
 
   /* Get updated video params if modified by peer MFX element*/
-  filter->params.AsyncDepth =
-      gst_mfx_task_get_video_params (filter->vpp[1])->AsyncDepth;
-  filter->params.IOPattern =
-      gst_mfx_task_get_video_params (filter->vpp[1])->IOPattern;
+  gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
 
   memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 

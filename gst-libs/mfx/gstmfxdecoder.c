@@ -444,10 +444,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   }
 
   /* Get updated video params if modified by peer MFX element*/
-  decoder->params.AsyncDepth =
-    gst_mfx_task_get_video_params (decoder->decode)->AsyncDepth;
-  decoder->params.IOPattern =
-    gst_mfx_task_get_video_params (decoder->decode)->IOPattern;
+  gst_mfx_task_update_video_params (decoder->decode, &decoder->params);
 
   if (decoder->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY) {
     decoder->memtype_is_system = FALSE;
@@ -515,8 +512,6 @@ error:
 static gboolean
 gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
 {
-  mfxStatus sts;
-
   close_decoder(decoder);
 
   if (info)
