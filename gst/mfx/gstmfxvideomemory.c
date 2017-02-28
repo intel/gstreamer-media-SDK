@@ -134,20 +134,17 @@ gst_video_meta_map_mfx_surface (GstVideoMeta * meta, guint plane,
   g_return_val_if_fail (mem->meta, FALSE);
 
   /* Map for writing */
-  if (++mem->map_count == 1) {
-    if (!ensure_surface (mem))
-      goto error_ensure_surface;
+  if (!ensure_surface (mem))
+    goto error_ensure_surface;
 
-    if (!gst_mfx_surface_map (mem->surface))
-      goto error_map_surface;
-  }
+  if (!gst_mfx_surface_map (mem->surface))
+    goto error_map_surface;
 
   *data = gst_mfx_surface_get_plane (mem->surface, plane);
   *stride = gst_mfx_surface_get_pitch (mem->surface, plane);
 
   info->flags = flags;
   return TRUE;
-
   /* ERRORS */
 error_ensure_surface:
   {
@@ -183,8 +180,7 @@ gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
   g_return_val_if_fail (mem->meta, FALSE);
   g_return_val_if_fail (mem->surface, FALSE);
 
-  if (--mem->map_count == 0)
-    gst_mfx_surface_unmap(mem->surface);
+  gst_mfx_surface_unmap(mem->surface);
 
   return TRUE;
 }
@@ -214,7 +210,6 @@ gst_mfx_video_memory_new (GstAllocator * base_allocator, GstMfxVideoMeta * meta)
   mem->image = NULL;
   mem->meta = meta ? gst_mfx_video_meta_ref (meta) : NULL;
   mem->map_type = 0;
-  mem->map_count = 0;
   mem->new_copy = FALSE;
 
   return GST_MEMORY_CAST (mem);
@@ -243,28 +238,26 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize, guint flags)
   g_return_val_if_fail (mem, NULL);
   g_return_val_if_fail (mem->meta, NULL);
 
-  if (mem->map_count == 0) {
-    switch (flags & GST_MAP_READWRITE) {
-      case 0:
-        // No flags set: return a GstMfxSurface
-        gst_mfx_surface_replace (&mem->surface,
-            gst_mfx_video_meta_get_surface (mem->meta));
-        if (!mem->surface)
-          goto error_no_surface_meta;
-        mem->map_type = GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE;
-        break;
-      case GST_MAP_READ:
-        // Only read flag set: return raw pixels
-        if (!ensure_surface (mem))
-          goto error_no_surface;
-        if (!gst_mfx_surface_map(mem->surface))
-          goto error_map_surface;
+  switch (flags & GST_MAP_READWRITE) {
+    case 0:
+      // No flags set: return a GstMfxSurface
+      gst_mfx_surface_replace (&mem->surface,
+          gst_mfx_video_meta_get_surface (mem->meta));
+      if (!mem->surface)
+        goto error_no_surface_meta;
+      mem->map_type = GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE;
+      break;
+    case GST_MAP_READ:
+      // Only read flag set: return raw pixels
+      if (!ensure_surface (mem))
+        goto error_no_surface;
+      if (!gst_mfx_surface_map(mem->surface))
+        goto error_map_surface;
 
-        mem->map_type = GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR;
-        break;
-      default:
-        goto error_unsupported_map;
-    }
+      mem->map_type = GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR;
+      break;
+    default:
+      goto error_unsupported_map;
   }
 
   switch (mem->map_type) {
@@ -280,9 +273,8 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize, guint flags)
     default:
       goto error_unsupported_map_type;
   }
-  mem->map_count++;
-  return mem->data;
 
+  return mem->data;
   /* ERRORS */
 error_unsupported_map:
   GST_ERROR ("unsupported map flags (0x%x)", flags);
@@ -307,25 +299,22 @@ error_map_surface:
 static void
 gst_mfx_video_memory_unmap (GstMfxVideoMemory * mem)
 {
-  if (mem->map_count == 1) {
-    switch (mem->map_type) {
-      case GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE:
-        gst_mfx_surface_replace (&mem->surface, NULL);
-        break;
-      case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
-        if (mem->data && mem->new_copy)
-          g_slice_free1(GST_VIDEO_INFO_SIZE(mem->image_info), mem->data);
-        gst_mfx_surface_unmap(mem->surface);
-        mem->data = NULL;
-        break;
-      default:
-        goto error_incompatible_map;
-    }
-    mem->map_type = 0;
+  switch (mem->map_type) {
+    case GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE:
+      gst_mfx_surface_replace (&mem->surface, NULL);
+      break;
+    case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
+      if (mem->data && mem->new_copy)
+        g_slice_free1(GST_VIDEO_INFO_SIZE(mem->image_info), mem->data);
+      gst_mfx_surface_unmap(mem->surface);
+      mem->data = NULL;
+      break;
+    default:
+      goto error_incompatible_map;
   }
-  mem->map_count--;
-  return;
+  mem->map_type = 0;
 
+  return;
   /* ERRORS */
 error_incompatible_map:
   GST_ERROR ("incompatible map type (%d)", mem->map_type);
