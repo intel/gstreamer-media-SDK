@@ -115,8 +115,8 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
       goto error;
     }
 
-    gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
     vaapi_image_unref (image);
+    gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
   } else {
     texture->texture_id =
         egl_create_texture_from_data (texture->egl_context, GL_TEXTURE_2D,
