@@ -1,8 +1,13 @@
 function(FindWayland libs)
   pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
+  pkg_check_modules(WAYLAND_CURSOR wayland-cursor)
   if(WAYLAND_CLIENT_FOUND)
     set(${libs} ${${libs}} ${WAYLAND_CLIENT_LIBRARIES} PARENT_SCOPE)
     include_directories (${WAYLAND_CLIENT_INCLUDE_DIRS})
+  endif()
+  if(WAYLAND_CURSOR_FOUND)
+    set(${libs} ${${libs}} ${WAYLAND_CURSOR_LIBRARIES} PARENT_SCOPE)
+    include_directories (${WAYLAND_CURSOR_INCLUDE_DIRS})
   endif()
 endfunction(FindWayland)
 
