@@ -109,7 +109,7 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
 
     texture->texture_id =
         egl_create_texture_from_egl_image (texture->egl_context,
-        texture->gl_target, texture->egl_image);
+          texture->gl_target, texture->egl_image);
     if (!texture->texture_id) {
       GST_ERROR ("failed to create texture from EGL image");
       goto error;
@@ -120,8 +120,8 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
   } else {
     texture->texture_id =
         egl_create_texture_from_data (texture->egl_context, GL_TEXTURE_2D,
-        GL_BGRA_EXT, texture->width, texture->height,
-        gst_mfx_surface_get_plane (surface, 0));
+          GL_BGRA_EXT, texture->width, texture->height,
+          gst_mfx_surface_get_plane (surface, 0));
     if (!texture->texture_id) {
       GST_ERROR ("failed to create texture from raw data");
       return FALSE;
