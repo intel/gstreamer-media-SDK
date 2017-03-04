@@ -76,19 +76,15 @@ Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 
 	cmake .. -DUSE_VP9_DECODER=ON
 
 
-Next step is to compile the GStreamer-MSDK plugins:
+Next step is to compile and install the GStreamer-MSDK plugins:
 
 	make
+	make install
 
-To install the plugins:
-
-	sudo make install
-
-The plugins would be normally installed in the /usr/lib/gstreamer-1.0 directory.
 
 To uninstall the plugins:
 
-	sudo make uninstall
+	make uninstall
 
 
 Usage

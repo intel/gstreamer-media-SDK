@@ -107,11 +107,11 @@ gst_mfx_display_get_type (void)
   static const GEnumValue display_types[] = {
     {GST_MFX_DISPLAY_TYPE_ANY,
         "Auto detection", "any"},
-#if defined(USE_X11) && defined(USE_DRI3)
+#if defined(WITH_X11) && defined(USE_DRI3)
     {GST_MFX_DISPLAY_TYPE_X11,
         "X11 display", "x11"},
 #endif
-#ifdef USE_WAYLAND
+#if defined(WITH_WAYLAND) && defined(USE_WAYLAND)
     {GST_MFX_DISPLAY_TYPE_WAYLAND,
         "Wayland display", "wayland"},
 #endif
