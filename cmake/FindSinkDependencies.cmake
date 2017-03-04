@@ -5,6 +5,7 @@ function(FindWayland libs)
     set(${libs} ${${libs}} ${WAYLAND_CLIENT_LIBRARIES} PARENT_SCOPE)
     include_directories (${WAYLAND_CLIENT_INCLUDE_DIRS})
   endif()
+
   if(WAYLAND_CURSOR_FOUND)
     set(${libs} ${${libs}} ${WAYLAND_CURSOR_LIBRARIES} PARENT_SCOPE)
     include_directories (${WAYLAND_CURSOR_INCLUDE_DIRS})

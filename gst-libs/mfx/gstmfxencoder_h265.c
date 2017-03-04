@@ -122,9 +122,7 @@ gst_mfx_encoder_load_hevc_plugin (GstMfxEncoder * encoder)
 
   gchar *plugin_uids[] = {
     "6fadc791a0c2eb479ab6dcd5ea9da347",
-#ifndef WITH_MSS_2016
-    "e5400a06c74d41f5b12d430bbaa23d0b",
-#endif
+    //"e5400a06c74d41f5b12d430bbaa23d0b",
     "2fca99749fdb49aeb121a5b63ef568f7",
     NULL
   };

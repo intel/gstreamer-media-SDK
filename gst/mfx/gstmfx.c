@@ -26,38 +26,38 @@
 #include "gstmfxdec.h"
 #endif
 #ifdef MFX_VPP
-#include "gstmfxpostproc.h"
+# include "gstmfxpostproc.h"
 #endif
 #ifdef MFX_SINK
-#include "gstmfxsink.h"
+# include "gstmfxsink.h"
 #endif
 #ifdef MFX_SINK_BIN
-#include "gstmfxsinkbin.h"
+# include "gstmfxsinkbin.h"
 #endif
 #ifdef MFX_H264_ENCODER
-#include "gstmfxenc_h264.h"
+# include "gstmfxenc_h264.h"
 #endif
 #ifdef MFX_H265_ENCODER
-#include "gstmfxenc_h265.h"
+# include "gstmfxenc_h265.h"
 #endif
 #ifdef MFX_MPEG2_ENCODER
-#include "gstmfxenc_mpeg2.h"
+# include "gstmfxenc_mpeg2.h"
 #endif
 #ifdef MFX_JPEG_ENCODER
-#include "gstmfxenc_jpeg.h"
+# include "gstmfxenc_jpeg.h"
 #endif
 
 #ifdef MFX_VC1_PARSER
-#include "parsers/gstvc1parse.h"
+# include "parsers/gstvc1parse.h"
 #endif
 
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
   gboolean ret = FALSE;
+
 #ifdef MFX_DECODER
-  ret |= gst_element_register (plugin, "mfxdecode",
-      GST_RANK_PRIMARY + 3, GST_TYPE_MFXDEC);
+  ret |= gst_mfxdec_register (plugin);
 #endif
 
 #ifdef MFX_VPP
@@ -102,7 +102,6 @@ plugin_init (GstPlugin * plugin)
 
   return ret;
 }
-
 
 
 GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,   /* major */
