@@ -51,7 +51,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 #ifdef USE_HEVC_DECODER
     GST_CAPS_CODEC ("video/x-h265, \
         alignment = (string) au, \
-        profile = (string) main, \
+        profile = (string) { main, main-10 }, \
         stream-format = (string) byte-stream")
 #endif
     GST_CAPS_CODEC ("video/mpeg, \
