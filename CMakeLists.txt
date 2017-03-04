@@ -7,37 +7,39 @@ include(CMakeDependentOption)
 
 option (DEBUG "Turn on debug build." OFF)
 
-option (MFX_DECODER "Build MSDK Decoder plugin." ON)
-option (USE_HEVC_DECODER "Build MSDK Decoder plugin with HEVC support." ON)
-option (USE_VP8_DECODER "Build MSDK Decoder plugin with VP8 support." ON)
-option (USE_VP9_DECODER "Build MSDK Decoder plugin with VP9 support." ON)
+option (MFX_DECODER "Build MSDK decoder plugins." ON)
+option (USE_HEVC_DECODER "Build MSDK decoder plugin with HEVC support." ON)
+option (USE_VP8_DECODER "Build MSDK decoder plugin with VP8 support." ON)
+option (USE_VP9_DECODER "Build MSDK decoder plugin with VP9 support." ON)
 
-option (MFX_ENCODER "Build MSDK Encoder plugin." ON)
-CMAKE_DEPENDENT_OPTION(MFX_H264_ENCODER  "Build H.264 Encoder plugin" ON
+option (MFX_ENCODER "Build MSDK encoder plugin." ON)
+CMAKE_DEPENDENT_OPTION(MFX_H264_ENCODER  "Build H.264 encoder plugin" ON
     "MFX_ENCODER" OFF)
-CMAKE_DEPENDENT_OPTION(MFX_H265_ENCODER  "Build H.265 Encoder plugin" ON
+CMAKE_DEPENDENT_OPTION(MFX_H265_ENCODER  "Build H.265 encoder plugin" ON
     "MFX_ENCODER" OFF)
-CMAKE_DEPENDENT_OPTION(MFX_MPEG2_ENCODER "Build MPEG2 Encoder plugin" ON
+CMAKE_DEPENDENT_OPTION(MFX_MPEG2_ENCODER "Build MPEG2 encoder plugin" ON
     "MFX_ENCODER" OFF)
-CMAKE_DEPENDENT_OPTION(MFX_JPEG_ENCODER  "Build JPEG Encoder plugin"  ON
+CMAKE_DEPENDENT_OPTION(MFX_JPEG_ENCODER  "Build JPEG encoder plugin"  ON
     "MFX_ENCODER" OFF)
 
 option (MFX_VPP "Build MSDK VPP plugin." ON)
 
-option (MFX_SINK "Build MSDK SINK plugin." ON)
-CMAKE_DEPENDENT_OPTION(WAYLAND_RENDERER "Build Sink plugin with Wayland backend"
+option (MFX_SINK "Build MSDK sink plugin." ON)
+CMAKE_DEPENDENT_OPTION(WAYLAND_RENDERER "Build sink plugin with Wayland backend"
     ON "MFX_SINK" OFF)
-CMAKE_DEPENDENT_OPTION(X11_RENDERER  "Build Sink plugin with X11 backend"
+CMAKE_DEPENDENT_OPTION(DRI3_RENDERER  "Build sink plugin with X11 DRI3 backend"
     ON "MFX_SINK" OFF)
-CMAKE_DEPENDENT_OPTION(EGL_RENDERER "Build Sink plugin with EGL backend"
+CMAKE_DEPENDENT_OPTION(EGL_RENDERER "Build sink plugin with EGL backend"
     ON "MFX_SINK" OFF)
 
-CMAKE_DEPENDENT_OPTION (MFX_SINK_BIN "Build MSDK SINK BIN plugin."
+CMAKE_DEPENDENT_OPTION (MFX_SINK_BIN "Build MSDK sinkbin plugin."
     ON "MFX_SINK;MFX_VPP" OFF)
+
+option (WITH_X11 "Enable X11 support" ON)
 
 option (WITH_MSS_2016 "Build plugins for MSS." OFF)
 
-option (MFX_VC1_PARSER "Build VC1 AP Parser plugin" ON)
+option (MFX_VC1_PARSER "Build VC1 parser plugin" ON)
 
 include(${CMAKE_SOURCE_DIR}/cmake/ProjectInfo.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/ProjectConfig.cmake)

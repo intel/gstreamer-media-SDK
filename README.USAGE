@@ -11,6 +11,7 @@ Available GStreamer MSDK plugins
 
 Plugin name        | Description
 ------------------------------------------------------------------------
+mfxdecode          | Generic Media SDK Decoder Plugin
 mfxh264dec         | Media SDK H264 Decoder Plugin
 mfxhevcdec         | Media SDK HEVC Decoder Plugin
 mfxmpeg2dec        | Media SDK MPEG2 Decoder Plugin

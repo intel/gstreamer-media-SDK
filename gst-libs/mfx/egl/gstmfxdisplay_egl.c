@@ -30,10 +30,10 @@
 #include "gstmfxtexture_egl.h"
 
 #ifdef USE_X11
-#include <x11/gstmfxdisplay_x11.h>
+# include <x11/gstmfxdisplay_x11.h>
 #endif
 #ifdef USE_WAYLAND
-#include <wayland/gstmfxdisplay_wayland.h>
+# include <wayland/gstmfxdisplay_wayland.h>
 #endif
 
 GST_DEBUG_CATEGORY (gst_debug_mfxdisplay_egl);

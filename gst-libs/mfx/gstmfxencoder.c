@@ -840,8 +840,10 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   mfxFrameAllocRequest enc_request;
   gboolean memtype_is_system = FALSE;
 
-  /* Use input system memory with SW HEVC encoder */
-  if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7"))
+  /* Use input system memory with SW HEVC encoder or when linked directly
+   * with SW HEVC decoder decoding HEVC main-10 streams */
+  if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7")
+      || encoder->frame_info.FourCC == MFX_FOURCC_P010)
     memtype_is_system = TRUE;
 
   memset (&enc_request, 0, sizeof (mfxFrameAllocRequest));
