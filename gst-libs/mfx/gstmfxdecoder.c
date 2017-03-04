@@ -166,7 +166,7 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
   g_queue_clear (&decoder->decoded_frames);
 
   if ((decoder->params.mfx.CodecId == MFX_CODEC_VP8) ||
-#ifdef HAS_VP9
+#ifdef USE_VP9_DECODER
       (decoder->params.mfx.CodecId == MFX_CODEC_VP9) ||
 #endif
       (decoder->params.mfx.CodecId == MFX_CODEC_HEVC))
@@ -181,16 +181,19 @@ static mfxStatus
 gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 {
   mfxStatus sts;
-  guint i, c;
 
   switch (decoder->params.mfx.CodecId) {
     case MFX_CODEC_HEVC: {
+      guint i = 0, c;
       gchar *uids[] = {
-        "33a61c0b4c27454ca8d85dde757c6f8e",
-        "15dd936825ad475ea34e35f3f54217a6",
+        "33a61c0b4c27454ca8d85dde757c6f8e", /* HW decoder */
+        "15dd936825ad475ea34e35f3f54217a6", /* SW decoder */
         NULL
       };
-      for (i = 0; uids[i]; i++) {
+      /* HEVC main10 profiles can only be decoded through SW decoder */
+      if (decoder->profile == GST_MFX_PROFILE_HEVC_MAIN10)
+        i = 1;
+      for (; uids[i]; i++) {
         for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
           sscanf (uids[i] + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
         sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
@@ -202,13 +205,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
       }
       break;
     }
-    case MFX_CODEC_VP8: {
-      decoder->plugin_uid = MFX_PLUGINID_VP8D_HW;
-      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
-
-      break;
-    }
-#ifdef HAS_VP9
+#ifdef USE_VP9_DECODER
     case MFX_CODEC_VP9: {
       decoder->plugin_uid = MFX_PLUGINID_VP9D_HW;
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
