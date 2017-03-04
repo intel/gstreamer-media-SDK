@@ -89,13 +89,15 @@ static const GstMfxCodecMap mfx_codec_map[] = {
   {"vc1", GST_RANK_PRIMARY + 3,
       "video/x-wmv, \
        stream-format = (string) { sequence-layer-frame-layer, bdu }"},
-#ifdef USE_VP8_DECODER
+#ifndef WITH_MSS_2016
+# ifdef USE_VP8_DECODER
   {"vp8", GST_RANK_PRIMARY + 3, "video/x-vp8"},
-#endif
-#ifdef USE_VP9_DECODER
+# endif
+# ifdef USE_VP9_DECODER
   {"vp9", GST_RANK_PRIMARY + 3, "video/x-vp9"},
-#endif
+# endif
   {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
+#endif
 };
 
 G_DEFINE_TYPE_WITH_CODE (
