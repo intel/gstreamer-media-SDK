@@ -35,31 +35,13 @@
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAT_DEFAULT mfxdec_debug
 
+#define GST_MFXDEC_PARAMS_QDATA \
+  g_quark_from_static_string("mfxdec-params")
+
 #define DEFAULT_ASYNC_DEPTH 16
 
 /* Default templates */
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
-
-/* *INDENT-OFF* */
-static const char gst_mfxdecode_sink_caps_str[] =
-    GST_CAPS_CODEC ("video/mpeg, \
-        mpegversion = 2")
-    GST_CAPS_CODEC ("video/x-h264, \
-        alignment = (string) au, \
-        profile = (string) { constrained-baseline, baseline, main, high }, \
-        stream-format = (string) byte-stream")
-    GST_CAPS_CODEC ("video/x-h265, \
-        alignment = (string) au, \
-        profile = (string) main, \
-        stream-format = (string) byte-stream")
-    GST_CAPS_CODEC ("video/x-wmv, \
-        stream-format = (string) { sequence-layer-frame-layer, bdu }")
-    GST_CAPS_CODEC ("video/x-vp8")
-#ifdef HAS_VP9
-    GST_CAPS_CODEC ("video/x-vp9")
-#endif
-    GST_CAPS_CODEC ("image/jpeg")
-  ;
 
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_SURFACE_CAPS ";"
@@ -72,13 +54,6 @@ enum
   PROP_LIVE_MODE
 };
 
-static GstStaticPadTemplate sink_template_factory =
-GST_STATIC_PAD_TEMPLATE ("sink",
-  GST_PAD_SINK,
-  GST_PAD_ALWAYS,
-  GST_STATIC_CAPS (gst_mfxdecode_sink_caps_str)
-);
-
 static GstStaticPadTemplate src_template_factory =
   GST_STATIC_PAD_TEMPLATE ("src",
   GST_PAD_SRC,
@@ -86,12 +61,52 @@ static GstStaticPadTemplate src_template_factory =
   GST_STATIC_CAPS (gst_mfxdecode_src_caps_str)
 );
 
+typedef struct _GstMfxCodecMap GstMfxCodecMap;
+struct _GstMfxCodecMap
+{
+  const gchar *name;
+  guint rank;
+  const gchar *caps_str;
+};
+
+static const GstMfxCodecMap mfx_codec_map[] = {
+  {"h264", GST_RANK_PRIMARY + 3,
+      "video/x-h264, \
+       alignment = (string) au, \
+       profile = (string) { constrained-baseline, baseline, main, high }, \
+       stream-format = (string) byte-stream"},
+#ifdef USE_HEVC_DECODER
+  {"hevc", GST_RANK_PRIMARY + 3,
+      "video/x-h265, \
+       alignment = (string) au, \
+       profile = (string) main, \
+       stream-format = (string) byte-stream"},
+#endif
+  {"mpeg2", GST_RANK_PRIMARY + 3,
+      "video/mpeg, \
+       mpegversion=2, \
+       systemstream=(boolean) false"},
+  {"vc1", GST_RANK_PRIMARY + 3,
+      "video/x-wmv, \
+       stream-format = (string) { sequence-layer-frame-layer, bdu }"},
+#ifndef WITH_MSS_2016
+# ifdef USE_VP8_DECODER
+  {"vp8", GST_RANK_PRIMARY + 3, "video/x-vp8"},
+# endif
+# ifdef USE_VP9_DECODER
+  {"vp9", GST_RANK_PRIMARY + 3, "video/x-vp9"},
+# endif
+  {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
+#endif
+};
+
 G_DEFINE_TYPE_WITH_CODE (
     GstMfxDec,
     gst_mfxdec,
     GST_TYPE_VIDEO_DECODER,
     GST_MFX_PLUGIN_BASE_INIT_INTERFACES);
 
+static GstElementClass *parent_class = NULL;
 
 static GstVideoCodecState *
 copy_video_codec_state (const GstVideoCodecState * in_state)
@@ -222,10 +237,7 @@ static void
 gst_mfxdec_set_property (GObject * object, guint prop_id,
   const GValue * value, GParamSpec * pspec)
 {
-  GstMfxDec *dec;
-
-  g_return_if_fail (GST_IS_MFXDEC (object));
-  dec = GST_MFXDEC (object);
+  GstMfxDec *dec = GST_MFXDEC (object);
 
   switch (prop_id) {
   case PROP_ASYNC_DEPTH:
@@ -244,10 +256,7 @@ static void
 gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
   GParamSpec * pspec)
 {
-  GstMfxDec *dec;
-
-  g_return_if_fail (GST_IS_MFXDEC (object));
-  dec = GST_MFXDEC (object);
+  GstMfxDec *dec = GST_MFXDEC (object);
 
   switch (prop_id) {
   case PROP_ASYNC_DEPTH:
@@ -319,7 +328,7 @@ gst_mfxdec_finalize (GObject * object)
   gst_caps_replace (&mfxdec->srcpad_caps, NULL);
 
   gst_mfx_plugin_base_finalize (GST_MFX_PLUGIN_BASE (object));
-  G_OBJECT_CLASS (gst_mfxdec_parent_class)->finalize (object);
+  G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 static gboolean
@@ -514,11 +523,10 @@ gst_mfxdec_sink_query (GstVideoDecoder * vdec, GstQuery * query)
       break;
     }
     default:{
-      ret = GST_VIDEO_DECODER_CLASS (gst_mfxdec_parent_class)->sink_query (vdec, query);
+      ret = GST_VIDEO_DECODER_CLASS (parent_class)->sink_query (vdec, query);
       break;
     }
   }
-
   return ret;
 }
 
@@ -552,11 +560,10 @@ gst_mfxdec_src_query (GstVideoDecoder * vdec, GstQuery * query)
       break;
     }
     default:{
-      ret = GST_VIDEO_DECODER_CLASS (gst_mfxdec_parent_class)->src_query (vdec, query);
+      ret = GST_VIDEO_DECODER_CLASS (parent_class)->src_query (vdec, query);
       break;
     }
   }
-
   return ret;
 }
 
@@ -566,9 +573,15 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
   GstVideoDecoderClass *vdec_class = GST_VIDEO_DECODER_CLASS (klass);
+  GstPadTemplate *pad_template;
+  GstMfxCodecMap *map;
+  gchar *name, *longname, *description;
+  GstCaps *caps;
 
   GST_DEBUG_CATEGORY_INIT (mfxdec_debug, GST_PLUGIN_NAME,
       0, GST_PLUGIN_DESC);
+
+  parent_class = g_type_class_peek_parent (klass);
 
   gst_mfx_plugin_base_class_init (GST_MFX_PLUGIN_BASE_CLASS (klass));
 
@@ -588,17 +601,6 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
       "Live streaming mode (not recommended)",
       FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&src_template_factory));
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&sink_template_factory));
-  gst_element_class_set_static_metadata (element_class,
-      "MFX Video Decoder",
-      "Codec/Decoder/Video",
-      "Uses libmfx for decoding video streams",
-      "Ishmael Sameen<ishmael.visayana.sameen@intel.com>");
-
   vdec_class->open = GST_DEBUG_FUNCPTR (gst_mfxdec_open);
   vdec_class->close = GST_DEBUG_FUNCPTR (gst_mfxdec_close);
   vdec_class->flush = GST_DEBUG_FUNCPTR (gst_mfxdec_flush);
@@ -609,6 +611,32 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
       GST_DEBUG_FUNCPTR (gst_mfxdec_decide_allocation);
   vdec_class->src_query = GST_DEBUG_FUNCPTR (gst_mfxdec_src_query);
   vdec_class->sink_query = GST_DEBUG_FUNCPTR (gst_mfxdec_sink_query);
+
+  map = (GstMfxCodecMap *) g_type_get_qdata (G_OBJECT_CLASS_TYPE (klass),
+      GST_MFXDEC_PARAMS_QDATA);
+
+  name = g_ascii_strup (map->name, -1);
+  longname = g_strdup_printf ("MFX %s decoder", name);
+  description = g_strdup_printf ("An MFX-based %s video decoder", name);
+  g_free (name);
+
+  gst_element_class_set_static_metadata (element_class, longname,
+      "Codec/Decoder/Video", description,
+      "Ishmael Sameen<ishmael.visayana.sameen@intel.com>");
+
+  g_free (longname);
+  g_free (description);
+
+  /* sink pad */
+  caps = gst_caps_from_string (map->caps_str);
+  pad_template = gst_pad_template_new ("sink", GST_PAD_SINK, GST_PAD_ALWAYS,
+      caps);
+  gst_caps_unref (caps);
+  gst_element_class_add_pad_template (element_class, pad_template);
+
+  /* src pad */
+  gst_element_class_add_static_pad_template (element_class,
+      &src_template_factory);
 }
 
 static void
@@ -620,3 +648,50 @@ gst_mfxdec_init (GstMfxDec *mfxdec)
   gst_video_decoder_set_packetized (GST_VIDEO_DECODER (mfxdec), TRUE);
   gst_video_decoder_set_needs_format (GST_VIDEO_DECODER (mfxdec), TRUE);
 }
+
+gboolean
+gst_mfxdec_register (GstPlugin * plugin)
+{
+  gboolean ret = FALSE;
+  guint i, rank;
+  gchar *type_name, *element_name;
+  const gchar *name;
+  GType type;
+  GTypeInfo typeinfo = {
+    sizeof (GstMfxDecClass),
+    NULL,
+    NULL,
+    (GClassInitFunc) gst_mfxdec_class_init,
+    NULL,
+    NULL,
+    sizeof (GstMfxDec),
+    0,
+    (GInstanceInitFunc) gst_mfxdec_init,
+  };
+
+  for (i = 0; i < G_N_ELEMENTS (mfx_codec_map); i++) {
+    name = mfx_codec_map[i].name;
+    rank = mfx_codec_map[i].rank;
+
+    type_name = g_strdup_printf ("GstMfxDec_%s", name);
+    element_name = g_strdup_printf ("mfx%sdec", name);
+
+    type = g_type_from_name (type_name);
+    if (!type) {
+      /* create the gtype now */
+      type = g_type_register_static (GST_TYPE_VIDEO_DECODER, type_name,
+          &typeinfo, 0);
+      gst_mfx_plugin_base_init_interfaces (type);
+      g_type_set_qdata (type, GST_MFXDEC_PARAMS_QDATA,
+          (gpointer) & mfx_codec_map[i]);
+    }
+
+    ret |= gst_element_register (plugin, element_name, rank, type);
+
+    g_free (element_name);
+    g_free (type_name);
+  }
+
+  return ret;
+}
+

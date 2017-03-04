@@ -26,20 +26,7 @@
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_MFXDEC \
-  (gst_mfxdec_get_type ())
-#define GST_MFXDEC_CAST(obj) \
-  ((GstMfxDec *)(obj))
-#define GST_MFXDEC(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXDEC, GstMfxDec))
-#define GST_MFXDEC_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXDEC, GstMfxDecClass))
-#define GST_MFXDEC_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXDEC, GstMfxDecClass))
-#define GST_IS_MFXDEC(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXDEC))
-#define GST_IS_MFXDEC_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXDEC))
+#define GST_MFXDEC(obj) ((GstMfxDec *)(obj))
 
 typedef struct _GstMfxDec GstMfxDec;
 typedef struct _GstMfxDecClass GstMfxDecClass;
@@ -63,7 +50,8 @@ struct _GstMfxDecClass {
   GstMfxPluginBaseClass parent_class;
 };
 
-GType gst_mfxdec_get_type (void);
+gboolean gst_mfxdec_register (GstPlugin * plugin);
+
 
 G_END_DECLS
 

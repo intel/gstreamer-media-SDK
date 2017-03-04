@@ -8,7 +8,9 @@ include(CMakeDependentOption)
 option (DEBUG "Turn on debug build." OFF)
 
 option (MFX_DECODER "Build MSDK Decoder plugin." ON)
-option (MFX_VP9_DECODER "Build MSDK Decoder plugin with VP9 support." OFF)
+option (USE_HEVC_DECODER "Build MSDK Decoder plugin with HEVC support." ON)
+option (USE_VP8_DECODER "Build MSDK Decoder plugin with VP8 support." ON)
+option (USE_VP9_DECODER "Build MSDK Decoder plugin with VP9 support." OFF)
 
 option (MFX_ENCODER "Build MSDK Encoder plugin." ON)
 CMAKE_DEPENDENT_OPTION(MFX_H264_ENCODER  "Build H.264 Encoder plugin" ON
