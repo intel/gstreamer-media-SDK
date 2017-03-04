@@ -43,6 +43,32 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 /* Default templates */
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
 
+static const char gst_mfxdecode_sink_caps_str[] =
+    GST_CAPS_CODEC ("video/x-h264, \
+        alignment = (string) au, \
+        profile = (string) { constrained-baseline, baseline, main, high }, \
+        stream-format = (string) byte-stream")
+#ifdef USE_HEVC_DECODER
+    GST_CAPS_CODEC ("video/x-h265, \
+        alignment = (string) au, \
+        profile = (string) main, \
+        stream-format = (string) byte-stream")
+#endif
+    GST_CAPS_CODEC ("video/mpeg, \
+        mpegversion = 2")
+    GST_CAPS_CODEC ("video/x-wmv, \
+        stream-format = (string) { sequence-layer-frame-layer, bdu }")
+#ifndef WITH_MSS_2016
+# ifdef USE_VP8_DECODER
+    GST_CAPS_CODEC ("video/x-vp8")
+# endif
+# ifdef USE_VP9_DECODER
+    GST_CAPS_CODEC ("video/x-vp9")
+# endif
+#endif
+    GST_CAPS_CODEC ("image/jpeg")
+  ;
+
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_SURFACE_CAPS ";"
   GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
@@ -98,13 +124,8 @@ static const GstMfxCodecMap mfx_codec_map[] = {
 # endif
   {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
 #endif
+  {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
 };
-
-G_DEFINE_TYPE_WITH_CODE (
-    GstMfxDec,
-    gst_mfxdec,
-    GST_TYPE_VIDEO_DECODER,
-    GST_MFX_PLUGIN_BASE_INIT_INTERFACES);
 
 static GstElementClass *parent_class = NULL;
 
@@ -615,10 +636,16 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
   map = (GstMfxCodecMap *) g_type_get_qdata (G_OBJECT_CLASS_TYPE (klass),
       GST_MFXDEC_PARAMS_QDATA);
 
-  name = g_ascii_strup (map->name, -1);
-  longname = g_strdup_printf ("MFX %s decoder", name);
-  description = g_strdup_printf ("An MFX-based %s video decoder", name);
-  g_free (name);
+  if (map->name) {
+    name = g_ascii_strup (map->name, -1);
+    longname = g_strdup_printf ("MFX %s decoder", name);
+    description = g_strdup_printf ("An MFX-based %s video decoder", name);
+    g_free (name);
+  }
+  else {
+    longname = g_strdup_printf ("MFX Video Decoder");
+    description = g_strdup_printf ("Uses libmfx for decoding video streams");
+  }
 
   gst_element_class_set_static_metadata (element_class, longname,
       "Codec/Decoder/Video", description,
@@ -673,8 +700,14 @@ gst_mfxdec_register (GstPlugin * plugin)
     name = mfx_codec_map[i].name;
     rank = mfx_codec_map[i].rank;
 
-    type_name = g_strdup_printf ("GstMfxDec_%s", name);
-    element_name = g_strdup_printf ("mfx%sdec", name);
+    if (name) {
+      type_name = g_strdup_printf ("GstMfxDec_%s", name);
+      element_name = g_strdup_printf ("mfx%sdec", name);
+    }
+    else {
+      type_name = g_strdup_printf ("GstMfxDec");
+      element_name = g_strdup_printf ("mfxdecode");
+    }
 
     type = g_type_from_name (type_name);
     if (!type) {
@@ -686,6 +719,7 @@ gst_mfxdec_register (GstPlugin * plugin)
           (gpointer) & mfx_codec_map[i]);
     }
 
+    /* mfxdecode was only registered for legacy purposes */
     ret |= gst_element_register (plugin, element_name, rank, type);
 
     g_free (element_name);
