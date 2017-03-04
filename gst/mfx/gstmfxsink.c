@@ -27,7 +27,7 @@
 /* Supported interfaces */
 #include <gst/video/navigation.h>
 
-#include "gst-libs/mfx/sysdeps.h"
+#include <gst-libs/mfx/sysdeps.h>
 #include "gstmfxsink.h"
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideometa.h"
@@ -87,6 +87,7 @@ enum
 
 #define DEFAULT_DISPLAY_TYPE            GST_MFX_DISPLAY_TYPE_ANY
 #define DEFAULT_GL_API                  GST_MFX_GLAPI_GLES2
+
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
 
 static void gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay);
@@ -111,8 +112,8 @@ gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
 }
 
 #ifdef USE_EGL
-#include <egl/gstmfxdisplay_egl.h>
-#include <egl/gstmfxwindow_egl.h>
+# include <egl/gstmfxdisplay_egl.h>
+# include <egl/gstmfxwindow_egl.h>
 
 #define GST_MFX_TYPE_GL_API \
   gst_mfx_gl_api_get_type ()
@@ -138,11 +139,11 @@ gst_mfx_gl_api_get_type (void)
 #endif // USE_EGL
 
 #ifdef USE_X11
-#include <x11/gstmfxdisplay_x11.h>
-#include <x11/gstmfxwindow_x11.h>
+# include <x11/gstmfxdisplay_x11.h>
+# include <x11/gstmfxwindow_x11.h>
 
 #ifdef HAVE_XKBLIB
-#include <X11/XKBlib.h>
+# include <X11/XKBlib.h>
 #endif
 
 static inline KeySym
@@ -446,8 +447,8 @@ gst_mfxsink_backend_egl (void)
 /* --- Wayland Backend                                                  --- */
 /* -------------------------------------------------------------------------*/
 #ifdef USE_WAYLAND
-#include <wayland/gstmfxdisplay_wayland.h>
-#include <wayland/gstmfxwindow_wayland.h>
+# include <wayland/gstmfxdisplay_wayland.h>
+# include <wayland/gstmfxwindow_wayland.h>
 
 static gboolean
 gst_mfxsink_wayland_create_window (GstMfxSink * sink, guint width, guint height)
@@ -702,7 +703,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
           GST_MFX_DISPLAY_TYPE (gst_mfx_display_egl_get_parent_display (display));
       break;
 #endif
-#ifdef USE_X11
+#if defined(USE_X11) && defined(USE_DRI3)
     case GST_MFX_DISPLAY_TYPE_X11:
       display = gst_mfx_display_x11_new (sink->display_name);
       if (!display)
@@ -873,7 +874,13 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
   if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
     GstMfxDisplay *display = gst_mfx_display_wayland_new (sink->display_name);
     sink->display_type_req = display ?
-        GST_MFX_DISPLAY_TYPE_WAYLAND : GST_MFX_DISPLAY_TYPE_X11;
+        GST_MFX_DISPLAY_TYPE_WAYLAND :
+#if defined(USE_X11) && defined(USE_DRI3)
+        GST_MFX_DISPLAY_TYPE_X11
+#else
+        GST_MFX_DISPLAY_TYPE_EGL
+#endif
+    ;
 
     if (display) {
       gst_mfx_display_replace (&sink->display, display);

@@ -29,7 +29,7 @@ if(WAYLAND_RENDERER)
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/scaler-protocol.c")
 endif()
 
-if(X11_RENDERER)
+if(WITH_X11)
     set(SOURCE ${SOURCE}
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/x11/gstmfxdisplay_x11.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/x11/gstmfxutils_x11.c"

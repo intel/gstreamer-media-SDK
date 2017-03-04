@@ -72,9 +72,9 @@ typedef struct _GstMfxDisplay                 GstMfxDisplay;
 typedef enum
 {
   GST_MFX_DISPLAY_TYPE_ANY = 0,
-  GST_MFX_DISPLAY_TYPE_EGL,
+  GST_MFX_DISPLAY_TYPE_X11,
   GST_MFX_DISPLAY_TYPE_WAYLAND,
-  GST_MFX_DISPLAY_TYPE_X11
+  GST_MFX_DISPLAY_TYPE_EGL,
 } GstMfxDisplayType;
 
 #define GST_MFX_TYPE_DISPLAY_TYPE (gst_mfx_display_get_type())
