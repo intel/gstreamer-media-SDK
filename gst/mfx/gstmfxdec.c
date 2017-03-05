@@ -48,23 +48,17 @@ static const char gst_mfxdecode_sink_caps_str[] =
         alignment = (string) au, \
         profile = (string) { constrained-baseline, baseline, main, high }, \
         stream-format = (string) byte-stream")
-#ifdef USE_HEVC_DECODER
     GST_CAPS_CODEC ("video/x-h265, \
         alignment = (string) au, \
         profile = (string) { main, main-10 }, \
         stream-format = (string) byte-stream")
-#endif
     GST_CAPS_CODEC ("video/mpeg, \
         mpegversion = 2")
     GST_CAPS_CODEC ("video/x-wmv, \
         stream-format = (string) { sequence-layer-frame-layer, bdu }")
-#ifndef WITH_MSS_2016
-# ifdef USE_VP8_DECODER
     GST_CAPS_CODEC ("video/x-vp8")
-# endif
-# ifdef USE_VP9_DECODER
+#ifdef USE_VP9_DECODER
     GST_CAPS_CODEC ("video/x-vp9")
-# endif
 #endif
     GST_CAPS_CODEC ("image/jpeg")
   ;
@@ -115,7 +109,6 @@ static const GstMfxCodecMap mfx_codec_map[] = {
   {"vc1", GST_RANK_PRIMARY + 3,
       "video/x-wmv, \
        stream-format = (string) { sequence-layer-frame-layer, bdu }"},
-#ifndef WITH_MSS_2016
 # ifdef USE_VP8_DECODER
   {"vp8", GST_RANK_PRIMARY + 3, "video/x-vp8"},
 # endif
@@ -123,7 +116,6 @@ static const GstMfxCodecMap mfx_codec_map[] = {
   {"vp9", GST_RANK_PRIMARY + 3, "video/x-vp9"},
 # endif
   {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
-#endif
   {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
 };
 

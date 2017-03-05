@@ -391,7 +391,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GstMfxSurface * surface,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
-#if defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT) && defined(HAVE_XRENDER)
+#if defined(USE_DRI3) && defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT) && defined(HAVE_XRENDER)
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
   GstMfxDisplayX11 *const x11_display =
         GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));

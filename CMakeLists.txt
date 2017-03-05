@@ -25,19 +25,20 @@ CMAKE_DEPENDENT_OPTION(MFX_JPEG_ENCODER  "Build JPEG encoder plugin"  ON
 option (MFX_VPP "Build MSDK VPP plugin." ON)
 
 option (MFX_SINK "Build MSDK sink plugin." ON)
-CMAKE_DEPENDENT_OPTION(WAYLAND_RENDERER "Build sink plugin with Wayland backend"
+CMAKE_DEPENDENT_OPTION(USE_WAYLAND_RENDERER "Build sink plugin with Wayland backend"
     ON "MFX_SINK" OFF)
-CMAKE_DEPENDENT_OPTION(DRI3_RENDERER  "Build sink plugin with X11 DRI3 backend"
+CMAKE_DEPENDENT_OPTION(USE_DRI3_RENDERER  "Build sink plugin with X11 DRI3 backend"
     ON "MFX_SINK" OFF)
-CMAKE_DEPENDENT_OPTION(EGL_RENDERER "Build sink plugin with EGL backend"
+CMAKE_DEPENDENT_OPTION(USE_EGL_RENDERER "Build sink plugin with EGL backend"
     ON "MFX_SINK" OFF)
 
 CMAKE_DEPENDENT_OPTION (MFX_SINK_BIN "Build MSDK sinkbin plugin."
     ON "MFX_SINK;MFX_VPP" OFF)
 
 option (WITH_X11 "Enable X11 support" ON)
+option (WITH_WAYLAND "Enable Wayland support" ON)
 
-option (WITH_MSS_2016 "Build plugins for MSS." OFF)
+option (WITH_MSS_2016 "Build plugins for MSS 2016." OFF)
 
 option (MFX_VC1_PARSER "Build VC1 parser plugin" ON)
 
@@ -69,7 +70,11 @@ include_directories(
     parsers)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set (CMAKE_INSTALL_PREFIX "${GSTREAMER_LIBDIR}/gstreamer-1.0")
+    if(DEFINED $ENV{XDG_DATA_HOME})
+        set (CMAKE_INSTALL_PREFIX "$ENV{XDG_DATA_HOME}/gstreamer-1.0/plugins")
+    else()
+        set (CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local/share/gstreamer-1.0/plugins")
+    endif()
 endif()
 
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)

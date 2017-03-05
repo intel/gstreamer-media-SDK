@@ -29,10 +29,10 @@
 #include "gstmfxwindow_priv.h"
 #include "gstmfxtexture_egl.h"
 
-#ifdef USE_X11
+#ifdef WITH_X11
 # include <x11/gstmfxdisplay_x11.h>
 #endif
-#ifdef USE_WAYLAND
+#ifdef WITH_WAYLAND
 # include <wayland/gstmfxdisplay_wayland.h>
 #endif
 
@@ -49,12 +49,12 @@ typedef struct
 
 /* *INDENT-OFF* */
 static const DisplayMap g_display_map[] = {
-#ifdef USE_WAYLAND
+#ifdef WITH_WAYLAND
   {"wayland",
   GST_MFX_DISPLAY_TYPE_WAYLAND,
   gst_mfx_display_wayland_new },
 #endif
-#ifdef USE_X11
+#ifdef WITH_X11
   {"x11",
   GST_MFX_DISPLAY_TYPE_X11,
   gst_mfx_display_x11_new },

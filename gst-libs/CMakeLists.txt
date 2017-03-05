@@ -21,7 +21,7 @@ if(MFX_DECODER)
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/gstmfxdecoder.c")
 endif()
 
-if(WAYLAND_RENDERER)
+if(WITH_WAYLAND)
     set(SOURCE ${SOURCE}
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/gstmfxdisplay_wayland.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/wayland/gstmfxwindow_wayland.c"
@@ -37,7 +37,7 @@ if(WITH_X11)
 endif()
 
 
-if(EGL_RENDERER)
+if(USE_EGL_RENDERER)
     set(SOURCE ${SOURCE}
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/egl/gstmfxdisplay_egl.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/mfx/egl/gstmfxtexture_egl.c"
