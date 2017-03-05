@@ -205,13 +205,17 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
       }
       break;
     }
+    case MFX_CODEC_VP8:
+      decoder->plugin_uid = MFX_PLUGINID_VP8D_HW;
+      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
+
+      break;
 #ifdef USE_VP9_DECODER
-    case MFX_CODEC_VP9: {
+    case MFX_CODEC_VP9:
       decoder->plugin_uid = MFX_PLUGINID_VP9D_HW;
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
 
       break;
-    }
 #endif
     default:
       sts = MFX_ERR_NONE;
