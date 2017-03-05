@@ -87,7 +87,7 @@ gst-launch-1.0 filesrc location=input.avi ! avidemux ! mfxjpegdec ! mfxsinkeleme
 gst-launch-1.0 filesrc location=input.wmv ! asfdemux ! mfxvc1parse ! mfxvc1dec ! mfxsinkelement
 
 # Basic VP8 / VP9 decode
-gst-launch-1.0 filesrc location=input.webm ! matroskademux ! mfxvp8dec ! mfxsinkelement
+gst-launch-1.0 filesrc location=input.webm ! matroskademux ! mfxdecode ! mfxsinkelement
 
 # H264 raw file encode
 gst-launch-1.0 filesrc location=raw.yuv ! \
@@ -95,11 +95,11 @@ gst-launch-1.0 filesrc location=raw.yuv ! \
   mfxh264enc ! matroskamux ! filesink location=/path/to/output.mkv sync=false
 
 # Trancode an H264 video to an HEVC video
-gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxh264dec ! \
+gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
   mfxhevcenc ! matroskamux ! filesink location=/path/to/output.mkv sync=false
 
 # Video preview with transcoding
-gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxh264dec ! \
+gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
   tee name=tp tp. ! queue ! mfxsinkelement  tp. ! queue ! \
   mfxmpeg2enc ! mpegtsmux ! filesink location=/path/to/output.mpg
 
@@ -118,7 +118,7 @@ gst-launch-1.0 -v udpsrc port=<port> caps="application/x-rtp, media=(string)vide
   rtph264depay ! h264parse ! mfxh264dec ! mfxsink
 
 # Multi-window decode with different renderers
-gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxh264dec ! \
+gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
   tee name=tp tp. ! queue ! mfxsink display=egl  tp. ! queue ! mfxsink display=x11
 
 # VPP postprocessing after decode (gst-inspect-1.0 mfxvpp for <options>)
@@ -126,7 +126,7 @@ gst-launch-1.0 filesrc location=video.mkv ! matroskademux ! h265parse ! mfxhevcd
   mfxvpp <options> ! mfxsinkelement
 
 # VPP postprocessing during MPEG2 to H264 transcoding (gst-inspect-1.0 mfxvpp for <options>)
-gst-launch-1.0 filesrc location=video.mpg ! mpegpsdemux ! mpegvideoparse ! mfxmpeg2dec ! \
+gst-launch-1.0 filesrc location=video.mpg ! mpegpsdemux ! mpegvideoparse ! mfxdecode ! \
   mfxvpp <options> ! mfxh264enc ! qtmux ! filesink location=/path/to/output.mp4 sync=false
 
 
@@ -158,8 +158,8 @@ while ensuring all frames are processed in video memory for full performance.
     sink_2::xpos=0 sink_2::ypos=540 sink_2::width=960 sink_2::height=540
     sink_3::xpos=960 sink_3::ypos=540 sink_3::width=960 sink_3::height=540 ! glimagesink \
     v4l2src io-mode=5 ! mfxvpp ! m.sink_0 \
-    filesrc location=video1.mp4 ! qtdemux ! h264parse ! mfxh264dec ! mfxvpp brightness=-90 ! m.sink_1 \
-    filesrc location=video2.mpg ! tsdemux ! mpegvideoparse ! mfxmpeg2dec ! m.sink_2 \
-    filesrc location=video3.mkv ! matroskademux ! h265parse ! mfxhevcdec ! mfxvpp contrast=3 ! m.sink_3
+    filesrc location=video1.mp4 ! qtdemux ! h264parse ! mfxdecode ! mfxvpp brightness=-90 ! m.sink_1 \
+    filesrc location=video2.mpg ! tsdemux ! mpegvideoparse ! mfxdecode ! m.sink_2 \
+    filesrc location=video3.mkv ! matroskademux ! h265parse ! mfxdecode ! mfxvpp contrast=3 ! m.sink_3
   
   
