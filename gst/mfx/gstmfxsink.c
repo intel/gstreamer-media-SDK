@@ -682,7 +682,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
   GstMfxDisplay *display = NULL;
 
   switch (sink->display_type_req) {
-#if defined(WITH_X11) && defined(USE_DRI3)
+#ifdef USE_DRI3
     case GST_MFX_DISPLAY_TYPE_X11:
       display = gst_mfx_display_x11_new (sink->display_name);
       if (!display)
@@ -691,7 +691,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
       sink->display_type = GST_MFX_DISPLAY_TYPE_X11;
       break;
 #endif
-#if defined(WITH_WAYLAND) && defined(USE_WAYLAND)
+#ifdef USE_WAYLAND
     case GST_MFX_DISPLAY_TYPE_WAYLAND:
       if (!sink->display) {
         display = gst_mfx_display_wayland_new (sink->display_name);
@@ -885,7 +885,7 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
     }
     else
 #else
-# if defined(WITH_X11) && defined(USE_DRI3)
+# ifdef USE_DRI3
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_X11;
 # else
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_EGL;
