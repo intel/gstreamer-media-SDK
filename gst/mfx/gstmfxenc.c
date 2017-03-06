@@ -204,32 +204,32 @@ gst_mfxenc_push_frame (GstMfxEnc * encode, GstVideoCodecFrame * out_frame)
 {
   GstVideoEncoder *const venc = GST_VIDEO_ENCODER_CAST (encode);
   GstMfxEncClass *const klass = GST_MFXENC_GET_CLASS (encode);
-  GstBuffer *out_buffer;
+  GstBuffer *outbuf;
   GstFlowReturn ret;
 
   /* Update output state */
   if (!ensure_output_state (encode))
     goto error_output_state;
 
-  out_buffer = out_frame->output_buffer;
   if (klass->format_buffer) {
-    ret = klass->format_buffer (encode, &out_buffer);
+    ret = klass->format_buffer (encode, out_frame->output_buffer, &outbuf);
     if (GST_FLOW_OK != ret)
       goto error_format_buffer;
+    gst_buffer_replace (&out_frame->output_buffer, outbuf);
+    gst_buffer_unref (outbuf);
   }
 
   GST_DEBUG ("output:%" GST_TIME_FORMAT ", size:%zu",
-      GST_TIME_ARGS (out_frame->pts), gst_buffer_get_size (out_buffer));
+      GST_TIME_ARGS (out_frame->pts),
+      gst_buffer_get_size (out_frame->output_buffer));
 
-  ret = gst_video_encoder_finish_frame (venc, out_frame);
-
-  return ret;
+  return gst_video_encoder_finish_frame (venc, out_frame);
   /* ERRORS */
 error_format_buffer:
   {
     GST_ERROR ("failed to format encoded buffer in system memory");
-    if (out_buffer)
-      gst_buffer_unref (out_buffer);
+    if (out_frame->output_buffer)
+      gst_buffer_unref (out_frame->output_buffer);
     gst_video_codec_frame_unref (out_frame);
     return ret;
   }

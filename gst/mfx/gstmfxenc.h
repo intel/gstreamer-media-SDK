@@ -67,16 +67,13 @@ struct _GstMfxEncClass
   GstMfxPluginBaseClass parent_class;
 
   GPtrArray *      	(*get_properties) (void);
-  gboolean      		(*get_property)   (GstMfxEnc * encode,
-																					guint prop_id, GValue * value);
-  gboolean      		(*set_property)   (GstMfxEnc * encode,
-																					guint prop_id, const GValue * value);
+  gboolean      		(*get_property)   (GstMfxEnc * encode, guint prop_id, GValue * value);
+  gboolean      		(*set_property)   (GstMfxEnc * encode, guint prop_id, const GValue * value);
 
   gboolean      		(*set_config)     (GstMfxEnc * encode);
   GstCaps *      		(*get_caps)       (GstMfxEnc * encode);
   GstMfxEncoder *		(*alloc_encoder)  (GstMfxEnc * encode);
-  gboolean      		(*format_buffer)  (GstMfxEnc * encode,
-																					GstBuffer ** out_buffer_ptr);
+  gboolean      		(*format_buffer)  (GstMfxEnc * encode, GstBuffer * in_buffer, GstBuffer ** out_buffer_ptr);
 };
 
 GType

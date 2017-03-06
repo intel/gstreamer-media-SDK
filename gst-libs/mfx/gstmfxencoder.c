@@ -993,8 +993,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
     frame->output_buffer =
         gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
-            encoder->bs.Data, encoder->bs.MaxLength,
-            encoder->bs.DataOffset, encoder->bs.DataLength, NULL, NULL);
+          encoder->bs.Data, encoder->bs.MaxLength,
+          encoder->bs.DataOffset, encoder->bs.DataLength, NULL, NULL);
 
     encoder->bs.DataLength = 0;
   }
