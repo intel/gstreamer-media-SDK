@@ -413,7 +413,6 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   guint size, min, max;
   gboolean update_pool = FALSE;
   gboolean has_video_meta = FALSE;
-  gboolean has_video_alignment = FALSE;
   GstStructure *params;
   guint idx;
 
@@ -461,12 +460,6 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     gst_query_parse_nth_allocation_pool (query, 0, &pool, &size, &min, &max);
     update_pool = TRUE;
     size = MAX (size, vi.size);
-    if (pool) {
-      /* Check whether downstream element proposed a bufferpool but did
-         not provide a correct propose_allocation () implementation */
-      has_video_alignment = gst_buffer_pool_has_option (pool,
-          GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT);
-    }
   } else {
     pool = NULL;
     size = vi.size;

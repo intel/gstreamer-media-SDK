@@ -39,7 +39,6 @@ struct _GstMfxVideoBufferPoolPrivate
   GstVideoInfo alloc_info;
   GstMfxDisplay *display;
   guint has_video_meta:1;
-  guint has_video_alignment:1;
   guint use_dmabuf_memory:1;
   gboolean memtype_is_system;
 };
@@ -138,13 +137,6 @@ gst_mfx_video_buffer_pool_set_config (GstBufferPool * pool,
 
   priv->has_video_meta = gst_buffer_pool_config_has_option (config,
       GST_BUFFER_POOL_OPTION_VIDEO_META);
-
-  priv->has_video_alignment = gst_buffer_pool_config_has_option (config,
-      GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT);
-  if (priv->has_video_alignment) {
-    fill_video_alignment (GST_MFX_VIDEO_BUFFER_POOL (pool), &align);
-    gst_buffer_pool_config_set_video_alignment (config, &align);
-  }
 
   return
       GST_BUFFER_POOL_CLASS
