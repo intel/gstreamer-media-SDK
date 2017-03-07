@@ -59,18 +59,6 @@ gst_mfx_video_buffer_pool_finalize (GObject * object)
   G_OBJECT_CLASS (gst_mfx_video_buffer_pool_parent_class)->finalize (object);
 }
 
-static void
-fill_video_alignment (GstMfxVideoBufferPool * pool, GstVideoAlignment * align)
-{
-  GstVideoInfo *const vip = &pool->priv->alloc_info;
-  guint i;
-
-  gst_video_alignment_reset (align);
-  for (i = 0; i < GST_VIDEO_INFO_N_PLANES (vip); i++)
-    align->stride_align[i] =
-        (1U << g_bit_nth_lsf (GST_VIDEO_INFO_PLANE_STRIDE (vip, i), 0)) - 1;
-}
-
 static const gchar **
 gst_mfx_video_buffer_pool_get_options (GstBufferPool * pool)
 {
