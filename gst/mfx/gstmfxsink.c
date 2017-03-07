@@ -884,15 +884,12 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
       gst_mfx_display_unref (display);
     }
     else
-#else
-# ifdef USE_DRI3
+#endif  // WITH_WAYLAND
+#ifdef USE_DRI3
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_X11;
-# else
+#else
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_EGL;
-# endif
-#endif // WITH_WAYLAND
-
-
+#endif // USE_DRI3
   }
 
   if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_X11 ||

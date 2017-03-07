@@ -65,7 +65,7 @@ include_directories(${PROJECT_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=gnu99 -Wall -fPIE")
-set(CMAKE_C_RELEASE_FLAGS "${CMAKE_C_RELEASE_FLAGS} -D_FORTITY_SOURCE=2")
+set(CMAKE_C_RELEASE_FLAGS "${CMAKE_C_RELEASE_FLAGS} -D_FORTIFY_SOURCE=2")
 
 include_directories(
     gst/mfx

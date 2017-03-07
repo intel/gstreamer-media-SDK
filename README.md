@@ -51,11 +51,12 @@ Requirements
   * Intel Haswell / Broadwell / Skylake with Intel HD / Iris Pro graphics
   * Intel Apollo Lake
 
+
 Compiling
 ---------
 GStreamer-MSDK uses the CMake build tool to build the plugins.
-Create a build directory within the source directory and run the CMake
-command to configure the build.
+Create a build folder within the source directory and run the CMake
+command to configure the out-of-source build.
 
 	mkdir build
 	cd build
@@ -65,26 +66,28 @@ To make a debug build:
 
 	cmake .. -DDEBUG=ON
 		
-
 To build the plugins for Media Server Studio 2016 Linux Edition:
 
 	cmake .. -DWITH_MSS_2016=ON
-		
 
 Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 decode support:
 
 	cmake .. -DUSE_VP9_DECODER=ON
 
+For a list of more options when configuring the build, refer to the CMakeLists.txt file inside the source directory.
 
 Next step is to compile and install the GStreamer-MSDK plugins:
 
 	make
 	make install
 
-
 To uninstall the plugins:
 
 	make uninstall
+
+If you intend to rebuild the plugins after making changes to the source code or you would
+want to change some of the build options after uninstalling the plugins, it is highly recommended to
+simply delete the build folder that you have created and repeat the build process as above.
 
 
 Usage
