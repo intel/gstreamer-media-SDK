@@ -980,7 +980,6 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
   GstMfxVideoMeta *meta;
   GstMfxSurface *surface, *composite_surface = NULL;
   GstMfxRectangle *surface_rect = NULL;
-  GstMfxRectangle tmp_rect;
   GstFlowReturn ret;
 
   GstVideoOverlayCompositionMeta *const cmeta =

@@ -39,7 +39,6 @@ struct _GstMfxVideoBufferPoolPrivate
   GstVideoInfo alloc_info;
   GstMfxDisplay *display;
   guint has_video_meta:1;
-  guint has_video_alignment:1;
   guint use_dmabuf_memory:1;
   gboolean memtype_is_system;
 };
@@ -58,18 +57,6 @@ gst_mfx_video_buffer_pool_finalize (GObject * object)
   g_clear_object (&priv->allocator);
 
   G_OBJECT_CLASS (gst_mfx_video_buffer_pool_parent_class)->finalize (object);
-}
-
-static void
-fill_video_alignment (GstMfxVideoBufferPool * pool, GstVideoAlignment * align)
-{
-  GstVideoInfo *const vip = &pool->priv->alloc_info;
-  guint i;
-
-  gst_video_alignment_reset (align);
-  for (i = 0; i < GST_VIDEO_INFO_N_PLANES (vip); i++)
-    align->stride_align[i] =
-        (1U << g_bit_nth_lsf (GST_VIDEO_INFO_PLANE_STRIDE (vip, i), 0)) - 1;
 }
 
 static const gchar **
@@ -138,13 +125,6 @@ gst_mfx_video_buffer_pool_set_config (GstBufferPool * pool,
 
   priv->has_video_meta = gst_buffer_pool_config_has_option (config,
       GST_BUFFER_POOL_OPTION_VIDEO_META);
-
-  priv->has_video_alignment = gst_buffer_pool_config_has_option (config,
-      GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT);
-  if (priv->has_video_alignment) {
-    fill_video_alignment (GST_MFX_VIDEO_BUFFER_POOL (pool), &align);
-    gst_buffer_pool_config_set_video_alignment (config, &align);
-  }
 
   return
       GST_BUFFER_POOL_CLASS

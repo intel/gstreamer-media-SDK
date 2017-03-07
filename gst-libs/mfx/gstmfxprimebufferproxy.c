@@ -75,7 +75,6 @@ vpg_load_symbol (const gchar * vpg_extension)
 static gboolean
 gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
 {
-  GstMfxDisplay *display;
   VASurfaceID surf;
   VAStatus va_status;
   VAImage va_img;
