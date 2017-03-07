@@ -196,21 +196,23 @@ _h265_byte_stream_next_nal (guint8 * buffer, guint32 len, guint32 * nal_size)
 }
 
 static gboolean
-_h265_convert_byte_stream_to_hvc (GstBuffer * buf)
+_h265_convert_byte_stream_to_hvc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
 {
   GstMapInfo info;
-  guint32 nal_size, buf_size = 0;
-  guint8 *nal_start_code, *nal_body, *cur;
+  guint32 nal_size = 0;
+  guint8 *nal_start_code, *nal_body;
+  guint8 *hvc1_data = NULL;
   guint8 *frame_end;
+  GByteArray *hvc1_bytes = g_byte_array_new();
 
-  g_assert (buf);
-
-  if (!gst_buffer_map (buf, &info, GST_MAP_READ | GST_MAP_WRITE))
+  if (!hvc1_bytes)
     return FALSE;
 
-  cur = nal_start_code = info.data;
+  if (!gst_buffer_map (inbuf, &info, GST_MAP_READ))
+    return FALSE;
+
+  nal_start_code = info.data;
   frame_end = info.data + info.size;
-  nal_size = 0;
 
   while ((frame_end > nal_start_code) &&
       (nal_body = _h265_byte_stream_next_nal (nal_start_code,
@@ -221,30 +223,36 @@ _h265_convert_byte_stream_to_hvc (GstBuffer * buf)
     /* A start code size of 3 indicates the start of an
      * encoded picture in MSDK */
     if (nal_body - nal_start_code == 3) {
-      memmove (cur + 4, nal_body, nal_size);
-      /* Precede NALU with NALU size */
-      GST_WRITE_UINT32_BE (cur, nal_size);
+      hvc1_data = g_malloc(nal_size + 4);
+      if (!hvc1_data)
+        goto error;
 
-      cur += (nal_size + 4);
-      buf_size += (nal_size + 4);
+      /* Precede NALU with NALU size */
+      GST_WRITE_UINT32_BE (hvc1_data, nal_size);
+      memcpy (hvc1_data + 4, nal_body, nal_size);
+
+      g_byte_array_append(hvc1_bytes, hvc1_data, nal_size + 4);
+      g_free (hvc1_data);
     }
     nal_start_code = nal_body + nal_size;
   }
-  gst_buffer_unmap (buf, &info);
+  gst_buffer_unmap (inbuf, &info);
 
-  if (buf_size)
-    gst_buffer_resize (buf, 0, buf_size);
+  if (hvc1_bytes->data)
+    *outbuf_ptr = gst_buffer_new_wrapped(hvc1_bytes->data, hvc1_bytes->len);
 
+  g_byte_array_free(hvc1_bytes, FALSE);
   return TRUE;
 
 error:
-  gst_buffer_unmap (buf, &info);
+  g_byte_array_free(hvc1_bytes, TRUE);
+  gst_buffer_unmap (inbuf, &info);
   return FALSE;
 }
 
 static GstFlowReturn
 gst_mfxenc_h265_format_buffer (GstMfxEnc * base_encode,
-    GstBuffer ** out_buffer_ptr)
+    GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
 {
   GstMfxEncH265 *const encode = GST_MFXENC_H265_CAST (base_encode);
 
@@ -252,7 +260,7 @@ gst_mfxenc_h265_format_buffer (GstMfxEnc * base_encode,
     return GST_FLOW_OK;
 
   /* Convert to hvcC format */
-  if (!_h265_convert_byte_stream_to_hvc (*out_buffer_ptr))
+  if (!_h265_convert_byte_stream_to_hvc (inbuf, outbuf_ptr))
     goto error_convert_buffer;
   return GST_FLOW_OK;
 
@@ -260,7 +268,7 @@ gst_mfxenc_h265_format_buffer (GstMfxEnc * base_encode,
 error_convert_buffer:
   {
     GST_ERROR ("failed to convert from bytestream format to hvcC format");
-    gst_buffer_replace (out_buffer_ptr, NULL);
+    gst_buffer_replace (outbuf_ptr, NULL);
     return GST_FLOW_ERROR;
   }
 }
