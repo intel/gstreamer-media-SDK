@@ -699,12 +699,10 @@ set_default_option_values (GstMfxEncoder * encoder)
   encoder->extco2.BitrateLimit = MFX_CODINGOPTION_ON;
   encoder->extco2.MBBRC = MFX_CODINGOPTION_UNKNOWN;
   encoder->extco2.ExtBRC = MFX_CODINGOPTION_UNKNOWN;
-  //encoder->extco2.LookAheadDepth  = 40;
   encoder->extco2.RepeatPPS = MFX_CODINGOPTION_ON;
   encoder->extco2.BRefType = MFX_B_REF_UNKNOWN;
   encoder->extco2.AdaptiveI = MFX_CODINGOPTION_UNKNOWN;
   encoder->extco2.AdaptiveB = MFX_CODINGOPTION_UNKNOWN;
-  //encoder->extco2.LookAheadDS     = MFX_LOOKAHEAD_DS_OFF;
   encoder->extco2.NumMbPerSlice = 0;
 }
 
@@ -776,6 +774,7 @@ set_extended_coding_options (GstMfxEncoder * encoder)
   encoder->params.ExtParam = encoder->extparam_internal;
 }
 
+/* Many of the default settings here are inspired by Handbrake */
 static void
 gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 {
@@ -795,7 +794,8 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
         /* If set to auto, then enable b-pyramid */
         if (GST_MFX_OPTION_AUTO == encoder->b_strategy)
           encoder->b_strategy = GST_MFX_OPTION_ON;
-        encoder->gop_size = 32;
+        if (!encoder->gop_size)
+          encoder->gop_size = 32;
         encoder->gop_refdist =
             encoder->gop_refdist < 0 ? 4 : encoder->gop_refdist;
         break;
@@ -811,17 +811,26 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
         break;
     }
 
+    if (!encoder->gop_size) {
+      gdouble frame_rate;
+
+      gst_util_fraction_to_double (encoder->info.fps_n,
+        encoder->info.fps_d, &frame_rate);
+
+      encoder->gop_size = (guint16)(frame_rate + 0.5);
+    }
+
     encoder->params.mfx.TargetUsage = encoder->preset;
     encoder->params.mfx.RateControlMethod = encoder->rc_method;
     encoder->params.mfx.IdrInterval = encoder->idr_interval;
-    encoder->params.mfx.NumRefFrame = CLAMP (encoder->num_refs, 0, 16);
+    encoder->params.mfx.NumRefFrame = encoder->num_refs;
     encoder->params.mfx.GopPicSize = encoder->gop_size;
     encoder->params.mfx.NumSlice = encoder->num_slices;
 
     if (encoder->bitrate)
       encoder->params.mfx.TargetKbps = encoder->bitrate;
-    encoder->params.mfx.GopRefDist = CLAMP (
-        encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist, 0, 32);
+    encoder->params.mfx.GopRefDist =
+        encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist;
 
     set_extended_coding_options (encoder);
   }
