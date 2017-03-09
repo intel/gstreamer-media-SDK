@@ -81,7 +81,6 @@ gst_mfx_video_buffer_pool_set_config (GstBufferPool * pool,
   GstCaps *caps = NULL;
   GstVideoInfo *const cur_vip = &priv->video_info[priv->video_info_index];
   GstVideoInfo *const new_vip = &priv->video_info[!priv->video_info_index];
-  GstVideoAlignment align;
   GstAllocator *allocator;
   gboolean changed_caps, use_dmabuf_memory;
 

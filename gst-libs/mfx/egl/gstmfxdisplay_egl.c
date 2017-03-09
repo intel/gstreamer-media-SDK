@@ -241,11 +241,11 @@ gst_mfx_display_egl_new(const gchar * display_name, guint gles_version)
 }
 
 GstMfxDisplay *
-gst_mfx_display_egl_get_parent_display (GstMfxDisplayEGL * display)
+gst_mfx_display_egl_get_parent_display (GstMfxDisplay * display)
 {
   g_return_val_if_fail (display != NULL, NULL);
 
-  return display->display;
+  return GST_MFX_DISPLAY_EGL(display)->display;
 }
 
 EglContext *
