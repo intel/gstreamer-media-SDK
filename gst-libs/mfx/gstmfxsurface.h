@@ -98,7 +98,7 @@ gst_mfx_surface_get_plane (GstMfxSurface * surface, guint plane);
 guint16
 gst_mfx_surface_get_pitch (GstMfxSurface * surface, guint plane);
 
-const GstMfxRectangle *
+GstMfxRectangle *
 gst_mfx_surface_get_crop_rect(GstMfxSurface * surface);
 
 gboolean
