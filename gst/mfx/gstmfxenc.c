@@ -204,7 +204,7 @@ gst_mfxenc_push_frame (GstMfxEnc * encode, GstVideoCodecFrame * out_frame)
 {
   GstVideoEncoder *const venc = GST_VIDEO_ENCODER_CAST (encode);
   GstMfxEncClass *const klass = GST_MFXENC_GET_CLASS (encode);
-  GstBuffer *outbuf;
+  GstBuffer *outbuf = NULL;
   GstFlowReturn ret;
 
   /* Update output state */
@@ -215,8 +215,10 @@ gst_mfxenc_push_frame (GstMfxEnc * encode, GstVideoCodecFrame * out_frame)
     ret = klass->format_buffer (encode, out_frame->output_buffer, &outbuf);
     if (GST_FLOW_OK != ret)
       goto error_format_buffer;
-    gst_buffer_replace (&out_frame->output_buffer, outbuf);
-    gst_buffer_unref (outbuf);
+    if (outbuf) {
+      gst_buffer_replace (&out_frame->output_buffer, outbuf);
+      gst_buffer_unref (outbuf);
+    }
   }
 
   GST_DEBUG ("output:%" GST_TIME_FORMAT ", size:%zu",

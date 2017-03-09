@@ -21,7 +21,6 @@
 #ifndef GST_MFX_DISPLAY_EGL_H
 #define GST_MFX_DISPLAY_EGL_H
 
-#include <EGL/egl.h>
 #include "gstmfxdisplay.h"
 
 G_BEGIN_DECLS
