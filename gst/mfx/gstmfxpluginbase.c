@@ -30,7 +30,11 @@
 #include "gstmfxvideobufferpool.h"
 
 #ifdef HAVE_GST_GL_LIBS
+# if GST_CHECK_VERSION(1,11,1)
+# include <gst/gl/gstglcontext.h>
+# else
 # include <gst/gl/egl/gstglcontext_egl.h>
+# endif
 #endif
 
 /* Default debug category is from the subclass */
@@ -433,6 +437,15 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
       GstObject *gl_context;
+# if GST_CHECK_VERSION(1,11,1)
+      if (gst_structure_get (params, "gst.gl.GstGLContext", GST_TYPE_GL_CONTEXT,
+          &gl_context, NULL) && gl_context) {
+        plugin->srcpad_has_dmabuf =
+            !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
+            gst_gl_context_check_feature (gl_context, "EGL_EXT_image_dma_buf_import");
+        gst_object_unref (gl_context);
+      }
+# else
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
           &gl_context, NULL) && gl_context) {
         plugin->srcpad_has_dmabuf =
@@ -442,6 +455,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
               GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
         gst_object_unref (gl_context);
       }
+# endif
     }
   }
 #endif
