@@ -12,4 +12,3 @@
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "@GstMfx_VERSION@"
-
