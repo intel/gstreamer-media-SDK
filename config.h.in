@@ -13,5 +13,3 @@
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "@GstMfx_VERSION@"
 
-/* Define to the set of enabled OpenGL ES APIs */
-#define USE_GLES_VERSION_MASK 13

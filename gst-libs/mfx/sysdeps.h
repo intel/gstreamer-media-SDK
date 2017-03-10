@@ -32,10 +32,13 @@
 
 #include <drm.h>
 
-
 #include <gst/gst.h>
 #include <mfxvideo.h>
 
+/* Supported OpenGL ES API version mask */
+#define USE_GLES_VERSION_MASK 13
+
+/* Media SDK API version check  */
 #define	MSDK_CHECK_VERSION(major,minor)	\
     (MFX_VERSION_MAJOR > major || \
      (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR > minor) || \

@@ -190,7 +190,8 @@ gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, FALSE);
 
-  return gst_mfx_task_ref (aggregator->current_task);
+  return aggregator->current_task ?
+    gst_mfx_task_ref (aggregator->current_task) : NULL;
 }
 
 gboolean
