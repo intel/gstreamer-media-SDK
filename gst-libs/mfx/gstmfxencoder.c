@@ -1005,6 +1005,11 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
           encoder->bs.Data, encoder->bs.MaxLength,
           encoder->bs.DataOffset, encoder->bs.DataLength, NULL, NULL);
 
+    if (encoder->bs.FrameType & MFX_FRAMETYPE_IDR)
+      GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (frame);
+    else
+      GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (frame);
+
     encoder->bs.DataLength = 0;
   }
 
@@ -1046,8 +1051,13 @@ gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
 
     (*frame)->output_buffer =
         gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
-            encoder->bs.Data, encoder->bs.MaxLength,
-            encoder->bs.DataOffset, encoder->bs.DataLength, NULL, NULL);
+          encoder->bs.Data, encoder->bs.MaxLength,
+          encoder->bs.DataOffset, encoder->bs.DataLength, NULL, NULL);
+
+    if (encoder->bs.FrameType & MFX_FRAMETYPE_IDR)
+      GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (*frame);
+    else
+      GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (*frame);
 
     encoder->bs.DataLength = 0;
   }
