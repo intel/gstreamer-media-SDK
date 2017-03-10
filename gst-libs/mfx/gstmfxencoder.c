@@ -855,6 +855,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   mfxFrameAllocRequest *request;
   mfxFrameAllocRequest enc_request;
   gboolean memtype_is_system = FALSE;
+  mfxFrameInfo *info;
 
   /* Use input system memory with SW HEVC encoder or when linked directly
    * with SW HEVC decoder decoding HEVC main-10 streams */
@@ -947,6 +948,10 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
+  info = &encoder->params.mfx.FrameInfo;
+  encoder->duration =
+      (info->FrameRateExtD / (gdouble)info->FrameRateExtN) * 1000000000;
+  encoder->current_pts = encoder->duration * 16;
 
   GST_INFO ("Initialized MFX encoder task using input %s memory surfaces",
     memtype_is_system ? "system" : "video");
@@ -957,18 +962,9 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 static void
 calculate_new_pts_and_dts (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 {
-
-  if (!encoder->duration) {
-    mfxFrameInfo *info = &encoder->params.mfx.FrameInfo;
-
-    encoder->duration =
-        (info->FrameRateExtD / (gdouble)info->FrameRateExtN) * 1000000000;
-  }
   frame->duration = encoder->duration;
-  frame->dts = encoder->current_dts;
-  frame->pts = frame->dts -
-    ((encoder->bs.DecodeTimeStamp / (gdouble) 90000) * 1000000000);
-  encoder->current_dts += encoder->duration;
+  frame->pts = (encoder->bs.TimeStamp / (gdouble) 90000) * 1000000000;
+  frame->dts = (encoder->bs.DecodeTimeStamp / (gdouble) 90000) * 1000000000;
 }
 
 GstMfxEncoderStatus
@@ -993,6 +989,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
   }
 
   insurf = gst_mfx_surface_get_frame_surface (surface);
+  insurf->Data.TimeStamp = (encoder->current_pts / (gdouble)1000000000) * 90000;
+  encoder->current_pts += encoder->duration;
 
   do {
     sts = MFXVideoENCODE_EncodeFrameAsync (encoder->session,

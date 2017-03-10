@@ -167,7 +167,7 @@ struct _GstMfxEncoder
   gchar                  *plugin_uid;
   GstVideoInfo            info;
 
-  GstClockTime            current_dts;
+  GstClockTime            current_pts;
   GstClockTime            duration;
 
   /* Encoder params */
