@@ -42,7 +42,6 @@ typedef struct __GstMfxSinkBin {
   GstBin parent;
 
   GstElement *postproc;
-  GstElement *queue;
   GstElement *sink;
 } GstMfxSinkBin;
 

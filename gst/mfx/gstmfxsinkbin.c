@@ -475,8 +475,6 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
     goto error_element_missing;
   }
 
-  mfxsinkbin->queue = gst_element_factory_make ("queue", NULL);
-
   /* create the sink */
   mfxsinkbin->sink = gst_element_factory_make ("mfxsinkelement", NULL);
   if(!mfxsinkbin->sink)  {
@@ -486,10 +484,9 @@ gst_mfx_sink_bin_configure (GstMfxSinkBin * mfxsinkbin)
 
   gst_bin_add_many (GST_BIN (mfxsinkbin),
     mfxsinkbin->postproc,
-    mfxsinkbin->queue,
     mfxsinkbin->sink, NULL);
 
-  if (!gst_element_link_many (mfxsinkbin->postproc, mfxsinkbin->queue,
+  if (!gst_element_link_many (mfxsinkbin->postproc,
       mfxsinkbin->sink, NULL))
     goto error_link_pad;
 
