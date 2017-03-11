@@ -101,7 +101,7 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
 
     texture->egl_image =
         vtable->eglCreateImageKHR (ctx->display->base.handle.p, EGL_NO_CONTEXT,
-        EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer) NULL, attribs);
+          EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer) NULL, attribs);
     if (!texture->egl_image) {
       GST_ERROR ("failed to import VA buffer (RGBA) into EGL image");
       goto error;

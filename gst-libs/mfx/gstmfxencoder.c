@@ -522,7 +522,6 @@ gst_mfx_encoder_init (GstMfxEncoder * encoder,
   gst_mfx_encoder_set_frame_info (encoder);
 
   return TRUE;
-
   /* ERRORS */
 error_invalid_vtable:
   {
@@ -969,13 +968,13 @@ calculate_new_pts_and_dts (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
     encoder->duration =
         (info->FrameRateExtD / (gdouble)info->FrameRateExtN) * 1000000000;
-    encoder->current_pts = encoder->duration * params.mfx.NumRefFrame;
+    encoder->current_dts = encoder->duration * params.mfx.NumRefFrame;
   }
   frame->duration = encoder->duration;
-  frame->dts = encoder->current_pts;
+  frame->dts = encoder->current_dts;
   frame->pts = frame->dts -
     ((encoder->bs.DecodeTimeStamp / (gdouble) 90000) * 1000000000);
-  encoder->current_pts += encoder->duration;
+  encoder->current_dts += encoder->duration;
 }
 
 GstMfxEncoderStatus
@@ -990,7 +989,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
   surface = gst_video_codec_frame_get_user_data (frame);
 
   if (encoder->filter) {
-    filter_sts = gst_mfx_filter_process (encoder->filter, surface, &filter_surface);
+    filter_sts =
+        gst_mfx_filter_process (encoder->filter, surface, &filter_surface);
     if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
       GST_ERROR ("MFX pre-processing error during encode.");
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
@@ -1205,7 +1205,6 @@ set_property (GstMfxEncoder * encoder, gint prop_id, const GValue * value)
       success = FALSE;
       break;
   }
-
   return success ? GST_MFX_ENCODER_STATUS_SUCCESS :
       GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
 }
@@ -1235,7 +1234,6 @@ gst_mfx_encoder_set_property (GstMfxEncoder * encoder, gint prop_id,
   if (default_value.g_type)
     g_value_unset (&default_value);
   return status;
-
   /* ERRORS */
 error_invalid_property:
   {
@@ -1253,7 +1251,6 @@ check_video_info (GstMfxEncoder * encoder, const GstVideoInfo * vip)
   if (vip->fps_n < 0 || vip->fps_d <= 0)
     goto error_invalid_framerate;
   return GST_MFX_ENCODER_STATUS_SUCCESS;
-
   /* ERRORS */
 error_invalid_resolution:
   {
