@@ -959,16 +959,10 @@ calculate_new_pts_and_dts (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 {
 
   if (!encoder->duration) {
-    mfxVideoParam params;
-    mfxFrameInfo *info;
-
-    memset (&params, 0, sizeof(mfxVideoParam));
-    MFXVideoENCODE_GetVideoParam(encoder->session, &params);
-    info = &params.mfx.FrameInfo;
+    mfxFrameInfo *info = &encoder->params.mfx.FrameInfo;
 
     encoder->duration =
         (info->FrameRateExtD / (gdouble)info->FrameRateExtN) * 1000000000;
-    encoder->current_dts = encoder->duration * params.mfx.NumRefFrame;
   }
   frame->duration = encoder->duration;
   frame->dts = encoder->current_dts;
