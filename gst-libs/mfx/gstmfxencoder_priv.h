@@ -131,8 +131,8 @@ typedef struct {
   GParamSpec *pspec;
 } GstMfxEncoderPropData;
 
-#define GST_MFX_ENCODER_PROPERTIES_APPEND(props, id, pspec) do {    	\
-  props = gst_mfx_encoder_properties_append (props, id, pspec);     	\
+#define GST_MFX_ENCODER_PROPERTIES_APPEND(props, id, pspec) do {      \
+  props = gst_mfx_encoder_properties_append (props, id, pspec);       \
   if (!props)                                                         \
     return NULL;                                                      \
 } while (0)
@@ -219,13 +219,13 @@ struct _GstMfxEncoderClassData
 
 #define GST_MFX_ENCODER_DEFINE_CLASS_DATA(CODEC)                      \
   GST_MFX_TYPE_DEFINE_ENUM_SUBSET_FROM_MASK(                          \
-  G_PASTE (GstMfxRateControl, CODEC),                             		\
-  G_PASTE (gst_mfx_rate_control_, CODEC),                         		\
-  GST_MFX_TYPE_RATE_CONTROL, SUPPORTED_RATECONTROLS);             		\
+  G_PASTE (GstMfxRateControl, CODEC),                                 \
+  G_PASTE (gst_mfx_rate_control_, CODEC),                             \
+  GST_MFX_TYPE_RATE_CONTROL, SUPPORTED_RATECONTROLS);                 \
   \
   static const GstMfxEncoderClassData g_class_data = {                \
   .rate_control_get_type =                                            \
-  G_PASTE (G_PASTE (gst_mfx_rate_control_, CODEC), _get_type),  			\
+  G_PASTE (G_PASTE (gst_mfx_rate_control_, CODEC), _get_type),        \
   .default_rate_control = DEFAULT_RATECONTROL,                        \
   .rate_control_mask = SUPPORTED_RATECONTROLS,                        \
 }
@@ -256,15 +256,15 @@ struct _GstMfxEncoderClass
 
 #define GST_MFX_ENCODER_CLASS_INIT_BASE(CODEC)                \
   .parent_class = {                                           \
-  .size = sizeof (G_PASTE (GstMfxEncoder, CODEC)),          	\
-  .finalize = (GDestroyNotify) gst_mfx_encoder_finalize     	\
+  .size = sizeof (G_PASTE (GstMfxEncoder, CODEC)),            \
+  .finalize = (GDestroyNotify) gst_mfx_encoder_finalize       \
 }
 
 #define GST_MFX_ENCODER_CLASS_INIT(CODEC, codec)              \
   GST_MFX_ENCODER_CLASS_INIT_BASE (CODEC),                    \
   .class_data = &g_class_data,                                \
-  GST_MFX_ENCODER_CLASS_HOOK (codec, init),                 	\
-  GST_MFX_ENCODER_CLASS_HOOK (codec, finalize),             	\
+  GST_MFX_ENCODER_CLASS_HOOK (codec, init),                   \
+  GST_MFX_ENCODER_CLASS_HOOK (codec, finalize),               \
   GST_MFX_ENCODER_CLASS_HOOK (codec, reconfigure),            \
   GST_MFX_ENCODER_CLASS_HOOK (codec, get_default_properties)
 
