@@ -147,9 +147,9 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass);
 struct _GstMfxEncoder
 {
   /*< private >*/
-  GstMfxMiniObject    		parent_instance;
+  GstMfxMiniObject        parent_instance;
 
-  GPtrArray         		 *properties;
+  GPtrArray              *properties;
   mfxU16                  profile;
 
   GstMfxTaskAggregator   *aggregator;
@@ -164,37 +164,40 @@ struct _GstMfxEncoder
   mfxFrameInfo            frame_info;
   mfxBitstream            bs;
   mfxU32                  codec;
-  gchar           			 *plugin_uid;
-  GstVideoInfo      			info;
+  gchar                  *plugin_uid;
+  GstVideoInfo            info;
+
+  GstClockTime            current_pts;
+  GstClockTime            duration;
 
   /* Encoder params */
-  GstMfxEncoderPreset    	preset;
-  GstMfxRateControl    		rc_method;
+  GstMfxEncoderPreset     preset;
+  GstMfxRateControl       rc_method;
   guint                   global_quality;
-  mfxU16          				bitrate;
-  mfxU16          				async_depth;
-  mfxU16          				la_depth;
-  mfxU16          				idr_interval;
-  mfxU16          				gop_size;
-  gint          					gop_refdist;
-  mfxU16          				num_refs;
-  mfxU16          				num_slices;
-  mfxU16          				qpi_offset;
-  mfxU16          				qpp_offset;
-  mfxU16          				qpb_offset;
+  mfxU16                  bitrate;
+  mfxU16                  async_depth;
+  mfxU16                  la_depth;
+  mfxU16                  gop_size;
+  gint                    gop_refdist;
+  gint                    idr_interval;
+  mfxU16                  num_refs;
+  mfxU16                  num_slices;
+  mfxU16                  qpi_offset;
+  mfxU16                  qpp_offset;
+  mfxU16                  qpb_offset;
   mfxU16                  avbr_accuracy;
   mfxU16                  avbr_convergence;
   mfxU16                  jpeg_quality;
 
-  mfxExtCodingOption    	extco;
-  mfxExtCodingOption2    	extco2;
+  mfxExtCodingOption      extco;
+  mfxExtCodingOption2     extco2;
   mfxExtHEVCParam         exthevc;
-  mfxExtBuffer       		 *extparam_internal[3];
-  int            					nb_extparam_internal;
+  mfxExtBuffer           *extparam_internal[3];
+  int                     nb_extparam_internal;
 
 	/* H264 specific coding options */
-	gboolean        				use_cabac;
-  gint                    max_slice_size;
+	gboolean                use_cabac;
+	gint                    max_slice_size;
 
   GstMfxOption            mbbrc;
   GstMfxOption            extbrc;
@@ -202,7 +205,7 @@ struct _GstMfxEncoder
   GstMfxOption            adaptive_i;
   GstMfxOption            adaptive_b;
 
-  mfxU16          				look_ahead_downsampling;
+  mfxU16                  look_ahead_downsampling;
   mfxU16                  trellis;
 };
 
