@@ -167,7 +167,7 @@ struct _GstMfxEncoder
   gchar                  *plugin_uid;
   GstVideoInfo            info;
 
-  GstClockTime            current_pts;
+  GstClockTime            current_dts;
   GstClockTime            duration;
 
   /* Encoder params */
@@ -195,9 +195,9 @@ struct _GstMfxEncoder
   mfxExtBuffer           *extparam_internal[3];
   int                     nb_extparam_internal;
 
-	/* H264 specific coding options */
-	gboolean                use_cabac;
-	gint                    max_slice_size;
+  /* H264 specific coding options */
+  gboolean                use_cabac;
+  gint                    max_slice_size;
 
   GstMfxOption            mbbrc;
   GstMfxOption            extbrc;
