@@ -121,9 +121,9 @@ gst_mfx_encoder_load_hevc_plugin (GstMfxEncoder * encoder)
   guint i, c;
 
   gchar *plugin_uids[] = {
-    "6fadc791a0c2eb479ab6dcd5ea9da347",
-    //"e5400a06c74d41f5b12d430bbaa23d0b",
-    "2fca99749fdb49aeb121a5b63ef568f7",
+    "6fadc791a0c2eb479ab6dcd5ea9da347",     /* HW encoder */
+    //"e5400a06c74d41f5b12d430bbaa23d0b",   /* GPU-accelerated encoder */
+    "2fca99749fdb49aeb121a5b63ef568f7",     /* SW decoder */
     NULL
   };
   for (i = 0; plugin_uids[i]; i++) {

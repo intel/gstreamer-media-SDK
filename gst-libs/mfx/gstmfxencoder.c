@@ -151,10 +151,10 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_IDR_INTERVAL,
-      g_param_spec_uint ("idr-interval",
+      g_param_spec_int ("idr-interval",
           "IDR interval",
           "Distance (in I-frames) between IDR frames",
-          0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          -1, G_MAXINT, -1, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
  /**
   * GstMfxEncoder:gop-size
@@ -822,7 +822,15 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 
     encoder->params.mfx.TargetUsage = encoder->preset;
     encoder->params.mfx.RateControlMethod = encoder->rc_method;
-    encoder->params.mfx.IdrInterval = encoder->idr_interval;
+    if (encoder->idr_interval < 0) {
+      if (MFX_CODEC_HEVC == encoder->codec)
+        encoder->params.mfx.IdrInterval = 1;
+      else
+        encoder->params.mfx.IdrInterval = 0;
+    }
+    else {
+      encoder->params.mfx.IdrInterval = encoder->idr_interval;
+    }
     encoder->params.mfx.NumRefFrame = encoder->num_refs;
     encoder->params.mfx.GopPicSize = encoder->gop_size;
     encoder->params.mfx.NumSlice = encoder->num_slices;
@@ -947,6 +955,29 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
+static void
+calculate_new_pts_and_dts (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
+{
+
+  if (!encoder->duration) {
+    mfxVideoParam params;
+    mfxFrameInfo *info;
+
+    memset (&params, 0, sizeof(mfxVideoParam));
+    MFXVideoENCODE_GetVideoParam(encoder->session, &params);
+    info = &params.mfx.FrameInfo;
+
+    encoder->duration =
+        (info->FrameRateExtD / (gdouble)info->FrameRateExtN) * 1000000000;
+    encoder->current_pts = encoder->duration * params.mfx.NumRefFrame;
+  }
+  frame->duration = encoder->duration;
+  frame->dts = encoder->current_pts;
+  frame->pts = frame->dts -
+    ((encoder->bs.DecodeTimeStamp / (gdouble) 90000) * 1000000000);
+  encoder->current_pts += encoder->duration;
+}
+
 GstMfxEncoderStatus
 gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 {
@@ -1005,13 +1036,16 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
           encoder->bs.Data, encoder->bs.MaxLength,
           encoder->bs.DataOffset, encoder->bs.DataLength, NULL, NULL);
 
-    if (encoder->bs.FrameType & MFX_FRAMETYPE_IDR)
-      GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (frame);
-    else
-      GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (frame);
+    calculate_new_pts_and_dts (encoder, frame);
 
     encoder->bs.DataLength = 0;
   }
+
+  if (encoder->bs.FrameType & MFX_FRAMETYPE_IDR
+      || encoder->bs.FrameType & MFX_FRAMETYPE_xIDR)
+    GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (frame);
+  else
+    GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (frame);
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
@@ -1054,13 +1088,16 @@ gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
           encoder->bs.Data, encoder->bs.MaxLength,
           encoder->bs.DataOffset, encoder->bs.DataLength, NULL, NULL);
 
-    if (encoder->bs.FrameType & MFX_FRAMETYPE_IDR)
-      GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (*frame);
-    else
-      GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (*frame);
+    calculate_new_pts_and_dts (encoder, *frame);
 
     encoder->bs.DataLength = 0;
   }
+
+  if (encoder->bs.FrameType & MFX_FRAMETYPE_IDR
+      || encoder->bs.FrameType & MFX_FRAMETYPE_xIDR)
+    GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (*frame);
+  else
+    GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (*frame);
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
@@ -1104,7 +1141,7 @@ set_property (GstMfxEncoder * encoder, gint prop_id, const GValue * value)
       encoder->bitrate = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_IDR_INTERVAL:
-      encoder->idr_interval = g_value_get_uint (value);
+      encoder->idr_interval = g_value_get_int (value);
       break;
     case GST_MFX_ENCODER_PROP_GOP_SIZE:
       encoder->gop_size = g_value_get_uint (value);
