@@ -183,33 +183,25 @@ EGL_OBJECT_DEFINE_CLASS(EglWindow, egl_window);
 static GMutex gl_vtables_lock;
 static EglVTable *gl_vtables[4];
 
-#if (USE_GLES_VERSION_MASK & (1U << 0))
 static const gchar *gl_library_names[] = {
   "libGL.la",
   "libGL.so.1",
   NULL
 };
-#endif
 
-#if (USE_GLES_VERSION_MASK & (1U << 2))
 static const gchar *gles2_library_names[] = {
   "libGLESv2.la",
   "libGLESv2.so.2",
   NULL
 };
-#endif
 
 static const gchar **gl_library_names_group[] = {
-#if (USE_GLES_VERSION_MASK & (1U << 0))
   gl_library_names,
-#endif
   NULL
 };
 
 static const gchar **gles2_library_names_group[] = {
-#if (USE_GLES_VERSION_MASK & (1U << 2))
   gles2_library_names,
-#endif
   NULL
 };
 

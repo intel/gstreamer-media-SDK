@@ -860,7 +860,6 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   mfxFrameAllocRequest *request;
   mfxFrameAllocRequest enc_request;
   gboolean memtype_is_system = FALSE;
-  mfxFrameInfo *info;
 
   /* Use input system memory with SW HEVC encoder or when linked directly
    * with SW HEVC decoder decoding HEVC main-10 streams */
