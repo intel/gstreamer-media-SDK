@@ -663,19 +663,16 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   /* Sequence header check for I-frames after MPEG2 video seeking */
   if (decoder->was_reset && MFX_CODEC_MPEG2 == decoder->params.mfx.CodecId) {
     if (GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)) {
-      decoder->bs.DataLength += minfo.size;
-      decoder->bs.MaxLength = decoder->bs.DataLength;
-      decoder->bitstream = g_byte_array_append (decoder->bitstream,
-          minfo.data, minfo.size);
-      decoder->bs.Data = decoder->bitstream->data;
+      decoder->bs.MaxLength = decoder->bs.DataLength = minfo.size;
+      decoder->bs.Data = minfo.data;
 
       sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
               &decoder->params);
       memset (&decoder->bs, 0, sizeof (mfxBitstream));
       if (MFX_ERR_MORE_DATA == sts) {
-        decoder->bitstream = g_byte_array_prepend (decoder->bitstream,
+        decoder->bitstream = g_byte_array_append (decoder->bitstream,
           decoder->codec_data->data, decoder->codec_data->len);
-        decoder->bs.DataLength += decoder->codec_data->len;
+        decoder->bs.DataLength = decoder->codec_data->len;
         decoder->bs.MaxLength = decoder->bs.DataLength;
         decoder->bs.Data = decoder->bitstream->data;
       }
@@ -686,7 +683,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     }
   }
 
-  if (minfo.size && MFX_ERR_NONE == sts) {
+  if (minfo.size) {
     decoder->bs.DataLength += minfo.size;
     if (decoder->bs.MaxLength <
         decoder->bs.DataLength + decoder->bitstream->len)
