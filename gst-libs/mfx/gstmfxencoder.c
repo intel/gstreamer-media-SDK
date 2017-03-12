@@ -387,8 +387,7 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     encoder->params.mfx.FrameInfo.CropY = 0;
     encoder->params.mfx.FrameInfo.CropW = encoder->info.width;
     encoder->params.mfx.FrameInfo.CropH = encoder->info.height;
-    encoder->params.mfx.FrameInfo.FrameRateExtN =
-        encoder->info.fps_n ? encoder->info.fps_n : 30;
+    encoder->params.mfx.FrameInfo.FrameRateExtN = encoder->info.fps_n;
     encoder->params.mfx.FrameInfo.FrameRateExtD = encoder->info.fps_d;
     encoder->params.mfx.FrameInfo.AspectRatioW = encoder->info.par_n;
     encoder->params.mfx.FrameInfo.AspectRatioH = encoder->info.par_d;
@@ -489,6 +488,12 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   encoder->async_depth = DEFAULT_ASYNC_DEPTH;
 
   encoder->info = *info;
+  if (!encoder->info.fps_n)
+    encoder->info.fps_n = 30;
+  encoder->duration =
+      (encoder->info.fps_d / (gdouble)encoder->info.fps_n) * 1000000000;
+  encoder->current_pts = GST_CLOCK_TIME_NONE;
+
   encoder->memtype_is_system = memtype_is_system;
 
   return TRUE;
@@ -948,10 +953,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
-  info = &encoder->params.mfx.FrameInfo;
-  encoder->duration =
-      (info->FrameRateExtD / (gdouble)info->FrameRateExtN) * 1000000000;
-  encoder->current_pts = encoder->duration * 16;
+  memset (&encoder->params, 0, sizeof(mfxVideoParam));
+  MFXVideoENCODE_GetVideoParam (encoder->session, &encoder->params);
 
   GST_INFO ("Initialized MFX encoder task using input %s memory surfaces",
     memtype_is_system ? "system" : "video");
@@ -989,6 +992,12 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
   }
 
   insurf = gst_mfx_surface_get_frame_surface (surface);
+  if (!GST_CLOCK_TIME_IS_VALID(encoder->current_pts)) {
+    if (GST_CLOCK_TIME_IS_VALID (frame->pts))
+      encoder->current_pts = frame->pts;
+    else
+      encoder->current_pts = encoder->duration * encoder->params.mfx.NumRefFrame;
+  }
   insurf->Data.TimeStamp = (encoder->current_pts / (gdouble)1000000000) * 90000;
   encoder->current_pts += encoder->duration;
 
