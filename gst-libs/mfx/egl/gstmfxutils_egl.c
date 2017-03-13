@@ -357,9 +357,9 @@ egl_vtable_load_gl_symbols(EglVTable * vtable, EGLDisplay display)
 
   vtable->glEGLImageTargetTexture2DOES =
         (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
-    if (!vtable->glEGLImageTargetTexture2DOES) {
-        return FALSE;
-    }
+  if (!vtable->glEGLImageTargetTexture2DOES) {
+    return FALSE;
+  }
 
   vtable->num_gl_symbols = n;
   return TRUE;
@@ -712,9 +712,6 @@ egl_config_new(EglDisplay * display, guint gles_version, GstVideoFormat format)
   *attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_B);
   *attrib++ = EGL_ALPHA_SIZE;
   *attrib++ = GST_VIDEO_FORMAT_INFO_DEPTH(finfo, GST_VIDEO_COMP_A);
-  //*attrib++ = 0;
-  //*attrib++ = EGL_DEPTH_SIZE;
-  //*attrib++ = 24;
   *attrib++ = EGL_RENDERABLE_TYPE;
   *attrib++ = vinfo->gl_api_bit;
   *attrib++ = EGL_NONE;
@@ -1275,7 +1272,7 @@ egl_window_finalize(EglWindow * window)
 {
   if (window->context && window->base.handle.p)
     eglDestroySurface(window->context->display->base.handle.p,
-    window->base.handle.p);
+      window->base.handle.p);
 
   egl_object_replace(&window->surface, NULL);
   egl_object_replace(&window->context, NULL);
@@ -1331,20 +1328,22 @@ egl_create_texture_from_data(EglContext * ctx, guint target, guint format,
   guint width, guint height, gpointer data)
 {
   EglVTable *const vtable = egl_context_get_vtable(ctx, TRUE);
-  guint texture, bytes_per_component = 4;
+  guint texture;
 
   vtable->glGenTextures(1, &texture);
   vtable->glBindTexture(target, texture);
 
   if (width > 0 && height > 0)
     vtable->glTexImage2D(target, 0, GL_RGBA, width, height, 0,
-            format, GL_UNSIGNED_BYTE, data);
+      format, GL_UNSIGNED_BYTE, data);
 
   vtable->glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   vtable->glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   vtable->glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   vtable->glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  vtable->glPixelStorei(GL_UNPACK_ALIGNMENT, bytes_per_component);
+  vtable->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+  vtable->glBindTexture(target, 0);
 
   return texture;
 }
