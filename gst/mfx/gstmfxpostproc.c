@@ -167,12 +167,14 @@ gst_mfx_frc_algorithm_get_type (void)
         "FRC with preserved original timestamps.", "frc-preserve-ts"},
     {GST_MFX_FRC_DISTRIBUTED_TIMESTAMP,
         "FRC with distributed timestamps.", "frc-distributed-ts"},
-    /*{ GST_MFX_FRC_FRAME_INTERPOLATION,
+#if 0
+    { GST_MFX_FRC_FRAME_INTERPOLATION,
        "Frame interpolation FRC.", "fi"},
        { GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
        "Frame dropping/repetition and frame interpolation FRC with preserved original timestamps.", "fi-preserve-ts"},
        { GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
-       "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"}, */
+       "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"},
+#endif
     {0, NULL, NULL},
   };
   if (!alg)
@@ -260,11 +262,11 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     }
   } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
     if (new_val < 500 )
-        new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
+      new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
     else if (new_val > 500 )
-        new_val = ((10.0 - 1.0)/(1000.0 - 500.0) * (new_val-500.0))+1.0;
+      new_val = ((10.0 - 1.0)/(1000.0 - 500.0) * (new_val-500.0))+1.0;
     else
-        new_val = 1.0;
+      new_val = 1.0;
 
     if (vpp->saturation != new_val) {
       vpp->saturation = new_val;
@@ -281,11 +283,11 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
     }
   } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
     if (new_val < 500 )
-        new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
+      new_val = ((1 - 0.0)/(500.0 - 0.0) * (new_val));
     else if (new_val > 500 )
-        new_val = ((10.0 - 1.0)/(1000.0 - 500.0) * (new_val-500.0))+1.0;
+      new_val = ((10.0 - 1.0)/(1000.0 - 500.0) * (new_val-500.0))+1.0;
     else
-        new_val = 1.0;
+      new_val = 1.0;
 
     if (vpp->contrast != new_val) {
       vpp->contrast = new_val;
@@ -310,22 +312,20 @@ gst_mfxpostproc_color_balance_get_value (GstColorBalance *cb,
     value = vpp->hue * 10;
   } else if (g_ascii_strcasecmp (channel->label, "SATURATION") == 0) {
     if (vpp->saturation < 1.0)
-        value = vpp->saturation * 500.0;
+      value = vpp->saturation * 500.0;
     else if (vpp->saturation > 1.0)
-	value = (vpp->saturation-1.0) *
-            ((1000.0 - 500.0) / (10 - 1)) + 500;
+	    value = (vpp->saturation-1.0) * ((1000.0 - 500.0) / (10 - 1)) + 500;
     else
-        value = vpp->saturation;
+      value = vpp->saturation;
   } else if (g_ascii_strcasecmp (channel->label, "BRIGHTNESS") == 0) {
-    value = vpp->brightness * 10;
+      value = vpp->brightness * 10;
   } else if (g_ascii_strcasecmp (channel->label, "CONTRAST") == 0) {
     if (vpp->contrast < 1.0)
-        value = vpp->contrast * 500.0;
+      value = vpp->contrast * 500.0;
     else if (vpp->contrast > 1.0)
-	value = (vpp->contrast-1.0) *
-            ((1000.0 - 500.0) / (10 - 1)) + 500;
+	    value = (vpp->contrast-1.0) * ((1000.0 - 500.0) / (10 - 1)) + 500;
     else
-        value = vpp->contrast;
+      value = vpp->contrast;
   } else {
     g_warning ("got an unknown channel %s", channel->label);
   }
@@ -416,14 +416,10 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
         gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
 
     if (task) {
-      if (sinkpad_has_raw_caps || srcpad_has_raw_caps) {
-        /* This ensures that the prior peer MFX task outputs to system memory,
-         * since VPP only works correctly with a sys-in / sys-out configuration */
+      if (sinkpad_has_raw_caps || srcpad_has_raw_caps)
         plugin->sinkpad_caps_is_raw = TRUE;
-      }
-      else {
+      else
         plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
-      }
       gst_mfx_task_unref (task);
     }
   }
@@ -788,7 +784,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   /* Update width and height from the caps */
   if (GST_VIDEO_INFO_HEIGHT (&peer_vi) != 1 &&
       GST_VIDEO_INFO_WIDTH (&peer_vi) != 1)
-      find_best_size(vpp, &peer_vi, &width, &height);
+    find_best_size(vpp, &peer_vi, &width, &height);
 
   if (vpp->format != DEFAULT_FORMAT)
     out_format = vpp->format;
@@ -810,7 +806,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-      &out_format);
+        &out_format);
   gst_video_info_change_format (&vi, out_format, width, height);
 
   out_caps = gst_video_info_to_caps (&vi);
@@ -933,7 +929,6 @@ gst_mfxpostproc_set_caps (GstBaseTransform * trans, GstCaps * caps,
     if (!gst_mfxpostproc_create (vpp))
       return FALSE;
   }
-
   return TRUE;
 }
 
@@ -954,7 +949,7 @@ gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
 
   return
       GST_BASE_TRANSFORM_CLASS (gst_mfxpostproc_parent_class)->query (trans,
-      direction, query);
+        direction, query);
 }
 
 static gboolean

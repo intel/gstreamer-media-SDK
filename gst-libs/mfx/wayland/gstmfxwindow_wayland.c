@@ -243,12 +243,12 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   vaapi_image = gst_mfx_prime_buffer_proxy_get_vaapi_image (buffer_proxy);
   num_planes = vaapi_image_get_plane_count (vaapi_image);
 
-  if ((dst_rect->height != src_rect->height) ||
-          (dst_rect->width != src_rect->width)) {
-      if (priv->viewport) {
-        wl_viewport_set_destination (priv->viewport,
-            dst_rect->width, dst_rect->height);
-      }
+  if ((dst_rect->height != src_rect->height)
+      || (dst_rect->width != src_rect->width)) {
+    if (priv->viewport) {
+      wl_viewport_set_destination (priv->viewport,
+          dst_rect->width, dst_rect->height);
+    }
   }
 
   for (i = 0; i < num_planes; i++) {
@@ -256,11 +256,10 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     pitches[i] = vaapi_image_get_pitch (vaapi_image, i);
   }
 
-  if (GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format (vaapi_image)) {
+  if (GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format (vaapi_image))
     drm_format = WL_DRM_FORMAT_NV12;
-  } else if (GST_VIDEO_FORMAT_BGRA == vaapi_image_get_format (vaapi_image)) {
+  else if (GST_VIDEO_FORMAT_BGRA == vaapi_image_get_format (vaapi_image))
     drm_format = WL_DRM_FORMAT_ARGB8888;
-  }
 
   if (!drm_format)
     goto error;

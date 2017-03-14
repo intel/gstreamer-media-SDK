@@ -251,9 +251,8 @@ gst_mfxenc_get_caps_impl (GstVideoEncoder * venc)
 
   if (plugin->sinkpad_caps)
     caps = gst_caps_ref (plugin->sinkpad_caps);
-  else {
+  else
     caps = gst_pad_get_pad_template_caps (plugin->sinkpad);
-  }
   return caps;
 }
 

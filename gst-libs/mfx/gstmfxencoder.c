@@ -567,10 +567,10 @@ gst_mfx_encoder_new (const GstMfxEncoderClass * klass,
 
   encoder = gst_mfx_mini_object_new0 (GST_MFX_MINI_OBJECT_CLASS (klass));
   if (!encoder)
-     return NULL;
+    return NULL;
 
   if (!gst_mfx_encoder_init (encoder, aggregator, info, memtype_is_system))
-     goto error;
+    goto error;
 
   return encoder;
 error:
@@ -758,9 +758,9 @@ set_extended_coding_options (GstMfxEncoder * encoder)
       break;
   }
 
-  if ((!((encoder->info.width & 15) ^ 8) ||
-          !((encoder->info.height & 15) ^ 8)) &&
-      (encoder->codec == MFX_CODEC_HEVC)) {
+  if ((!((encoder->info.width & 15) ^ 8)
+        || !((encoder->info.height & 15) ^ 8))
+      && (encoder->codec == MFX_CODEC_HEVC)) {
     encoder->exthevc.Header.BufferId = MFX_EXTBUFF_HEVC_PARAM;
     encoder->exthevc.Header.BufferSz = sizeof (encoder->exthevc);
     encoder->exthevc.PicWidthInLumaSamples = encoder->info.width;
@@ -872,7 +872,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   gst_mfx_encoder_set_encoding_params (encoder);
 
   sts = MFXVideoENCODE_Query (encoder->session, &encoder->params,
-      &encoder->params);
+          &encoder->params);
   if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
     GST_WARNING ("Partial acceleration %d", sts);
     memtype_is_system = TRUE;
@@ -891,7 +891,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   }
 
   sts = MFXVideoENCODE_QueryIOSurf (encoder->session, &encoder->params,
-        &enc_request);
+          &enc_request);
   if (sts < 0) {
     GST_ERROR ("Unable to query encode allocation request %d", sts);
     return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
@@ -1002,7 +1002,7 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
   do {
     sts = MFXVideoENCODE_EncodeFrameAsync (encoder->session,
-        NULL, insurf, &encoder->bs, &syncp);
+            NULL, insurf, &encoder->bs, &syncp);
 
     if (MFX_WRN_DEVICE_BUSY == sts)
       g_usleep (500);
@@ -1019,9 +1019,9 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
   else if (MFX_ERR_MORE_DATA == sts)
     return GST_MFX_ENCODER_STATUS_MORE_DATA;
 
-  if (sts != MFX_ERR_NONE &&
-      sts != MFX_ERR_MORE_BITSTREAM &&
-      sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
+  if (sts != MFX_ERR_NONE
+      && sts != MFX_ERR_MORE_BITSTREAM
+      && sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
     GST_ERROR ("Error during MFX encoding.");
     return GST_MFX_ENCODER_STATUS_ERROR_UNKNOWN;
   }
@@ -1058,7 +1058,7 @@ gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
 
   do {
     sts = MFXVideoENCODE_EncodeFrameAsync (encoder->session,
-        NULL, NULL, &encoder->bs, &syncp);
+            NULL, NULL, &encoder->bs, &syncp);
 
     if (MFX_WRN_DEVICE_BUSY == sts)
       g_usleep (500);

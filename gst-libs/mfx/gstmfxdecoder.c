@@ -169,11 +169,11 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
   g_queue_clear (&decoder->pending_frames);
   g_queue_clear (&decoder->decoded_frames);
 
-  if ((decoder->params.mfx.CodecId == MFX_CODEC_VP8) ||
+  if ((decoder->params.mfx.CodecId == MFX_CODEC_VP8)
 #ifdef USE_VP9_DECODER
-      (decoder->params.mfx.CodecId == MFX_CODEC_VP9) ||
+      || (decoder->params.mfx.CodecId == MFX_CODEC_VP9)
 #endif
-      (decoder->params.mfx.CodecId == MFX_CODEC_HEVC))
+      || (decoder->params.mfx.CodecId == MFX_CODEC_HEVC))
     MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
 
   close_decoder (decoder);
@@ -296,7 +296,7 @@ task_init (GstMfxDecoder * decoder)
   }
 
   sts = MFXVideoDECODE_QueryIOSurf (decoder->session, &decoder->params,
-      &decoder->request);
+          &decoder->request);
   if (sts < 0) {
     GST_ERROR ("Unable to query decode allocation request %d", sts);
     goto error_query_request;
@@ -720,8 +720,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     goto end;
   }
 
-  if (sts != MFX_ERR_NONE &&
-      sts != MFX_ERR_MORE_DATA) {
+  if (sts != MFX_ERR_NONE
+      && sts != MFX_ERR_MORE_DATA) {
     GST_ERROR ("Status %d : Error during MFX decoding", sts);
     ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
     goto end;
@@ -779,8 +779,8 @@ update:
      * MFX session. This re-initialization can only occur if no other peer
      * MFX task from a downstream element marked the decoder task with
      * another task type at this point. */
-    if ((decoder->enable_csc || decoder->enable_deinterlace) &&
-        (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER)) {
+    if ((decoder->enable_csc || decoder->enable_deinterlace)
+        && (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER)) {
       if (!gst_mfx_decoder_reinit (decoder, &outsurf->Info))
         ret = GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
       else
