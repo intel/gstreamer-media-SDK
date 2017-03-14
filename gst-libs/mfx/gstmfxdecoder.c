@@ -824,8 +824,8 @@ update:
 
 end:
   gst_buffer_unmap (frame->input_buffer, &minfo);
-  if (decoder->can_double_deinterlace)
-    gst_buffer_unref (frame->input_buffer);
+  /* Clear input bitstream after copying  it to internal decoder buffer */
+  gst_buffer_replace (&frame->input_buffer, NULL);
 
   return ret;
 }
