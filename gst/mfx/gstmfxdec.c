@@ -205,6 +205,8 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
     return FALSE;
 
   vi = &state->info;
+  if (!vi->fps_n)
+    vi->fps_n = 30;
 
   state->caps = gst_video_info_to_caps (vi);
   if (features)

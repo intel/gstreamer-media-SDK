@@ -255,7 +255,7 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   frame_info->CropY = 0;
   frame_info->CropW = decoder->info.width;
   frame_info->CropH = decoder->info.height;
-  frame_info->FrameRateExtN = decoder->info.fps_n ? decoder->info.fps_n : 30;
+  frame_info->FrameRateExtN = decoder->info.fps_n;
   frame_info->FrameRateExtD = decoder->info.fps_d;
   frame_info->AspectRatioW = decoder->info.par_n;
   frame_info->AspectRatioH = decoder->info.par_d;
@@ -338,11 +338,10 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
     GstVideoInfo * info, mfxU16 async_depth, gboolean live_mode)
 {
   decoder->profile = profile;
+  if (!info->fps_n)
+    info->fps_n = 30;
   decoder->info = *info;
-  if (!decoder->info.fps_n)
-    decoder->info.fps_n = 30;
-  decoder->duration =
-      (decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
+  decoder->duration = (info->fps_d / (gdouble)info->fps_n) * 1000000000;
 
   decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
   decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
