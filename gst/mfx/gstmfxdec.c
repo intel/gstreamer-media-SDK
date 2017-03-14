@@ -38,7 +38,7 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_MFXDEC_PARAMS_QDATA \
   g_quark_from_static_string("mfxdec-params")
 
-#define DEFAULT_ASYNC_DEPTH 16
+#define DEFAULT_ASYNC_DEPTH 4
 
 /* Default templates */
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
@@ -297,12 +297,20 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
   GstMfxProfile profile = gst_mfx_profile_from_caps (caps);
   GstVideoInfo info;
+  GstObject *parent;
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
     return FALSE;
 
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
+
+  /* Increase async depth considerably when using decodebin to avoid
+   * jerky video playback resulting from threading issues */
+  parent = gst_object_get_parent(mfxdec);
+  if (parent && !GST_IS_PIPELINE (GST_ELEMENT(parent)))
+    mfxdec->async_depth = 16;
+  gst_object_replace (&parent, NULL);
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
       profile, &info, mfxdec->async_depth, mfxdec->live_mode);
