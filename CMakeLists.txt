@@ -73,11 +73,7 @@ include_directories(
     parsers)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if(DEFINED $ENV{XDG_DATA_HOME})
-        set (CMAKE_INSTALL_PREFIX "$ENV{XDG_DATA_HOME}/gstreamer-1.0/plugins")
-    else()
-        set (CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local/share/gstreamer-1.0/plugins")
-    endif()
+    set (CMAKE_INSTALL_PREFIX "${GSTREAMER_LIBDIR}/gstreamer-1.0")
 endif()
 
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
