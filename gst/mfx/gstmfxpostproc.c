@@ -1191,7 +1191,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
       g_param_spec_uint ("width",
           "Width",
           "Forced output width",
-          0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          0, 8192, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:height
@@ -1206,7 +1206,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
       g_param_spec_uint ("height",
           "Height",
           "Forced output height",
-          0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          0, 8192, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:force-aspect-ratio

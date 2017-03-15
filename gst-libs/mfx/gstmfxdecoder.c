@@ -618,8 +618,12 @@ queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface,
   else
     out_frame = new_frame (decoder);
 
-  if (!GST_CLOCK_TIME_IS_VALID(out_frame->pts))
+  /* This is mainly for rendering demuxed videos with no PTS and duration */
+  if (!GST_CLOCK_TIME_IS_VALID(out_frame->pts)
+      && !GST_CLOCK_TIME_IS_VALID(out_frame->duration)) {
     out_frame->pts = decoder->current_pts + decoder->pts_offset;
+    out_frame->duration = decoder->duration;
+  }
   decoder->current_pts += decoder->duration;
 
   gst_video_codec_frame_set_user_data(out_frame,
