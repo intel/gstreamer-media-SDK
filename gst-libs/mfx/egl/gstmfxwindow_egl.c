@@ -115,7 +115,7 @@ static gboolean
 ensure_texture (GstMfxWindowEGL * window, guint width, guint height)
 {
   GstMfxTextureEGL *texture;
-  GstMfxDisplay *display = GST_MFX_WINDOW( window)->display;
+  GstMfxDisplay *display = GST_MFX_WINDOW (window)->display;
 
   texture = gst_mfx_texture_egl_new (display,
       GL_TEXTURE_2D, GL_RGBA, width, height);

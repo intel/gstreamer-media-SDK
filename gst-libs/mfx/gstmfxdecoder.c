@@ -339,7 +339,10 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
 {
   decoder->profile = profile;
   decoder->info = *info;
-  decoder->duration = (info->fps_d / (gdouble)info->fps_n) * 1000000000;
+  if (!decoder->info.fps_n)
+    decoder->info.fps_n = 30;
+  decoder->duration =
+      (decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
 
   decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
   decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
@@ -602,7 +605,6 @@ new_frame (GstMfxDecoder * decoder)
 
   frame->duration = decoder->duration;
   frame->pts = decoder->current_pts + decoder->pts_offset;
-  decoder->current_pts += decoder->duration;
 
   return frame;
 }
@@ -615,6 +617,10 @@ queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface,
     out_frame = g_queue_pop_tail (&decoder->pending_frames);
   else
     out_frame = new_frame (decoder);
+
+  if (!GST_CLOCK_TIME_IS_VALID(out_frame->pts))
+    out_frame->pts = decoder->current_pts + decoder->pts_offset;
+  decoder->current_pts += decoder->duration;
 
   gst_video_codec_frame_set_user_data(out_frame,
       gst_mfx_surface_ref (surface), gst_mfx_surface_unref);

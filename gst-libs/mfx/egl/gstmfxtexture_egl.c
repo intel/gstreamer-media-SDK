@@ -79,7 +79,7 @@ do_bind_texture_unlocked (GstMfxTextureEGL * texture,
     if (!buffer_proxy)
       return FALSE;
 
-    image = gst_mfx_prime_buffer_proxy_get_vaapi_image(buffer_proxy);
+    image = gst_mfx_prime_buffer_proxy_get_vaapi_image (buffer_proxy);
 
     texture->width = vaapi_image_get_width (image);
     texture->height = vaapi_image_get_height (image);

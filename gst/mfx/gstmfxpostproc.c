@@ -91,7 +91,8 @@ enum
   PROP_BRIGHTNESS,
   PROP_CONTRAST,
   PROP_ROTATION,
-  PROP_FRAMERATE_CONVERSION,
+  PROP_FRAMERATE,
+  PROP_FRC_ALGORITHM,
 };
 
 #define DEFAULT_ASYNC_DEPTH             0
@@ -789,14 +790,12 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   if (vpp->format != DEFAULT_FORMAT)
     out_format = vpp->format;
 
-  if (fps_n != GST_VIDEO_INFO_FPS_N (&vpp->sinkpad_info) && 0 != fps_n) {
-    vpp->fps_n = fps_n;
-    vpp->fps_d = fps_d;
-    GST_VIDEO_INFO_FPS_N (&vi) = fps_n;
-    GST_VIDEO_INFO_FPS_D (&vi) = fps_d;
+  if (vpp->frame_rate) {
+    gst_util_double_to_fraction(vpp->frame_rate, &vpp->fps_n, &vpp->fps_d);
+    GST_VIDEO_INFO_FPS_N (&vi) = vpp->fps_n;
+    GST_VIDEO_INFO_FPS_D (&vi) = vpp->fps_d;
     vpp->field_duration = gst_util_uint64_scale (GST_SECOND,
         vpp->fps_d, vpp->fps_n);
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
     if (DEFAULT_FRC_ALG == vpp->alg)
       vpp->alg = GST_MFX_FRC_PRESERVE_TIMESTAMP;
   }
@@ -1043,9 +1042,12 @@ gst_mfxpostproc_set_property (GObject * object,
       vpp->angle = g_value_get_enum (value);
       vpp->flags |= GST_MFX_POSTPROC_FLAG_ROTATION;
       break;
-    case PROP_FRAMERATE_CONVERSION:
-      vpp->alg = g_value_get_enum (value);
+    case PROP_FRAMERATE:
+      vpp->frame_rate = g_value_get_double (value);
       vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+      break;
+    case PROP_FRC_ALGORITHM:
+      vpp->alg = g_value_get_enum (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1100,7 +1102,10 @@ gst_mfxpostproc_get_property (GObject * object,
     case PROP_ROTATION:
       g_value_set_enum (value, vpp->angle);
       break;
-    case PROP_FRAMERATE_CONVERSION:
+    case PROP_FRAMERATE:
+      g_value_set_double (value, vpp->frame_rate);
+      break;
+    case PROP_FRC_ALGORITHM:
       g_value_set_enum (value, vpp->alg);
       break;
     default:
@@ -1157,7 +1162,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:deinterlace-mode:
+   * GstMfxPostproc:deinterlace-mode
    *
    * This selects whether the deinterlacing should always be applied
    * or if they should only be applied on content that has the
@@ -1174,7 +1179,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:width:
+   * GstMfxPostproc:width
    *
    * The forced output width in pixels. If set to zero, the width is
    * calculated from the height if aspect ration is preserved, or
@@ -1189,7 +1194,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:height:
+   * GstMfxPostproc:height
    *
    * The forced output height in pixels. If set to zero, the height is
    * calculated from the width if aspect ration is preserved, or
@@ -1204,7 +1209,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:force-aspect-ratio:
+   * GstMfxPostproc:force-aspect-ratio
    *
    * When enabled, scaling respects video aspect ratio; when disabled,
    * the video is distorted to fit the width and height properties.
@@ -1218,7 +1223,20 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:denoise:
+   * GstMfxPostproc:frame-rate
+   *
+   * The forced output frame rate specified as a floating-point value
+   */
+  g_object_class_install_property
+      (object_class,
+      PROP_FRAMERATE,
+      g_param_spec_double ("frame-rate",
+          "Frame rate",
+          "Forced output frame rate",
+          0.0, 300.0, 0.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstMfxPostproc:denoise
    *
    * The level of noise reduction to apply.
    */
@@ -1230,7 +1248,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:detail:
+   * GstMfxPostproc:detail
    *
    * The level of detail / edge enhancement to apply for positive values.
    */
@@ -1242,7 +1260,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:hue:
+   * GstMfxPostproc:hue
    *
    * The color hue, expressed as a float value. Range is -180.0 to
    * 180.0. Default value is 0.0 and represents no modification.
@@ -1256,7 +1274,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:saturation:
+   * GstMfxPostproc:saturation
    *
    * The color saturation, expressed as a float value. Range is 0.0 to
    * 10.0. Default value is 1.0 and represents no modification.
@@ -1270,7 +1288,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:brightness:
+   * GstMfxPostproc:brightness
    *
    * The color brightness, expressed as a float value. Range is -100.0
    * to 100.0. Default value is 0.0 and represents no modification.
@@ -1284,7 +1302,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:contrast:
+   * GstMfxPostproc:contrast
    *
    * The color contrast, expressed as a float value. Range is 0.0 to
    * 10.0. Default value is 1.0 and represents no modification.
@@ -1299,7 +1317,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
 
 #ifndef WITH_MSS_2016
   /**
-   * GstMfxPostproc:rotation:
+   * GstMfxPostproc:rotation
    *
    * The rotation angle  for the surface, expressed in GstMfxRotation.
    */
@@ -1313,12 +1331,12 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
 #endif
 
   /**
-   * GstMfxPostproc: framerate conversion:
+   * GstMfxPostproc: framerate conversion
    * The framerate conversion algorithm to convert framerate of the video,
    * expressed in GstMfxFrcAlgorithm.
    */
   g_object_class_install_property (object_class,
-      PROP_FRAMERATE_CONVERSION,
+      PROP_FRC_ALGORITHM,
       g_param_spec_enum ("frc-algorithm",
           "Algorithm",
           "The algorithm type",

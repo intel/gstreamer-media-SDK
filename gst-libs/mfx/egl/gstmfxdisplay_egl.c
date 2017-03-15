@@ -119,26 +119,26 @@ static gboolean
 gst_mfx_display_egl_bind_display(GstMfxDisplayEGL * display,
   const InitParams * params)
 {
-  GstMfxDisplay *native_display = NULL;
+  GstMfxDisplay *parent_display = NULL;
   EglDisplay *egl_display;
   const DisplayMap *m;
 
   for (m = g_display_map; m->type_str != NULL; m++) {
-    native_display = m->create_display(params->display_name);
+    parent_display = m->create_display(params->display_name);
 
-    if (native_display) {
+    if (parent_display) {
       GST_INFO("selected backend: %s", m->type_str);
       break;
     }
   }
 
-  if (!native_display)
+  if (!parent_display)
     goto error_unsupported_display_type;
 
-  gst_mfx_display_use_opengl(native_display);
+  gst_mfx_display_use_opengl (parent_display);
 
-  gst_mfx_display_replace(&display->display, native_display);
-  gst_mfx_display_unref(native_display);
+  gst_mfx_display_replace(&display->display, parent_display);
+  gst_mfx_display_unref(parent_display);
 
   egl_display = egl_display_new(GST_MFX_DISPLAY_HANDLE(display->display));
   if (!egl_display)
