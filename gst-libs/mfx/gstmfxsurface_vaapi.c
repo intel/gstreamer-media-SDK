@@ -185,7 +185,7 @@ gst_mfx_surface_vaapi_class(void)
 }
 
 GstMfxSurface *
-gst_mfx_surface_vaapi_new(GstMfxDisplay * display, GstVideoInfo * info)
+gst_mfx_surface_vaapi_new(GstMfxDisplay * display, const GstVideoInfo * info)
 {
   return
     gst_mfx_surface_new_internal(gst_mfx_surface_vaapi_class(),

@@ -119,7 +119,7 @@ gst_mfx_filter_set_frame_info (GstMfxFilter * filter, mfxFrameInfo * info)
 
 void
 gst_mfx_filter_set_frame_info_from_gst_video_info (GstMfxFilter * filter,
-    GstVideoInfo * info)
+    const GstVideoInfo * info)
 {
   g_return_if_fail (filter != NULL);
 

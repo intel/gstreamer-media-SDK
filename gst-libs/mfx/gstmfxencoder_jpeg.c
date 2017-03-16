@@ -92,7 +92,7 @@ gst_mfx_encoder_jpeg_class (void)
 
 GstMfxEncoder *
 gst_mfx_encoder_jpeg_new (GstMfxTaskAggregator * aggregator,
-    GstVideoInfo * info, gboolean mapped)
+    const GstVideoInfo * info, gboolean mapped)
 {
   return gst_mfx_encoder_new (gst_mfx_encoder_jpeg_class (),
       aggregator, info, mapped);

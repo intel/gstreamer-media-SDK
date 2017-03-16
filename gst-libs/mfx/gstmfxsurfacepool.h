@@ -31,7 +31,7 @@ G_BEGIN_DECLS
   ((GstMfxSurfacePool *)(obj))
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new (GstMfxDisplay * display, GstVideoInfo * info,
+gst_mfx_surface_pool_new (GstMfxDisplay * display, const GstVideoInfo * info,
     gboolean memtype_is_system);
 
 GstMfxSurfacePool *

@@ -272,7 +272,7 @@ gst_mfx_encoder_h264_class (void)
 
 GstMfxEncoder *
 gst_mfx_encoder_h264_new (GstMfxTaskAggregator * aggregator,
-    GstVideoInfo * info, gboolean mapped)
+    const GstVideoInfo * info, gboolean mapped)
 {
   return gst_mfx_encoder_new (gst_mfx_encoder_h264_class (),
       aggregator, info, mapped);

@@ -157,7 +157,7 @@ gst_mfx_surface_release_default (GstMfxSurface * surface)
 
 static void
 gst_mfx_surface_derive_mfx_frame_info(GstMfxSurface * surface,
-  GstVideoInfo * info)
+  const GstVideoInfo * info)
 {
   mfxFrameInfo *frame_info = &surface->surface.Info;
 
@@ -220,7 +220,7 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
 }
 
 static gboolean
-gst_mfx_surface_create(GstMfxSurface * surface, GstVideoInfo * info,
+gst_mfx_surface_create(GstMfxSurface * surface, const GstVideoInfo * info,
     GstMfxTask * task)
 {
   if (task) {
@@ -284,7 +284,7 @@ gst_mfx_surface_class(void)
 }
 
 GstMfxSurface *
-gst_mfx_surface_new (GstVideoInfo * info)
+gst_mfx_surface_new (const GstVideoInfo * info)
 {
   return gst_mfx_surface_new_internal(gst_mfx_surface_class(), NULL, info, NULL);
 }
@@ -305,7 +305,7 @@ gst_mfx_surface_new_from_pool(GstMfxSurfacePool * pool)
 
 GstMfxSurface *
 gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
-    GstMfxDisplay * display, GstVideoInfo * info, GstMfxTask * task)
+    GstMfxDisplay * display, const GstVideoInfo * info, GstMfxTask * task)
 {
   GstMfxSurface *surface;
 
