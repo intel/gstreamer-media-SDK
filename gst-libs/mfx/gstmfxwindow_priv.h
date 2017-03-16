@@ -48,8 +48,6 @@ typedef gboolean(*GstMfxWindowResizeFunc) (GstMfxWindow * window,
 typedef gboolean(*GstMfxWindowRenderFunc) (GstMfxWindow * window,
     GstMfxSurface * surface, const GstMfxRectangle * src_rect,
     const GstMfxRectangle * dst_rect);
-typedef gboolean(*GstMfxWindowSetUnblockFunc) (GstMfxWindow * window);
-typedef gboolean(*GstMfxWindowSetUnblockCancelFunc) (GstMfxWindow * window);
 
 #undef GST_MFX_WINDOW_ID
 #define GST_MFX_WINDOW_ID(window) \
@@ -95,9 +93,6 @@ struct _GstMfxWindow
  *   create the window
  * @get_colormap: virtual function to get the desired colormap used to
  *   create the window, or the currently allocated one
- * @unblock: virtual function to unblock a rendering surface operation
- * @unblock_cancel: virtual function to cancel the previous unblock
- *   request.
  *
  * Base class for system-dependent windows.
  */
@@ -115,8 +110,6 @@ struct _GstMfxWindowClass
   GstMfxWindowSetFullscreenFunc set_fullscreen;
   GstMfxWindowResizeFunc resize;
   GstMfxWindowRenderFunc render;
-  GstMfxWindowSetUnblockFunc unblock;
-  GstMfxWindowSetUnblockCancelFunc unblock_cancel;
 };
 
 void
