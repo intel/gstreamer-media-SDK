@@ -255,7 +255,7 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   frame_info->CropY = 0;
   frame_info->CropW = decoder->info.width;
   frame_info->CropH = decoder->info.height;
-  frame_info->FrameRateExtN = decoder->info.fps_n ? decoder->info.fps_n : 30;
+  frame_info->FrameRateExtN = decoder->info.fps_n;
   frame_info->FrameRateExtD = decoder->info.fps_d;
   frame_info->AspectRatioW = decoder->info.par_n;
   frame_info->AspectRatioH = decoder->info.par_d;
@@ -335,7 +335,7 @@ error_query_request:
 static gboolean
 gst_mfx_decoder_init (GstMfxDecoder * decoder,
     GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-    GstVideoInfo * info, mfxU16 async_depth, gboolean live_mode)
+    const GstVideoInfo * info, mfxU16 async_depth, gboolean live_mode)
 {
   decoder->profile = profile;
   decoder->info = *info;
@@ -390,7 +390,7 @@ gst_mfx_decoder_class (void)
 
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
-    GstMfxProfile profile, GstVideoInfo * info, mfxU16 async_depth,
+    GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
     gboolean live_mode)
 {
   GstMfxDecoder *decoder;
@@ -610,9 +610,10 @@ new_frame (GstMfxDecoder * decoder)
 }
 
 static void
-queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface,
-    GstVideoCodecFrame *out_frame)
+queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface)
 {
+  GstVideoCodecFrame *out_frame;
+
   if (!decoder->can_double_deinterlace)
     out_frame = g_queue_pop_tail (&decoder->pending_frames);
   else
@@ -654,7 +655,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxFrameSurface1 *insurf, *outsurf = NULL;
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
-  GstVideoCodecFrame *out_frame;
 
   if (!decoder->can_double_deinterlace) {
     /* Save frames for later synchronization with decoded MFX surfaces */
@@ -802,7 +802,7 @@ update:
       do {
         filter_sts = gst_mfx_filter_process (decoder->filter, surface,
           &filter_surface);
-        queue_output_frame (decoder, filter_surface, out_frame);
+        queue_output_frame (decoder, filter_surface);
       } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == filter_sts);
 
       if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
@@ -812,7 +812,7 @@ update:
       }
     }
     else {
-      queue_output_frame (decoder, surface, out_frame);
+      queue_output_frame (decoder, surface);
     }
 
     decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
@@ -824,8 +824,8 @@ update:
 
 end:
   gst_buffer_unmap (frame->input_buffer, &minfo);
-  if (decoder->can_double_deinterlace)
-    gst_buffer_unref (frame->input_buffer);
+  /* Clear input bitstream after copying  it to internal decoder buffer */
+  gst_buffer_replace (&frame->input_buffer, NULL);
 
   return ret;
 }
@@ -839,7 +839,6 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
   mfxFrameSurface1 *insurf, *outsurf = NULL;
   mfxSyncPoint syncp;
   mfxStatus sts;
-  GstVideoCodecFrame *frame;
 
   do {
     surface = gst_mfx_surface_new_from_pool (decoder->pool);
@@ -866,11 +865,11 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
       do {
         filter_sts = gst_mfx_filter_process (decoder->filter, surface,
           &filter_surface);
-        queue_output_frame (decoder, filter_surface, frame);
+        queue_output_frame (decoder, filter_surface);
       } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == filter_sts);
     }
     else {
-      queue_output_frame (decoder, surface, frame);
+      queue_output_frame (decoder, surface);
     }
 
     ret = GST_MFX_DECODER_STATUS_SUCCESS;

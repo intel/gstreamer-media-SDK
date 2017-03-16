@@ -1223,14 +1223,14 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstMfxPostproc:frame-rate
+   * GstMfxPostproc:framerate
    *
    * The forced output frame rate specified as a floating-point value
    */
   g_object_class_install_property
       (object_class,
       PROP_FRAMERATE,
-      g_param_spec_double ("frame-rate",
+      g_param_spec_double ("framerate",
           "Frame rate",
           "Forced output frame rate",
           0.0, 300.0, 0.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
@@ -1331,7 +1331,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
 #endif
 
   /**
-   * GstMfxPostproc: framerate conversion
+   * GstMfxPostproc: frc-algorithm
    * The framerate conversion algorithm to convert framerate of the video,
    * expressed in GstMfxFrcAlgorithm.
    */

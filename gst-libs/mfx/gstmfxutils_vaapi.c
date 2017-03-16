@@ -23,6 +23,7 @@
 #include "sysdeps.h"
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxminiobject.h"
+#include "video-format.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"

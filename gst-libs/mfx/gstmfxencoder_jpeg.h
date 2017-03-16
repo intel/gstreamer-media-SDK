@@ -36,7 +36,7 @@ typedef enum {
 
 GstMfxEncoder *
 gst_mfx_encoder_jpeg_new(GstMfxTaskAggregator * aggregator,
-  	GstVideoInfo * info, gboolean mapped);
+  	const GstVideoInfo * info, gboolean mapped);
 
 GPtrArray *
 gst_mfx_encoder_jpeg_get_default_properties(void);

@@ -127,7 +127,7 @@ gst_mfx_surface_pool_class (void)
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new (GstMfxDisplay * display,
-    GstVideoInfo * info, gboolean memtype_is_system)
+    const GstVideoInfo * info, gboolean memtype_is_system)
 {
   GstMfxSurfacePool *pool;
 

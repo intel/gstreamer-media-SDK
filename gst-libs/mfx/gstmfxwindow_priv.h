@@ -119,6 +119,9 @@ struct _GstMfxWindowClass
   GstMfxWindowSetUnblockCancelFunc unblock_cancel;
 };
 
+void
+gst_mfx_window_class_init(GstMfxWindowClass * klass);
+
 GstMfxWindow *
 gst_mfx_window_new_internal(const GstMfxWindowClass * window_class,
   GstMfxDisplay * display, GstMfxID handle, guint width, guint height);

@@ -1091,8 +1091,7 @@ gst_mfxsink_set_property (GObject * object,
       sink->display_type_req = g_value_get_enum (value);
       break;
     case PROP_DISPLAY_NAME:
-      gst_mfxsink_set_display_name (GST_MFX_PLUGIN_BASE (sink),
-          g_value_get_string (value));
+      gst_mfxsink_set_display_name (sink, g_value_get_string (value));
       break;
     case PROP_FULLSCREEN:
       sink->fullscreen = g_value_get_boolean (value);

@@ -52,7 +52,7 @@ typedef struct _GstMfxSurface GstMfxSurface;
 typedef struct _GstMfxSurfaceClass GstMfxSurfaceClass;
 
 GstMfxSurface *
-gst_mfx_surface_new (GstVideoInfo * info);
+gst_mfx_surface_new (const GstVideoInfo * info);
 
 GstMfxSurface *
 gst_mfx_surface_new_from_task (GstMfxTask * task);

@@ -155,6 +155,14 @@ GstMfxEncoderStatus
 gst_mfx_encoder_get_codec_data (GstMfxEncoder * encoder,
     GstBuffer ** out_codec_data_ptr);
 
+GstMfxEncoderStatus
+gst_mfx_encoder_set_codec_state (GstMfxEncoder * encoder,
+    GstVideoCodecState * state);
+
+GstMfxEncoderStatus
+gst_mfx_encoder_set_property (GstMfxEncoder * encoder, gint prop_id,
+    const GValue * value);
+
 gboolean
 gst_mfx_encoder_set_gop_refdist (GstMfxEncoder * encoder, gint gop_refdist);
 

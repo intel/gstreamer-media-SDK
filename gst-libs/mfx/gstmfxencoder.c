@@ -432,7 +432,7 @@ init_encoder_task (GstMfxEncoder * encoder)
 
 static gboolean
 gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
-    GstMfxTaskAggregator * aggregator, GstVideoInfo * info,
+    GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
     gboolean memtype_is_system)
 {
   encoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
@@ -502,7 +502,8 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 /* Base encoder initialization (internal) */
 static gboolean
 gst_mfx_encoder_init (GstMfxEncoder * encoder,
-    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean memtype_is_system)
+    GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
+    gboolean memtype_is_system)
 {
   GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
 
@@ -559,7 +560,8 @@ gst_mfx_encoder_finalize (GstMfxEncoder * encoder)
 
 GstMfxEncoder *
 gst_mfx_encoder_new (const GstMfxEncoderClass * klass,
-    GstMfxTaskAggregator * aggregator, GstVideoInfo * info, gboolean memtype_is_system)
+    GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
+    gboolean memtype_is_system)
 {
   GstMfxEncoder *encoder;
 
