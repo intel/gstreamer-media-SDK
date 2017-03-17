@@ -661,6 +661,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     /* Save frames for later synchronization with decoded MFX surfaces */
     g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
   }
+  else
+    GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY (frame);
 
   if (!GST_CLOCK_TIME_IS_VALID(decoder->pts_offset)
       && GST_CLOCK_TIME_IS_VALID(frame->dts))
@@ -728,7 +730,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
   if (MFX_ERR_MORE_DATA == sts) {
     if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
-      gst_video_codec_frame_unref (g_queue_pop_head (&decoder->pending_frames));
+      GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY ((GstVideoCodecFrame *)
+        g_queue_pop_head (&decoder->pending_frames));
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
@@ -827,8 +830,6 @@ update:
 
 end:
   gst_buffer_unmap (frame->input_buffer, &minfo);
-  /* Clear input bitstream after copying  it to internal decoder buffer */
-  gst_buffer_replace (&frame->input_buffer, NULL);
 
   return ret;
 }
