@@ -731,7 +731,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   if (MFX_ERR_MORE_DATA == sts) {
     if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
       GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY ((GstVideoCodecFrame *)
-        g_queue_pop_head (&decoder->pending_frames));
+        g_queue_pop_nth (&decoder->pending_frames,
+          g_queue_index (&decoder->pending_frames, frame)));
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
