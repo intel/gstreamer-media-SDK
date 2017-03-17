@@ -56,7 +56,7 @@ struct _GstMfxDecoder
   GstVideoInfo info;
   gboolean inited;
   gboolean was_reset;
-  gboolean first_frame_decoded;
+  gboolean has_ready_frames;
   gboolean memtype_is_system;
   gboolean enable_csc;
   gboolean enable_deinterlace;
@@ -593,6 +593,7 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   memset(&decoder->bs, 0, sizeof(mfxBitstream));
 
   decoder->was_reset = TRUE;
+  decoder->has_ready_frames = FALSE;
 }
 
 static GstVideoCodecFrame *
@@ -660,6 +661,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     /* Save frames for later synchronization with decoded MFX surfaces */
     g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
   }
+  else
+    GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY (frame);
 
   if (!GST_CLOCK_TIME_IS_VALID(decoder->pts_offset)
       && GST_CLOCK_TIME_IS_VALID(frame->dts))
@@ -726,6 +729,9 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
   if (MFX_ERR_MORE_DATA == sts) {
+    if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
+      GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY ((GstVideoCodecFrame *)
+        g_queue_pop_head (&decoder->pending_frames));
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
@@ -738,7 +744,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
-    decoder->first_frame_decoded = TRUE;
+    decoder->has_ready_frames = TRUE;
 
     if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
       do {
@@ -765,7 +771,7 @@ update:
         /* Check if stream has progressive frames first.
          * If it does then it should be a mixed interlaced stream */
         if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE
-            && decoder->first_frame_decoded)
+            && decoder->has_ready_frames)
           decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
         else {
           if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
@@ -824,8 +830,6 @@ update:
 
 end:
   gst_buffer_unmap (frame->input_buffer, &minfo);
-  /* Clear input bitstream after copying  it to internal decoder buffer */
-  gst_buffer_replace (&frame->input_buffer, NULL);
 
   return ret;
 }

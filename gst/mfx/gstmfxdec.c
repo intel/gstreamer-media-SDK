@@ -478,6 +478,9 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
   sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
+  if (GST_VIDEO_CODEC_FRAME_IS_DECODE_ONLY(frame))
+    gst_video_decoder_finish_frame (vdec, frame);
+
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
       ret = GST_FLOW_OK;
