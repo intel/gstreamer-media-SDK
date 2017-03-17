@@ -14,8 +14,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/FindVC1ParserDependencies.cmake)
 FindMediaSDK()
 FindBaseLibs(BASE_LIBRARIES)
 
-add_definitions(-DHAVE_CONFIG_H)
-
 if(WITH_MSS_2016)
   add_definitions(-DWITH_MSS_2016)
 endif()

@@ -21,9 +21,7 @@
 #ifndef SYSDEPS_H
 #define SYSDEPS_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "version.h"
 
 #include <stdio.h>
 #include <stdlib.h>
