@@ -1148,28 +1148,6 @@ gst_mfxsink_get_property (GObject * object,
   }
 }
 
-static gboolean
-gst_mfxsink_unlock (GstBaseSink * base_sink)
-{
-  GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
-
-  if (sink->window)
-    return gst_mfx_window_unblock (sink->window);
-
-  return TRUE;
-}
-
-static gboolean
-gst_mfxsink_unlock_stop (GstBaseSink * base_sink)
-{
-  GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
-
-  if (sink->window)
-    return gst_mfx_window_unblock_cancel (sink->window);
-
-  return TRUE;
-}
-
 static void
 gst_mfxsink_class_init (GstMfxSinkClass * klass)
 {
@@ -1195,8 +1173,6 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
   basesink_class->get_caps = gst_mfxsink_get_caps;
   basesink_class->set_caps = gst_mfxsink_set_caps;
   basesink_class->query = GST_DEBUG_FUNCPTR (gst_mfxsink_query);
-  basesink_class->unlock = gst_mfxsink_unlock;
-  basesink_class->unlock_stop = gst_mfxsink_unlock_stop;
 
   videosink_class->show_frame = GST_DEBUG_FUNCPTR (gst_mfxsink_show_frame);
 

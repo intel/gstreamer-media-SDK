@@ -90,9 +90,6 @@ void
 gst_mfx_window_reconfigure (GstMfxWindow * window);
 
 gboolean
-gst_mfx_window_unblock (GstMfxWindow * window);
-
-gboolean
 gst_mfx_window_unblock_cancel (GstMfxWindow * window);
 
 G_END_DECLS
