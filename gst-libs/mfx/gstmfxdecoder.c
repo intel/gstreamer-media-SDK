@@ -830,6 +830,8 @@ update:
 
 end:
   gst_buffer_unmap (frame->input_buffer, &minfo);
+  /* Clear bitstream buffer after copying to internal buffer */
+  gst_buffer_replace (&frame->input_buffer, NULL);
 
   return ret;
 }
