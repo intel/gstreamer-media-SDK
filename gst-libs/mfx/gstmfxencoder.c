@@ -842,6 +842,9 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
         encoder->gop_refdist =
             encoder->gop_refdist < 0 ? 4 : encoder->gop_refdist;
         break;
+      case GST_MFX_RATECONTROL_VCM:
+        encoder->gop_refdist = 0;
+        break;
       case GST_MFX_RATECONTROL_AVBR:
         encoder->params.mfx.Convergence = encoder->avbr_convergence;
         encoder->params.mfx.Accuracy = encoder->avbr_accuracy;

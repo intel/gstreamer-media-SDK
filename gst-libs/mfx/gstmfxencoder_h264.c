@@ -41,6 +41,7 @@
   GST_MFX_RATECONTROL_MASK (CBR)      |             \
   GST_MFX_RATECONTROL_MASK (VBR)      |             \
   GST_MFX_RATECONTROL_MASK (AVBR)     |             \
+  GST_MFX_RATECONTROL_MASK (VCM)      |             \
   GST_MFX_RATECONTROL_MASK (LA_BRC)   |             \
   GST_MFX_RATECONTROL_MASK (LA_HRD)   |             \
   GST_MFX_RATECONTROL_MASK (ICQ)      |             \
@@ -79,6 +80,7 @@ ensure_bitrate (GstMfxEncoderH264 * encoder)
   switch (GST_MFX_ENCODER_RATE_CONTROL (encoder)) {
     case GST_MFX_RATECONTROL_CBR:
     case GST_MFX_RATECONTROL_VBR:
+    case GST_MFX_RATECONTROL_VCM:
     case GST_MFX_RATECONTROL_AVBR:
     case GST_MFX_RATECONTROL_LA_BRC:
     case GST_MFX_RATECONTROL_LA_HRD:
