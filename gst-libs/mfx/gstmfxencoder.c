@@ -142,7 +142,43 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
       g_param_spec_uint ("bitrate",
           "Bitrate (kbps)",
           "The desired bitrate expressed in kbps (0: auto-calculate)",
-          0, 100 * 1024, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          0, G_MAXUINT16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+ /**
+  * GstMfxEncoder:brc-multiplier
+  *
+  * Bit rate control multiplier for high bit rates
+  */
+  GST_MFX_ENCODER_PROPERTIES_APPEND (props,
+      GST_MFX_ENCODER_PROP_BRC_MULTIPLIER,
+      g_param_spec_uint ("brc-multiplier",
+          "Bit rate control multiplier",
+          "Multiplier for bit rate control methods to achieve high bit rates",
+          0, G_MAXUINT16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+ /**
+  * GstMfxEncoder:max-buffer-size
+  *
+  * Bit rate control multiplier for high bit rates
+  */
+  GST_MFX_ENCODER_PROPERTIES_APPEND (props,
+      GST_MFX_ENCODER_PROP_MAX_BUFFER_SIZE,
+      g_param_spec_uint ("max-buffer-size",
+          "Maximum buffer size (KB)",
+          "Maximum possible size of compressed frames",
+          0, G_MAXUINT16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+ /**
+  * GstMfxEncoder:vbv-max-bitrate
+  *
+  * Maximum bit rate at which encoded data enters the VBV
+  */
+  GST_MFX_ENCODER_PROPERTIES_APPEND (props,
+      GST_MFX_ENCODER_PROP_VBV_MAX_BITRATE,
+      g_param_spec_uint ("vbv-max-bitrate",
+          "VBV maximum bit rate (Kbps)",
+          "Maximum bit rate at which encoded data enters the VBV",
+          0, G_MAXUINT16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
  /**
   * GstMfxEncoder:idr-interval
@@ -520,7 +556,8 @@ gst_mfx_encoder_init (GstMfxEncoder * encoder,
 
 #undef CHECK_VTABLE_HOOK
 
-  if (!gst_mfx_encoder_init_properties (encoder, aggregator, info, memtype_is_system))
+  if (!gst_mfx_encoder_init_properties (encoder, aggregator, info,
+        memtype_is_system))
     return FALSE;
   if (!klass->init (encoder))
     return FALSE;
@@ -843,6 +880,11 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 
     if (encoder->bitrate)
       encoder->params.mfx.TargetKbps = encoder->bitrate;
+    encoder->params.mfx.BRCParamMultiplier = encoder->brc_multiplier;
+    encoder->params.mfx.BufferSizeInKB = encoder->max_buffer_size;
+    encoder->params.mfx.MaxKbps =
+        encoder->vbv_max_bitrate > encoder->bitrate ?
+          encoder->vbv_max_bitrate : encoder->bitrate;
     encoder->params.mfx.GopRefDist =
         encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist;
 
@@ -909,12 +951,15 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 
     /* Re-calculate suggested number of allocated frames for shared task if
      * async-depth of shared task doesn't match with the encoder async-depth */
-    if (params->AsyncDepth != encoder->params.AsyncDepth) {
-      params->AsyncDepth = encoder->params.AsyncDepth;
-      if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT))
-        request->NumFrameSuggested = encoder->params.AsyncDepth;
-      else if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_DECODER))
-        MFXVideoDECODE_QueryIOSurf (encoder->session, params, request);
+    params->AsyncDepth = encoder->params.AsyncDepth;
+    if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_VPP_OUT)) {
+      mfxFrameAllocRequest vpp_request[2];
+
+      MFXVideoVPP_QueryIOSurf (encoder->session, params, vpp_request);
+      *request = vpp_request[1];
+    }
+    else if (gst_mfx_task_has_type (encoder->encode, GST_MFX_TASK_DECODER)) {
+      MFXVideoDECODE_QueryIOSurf (encoder->session, params, request);
     }
     request->NumFrameSuggested +=
         (enc_request.NumFrameSuggested - encoder->params.AsyncDepth + 1);
@@ -1137,6 +1182,15 @@ set_property (GstMfxEncoder * encoder, gint prop_id, const GValue * value)
       break;
     case GST_MFX_ENCODER_PROP_BITRATE:
       encoder->bitrate = g_value_get_uint (value);
+      break;
+    case GST_MFX_ENCODER_PROP_MAX_BUFFER_SIZE:
+      encoder->max_buffer_size = g_value_get_uint (value);
+      break;
+    case GST_MFX_ENCODER_PROP_VBV_MAX_BITRATE:
+      encoder->vbv_max_bitrate = g_value_get_uint (value);
+      break;
+    case GST_MFX_ENCODER_PROP_BRC_MULTIPLIER:
+      encoder->brc_multiplier = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_IDR_INTERVAL:
       encoder->idr_interval = g_value_get_int (value);
