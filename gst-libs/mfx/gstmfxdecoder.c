@@ -744,6 +744,11 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
+    if (insurf->Data.Corrupted & MFX_CORRUPTION_MAJOR) {
+      gst_mfx_decoder_reset (decoder);
+      ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
+      goto end;
+    }
     decoder->has_ready_frames = TRUE;
 
     if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
