@@ -176,6 +176,8 @@ struct _GstMfxEncoder
   guint                   global_quality;
   mfxU16                  bitrate;
   mfxU16                  brc_multiplier;
+  mfxU16                  max_buffer_size;
+  mfxU16                  vbv_max_bitrate;
   mfxU16                  async_depth;
   mfxU16                  la_depth;
   mfxU16                  gop_size;
