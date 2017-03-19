@@ -689,6 +689,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     }
     else {
       *discarded_frame = frame;
+      ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
       goto end;
     }
   }
