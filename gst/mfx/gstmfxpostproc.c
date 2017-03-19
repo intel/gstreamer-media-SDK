@@ -509,7 +509,7 @@ gst_mfxpostproc_update_sink_caps (GstMfxPostproc * vpp, GstCaps * caps,
 static GstBuffer *
 create_output_buffer (GstMfxPostproc * vpp)
 {
-  GstBuffer *outbuf;
+  GstBuffer *outbuf = NULL;
   GstFlowReturn ret;
 
   GstBufferPool *const pool =
@@ -520,14 +520,11 @@ create_output_buffer (GstMfxPostproc * vpp)
   if (!gst_buffer_pool_set_active (pool, TRUE))
     goto error_activate_pool;
 
-  outbuf = NULL;
-
   ret = gst_buffer_pool_acquire_buffer (pool, &outbuf, NULL);
-
   if (GST_FLOW_OK != ret || !outbuf)
     goto error_create_buffer;
-  return outbuf;
 
+  return outbuf;
   /* Errors */
 error_activate_pool:
   {
@@ -579,19 +576,18 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
   GstMfxVideoMeta *inbuf_meta, *outbuf_meta;
   GstMfxSurface *surface, *out_surface;
-  GstMfxFilterStatus status;
-  GstFlowReturn ret;
-  GstBuffer *buf;
+  GstMfxFilterStatus status = GST_MFX_FILTER_STATUS_SUCCESS;
+  GstFlowReturn ret = GST_FLOW_OK;
+  GstBuffer *buf = NULL;
   GstMfxRectangle *crop_rect = NULL;
   GstClockTime timestamp;
 
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
 
-  ret =
-      gst_mfx_plugin_base_get_input_buffer (GST_MFX_PLUGIN_BASE (vpp),
-      inbuf, &buf);
-  if (ret != GST_FLOW_OK)
-    return GST_FLOW_ERROR;
+  ret = gst_mfx_plugin_base_get_input_buffer (GST_MFX_PLUGIN_BASE (vpp),
+          inbuf, &buf);
+  if (GST_FLOW_OK != ret)
+    return ret;
 
   inbuf_meta = gst_buffer_get_mfx_video_meta (buf);
   surface = gst_mfx_video_meta_get_surface (inbuf_meta);
@@ -600,15 +596,17 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
   do {
     if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
+      if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status)
+        gst_buffer_replace (&buf, NULL);
       buf = create_output_buffer (vpp);
       if (!buf)
         goto error_create_buffer;
     }
 
     status = gst_mfx_filter_process (vpp->filter, surface, &out_surface);
-    if (GST_MFX_FILTER_STATUS_SUCCESS != status &&
-        GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status &&
-        GST_MFX_FILTER_STATUS_ERROR_MORE_DATA != status)
+    if (GST_MFX_FILTER_STATUS_SUCCESS != status
+        && GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE != status
+        && GST_MFX_FILTER_STATUS_ERROR_MORE_DATA != status)
       goto error_process_vpp;
 
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status)
@@ -632,31 +630,35 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
       }
     }
 
-    if (GST_MFX_FILTER_STATUS_ERROR_MORE_DATA == status)
+    if (GST_MFX_FILTER_STATUS_ERROR_MORE_DATA == status) {
+      gst_buffer_unref (buf);
       return GST_BASE_TRANSFORM_FLOW_DROPPED;
+    }
 
     if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status) {
       GST_BUFFER_TIMESTAMP (buf) = timestamp;
       GST_BUFFER_DURATION (buf) = vpp->field_duration;
       timestamp += vpp->field_duration;
       ret = gst_pad_push (trans->srcpad, buf);
-    } else {
+    }
+    else {
       if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
         GST_BUFFER_TIMESTAMP (outbuf) = timestamp;
         GST_BUFFER_DURATION (outbuf) = vpp->field_duration;
-      } else
+      }
+      else {
         gst_buffer_copy_into (outbuf, inbuf, GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+      }
     }
-
-  } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status);
+  } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status
+           && GST_FLOW_OK == ret);
 
 #if GST_CHECK_VERSION(1,8,0)
-  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp),
-      outbuf);
+  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp), outbuf);
 #endif // GST_CHECK_VERSION
 
   gst_buffer_unref (buf);
-  return GST_FLOW_OK;
+  return ret;
   /* ERRORS */
 error_create_buffer:
   {
@@ -790,8 +792,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   if (vpp->format != DEFAULT_FORMAT)
     out_format = vpp->format;
 
-  if (vpp->frame_rate) {
-    gst_util_double_to_fraction(vpp->frame_rate, &vpp->fps_n, &vpp->fps_d);
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
     GST_VIDEO_INFO_FPS_N (&vi) = vpp->fps_n;
     GST_VIDEO_INFO_FPS_D (&vi) = vpp->fps_d;
     vpp->field_duration = gst_util_uint64_scale (GST_SECOND,
@@ -855,52 +856,45 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   if (vpp->async_depth)
     gst_mfx_filter_set_async_depth (vpp->filter, vpp->async_depth);
 
-  if (!gst_mfx_filter_set_size (vpp->filter,
-          GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
-          GST_VIDEO_INFO_HEIGHT (&vpp->srcpad_info)))
-    return FALSE;
+  gst_mfx_filter_set_size (vpp->filter,
+    GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
+    GST_VIDEO_INFO_HEIGHT (&vpp->srcpad_info));
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FORMAT) &&
-      !gst_mfx_filter_set_format (vpp->filter,
-          gst_video_format_to_mfx_fourcc (vpp->format)))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_FORMAT)
+    gst_mfx_filter_set_format (vpp->filter,
+      gst_video_format_to_mfx_fourcc (vpp->format));
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE) &&
-      !gst_mfx_filter_set_denoising_level (vpp->filter, vpp->denoise_level))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE)
+    gst_mfx_filter_set_denoising_level (vpp->filter, vpp->denoise_level);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DETAIL) &&
-      !gst_mfx_filter_set_detail_level (vpp->filter, vpp->detail_level))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_DETAIL)
+    gst_mfx_filter_set_detail_level (vpp->filter, vpp->detail_level);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_HUE) &&
-      !gst_mfx_filter_set_hue (vpp->filter, vpp->hue))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_HUE)
+    gst_mfx_filter_set_hue (vpp->filter, vpp->hue);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_SATURATION) &&
-      !gst_mfx_filter_set_saturation (vpp->filter, vpp->saturation))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_SATURATION)
+    gst_mfx_filter_set_saturation (vpp->filter, vpp->saturation);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_BRIGHTNESS) &&
-      !gst_mfx_filter_set_brightness (vpp->filter, vpp->brightness))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_BRIGHTNESS)
+    gst_mfx_filter_set_brightness (vpp->filter, vpp->brightness);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_CONTRAST) &&
-      !gst_mfx_filter_set_contrast (vpp->filter, vpp->contrast))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_CONTRAST)
+    gst_mfx_filter_set_contrast (vpp->filter, vpp->contrast);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_ROTATION) &&
-      !gst_mfx_filter_set_rotation (vpp->filter, vpp->angle))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_ROTATION)
+    gst_mfx_filter_set_rotation (vpp->filter, vpp->angle);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) &&
-      !gst_mfx_filter_set_deinterlace_mode (vpp->filter, vpp->deinterlace_mode))
-    return FALSE;
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)
+    gst_mfx_filter_set_deinterlace_mode (vpp->filter, vpp->deinterlace_mode);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) &&
-      !(gst_mfx_filter_set_frc_algorithm (vpp->filter, vpp->alg) &&
-          gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d)))
-    return FALSE;
+  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FRC)
+      && gst_util_fraction_compare(vpp->fps_n, vpp->fps_d,
+            GST_VIDEO_INFO_FPS_N (&vpp->sinkpad_info),
+            GST_VIDEO_INFO_FPS_D (&vpp->sinkpad_info))) {
+    gst_mfx_filter_set_frc_algorithm (vpp->filter, vpp->alg);
+    gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d);
+  }
 
   return  gst_mfx_filter_prepare (vpp->filter);
 }
@@ -1043,7 +1037,8 @@ gst_mfxpostproc_set_property (GObject * object,
       vpp->flags |= GST_MFX_POSTPROC_FLAG_ROTATION;
       break;
     case PROP_FRAMERATE:
-      vpp->frame_rate = g_value_get_double (value);
+      vpp->fps_n = gst_value_get_fraction_numerator (value);
+      vpp->fps_d = gst_value_get_fraction_denominator (value);
       vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
       break;
     case PROP_FRC_ALGORITHM:
@@ -1103,7 +1098,7 @@ gst_mfxpostproc_get_property (GObject * object,
       g_value_set_enum (value, vpp->angle);
       break;
     case PROP_FRAMERATE:
-      g_value_set_double (value, vpp->frame_rate);
+      gst_value_set_fraction (value, vpp->fps_n, vpp->fps_d);
       break;
     case PROP_FRC_ALGORITHM:
       g_value_set_enum (value, vpp->alg);
@@ -1230,10 +1225,11 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   g_object_class_install_property
       (object_class,
       PROP_FRAMERATE,
-      g_param_spec_double ("framerate",
+      gst_param_spec_fraction ("framerate",
           "Frame rate",
           "Forced output frame rate",
-          0.0, 300.0, 0.0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          0, 1, G_MAXINT, 1, 0, 1,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:denoise

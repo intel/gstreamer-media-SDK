@@ -586,15 +586,15 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
 
   outbuf = NULL;
   if (gst_buffer_pool_acquire_buffer (plugin->sinkpad_buffer_pool,
-          &outbuf, NULL) != GST_FLOW_OK)
+        &outbuf, NULL) != GST_FLOW_OK)
     goto error_create_buffer;
 
   if (!gst_video_frame_map (&src_frame, &plugin->sinkpad_info, inbuf,
-          GST_MAP_READ))
+        GST_MAP_READ))
     goto error_map_src_buffer;
 
   if (!gst_video_frame_map (&out_frame, &plugin->sinkpad_info, outbuf,
-          GST_MAP_WRITE))
+        GST_MAP_WRITE))
     goto error_map_dst_buffer;
 
   /* Hack for incoming video frames with changed GstVideoInfo dimensions */
@@ -607,8 +607,8 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
   if (!success)
     goto error_copy_buffer;
 
-  gst_buffer_copy_into (outbuf, inbuf, GST_BUFFER_COPY_FLAGS |
-      GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+  gst_buffer_copy_into (outbuf, inbuf,
+    GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
   *outbuf_ptr = outbuf;
   return GST_FLOW_OK;
 

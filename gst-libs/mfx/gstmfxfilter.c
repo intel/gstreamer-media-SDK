@@ -561,6 +561,8 @@ gboolean
 gst_mfx_filter_set_size (GstMfxFilter * filter, mfxU16 width, mfxU16 height)
 {
   g_return_val_if_fail (filter != NULL, FALSE);
+  g_return_val_if_fail (width > 0 && width <= 8192, FALSE);
+  g_return_val_if_fail (height > 0 && height <= 8192, FALSE);
 
   filter->width = width;
   filter->height = height;

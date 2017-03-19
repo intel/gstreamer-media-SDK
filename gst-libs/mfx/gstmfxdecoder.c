@@ -657,16 +657,16 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
+  if (!GST_CLOCK_TIME_IS_VALID(decoder->pts_offset)
+      && GST_CLOCK_TIME_IS_VALID(frame->dts))
+    decoder->pts_offset = frame->dts;
+
   if (!decoder->can_double_deinterlace) {
     /* Save frames for later synchronization with decoded MFX surfaces */
     g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
   }
   else
     GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY (frame);
-
-  if (!GST_CLOCK_TIME_IS_VALID(decoder->pts_offset)
-      && GST_CLOCK_TIME_IS_VALID(frame->dts))
-    decoder->pts_offset = frame->dts;
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
     GST_ERROR ("Failed to map input buffer");
@@ -689,12 +689,13 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         decoder->bs.MaxLength = decoder->bs.DataLength;
         decoder->bs.Data = decoder->bitstream->data;
       }
-      decoder->was_reset = FALSE;
     }
     else {
       goto end;
     }
   }
+
+  decoder->was_reset = FALSE;
 
   if (minfo.size) {
     decoder->bs.DataLength += minfo.size;
@@ -729,10 +730,11 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
   if (MFX_ERR_MORE_DATA == sts) {
-    if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
+    if (decoder->has_ready_frames && !decoder->can_double_deinterlace) {
       GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY ((GstVideoCodecFrame *)
         g_queue_pop_nth (&decoder->pending_frames,
           g_queue_index (&decoder->pending_frames, frame)));
+    }
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
