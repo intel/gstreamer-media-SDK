@@ -465,6 +465,13 @@ gst_mfxpostproc_update_src_caps (GstMfxPostproc * vpp, GstCaps * caps,
       vpp->height != GST_VIDEO_INFO_HEIGHT (&vpp->sinkpad_info))
     vpp->flags |= GST_MFX_POSTPROC_FLAG_SIZE;
 
+  if (vpp->fps_n && gst_util_fraction_compare(
+        GST_VIDEO_INFO_FPS_N (&vpp->srcpad_info),
+        GST_VIDEO_INFO_FPS_D (&vpp->srcpad_info),
+        GST_VIDEO_INFO_FPS_N (&vpp->sinkpad_info),
+        GST_VIDEO_INFO_FPS_D (&vpp->sinkpad_info)))
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+
   return TRUE;
 }
 
@@ -792,7 +799,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   if (vpp->format != DEFAULT_FORMAT)
     out_format = vpp->format;
 
-  if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
+  if (vpp->fps_n) {
     GST_VIDEO_INFO_FPS_N (&vi) = vpp->fps_n;
     GST_VIDEO_INFO_FPS_D (&vi) = vpp->fps_d;
     vpp->field_duration = gst_util_uint64_scale (GST_SECOND,
@@ -888,10 +895,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)
     gst_mfx_filter_set_deinterlace_mode (vpp->filter, vpp->deinterlace_mode);
 
-  if ((vpp->flags & GST_MFX_POSTPROC_FLAG_FRC)
-      && gst_util_fraction_compare(vpp->fps_n, vpp->fps_d,
-            GST_VIDEO_INFO_FPS_N (&vpp->sinkpad_info),
-            GST_VIDEO_INFO_FPS_D (&vpp->sinkpad_info))) {
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
     gst_mfx_filter_set_frc_algorithm (vpp->filter, vpp->alg);
     gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d);
   }
@@ -933,9 +937,9 @@ gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
 
   if (GST_QUERY_TYPE (query) == GST_QUERY_CONTEXT) {
     if (gst_mfx_handle_context_query (query,
-            GST_MFX_PLUGIN_BASE_AGGREGATOR (vpp))) {
+          GST_MFX_PLUGIN_BASE_AGGREGATOR (vpp))) {
       GST_DEBUG_OBJECT (vpp, "sharing tasks %p",
-          GST_MFX_PLUGIN_BASE_AGGREGATOR (vpp));
+        GST_MFX_PLUGIN_BASE_AGGREGATOR (vpp));
       return TRUE;
     }
   }
@@ -1039,7 +1043,6 @@ gst_mfxpostproc_set_property (GObject * object,
     case PROP_FRAMERATE:
       vpp->fps_n = gst_value_get_fraction_numerator (value);
       vpp->fps_d = gst_value_get_fraction_denominator (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
       break;
     case PROP_FRC_ALGORITHM:
       vpp->alg = g_value_get_enum (value);
