@@ -237,6 +237,7 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
   g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
 
   task->saved_responses = g_list_delete_link (task->saved_responses, l);
+  g_free (response_data);
 
   return MFX_ERR_NONE;
 }

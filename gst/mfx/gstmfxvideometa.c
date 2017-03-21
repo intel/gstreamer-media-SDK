@@ -173,8 +173,7 @@ gst_mfx_video_meta_set_surface (GstMfxVideoMeta * meta,
 {
   g_return_if_fail (GST_MFX_IS_VIDEO_META (meta));
 
-  if (surface)
-    gst_mfx_surface_replace (&meta->surface, surface);
+  gst_mfx_surface_replace (&meta->surface, surface);
 }
 
 #define GST_MFX_VIDEO_META_HOLDER(meta) \

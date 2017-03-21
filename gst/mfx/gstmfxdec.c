@@ -462,7 +462,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
   GstMfxDecoderStatus sts;
   GstFlowReturn ret = GST_FLOW_OK;
-  GstVideoCodecFrame *out_frame = NULL;
+  GstVideoCodecFrame *out_frame = NULL, *discarded_frame = NULL;
 
   if (!gst_mfxdec_negotiate (mfxdec))
       goto not_negotiated;
@@ -476,10 +476,12 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       GST_TIME_ARGS (frame->pts),
       GST_TIME_ARGS (frame->duration));
 
-  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
+  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, &discarded_frame);
 
-  if (GST_VIDEO_CODEC_FRAME_IS_DECODE_ONLY(frame))
-    gst_video_decoder_finish_frame (vdec, frame);
+  if (discarded_frame) {
+    GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY(discarded_frame);
+    gst_video_decoder_finish_frame (vdec, discarded_frame);
+  }
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:

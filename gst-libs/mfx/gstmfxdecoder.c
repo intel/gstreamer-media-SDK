@@ -647,7 +647,7 @@ sort_pts (gconstpointer frame1, gconstpointer frame2, gpointer data)
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame)
+    GstVideoCodecFrame * frame, GstVideoCodecFrame ** discarded_frame)
 {
   GstMapInfo minfo;
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
@@ -657,43 +657,49 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
-  if (!decoder->can_double_deinterlace) {
-    /* Save frames for later synchronization with decoded MFX surfaces */
-    g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
-  }
-  else
-    GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY (frame);
-
   if (!GST_CLOCK_TIME_IS_VALID(decoder->pts_offset)
-      && GST_CLOCK_TIME_IS_VALID(frame->dts))
-    decoder->pts_offset = frame->dts;
+      && GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)
+      && GST_CLOCK_TIME_IS_VALID (frame->pts))
+    decoder->pts_offset = frame->pts;
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
     GST_ERROR ("Failed to map input buffer");
     return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
   }
 
-  /* Sequence header check for I-frames after MPEG2 video seeking */
-  if (decoder->was_reset && MFX_CODEC_MPEG2 == decoder->params.mfx.CodecId) {
+  if (decoder->was_reset) {
     if (GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)) {
-      decoder->bs.MaxLength = decoder->bs.DataLength = minfo.size;
-      decoder->bs.Data = minfo.data;
+      /* Sequence header check for I-frames after MPEG2 video seeking */
+      if (MFX_CODEC_MPEG2 == decoder->params.mfx.CodecId) {
+        decoder->bs.MaxLength = decoder->bs.DataLength = minfo.size;
+        decoder->bs.Data = minfo.data;
 
-      sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
-              &decoder->params);
-      memset (&decoder->bs, 0, sizeof (mfxBitstream));
-      if (MFX_ERR_MORE_DATA == sts) {
-        decoder->bitstream = g_byte_array_append (decoder->bitstream,
-          decoder->codec_data->data, decoder->codec_data->len);
-        decoder->bs.DataLength = decoder->codec_data->len;
-        decoder->bs.MaxLength = decoder->bs.DataLength;
-        decoder->bs.Data = decoder->bitstream->data;
+        sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
+                &decoder->params);
+        memset (&decoder->bs, 0, sizeof (mfxBitstream));
+        if (MFX_ERR_MORE_DATA == sts) {
+          decoder->bitstream = g_byte_array_append (decoder->bitstream,
+            decoder->codec_data->data, decoder->codec_data->len);
+          decoder->bs.DataLength = decoder->codec_data->len;
+          decoder->bs.MaxLength = decoder->bs.DataLength;
+          decoder->bs.Data = decoder->bitstream->data;
+        }
       }
       decoder->was_reset = FALSE;
     }
     else {
+      *discarded_frame = frame;
+      ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
       goto end;
     }
+  }
+
+  if (!decoder->can_double_deinterlace) {
+    /* Save frames for later synchronization with decoded MFX surfaces */
+    g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
+  }
+  else {
+    *discarded_frame = frame;
   }
 
   if (minfo.size) {
@@ -729,15 +735,24 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
   if (MFX_ERR_MORE_DATA == sts) {
-    if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
-      GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY ((GstVideoCodecFrame *)
-        g_queue_pop_head (&decoder->pending_frames));
+    if (decoder->has_ready_frames && !decoder->can_double_deinterlace) {
+      GstVideoCodecFrame *cur_frame;
+      guint n = g_queue_get_length (&decoder->pending_frames) - 1;
+
+      /* Discard partial frames */
+      while (cur_frame = g_queue_peek_nth(&decoder->pending_frames, n)) {
+        if ((cur_frame->pts - decoder->pts_offset) % decoder->duration) {
+          *discarded_frame = g_queue_pop_nth (&decoder->pending_frames, n);
+          break;
+        }
+        n--;
+      }
+    }
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
 
-  if (sts != MFX_ERR_NONE
-      && sts != MFX_ERR_MORE_DATA) {
+  if (MFX_ERR_NONE != sts && MFX_ERR_MORE_DATA != sts) {
     GST_ERROR ("Status %d : Error during MFX decoding", sts);
     ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
     goto end;

@@ -95,7 +95,6 @@ struct _GstMfxPostproc
   GstVideoFormat          format;        /* output video format */
   guint                   width;
   guint                   height;
-  gdouble                 frame_rate;
   guint                   flags;
   guint                   async_depth;
 

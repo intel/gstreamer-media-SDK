@@ -37,7 +37,7 @@ gst_mfx_rate_control_get_type (void)
     {GST_MFX_RATECONTROL_CBR,
         "Constant bitrate", "cbr"},
     {GST_MFX_RATECONTROL_VCM,
-        "Video conference", "vcm"},
+        "Video conference mode", "vcm"},
     {GST_MFX_RATECONTROL_VBR,
         "Variable bitrate", "vbr"},
     {GST_MFX_RATECONTROL_AVBR,
