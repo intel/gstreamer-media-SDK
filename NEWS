@@ -1,3 +1,13 @@
+Version 1.3.0
+* Split mfxdecode into separate MFX decoder plugins.
+* Added VCM rate control method and new properties in MFX encoder.
+* Fixed seeking issues with MFX-encoded videos by setting correct IDR intervals.
+* Fixed memory leak issue in MFX encoder plugin when muxing to avcc or hvc1.
+* Added a new framerate property in mfxvpp.
+* Fixed memory leak issues with mfxdecode and mfxvpp.
+* Refined CMake compile options for decoder and renderer support.
+* Fixed CMake compilation issues for Ubuntu 16.04 LTS.
+
 Version 1.2.0
 * Implemented text overlay support with MFX VPP surface composition.
 
