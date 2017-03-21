@@ -98,6 +98,11 @@ gst-launch-1.0 filesrc location=raw.yuv ! \
 gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
   mfxhevcenc ! matroskamux ! filesink location=/path/to/output.mkv sync=false
 
+# Trancode a 4k H264 video to a resized 1080p HEVC video with AAC audio encoding and muxing
+gst-launch-1.0 filesrc location=4k_video.mp4 ! qtdemux name=demux demux.video_0 ! h264parse ! \
+  mfxh264dec ! mfxvpp width=1920 height=1080 ! mfxhevcenc ! mux. demux.audio_0 ! queue ! decodebin ! \
+  avenc_aac ! mux. matroskamux name=mux ! filesink location=/path/to/output.mkv sync=false
+
 # Video preview with transcoding
 gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
   tee name=tp tp. ! queue ! mfxsinkelement  tp. ! queue ! \
@@ -106,7 +111,7 @@ gst-launch-1.0 filesrc location=video.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
 # Simultaneous camera preview using dma-buffer sharing and H264 encoding
 gst-launch-1.0 v4l2src io-mode=5 ! video/x-raw, width=<w>, height=<h> ! mfxvpp ! \
   tee name=tp ! queue ! mfxsinkelement tp. ! mfxh264enc ! 'video/x-h264, profile=baseline' ! \
-  matroskamux ! filesink location=/path/to/output.mkv
+  flvmux streamable=true ! filesink location=/path/to/output.flv
   
 # RTP sender (H264)
 gst-launch-1.0 v4l2src io-mode=5 ! mfxh264enc ! \
