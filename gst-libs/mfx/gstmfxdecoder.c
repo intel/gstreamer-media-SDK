@@ -587,9 +587,6 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   while (!g_queue_is_empty(&decoder->pending_frames))
     g_queue_push_head(&decoder->discarded_frames,
       g_queue_pop_head(&decoder->pending_frames));
-  while (!g_queue_is_empty(&decoder->decoded_frames))
-    g_queue_push_head(&decoder->discarded_frames,
-      g_queue_pop_head(&decoder->decoded_frames));
 
   decoder->pts_offset = GST_CLOCK_TIME_NONE;
   decoder->current_pts = 0;
@@ -615,6 +612,7 @@ new_frame (GstMfxDecoder * decoder)
 
   frame->duration = decoder->duration;
   frame->pts = decoder->current_pts + decoder->pts_offset;
+  decoder->current_pts += decoder->duration;
 
   return frame;
 }
@@ -628,14 +626,6 @@ queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface)
     out_frame = g_queue_pop_tail (&decoder->pending_frames);
   else
     out_frame = new_frame (decoder);
-
-  /* This is mainly for rendering demuxed videos with no PTS and duration */
-  if (!GST_CLOCK_TIME_IS_VALID(out_frame->pts)
-      && !GST_CLOCK_TIME_IS_VALID(out_frame->duration)) {
-    out_frame->pts = decoder->current_pts + decoder->pts_offset;
-    out_frame->duration = decoder->duration;
-  }
-  decoder->current_pts += decoder->duration;
 
   gst_video_codec_frame_set_user_data(out_frame,
       gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
