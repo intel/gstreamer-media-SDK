@@ -1101,7 +1101,8 @@ gst_mfxpostproc_get_property (GObject * object,
       g_value_set_enum (value, vpp->angle);
       break;
     case PROP_FRAMERATE:
-      gst_value_set_fraction (value, vpp->fps_n, vpp->fps_d);
+      if (vpp->fps_n && vpp->fps_d)
+        gst_value_set_fraction (value, vpp->fps_n, vpp->fps_d);
       break;
     case PROP_FRC_ALGORITHM:
       g_value_set_enum (value, vpp->alg);
