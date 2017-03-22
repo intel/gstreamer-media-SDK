@@ -88,6 +88,9 @@ gboolean
 gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
     GstVideoCodecFrame ** out_frame);
 
+GstVideoCodecFrame *
+gst_mfx_decoder_get_discarded_frame (GstMfxDecoder * decoder);
+
 GstVideoInfo *
 gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder);
 
@@ -100,7 +103,7 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame, GstVideoCodecFrame ** discarded_frame);
+    GstVideoCodecFrame * frame);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_flush (GstMfxDecoder * decoder);
