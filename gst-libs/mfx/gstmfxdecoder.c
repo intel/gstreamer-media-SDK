@@ -46,6 +46,7 @@ struct _GstMfxDecoder
 
   GQueue decoded_frames;
   GQueue pending_frames;
+  GQueue discarded_frames;
 
   mfxSession session;
   mfxVideoParam params;
@@ -84,6 +85,14 @@ gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
 
   *out_frame = g_queue_pop_tail (&decoder->decoded_frames);
   return *out_frame != NULL;
+}
+
+GstVideoCodecFrame *
+gst_mfx_decoder_get_discarded_frame (GstMfxDecoder * decoder)
+{
+  g_return_val_if_fail (decoder != NULL, NULL);
+
+  return g_queue_pop_tail (&decoder->discarded_frames);
 }
 
 GstVideoInfo *
@@ -168,6 +177,7 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
       (GFunc) gst_video_codec_frame_unref, NULL);
   g_queue_clear (&decoder->pending_frames);
   g_queue_clear (&decoder->decoded_frames);
+  g_queue_clear (&decoder->discarded_frames);
 
   if ((decoder->params.mfx.CodecId == MFX_CODEC_VP8)
 #ifdef USE_VP9_DECODER
@@ -364,6 +374,7 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
 
   g_queue_init (&decoder->decoded_frames);
   g_queue_init (&decoder->pending_frames);
+  g_queue_init (&decoder->discarded_frames);
 
   decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   if (!task_init(decoder))
@@ -573,14 +584,12 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
     return;
 
   /* Flush pending frames */
-  if (!decoder->can_double_deinterlace) {
-    while (!g_queue_is_empty(&decoder->pending_frames))
-      gst_video_codec_frame_unref(g_queue_pop_head(&decoder->pending_frames));
-  }
-  else {
-    while (!g_queue_is_empty(&decoder->decoded_frames))
-      gst_video_codec_frame_unref(g_queue_pop_head(&decoder->decoded_frames));
-  }
+  while (!g_queue_is_empty(&decoder->pending_frames))
+    g_queue_push_head(&decoder->discarded_frames,
+      g_queue_pop_head(&decoder->pending_frames));
+  while (!g_queue_is_empty(&decoder->decoded_frames))
+    g_queue_push_head(&decoder->discarded_frames,
+      g_queue_pop_head(&decoder->decoded_frames));
 
   decoder->pts_offset = GST_CLOCK_TIME_NONE;
   decoder->current_pts = 0;
@@ -647,7 +656,7 @@ sort_pts (gconstpointer frame1, gconstpointer frame2, gpointer data)
 
 GstMfxDecoderStatus
 gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame, GstVideoCodecFrame ** discarded_frame)
+    GstVideoCodecFrame * frame)
 {
   GstMapInfo minfo;
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
@@ -688,7 +697,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       decoder->was_reset = FALSE;
     }
     else {
-      *discarded_frame = frame;
+      g_queue_push_head(&decoder->discarded_frames, frame);
       ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
       goto end;
     }
@@ -699,7 +708,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
   }
   else {
-    *discarded_frame = frame;
+    g_queue_push_head(&decoder->discarded_frames, frame);
   }
 
   if (minfo.size) {
@@ -742,7 +751,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       /* Discard partial frames */
       while (cur_frame = g_queue_peek_nth(&decoder->pending_frames, n)) {
         if ((cur_frame->pts - decoder->pts_offset) % decoder->duration) {
-          *discarded_frame = g_queue_pop_nth (&decoder->pending_frames, n);
+          g_queue_push_head(&decoder->discarded_frames,
+            g_queue_pop_nth (&decoder->pending_frames, n));
           break;
         }
         n--;

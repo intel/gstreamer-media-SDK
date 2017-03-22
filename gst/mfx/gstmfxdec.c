@@ -324,6 +324,17 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   return TRUE;
 }
 
+static void
+gst_mfxdec_flush_discarded_frames (GstMfxDec * mfxdec)
+{
+  GstVideoCodecFrame *frame = NULL;
+
+  while (frame = gst_mfx_decoder_get_discarded_frame(mfxdec->decoder)) {
+    GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY(frame);
+    gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
+  }
+}
+
 static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
   gboolean hard)
@@ -334,6 +345,7 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
     profile = gst_mfx_profile_from_caps (caps);
     if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder)) {
       gst_mfx_decoder_reset (mfxdec->decoder);
+      gst_mfxdec_flush_discarded_frames (mfxdec);
       return TRUE;
     }
   }
@@ -462,7 +474,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
   GstMfxDecoderStatus sts;
   GstFlowReturn ret = GST_FLOW_OK;
-  GstVideoCodecFrame *out_frame = NULL, *discarded_frame = NULL;
+  GstVideoCodecFrame *out_frame = NULL;
 
   if (!gst_mfxdec_negotiate (mfxdec))
       goto not_negotiated;
@@ -476,12 +488,9 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       GST_TIME_ARGS (frame->pts),
       GST_TIME_ARGS (frame->duration));
 
-  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame, &discarded_frame);
+  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
-  if (discarded_frame) {
-    GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY(discarded_frame);
-    gst_video_decoder_finish_frame (vdec, discarded_frame);
-  }
+  gst_mfxdec_flush_discarded_frames (mfxdec);
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
@@ -534,6 +543,9 @@ gst_mfxdec_finish (GstVideoDecoder *vdec)
         break;
     }
   } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
+
+  gst_mfxdec_flush_discarded_frames (mfxdec);
+
   return ret;
 }
 
