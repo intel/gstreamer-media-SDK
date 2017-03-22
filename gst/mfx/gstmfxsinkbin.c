@@ -50,6 +50,7 @@ enum
   PROP_FULL_COLOR_RANGE,
   PROP_WIDTH,
   PROP_HEIGHT,
+  PROP_FRAMERATE,
   PROP_DEINTERLACE_MODE,
   PROP_DENOISE,
   PROP_DETAIL,
@@ -175,6 +176,13 @@ gst_mfx_sink_bin_set_property (GObject * object,
           g_value_get_uint (value),
           NULL);
       break;
+    case PROP_FRAMERATE:
+      g_object_set (G_OBJECT (mfxsinkbin->postproc),
+          pspec->name,
+          gst_value_get_fraction_numerator (value),
+          gst_value_get_fraction_denominator (value),
+          NULL);
+      break;
 
     case PROP_DEINTERLACE_MODE:
 #ifndef WITH_MSS_2016
@@ -235,6 +243,7 @@ gst_mfx_sink_bin_get_property (GObject * object,
     /* VPP */
     case PROP_WIDTH:
     case PROP_HEIGHT:
+    case PROP_FRAMERATE:
     case PROP_DEINTERLACE_MODE:
     case PROP_DENOISE:
     case PROP_DETAIL:
@@ -402,6 +411,13 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           "Height",
           "Forced output height",
           0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_FRAMERATE] =
+      gst_param_spec_fraction ("framerate",
+          "Frame rate",
+          "Forced output frame rate",
+          0, 1, G_MAXINT, 1, 0, 1,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_DENOISE] =
       g_param_spec_uint ("denoise",
