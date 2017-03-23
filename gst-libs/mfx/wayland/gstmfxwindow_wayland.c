@@ -190,10 +190,10 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   gint offsets[3] = { 0 }, pitches[3] = { 0 }, num_planes = 0, i = 0;
   VaapiImage *vaapi_image;
 
-  /*if (g_atomic_int_get (&priv->num_frames_pending)) {
+  if (g_atomic_int_get (&priv->num_frames_pending)) {
     GST_DEBUG ("Skip redrawing due to pending frames");
     return TRUE;
-  }*/
+  }
 
   buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!buffer_proxy)
