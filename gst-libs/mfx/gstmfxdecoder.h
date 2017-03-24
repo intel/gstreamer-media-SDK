@@ -95,6 +95,9 @@ GstVideoInfo *
 gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder);
 
 void
+gst_mfx_decoder_skip_corrupted_frames (GstMfxDecoder * decoder);
+
+void
 gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
     gboolean memtype_is_video);
 

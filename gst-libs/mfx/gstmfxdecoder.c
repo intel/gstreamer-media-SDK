@@ -61,6 +61,7 @@ struct _GstMfxDecoder
   gboolean memtype_is_system;
   gboolean enable_csc;
   gboolean enable_deinterlace;
+  gboolean skip_corrupted_frames;
   gboolean can_double_deinterlace;
 
   /* For special double frame rate deinterlacing case */
@@ -101,6 +102,14 @@ gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder)
   g_return_val_if_fail (decoder != NULL, NULL);
 
   return &decoder->info;
+}
+
+void
+gst_mfx_decoder_skip_corrupted_frames (GstMfxDecoder * decoder)
+{
+  g_return_if_fail (decoder != NULL);
+
+  decoder->skip_corrupted_frames = TRUE;
 }
 
 void
@@ -759,7 +768,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
-    if (insurf->Data.Corrupted & MFX_CORRUPTION_MAJOR) {
+    if (decoder->skip_corrupted_frames
+        && insurf->Data.Corrupted & MFX_CORRUPTION_MAJOR) {
       gst_mfx_decoder_reset (decoder);
       ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
       goto end;

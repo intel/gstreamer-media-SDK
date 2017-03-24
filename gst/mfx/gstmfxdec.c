@@ -71,7 +71,8 @@ enum
 {
   PROP_0,
   PROP_ASYNC_DEPTH,
-  PROP_LIVE_MODE
+  PROP_LIVE_MODE,
+  PROP_SKIP_CORRUPTED_FRAMES
 };
 
 static GstStaticPadTemplate src_template_factory =
@@ -259,6 +260,9 @@ gst_mfxdec_set_property (GObject * object, guint prop_id,
   case PROP_LIVE_MODE:
     dec->live_mode = g_value_get_boolean (value);
     break;
+  case PROP_SKIP_CORRUPTED_FRAMES:
+    dec->skip_corrupted_frames = g_value_get_boolean (value);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     break;
@@ -277,6 +281,9 @@ gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
     break;
   case PROP_LIVE_MODE:
     g_value_set_boolean (value, dec->live_mode);
+    break;
+  case PROP_SKIP_CORRUPTED_FRAMES:
+    g_value_set_boolean (value, dec->skip_corrupted_frames);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -316,6 +323,9 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
       profile, &info, mfxdec->async_depth, mfxdec->live_mode);
   if (!mfxdec->decoder)
     return FALSE;
+
+  if (mfxdec->skip_corrupted_frames)
+    gst_mfx_decoder_skip_corrupted_frames (mfxdec->decoder);
 
   mfxdec->do_renego = TRUE;
 
@@ -638,6 +648,12 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
       "Live streaming mode (not recommended)",
       FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  g_object_class_install_property (gobject_class, PROP_SKIP_CORRUPTED_FRAMES,
+  g_param_spec_boolean ("skip-corrupted-frames",
+      "Skip corrupted frames",
+      "Skip decoded frames that have major corruption",
+      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   vdec_class->open = GST_DEBUG_FUNCPTR (gst_mfxdec_open);
   vdec_class->close = GST_DEBUG_FUNCPTR (gst_mfxdec_close);
   vdec_class->flush = GST_DEBUG_FUNCPTR (gst_mfxdec_flush);
@@ -687,6 +703,7 @@ gst_mfxdec_init (GstMfxDec *mfxdec)
 {
   mfxdec->async_depth = DEFAULT_ASYNC_DEPTH;
   mfxdec->live_mode = FALSE;
+  mfxdec->skip_corrupted_frames = FALSE;
 
   gst_video_decoder_set_packetized (GST_VIDEO_DECODER (mfxdec), TRUE);
   gst_video_decoder_set_needs_format (GST_VIDEO_DECODER (mfxdec), TRUE);
