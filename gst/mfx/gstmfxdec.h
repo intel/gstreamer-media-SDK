@@ -40,6 +40,7 @@ struct _GstMfxDec {
   GstMfxDecoder       *decoder;
   guint                async_depth;
   gboolean             live_mode;
+  gboolean             skip_corrupted_frames;
 
   GstVideoCodecState  *input_state;
   volatile gboolean    do_renego;
