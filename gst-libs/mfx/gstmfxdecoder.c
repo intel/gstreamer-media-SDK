@@ -47,6 +47,7 @@ struct _GstMfxDecoder
   GQueue decoded_frames;
   GQueue pending_frames;
   GQueue discarded_frames;
+  guint num_partial_frames;
 
   mfxSession session;
   mfxVideoParam params;
@@ -743,20 +744,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
   if (MFX_ERR_MORE_DATA == sts) {
-    if (decoder->has_ready_frames && !decoder->can_double_deinterlace) {
-      GstVideoCodecFrame *cur_frame;
-      guint n = g_queue_get_length (&decoder->pending_frames) - 1;
-
-      /* Discard partial frames */
-      while (cur_frame = g_queue_peek_nth(&decoder->pending_frames, n)) {
-        if ((cur_frame->pts - decoder->pts_offset) % decoder->duration) {
-          g_queue_push_head(&decoder->discarded_frames,
-            g_queue_pop_nth (&decoder->pending_frames, n));
-          break;
-        }
-        n--;
-      }
-    }
+    if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
+      decoder->num_partial_frames++;
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
@@ -768,6 +757,22 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
+    if (decoder->num_partial_frames) {
+      GstVideoCodecFrame *cur_frame;
+      guint n = g_queue_get_length (&decoder->pending_frames) - 1;
+
+      /* Discard partial frames */
+      while (decoder->num_partial_frames
+          && (cur_frame = g_queue_peek_nth (&decoder->pending_frames, n))) {
+        if (cur_frame->pts % decoder->duration) {
+          g_queue_push_head(&decoder->discarded_frames,
+            g_queue_pop_nth (&decoder->pending_frames, n));
+          decoder->num_partial_frames--;
+        }
+        n--;
+      }
+    }
+
     if (decoder->skip_corrupted_frames
         && insurf->Data.Corrupted & MFX_CORRUPTION_MAJOR) {
       gst_mfx_decoder_reset (decoder);
