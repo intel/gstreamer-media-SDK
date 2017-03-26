@@ -764,7 +764,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       /* Discard partial frames */
       while (decoder->num_partial_frames
           && (cur_frame = g_queue_peek_nth (&decoder->pending_frames, n))) {
-        if (cur_frame->pts % decoder->duration) {
+        if ((cur_frame->pts - decoder->pts_offset) % decoder->duration) {
           g_queue_push_head(&decoder->discarded_frames,
             g_queue_pop_nth (&decoder->pending_frames, n));
           decoder->num_partial_frames--;
