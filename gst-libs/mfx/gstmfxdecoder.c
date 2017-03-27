@@ -47,7 +47,6 @@ struct _GstMfxDecoder
   GQueue decoded_frames;
   GQueue pending_frames;
   GQueue discarded_frames;
-  guint num_partial_frames;
 
   mfxSession session;
   mfxVideoParam params;
@@ -64,6 +63,7 @@ struct _GstMfxDecoder
   gboolean enable_deinterlace;
   gboolean skip_corrupted_frames;
   gboolean can_double_deinterlace;
+  guint num_partial_frames;
 
   /* For special double frame rate deinterlacing case */
   GstClockTime current_pts;
@@ -610,6 +610,7 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 
   decoder->was_reset = TRUE;
   decoder->has_ready_frames = FALSE;
+  decoder->num_partial_frames = 0;
 }
 
 static GstVideoCodecFrame *
