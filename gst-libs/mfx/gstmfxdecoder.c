@@ -866,7 +866,6 @@ update:
 
 end:
   gst_buffer_unmap (frame->input_buffer, &minfo);
-
   return ret;
 }
 
