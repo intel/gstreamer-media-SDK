@@ -324,11 +324,14 @@ gst_mfxenc_open (GstVideoEncoder * venc)
 static gboolean
 gst_mfxenc_close (GstVideoEncoder * venc)
 {
-  GstMfxEnc *const encode = GST_MFXENC_CAST (venc);
-
-  gst_mfxenc_destroy (encode);
-  gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (encode));
+  gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (venc));
   return TRUE;
+}
+
+static gboolean
+gst_mfxenc_stop (GstVideoEncoder * venc)
+{
+  return gst_mfxenc_destroy (GST_MFXENC_CAST (venc));
 }
 
 static gboolean
@@ -521,6 +524,7 @@ gst_mfxenc_class_init (GstMfxEncClass * klass)
   object_class->finalize = gst_mfxenc_finalize;
 
   venc_class->open = GST_DEBUG_FUNCPTR (gst_mfxenc_open);
+  venc_class->stop = GST_DEBUG_FUNCPTR (gst_mfxenc_stop);
   venc_class->close = GST_DEBUG_FUNCPTR (gst_mfxenc_close);
   venc_class->set_format = GST_DEBUG_FUNCPTR (gst_mfxenc_set_format);
   venc_class->handle_frame = GST_DEBUG_FUNCPTR (gst_mfxenc_handle_frame);
