@@ -54,6 +54,7 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_region *opaque_region;
   struct wl_viewport *viewport;
   struct wl_event_queue *event_queue;
+  struct wl_callback *callback;
   GThread *thread;
 #ifdef USE_EGL
   struct wl_egl_window *egl_window;
@@ -95,7 +96,14 @@ static const struct wl_callback_listener frame_callback_listener = {
 static void
 frame_release_callback (void *data, struct wl_buffer *wl_buffer)
 {
+  GstMfxWindowWaylandPrivate *priv =
+      GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (data);
+
   wl_buffer_destroy (wl_buffer);
+  if (priv->callback) {
+    wl_callback_destroy (priv->callback);
+    priv->callback = NULL;
+  }
 }
 
 static const struct wl_buffer_listener frame_buffer_listener = {
@@ -184,16 +192,15 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
       GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
   GstMfxPrimeBufferProxy *buffer_proxy;
   struct wl_buffer *buffer;
-  struct wl_callback *callback;
   guintptr fd = 0;
   guint32 drm_format = 0;
   gint offsets[3] = { 0 }, pitches[3] = { 0 }, num_planes = 0, i = 0;
   VaapiImage *vaapi_image;
 
-  if (g_atomic_int_get (&priv->num_frames_pending)) {
+  /*if (g_atomic_int_get (&priv->num_frames_pending)) {
     GST_DEBUG ("Skip redrawing due to pending frames");
     return TRUE;
-  }
+  }*/
 
   buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!buffer_proxy)
@@ -253,10 +260,10 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     priv->opaque_region = NULL;
   }
   wl_proxy_set_queue ((struct wl_proxy *) buffer, priv->event_queue);
-  wl_buffer_add_listener (buffer, &frame_buffer_listener, NULL);
+  wl_buffer_add_listener (buffer, &frame_buffer_listener, window);
 
-  callback = wl_surface_frame (priv->surface);
-  wl_callback_add_listener (callback, &frame_callback_listener, window);
+  priv->callback = wl_surface_frame (priv->surface);
+  wl_callback_add_listener (priv->callback, &frame_callback_listener, window);
 
   wl_surface_commit (priv->surface);
   wl_display_flush (display);
