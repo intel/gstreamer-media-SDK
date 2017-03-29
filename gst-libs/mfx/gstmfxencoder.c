@@ -1044,7 +1044,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
   if (!GST_CLOCK_TIME_IS_VALID(encoder->current_pts))
     encoder->current_pts = encoder->duration * encoder->params.mfx.NumRefFrame;
-  if (GST_CLOCK_TIME_IS_VALID (frame->pts))
+  if (GST_CLOCK_TIME_IS_VALID (frame->pts)
+      && (frame->pts > encoder->current_pts))
     encoder->current_pts = frame->pts;
 
   insurf->Data.TimeStamp = (encoder->current_pts / (gdouble)1000000000) * 90000;
