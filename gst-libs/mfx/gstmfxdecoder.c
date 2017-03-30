@@ -540,9 +540,12 @@ init_filter (GstMfxDecoder * decoder)
      &decoder->params.mfx.FrameInfo);
   if (decoder->enable_csc)
     gst_mfx_filter_set_format (decoder->filter, output_fourcc);
-  if (decoder->enable_deinterlace)
-    gst_mfx_filter_set_deinterlace_mode (decoder->filter,
-      GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF);
+  if (decoder->enable_deinterlace) {
+    GstMfxDeinterlaceMode di_mode =
+      decoder->can_double_deinterlace ? GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF
+        : GST_MFX_DEINTERLACE_MODE_ADVANCED;
+    gst_mfx_filter_set_deinterlace_mode (decoder->filter, di_mode);
+  }
   gst_mfx_filter_set_async_depth (decoder->filter, decoder->params.AsyncDepth);
 
   if (!gst_mfx_filter_prepare (decoder->filter)) {
@@ -601,8 +604,6 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   decoder->pts_offset = GST_CLOCK_TIME_NONE;
   decoder->current_pts = 0;
 
-  MFXVideoDECODE_Reset (decoder->session, &decoder->params);
-
   if (decoder->bitstream->len)
     g_byte_array_remove_range (decoder->bitstream, 0,
       decoder->bitstream->len);
@@ -611,6 +612,8 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   decoder->was_reset = TRUE;
   decoder->has_ready_frames = FALSE;
   decoder->num_partial_frames = 0;
+
+  MFXVideoDECODE_Reset (decoder->session, &decoder->params);
 }
 
 static GstVideoCodecFrame *
