@@ -41,15 +41,17 @@ typedef struct _GstMfxWindowX11Class GstMfxWindowX11Class;
 
 struct _GstMfxWindowX11Private
 {
-  Atom    atom_NET_WM_STATE;
-  Atom    atom_NET_WM_STATE_FULLSCREEN;
+  Atom atom_NET_WM_STATE;
+  Atom atom_NET_WM_STATE_FULLSCREEN;
 
-  guint is_mapped : 1;
-  guint fullscreen_on_map : 1;
+  guint is_mapped;
+  guint fullscreen_on_map;
 #ifdef HAVE_XRENDER
   Picture picture;
 #endif
   xcb_connection_t *xcbconn;
+  /* Used for thread-safe locking of XRender operations */
+  GstMfxDisplay *display;
 };
 
 /**

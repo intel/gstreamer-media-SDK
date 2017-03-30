@@ -45,6 +45,7 @@
 #include "gstmfxdisplay_x11_priv.h"
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxutils_x11.h"
+#include "gstmfxsurface_vaapi.h"
 #include "gstmfxprimebufferproxy.h"
 
 #define DEBUG 1
@@ -275,6 +276,7 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
     }
     GST_MFX_WINDOW_ID (window) = None;
   }
+  gst_mfx_display_replace (&priv->display, NULL);
 }
 
 static gboolean
@@ -402,16 +404,19 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   Window root;
   int x = 0, y = 0, bpp = 0;
   unsigned int width, height, border, depth, stride, size;
-  Pixmap pixmap;
+  xcb_pixmap_t pixmap;
   Picture picture;
   XRenderPictFormat *pic_fmt;
   XWindowAttributes wattr;
   int fmt, op;
 
+  if (!priv->display)
+    priv->display = gst_mfx_surface_vaapi_get_display (surface);
+
   if (!priv->xcbconn) {
-    GST_MFX_DISPLAY_LOCK (x11_display);
+    GST_MFX_DISPLAY_LOCK (priv->display);
     priv->xcbconn = XGetXCBConnection (display);
-    GST_MFX_DISPLAY_UNLOCK (x11_display);
+    GST_MFX_DISPLAY_UNLOCK (priv->display);
   }
 
   buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
@@ -467,9 +472,12 @@ get_pic_fmt:
   xcb_dri3_pixmap_from_buffer (priv->xcbconn, pixmap, win, size,
       src_rect->width, src_rect->height, stride, depth, bpp,
       GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
-  if (!pixmap)
+  if (!pixmap) {
+    GST_MFX_DISPLAY_UNLOCK (x11_display);
     return FALSE;
+  }
 
+  GST_MFX_DISPLAY_LOCK (priv->display);
   do {
     const double sx = (double) src_rect->width / dst_rect->width;
     const double sy = (double) src_rect->height / dst_rect->height;
@@ -495,12 +503,14 @@ get_pic_fmt:
     XRenderComposite (display, op, picture, None, priv->picture,
         0, 0, 0, 0, dst_rect->x, dst_rect->y,
         dst_rect->width, dst_rect->height);
-    XSync (display, False);
   } while (0);
 
   if (picture)
     XRenderFreePicture (display, picture);
-  XFreePixmap (display, pixmap);
+  xcb_free_pixmap (priv->xcbconn, pixmap);
+  xcb_flush (priv->xcbconn);
+
+  GST_MFX_DISPLAY_UNLOCK (priv->display);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
