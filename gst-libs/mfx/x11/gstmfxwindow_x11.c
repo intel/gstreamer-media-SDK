@@ -45,7 +45,6 @@
 #include "gstmfxdisplay_x11_priv.h"
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxutils_x11.h"
-#include "gstmfxsurface_vaapi.h"
 #include "gstmfxprimebufferproxy.h"
 
 #define DEBUG 1
