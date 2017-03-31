@@ -860,6 +860,7 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
   }
 
   gst_mfx_composite_filter_replace (&sink->composite_filter, NULL);
+  gst_mfx_display_replace (&sink->drm_display, NULL);
 
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (sink));
   return TRUE;
@@ -931,6 +932,8 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
+  sink->drm_display =
+      gst_mfx_task_aggregator_get_display (plugin->aggregator);
   gst_mfxsink_set_render_backend (sink);
 
   if (!gst_mfx_plugin_base_set_caps (plugin, caps, NULL))
@@ -1017,12 +1020,15 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
         composition, &composite_surface);
   }
 
+  if (sink->display_type_req != GST_MFX_DISPLAY_TYPE_EGL)
+    GST_MFX_DISPLAY_LOCK (sink->drm_display);
   if (!gst_mfxsink_render_surface (sink,
         composite_surface ? composite_surface : surface, surface_rect))
     goto error;
 
   ret = GST_FLOW_OK;
 done:
+  GST_MFX_DISPLAY_UNLOCK (sink->drm_display);
   gst_mfx_surface_composition_replace (&composition, NULL);
   return ret;
 

@@ -276,7 +276,6 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
     }
     GST_MFX_WINDOW_ID (window) = None;
   }
-  gst_mfx_display_replace (&priv->display, NULL);
 }
 
 static gboolean
@@ -410,13 +409,10 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   XWindowAttributes wattr;
   int fmt, op;
 
-  if (!priv->display)
-    priv->display = gst_mfx_surface_vaapi_get_display (surface);
-
   if (!priv->xcbconn) {
-    GST_MFX_DISPLAY_LOCK (priv->display);
+    GST_MFX_DISPLAY_LOCK (x11_display);
     priv->xcbconn = XGetXCBConnection (display);
-    GST_MFX_DISPLAY_UNLOCK (priv->display);
+    GST_MFX_DISPLAY_UNLOCK (x11_display);
   }
 
   buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
@@ -477,7 +473,6 @@ get_pic_fmt:
     return FALSE;
   }
 
-  GST_MFX_DISPLAY_LOCK (priv->display);
   do {
     const double sx = (double) src_rect->width / dst_rect->width;
     const double sy = (double) src_rect->height / dst_rect->height;
@@ -510,7 +505,6 @@ get_pic_fmt:
   xcb_free_pixmap (priv->xcbconn, pixmap);
   xcb_flush (priv->xcbconn);
 
-  GST_MFX_DISPLAY_UNLOCK (priv->display);
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);

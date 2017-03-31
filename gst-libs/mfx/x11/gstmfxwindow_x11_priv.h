@@ -50,8 +50,6 @@ struct _GstMfxWindowX11Private
   Picture picture;
 #endif
   xcb_connection_t *xcbconn;
-  /* Used for thread-safe locking of XRender operations */
-  GstMfxDisplay *display;
 };
 
 /**
