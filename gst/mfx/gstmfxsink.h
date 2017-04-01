@@ -96,6 +96,7 @@ struct _GstMfxSink
   volatile gboolean          event_thread_cancel;
 
   GstMfxCompositeFilter     *composite_filter;
+  GstMfxDisplay             *drm_display;
 
   GstMfxDisplay             *display;
   GstMfxDisplayType          display_type;

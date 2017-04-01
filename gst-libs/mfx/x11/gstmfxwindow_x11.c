@@ -402,7 +402,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   Window root;
   int x = 0, y = 0, bpp = 0;
   unsigned int width, height, border, depth, stride, size;
-  Pixmap pixmap;
+  xcb_pixmap_t pixmap;
   Picture picture;
   XRenderPictFormat *pic_fmt;
   XWindowAttributes wattr;
@@ -467,8 +467,10 @@ get_pic_fmt:
   xcb_dri3_pixmap_from_buffer (priv->xcbconn, pixmap, win, size,
       src_rect->width, src_rect->height, stride, depth, bpp,
       GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
-  if (!pixmap)
+  if (!pixmap) {
+    GST_MFX_DISPLAY_UNLOCK (x11_display);
     return FALSE;
+  }
 
   do {
     const double sx = (double) src_rect->width / dst_rect->width;
@@ -495,12 +497,13 @@ get_pic_fmt:
     XRenderComposite (display, op, picture, None, priv->picture,
         0, 0, 0, 0, dst_rect->x, dst_rect->y,
         dst_rect->width, dst_rect->height);
-    XSync (display, False);
   } while (0);
 
   if (picture)
     XRenderFreePicture (display, picture);
-  XFreePixmap (display, pixmap);
+  xcb_free_pixmap (priv->xcbconn, pixmap);
+  xcb_flush (priv->xcbconn);
+
   GST_MFX_DISPLAY_UNLOCK (x11_display);
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);

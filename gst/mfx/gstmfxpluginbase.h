@@ -157,9 +157,6 @@ gst_mfx_plugin_base_init (GstMfxPluginBase * plugin,
 void
 gst_mfx_plugin_base_finalize (GstMfxPluginBase * plugin);
 
-gboolean
-gst_mfx_plugin_base_open (GstMfxPluginBase * plugin);
-
 void
 gst_mfx_plugin_base_close (GstMfxPluginBase * plugin);
 

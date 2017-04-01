@@ -110,21 +110,6 @@ gst_mfx_plugin_base_finalize (GstMfxPluginBase * plugin)
 }
 
 /**
- * gst_mfx_plugin_base_open:
- * @plugin: a #GstMfxPluginBase
- *
- * Allocates any internal resources needed for correct operation from
- * the subclass.
- *
- * Returns: %TRUE if successful, %FALSE otherwise.
- */
-gboolean
-gst_mfx_plugin_base_open (GstMfxPluginBase * plugin)
-{
-  return TRUE;
-}
-
-/**
  * gst_mfx_plugin_base_close:
  * @plugin: a #GstMfxPluginBase
  *
