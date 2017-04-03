@@ -947,6 +947,11 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   if (encoder->shared) {
     mfxVideoParam *params = gst_mfx_task_get_video_params (encoder->encode);
 
+    if (!params) {
+      GST_ERROR ("Unable to retrieve task parameters for encoder.");
+      return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
+    }
+
     gst_mfx_task_aggregator_update_peer_memtypes (encoder->aggregator,
       memtype_is_system);
 
