@@ -188,7 +188,7 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
 GstMfxTask *
 gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator)
 {
-  g_return_val_if_fail (aggregator != NULL, FALSE);
+  g_return_val_if_fail (aggregator != NULL, NULL);
 
   return aggregator->current_task ?
     gst_mfx_task_ref (aggregator->current_task) : NULL;
