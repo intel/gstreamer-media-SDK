@@ -125,6 +125,12 @@ gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
    * MFX VPP task, or due to decoder limitations for that particular
    * codec. In that case, return to confirm the use of system memory */
   params = gst_mfx_task_get_video_params (decoder->decode);
+
+  if (!params) {
+    GST_WARNING ("Unable to retrieve task parameters for decoder");
+    return;
+  }
+
   if (params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY) {
     decoder->memtype_is_system = TRUE;
     gst_mfx_task_ensure_memtype_is_system (decoder->decode);
