@@ -1001,14 +1001,19 @@ gst_mfx_filter_start (GstMfxFilter * filter)
 {
   mfxStatus sts = MFX_ERR_NONE;
   gboolean memtype_is_system;
+  mfxFrameAllocRequest *request;
 
   /* Get updated video params if modified by peer MFX element*/
   gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
 
   memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 
-  memcpy (filter->shared_request[1], gst_mfx_task_get_request (filter->vpp[1]),
-      sizeof(mfxFrameAllocRequest));
+  request =  gst_mfx_task_get_request (filter->vpp[1]);
+  if (!request) {
+    GST_ERROR ("Unable to retrieve task parameters from VPP allocation request.");
+    return GST_MFX_FILTER_STATUS_ERROR_INVALID_PARAMETER;
+  }
+  memcpy (filter->shared_request[1], request, sizeof(mfxFrameAllocRequest));
 
   if (!memtype_is_system) {
     gst_mfx_task_use_video_memory (filter->vpp[1]);
