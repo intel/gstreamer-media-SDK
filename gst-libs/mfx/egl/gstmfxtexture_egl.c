@@ -198,14 +198,6 @@ gst_mfx_texture_egl_destroy (GstMfxTextureEGL * texture)
       (EglContextRunFunc) do_destroy_texture, texture);
 }
 
-static gboolean
-gst_mfx_texture_egl_create_surface (GstMfxTextureEGL * texture)
-{
-  egl_object_replace (&texture->egl_context,
-      GST_MFX_DISPLAY_EGL_CONTEXT (texture->display));
-  return TRUE;
-}
-
 static void
 gst_mfx_texture_egl_init (GstMfxTextureEGL * texture, GstMfxDisplay * display,
     guint target, guint format, guint width, guint height)
@@ -215,6 +207,9 @@ gst_mfx_texture_egl_init (GstMfxTextureEGL * texture, GstMfxDisplay * display,
   texture->gl_format = format;
   texture->width = width;
   texture->height = height;
+
+  egl_object_replace (&texture->egl_context,
+      GST_MFX_DISPLAY_EGL_CONTEXT (texture->display));
 }
 
 static void
@@ -273,13 +268,7 @@ gst_mfx_texture_egl_new (GstMfxDisplay * display, guint target,
     return NULL;
 
   gst_mfx_texture_egl_init (texture, display, target, format, width, height);
-  if (!gst_mfx_texture_egl_create_surface (texture))
-    goto error;
   return texture;
-
-error:
-  gst_mfx_mini_object_unref (texture);
-  return NULL;
 }
 
 GstMfxTextureEGL *
