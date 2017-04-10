@@ -478,6 +478,11 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (encoder->aggregator);
 
+     if (!task) {
+       GST_ERROR ("Unable to retrieve upstream MFX task from task aggregator.");
+       return FALSE;
+     }
+
     /* This could be a potentially shared task, so get the mfxFrameInfo
      * from the current task to initialize the new encoder
      * or shared VPP / encoder task */
@@ -486,7 +491,12 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
       encoder->frame_info = params->mfx.FrameInfo;
     }
     else {
-      encoder->frame_info = gst_mfx_task_get_request (task)->Info;
+      mfxFrameAllocRequest *req = gst_mfx_task_get_request(task);
+      if (!req) {
+        GST_ERROR ("Unable to retrieve allocation request for encoder task.");
+        return FALSE;
+      }
+      encoder->frame_info = req->Info;
     }
 
     if (gst_mfx_task_has_video_memory (task) &&
@@ -946,6 +956,11 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 
   if (encoder->shared) {
     mfxVideoParam *params = gst_mfx_task_get_video_params (encoder->encode);
+
+    if (!params) {
+      GST_ERROR ("Unable to retrieve task parameters for encoder.");
+      return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
+    }
 
     gst_mfx_task_aggregator_update_peer_memtypes (encoder->aggregator,
       memtype_is_system);
