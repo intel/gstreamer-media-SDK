@@ -105,12 +105,8 @@ gst_mfxenc_mpeg2_get_property (GObject * object,
 static GstCaps *
 gst_mfxenc_mpeg2_get_caps (GstMfxEnc * base_encode)
 {
-  GstCaps *caps;
-
-  caps = gst_caps_from_string (GST_CODEC_CAPS);
-
   /* XXX: update profile and level information */
-  return caps;
+  return gst_caps_from_string (GST_CODEC_CAPS);
 }
 
 static GstMfxEncoder *

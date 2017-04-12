@@ -771,26 +771,26 @@ set_extended_coding_options (GstMfxEncoder * encoder)
   set_default_option_values (encoder);
 
   if (encoder->mbbrc != GST_MFX_OPTION_AUTO)
-    encoder->extco2.MBBRC = encoder->mbbrc ?
-        MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    encoder->extco2.MBBRC =
+        encoder->mbbrc ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
   if (encoder->extbrc != GST_MFX_OPTION_AUTO)
-    encoder->extco2.ExtBRC = encoder->extbrc ?
-        MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    encoder->extco2.ExtBRC =
+        encoder->extbrc ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
   if (encoder->adaptive_i != GST_MFX_OPTION_AUTO)
-    encoder->extco2.AdaptiveI = encoder->adaptive_i ?
-        MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    encoder->extco2.AdaptiveI =
+        encoder->adaptive_i ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
   if (encoder->adaptive_b != GST_MFX_OPTION_AUTO)
-    encoder->extco2.AdaptiveB = encoder->adaptive_b ?
-        MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    encoder->extco2.AdaptiveB =
+        encoder->adaptive_b ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
   if (encoder->b_strategy != GST_MFX_OPTION_AUTO)
-    encoder->extco2.BRefType = encoder->b_strategy ?
-        MFX_B_REF_PYRAMID : MFX_B_REF_OFF;
+    encoder->extco2.BRefType =
+        encoder->b_strategy ? MFX_B_REF_PYRAMID : MFX_B_REF_OFF;
 
   if (MFX_CODEC_AVC == encoder->codec) {
     if (encoder->max_slice_size >= 0)
       encoder->extco2.MaxSliceSize = encoder->max_slice_size;
-    encoder->extco.CAVLC = !encoder->use_cabac ?
-        MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
+    encoder->extco.CAVLC =
+        !encoder->use_cabac ? MFX_CODINGOPTION_ON : MFX_CODINGOPTION_OFF;
     encoder->extco2.Trellis = encoder->trellis;
   }
 
@@ -893,11 +893,10 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 
     if (encoder->bitrate)
       encoder->params.mfx.TargetKbps = encoder->bitrate;
+    if (encoder->vbv_max_bitrate > encoder->bitrate)
+      encoder->params.mfx.MaxKbps = encoder->vbv_max_bitrate;
     encoder->params.mfx.BRCParamMultiplier = encoder->brc_multiplier;
     encoder->params.mfx.BufferSizeInKB = encoder->max_buffer_size;
-    encoder->params.mfx.MaxKbps =
-        encoder->vbv_max_bitrate > encoder->bitrate ?
-          encoder->vbv_max_bitrate : encoder->bitrate;
     encoder->params.mfx.GopRefDist =
         encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist;
 
@@ -1063,7 +1062,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
       && (frame->pts > encoder->current_pts))
     encoder->current_pts = frame->pts;
 
-  insurf->Data.TimeStamp = (encoder->current_pts / (gdouble)1000000000) * 90000;
+  insurf->Data.TimeStamp =
+      gst_util_uint64_scale (encoder->current_pts, 90000, GST_SECOND);
   encoder->current_pts += encoder->duration;
 
   do {
