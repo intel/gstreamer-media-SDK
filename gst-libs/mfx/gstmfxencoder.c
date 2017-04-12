@@ -893,7 +893,7 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 
     if (encoder->bitrate)
       encoder->params.mfx.TargetKbps = encoder->bitrate;
-    if (encoder->vbv_max_bitrate > encoder->bitrate)
+    if (encoder->vbv_max_bitrate >= encoder->bitrate)
       encoder->params.mfx.MaxKbps = encoder->vbv_max_bitrate;
     encoder->params.mfx.BRCParamMultiplier = encoder->brc_multiplier;
     encoder->params.mfx.BufferSizeInKB = encoder->max_buffer_size;
@@ -920,7 +920,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   /* Use input system memory with SW HEVC encoder or when linked directly
    * with SW HEVC decoder decoding HEVC main-10 streams */
   if (!g_strcmp0 (encoder->plugin_uid, "2fca99749fdb49aeb121a5b63ef568f7")
-      || encoder->frame_info.FourCC == MFX_FOURCC_P010)
+      || MFX_FOURCC_P010 == encoder->frame_info.FourCC
+      || MFX_FOURCC_NV12 == encoder->frame_info.FourCC)
     memtype_is_system = TRUE;
 
   memset (&enc_request, 0, sizeof (mfxFrameAllocRequest));
@@ -929,11 +930,11 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
 
   sts = MFXVideoENCODE_Query (encoder->session, &encoder->params,
           &encoder->params);
-  if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
+  if (MFX_WRN_PARTIAL_ACCELERATION == sts) {
     GST_WARNING ("Partial acceleration %d", sts);
     memtype_is_system = TRUE;
   }
-  else if (sts == MFX_WRN_INCOMPATIBLE_VIDEO_PARAM) {
+  else if (MFX_WRN_INCOMPATIBLE_VIDEO_PARAM == sts) {
     GST_WARNING ("Incompatible video params detected %d", sts);
   }
 
@@ -989,9 +990,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     gst_mfx_task_set_request(encoder->encode, request);
   }
 
-  /* Need to use filter to avoid stuttering when encoding raw NV12 surfaces */
-  if (encoder->frame_info.FourCC != MFX_FOURCC_NV12 ||
-      encoder->memtype_is_system) {
+  if (MFX_FOURCC_NV12 != encoder->frame_info.FourCC) {
     encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
         encoder->encode, GST_MFX_TASK_VPP_OUT,
         encoder->memtype_is_system, memtype_is_system);
