@@ -175,8 +175,8 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_VBV_MAX_BITRATE,
-      g_param_spec_uint ("vbv-max-bitrate",
-          "VBV maximum bit rate (Kbps)",
+      g_param_spec_uint ("max-bitrate",
+          "Video Buffering Verifier (VBV) maximum bit rate (Kbps)",
           "Maximum bit rate at which encoded data enters the VBV",
           0, G_MAXUINT16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
@@ -893,7 +893,7 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 
     if (encoder->bitrate)
       encoder->params.mfx.TargetKbps = encoder->bitrate;
-    if (encoder->vbv_max_bitrate >= encoder->bitrate)
+    if (encoder->vbv_max_bitrate > encoder->bitrate)
       encoder->params.mfx.MaxKbps = encoder->vbv_max_bitrate;
     encoder->params.mfx.BRCParamMultiplier = encoder->brc_multiplier;
     encoder->params.mfx.BufferSizeInKB = encoder->max_buffer_size;
