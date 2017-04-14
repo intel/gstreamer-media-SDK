@@ -895,9 +895,8 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
       encoder->params.mfx.TargetKbps = encoder->bitrate;
     encoder->params.mfx.BRCParamMultiplier = encoder->brc_multiplier;
     encoder->params.mfx.BufferSizeInKB = encoder->max_buffer_size;
-    encoder->params.mfx.MaxKbps =
-        encoder->vbv_max_bitrate > encoder->bitrate ?
-          encoder->vbv_max_bitrate : encoder->bitrate;
+    if (encoder->vbv_max_bitrate > encoder->bitrate)
+      encoder->params.mfx.MaxKbps = encoder->vbv_max_bitrate;
     encoder->params.mfx.GopRefDist =
         encoder->gop_refdist < 0 ? 3 : encoder->gop_refdist;
 
