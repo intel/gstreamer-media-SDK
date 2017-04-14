@@ -175,7 +175,7 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
   */
   GST_MFX_ENCODER_PROPERTIES_APPEND (props,
       GST_MFX_ENCODER_PROP_VBV_MAX_BITRATE,
-      g_param_spec_uint ("vbv-max-bitrate",
+      g_param_spec_uint ("max-bitrate",
           "VBV maximum bit rate (Kbps)",
           "Maximum bit rate at which encoded data enters the VBV",
           0, G_MAXUINT16, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
