@@ -406,7 +406,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   Picture picture;
   XRenderPictFormat *pic_fmt;
   XWindowAttributes wattr;
-  int fmt, op;
+  int fmt = 0, op = 0;
 
   if (!priv->xcbconn) {
     GST_MFX_DISPLAY_LOCK (x11_display);
