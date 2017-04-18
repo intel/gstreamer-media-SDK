@@ -1032,6 +1032,11 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
 
     composition = gst_mfx_surface_composition_new (surface, overlay);
 
+    if (!composition) {
+      GST_ERROR("Failed to create new surfaces composition");
+      goto error;
+    }
+
     gst_mfx_composite_filter_apply_composition (sink->composite_filter,
         composition, &composite_surface);
   }
