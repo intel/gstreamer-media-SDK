@@ -461,6 +461,10 @@ get_pic_fmt:
   }
   stride = GST_ROUND_UP_16 (src_rect->width) * bpp / 8;
   size = GST_ROUND_UP_N (stride * src_rect->height, 4096);
+  if (!pic_fmt) {
+    GST_ERROR("Unable to initialize picture format.\n");
+    return FALSE;
+  }
 
   GST_MFX_DISPLAY_LOCK (x11_display);
   pixmap = xcb_generate_id (priv->xcbconn);
