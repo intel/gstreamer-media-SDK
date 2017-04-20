@@ -253,77 +253,26 @@ gst_caps_has_mfx_surface (GstCaps * caps)
   return _gst_caps_has_feature (caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 }
 
-/* This is a temporary workaround function for mfxvpp to determine the output
- * memory type. This doesn't work very well with playbin though */
 gboolean
 gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
 {
-  GstPad *peer_sinkpad = NULL;
-  GstElement *element = NULL;
-  GstCaps *caps = NULL, *templ = NULL;
-  gchar *element_name = NULL;
-  gboolean has_raw_caps = FALSE;
+  GstCaps *caps = NULL;
+  gboolean has_raw_caps = TRUE;
 
-  while (1) {
-    peer_sinkpad = gst_pad_get_peer (srcpad);
-    if (!peer_sinkpad)
-      goto cleanup;
+  caps = gst_pad_peer_query_caps (srcpad, NULL);
+  if (!caps)
+    return has_raw_caps;
 
-    caps = gst_pad_get_allowed_caps (peer_sinkpad);
-
-    element = gst_pad_get_parent_element (peer_sinkpad);
-    gst_object_unref (peer_sinkpad);
-
-    if (!element)
-      goto cleanup;
-    srcpad = gst_element_get_static_pad (element, "src");
-
-    if (GST_IS_BIN (element) &&
-        gst_bin_get_by_name (element, "gluploadelement0")) {
+  if (gst_caps_has_mfx_surface (caps)
 #if GST_CHECK_VERSION(1,8,0)
-      has_raw_caps = g_strcmp0(getenv("GST_GL_PLATFORM"), "egl");
-#else
-      has_raw_caps = TRUE;
+      || (!g_strcmp0(getenv("GST_GL_PLATFORM"), "egl")
+          && _gst_caps_has_feature (caps,
+                GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META))
 #endif
-      goto cleanup;
-    }
-    else {
-      element_name = gst_element_get_name (element);
-      if (GST_IS_BASE_TRANSFORM (element)) {
-        if (strncmp (element_name, "mfxpostproc", 11) == 0)
-          continue;
+      )
+    has_raw_caps = FALSE;
 
-        if (strncmp (element_name, "gluploadelement", 15) == 0) {
-#if GST_CHECK_VERSION(1,8,0)
-          has_raw_caps = g_strcmp0(getenv("GST_GL_PLATFORM"), "egl");
-#else
-          has_raw_caps = TRUE;
-#endif
-          goto cleanup;
-        }
-
-        if (!gst_caps_has_mfx_surface (caps))
-          has_raw_caps = TRUE;
-        goto cleanup;
-      }
-
-      templ = gst_pad_get_pad_template_caps (peer_sinkpad);
-
-      if (_gst_caps_has_feature (templ, GST_CAPS_FEATURES_ANY) ||
-          gst_caps_is_any (templ))
-        continue;
-
-      if (!gst_caps_has_mfx_surface (caps))
-        has_raw_caps = TRUE;
-      goto cleanup;
-    }
-  }
-
-cleanup:
-  if (element)
-    g_clear_object (&element);
-  gst_caps_replace (&caps, NULL);
-
+  gst_caps_unref (caps);
   return has_raw_caps;
 }
 
