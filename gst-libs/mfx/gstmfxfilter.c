@@ -1023,6 +1023,9 @@ gst_mfx_filter_start (GstMfxFilter * filter)
     if (MFX_ERR_NONE != sts)
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
   }
+  else {
+    gst_mfx_task_ensure_memtype_is_system (filter->vpp[1]);
+  }
 
   filter->vpp_pool[1] = gst_mfx_surface_pool_new_with_task (filter->vpp[1]);
   if (!filter->vpp_pool[1])

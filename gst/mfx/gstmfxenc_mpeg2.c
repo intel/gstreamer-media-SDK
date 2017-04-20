@@ -25,7 +25,6 @@
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideomemory.h"
 
-#include <gst-libs/mfx/gstmfxdisplay.h>
 #include <gst-libs/mfx/gstmfxencoder_mpeg2.h>
 
 #define GST_PLUGIN_NAME "mfxmpeg2enc"
