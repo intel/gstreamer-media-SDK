@@ -24,7 +24,6 @@
 #include "gstmfxdecoder.h"
 #include "gstmfxfilter.h"
 #include "gstmfxsurfacepool.h"
-#include "gstmfxvideometa.h"
 #include "gstmfxsurface.h"
 #include "gstmfxtask.h"
 
@@ -676,14 +675,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
-  if (!decoder->can_double_deinterlace) {
-    /* Save frames for later synchronization with decoded MFX surfaces */
-    g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
-  }
-  else {
-    g_queue_push_head(&decoder->discarded_frames, frame);
-  }
-
   if (!GST_CLOCK_TIME_IS_VALID(decoder->pts_offset)
       && GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)
       && GST_CLOCK_TIME_IS_VALID (frame->pts))
@@ -715,10 +706,18 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       decoder->was_reset = FALSE;
     }
     else {
-      decoder->num_partial_frames++;
+      g_queue_push_head(&decoder->discarded_frames, frame);
       ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
       goto end;
     }
+  }
+
+  if (!decoder->can_double_deinterlace) {
+    /* Save frames for later synchronization with decoded MFX surfaces */
+    g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
+  }
+  else {
+    g_queue_push_head(&decoder->discarded_frames, frame);
   }
 
   if (minfo.size) {
@@ -774,8 +773,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       /* Discard partial frames */
       while (decoder->num_partial_frames
           && (cur_frame = g_queue_peek_nth (&decoder->pending_frames, n))) {
-        if ((cur_frame->pts < decoder->pts_offset)
-            || ((cur_frame->pts - decoder->pts_offset) % decoder->duration)) {
+        if ((cur_frame->pts - decoder->pts_offset) % decoder->duration) {
           g_queue_push_head(&decoder->discarded_frames,
             g_queue_pop_nth (&decoder->pending_frames, n));
           decoder->num_partial_frames--;

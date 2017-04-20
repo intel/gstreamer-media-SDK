@@ -448,34 +448,6 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 }
 
 static gboolean
-gst_mfxpostproc_update_src_caps (GstMfxPostproc * vpp, GstCaps * caps,
-    gboolean * caps_changed_ptr)
-{
-  GST_INFO_OBJECT (vpp, "new src caps = %" GST_PTR_FORMAT, caps);
-
-  if (!video_info_update (caps, &vpp->srcpad_info, caps_changed_ptr))
-    return FALSE;
-
-  if (GST_VIDEO_INFO_FORMAT (&vpp->sinkpad_info) !=
-      GST_VIDEO_INFO_FORMAT (&vpp->srcpad_info))
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
-
-  if ((vpp->width || vpp->height) &&
-      vpp->width != GST_VIDEO_INFO_WIDTH (&vpp->sinkpad_info) &&
-      vpp->height != GST_VIDEO_INFO_HEIGHT (&vpp->sinkpad_info))
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_SIZE;
-
-  if (vpp->fps_n && gst_util_fraction_compare(
-        GST_VIDEO_INFO_FPS_N (&vpp->srcpad_info),
-        GST_VIDEO_INFO_FPS_D (&vpp->srcpad_info),
-        GST_VIDEO_INFO_FPS_N (&vpp->sinkpad_info),
-        GST_VIDEO_INFO_FPS_D (&vpp->sinkpad_info)))
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
-
-  return TRUE;
-}
-
-static gboolean
 video_info_changed (GstVideoInfo * old_vip, GstVideoInfo * new_vip)
 {
   if (GST_VIDEO_INFO_FORMAT (old_vip) != GST_VIDEO_INFO_FORMAT (new_vip))
@@ -501,6 +473,34 @@ video_info_update (GstCaps * caps, GstVideoInfo * info,
     *caps_changed_ptr = TRUE;
     *info = vi;
   }
+  return TRUE;
+}
+
+static gboolean
+gst_mfxpostproc_update_src_caps (GstMfxPostproc * vpp, GstCaps * caps,
+    gboolean * caps_changed_ptr)
+{
+  GST_INFO_OBJECT (vpp, "new src caps = %" GST_PTR_FORMAT, caps);
+
+  if (!video_info_update (caps, &vpp->srcpad_info, caps_changed_ptr))
+    return FALSE;
+
+  if (GST_VIDEO_INFO_FORMAT (&vpp->sinkpad_info) !=
+      GST_VIDEO_INFO_FORMAT (&vpp->srcpad_info))
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
+
+  if ((vpp->width || vpp->height) &&
+      vpp->width != GST_VIDEO_INFO_WIDTH (&vpp->sinkpad_info) &&
+      vpp->height != GST_VIDEO_INFO_HEIGHT (&vpp->sinkpad_info))
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_SIZE;
+
+  if (vpp->fps_n && gst_util_fraction_compare(
+        GST_VIDEO_INFO_FPS_N (&vpp->srcpad_info),
+        GST_VIDEO_INFO_FPS_D (&vpp->srcpad_info),
+        GST_VIDEO_INFO_FPS_N (&vpp->sinkpad_info),
+        GST_VIDEO_INFO_FPS_D (&vpp->sinkpad_info)))
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+
   return TRUE;
 }
 

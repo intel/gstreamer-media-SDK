@@ -25,7 +25,6 @@
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideomemory.h"
 
-#include <gst-libs/mfx/gstmfxdisplay.h>
 #include <gst-libs/mfx/gstmfxencoder_h264.h>
 #include <gst-libs/mfx/gstmfxutils_h264.h>
 

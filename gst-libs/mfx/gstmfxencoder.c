@@ -23,7 +23,6 @@
 #include "gstmfxencoder_priv.h"
 #include "gstmfxfilter.h"
 #include "gstmfxsurfacepool.h"
-#include "gstmfxvideometa.h"
 #include "gstmfxsurface.h"
 #include "gstmfxtask.h"
 
