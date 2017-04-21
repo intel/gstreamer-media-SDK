@@ -23,7 +23,6 @@
 #include "gstmfxpluginutil.h"
 #include "gstmfxvideomemory.h"
 
-#include <gst-libs/mfx/gstmfxdisplay.h>
 #include <gst-libs/mfx/gstmfxencoder_jpeg.h>
 
 #define GST_PLUGIN_NAME "mfxjpegenc"
