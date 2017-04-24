@@ -96,7 +96,7 @@ struct _GstMfxVideoMemory
   VaapiImage          *image;
   GstMfxVideoMeta     *meta;
   guint                map_type;
-  gpointer             data;
+  guint8              *data;
   gboolean             new_copy;
 };
 

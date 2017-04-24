@@ -1031,9 +1031,8 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
             !gst_mfx_surface_has_video_memory (surface));
 
     composition = gst_mfx_surface_composition_new (surface, overlay);
-
     if (!composition) {
-      GST_ERROR("Failed to create new surfaces composition");
+      GST_ERROR("Failed to create new surface composition");
       goto error;
     }
 

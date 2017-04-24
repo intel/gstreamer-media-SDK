@@ -19,13 +19,10 @@
  */
 
 #include "sysdeps.h"
-#include <va/va.h>
-#include <mfxplugin.h>
-
-#include <common/gstbitwriter.h>
-#include "gst-libs/mfx/sysdeps.h"
+#include "common/gstbitwriter.h"
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_h265.h"
+#include <mfxplugin.h>
 
 #define DEBUG 1
 #include "gstmfxdebug.h"

@@ -32,7 +32,7 @@ copy_image (GstMfxVideoMemory * mem)
   guint8 *src_plane = NULL;
 
   guint data_size = GST_VIDEO_INFO_SIZE (mem->image_info);
-  mem->data = (guint8 *) g_slice_alloc0 (data_size);
+  mem->data = g_slice_alloc (data_size);
   if (!mem->data)
     return FALSE;
 

@@ -18,9 +18,7 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#include <va/va.h>
-
-#include "gst-libs/mfx/sysdeps.h"
+#include "sysdeps.h"
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_jpeg.h"
 

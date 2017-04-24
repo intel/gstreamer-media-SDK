@@ -425,6 +425,8 @@ gst_mfx_filter_finalize (GstMfxFilter * filter)
 {
   guint i;
 
+  MFXVideoVPP_Close (filter->session);
+
   for (i = 0; i < 2; i++) {
     if (!filter->vpp[i])
       continue;
@@ -441,8 +443,6 @@ gst_mfx_filter_finalize (GstMfxFilter * filter)
       filter->ext_buffer);
   g_ptr_array_free (filter->filter_op_data, TRUE);
   gst_mfx_task_aggregator_unref (filter->aggregator);
-
-  MFXVideoVPP_Close (filter->session);
 }
 
 static inline const GstMfxMiniObjectClass *
