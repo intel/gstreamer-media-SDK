@@ -15,6 +15,7 @@ else
   gst_version_nano = 0
 endif
 
+glib_req = '>= 2.40.0'
 gst_req = '>= @0@.@1@.0'.format(gst_version_major, gst_version_minor)
 
 api_version = '1.0'
@@ -112,53 +113,25 @@ libsinc = include_directories('gst-libs')
 
 vs_module_defs_dir = meson.current_source_dir() + '/win32/common/'
 
+
 # To use the subproject make subprojects directory
 # and put gstreamer meson git there (symlinking is fine)
 # Mandatory GST deps
-#gst_dep = dependency('gstreamer-1.0', version : gst_req,
-#  fallback : ['gstreamer', 'gst_dep'])
-#gstbase_dep = dependency('gstreamer-base-1.0', version : gst_req,
-#  fallback : ['gstreamer', 'gstbase_dep'])
-#gsvideo_dep = dependency('gstvideo-1.0', version : gst_req,
-#  fallback : ['gstreamer', 'gsvideo_dep'])
-#if get_option('MFX_VC1_PARSER')
-#  gstcodecparsers_dep = dependency('gstcodecparsers-1.0', version : gst_req,
-#    fallback : ['gstreamer', 'gstcodecparsers_dep'])
-#  gstpbutils_dep = dependency('gstpbutils-1.0', version : gst_req,
-#    fallback : ['gstreamer', 'gstpbutils_dep'])
-#endif
+glib_deps = [dependency('glib-2.0', version : glib_req),
+     dependency('gobject-2.0', version : glib_req)]
+gst_dep = dependency('gstreamer-1.0', version : gst_req,
+  fallback : ['gstreamer', 'gst_dep'])
+gstbase_dep = dependency('gstreamer-base-1.0', version : gst_req,
+  fallback : ['gstreamer', 'gstbase_dep'])
+gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req,
+  fallback : ['gstreamer', 'gstvideo_dep'])
   
-  
-python = find_program('python')
-gst_lib_dir_windows = run_command(python, '-c', 'import os; print(os.environ.get("GSTREAMER_1_0_ROOT_X86_64", ""))').stdout().strip()#find a better way to get env var.
-
-if gst_lib_dir_windows != ''
-  gst_libdir = [gst_lib_dir_windows + '/lib']
-  gst_incdir = include_directories(gst_lib_dir_windows + '/include/gstreamer-1.0')
-  gst_lib = cc.find_library('gstreamer-1.0', dirs: gst_libdir, required: true)
-  gst_dep = declare_dependency(include_directories: gst_incdir, dependencies: [gst_lib])
-
-  if get_option('MFX_VC1_PARSER')
-    gstcodecparsers_lib = cc.find_library('gstcodecparsers-1.0', dirs: gst_libdir, required: false)
-    gstcodecparsers_dep = declare_dependency(include_directories: gst_incdir, dependencies: [gstcodecparsers_lib])
-	gstpbutils_lib = cc.find_library('gstpbutils-1.0', dirs: gst_libdir, required: false)
-    gstpbutils_dep = declare_dependency(include_directories: gst_incdir, dependencies: [gstpbutils_lib])
-  endif
-  
-  gstvideo_lib = cc.find_library('gstvideo-1.0', dirs: gst_libdir, required: true)
-  gstvideo_dep = declare_dependency(include_directories: gst_incdir, dependencies: [gstvideo_lib])
-  
-  gstbase_lib = cc.find_library('gstbase-1.0', dirs: gst_libdir, required: true)
-  gstbase_dep = declare_dependency(include_directories: gst_incdir, dependencies: [gstbase_lib])
-
-  glib_incdir = include_directories(gst_lib_dir_windows + '/include/glib-2.0', gst_lib_dir_windows + '/lib/glib-2.0/include')
-  glib_lib = cc.find_library('glib-2.0', dirs: gst_libdir, required: false)
-  gobject_lib = cc.find_library('gobject-2.0', dirs: gst_libdir, required: false)
-  glib_deps = [declare_dependency(include_directories: glib_incdir, dependencies: [glib_lib]),
-					declare_dependency(include_directories: glib_incdir, dependencies: [gobject_lib])]  
+if get_option('MFX_VC1_PARSER')
+  gstcodecparsers_dep = dependency('gstreamer-codecparsers-1.0', version : gst_req,
+    fallback : ['gstreamer', 'gst_dep'])
+  gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version : gst_req,
+    fallback : ['gstreamer', 'gst_dep'])
 endif
-  
-#todo: declare glib_deps and glib gst_dep like in gst-plugins-good.
 
 #TODO: check if needed: vs_module_defs_dir = meson.current_source_dir() + '/win32/common/'
 
@@ -186,10 +159,10 @@ endif
 #    endif
 #endif
 
-
 mfx_home = get_option('MFX_HOME')
 if mfx_home == ''
-	mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", ""))').stdout().strip()#todo check how to better get env var.
+  python = find_program('python')		 
+  mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", ""))').stdout().strip()#todo check how to better get env var.
 endif
 
 if mfx_home != ''
