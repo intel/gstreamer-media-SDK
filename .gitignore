@@ -2,3 +2,4 @@
 x64/
 gst_msdk/x64/
 *.db
+subprojects
