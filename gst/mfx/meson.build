@@ -8,6 +8,13 @@ gstmfx_sources = [
   'gstmfxvideometa.c',
 ]
 
+gstmfx_dependencies = [
+  gstmfx_dep,
+  glib_deps,
+  gstvideo_dep,
+  gstbase_dep,
+]
+
 if get_option('MFX_DECODER')
   gstmfx_sources += 'gstmfxdec.c'
 endif
@@ -32,11 +39,15 @@ if get_option('MFX_VPP')
   gstmfx_sources += 'gstmfxpostproc.c'
 endif
 
+if get_option('MFX_VC1_PARSER')
+  gstmfx_dependencies += gstmfxvc1parse_dep
+endif
+
 gstmfx = library('gst_mfx',
   gstmfx_sources,
   c_args : gst_mfx_args,
   include_directories: [configinc, libsinc],
-  dependencies : [gstmfx_dep, glib_deps, gstvideo_dep, gstbase_dep, gstmfxvc1parse_dep],
+  dependencies : gstmfx_dependencies,
   install : true,
   install_dir : plugins_install_dir,
 )
