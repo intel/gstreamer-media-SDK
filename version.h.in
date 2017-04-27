@@ -1,14 +1,14 @@
 /* Name of package */
-#define PACKAGE "gstmfx"
+#define PACKAGE "@PACKAGE@"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "GStreamer Media SDK"
+#define PACKAGE_NAME "@GST_PACKAGE_NAME@"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GStreamer Media SDK 1.4.0"
+#define PACKAGE_STRING "@GST_PACKAGE_NAME@ @PACKAGE_VERSION@"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "gstreamer-msdk"
+#define PACKAGE_TARNAME "@GETTEXT_PACKAGE@"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4.0"
+#define PACKAGE_VERSION "@PACKAGE_VERSION@"
