@@ -30,45 +30,8 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-struct _GstMfxDecoder
-{
-  /*< private > */
-  GstMfxMiniObject parent_instance;
-
-  GstMfxTaskAggregator *aggregator;
-  GstMfxTask *decode;
-  GstMfxProfile profile;
-  GstMfxSurfacePool *pool;
-  GstMfxFilter *filter;
-  GByteArray *bitstream;
-  GByteArray *codec_data;
-
-  GQueue decoded_frames;
-  GQueue pending_frames;
-  GQueue discarded_frames;
-
-  mfxSession session;
-  mfxVideoParam params;
-  mfxFrameAllocRequest request;
-  mfxBitstream bs;
-  mfxPluginUID plugin_uid;
-
-  GstVideoInfo info;
-  gboolean inited;
-  gboolean was_reset;
-  gboolean has_ready_frames;
-  gboolean memtype_is_system;
-  gboolean enable_csc;
-  gboolean enable_deinterlace;
-  gboolean skip_corrupted_frames;
-  gboolean can_double_deinterlace;
-  guint num_partial_frames;
-
-  /* For special double frame rate deinterlacing case */
-  GstClockTime current_pts;
-  GstClockTime duration;
-  GstClockTime pts_offset;
-};
+G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder,
+	GST_TYPE_OBJECT);
 
 GstMfxProfile
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
@@ -177,8 +140,9 @@ close_decoder (GstMfxDecoder * decoder)
 }
 
 static void
-gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
+gst_mfx_decoder_finalize (GObject * object)
 {
+  GstMfxDecoder* decoder = GST_MFX_DECODER(object);
   gst_mfx_filter_replace (&decoder->filter, NULL);
 
   g_byte_array_unref (decoder->bitstream);
@@ -358,107 +322,93 @@ error_query_request:
 }
 
 static gboolean
-gst_mfx_decoder_init (GstMfxDecoder * decoder,
-    GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-    const GstVideoInfo * info, mfxU16 async_depth, gboolean live_mode)
+gst_mfx_decoder_create(GstMfxDecoder * decoder,
+	GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
+	const GstVideoInfo * info, mfxU16 async_depth, gboolean live_mode)
 {
-  decoder->profile = profile;
-  decoder->info = *info;
-  if (!decoder->info.fps_n)
-    decoder->info.fps_n = 30;
-  decoder->duration =
-      (decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
+	decoder->profile = profile;
+	decoder->info = *info;
+	if (!decoder->info.fps_n)
+		decoder->info.fps_n = 30;
+	decoder->duration =
+		(decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
 
-  decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
-  decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
-  if (live_mode) {
-    decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
-    /* This is a special fix for Android Auto / Apple Carplay issues */
-    if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
-      decoder->params.mfx.DecodedOrder = 1;
-  }
+	decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
+	decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
+	if (live_mode) {
+		decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
+		/* This is a special fix for Android Auto / Apple Carplay issues */
+		if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
+			decoder->params.mfx.DecodedOrder = 1;
+	}
 
-  decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-  decoder->inited = FALSE;
-  decoder->bs.MaxLength = 1024 * 16;
-  decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
-  if (!decoder->bitstream)
-    return FALSE;
+	decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+	decoder->inited = FALSE;
+	decoder->bs.MaxLength = 1024 * 16;
+	decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
+	if (!decoder->bitstream)
+		return FALSE;
 
-  decoder->pts_offset = GST_CLOCK_TIME_NONE;
+	decoder->pts_offset = GST_CLOCK_TIME_NONE;
 
-  g_queue_init (&decoder->decoded_frames);
-  g_queue_init (&decoder->pending_frames);
-  g_queue_init (&decoder->discarded_frames);
+	g_queue_init (&decoder->decoded_frames);
+	g_queue_init (&decoder->pending_frames);
+	g_queue_init (&decoder->discarded_frames);
 
-  decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
-  if (!task_init(decoder))
-    goto error_init_task;
+	decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
+	if (!task_init(decoder))
+		goto error_init_task;
 
-  return TRUE;
+	return TRUE;
 
 error_init_task:
-  {
-    g_byte_array_unref (decoder->bitstream);
-    return FALSE;
-  }
+	{
+		g_byte_array_unref (decoder->bitstream);
+		return FALSE;
+	}
 }
 
-static inline const GstMfxMiniObjectClass *
-gst_mfx_decoder_class (void)
+static void
+gst_mfx_decoder_init (GstMfxDecoder * decoder)
 {
-  static const GstMfxMiniObjectClass GstMfxDecoderClass = {
-    sizeof (GstMfxDecoder),
-    (GDestroyNotify) gst_mfx_decoder_finalize
-  };
-  return &GstMfxDecoderClass;
 }
 
 GstMfxDecoder *
-gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_decoder_new (GstMfxDecoder * decoder, GstMfxTaskAggregator * aggregator,
     GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
     gboolean live_mode)
 {
-  GstMfxDecoder *decoder;
-
+  g_return_val_if_fail (decoder != NULL, NULL);
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  decoder = gst_mfx_mini_object_new0 (gst_mfx_decoder_class ());
-  if (!decoder)
-    goto error;
-
-  if (!gst_mfx_decoder_init (decoder, aggregator, profile, info,
-            async_depth, live_mode))
-    goto error;
+  if (!gst_mfx_decoder_create (decoder, aggregator, profile, info,
+	  async_depth, live_mode))
+	  goto error;
 
   return decoder;
 error:
-  gst_mfx_mini_object_unref (decoder);
+  gst_mfx_decoder_unref (decoder);
   return NULL;
 }
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder)
 {
-  g_return_val_if_fail (decoder != NULL, NULL);
-
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (decoder));
+	return ((gpointer)gst_object_ref (GST_OBJECT(decoder)));
 }
 
 void
 gst_mfx_decoder_unref (GstMfxDecoder * decoder)
 {
-  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (decoder));
+	gst_object_unref (GST_OBJECT(decoder));
 }
 
 void
 gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
     GstMfxDecoder * new_decoder)
 {
-  g_return_if_fail (old_decoder_ptr != NULL);
-
-  gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_decoder_ptr,
-      GST_MFX_MINI_OBJECT (new_decoder));
+	gst_object_replace((GstObject **) old_decoder_ptr,
+		GST_OBJECT (new_decoder));
 }
 
 static GstMfxDecoderStatus
@@ -926,4 +876,11 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
     ret = GST_MFX_DECODER_STATUS_FLUSHED;
   }
   return ret;
+}
+
+static void
+gst_mfx_decoder_class_init(GstMfxDecoderClass * klass)
+{
+	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+	object_class->finalize = gst_mfx_decoder_finalize;
 }

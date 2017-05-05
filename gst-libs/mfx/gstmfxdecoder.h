@@ -23,15 +23,104 @@
 #ifndef GST_MFX_DECODER_H
 #define GST_MFX_DECODER_H
 
+#include <mfxplugin.h>
 #include "gstmfxsurface.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxprofile.h"
+#include "gstmfxfilter.h"
 
 G_BEGIN_DECLS
 
-#define GST_MFX_DECODER(obj) ((GstMfxDecoder *)(obj))
+#define GST_TYPE_MFX_DECODER (gst_mfx_decoder_get_type ())
+
+#define GST_MFX_DECODER(obj) \
+    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_DECODER, GstMfxDecoder))
+
+#define GST_MFX_IS_DECODER(obj) \
+    (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFX_DECODER))
+
+#define GST_MFX_DECODER_CAST(display) \
+    ((GstMfxDecoder *)(display))
+
+#define GST_MFX_DECODER_GET_PRIVATE(display) \
+    (GST_MFX_DECODER_CAST (display)->priv)
+
+#define GST_MFX_DECODER_CLASS(klass) \
+    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_DECODER, GstMfxDecoderClass))
+
+#define GST_MFX_IS_DECODER_CLASS(klass) \
+    (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFX_DECODER))
+
+#define GST_MFX_DECODER_GET_CLASS(obj) \
+    (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFX_DECODER, GstMfxDecoderClass))
+
+/**
+* GST_MFX_DECODER_GET_CLASS_TYPE:
+* @decoder: a #GstMfxDecoder
+*
+* Returns the #decoder class type
+* This is an internal macro that does not do any run-time type check.
+*/
+#undef  GST_MFX_DECODER_GET_CLASS_TYPE
+#define GST_MFX_DECODER_GET_CLASS_TYPE(decoder) \
+    GST_MFX_DECODER_GET_CLASS (GST_MFX_DECODER (decoder))
+
 
 typedef struct _GstMfxDecoder GstMfxDecoder;
+typedef struct _GstMfxDecoderClass GstMfxDecoderClass;
+
+struct _GstMfxDecoder
+{
+	/*< private > */
+	GstObject parent_instance;
+
+	GstMfxTaskAggregator *aggregator;
+	GstMfxTask *decode;
+	GstMfxProfile profile;
+	GstMfxSurfacePool *pool;
+	GstMfxFilter *filter;
+	GByteArray *bitstream;
+	GByteArray *codec_data;
+
+	GQueue decoded_frames;
+	GQueue pending_frames;
+	GQueue discarded_frames;
+
+	mfxSession session;
+	mfxVideoParam params;
+	mfxFrameAllocRequest request;
+	mfxBitstream bs;
+	mfxPluginUID plugin_uid;
+
+	GstVideoInfo info;
+	gboolean inited;
+	gboolean was_reset;
+	gboolean has_ready_frames;
+	gboolean memtype_is_system;
+	gboolean enable_csc;
+	gboolean enable_deinterlace;
+	gboolean skip_corrupted_frames;
+	gboolean can_double_deinterlace;
+	guint num_partial_frames;
+
+	/* For special double frame rate deinterlacing case */
+	GstClockTime current_pts;
+	GstClockTime duration;
+	GstClockTime pts_offset;
+};
+
+//TODO: cleanup.
+struct _GstMfxDecoderClass
+{
+	/*< private >*/
+	GstObjectClass parent_class;
+
+	/*< protected >*/
+	//guint display_type;
+
+	/*< public >*/
+	//void(*init)            (GstMfxDecoder * decoder);
+};
 
 /**
 * GstMfxDecoderStatus:
@@ -67,9 +156,12 @@ typedef enum {
 } GstMfxDecoderStatus;
 
 GstMfxDecoder *
-gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_decoder_new (GstMfxDecoder * decoder, GstMfxTaskAggregator * aggregator,
     GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
     gboolean live_mode);
+
+GType
+gst_mfx_decoder_get_type(void) G_GNUC_CONST;
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder);
