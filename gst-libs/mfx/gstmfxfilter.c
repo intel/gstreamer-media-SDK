@@ -202,10 +202,10 @@ configure_filters (GstMfxFilter * filter)
   filter requested, deallocate resources when resetting */
   if (filter->vpp_use.AlgList &&
       (len != filter->vpp_use.NumAlg)) {
-    g_slice_free1 (filter->vpp_use.AlgList,
-        (filter->vpp_use.NumAlg * sizeof (mfxU32)));
-    g_slice_free1 (filter->ext_buffer,
-        ((filter->vpp_use.NumAlg + 1) * sizeof (mfxExtBuffer *)));
+    g_slice_free1 (filter->vpp_use.NumAlg * sizeof (mfxU32),
+		filter->vpp_use.AlgList);
+	g_slice_free1(filter->params.NumExtParam * sizeof(mfxExtBuffer *),
+		filter->ext_buffer);
   }
   if (!len)
     return FALSE;
