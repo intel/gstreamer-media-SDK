@@ -878,6 +878,8 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
   mfxSyncPoint syncp;
   mfxStatus sts;
 
+  g_return_val_if_fail(decoder != NULL, GST_MFX_DECODER_STATUS_FLUSHED);
+
   do {
     surface = gst_mfx_surface_new_from_pool (decoder->pool);
     if (!surface)
