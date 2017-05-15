@@ -30,8 +30,47 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder,
-	GST_TYPE_OBJECT);
+struct _GstMfxDecoder
+{
+	/*< private > */
+	GstObject parent_instance;
+
+	GstMfxTaskAggregator *aggregator;
+	GstMfxTask *decode;
+	GstMfxProfile profile;
+	GstMfxSurfacePool *pool;
+	GstMfxFilter *filter;
+	GByteArray *bitstream;
+	GByteArray *codec_data;
+
+	GQueue decoded_frames;
+	GQueue pending_frames;
+	GQueue discarded_frames;
+
+	mfxSession session;
+	mfxVideoParam params;
+	mfxFrameAllocRequest request;
+	mfxBitstream bs;
+	mfxPluginUID plugin_uid;
+
+	GstVideoInfo info;
+	gboolean inited;
+	gboolean was_reset;
+	gboolean has_ready_frames;
+	gboolean memtype_is_system;
+	gboolean enable_csc;
+	gboolean enable_deinterlace;
+	gboolean skip_corrupted_frames;
+	gboolean can_double_deinterlace;
+	guint num_partial_frames;
+
+	/* For special double frame rate deinterlacing case */
+	GstClockTime current_pts;
+	GstClockTime duration;
+	GstClockTime pts_offset;
+};
+
+G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
 
 GstMfxProfile
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
