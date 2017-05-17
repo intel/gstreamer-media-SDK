@@ -457,6 +457,7 @@ gst_mfx_video_allocator_new (
   allocator->image_info = *vip;
 
   allocator->surface_pool = gst_mfx_surface_pool_new (
+	  g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL),
       &allocator->image_info, mapped);
   if (!allocator->surface_pool)
     goto error_create_surface_pool;

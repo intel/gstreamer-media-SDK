@@ -22,7 +22,6 @@
 
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
-#include "gstmfxminiobject.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -30,7 +29,7 @@
 struct _GstMfxSurfacePool
 {
   /*< private > */
-  GstMfxMiniObject parent_instance;
+  GstObject parent_instance;
 
   GstMfxTask *task;
   GstVideoInfo info;
@@ -40,6 +39,8 @@ struct _GstMfxSurfacePool
   guint used_count;
   GMutex mutex;
 };
+
+G_DEFINE_TYPE(GstMfxSurfacePool, gst_mfx_surface_pool, GST_TYPE_OBJECT);
 
 static void
 gst_mfx_surface_pool_put_surface (GstMfxSurfacePool * pool,
@@ -66,7 +67,7 @@ release_surfaces (gpointer surface, gpointer pool)
 }
 
 static void
-gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
+gst_mfx_surface_pool_create (GstMfxSurfacePool * pool)
 {
   pool->used_surfaces = NULL;
   pool->used_count = 0;
@@ -75,9 +76,10 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
   g_mutex_init (&pool->mutex);
 }
 
-void
-gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
+static void
+gst_mfx_surface_pool_finalize (GObject * object)
 {
+  GstMfxSurfacePool *pool = GST_MFX_SURFACE_POOL(object);
   GstMfxSurface *surface;
 
   while (g_list_length(pool->used_surfaces)) {
@@ -94,52 +96,30 @@ gst_mfx_surface_pool_finalize (GstMfxSurfacePool * pool)
   gst_mfx_task_replace (&pool->task, NULL);
 }
 
-static inline const GstMfxMiniObjectClass *
-gst_mfx_surface_pool_class (void)
-{
-  static const GstMfxMiniObjectClass GstMfxSurfacePoolClass = {
-    sizeof (GstMfxSurfacePool),
-    (GDestroyNotify) gst_mfx_surface_pool_finalize
-  };
-  return &GstMfxSurfacePoolClass;
-}
-
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new (const GstVideoInfo * info,
+gst_mfx_surface_pool_new (GstMfxSurfacePool * pool, const GstVideoInfo * info,
 	gboolean memtype_is_system)
 {
-  GstMfxSurfacePool *pool;
-
-  g_return_val_if_fail (info != NULL, NULL);
-
-  pool = (GstMfxSurfacePool *)
-      gst_mfx_mini_object_new0 (gst_mfx_surface_pool_class ());
-  if (!pool)
-    return NULL;
+  g_return_val_if_fail(pool != NULL, NULL);
+  g_return_val_if_fail(info != NULL, NULL);
 
   pool->memtype_is_system = memtype_is_system;
   pool->info = *info;
 
-  gst_mfx_surface_pool_init (pool);
+  gst_mfx_surface_pool_create (pool);
 
   return pool;
 }
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new_with_task (GstMfxTask * task)
-{
-  GstMfxSurfacePool *pool;
-
+gst_mfx_surface_pool_new_with_task (GstMfxSurfacePool * pool, GstMfxTask * task)
+{ 
+  g_return_val_if_fail (pool != NULL, NULL);
   g_return_val_if_fail (task != NULL, NULL);
-
-  pool = (GstMfxSurfacePool *)
-      gst_mfx_mini_object_new0 (gst_mfx_surface_pool_class ());
-  if (!pool)
-    return NULL;
 
   pool->task = gst_mfx_task_ref (task);
   pool->memtype_is_system = !gst_mfx_task_has_video_memory (task);
-  gst_mfx_surface_pool_init (pool);
+  gst_mfx_surface_pool_create (pool);
 
   return pool;
 }
@@ -149,13 +129,13 @@ gst_mfx_surface_pool_ref (GstMfxSurfacePool * pool)
 {
   g_return_val_if_fail (pool != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (pool));
+  return gst_object_ref (GST_OBJECT (pool));
 }
 
 void
 gst_mfx_surface_pool_unref (GstMfxSurfacePool * pool)
 {
-  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (pool));
+	gst_object_unref (GST_OBJECT(pool));
 }
 
 void
@@ -164,8 +144,8 @@ gst_mfx_surface_pool_replace (GstMfxSurfacePool ** old_pool_ptr,
 {
   g_return_if_fail (old_pool_ptr != NULL);
 
-  gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_pool_ptr,
-      GST_MFX_MINI_OBJECT (new_pool));
+  gst_object_replace ((GstObject **) old_pool_ptr,
+	  GST_OBJECT (new_pool));
 }
 
 
@@ -249,4 +229,16 @@ gst_mfx_surface_pool_find_surface (GstMfxSurfacePool * pool,
       sync_output_surface);
 
   return GST_MFX_SURFACE (l->data);
+}
+
+static void
+gst_mfx_surface_pool_init(GstMfxSurfacePool * pool)
+{
+}
+
+static void
+gst_mfx_surface_pool_class_init(GstMfxSurfacePoolClass * klass)
+{
+	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+	object_class->finalize = gst_mfx_surface_pool_finalize;
 }

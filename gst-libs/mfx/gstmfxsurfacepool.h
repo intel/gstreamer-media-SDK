@@ -27,15 +27,17 @@
 
 G_BEGIN_DECLS
 
+#define GST_TYPE_MFX_SURFACE_POOL (gst_mfx_surface_pool_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxSurfacePool, gst_mfx_surface_pool, GST_MFX, SURFACE_POOL, GstObject)
 #define GST_MFX_SURFACE_POOL(obj) \
   ((GstMfxSurfacePool *)(obj))
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new (const GstVideoInfo * info,
+gst_mfx_surface_pool_new (GstMfxSurfacePool * pool, const GstVideoInfo * info,
     gboolean memtype_is_system);
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new_with_task (GstMfxTask * task);
+gst_mfx_surface_pool_new_with_task (GstMfxSurfacePool * pool, GstMfxTask * task);
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_ref (GstMfxSurfacePool * pool);

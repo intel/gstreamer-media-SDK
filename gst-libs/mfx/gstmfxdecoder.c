@@ -163,7 +163,8 @@ init_decoder (GstMfxDecoder * decoder)
   }
 
   if (!decoder->pool) {
-    decoder->pool = gst_mfx_surface_pool_new_with_task (decoder->decode);
+    decoder->pool = gst_mfx_surface_pool_new_with_task (
+		g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), decoder->decode);
     if (!decoder->pool)
       return FALSE;
   }

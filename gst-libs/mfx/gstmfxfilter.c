@@ -340,7 +340,8 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
         return FALSE;
     }
 
-    filter->vpp_pool[0] = gst_mfx_surface_pool_new_with_task (filter->vpp[0]);
+    filter->vpp_pool[0] = gst_mfx_surface_pool_new_with_task (
+		g_object_new( GST_TYPE_MFX_SURFACE_POOL, NULL), filter->vpp[0]);
     if (!filter->vpp_pool[0])
       return FALSE;
   }
@@ -1030,7 +1031,8 @@ gst_mfx_filter_start (GstMfxFilter * filter)
 	gst_mfx_task_ensure_memtype_is_system(filter->vpp[1]);
   }
 
-  filter->vpp_pool[1] = gst_mfx_surface_pool_new_with_task (filter->vpp[1]);
+  filter->vpp_pool[1] = gst_mfx_surface_pool_new_with_task (
+	  g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), filter->vpp[1]);
   if (!filter->vpp_pool[1])
     return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 
