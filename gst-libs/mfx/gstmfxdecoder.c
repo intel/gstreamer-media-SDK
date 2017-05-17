@@ -288,10 +288,14 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   frame_info->BitDepthLuma = 8;
 
   frame_info->Width = GST_ROUND_UP_16 (decoder->info.width);
-  frame_info->Height =
-      (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
-          GST_ROUND_UP_16 (decoder->info.height) :
-          GST_ROUND_UP_32 (decoder->info.height);
+  if (decoder->params.mfx.CodecId == MFX_CODEC_HEVC) {
+    frame_info->Height = GST_ROUND_UP_32 (decoder->info.height);
+  } else {
+    frame_info->Height =
+         (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
+              GST_ROUND_UP_16 (decoder->info.height) :
+              GST_ROUND_UP_32 (decoder->info.height);
+  }
 
   decoder->params.mfx.CodecProfile =
       gst_mfx_profile_get_codec_profile(decoder->profile);
