@@ -38,7 +38,6 @@ G_DECLARE_FINAL_TYPE(GstMfxTask, gst_mfx_task, GST_MFX, TASK, GstObject)
 #define GST_MFX_TASK_DISPLAY(task) \
   gst_mfx_task_get_display (task)
 
-
 typedef struct _GstMfxTaskAggregator GstMfxTaskAggregator;
 
 typedef enum {

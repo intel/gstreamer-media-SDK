@@ -31,56 +31,27 @@
 struct _GstMfxTaskAggregator
 {
   /*< private > */
-  GstMfxMiniObject parent_instance;
+  GstObject parent_instance;
 
   GList *cache;
   GstMfxTask *current_task;
   mfxSession parent_session;
 };
 
+G_DEFINE_TYPE(GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_TYPE_OBJECT);
+
 static void
-gst_mfx_task_aggregator_finalize (GstMfxTaskAggregator * aggregator)
+gst_mfx_task_aggregator_finalize (GObject * object)
 {
+  GstMfxTaskAggregator* aggregator = GST_MFX_TASK_AGGREGATOR(object);
   MFXClose (aggregator->parent_session);
   g_list_free(aggregator->cache);
 }
 
-static inline const GstMfxMiniObjectClass *
-gst_mfx_task_aggregator_class (void)
+static void
+gst_mfx_task_aggregator_init(GstMfxTaskAggregator * aggregator)
 {
-  static const GstMfxMiniObjectClass GstMfxTaskAggregatorClass = {
-    sizeof (GstMfxTaskAggregator),
-    (GDestroyNotify) gst_mfx_task_aggregator_finalize
-  };
-  return &GstMfxTaskAggregatorClass;
-}
-
-static gboolean
-aggregator_create (GstMfxTaskAggregator * aggregator)
-{
-  g_return_val_if_fail (aggregator != NULL, FALSE);
-
-  aggregator->cache = NULL;
-
-  return TRUE;
-}
-
-GstMfxTaskAggregator *
-gst_mfx_task_aggregator_new (void)
-{
-  GstMfxTaskAggregator *aggregator;
-
-  aggregator = gst_mfx_mini_object_new0 (gst_mfx_task_aggregator_class ());
-  if (!aggregator)
-    return NULL;
-
-  if (!aggregator_create (aggregator))
-    goto error;
-
-  return aggregator;
-error:
-  gst_mfx_task_aggregator_unref (aggregator);
-  return NULL;
+	aggregator->cache = NULL;
 }
 
 GstMfxTaskAggregator *
@@ -88,13 +59,13 @@ gst_mfx_task_aggregator_ref (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (aggregator));
+  return gst_object_ref (GST_OBJECT (aggregator));
 }
 
 void
 gst_mfx_task_aggregator_unref (GstMfxTaskAggregator * aggregator)
 {
-  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (aggregator));
+  gst_object_unref (GST_OBJECT(aggregator));
 }
 
 void
@@ -103,8 +74,8 @@ gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
 {
   g_return_if_fail (old_aggregator_ptr != NULL);
 
-  gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_aggregator_ptr,
-      GST_MFX_MINI_OBJECT (new_aggregator));
+  gst_object_replace ((GstObject **) old_aggregator_ptr,
+	  GST_OBJECT(new_aggregator));
 }
 
 mfxSession
@@ -247,4 +218,11 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
     }
     memtype_is_system = !!(params->IOPattern & MFX_IOPATTERN_IN_SYSTEM_MEMORY);
   } while (memtype_is_system);
+}
+
+static void
+gst_mfx_task_aggregator_class_init(GstMfxTaskAggregatorClass * klass)
+{
+	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+	object_class->finalize = gst_mfx_task_aggregator_finalize;
 }

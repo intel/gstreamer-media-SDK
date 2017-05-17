@@ -21,19 +21,17 @@
 #ifndef GST_MFX_TASK_AGGREGATOR_H
 #define GST_MFX_TASK_AGGREGATOR_H
 
-#include "gstmfxminiobject.h"
 #include "gstmfxtask.h"
 
 #include <mfxvideo.h>
 
 G_BEGIN_DECLS
 
-#define GST_MFX_TASK_AGGREGATOR (obj) \
+#define GST_TYPE_MFX_TASK_AGGREGATOR (gst_mfx_task_aggregator_get_type ())
+G_DECLARE_FINAL_TYPE( GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_MFX, TASK_AGGREGATOR, GstObject)
+
+#define GST_MFX_TASK_AGGREGATOR(obj) \
   ((GstMfxTaskAggregator *) (obj))
-
-
-GstMfxTaskAggregator *
-gst_mfx_task_aggregator_new (void);
 
 GstMfxTask *
 gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator);

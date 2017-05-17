@@ -38,7 +38,7 @@ gst_mfx_ensure_aggregator (GstElement * element)
   if (gst_mfx_video_context_prepare (element, &plugin->aggregator))
     return TRUE;
 
-  aggregator = gst_mfx_task_aggregator_new ();
+  aggregator = g_object_new(GST_TYPE_MFX_TASK_AGGREGATOR, NULL);
   if (!aggregator)
     return FALSE;
 

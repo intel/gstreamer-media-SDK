@@ -23,6 +23,7 @@
 #ifndef GST_MFX_ENCODER_PRIV_H
 #define GST_MFX_ENCODER_PRIV_H
 
+#include "gstmfxminiobject.h"
 #include "gstmfxencoder.h"
 #include "gstmfxfilter.h"
 #include "gstmfxsurfacepool.h"
