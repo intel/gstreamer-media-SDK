@@ -28,7 +28,10 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GstMfxFilter                    GstMfxFilter;
+#define GST_TYPE_MFX_FILTER (gst_mfx_filter_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxFilter, gst_mfx_filter, GST_MFX, FILTER, GstObject)
+
+#define GST_MFX_FILTER(obj) ((GstMfxFilter *)(obj))
 
 /**
  * GstMfxFilterStatus:
@@ -149,11 +152,11 @@ typedef enum {
 } GstMfxRotation;
 
 GstMfxFilter *
-gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
     gboolean is_system_in, gboolean is_system_out);
 
 GstMfxFilter *
-gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new_with_task (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
     GstMfxTask * task, GstMfxTaskType type,
     gboolean is_system_in, gboolean is_system_out);
 

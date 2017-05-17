@@ -513,8 +513,8 @@ init_filter (GstMfxDecoder * decoder)
   mfxU32 output_fourcc =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
 
-  decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
-    decoder->decode, GST_MFX_TASK_VPP_IN,
+  decoder->filter = gst_mfx_filter_new_with_task (g_object_new(GST_TYPE_MFX_FILTER, NULL), 
+	  decoder->aggregator, decoder->decode, GST_MFX_TASK_VPP_IN,
     decoder->memtype_is_system, decoder->memtype_is_system);
   if (!decoder->filter) {
     GST_ERROR ("Unable to initialize filter.");

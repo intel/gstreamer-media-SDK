@@ -991,8 +991,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   }
 
   if (MFX_FOURCC_NV12 != encoder->frame_info.FourCC) {
-    encoder->filter = gst_mfx_filter_new_with_task (encoder->aggregator,
-        encoder->encode, GST_MFX_TASK_VPP_OUT,
+    encoder->filter = gst_mfx_filter_new_with_task (g_object_new(GST_TYPE_MFX_FILTER, NULL),
+		encoder->aggregator, encoder->encode, GST_MFX_TASK_VPP_OUT,
         encoder->memtype_is_system, memtype_is_system);
 
     request->NumFrameSuggested += (1 - encoder->params.AsyncDepth);

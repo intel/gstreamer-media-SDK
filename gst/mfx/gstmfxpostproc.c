@@ -436,7 +436,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
   plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
 
-  vpp->filter = gst_mfx_filter_new (plugin->aggregator,
+  vpp->filter = gst_mfx_filter_new (g_object_new(GST_TYPE_MFX_FILTER, NULL), plugin->aggregator,
       plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
   if (!vpp->filter)
     return FALSE;

@@ -30,9 +30,6 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-#define GST_MFX_FILTER(obj) \
-  ((GstMfxFilter *)(obj))
-
 typedef struct _GstMfxFilterOpData GstMfxFilterOpData;
 
 typedef struct
@@ -52,7 +49,7 @@ struct _GstMfxFilterOpData
 struct _GstMfxFilter
 {
   /*< private > */
-  GstMfxMiniObject parent_instance;
+  GstObject parent_instance;
   GstMfxTaskAggregator *aggregator;
   GstMfxTask *vpp[2];
   GstMfxSurfacePool *vpp_pool[2];
@@ -79,6 +76,8 @@ struct _GstMfxFilter
   mfxExtBuffer **ext_buffer;
   mfxExtVPPDoUse vpp_use;
 };
+
+G_DEFINE_TYPE(GstMfxFilter, gst_mfx_filter, GST_TYPE_OBJECT)
 
 static const GstMfxFilterMap filter_map[] = {
   {GST_MFX_FILTER_DEINTERLACING, MFX_EXTBUFF_VPP_DEINTERLACING,
@@ -381,7 +380,7 @@ gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags)
 }
 
 static gboolean
-gst_mfx_filter_init (GstMfxFilter * filter,
+gst_mfx_filter_create (GstMfxFilter * filter,
     GstMfxTaskAggregator * aggregator,
     gboolean is_system_in, gboolean is_system_out)
 {
@@ -423,8 +422,9 @@ gst_mfx_filter_init (GstMfxFilter * filter,
 }
 
 static void
-gst_mfx_filter_finalize (GstMfxFilter * filter)
+gst_mfx_filter_finalize (GObject * object)
 {
+  GstMfxFilter * filter = GST_MFX_FILTER (object);
   guint i;
 
   MFXVideoVPP_Close(filter->session);
@@ -447,66 +447,56 @@ gst_mfx_filter_finalize (GstMfxFilter * filter)
   gst_mfx_task_aggregator_unref (filter->aggregator);
 }
 
-static inline const GstMfxMiniObjectClass *
-gst_mfx_filter_class (void)
+static void
+gst_mfx_filter_init(GstMfxFilter * decoder)
 {
-  static const GstMfxMiniObjectClass GstMfxFilterClass = {
-    sizeof (GstMfxFilter),
-    (GDestroyNotify) gst_mfx_filter_finalize
-  };
-  return &GstMfxFilterClass;
+}
+
+static void
+gst_mfx_filter_class_init(GstMfxFilterClass * klass)
+{
+	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+	object_class->finalize = gst_mfx_filter_finalize;
 }
 
 GstMfxFilter *
-gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
     gboolean is_system_in, gboolean is_system_out)
 {
-  GstMfxFilter *filter;
-
+  g_return_val_if_fail(filter != NULL, NULL);
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  filter = (GstMfxFilter *)
-      gst_mfx_mini_object_new0 (gst_mfx_filter_class ());
-  if (!filter)
-    return NULL;
-
-  if (!gst_mfx_filter_init (filter, aggregator, is_system_in, is_system_out))
+  if (!gst_mfx_filter_create (filter, aggregator, is_system_in, is_system_out))
     goto error;
 
   return filter;
 
 error:
-  gst_mfx_mini_object_unref (filter);
+  gst_object_unref (filter);
   return NULL;
 }
 
 GstMfxFilter *
-gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new_with_task (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
     GstMfxTask * task, GstMfxTaskType type,
     gboolean is_system_in, gboolean is_system_out)
 {
-  GstMfxFilter *filter;
-
-  g_return_val_if_fail (aggregator != NULL, NULL);
-  g_return_val_if_fail (task != NULL, NULL);
-
-  filter = (GstMfxFilter *)
-      gst_mfx_mini_object_new0 (gst_mfx_filter_class ());
-  if (!filter)
-    return NULL;
+	g_return_val_if_fail(filter != NULL, NULL);
+	g_return_val_if_fail(aggregator != NULL, NULL);
+	g_return_val_if_fail (task != NULL, NULL);
 
   filter->session = gst_mfx_task_get_session (task);
   filter->vpp[!!(type & GST_MFX_TASK_VPP_OUT)] = gst_mfx_task_ref (task);
 
   gst_mfx_task_set_task_type (task, gst_mfx_task_get_task_type (task) | type);
 
-  if (!gst_mfx_filter_init (filter, aggregator, is_system_in, is_system_out))
+  if (!gst_mfx_filter_create (filter, aggregator, is_system_in, is_system_out))
     goto error;
 
   return filter;
 
 error:
-  gst_mfx_mini_object_unref (filter);
+  gst_object_unref (filter);
   return NULL;
 }
 
@@ -517,7 +507,7 @@ gst_mfx_filter_ref (GstMfxFilter * filter)
   g_return_val_if_fail (filter != NULL, NULL);
 
   return
-      GST_MFX_FILTER (gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (filter)));
+      GST_MFX_FILTER (gst_object_ref (GST_OBJECT (filter)));
 }
 
 void
@@ -525,7 +515,7 @@ gst_mfx_filter_unref (GstMfxFilter * filter)
 {
   g_return_if_fail (filter != NULL);
 
-  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (filter));
+  gst_object_unref (GST_OBJECT(filter));
 }
 
 
@@ -535,8 +525,8 @@ gst_mfx_filter_replace (GstMfxFilter ** old_filter_ptr,
 {
   g_return_if_fail (old_filter_ptr != NULL);
 
-  gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_filter_ptr,
-      GST_MFX_MINI_OBJECT (new_filter));
+  gst_object_replace ((GstObject **) old_filter_ptr,
+      GST_OBJECT (new_filter));
 }
 
 GstMfxSurfacePool *
