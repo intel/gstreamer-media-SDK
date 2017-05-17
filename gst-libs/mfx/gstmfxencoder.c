@@ -458,8 +458,8 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
 static void
 init_encoder_task (GstMfxEncoder * encoder)
 {
-  encoder->encode = gst_mfx_task_new (encoder->aggregator,
-      GST_MFX_TASK_ENCODER);
+  encoder->encode = gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL), 
+	  encoder->aggregator, GST_MFX_TASK_ENCODER);
   encoder->session = gst_mfx_task_get_session (encoder->encode);
   gst_mfx_task_aggregator_set_current_task (encoder->aggregator,
       encoder->encode);

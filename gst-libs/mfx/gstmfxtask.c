@@ -39,7 +39,7 @@ struct _ResponseData
 
 struct _GstMfxTask
 {
-  GstMfxMiniObject parent_instance;
+  GstObject parent_instance;
 
   GstMfxTaskAggregator *aggregator;
   GList *saved_responses;
@@ -50,6 +50,8 @@ struct _GstMfxTask
   gboolean memtype_is_system;
   gboolean is_joined;
 };
+
+G_DEFINE_TYPE(GstMfxTask, gst_mfx_task, GST_TYPE_OBJECT);
 
 static gint
 find_response (gconstpointer response_data, gconstpointer response)
@@ -229,8 +231,9 @@ gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params)
 }
 
 static void
-gst_mfx_task_finalize (GstMfxTask * task)
+gst_mfx_task_finalize (GObject * object)
 {
+  GstMfxTask* task = GST_MFX_TASK(object);
   if (task->is_joined) {
     MFXDisjoinSession (task->session);
     MFXClose (task->session);
@@ -240,19 +243,20 @@ gst_mfx_task_finalize (GstMfxTask * task)
   g_list_free_full (task->saved_responses, g_free);
 }
 
-
-static inline const GstMfxMiniObjectClass *
-gst_mfx_task_class (void)
+static void
+gst_mfx_task_class_init (GstMfxTaskClass * klass)
 {
-  static const GstMfxMiniObjectClass GstMfxTaskClass = {
-    sizeof (GstMfxTask),
-    (GDestroyNotify) gst_mfx_task_finalize
-  };
-  return &GstMfxTaskClass;
+	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+	object_class->finalize = gst_mfx_task_finalize;
 }
 
 static void
-gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
+gst_mfx_task_init(GstMfxTask * task)
+{
+}
+
+static void
+gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     mfxSession session, guint type_flags, gboolean is_joined)
 {
   task->is_joined = is_joined;
@@ -266,11 +270,12 @@ gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 }
 
 GstMfxTask *
-gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
+gst_mfx_task_new (GstMfxTask * task, GstMfxTaskAggregator * aggregator, guint type_flags)
 {
   mfxSession session;
   gboolean is_joined;
 
+  g_return_val_if_fail (task != NULL, NULL);
   g_return_val_if_fail (aggregator != NULL, NULL);
 
   session = gst_mfx_task_aggregator_create_session (aggregator, &is_joined);
@@ -278,23 +283,18 @@ gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
     return NULL;
 
   return
-    gst_mfx_task_new_with_session (aggregator, session, type_flags, is_joined);
+    gst_mfx_task_new_with_session (task, aggregator, session, type_flags, is_joined);
 }
 
 GstMfxTask *
-gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new_with_session (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     mfxSession session, guint type_flags, gboolean is_joined)
 {
-  GstMfxTask *task;
-
+  g_return_val_if_fail (task != NULL, NULL);
   g_return_val_if_fail (aggregator != NULL, NULL);
   g_return_val_if_fail (session != NULL, NULL);
 
-  task = gst_mfx_mini_object_new0 (gst_mfx_task_class ());
-  if (!task)
-    return NULL;
-
-  gst_mfx_task_init (task, aggregator, session, type_flags, is_joined);
+  gst_mfx_task_create (task, aggregator, session, type_flags, is_joined);
 
   return task;
 }
@@ -304,13 +304,13 @@ gst_mfx_task_ref (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (task));
+  return gst_object_ref (GST_OBJECT (task));
 }
 
 void
 gst_mfx_task_unref (GstMfxTask * task)
 {
-  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (task));
+	gst_object_unref (GST_OBJECT(task));
 }
 
 void
@@ -318,8 +318,8 @@ gst_mfx_task_replace (GstMfxTask ** old_task_ptr, GstMfxTask * new_task)
 {
   g_return_if_fail (old_task_ptr != NULL);
 
-  gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_task_ptr,
-      GST_MFX_MINI_OBJECT (new_task));
+  gst_object_replace ((GstObject **) old_task_ptr,
+      GST_OBJECT (new_task));
 }
 
 

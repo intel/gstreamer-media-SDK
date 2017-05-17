@@ -21,12 +21,13 @@
 #ifndef GST_MFX_TASK_H
 #define GST_MFX_TASK_H
 
-#include "gstmfxminiobject.h"
-
 #include <mfxvideo.h>
 #include <gst/video/video.h>
 
 G_BEGIN_DECLS
+
+#define GST_TYPE_MFX_TASK (gst_mfx_task_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxTask, gst_mfx_task, GST_MFX, TASK, GstObject)
 
 #define GST_MFX_TASK(obj) \
   ((GstMfxTask *) (obj))
@@ -38,7 +39,6 @@ G_BEGIN_DECLS
   gst_mfx_task_get_display (task)
 
 
-typedef struct _GstMfxTask GstMfxTask;
 typedef struct _GstMfxTaskAggregator GstMfxTaskAggregator;
 
 typedef enum {
@@ -50,11 +50,11 @@ typedef enum {
 } GstMfxTaskType;
 
 GstMfxTask *
-gst_mfx_task_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   guint type_flags);
 
 GstMfxTask *
-gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
+gst_mfx_task_new_with_session (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     mfxSession session, guint type_flags, gboolean is_joined);
 
 GstMfxTask *

@@ -306,8 +306,8 @@ task_init (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
   mfxU32 output_fourcc, decoded_fourcc;
 
-  decoder->decode = gst_mfx_task_new (decoder->aggregator,
-      GST_MFX_TASK_DECODER);
+  decoder->decode = gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL),
+	  decoder->aggregator, GST_MFX_TASK_DECODER);
   if (!decoder->decode)
     return FALSE;
 

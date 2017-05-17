@@ -394,14 +394,15 @@ gst_mfx_filter_create (GstMfxFilter * filter,
   if (!filter->vpp[1]) {
     if (!filter->session) {
       filter->vpp[1] =
-          gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
+          gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL), 
+			  filter->aggregator, GST_MFX_TASK_VPP_OUT);
       filter->session = gst_mfx_task_get_session (filter->vpp[1]);
     }
     else {
       /* is_joined is FALSE since parent task will take care of
        * disjoining / closing the session when it is destroyed */
-      filter->vpp[1] = gst_mfx_task_new_with_session (filter->aggregator,
-          filter->session, GST_MFX_TASK_VPP_OUT, FALSE);
+      filter->vpp[1] = gst_mfx_task_new_with_session (g_object_new(GST_TYPE_MFX_TASK, NULL),
+		  filter->aggregator, filter->session, GST_MFX_TASK_VPP_OUT, FALSE);
     }
     if (!filter->vpp[1])
       return FALSE;
