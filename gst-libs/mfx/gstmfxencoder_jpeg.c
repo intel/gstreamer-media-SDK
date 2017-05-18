@@ -20,6 +20,7 @@
 
 #include "sysdeps.h"
 #include "gstmfxencoder_priv.h"
+#include "gstmfxencoder.h"
 #include "gstmfxencoder_jpeg.h"
 
 #define DEBUG 1
@@ -43,18 +44,24 @@ struct _GstMfxEncoderJpeg
   GstMfxEncoder parent_instance;
 };
 
+G_DEFINE_TYPE(GstMfxEncoderJpeg, gst_mfx_encoder_jpeg, GST_TYPE_MFX_ENCODER);
+
 static GstMfxEncoderStatus
 gst_mfx_encoder_jpeg_reconfigure (GstMfxEncoder * base_encoder)
 {
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
-static gboolean
-gst_mfx_encoder_jpeg_init (GstMfxEncoder * base_encoder)
+static void
+gst_mfx_encoder_jpeg_init(GstMfxEncoderJpeg * base_encoder)
 {
-  base_encoder->codec = MFX_CODEC_JPEG;
+}
 
-  return TRUE;
+static gboolean
+gst_mfx_encoder_jpeg_create(GstMfxEncoder * base_encoder)
+{
+	GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_JPEG;
+	return TRUE;
 }
 
 static void
@@ -68,7 +75,7 @@ gst_mfx_encoder_jpeg_set_property (GstMfxEncoder * base_encoder,
 {
   switch (prop_id) {
     case GST_MFX_ENCODER_JPEG_PROP_QUALITY:
-      base_encoder->jpeg_quality = g_value_get_uint (value);
+		GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->jpeg_quality = g_value_get_uint (value);
       break;
     default:
       return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
@@ -76,23 +83,11 @@ gst_mfx_encoder_jpeg_set_property (GstMfxEncoder * base_encoder,
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
-GST_MFX_ENCODER_DEFINE_CLASS_DATA (JPEG);
-
-static inline const GstMfxEncoderClass *
-gst_mfx_encoder_jpeg_class (void)
-{
-  static const GstMfxEncoderClass GstMfxEncoderJpegClass = {
-    GST_MFX_ENCODER_CLASS_INIT (Jpeg, jpeg),
-    .set_property = gst_mfx_encoder_jpeg_set_property,
-  };
-  return &GstMfxEncoderJpegClass;
-}
-
 GstMfxEncoder *
-gst_mfx_encoder_jpeg_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_jpeg_new (GstMfxEncoderJpeg * encoder, GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped)
 {
-  return gst_mfx_encoder_new (gst_mfx_encoder_jpeg_class (),
+  return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder), GST_MFX_ENCODER_GET_CLASS(encoder),
       aggregator, info, mapped);
 }
 
@@ -124,4 +119,20 @@ gst_mfx_encoder_jpeg_get_default_properties (void)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   return props;
+}
+
+GST_MFX_ENCODER_DEFINE_CLASS_DATA(JPEG);
+
+static void
+gst_mfx_encoder_jpeg_class_init(GstMfxEncoderJpegClass * klass)
+{
+	GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
+
+	encoder_class->class_data = &g_class_data;
+	encoder_class->create = gst_mfx_encoder_jpeg_create;
+	encoder_class->finalize = gst_mfx_encoder_jpeg_finalize;
+	encoder_class->reconfigure = gst_mfx_encoder_jpeg_reconfigure;
+	encoder_class->get_default_properties = gst_mfx_encoder_jpeg_get_default_properties;
+
+	encoder_class->set_property = gst_mfx_encoder_jpeg_set_property;
 }

@@ -225,7 +225,7 @@ gst_mfxenc_h264_alloc_encoder (GstMfxEnc * base)
   if (base->encoder)
     return base->encoder;
 
-  return gst_mfx_encoder_h264_new (plugin->aggregator, &plugin->sinkpad_info,
+  return gst_mfx_encoder_h264_new (g_object_new(GST_TYPE_MFX_ENCODER_H264, NULL), plugin->aggregator, &plugin->sinkpad_info,
       plugin->sinkpad_caps_is_raw);
 }
 

@@ -30,10 +30,11 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_ENCODER (obj) \
-  ((GstMfxEncoder *)(obj))
+#define GST_TYPE_MFX_ENCODER                  (gst_mfx_encoder_get_type ())
+#define GST_MFX_ENCODER(obj) \
+    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_ENCODER, GstMfxEncoder))
 
-typedef struct _GstMfxEncoder GstMfxEncoder;
+typedef struct _GstMfxEncoder                 GstMfxEncoder;
 
 /**
  * GstMfxEncoderStatus:
@@ -133,6 +134,10 @@ typedef struct {
   const gint prop;
   GParamSpec *const pspec;
 } GstMfxEncoderPropInfo;
+
+
+GType
+gst_mfx_encoder_get_type(void) G_GNUC_CONST;
 
 GType
 gst_mfx_encoder_preset_get_type (void);

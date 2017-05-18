@@ -45,29 +45,31 @@
 #define GST_MFX_ENCODER_MPEG2_CAST(encoder) \
   ((GstMfxEncoderMpeg2 *)(encoder))
 
-struct _GstMfxEncoderMpeg2
-{
-  GstMfxEncoder parent_instance;
+
+struct _GstMfxEncoderMpeg2 {
+	GstMfxEncoder parent_instance;
 };
+
+G_DEFINE_TYPE(GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_TYPE_MFX_ENCODER);
 
 static void
 ensure_bitrate (GstMfxEncoderMpeg2 * encoder)
 {
-  GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST (encoder);
+	GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
 
   /* Default compression: 64 bits per macroblock */
-  switch (GST_MFX_ENCODER_RATE_CONTROL (encoder)) {
+  switch (GST_MFX_ENCODER_RATE_CONTROL (priv)) {
     case GST_MFX_RATECONTROL_CBR:
     case GST_MFX_RATECONTROL_VBR:
     case GST_MFX_RATECONTROL_AVBR:
-      if (!base_encoder->bitrate)
-        base_encoder->bitrate = GST_MFX_ENCODER_WIDTH (encoder) *
-            GST_MFX_ENCODER_HEIGHT (encoder) *
-            GST_MFX_ENCODER_FPS_N (encoder) /
-            GST_MFX_ENCODER_FPS_D (encoder) / 4 / 1000;
+      if (!priv->bitrate)
+        priv->bitrate = GST_MFX_ENCODER_WIDTH (priv) *
+            GST_MFX_ENCODER_HEIGHT (priv) *
+            GST_MFX_ENCODER_FPS_N (priv) /
+            GST_MFX_ENCODER_FPS_D (priv) / 4 / 1000;
       break;
     default:
-      base_encoder->bitrate = 0;
+      priv->bitrate = 0;
       break;
   }
 }
@@ -75,22 +77,26 @@ ensure_bitrate (GstMfxEncoderMpeg2 * encoder)
 static GstMfxEncoderStatus
 gst_mfx_encoder_mpeg2_reconfigure (GstMfxEncoder * base_encoder)
 {
-  GstMfxEncoderMpeg2 *const encoder = GST_MFX_ENCODER_MPEG2_CAST (base_encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
 
   /* Ensure bitrate if not set */
-  ensure_bitrate (encoder);
+  ensure_bitrate (GST_MFX_ENCODER_MPEG2 (base_encoder));
 
-  GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (encoder),
-      GST_MFX_ENCODER_HEIGHT (encoder));
+  GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (priv),
+      GST_MFX_ENCODER_HEIGHT (priv));
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
-static gboolean
-gst_mfx_encoder_mpeg2_init (GstMfxEncoder * base_encoder)
+static void
+gst_mfx_encoder_mpeg2_init(GstMfxEncoderMpeg2 * encoder)
 {
-  base_encoder->codec = MFX_CODEC_MPEG2;
+}
 
+static gboolean
+gst_mfx_encoder_mpeg2_create (GstMfxEncoder * base_encoder)
+{
+  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_MPEG2;
   return TRUE;
 }
 
@@ -99,22 +105,11 @@ gst_mfx_encoder_mpeg2_finalize (GstMfxEncoder * base_encoder)
 {
 }
 
-GST_MFX_ENCODER_DEFINE_CLASS_DATA (MPEG2);
-
-static inline const GstMfxEncoderClass *
-gst_mfx_encoder_mpeg2_class (void)
-{
-  static const GstMfxEncoderClass GstMfxEncoderMpeg2Class = {
-    GST_MFX_ENCODER_CLASS_INIT (Mpeg2, mpeg2),
-  };
-  return &GstMfxEncoderMpeg2Class;
-}
-
 GstMfxEncoder *
-gst_mfx_encoder_mpeg2_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_mpeg2_new (GstMfxEncoderMpeg2 * encoder, GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped)
 {
-  return gst_mfx_encoder_new (gst_mfx_encoder_mpeg2_class (),
+  return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder), GST_MFX_ENCODER_GET_CLASS(encoder),
       aggregator, info, mapped);
 }
 
@@ -132,12 +127,28 @@ gst_mfx_encoder_mpeg2_new (GstMfxTaskAggregator * aggregator,
 GPtrArray *
 gst_mfx_encoder_mpeg2_get_default_properties (void)
 {
-  const GstMfxEncoderClass *const klass = gst_mfx_encoder_mpeg2_class ();
   GPtrArray *props;
-
-  props = gst_mfx_encoder_properties_get_default (klass);
+  {
+    GstMfxEncoderClass *const klass = g_type_class_ref(GST_TYPE_MFX_ENCODER_MPEG2);
+    props = gst_mfx_encoder_properties_get_default(klass);
+    g_type_class_unref(klass);
+  }
   if (!props)
     return NULL;
 
   return props;
+}
+
+GST_MFX_ENCODER_DEFINE_CLASS_DATA(MPEG2);
+
+static void
+gst_mfx_encoder_mpeg2_class_init(GstMfxEncoderMpeg2Class * klass)
+{
+	GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
+
+	encoder_class->class_data = &g_class_data;
+	encoder_class->create = gst_mfx_encoder_mpeg2_create;
+	encoder_class->finalize = gst_mfx_encoder_mpeg2_finalize;
+	encoder_class->reconfigure = gst_mfx_encoder_mpeg2_reconfigure;
+	encoder_class->get_default_properties = gst_mfx_encoder_mpeg2_get_default_properties;
 }

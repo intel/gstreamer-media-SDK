@@ -23,7 +23,6 @@
 #ifndef GST_MFX_ENCODER_PRIV_H
 #define GST_MFX_ENCODER_PRIV_H
 
-#include "gstmfxminiobject.h"
 #include "gstmfxencoder.h"
 #include "gstmfxfilter.h"
 #include "gstmfxsurfacepool.h"
@@ -36,11 +35,14 @@ G_BEGIN_DECLS
 #define GST_MFX_ENCODER_CAST(encoder) \
   ((GstMfxEncoder *)(encoder))
 
+#define GST_MFX_ENCODER_GET_PRIVATE(encoder) \
+  (GST_MFX_ENCODER_CAST (encoder)->priv)
+
 #define GST_MFX_ENCODER_CLASS(klass) \
   ((GstMfxEncoderClass *)(klass))
 
 #define GST_MFX_ENCODER_GET_CLASS(obj) \
-  GST_MFX_ENCODER_CLASS(GST_MFX_MINI_OBJECT_GET_CLASS(obj))
+  GST_MFX_ENCODER_CLASS(GST_OBJECT_GET_CLASS(obj))
 
 
 /**
@@ -52,7 +54,7 @@ G_BEGIN_DECLS
  */
 #undef  GST_MFX_ENCODER_VIDEO_INFO
 #define GST_MFX_ENCODER_VIDEO_INFO(encoder) \
-  (&GST_MFX_ENCODER_CAST (encoder)->info)
+  (&(encoder)->info)
 
 /**
  * GST_MFX_ENCODER_WIDTH:
@@ -107,7 +109,7 @@ G_BEGIN_DECLS
  */
 #undef  GST_MFX_ENCODER_RATE_CONTROL
 #define GST_MFX_ENCODER_RATE_CONTROL(encoder) \
-  (GST_MFX_ENCODER_CAST (encoder)->rc_method)
+  ((encoder)->rc_method)
 
 /**
  * GST_MFX_ENCODER_PRESET
@@ -145,11 +147,12 @@ gst_mfx_encoder_properties_append(GPtrArray * props, gint prop_id,
 GPtrArray *
 gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass);
 
-struct _GstMfxEncoder
-{
-  /*< private >*/
-  GstMfxMiniObject        parent_instance;
 
+typedef struct _GstMfxEncoderPrivate          GstMfxEncoderPrivate;
+
+struct _GstMfxEncoderPrivate 
+{
+  GstMfxEncoder			 *parent;
   GPtrArray              *properties;
   mfxU16                  profile;
 
@@ -213,6 +216,20 @@ struct _GstMfxEncoder
   mfxU16                  trellis;
 };
 
+/**
+* GstMfxEncoder:
+*
+* Base class for MFX encoders.
+*/
+struct _GstMfxEncoder
+{
+	/*< private >*/
+	GstObject				 parent_instance;
+
+	GstMfxEncoderPrivate	*priv;
+};
+
+
 struct _GstMfxEncoderClassData
 {
   /*< private >*/
@@ -237,49 +254,30 @@ struct _GstMfxEncoderClassData
 struct _GstMfxEncoderClass
 {
   /*< private >*/
-  GstMfxMiniObjectClass parent_class;
+  GstObjectClass parent_class;
 
+  /*< protected >*/
   const GstMfxEncoderClassData *class_data;
 
-  gboolean                (*init) (GstMfxEncoder * encoder);
+  /*< public >*/
+  gboolean                (*create) (GstMfxEncoder * encoder);
   void                    (*finalize) (GstMfxEncoder * encoder);
-
   GstMfxEncoderStatus     (*reconfigure) (GstMfxEncoder * encoder);
-
   GPtrArray *             (*get_default_properties) (void);
   GstMfxEncoderStatus     (*set_property) (GstMfxEncoder * encoder,
-    gint prop_id, const GValue * value);
-
+								gint prop_id, const GValue * value);
   /* get_codec_data can be NULL */
   GstMfxEncoderStatus     (*get_codec_data) (GstMfxEncoder * encoder,
-    GstBuffer ** codec_data);
+									GstBuffer ** codec_data);
 };
-
-#define GST_MFX_ENCODER_CLASS_HOOK(codec, func) \
-  .func = G_PASTE (G_PASTE (G_PASTE (gst_mfx_encoder_,codec),_), func)
-
-#define GST_MFX_ENCODER_CLASS_INIT_BASE(CODEC)                \
-  .parent_class = {                                           \
-  .size = sizeof (G_PASTE (GstMfxEncoder, CODEC)),            \
-  .finalize = (GDestroyNotify) gst_mfx_encoder_finalize       \
-}
-
-#define GST_MFX_ENCODER_CLASS_INIT(CODEC, codec)              \
-  GST_MFX_ENCODER_CLASS_INIT_BASE (CODEC),                    \
-  .class_data = &g_class_data,                                \
-  GST_MFX_ENCODER_CLASS_HOOK (codec, init),                   \
-  GST_MFX_ENCODER_CLASS_HOOK (codec, finalize),               \
-  GST_MFX_ENCODER_CLASS_HOOK (codec, reconfigure),            \
-  GST_MFX_ENCODER_CLASS_HOOK (codec, get_default_properties)
 
 
 GstMfxEncoder *
-gst_mfx_encoder_new (const GstMfxEncoderClass * klass,
+gst_mfx_encoder_new (GstMfxEncoder *encoder, const GstMfxEncoderClass * klass,
   	GstMfxTaskAggregator * aggregator, const GstVideoInfo * info, gboolean mapped);
 
 void
-gst_mfx_encoder_finalize (GstMfxEncoder * encoder);
-
+gst_mfx_encoder_finalize (GObject * object);
 
 G_END_DECLS
 

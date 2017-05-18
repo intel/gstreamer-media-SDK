@@ -62,40 +62,42 @@
 #define GST_MFX_ENCODER_H265_CAST(encoder) \
   ((GstMfxEncoderH265 *)(encoder))
 
-struct _GstMfxEncoderH265
-{
+struct _GstMfxEncoderH265 {
   GstMfxEncoder parent_instance;
 };
+
+G_DEFINE_TYPE(GstMfxEncoderH265, gst_mfx_encoder_h265, GST_TYPE_MFX_ENCODER);
 
 /* Estimates a good enough bitrate if none was supplied */
 static void
 ensure_bitrate (GstMfxEncoderH265 * encoder)
 {
   GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST (encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
 
-  switch (GST_MFX_ENCODER_RATE_CONTROL (encoder)) {
+  switch (GST_MFX_ENCODER_RATE_CONTROL (priv)) {
     case GST_MFX_RATECONTROL_CBR:
     case GST_MFX_RATECONTROL_VBR:
     case GST_MFX_RATECONTROL_AVBR:
     case GST_MFX_RATECONTROL_VCM:
     case GST_MFX_RATECONTROL_LA_BRC:
     case GST_MFX_RATECONTROL_LA_HRD:
-      if (!base_encoder->bitrate) {
-        guint luma_width = GST_ROUND_UP_32 (GST_MFX_ENCODER_WIDTH (encoder));
-        guint luma_height = GST_ROUND_UP_32 (GST_MFX_ENCODER_HEIGHT (encoder));
+      if (!priv->bitrate) {
+        guint luma_width = GST_ROUND_UP_32 (GST_MFX_ENCODER_WIDTH (priv));
+        guint luma_height = GST_ROUND_UP_32 (GST_MFX_ENCODER_HEIGHT (priv));
 
         /* Fixme: Provide better estimation */
         /* Using a 1/6 compression ratio */
         /* 12 bits per pixel for yuv420 */
-        base_encoder->bitrate =
+        priv->bitrate =
             (luma_width * luma_height * 12 / 6) *
-            GST_MFX_ENCODER_FPS_N (encoder) /
-            GST_MFX_ENCODER_FPS_D (encoder) / 1000;
-        GST_INFO ("target bitrate computed to %u kbps", base_encoder->bitrate);
+            GST_MFX_ENCODER_FPS_N (priv) /
+            GST_MFX_ENCODER_FPS_D (priv) / 1000;
+        GST_INFO ("target bitrate computed to %u kbps", priv->bitrate);
       }
       break;
     default:
-      base_encoder->bitrate = 0;
+      priv->bitrate = 0;
       break;
   }
 }
@@ -104,9 +106,10 @@ static GstMfxEncoderStatus
 gst_mfx_encoder_h265_reconfigure (GstMfxEncoder * base_encoder)
 {
   GstMfxEncoderH265 *const encoder = GST_MFX_ENCODER_H265_CAST (base_encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
 
-  GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (encoder),
-      GST_MFX_ENCODER_HEIGHT (encoder));
+  GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (priv),
+      GST_MFX_ENCODER_HEIGHT (priv));
 
   /* Ensure bitrate if not set */
   ensure_bitrate (encoder);
@@ -120,6 +123,7 @@ gst_mfx_encoder_load_hevc_plugin (GstMfxEncoder * encoder)
   mfxPluginUID uid;
   mfxStatus sts;
   guint i, c;
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
 
   gchar *plugin_uids[] = {
     "6fadc791a0c2eb479ab6dcd5ea9da347",     /* HW encoder */
@@ -130,20 +134,25 @@ gst_mfx_encoder_load_hevc_plugin (GstMfxEncoder * encoder)
   for (i = 0; plugin_uids[i]; i++) {
     for (c = 0; c < sizeof (uid.Data); c++)
       sscanf (plugin_uids[i] + 2 * c, "%2hhx", uid.Data + c);
-    sts = MFXVideoUSER_Load (encoder->session, &uid, 1);
+    sts = MFXVideoUSER_Load (priv->session, &uid, 1);
     if (MFX_ERR_NONE == sts) {
-      encoder->plugin_uid = g_strdup (plugin_uids[i]);
-      GST_DEBUG ("Loaded HEVC encoder plugin %s", encoder->plugin_uid);
+      priv->plugin_uid = g_strdup (plugin_uids[i]);
+      GST_DEBUG ("Loaded HEVC encoder plugin %s", priv->plugin_uid);
       return TRUE;
     }
   }
   return FALSE;
 }
 
-static gboolean
-gst_mfx_encoder_h265_init (GstMfxEncoder * base_encoder)
+static void
+gst_mfx_encoder_h265_init(GstMfxEncoderH265 * base_encoder)
 {
-  base_encoder->codec = MFX_CODEC_HEVC;
+}
+
+static gboolean
+gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
+{
+  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_HEVC;
 
   return gst_mfx_encoder_load_hevc_plugin (base_encoder);
 }
@@ -153,12 +162,13 @@ gst_mfx_encoder_h265_finalize (GstMfxEncoder * base_encoder)
 {
   mfxPluginUID uid;
   guint c;
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
 
   for (c = 0; c < sizeof (uid.Data); c++)
-    sscanf (base_encoder->plugin_uid + 2 * c, "%2hhx", uid.Data + c);
+    sscanf (priv->plugin_uid + 2 * c, "%2hhx", uid.Data + c);
 
-  MFXVideoUSER_UnLoad (base_encoder->session, &uid);
-  g_free (base_encoder->plugin_uid);
+  MFXVideoUSER_UnLoad (priv->session, &uid);
+  g_free (priv->plugin_uid);
 }
 
 /* Generate "codec-data" buffer */
@@ -197,20 +207,22 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
     (mfxExtBuffer *) &vps,
   };
 
-  base_encoder->params.ExtParam = ext_buffers;
-  base_encoder->params.NumExtParam = 2;
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
 
-  sts = MFXVideoENCODE_GetVideoParam (base_encoder->session,
-      &base_encoder->params);
+  priv->params.ExtParam = ext_buffers;
+  priv->params.NumExtParam = 2;
+
+  sts = MFXVideoENCODE_GetVideoParam (priv->session,
+      &priv->params);
   if (sts < 0)
     return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
 
-  frame_info = &base_encoder->params.mfx.FrameInfo;
+  frame_info = &priv->params.mfx.FrameInfo;
 
   const guint8 general_profile_space = 0;
   const guint8 general_tier_flag =
-      !!(base_encoder->params.mfx.CodecLevel & MFX_TIER_HEVC_HIGH);
-  const guint8 general_profile_idc = base_encoder->params.mfx.CodecProfile;
+      !!(priv->params.mfx.CodecLevel & MFX_TIER_HEVC_HIGH);
+  const guint8 general_profile_idc = priv->params.mfx.CodecProfile;
   const guint32 general_profile_compatibility_flags =
       1 << (31 - general_profile_idc);
   const guint8 progressive_source_flag =
@@ -221,7 +233,7 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
   const guint8 non_packed_constraint_flag = 0;
   const guint8 frame_only_constraint_flag = 0;
   const guint8 general_level_idc =
-      (base_encoder->params.mfx.CodecLevel & 0xFF) * 3;
+      (priv->params.mfx.CodecLevel & 0xFF) * 3;
   const guint8 chroma_format_idc = frame_info->ChromaFormat;
 
   sps_info = &sps_data[4];
@@ -328,12 +340,14 @@ static GstMfxEncoderStatus
 gst_mfx_encoder_h265_set_property (GstMfxEncoder * base_encoder,
     gint prop_id, const GValue * value)
 {
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
+
   switch (prop_id) {
     case GST_MFX_ENCODER_H265_PROP_LA_DEPTH:
-      base_encoder->la_depth = g_value_get_uint (value);
+      priv->la_depth = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_H265_PROP_LOOKAHEAD_DS:
-      base_encoder->look_ahead_downsampling = g_value_get_enum (value);
+      priv->look_ahead_downsampling = g_value_get_enum (value);
       break;
     default:
       return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
@@ -341,24 +355,11 @@ gst_mfx_encoder_h265_set_property (GstMfxEncoder * base_encoder,
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
-GST_MFX_ENCODER_DEFINE_CLASS_DATA (H265);
-
-static inline const GstMfxEncoderClass *
-gst_mfx_encoder_h265_class (void)
-{
-  static const GstMfxEncoderClass GstMfxEncoderH265Class = {
-    GST_MFX_ENCODER_CLASS_INIT (H265, h265),
-    .set_property = gst_mfx_encoder_h265_set_property,
-    .get_codec_data = gst_mfx_encoder_h265_get_codec_data
-  };
-  return &GstMfxEncoderH265Class;
-}
-
 GstMfxEncoder *
-gst_mfx_encoder_h265_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_h265_new (GstMfxEncoderH265 * encoder, GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped)
 {
-  return gst_mfx_encoder_new (gst_mfx_encoder_h265_class (),
+  return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder), GST_MFX_ENCODER_GET_CLASS(encoder),
       aggregator, info, mapped);
 }
 
@@ -376,10 +377,12 @@ gst_mfx_encoder_h265_new (GstMfxTaskAggregator * aggregator,
 GPtrArray *
 gst_mfx_encoder_h265_get_default_properties (void)
 {
-  const GstMfxEncoderClass *const klass = gst_mfx_encoder_h265_class ();
   GPtrArray *props;
-
-  props = gst_mfx_encoder_properties_get_default (klass);
+  {
+    GstMfxEncoderClass *const klass = g_type_class_ref(GST_TYPE_MFX_ENCODER_H265);
+    props = gst_mfx_encoder_properties_get_default(klass);
+    g_type_class_unref(klass);
+  }
   if (!props)
     return NULL;
 
@@ -409,4 +412,21 @@ gst_mfx_encoder_h265_get_default_properties (void)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   return props;
+}
+
+GST_MFX_ENCODER_DEFINE_CLASS_DATA(H265);
+
+static void
+gst_mfx_encoder_h265_class_init(GstMfxEncoderH265Class * klass)
+{
+	GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
+
+	encoder_class->class_data = &g_class_data;
+	encoder_class->create = gst_mfx_encoder_h265_create;
+	encoder_class->finalize = gst_mfx_encoder_h265_finalize;
+	encoder_class->reconfigure = gst_mfx_encoder_h265_reconfigure;
+	encoder_class->get_default_properties = gst_mfx_encoder_h265_get_default_properties;
+
+	encoder_class->set_property = gst_mfx_encoder_h265_set_property;
+	encoder_class->get_codec_data = gst_mfx_encoder_h265_get_codec_data;
 }

@@ -142,8 +142,8 @@ gst_mfxenc_h265_alloc_encoder (GstMfxEnc * base)
   if (base->encoder)
     return base->encoder;
 
-  return gst_mfx_encoder_h265_new (plugin->aggregator, &plugin->sinkpad_info,
-      plugin->sinkpad_caps_is_raw);
+  return gst_mfx_encoder_h265_new (g_object_new(GST_TYPE_MFX_ENCODER_H265, NULL),
+    plugin->aggregator, &plugin->sinkpad_info, plugin->sinkpad_caps_is_raw);
 }
 
 /* h265 NAL byte stream operations */

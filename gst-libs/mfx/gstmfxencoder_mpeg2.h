@@ -27,17 +27,26 @@
 
 G_BEGIN_DECLS
 
+#define GST_TYPE_MFX_ENCODER_MPEG2 (gst_mfx_encoder_mpeg2_get_type ())
+G_DECLARE_FINAL_TYPE (GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_MFX, ENCODER_MPEG2, GstMfxEncoder)
+
 #define GST_MFX_ENCODER_MPEG2(encoder) \
   ((GstMfxEncoderMpeg2 *) (encoder))
 
-typedef struct _GstMfxEncoderMpeg2 GstMfxEncoderMpeg2;
+#define GST_MFX_ENCODER_MPEG2_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_MPEG2, \
+  GstMfxEncoderMpeg2Class))
 
 GstMfxEncoder *
-gst_mfx_encoder_mpeg2_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_mpeg2_new (GstMfxEncoderMpeg2 *, GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped);
 
+void 
+gst_mfx_encoder_mpeg2_init (GstMfxEncoderMpeg2 * base_encoder);
+
 GPtrArray *
-gst_mfx_encoder_mpeg2_get_default_properties(void);
+gst_mfx_encoder_mpeg2_get_default_properties (void);
+
 
 G_END_DECLS
 

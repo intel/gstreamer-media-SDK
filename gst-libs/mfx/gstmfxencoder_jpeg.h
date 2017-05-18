@@ -25,21 +25,29 @@
 
 G_BEGIN_DECLS
 
+#define GST_TYPE_MFX_ENCODER_JPEG (gst_mfx_encoder_jpeg_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxEncoderJpeg, gst_mfx_encoder_jpeg, GST_MFX, ENCODER_JPEG, GstMfxEncoder)
+
 #define GST_MFX_ENCODER_JPEG(encoder) \
   ((GstMfxEncoderJpeg *) (encoder))
 
-typedef struct _GstMfxEncoderJpeg GstMfxEncoderJpeg;
+#define GST_MFX_ENCODER_JPEG_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_JPEG, \
+  GstMfxEncoderJpegClass))
 
 typedef enum {
   GST_MFX_ENCODER_JPEG_PROP_QUALITY = -1
 } GstMfxEncoderJpegProp;
 
 GstMfxEncoder *
-gst_mfx_encoder_jpeg_new(GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_jpeg_new(GstMfxEncoderJpeg * encoder, GstMfxTaskAggregator * aggregator,
   	const GstVideoInfo * info, gboolean mapped);
 
+void
+gst_mfx_encoder_jpeg_init(GstMfxEncoderJpeg * encoder);
+
 GPtrArray *
-gst_mfx_encoder_jpeg_get_default_properties(void);
+gst_mfx_encoder_jpeg_get_default_properties (void);
 
 G_END_DECLS
 
