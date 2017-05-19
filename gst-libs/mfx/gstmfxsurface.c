@@ -35,7 +35,7 @@ GST_DEBUG_CATEGORY(gst_debug_mfx);
 
 
 static gboolean
-gst_mfx_surface_allocate_default (GstMfxSurface * surface)
+gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 {
   mfxFrameData *ptr = &surface->surface.Data;
   mfxFrameInfo *info = &surface->surface.Info;
@@ -286,7 +286,7 @@ gst_mfx_surface_class(void)
 GstMfxSurface *
 gst_mfx_surface_new (const GstVideoInfo * info)
 {
-  return gst_mfx_surface_new_internal(gst_mfx_surface_class(), NULL, info, NULL);
+  return gst_mfx_surface_new_internal(gst_mfx_surface_class(), info, NULL);
 }
 
 GstMfxSurface *
