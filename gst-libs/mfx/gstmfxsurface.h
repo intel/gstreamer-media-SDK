@@ -30,7 +30,9 @@
 
 G_BEGIN_DECLS
 
+#define GST_TYPE_MFX_SURFACE (gst_mfx_surface_get_type ())
 #define GST_MFX_SURFACE(obj) ((GstMfxSurface *) (obj))
+typedef struct _GstMfxSurface                 GstMfxSurface;
 
 #define GST_MFX_SURFACE_FRAME_SURFACE(surface) \
   gst_mfx_surface_get_frame_surface (surface)
@@ -48,8 +50,6 @@ G_BEGIN_DECLS
   gst_mfx_surface_get_height (surface)
 
 typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
-typedef struct _GstMfxSurface GstMfxSurface;
-typedef struct _GstMfxSurfaceClass GstMfxSurfaceClass;
 
 GstMfxSurface *
 gst_mfx_surface_new (const GstVideoInfo * info);

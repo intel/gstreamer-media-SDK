@@ -22,25 +22,24 @@
 #define GST_MFX_SURFACE_PRIV_H
 
 #include "gstmfxsurface.h"
-#include "gstmfxminiobject.h"
 
 G_BEGIN_DECLS
 
 #define GST_MFX_SURFACE_CLASS(klass) \
   ((GstMfxSurfaceClass *)(klass))
 
+#define GST_MFX_SURFACE_GET_PRIVATE(surface) \
+  (GST_MFX_SURFACE (surface)->priv)
+
 #define GST_MFX_SURFACE_GET_CLASS(obj) \
-  GST_MFX_SURFACE_CLASS(GST_MFX_MINI_OBJECT_GET_CLASS(obj))
+  GST_MFX_SURFACE_CLASS(GST_OBJECT_GET_CLASS(obj))
 
-typedef gboolean(*GstMfxSurfaceAllocateFunc) (GstMfxSurface * surface, GstMfxTask * task);
-typedef void(*GstMfxSurfaceReleaseFunc) (GstMfxSurface * surface);
-typedef gboolean(*GstMfxSurfaceMapFunc) (GstMfxSurface * surface);
-typedef void(*GstMfxSurfaceUnmapFunc) (GstMfxSurface * surface);
+typedef struct _GstMfxSurfaceClass            GstMfxSurfaceClass;
+typedef struct _GstMfxSurfacePrivate          GstMfxSurfacePrivate;
 
-struct _GstMfxSurface
+struct _GstMfxSurfacePrivate
 {
-  /*< private >*/
-  GstMfxMiniObject parent_instance;
+  GstMfxSurface *parent;
 
   GstMfxTask *task;
   GstMfxMemoryId mem_id;
@@ -61,10 +60,23 @@ struct _GstMfxSurface
   mfxExtBuffer **ext_buf;
 };
 
+struct _GstMfxSurface
+{
+  /*< private >*/
+  GstObject				 parent_instance;
+
+  GstMfxSurfacePrivate	*priv;
+};
+
+typedef gboolean(*GstMfxSurfaceAllocateFunc) (GstMfxSurface * surface, GstMfxTask * task);
+typedef void(*GstMfxSurfaceReleaseFunc) (GstMfxSurface * surface);
+typedef gboolean(*GstMfxSurfaceMapFunc) (GstMfxSurface * surface);
+typedef void(*GstMfxSurfaceUnmapFunc) (GstMfxSurface * surface);
+
 struct _GstMfxSurfaceClass
 {
   /*< private >*/
-  GstMfxMiniObjectClass parent_class;
+  GstObjectClass parent_class;
 
   /*< protected >*/
   GstMfxSurfaceAllocateFunc allocate;
@@ -74,18 +86,17 @@ struct _GstMfxSurfaceClass
 };
 
 GstMfxSurface *
-gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
-    const GstVideoInfo * info, GstMfxTask * task);
+gst_mfx_surface_new_internal (const GstVideoInfo * info, GstMfxTask * task);
 
 #define gst_mfx_surface_ref_internal(surface) \
-  ((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(surface)))
+  ((gpointer)gst_object_ref(GST_OBJECT(surface)))
 
 #define gst_mfx_surface_unref_internal(surface) \
-  gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(surface))
+  gst_object_unref(GST_OBJECT(surface))
 
 #define gst_mfx_surface_replace_internal(old_surface_ptr, new_surface) \
-  gst_mfx_mini_object_replace((GstMfxMiniObject **)(old_surface_ptr), \
-  GST_MFX_MINI_OBJECT(new_surface))
+  gst_object_replace((GstObject **)(old_surface_ptr), \
+  GST_OBJECT(new_surface))
 
 #undef  gst_mfx_surface_ref
 #define gst_mfx_surface_ref(surface) \

@@ -33,12 +33,15 @@ GST_DEBUG_CATEGORY(gst_debug_mfx);
 #undef gst_mfx_surface_unref
 #undef gst_mfx_surface_replace
 
+G_DEFINE_TYPE_WITH_CODE (GstMfxSurface, gst_mfx_surface, GST_TYPE_OBJECT, G_ADD_PRIVATE(GstMfxSurface));
 
 static gboolean
 gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 {
-  mfxFrameData *ptr = &surface->surface.Data;
-  mfxFrameInfo *info = &surface->surface.Info;
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
+
+  mfxFrameData *ptr = &priv->surface.Data;
+  mfxFrameInfo *info = &priv->surface.Info;
   guint frame_size, offset = 0;
   gboolean success = TRUE;
 
@@ -52,81 +55,81 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 
   switch (info->FourCC) {
   case MFX_FOURCC_NV12:
-    surface->data_size = frame_size * 3 / 2;
-    surface->data = g_slice_alloc(surface->data_size + offset);
-    if (!surface->data)
+    priv->data_size = frame_size * 3 / 2;
+    priv->data = g_slice_alloc(priv->data_size + offset);
+    if (!priv->data)
       goto error;
-    ptr->Pitch = surface->pitches[0] = surface->pitches[1] = info->Width;
+    ptr->Pitch = priv->pitches[0] = priv->pitches[1] = info->Width;
 
-    surface->planes[0] = ptr->Y = surface->data + offset;
-    surface->planes[1] = ptr->UV = ptr->Y + frame_size;
+    priv->planes[0] = ptr->Y = priv->data + offset;
+    priv->planes[1] = ptr->UV = ptr->Y + frame_size;
 
     break;
   case MFX_FOURCC_YV12:
-    surface->data_size = frame_size * 3 / 2;
-    surface->data = g_slice_alloc(surface->data_size);
-    if (!surface->data)
+    priv->data_size = frame_size * 3 / 2;
+    priv->data = g_slice_alloc(priv->data_size);
+    if (!priv->data)
       goto error;
-    ptr->Pitch = surface->pitches[0] = info->Width;
-    surface->pitches[1] = surface->pitches[2] = ptr->Pitch / 2;
+    ptr->Pitch = priv->pitches[0] = info->Width;
+    priv->pitches[1] = priv->pitches[2] = ptr->Pitch / 2;
 
-    surface->planes[0] = ptr->Y = surface->data;
-    if (surface->format == GST_VIDEO_FORMAT_I420) {
-      surface->planes[1] = ptr->U = ptr->Y + frame_size;
-      surface->planes[2] = ptr->V = ptr->U + (frame_size / 4);
+    priv->planes[0] = ptr->Y = priv->data;
+    if (priv->format == GST_VIDEO_FORMAT_I420) {
+      priv->planes[1] = ptr->U = ptr->Y + frame_size;
+      priv->planes[2] = ptr->V = ptr->U + (frame_size / 4);
     }
     else {
-      surface->planes[1] = ptr->V = ptr->Y + frame_size;
-      surface->planes[2] = ptr->U = ptr->V + (frame_size / 4);
+      priv->planes[1] = ptr->V = ptr->Y + frame_size;
+      priv->planes[2] = ptr->U = ptr->V + (frame_size / 4);
     }
 
     break;
   case MFX_FOURCC_YUY2:
-    surface->data_size = frame_size * 2;
-    surface->data = g_slice_alloc(surface->data_size + offset);
-    if (!surface->data)
+    priv->data_size = frame_size * 2;
+    priv->data = g_slice_alloc(priv->data_size + offset);
+    if (!priv->data)
       goto error;
-    ptr->Pitch = surface->pitches[0] = info->Width * 2;
+    ptr->Pitch = priv->pitches[0] = info->Width * 2;
 
-    surface->planes[0] = ptr->Y = surface->data + offset;
+    priv->planes[0] = ptr->Y = priv->data + offset;
     ptr->U = ptr->Y + 1;
     ptr->V = ptr->Y + 3;
 
     break;
   case MFX_FOURCC_UYVY:
-    surface->data_size = frame_size * 2;
-    surface->data = g_slice_alloc(surface->data_size);
-    if (!surface->data)
+    priv->data_size = frame_size * 2;
+    priv->data = g_slice_alloc(priv->data_size);
+    if (!priv->data)
       goto error;
-    ptr->Pitch = surface->pitches[0] = info->Width * 2;
+    ptr->Pitch = priv->pitches[0] = info->Width * 2;
 
-    surface->planes[0] = ptr->U = surface->data;
+    priv->planes[0] = ptr->U = priv->data;
     ptr->Y = ptr->U + 1;
     ptr->V = ptr->U + 2;
 
     break;
   case MFX_FOURCC_RGB4:
-    surface->data_size = frame_size * 4;
-    surface->data = g_slice_alloc(surface->data_size + offset);
-    if (!surface->data)
+    priv->data_size = frame_size * 4;
+    priv->data = g_slice_alloc(priv->data_size + offset);
+    if (!priv->data)
       goto error;
-    ptr->Pitch = surface->pitches[0] = info->Width * 4;
+    ptr->Pitch = priv->pitches[0] = info->Width * 4;
 
-    surface->planes[0] = ptr->B = surface->data + offset;
+    priv->planes[0] = ptr->B = priv->data + offset;
     ptr->G = ptr->B + 1;
     ptr->R = ptr->B + 2;
     ptr->A = ptr->B + 3;
 
     break;
   case MFX_FOURCC_P010:
-    surface->data_size = frame_size * 3;
-    surface->data = g_slice_alloc(surface->data_size + offset);
-    if (!surface->data)
+    priv->data_size = frame_size * 3;
+    priv->data = g_slice_alloc(priv->data_size + offset);
+    if (!priv->data)
       goto error;
-    ptr->Pitch = surface->pitches[0] = surface->pitches[1] = info->Width * 2;
+    ptr->Pitch = priv->pitches[0] = priv->pitches[1] = info->Width * 2;
 
-    surface->planes[0] = ptr->Y = surface->data + offset;
-    surface->planes[1] = ptr->UV = ptr->Y + frame_size * 2;
+    priv->planes[0] = ptr->Y = priv->data + offset;
+    priv->planes[1] = ptr->UV = ptr->Y + frame_size * 2;
 
     break;
   default:
@@ -136,19 +139,20 @@ error:
       break;
   }
 
-  surface->has_video_memory = FALSE;
+  priv->has_video_memory = FALSE;
   return success;
 }
 
 static void
 gst_mfx_surface_release_default (GstMfxSurface * surface)
 {
-  mfxFrameData *ptr = &surface->surface.Data;
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
+  mfxFrameData *ptr = &priv->surface.Data;
 
   if (NULL != ptr) {
     ptr->Pitch = 0;
-    if (surface->data)
-      g_slice_free1(surface->data_size, surface->data);
+    if (priv->data)
+      g_slice_free1(priv->data_size, priv->data);
     ptr->Y = NULL;
     ptr->U = NULL;
     ptr->V = NULL;
@@ -160,7 +164,7 @@ static void
 gst_mfx_surface_derive_mfx_frame_info(GstMfxSurface * surface,
   const GstVideoInfo * info)
 {
-  mfxFrameInfo *frame_info = &surface->surface.Info;
+  mfxFrameInfo *frame_info = &(GST_MFX_SURFACE_GET_PRIVATE(surface)->surface.Info);
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
   frame_info->FourCC =
@@ -191,50 +195,63 @@ gst_mfx_surface_derive_mfx_frame_info(GstMfxSurface * surface,
 static void
 gst_mfx_surface_init_properties(GstMfxSurface * surface)
 {
-  mfxFrameInfo *info = &surface->surface.Info;
-  mfxFrameData *ptr = &surface->surface.Data;
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
 
-  surface->width = info->Width;
-  surface->height = info->Height;
+  mfxFrameInfo *info = &priv->surface.Info;
+  mfxFrameData *ptr = &priv->surface.Data;
 
-  surface->crop_rect.x = info->CropX;
-  surface->crop_rect.y = info->CropY;
-  surface->crop_rect.width = info->CropW;
-  surface->crop_rect.height = info->CropH;
+  priv->width = info->Width;
+  priv->height = info->Height;
+
+  priv->crop_rect.x = info->CropX;
+  priv->crop_rect.y = info->CropY;
+  priv->crop_rect.width = info->CropW;
+  priv->crop_rect.height = info->CropH;
 
 #if MSDK_CHECK_VERSION(1,19)
   /* Full color range */
-  surface->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
-  surface->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
-  surface->siginfo.TransferMatrix = MFX_TRANSFERMATRIX_UNKNOWN;
-  surface->siginfo.NominalRange = MFX_NOMINALRANGE_0_255;
+  priv->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
+  priv->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
+  priv->siginfo.TransferMatrix = MFX_TRANSFERMATRIX_UNKNOWN;
+  priv->siginfo.NominalRange = MFX_NOMINALRANGE_0_255;
 
-  if (NULL == surface->ext_buf) {
-    surface->ext_buf = g_slice_alloc (sizeof (mfxExtBuffer *));
-    if (NULL != surface->ext_buf) {
-      surface->ext_buf[0] = (mfxExtBuffer *) &surface->siginfo;
+  if (NULL == priv->ext_buf) {
+    priv->ext_buf = g_slice_alloc (sizeof (mfxExtBuffer *));
+    if (NULL != priv->ext_buf) {
+      priv->ext_buf[0] = (mfxExtBuffer *) &priv->siginfo;
       ptr->NumExtParam = 1;
-      ptr->ExtParam = &surface->ext_buf[0];
+      ptr->ExtParam = &priv->ext_buf[0];
     }
   }
 #endif
+}
+
+static void
+gst_mfx_surface_init (GstMfxSurface * surface)
+{
+  GstMfxSurfacePrivate *const priv =
+    gst_mfx_surface_get_instance_private(surface);
+
+  surface->priv = priv;
 }
 
 static gboolean
 gst_mfx_surface_create(GstMfxSurface * surface, const GstVideoInfo * info,
     GstMfxTask * task)
 {
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
+
   if (task) {
     mfxFrameAllocRequest *req = gst_mfx_task_get_request(task);
     if (!req)
       return FALSE;
-    surface->surface.Info = req->Info;
-    surface->format = gst_video_format_from_mfx_fourcc (req->Info.FourCC);
-    surface->task = gst_mfx_task_ref (task);
+    priv->surface.Info = req->Info;
+    priv->format = gst_video_format_from_mfx_fourcc (req->Info.FourCC);
+    priv->task = gst_mfx_task_ref (task);
   }
   else if (info) {
     gst_mfx_surface_derive_mfx_frame_info(surface, info);
-    surface->format = GST_VIDEO_INFO_FORMAT(info);
+    priv->format = GST_VIDEO_INFO_FORMAT(info);
   }
 
   if (!GST_MFX_SURFACE_GET_CLASS(surface)->allocate(surface, task))
@@ -247,52 +264,40 @@ gst_mfx_surface_create(GstMfxSurface * surface, const GstVideoInfo * info,
 static void
 gst_mfx_surface_finalize (GstMfxSurface * surface)
 {
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
   GstMfxSurfaceClass *klass = GST_MFX_SURFACE_GET_CLASS(surface);
 
-  if (surface->ext_buf)
-    g_slice_free (mfxExtBuffer *, surface->ext_buf);
+  if (priv->ext_buf)
+    g_slice_free (mfxExtBuffer *, priv->ext_buf);
   if (klass->release)
     klass->release(surface);
-  gst_mfx_task_replace (&surface->task, NULL);
+  gst_mfx_task_replace (&priv->task, NULL);
 }
 
 void
 gst_mfx_surface_class_init(GstMfxSurfaceClass * klass)
 {
-  GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS(klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
   GstMfxSurfaceClass *const surface_class = GST_MFX_SURFACE_CLASS(klass);
 
   GST_DEBUG_CATEGORY_INIT(gst_debug_mfx, "mfx", 0, "MFX helper");
 
-  object_class->size = sizeof(GstMfxSurface);
-  object_class->finalize = (GDestroyNotify)gst_mfx_surface_finalize;
+  object_class->finalize = gst_mfx_surface_finalize;
+
   surface_class->allocate = gst_mfx_surface_allocate_default;
   surface_class->release = gst_mfx_surface_release_default;
-}
-
-static inline const GstMfxSurfaceClass *
-gst_mfx_surface_class(void)
-{
-  static GstMfxSurfaceClass g_class;
-  static gsize g_class_init = FALSE;
-
-  if (g_once_init_enter(&g_class_init)) {
-    gst_mfx_surface_class_init(&g_class);
-    g_once_init_leave(&g_class_init, TRUE);
-  }
-  return &g_class;
 }
 
 GstMfxSurface *
 gst_mfx_surface_new (const GstVideoInfo * info)
 {
-  return gst_mfx_surface_new_internal(gst_mfx_surface_class(), info, NULL);
+  return gst_mfx_surface_new_internal(info, NULL);
 }
 
 GstMfxSurface *
 gst_mfx_surface_new_from_task (GstMfxTask * task)
 {
-  return gst_mfx_surface_new_internal(gst_mfx_surface_class(), NULL, task);
+  return gst_mfx_surface_new_internal(NULL, task);
 }
 
 GstMfxSurface *
@@ -304,17 +309,16 @@ gst_mfx_surface_new_from_pool(GstMfxSurfacePool * pool)
 }
 
 GstMfxSurface *
-gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
-    const GstVideoInfo * info, GstMfxTask * task)
+gst_mfx_surface_new_internal(const GstVideoInfo * info, GstMfxTask * task)
 {
   GstMfxSurface *surface;
 
-  surface = (GstMfxSurface *)
-    gst_mfx_mini_object_new0(GST_MFX_MINI_OBJECT_CLASS(klass));
+  surface = g_object_new (GST_TYPE_MFX_SURFACE, NULL);
+
   if (!surface)
     return NULL;
 
-  surface->surface_id = GST_MFX_ID_INVALID;
+  GST_MFX_SURFACE_GET_PRIVATE(surface)->surface_id = GST_MFX_ID_INVALID;
 
   if (!gst_mfx_surface_create(surface, info, task))
     goto error;
@@ -329,19 +333,21 @@ GstMfxSurface *
 gst_mfx_surface_copy(GstMfxSurface * surface)
 {
   GstMfxSurface *copy;
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
+  GstMfxSurfacePrivate *copy_priv = NULL;
 
   g_return_val_if_fail(surface != NULL, NULL);
 
-  copy = (GstMfxSurface *)
-    gst_mfx_mini_object_new0(gst_mfx_surface_class());
+  copy = g_object_new(GST_TYPE_MFX_SURFACE, NULL); 
   if (!copy)
     return NULL;
+  copy_priv = GST_MFX_SURFACE_GET_PRIVATE(copy);
 
-  copy->surface = surface->surface;
-  copy->format = surface->format;
-  copy->width = surface->width;
-  copy->height = surface->height;
-  copy->crop_rect = surface->crop_rect;
+  copy_priv->surface = priv->surface;
+  copy_priv->format = priv->format;
+  copy_priv->width = priv->width;
+  copy_priv->height = priv->height;
+  copy_priv->crop_rect = priv->crop_rect;
 
   return copy;
 }
@@ -351,13 +357,13 @@ gst_mfx_surface_ref(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, NULL);
 
-  return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(surface));
+  return gst_object_ref(GST_OBJECT(surface));
 }
 
 void
 gst_mfx_surface_unref(GstMfxSurface * surface)
 {
-  gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(surface));
+  gst_object_unref(GST_OBJECT(surface));
 }
 
 void
@@ -366,8 +372,8 @@ gst_mfx_surface_replace(GstMfxSurface ** old_surface_ptr,
 {
   g_return_if_fail(old_surface_ptr != NULL);
 
-  gst_mfx_mini_object_replace((GstMfxMiniObject **)old_surface_ptr,
-    GST_MFX_MINI_OBJECT(new_surface));
+  gst_object_replace((GstObject **)old_surface_ptr,
+    GST_OBJECT(new_surface));
 }
 
 mfxFrameSurface1 *
@@ -375,7 +381,7 @@ gst_mfx_surface_get_frame_surface(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, NULL);
 
-  return &surface->surface;
+  return &GST_MFX_SURFACE_GET_PRIVATE(surface)->surface;
 }
 
 GstMfxID
@@ -383,7 +389,7 @@ gst_mfx_surface_get_id(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, GST_MFX_ID_INVALID);
 
-  return surface->surface_id;
+  return GST_MFX_SURFACE_GET_PRIVATE(surface)->surface_id;
 }
 
 GstVideoFormat
@@ -391,7 +397,7 @@ gst_mfx_surface_get_format(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, 0);
 
-  return surface->format;
+  return GST_MFX_SURFACE_GET_PRIVATE(surface)->format;
 }
 
 guint
@@ -399,7 +405,7 @@ gst_mfx_surface_get_width(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, 0);
 
-  return surface->width;
+  return GST_MFX_SURFACE_GET_PRIVATE(surface)->width;
 }
 
 guint
@@ -407,7 +413,7 @@ gst_mfx_surface_get_height(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, 0);
 
-  return surface->height;
+  return GST_MFX_SURFACE_GET_PRIVATE(surface)->height;
 }
 
 void
@@ -417,10 +423,10 @@ gst_mfx_surface_get_size(GstMfxSurface * surface,
   g_return_if_fail(surface != NULL);
 
   if (width_ptr)
-    *width_ptr = surface->width;
+    *width_ptr = GST_MFX_SURFACE_GET_PRIVATE(surface)->width;
 
   if (height_ptr)
-    *height_ptr = surface->height;
+    *height_ptr = GST_MFX_SURFACE_GET_PRIVATE(surface)->height;
 }
 
 guint8 *
@@ -429,7 +435,7 @@ gst_mfx_surface_get_plane(GstMfxSurface * surface, guint plane)
   g_return_val_if_fail(surface != NULL, NULL);
   g_return_val_if_fail(plane < 3, NULL);
 
-  return surface->planes[plane];
+  return GST_MFX_SURFACE_GET_PRIVATE(surface)->planes[plane];
 }
 
 guint16
@@ -438,7 +444,7 @@ gst_mfx_surface_get_pitch(GstMfxSurface * surface, guint plane)
   g_return_val_if_fail(surface != NULL, 0);
   g_return_val_if_fail(plane < 3, 0);
 
-  return surface->pitches[plane];
+  return GST_MFX_SURFACE_GET_PRIVATE(surface)->pitches[plane];
 }
 
 GstMfxRectangle *
@@ -446,7 +452,7 @@ gst_mfx_surface_get_crop_rect(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, NULL);
 
-  return &surface->crop_rect;
+  return &GST_MFX_SURFACE_GET_PRIVATE(surface)->crop_rect;
 }
 
 gboolean
@@ -454,7 +460,7 @@ gst_mfx_surface_has_video_memory(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, FALSE);
 
-  return surface->has_video_memory;
+  return GST_MFX_SURFACE_GET_PRIVATE(surface)->has_video_memory;
 }
 
 gboolean
@@ -462,9 +468,9 @@ gst_mfx_surface_map(GstMfxSurface * surface)
 {
   GstMfxSurfaceClass *const klass = GST_MFX_SURFACE_GET_CLASS(surface);
 
-  if (gst_mfx_surface_has_video_memory(surface) && !surface->mapped)
+  if (gst_mfx_surface_has_video_memory(surface) && !GST_MFX_SURFACE_GET_PRIVATE(surface)->mapped)
     if (klass->map)
-      return (surface->mapped = klass->map(surface));
+      return (GST_MFX_SURFACE_GET_PRIVATE(surface)->mapped = klass->map(surface));
 
   return TRUE;
 }
@@ -474,9 +480,9 @@ gst_mfx_surface_unmap(GstMfxSurface * surface)
 {
   GstMfxSurfaceClass *const klass = GST_MFX_SURFACE_GET_CLASS(surface);
 
-  if (gst_mfx_surface_has_video_memory(surface) && surface->mapped)
+  if (gst_mfx_surface_has_video_memory(surface) && GST_MFX_SURFACE_GET_PRIVATE(surface)->mapped)
     if (klass->unmap) {
       klass->unmap(surface);
-      surface->mapped = FALSE;
+      GST_MFX_SURFACE_GET_PRIVATE(surface)->mapped = FALSE;
     }
 }
