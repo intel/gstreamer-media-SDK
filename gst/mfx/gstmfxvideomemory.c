@@ -263,7 +263,7 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize, guint flags)
     case GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE:
       if (!mem->surface)
         goto error_no_surface;
-      mem->data = mem->surface;
+      mem->data = (void*) mem->surface;
       break;
     case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
       if (!get_image_data (mem))
