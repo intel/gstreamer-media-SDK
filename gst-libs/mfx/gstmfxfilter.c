@@ -264,7 +264,10 @@ init_params (GstMfxFilter * filter)
   }
   if (filter->height) {
     filter->params.vpp.Out.CropH = filter->height;
-    filter->params.vpp.Out.Height = GST_ROUND_UP_16 (filter->height);
+    filter->params.vpp.Out.Height =
+        (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
+           GST_ROUND_UP_16 (filter->height) :
+           GST_ROUND_UP_32 (filter->height);
   }
   if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
     /* Setup special double frame rate deinterlace mode */
@@ -276,8 +279,6 @@ init_params (GstMfxFilter * filter)
     filter->params.vpp.In.FrameRateExtN /= 2;
 
     filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
-    filter->params.vpp.Out.Height =
-        GST_ROUND_UP_16 (filter->params.vpp.Out.CropH);
   }
   if (filter->filter_op & GST_MFX_FILTER_FRAMERATE_CONVERSION &&
       (filter->fps_n && filter->fps_d)) {
