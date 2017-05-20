@@ -1,0 +1,212 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9B7D3E37-C79E-4BB3-B793-072AB9C7CE55}</ProjectGuid>
+    <RootNamespace>gst_msdk</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\gstreamer\1.0\x86_64\lib\glib-2.0\include;C:\gstreamer\1.0\x86_64\include\gstreamer-1.0;C:\gstreamer\1.0\x86_64\include\glib-2.0;$(INTELMEDIASDKROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\gstreamer\1.0\x86_64\lib;C:\gstreamer\1.0\x86_64\lib\gstreamer-1.0\static;C:\gstreamer\1.0\x86_64\lib\glib-2.0;$(INTELMEDIASDKROOT)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmfx.lib;gstreamer-1.0.lib;gobject-2.0.lib;glib-2.0.lib;gthread-2.0.lib;gio-2.0.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.;$(ProjectDir)gst-libs\mfx;$(GSTREAMER_1_0_ROOT_X86_64)lib\glib-2.0\include;$(GSTREAMER_1_0_ROOT_X86_64)include\gstreamer-1.0;$(GSTREAMER_1_0_ROOT_X86_64)include\glib-2.0;$(INTELMEDIASDKROOT)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);MFX_DECODER;MFX_VPP;MFX_SINK;MFX_H264_ENCODER;MFX_H265_ENCODER;MFX_MPEG2_ENCODER;MFX_JPEG_ENCODER;MFX_VC1_PARSER;USE_HEVC_DECODER;GST_USE_UNSTABLE_API;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(GSTREAMER_1_0_ROOT_X86_64)lib;$(GSTREAMER_1_0_ROOT_X86_64)lib\gstreamer-1.0;$(INTELMEDIASDKROOT)lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmfx.lib;dxva2.lib;gstreamer-1.0.lib;gobject-2.0.lib;glib-2.0.lib;gio-2.0.lib;gstpbutils-1.0.lib;gstbase-1.0.lib;gstvideo-1.0.lib;gstgl-1.0.lib;gstcodecparsers-1.0.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="gst-libs\mfx\common\gstbitwriter.c" />
+    <ClCompile Include="gst-libs\mfx\d3d11\gstmfxwindow_d3d11.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxdecoder.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxencoder.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxencoder_h264.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxencoder_h265.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxencoder_jpeg.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxencoder_mpeg2.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxfilter.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxprofile.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxsurface.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxsurfacepool.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxtask.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxtaskaggregator.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxutils_h264.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxvalue.c" />
+    <ClCompile Include="gst-libs\mfx\gstmfxwindow.c" />
+    <ClCompile Include="gst-libs\mfx\video-format.c" />
+    <ClCompile Include="gst\mfx\gstmfx.c" />
+    <ClCompile Include="gst\mfx\gstmfxdec.c" />
+    <ClCompile Include="gst\mfx\gstmfxenc.c" />
+    <ClCompile Include="gst\mfx\gstmfxenc_h264.c" />
+    <ClCompile Include="gst\mfx\gstmfxenc_h265.c" />
+    <ClCompile Include="gst\mfx\gstmfxenc_jpeg.c" />
+    <ClCompile Include="gst\mfx\gstmfxenc_mpeg2.c" />
+    <ClCompile Include="gst\mfx\gstmfxpluginbase.c" />
+    <ClCompile Include="gst\mfx\gstmfxpluginutil.c" />
+    <ClCompile Include="gst\mfx\gstmfxpostproc.c" />
+    <ClCompile Include="gst\mfx\gstmfxsink.c" />
+    <ClCompile Include="gst\mfx\gstmfxvideobufferpool.c" />
+    <ClCompile Include="gst\mfx\gstmfxvideocontext.c" />
+    <ClCompile Include="gst\mfx\gstmfxvideomemory.c" />
+    <ClCompile Include="gst\mfx\gstmfxvideometa.c" />
+    <ClCompile Include="parsers\gstvc1parse.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gst-libs\mfx\common\gstbitwriter.h" />
+    <ClInclude Include="gst-libs\mfx\d3d11\gstmfxwindow_d3d11.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxdebug.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxdecoder.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxencoder.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxencoder_h264.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxencoder_h265.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxencoder_jpeg.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxencoder_mpeg2.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxencoder_priv.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxfilter.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxprofile.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxsurface.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxsurfacepool.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxsurface_priv.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxtask.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxtaskaggregator.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxtypes.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxutils_h264.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxvalue.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxwindow.h" />
+    <ClInclude Include="gst-libs\mfx\gstmfxwindow_priv.h" />
+    <ClInclude Include="gst-libs\mfx\sysdeps.h" />
+    <ClInclude Include="gst-libs\mfx\video-format.h" />
+    <ClInclude Include="gst\mfx\gstmfxdec.h" />
+    <ClInclude Include="gst\mfx\gstmfxenc.h" />
+    <ClInclude Include="gst\mfx\gstmfxenc_h264.h" />
+    <ClInclude Include="gst\mfx\gstmfxenc_h265.h" />
+    <ClInclude Include="gst\mfx\gstmfxenc_jpeg.h" />
+    <ClInclude Include="gst\mfx\gstmfxenc_mpeg2.h" />
+    <ClInclude Include="gst\mfx\gstmfxpluginbase.h" />
+    <ClInclude Include="gst\mfx\gstmfxpluginutil.h" />
+    <ClInclude Include="gst\mfx\gstmfxpostproc.h" />
+    <ClInclude Include="gst\mfx\gstmfxsink.h" />
+    <ClInclude Include="gst\mfx\gstmfxvideobufferpool.h" />
+    <ClInclude Include="gst\mfx\gstmfxvideocontext.h" />
+    <ClInclude Include="gst\mfx\gstmfxvideomemory.h" />
+    <ClInclude Include="gst\mfx\gstmfxvideometa.h" />
+    <ClInclude Include="parsers\gstvc1parse.h" />
+    <ClInclude Include="version.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

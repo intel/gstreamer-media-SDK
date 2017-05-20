@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerEnvironment>PATH=$(GSTREAMER_1_0_ROOT_X86_64)bin</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerCommand>$(GSTREAMER_1_0_ROOT_X86_64)bin\gst-launch-1.0.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>--gst-debug=mfx*:6 --gst-plugin-load=$(TargetPath) filesrc location="C:/Users/$(USERNAME)/Videos/trailer_1080p.mov" ! qtdemux ! h264parse ! mfxdecode ! mfxsinkelement</LocalDebuggerCommandArguments>
+  </PropertyGroup>
+</Project>

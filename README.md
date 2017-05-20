@@ -40,6 +40,7 @@ Requirements
   * GStreamer 1.6.x (tested up to GStreamer 1.10.x)
   * gst-plugins-* 1.6.x (tested up to GStreamer 1.10.x)
   * CMake
+  * pkg-config
  
   * Renderers:  
     Wayland (>=1.7)  
@@ -54,32 +55,33 @@ Requirements
 
 Compiling
 ---------
-GStreamer-MSDK uses the CMake build tool to build the plugins.
-Create a build folder within the source directory and run the CMake
-command to configure the out-of-source build.
+GStreamer-MSDK uses the Meson build tool to build the plugins.
+On Windows, open VS x64 native tools command prompt, and add gstreamer pkgconfig path to PKG_CONFIG_PATH if not already done:
 
-	mkdir build
-	cd build
-	cmake ..
+	set PKG_CONFIG_PATH=%GSTREAMER_1_0_ROOT_X86_64%lib\pkgconfig
 
-To make a debug build:
+Run the Meson command to configure the out-of-source build.
 
-	cmake .. -DDEBUG=ON
+	meson ../gst-msdk-build 
+
+To setup a release build:
+
+	meson ../gst-msdk-build_release --buildtype=release
+	
+To setup a VS2015 project:
+
+	meson ../gst-msdk-build_msvc --backend=vs2015
 		
-To build the plugins for Media Server Studio 2016 Linux Edition:
+Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 decode support, from your build dir:
 
-	cmake .. -DWITH_MSS_2016=ON
+	mesonconf -DUSE_VP9_DECODER=true
 
-Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 decode support:
-
-	cmake .. -DUSE_VP9_DECODER=ON
-
-For a list of more options when configuring the build, refer to the CMakeLists.txt file inside the source directory.
+For a list of more options when configuring the build, refer to the meson_options.txt file inside the source directory or run mesonconf inside the build directory.
 
 Next step is to compile and install the GStreamer-MSDK plugins:
 
-	make
-	make install
+	cd ../gst-msdk-build
+	ninja
 
 To uninstall the plugins:
 
@@ -96,9 +98,9 @@ Please refer to README.USAGE for examples on how to accomplish various
 video-related tasks with the GStreamer-MSDK plugins.
 
 
-TODO
+In-progress
 ----
- - Microsoft&reg; Visual Studio support for Windows 10 enablement
+ - Microsoft&reg; Windows 10 support
 
 
 License
