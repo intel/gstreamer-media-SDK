@@ -34,7 +34,7 @@
 
 
 static gboolean
-gst_mfx_surface_allocate_default (GstMfxSurface * surface)
+gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 {
   mfxFrameData *ptr = &surface->surface.Data;
   mfxFrameInfo *info = &surface->surface.Info;
