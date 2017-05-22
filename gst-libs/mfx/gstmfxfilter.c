@@ -887,14 +887,19 @@ gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter,
   mfxExtVPPDeinterlacing *ext_deinterlacing;
 
   g_return_val_if_fail (filter != NULL, FALSE);
+#if MSDK_CHECK_VERSION(1,19)
   g_return_val_if_fail (GST_MFX_DEINTERLACE_MODE_BOB == mode
       || GST_MFX_DEINTERLACE_MODE_ADVANCED == mode
       || GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF == mode
-#if MSDK_CHECK_VERSION(1,19)
       || GST_MFX_DEINTERLACE_MODE_ADVANCED_SCD == mode
       || GST_MFX_DEINTERLACE_MODE_FIELD_WEAVING == mode
-#endif // MSDK_CHECK_VERSION
       , FALSE);
+#else
+  g_return_val_if_fail (GST_MFX_DEINTERLACE_MODE_BOB == mode
+      || GST_MFX_DEINTERLACE_MODE_ADVANCED == mode
+      || GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF == mode
+      , FALSE);
+#endif // MSDK_CHECK_VERSION
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_DEINTERLACING);
   if (NULL == op) {
@@ -947,14 +952,18 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   mfxExtVPPFrameRateConversion *ext_frc;
 
   g_return_val_if_fail (filter != NULL, FALSE);
+#if 0
   g_return_val_if_fail (GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
       || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
-#if 0
       || GST_MFX_FRC_FRAME_INTERPOLATION == alg
       || GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg
       || GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg
-#endif // 0
       , FALSE);
+#else
+  g_return_val_if_fail (GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
+      || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
+      , FALSE);
+#endif // 0
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_FRAMERATE_CONVERSION);
   if (NULL == op) {
