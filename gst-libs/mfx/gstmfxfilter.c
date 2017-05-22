@@ -162,7 +162,7 @@ check_supported_filters (GstMfxFilter * filter)
   memset (&vpp_use, 0, sizeof (mfxExtVPPDoUse));
 
   vpp_use.NumAlg = 1;
-  vpp_use.AlgList = g_slice_alloc (sizeof (mfxExtVPPDoUse));
+  vpp_use.AlgList = g_slice_alloc ( 1 * sizeof (mfxU32));
   vpp_use.Header.BufferId = MFX_EXTBUFF_VPP_DOUSE;
   param.NumExtParam = 1;
 
@@ -180,7 +180,7 @@ check_supported_filters (GstMfxFilter * filter)
   }
 
   /* Release the resource */
-  g_slice_free (mfxExtVPPDoUse, vpp_use.AlgList);
+  g_slice_free1 (1 * sizeof(mfxU32), vpp_use.AlgList);
 }
 
 static gboolean
@@ -300,7 +300,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   sts =
-      MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, &request);
+      MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, request);
   if (sts < 0) {
     GST_ERROR ("Unable to query VPP allocation request %d", sts);
     return FALSE;
