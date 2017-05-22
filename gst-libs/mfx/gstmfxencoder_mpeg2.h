@@ -31,12 +31,12 @@ G_BEGIN_DECLS
 #define GST_TYPE_MFX_ENCODER_MPEG2 (gst_mfx_encoder_mpeg2_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_MFX, ENCODER_MPEG2, GstMfxEncoder)
 
+#define GST_MFX_ENCODER_MPEG2(encoder) \
+  ((GstMfxEncoderMpeg2 *) (encoder))
+
 #define GST_MFX_ENCODER_MPEG2_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_MPEG2, \
   GstMfxEncoderMpeg2Class))
-
-#define GST_MFX_ENCODER_MPEG2(encoder) \
-  ((GstMfxEncoderMpeg2 *) (encoder))
 
 GstMfxEncoder *
 gst_mfx_encoder_mpeg2_new (GstMfxEncoderMpeg2 *, GstMfxTaskAggregator * aggregator,
