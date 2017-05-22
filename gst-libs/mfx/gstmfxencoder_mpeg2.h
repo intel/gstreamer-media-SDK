@@ -24,6 +24,7 @@
 #define GST_MFX_ENCODER_MPEG2_H
 
 #include "gstmfxencoder.h"
+#include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
 

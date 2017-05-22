@@ -626,7 +626,7 @@ gst_mfx_encoder_finalize (GObject * object)
 }
 
 GstMfxEncoder *
-gst_mfx_encoder_new (GstMfxEncoder * encoder, const GstMfxEncoderClass * klass,
+gst_mfx_encoder_new (GstMfxEncoder * encoder,
     GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
     gboolean memtype_is_system)
 {

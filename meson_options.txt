@@ -13,6 +13,8 @@ option('MFX_VPP', type : 'boolean', value : false)
 option('MFX_SINK', type : 'boolean', value : false)
 option('MFX_SINK_BIN', type : 'boolean', value : false)
 
+option('USE_D3D11_RENDERER', type : 'boolean', value : false)
+
 option('MFX_VC1_PARSER', type : 'boolean', value : false)
 
 option('MFX_HOME', type : 'string', value : '') #keep '' as default is set in meson.build

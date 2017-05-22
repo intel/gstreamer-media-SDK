@@ -6,7 +6,6 @@ gst_mfx_libs_sources = [
   'gstmfxencoder_jpeg.c',
   'gstmfxencoder_mpeg2.c',
   'gstmfxfilter.c',
-  'gstmfxminiobject.c',
   'gstmfxprofile.c',
   'gstmfxsurface.c',
   'gstmfxsurfacepool.c',
@@ -14,9 +13,14 @@ gst_mfx_libs_sources = [
   'gstmfxtaskaggregator.c',
   'gstmfxutils_h264.c',
   'gstmfxvalue.c',
+  'gstmfxwindow.c',
   'video-format.c',
   'common/gstbitwriter.c',
 ]
+
+if get_option('USE_D3D11_RENDERER')
+  gst_mfx_libs_sources += 'd3d11/gstmfxwindow_d3d11.c'
+endif
 
 gstmfx = library('gst-mfx-@0@'.format(api_version),
   gst_mfx_libs_sources,

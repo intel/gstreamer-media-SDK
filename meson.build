@@ -109,7 +109,7 @@ if get_option('MFX_VC1_PARSER')
 endif
 
 configinc = include_directories('.')
-libsinc = include_directories('gst-libs')
+libsinc = include_directories('gst-libs/mfx')
 
 vs_module_defs_dir = meson.current_source_dir() + '/win32/common/'
 

@@ -356,10 +356,11 @@ gst_mfx_encoder_h265_set_property (GstMfxEncoder * base_encoder,
 }
 
 GstMfxEncoder *
-gst_mfx_encoder_h265_new (GstMfxEncoderH265 * encoder, GstMfxTaskAggregator * aggregator,
-    const GstVideoInfo * info, gboolean mapped)
+gst_mfx_encoder_h265_new (GstMfxEncoderH265 * encoder,
+  GstMfxTaskAggregator * aggregator,
+  const GstVideoInfo * info, gboolean mapped)
 {
-  return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder), GST_MFX_ENCODER_GET_CLASS(encoder),
+  return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder),
       aggregator, info, mapped);
 }
 

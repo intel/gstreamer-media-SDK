@@ -42,26 +42,20 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 
   mfxFrameData *ptr = &priv->surface.Data;
   mfxFrameInfo *info = &priv->surface.Info;
-  guint frame_size, offset = 0;
+  guint frame_size;
   gboolean success = TRUE;
 
   frame_size = info->Width * info->Height;
 
-#ifdef WITH_MSS_2016
-  /* This offset value is required for Haswell when using MFX surfaces in
-   * system memory. Don't ask me why... */
-  offset = 1;
-#endif
-
   switch (info->FourCC) {
   case MFX_FOURCC_NV12:
     priv->data_size = frame_size * 3 / 2;
-    priv->data = g_slice_alloc(priv->data_size + offset);
+    priv->data = g_slice_alloc(priv->data_size);
     if (!priv->data)
       goto error;
     ptr->Pitch = priv->pitches[0] = priv->pitches[1] = info->Width;
 
-    priv->planes[0] = ptr->Y = priv->data + offset;
+    priv->planes[0] = ptr->Y = priv->data;
     priv->planes[1] = ptr->UV = ptr->Y + frame_size;
 
     break;
@@ -86,12 +80,12 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
     break;
   case MFX_FOURCC_YUY2:
     priv->data_size = frame_size * 2;
-    priv->data = g_slice_alloc(priv->data_size + offset);
+    priv->data = g_slice_alloc(priv->data_size);
     if (!priv->data)
       goto error;
     ptr->Pitch = priv->pitches[0] = info->Width * 2;
 
-    priv->planes[0] = ptr->Y = priv->data + offset;
+    priv->planes[0] = ptr->Y = priv->data;
     ptr->U = ptr->Y + 1;
     ptr->V = ptr->Y + 3;
 
@@ -110,12 +104,12 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
     break;
   case MFX_FOURCC_RGB4:
     priv->data_size = frame_size * 4;
-    priv->data = g_slice_alloc(priv->data_size + offset);
+    priv->data = g_slice_alloc(priv->data_size);
     if (!priv->data)
       goto error;
     ptr->Pitch = priv->pitches[0] = info->Width * 4;
 
-    priv->planes[0] = ptr->B = priv->data + offset;
+    priv->planes[0] = ptr->B = priv->data;
     ptr->G = ptr->B + 1;
     ptr->R = ptr->B + 2;
     ptr->A = ptr->B + 3;
@@ -123,12 +117,12 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
     break;
   case MFX_FOURCC_P010:
     priv->data_size = frame_size * 3;
-    priv->data = g_slice_alloc(priv->data_size + offset);
+    priv->data = g_slice_alloc(priv->data_size);
     if (!priv->data)
       goto error;
     ptr->Pitch = priv->pitches[0] = priv->pitches[1] = info->Width * 2;
 
-    priv->planes[0] = ptr->Y = priv->data + offset;
+    priv->planes[0] = ptr->Y = priv->data;
     priv->planes[1] = ptr->UV = ptr->Y + frame_size * 2;
 
     break;

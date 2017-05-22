@@ -273,8 +273,9 @@ struct _GstMfxEncoderClass
 
 
 GstMfxEncoder *
-gst_mfx_encoder_new (GstMfxEncoder *encoder, const GstMfxEncoderClass * klass,
-  	GstMfxTaskAggregator * aggregator, const GstVideoInfo * info, gboolean mapped);
+gst_mfx_encoder_new (GstMfxEncoder *encoder,
+  GstMfxTaskAggregator * aggregator,
+  const GstVideoInfo * info, gboolean mapped);
 
 void
 gst_mfx_encoder_finalize (GObject * object);

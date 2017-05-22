@@ -35,6 +35,10 @@ if get_option('MFX_ENCODER')
   endif
 endif
 
+if get_option('MFX_SINK')
+  gstmfx_sources += 'gstmfxsink.c'
+endif
+
 if get_option('MFX_VPP')
   gstmfx_sources += 'gstmfxpostproc.c'
 endif
