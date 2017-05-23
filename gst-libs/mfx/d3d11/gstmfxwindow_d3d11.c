@@ -76,10 +76,11 @@ gst_mfx_window_d3d11_create (GstMfxWindow * window,
   return TRUE;
 }
 
-static void
-gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
+static gboolean
+gst_mfx_window_d3d11_destroy (GObject * window)
 {
   GST_FIXME("unimplemented GstMfxWindowD3D11::destroy()");
+  return TRUE;
 }
 
 static gboolean

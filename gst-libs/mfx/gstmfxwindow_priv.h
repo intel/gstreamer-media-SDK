@@ -81,7 +81,7 @@ struct _GstMfxWindow
 /* GstMfxWindowClass hooks */
 typedef gboolean(*GstMfxWindowCreateFunc) (GstMfxWindow * window,
   guint * width, guint * height);
-typedef gboolean(*GstMfxWindowDestroyFunc) (GstMfxWindow * window);
+typedef gboolean(*GstMfxWindowDestroyFunc) (GObject * window);
 typedef gboolean(*GstMfxWindowShowFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowHideFunc) (GstMfxWindow * window);
 typedef gboolean(*GstMfxWindowGetGeometryFunc) (GstMfxWindow * window,
