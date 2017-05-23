@@ -337,9 +337,11 @@ gst_mfxdec_flush_discarded_frames (GstMfxDec * mfxdec)
 {
   GstVideoCodecFrame *frame = NULL;
 
-  while (frame = gst_mfx_decoder_get_discarded_frame(mfxdec->decoder)) {
+  frame = gst_mfx_decoder_get_discarded_frame(mfxdec->decoder);
+  while (frame) {
     GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY(frame);
     gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
+    frame = gst_mfx_decoder_get_discarded_frame(mfxdec->decoder);
   }
 }
 
