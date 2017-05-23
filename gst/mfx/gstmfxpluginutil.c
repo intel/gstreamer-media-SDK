@@ -179,7 +179,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   GstCaps *caps = NULL;
   GstCaps *out_caps, *templ;
   GstStructure *structure;
-  gchar *format = NULL;
+  const gchar *format = NULL;
 
   templ = gst_pad_get_pad_template_caps (pad);
   out_caps = gst_caps_intersect_full (gst_pad_peer_query_caps (pad, templ),
