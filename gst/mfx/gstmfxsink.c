@@ -406,6 +406,10 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
 
   gst_caps_replace (&sink->caps, caps);
 
+  /* Temporary - in order to avoid scaling textures */
+  win_width = sink->video_width; //TODO: remove
+  win_height = sink->video_height;
+
   gst_mfxsink_ensure_window_size (sink, &win_width, &win_height);
   if (sink->window) {
     if (!sink->foreign_window || sink->fullscreen)

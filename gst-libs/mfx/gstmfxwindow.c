@@ -77,6 +77,7 @@ gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
 
+
   /* FIXME: Implement generic device context class to get display size*/
   //gst_mfx_display_get_size (window->display,
     //&window->display_width, &window->display_height);
@@ -94,7 +95,7 @@ gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
 }
 
 static void
-gst_mfx_window_finalize (GstMfxWindow * window)
+gst_mfx_window_finalize (GObject * window)
 {
   GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS (window);
 
@@ -225,7 +226,7 @@ gst_mfx_window_hide (GstMfxWindow * window)
 guintptr
 gst_mfx_window_get_handle (GstMfxWindow * window)
 {
-  g_return_val_if_fail (window != NULL, NULL);
+  g_return_val_if_fail (window != NULL, (guintptr)NULL);
 
   return GST_MFX_WINDOW_GET_PRIVATE(window)->handle;
 }

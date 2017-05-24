@@ -383,7 +383,7 @@ gst_mfx_decoder_create(GstMfxDecoder * decoder,
 	}
 
   /* Temporary for testing purposes */
-  decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+  decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY; //TODO: remove
 	//decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	decoder->inited = FALSE;
 	decoder->bs.MaxLength = 1024 * 16;
