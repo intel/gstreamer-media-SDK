@@ -1010,6 +1010,9 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   /* Get updated video params if modified by peer MFX element*/
   gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
 
+  /* Temporary for testing purposes */
+  filter->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY; //TODO: remove
+
   memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 
   request =  gst_mfx_task_get_request (filter->vpp[1]);

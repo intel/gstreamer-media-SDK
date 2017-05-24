@@ -77,6 +77,7 @@ gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
 
+
   /* FIXME: Implement generic device context class to get display size*/
   //gst_mfx_display_get_size (window->display,
     //&window->display_width, &window->display_height);
