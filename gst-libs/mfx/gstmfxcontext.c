@@ -92,7 +92,7 @@ gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
 	  GST_OBJECT(new_context));
 }
 
-guintptr
+GstMfxDevice*
 gst_mfx_context_get_device(GstMfxContext * context)
 {
   return context->device;

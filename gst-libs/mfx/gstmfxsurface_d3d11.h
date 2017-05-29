@@ -36,7 +36,8 @@ G_DECLARE_FINAL_TYPE(GstMfxSurfaceD3D11, gst_mfx_surface_d3d11, GST_MFX, SURFACE
   GstMfxSurfaceD3D11Class))
 
 GstMfxSurface *
-gst_mfx_surface_d3d11_new_from_task(GstMfxTask * task);
+gst_mfx_surface_d3d11_new_from_task(GstMfxSurfaceD3D11 * surface,
+  GstMfxTask * task);
 
 G_END_DECLS
 

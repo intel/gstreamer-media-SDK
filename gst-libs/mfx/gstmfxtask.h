@@ -22,6 +22,7 @@
 #define GST_MFX_TASK_H
 
 #include "gstmfxcontext.h"
+#include "gstmfxtypes.h"
 #include "sysdeps.h"
 
 G_BEGIN_DECLS
@@ -80,6 +81,9 @@ gst_mfx_task_set_task_type (GstMfxTask * task, guint flags);
 
 guint
 gst_mfx_task_get_task_type (GstMfxTask * task);
+
+GstMfxMemoryId *
+gst_mfx_task_get_memory_id (GstMfxTask * task);
 
 void
 gst_mfx_task_use_video_memory (GstMfxTask * task);
