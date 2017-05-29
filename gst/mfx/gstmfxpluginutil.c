@@ -176,8 +176,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
   guint num_structures;
-  GstCaps *caps = NULL;
-  GstCaps *out_caps, *templ;
+  GstCaps *out_caps, *templ = NULL;
   GstStructure *structure;
   const gchar *format = NULL;
 
@@ -205,7 +204,6 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   gst_structure_free (structure);
 
 cleanup:
-  gst_caps_replace (&caps, NULL);
   gst_caps_replace (&out_caps, NULL);
   return feature;
 }
