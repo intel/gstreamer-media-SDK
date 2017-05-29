@@ -22,6 +22,7 @@
 #define GST_MFX_CONTEXT_H
 
 #include "sysdeps.h"
+#include "d3d11/gstmfxdevice.h"
 
 G_BEGIN_DECLS
 
@@ -43,7 +44,7 @@ void
 gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
     GstMfxContext * new_context);
 
-guintptr
+GstMfxDevice*
 gst_mfx_context_get_device(GstMfxContext * context);
 
 G_END_DECLS

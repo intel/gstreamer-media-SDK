@@ -24,6 +24,7 @@
 #include "gstmfxwindow_d3d11_priv.h"
 #include "gstmfxwindow_priv.h"
 #include "gstmfxsurface.h"
+#include "gstmfxallocator_d3d11.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -74,10 +75,16 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
       gst_mfx_surface_get_pitch(surface, 0), 0);//TODO: ensure RGB4*/
   }
   else {
+
+
+    mfxFrameSurface1* frame = (ID3D11Texture2D*)gst_mfx_surface_get_frame_surface(surface);
+    mfxHDLPair pair;
+    gst_mfx_task_frame_get_hdl(NULL, frame->Data.MemId, &pair);
+
     ID3D11DeviceContext_CopyResource(
       gst_mfx_device_get_d3d11_context(priv2->device),
       priv2->backbuffer_texture,
-      (ID3D11Texture2D*)gst_mfx_surface_get_id(surface));
+      (ID3D11Texture2D*) pair.first);
 
     /*ID3D11DeviceContext_CopyResource(priv2->d3d11_device_ctx,
       priv2->backbuffer_texture, (ID3D11Texture2D*) gst_mfx_surface_get_id(surface));*/
@@ -274,5 +281,6 @@ gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context,
       gst_mfx_context_get_device(context);
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW(window), context,
-    GST_MFX_ID_INVALID, width, height);
+    //GST_MFX_ID_INVALID, 
+    width, height);
 }
