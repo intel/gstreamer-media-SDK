@@ -1,5 +1,5 @@
 /*
- *  Copyright (C)
+ *  Copyright (C) 2017
  *    Author: Ishmael Visayana Sameen <ishmael1985@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
@@ -18,24 +18,42 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef GST_MFX_WINDOW_D3D11_H
-#define GST_MFX_WINDOW_D3D11_H
+#ifndef GST_MFX_DEVICE_H
+#define GST_MFX_DEVICE_H
 
-#include "gstmfxwindow.h"
-#include "gstmfxwindow_priv.h"
+#include "sysdeps.h"
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_MFX_WINDOW_D3D11 (gst_mfx_window_d3d11_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_MFX, WINDOW_D3D11, GstMfxWindow)
+#define GST_TYPE_MFX_DEVICE (gst_mfx_device_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxDevice, gst_mfx_device, GST_MFX, DEVICE, GstObject)
 
-#define GST_MFX_WINDOW_D3D11_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_WINDOW_D3D11, \
-  GstMfxWindowD3D11Class))
+#define GST_MFX_DEVICE(obj) ((GstMfxDevice *) (obj))
 
-GstMfxWindow *
-gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context, guint width, guint height);
+typedef struct _GstMfxDevice GstMfxDevice;
+
+GstMfxDevice *
+gst_mfx_device_new (GstMfxDevice * device, mfxSession session);
+
+GstMfxDevice *
+gst_mfx_device_ref(GstMfxDevice * device);
+
+void
+gst_mfx_device_unref(GstMfxDevice * device);
+
+void
+gst_mfx_device_replace(GstMfxDevice ** old_device_ptr,
+  GstMfxDevice * new_device);
+
+ID3D11Device *
+gst_mfx_device_get_handle(GstMfxDevice * device);
+
+IDXGIFactory2 *
+gst_mfx_device_get_factory(GstMfxDevice * device);
+
+ID3D11DeviceContext *
+gst_mfx_device_get_d3d11_context(GstMfxDevice * device);
 
 G_END_DECLS
 
-#endif /* GST_MFX_WINDOW_D3D11_H */
+#endif /* GST_MFX_DEVICE_H */

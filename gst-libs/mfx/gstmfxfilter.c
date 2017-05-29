@@ -1010,9 +1010,6 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   /* Get updated video params if modified by peer MFX element*/
   gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
 
-  /* Temporary for testing purposes */
-  filter->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY; //TODO: remove
-
   memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 
   request =  gst_mfx_task_get_request (filter->vpp[1]);
@@ -1031,7 +1028,7 @@ gst_mfx_filter_start (GstMfxFilter * filter)
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
   }
   else {
-	gst_mfx_task_ensure_memtype_is_system(filter->vpp[1]);
+	  gst_mfx_task_ensure_memtype_is_system(filter->vpp[1]);
   }
 
   filter->vpp_pool[1] = gst_mfx_surface_pool_new_with_task (

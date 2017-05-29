@@ -23,7 +23,7 @@
 #include "sysdeps.h"
 #include "gstmfxwindow.h"
 #include "gstmfxwindow_priv.h"
-//#include "gstmfxdisplay.h"
+#include "gstmfxcontext.h"
 #include "gstmfxsurface.h"
 
 #define DEBUG 1
@@ -77,9 +77,8 @@ gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
 
-
-  /* FIXME: Implement generic device context class to get display size*/
-  //gst_mfx_display_get_size (window->display,
+  /* TODO: Implement generic device context class to get display size*/
+  //gst_mfx_context_get_display_size (window->display,
     //&window->display_width, &window->display_height);
 
   if (!GST_MFX_WINDOW_GET_CLASS (window)->create (window, &width, &height))
@@ -95,14 +94,16 @@ gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
 }
 
 static void
-gst_mfx_window_finalize (GObject * window)
+gst_mfx_window_finalize (GObject * object)
 {
-  GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS (window);
+  GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS (object);
+  GstMfxWindow *window = GST_MFX_WINDOW(object);
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
 
   if (klass->destroy)
     klass->destroy (window);
 
-  //gst_mfx_display_replace (&window->display, NULL);
+  gst_mfx_context_replace (&priv->context, NULL);
 }
 
 void
@@ -116,22 +117,22 @@ gst_mfx_window_class_init (GstMfxWindowClass * klass)
 }
 
 GstMfxWindow *
-gst_mfx_window_new_internal (GstMfxWindow *window,
-  //GstMfxDisplay * display,
+gst_mfx_window_new_internal (GstMfxWindow *window, GstMfxContext * context,
   GstMfxID id, guint width, guint height)
 {
-  if (id != GST_MFX_ID_INVALID) {
+  /*if (id != GST_MFX_ID_INVALID) {
     g_return_val_if_fail (width == 0, NULL);
     g_return_val_if_fail (height == 0, NULL);
   } else {
     g_return_val_if_fail (width > 0, NULL);
     g_return_val_if_fail (height > 0, NULL);
-  }
+  }*/
 
-  //window->display = gst_mfx_display_ref (display);
   GST_MFX_WINDOW_GET_PRIVATE(window)->handle = id;
   GST_MFX_WINDOW_GET_PRIVATE(window)->use_foreign_window =
       id != GST_MFX_ID_INVALID;
+  GST_MFX_WINDOW_GET_PRIVATE(window)->context =
+    gst_mfx_context_ref(context);
   if (!gst_mfx_window_create (window, width, height))
     goto error;
   return window;
@@ -184,13 +185,13 @@ gst_mfx_window_replace (GstMfxWindow ** old_window_ptr,
   gst_mfx_window_replace_internal (old_window_ptr, new_window);
 }
 
-/*GstMfxDisplay *
-gst_mfx_window_get_display (GstMfxWindow * window)
+GstMfxContext *
+gst_mfx_window_get_context (GstMfxWindow * window)
 {
   g_return_val_if_fail (window != NULL, NULL);
 
-  return window->display;
-}*/
+  return GST_MFX_WINDOW_GET_PRIVATE(window)->context;
+}
 
 /**
  * gst_mfx_window_show:

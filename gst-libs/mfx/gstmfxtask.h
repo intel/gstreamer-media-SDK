@@ -21,8 +21,8 @@
 #ifndef GST_MFX_TASK_H
 #define GST_MFX_TASK_H
 
-#include <mfxvideo.h>
-#include <gst/video/video.h>
+#include "gstmfxcontext.h"
+#include "sysdeps.h"
 
 G_BEGIN_DECLS
 
@@ -35,10 +35,10 @@ G_DECLARE_FINAL_TYPE(GstMfxTask, gst_mfx_task, GST_MFX, TASK, GstObject)
 #define GST_MFX_TASK_SESSION(task) \
   gst_mfx_task_get_session (task)
 
-#define GST_MFX_TASK_DISPLAY(task) \
-  gst_mfx_task_get_display (task)
+#define GST_MFX_TASK_CONTEXT(task) \
+  gst_mfx_task_get_context (task)
 
-typedef struct _GstMfxTaskAggregator GstMfxTaskAggregator;
+typedef struct _GstMfxTaskAggregator  GstMfxTaskAggregator;
 
 typedef enum {
   GST_MFX_TASK_INVALID = 0,
@@ -99,22 +99,14 @@ gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params);
 void
 gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task);
 
+GstMfxContext *
+gst_mfx_task_get_context (GstMfxTask * task);
+
 guint
 gst_mfx_task_get_num_surfaces (GstMfxTask * task);
 
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task);
-
-/* ------------------------------------------------------------------------ */
-/* --- MFX Frame Allocator                                              --- */
-/* ------------------------------------------------------------------------ */
-
-mfxStatus
-gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest *req,
-    mfxFrameAllocResponse *resp);
-
-mfxStatus
-gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse *resp);
 
 G_END_DECLS
 

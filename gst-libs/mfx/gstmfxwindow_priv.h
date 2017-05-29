@@ -38,10 +38,6 @@ G_BEGIN_DECLS
 #define GST_MFX_WINDOW_ID(window) \
   (GST_MFX_WINDOW (window)->handle)
 
-//#undef GST_MFX_WINDOW_DISPLAY
-//#define GST_MFX_WINDOW_DISPLAY(window) \
-  //(GST_MFX_WINDOW (window)->display)
-
 typedef struct _GstMfxWindowClass            GstMfxWindowClass;
 typedef struct _GstMfxWindowPrivate          GstMfxWindowPrivate;
 
@@ -50,7 +46,7 @@ struct _GstMfxWindowPrivate
   /*< private >*/
   GstMfxWindow *parent;
 
-  //GstMfxDisplay *display;
+  GstMfxContext *context;
   guintptr handle;
 
   /*< protected >*/

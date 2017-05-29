@@ -11,6 +11,7 @@ gst_mfx_libs_sources = [
   'gstmfxprofile.c',
   'gstmfxsurface.c',
   'gstmfxsurfacepool.c',
+  'gstmfxcontext.c',
   'gstmfxtask.c',
   'gstmfxtaskaggregator.c',
   'gstmfxutils_h264.c',
@@ -25,6 +26,9 @@ if get_option('USE_D3D11_RENDERER')
   additional_deps += cc.find_library('d3d11')
   additional_deps += cc.find_library('dxguid')
 
+  gst_mfx_libs_sources += 'gstmfxallocator_d3d11.c'
+  gst_mfx_libs_sources += 'gstmfxsurface_d3d11.c'
+  gst_mfx_libs_sources += 'd3d11/gstmfxdevice.c'
   gst_mfx_libs_sources += 'd3d11/gstmfxwindow_d3d11.c'
 endif
 

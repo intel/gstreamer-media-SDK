@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2016 Intel Corporation
- *    Author: Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>
- *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *  Copyright (C) 2017
+ *    Author: Ishmael Visayana Sameen <ishmael1985@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -19,26 +18,25 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef GST_MFX_VIDEO_FORMAT_H
-#define GST_MFX_VIDEO_FORMAT_H
+#ifndef GST_MFX_ALLOCATOR_D3D11_FORMAT_H
+#define GST_MFX_ALLOCATOR_D3D11_FORMAT_H
 
-#include <gst/video/video.h>
-#include "sysdeps.h"
+#include <mfxvideo.h>
 
-G_BEGIN_DECLS
+mfxStatus
+gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *request,
+  mfxFrameAllocResponse *response);
 
-const gchar *
-gst_mfx_video_format_to_string (GstVideoFormat format);
+mfxStatus
+gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse *response);
 
-GstVideoFormat
-gst_video_format_from_mfx_fourcc (mfxU32 fourcc);
+mfxStatus
+gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 
-mfxU32
-gst_video_format_to_mfx_fourcc (GstVideoFormat format);
+mfxStatus
+gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 
-DXGI_FORMAT
-gst_mfx_fourcc_to_dxgi_format(mfxU32 fourcc);
+mfxStatus
+gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL * hdl);
 
-G_END_DECLS
-
-#endif /* GST_MFX_VIDEO_FORMAT_H */
+#endif /* GST_MFX_ALLOCATOR_D3D11_FORMAT_H */

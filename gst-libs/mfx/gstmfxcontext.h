@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2016 Intel Corporation
- *    Author: Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>
- *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *  Copyright (C) 2017
+ *    Author: Ishmael Visayana Sameen <ishmael1985@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -19,26 +18,34 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef GST_MFX_VIDEO_FORMAT_H
-#define GST_MFX_VIDEO_FORMAT_H
+#ifndef GST_MFX_CONTEXT_H
+#define GST_MFX_CONTEXT_H
 
-#include <gst/video/video.h>
 #include "sysdeps.h"
 
 G_BEGIN_DECLS
 
-const gchar *
-gst_mfx_video_format_to_string (GstVideoFormat format);
+#define GST_TYPE_MFX_CONTEXT (gst_mfx_context_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxContext, gst_mfx_context, GST_MFX, CONTEXT, GstObject)
 
-GstVideoFormat
-gst_video_format_from_mfx_fourcc (mfxU32 fourcc);
+#define GST_MFX_CONTEXT(obj) ((GstMfxContext *) (obj))
 
-mfxU32
-gst_video_format_to_mfx_fourcc (GstVideoFormat format);
+GstMfxContext *
+gst_mfx_context_new (GstMfxContext * context, mfxSession session);
 
-DXGI_FORMAT
-gst_mfx_fourcc_to_dxgi_format(mfxU32 fourcc);
+GstMfxContext *
+gst_mfx_context_ref (GstMfxContext * context);
+
+void
+gst_mfx_context_unref (GstMfxContext * context);
+
+void
+gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
+    GstMfxContext * new_context);
+
+guintptr
+gst_mfx_context_get_device(GstMfxContext * context);
 
 G_END_DECLS
 
-#endif /* GST_MFX_VIDEO_FORMAT_H */
+#endif /* GST_MFX_CONTEXT_H */

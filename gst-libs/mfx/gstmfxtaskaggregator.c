@@ -19,6 +19,7 @@
  */
 
 #include "gstmfxtaskaggregator.h"
+#include "gstmfxcontext.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -33,6 +34,7 @@ struct _GstMfxTaskAggregator
   /*< private > */
   GstObject parent_instance;
 
+  GstMfxContext *context;
   GList *cache;
   GstMfxTask *current_task;
   mfxSession parent_session;
@@ -52,6 +54,7 @@ static void
 gst_mfx_task_aggregator_init(GstMfxTaskAggregator * aggregator)
 {
 	aggregator->cache = NULL;
+  aggregator->context = NULL;
 }
 
 GstMfxTaskAggregator *
@@ -78,8 +81,29 @@ gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
 	  GST_OBJECT(new_aggregator));
 }
 
+GstMfxContext *
+gst_mfx_task_aggregator_get_context (GstMfxTaskAggregator * aggregator)
+{
+  g_return_val_if_fail(aggregator != NULL, 0);
+
+  return aggregator->context ? gst_mfx_context_ref (aggregator->context) : NULL;
+}
+
+static inline void
+gst_mfx_task_aggregator_set_device_context (GstMfxTaskAggregator * aggregator)
+{
+  if (!aggregator->context) {
+    aggregator->context =
+      gst_mfx_context_new(g_object_new(GST_TYPE_MFX_CONTEXT, NULL),
+        aggregator->parent_session);
+
+    MFXVideoCORE_SetHandle(aggregator->parent_session, MFX_HANDLE_D3D11_DEVICE,
+      gst_mfx_device_get_handle(gst_mfx_context_get_device(aggregator->context)));
+  }
+}
+
 mfxSession
-gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
+gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
     gboolean * is_joined)
 {
   mfxIMPL impl;
@@ -93,7 +117,8 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
   memset (&init_params, 0, sizeof (init_params));
 
   //init_params.GPUCopy = MFX_GPUCOPY_ON;
-  init_params.Implementation = MFX_IMPL_AUTO_ANY;
+  init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
+  init_params.Implementation |= MFX_IMPL_VIA_D3D11;
   init_params.Version.Major = 1;
   init_params.Version.Minor = 17;
 
@@ -133,6 +158,8 @@ gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
     sts = MFXJoinSession (aggregator->parent_session, session);
     *is_joined = TRUE;
   }
+
+  gst_mfx_task_aggregator_set_device_context (aggregator);
 
   return session;
 }

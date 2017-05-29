@@ -434,24 +434,23 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     priv->params.mfx.FrameInfo.BitDepthLuma = 8;
 
     if (!g_strcmp0 (priv->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
-		priv->params.mfx.FrameInfo.Width =
+		  priv->params.mfx.FrameInfo.Width =
           GST_ROUND_UP_32 (priv->info.width);
-		priv->params.mfx.FrameInfo.Height =
+		  priv->params.mfx.FrameInfo.Height =
           GST_ROUND_UP_32 (priv->info.height);
     } else {
 		priv->params.mfx.FrameInfo.Width =
-          GST_ROUND_UP_16 (priv->info.width);
+        GST_ROUND_UP_16 (priv->info.width);
 		priv->params.mfx.FrameInfo.Height =
-          (MFX_PICSTRUCT_PROGRESSIVE ==
-			  priv->params.mfx.FrameInfo.PicStruct) ?
+        (MFX_PICSTRUCT_PROGRESSIVE == priv->params.mfx.FrameInfo.PicStruct) ?
           GST_ROUND_UP_16 (priv->info.height) :
           GST_ROUND_UP_32 (priv->info.height);
     }
 
     if (!priv->frame_info.FourCC) {
-		priv->frame_info = priv->params.mfx.FrameInfo;
-		priv->frame_info.FourCC =
-          gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&priv->info));
+		  priv->frame_info = priv->params.mfx.FrameInfo;
+		  priv->frame_info.FourCC =
+        gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&priv->info));
     }
   }
   else {

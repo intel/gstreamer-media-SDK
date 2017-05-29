@@ -27,16 +27,18 @@ struct _GstMfxFormatMap
 {
   GstVideoFormat format;
   mfxU32 mfx_fourcc;
+  DXGI_FORMAT dxgi_format;
 };
 
 GstMfxFormatMap format_map[] = {
-  {GST_VIDEO_FORMAT_NV12, MFX_FOURCC_NV12},
-  {GST_VIDEO_FORMAT_I420, MFX_FOURCC_YV12},
-  {GST_VIDEO_FORMAT_YV12, MFX_FOURCC_YV12},
-  {GST_VIDEO_FORMAT_YUY2, MFX_FOURCC_YUY2},
-  {GST_VIDEO_FORMAT_UYVY, MFX_FOURCC_UYVY},
-  {GST_VIDEO_FORMAT_BGRA, MFX_FOURCC_RGB4},
-  {GST_VIDEO_FORMAT_BGRx, MFX_FOURCC_RGB4},
+  {GST_VIDEO_FORMAT_NV12, MFX_FOURCC_NV12, DXGI_FORMAT_NV12 },
+  {GST_VIDEO_FORMAT_YUY2, MFX_FOURCC_YUY2, DXGI_FORMAT_YUY2 },
+  {GST_VIDEO_FORMAT_YV12, MFX_FOURCC_YV12, DXGI_FORMAT_420_OPAQUE },
+  {GST_VIDEO_FORMAT_I420, MFX_FOURCC_YV12, DXGI_FORMAT_420_OPAQUE },
+  {GST_VIDEO_FORMAT_BGRA, MFX_FOURCC_RGB4, DXGI_FORMAT_B8G8R8A8_UNORM },
+  {GST_VIDEO_FORMAT_BGRx, MFX_FOURCC_RGB4, DXGI_FORMAT_B8G8R8A8_UNORM },
+  {GST_VIDEO_FORMAT_ENCODED, MFX_FOURCC_P8, DXGI_FORMAT_P8 },
+  {GST_VIDEO_FORMAT_ENCODED, MFX_FOURCC_P8_TEXTURE, DXGI_FORMAT_P8 },
   {0,}
 };
 
@@ -63,3 +65,16 @@ gst_video_format_to_mfx_fourcc (GstVideoFormat format)
   }
   return 0;
 }
+
+DXGI_FORMAT
+gst_mfx_fourcc_to_dxgi_format(mfxU32 fourcc)
+{
+  GstMfxFormatMap *m;
+
+  for (m = format_map; m->format; m++) {
+    if (fourcc == m->mfx_fourcc)
+      return m->dxgi_format;
+  }
+  return DXGI_FORMAT_UNKNOWN;
+}
+

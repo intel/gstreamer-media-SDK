@@ -28,7 +28,18 @@
 #include <string.h>
 
 #include <gst/gst.h>
+#include <gst/video/video.h>
 #include <mfxvideo.h>
+
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
+#define COBJMACROS
+
+#include <initguid.h>
+#include <d3d11.h>
+#include <dxgi1_2.h>
 
 /* Media SDK API version check  */
 #define	MSDK_CHECK_VERSION(major,minor)	\

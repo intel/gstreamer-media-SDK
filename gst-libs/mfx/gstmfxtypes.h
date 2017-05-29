@@ -94,8 +94,10 @@ struct _GstMfxRectangle {
 
 typedef struct _GstMfxMemoryId GstMfxMemoryId;
 struct _GstMfxMemoryId {
-    mfxMemId                mid;
-    mfxFrameInfo           *info;
+  mfxMemId                mid;
+  mfxMemId                mid_stage;
+  mfxU16                  rw;
+  mfxFrameInfo           *info;
 };
 
 typedef enum {

@@ -22,6 +22,7 @@
 
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
+#include "gstmfxsurface_d3d11.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -66,6 +67,25 @@ release_surfaces (gpointer surface, gpointer pool)
     gst_mfx_surface_pool_put_surface (_pool, _surface);
 }
 
+
+
+static void
+gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
+{
+  guint i, num_surfaces = gst_mfx_task_get_num_surfaces(pool->task);
+  GstMfxSurface *surface = NULL;
+
+  for (i = 0; i < num_surfaces; i++) {
+    surface =
+        gst_mfx_surface_d3d11_new_from_task(
+          g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), pool->task);
+    if (!surface)
+      return;
+
+    g_queue_push_tail(&pool->free_surfaces, surface);
+  }
+}
+
 static void
 gst_mfx_surface_pool_create (GstMfxSurfacePool * pool)
 {
@@ -74,6 +94,9 @@ gst_mfx_surface_pool_create (GstMfxSurfacePool * pool)
 
   g_queue_init (&pool->free_surfaces);
   g_mutex_init (&pool->mutex);
+
+  if (pool->task && gst_mfx_task_has_video_memory(pool->task))
+    gst_mfx_surface_pool_add_surfaces(pool);
 }
 
 static void
@@ -97,7 +120,8 @@ gst_mfx_surface_pool_finalize (GObject * object)
 }
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new (GstMfxSurfacePool * pool, const GstVideoInfo * info,
+gst_mfx_surface_pool_new (GstMfxSurfacePool * pool,
+  const GstVideoInfo * info,
 	gboolean memtype_is_system)
 {
   g_return_val_if_fail(pool != NULL, NULL);
@@ -186,10 +210,13 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
   if (!surface) {
     g_mutex_unlock (&pool->mutex);
     if (pool->task) {
-      surface = gst_mfx_surface_new_from_task (pool->task);
+      surface = gst_mfx_surface_new_from_task (
+        g_object_new(GST_TYPE_MFX_SURFACE, NULL), pool->task);
     }
     else {
-      surface = gst_mfx_surface_new(&pool->info);
+      surface =
+          gst_mfx_surface_new(g_object_new(GST_TYPE_MFX_SURFACE, NULL),
+            &pool->info);
     }
 
     g_mutex_lock (&pool->mutex);

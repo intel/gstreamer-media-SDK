@@ -21,10 +21,11 @@
 #ifndef GST_MFX_WINDOW_D3D11_PRIV_H
 #define GST_MFX_WINDOW_D3D11_PRIV_H
 
-#define COBJMACROS 
+/*#define COBJMACROS 
 #include <dxgi1_2.h>
-#include <d3d11.h>
+#include <d3d11.h>*/
 
+#include "gstmfxdevice.h"
 #include "gstmfxwindow_d3d11.h"
 #include "gstmfxwindow_priv.h"
 
@@ -45,10 +46,11 @@ typedef struct _GstMfxWindowD3D11Private   GstMfxWindowD3D11Private;
 
 struct _GstMfxWindowD3D11Private
 {
-  ID3D11Device *d3d11_device;
+  GstMfxDevice *device;
+  /*ID3D11Device *d3d11_device;
   ID3D11DeviceContext *d3d11_device_ctx;
   IDXGIFactory2 * dxgi_factory;
-  IDXGIAdapter2 * dxgi_adapter;
+  IDXGIAdapter2 * dxgi_adapter;*/
   IDXGISwapChain1 * dxgi_swapchain;
   ID3D11Texture2D * backbuffer_texture;
   HWND hwnd;
@@ -72,7 +74,7 @@ G_DEFINE_TYPE(GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_TYPE_MFX_WINDOW);
 /**
 * GstMfxWindowD3D11Class:
 *
-* VA/Wayland display wrapper clas.
+* MFX/D3D11 window wrapper clas.
 */
 struct _GstMfxWindowD3d11Class
 {

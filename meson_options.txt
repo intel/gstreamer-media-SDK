@@ -6,14 +6,14 @@ option('USE_VP9_DECODER', type : 'boolean', value : false)
 option('MFX_ENCODER', type : 'boolean', value : true)
 option('MFX_H264_ENCODER', type : 'boolean', value : true)
 option('MFX_H265_ENCODER', type : 'boolean', value : false)
-option('MFX_MPEG2_ENCODER', type : 'boolean', value : false)
-option('MFX_JPEG_ENCODER', type : 'boolean', value : false)
+option('MFX_MPEG2_ENCODER', type : 'boolean', value : true)
+option('MFX_JPEG_ENCODER', type : 'boolean', value : true)
 
-option('MFX_VPP', type : 'boolean', value : false)
-option('MFX_SINK', type : 'boolean', value : false)
+option('MFX_VPP', type : 'boolean', value : true)
+option('MFX_SINK', type : 'boolean', value : true)
 option('MFX_SINK_BIN', type : 'boolean', value : false)
 
-option('USE_D3D11_RENDERER', type : 'boolean', value : false)
+option('USE_D3D11_RENDERER', type : 'boolean', value : true)
 
 option('MFX_VC1_PARSER', type : 'boolean', value : false)
 

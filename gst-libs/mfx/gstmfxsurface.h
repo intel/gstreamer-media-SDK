@@ -52,10 +52,10 @@ typedef struct _GstMfxSurface                 GstMfxSurface;
 typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 
 GstMfxSurface *
-gst_mfx_surface_new (const GstVideoInfo * info);
+gst_mfx_surface_new (GstMfxSurface * surface, const GstVideoInfo * info);
 
 GstMfxSurface *
-gst_mfx_surface_new_from_task (GstMfxTask * task);
+gst_mfx_surface_new_from_task (GstMfxSurface * surface, GstMfxTask * task);
 
 GstMfxSurface *
 gst_mfx_surface_new_from_pool(GstMfxSurfacePool * pool);

@@ -138,7 +138,7 @@ error:
 }
 
 static void
-gst_mfx_surface_release_default (GObject * surface)
+gst_mfx_surface_release_default (GstMfxSurface * surface)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
   mfxFrameData *ptr = &priv->surface.Data;
@@ -283,15 +283,15 @@ gst_mfx_surface_class_init(GstMfxSurfaceClass * klass)
 }
 
 GstMfxSurface *
-gst_mfx_surface_new (const GstVideoInfo * info)
+gst_mfx_surface_new (GstMfxSurface * surface, const GstVideoInfo * info)
 {
-  return gst_mfx_surface_new_internal(info, NULL);
+  return gst_mfx_surface_new_internal(surface, info, NULL);
 }
 
 GstMfxSurface *
-gst_mfx_surface_new_from_task (GstMfxTask * task)
+gst_mfx_surface_new_from_task (GstMfxSurface * surface, GstMfxTask * task)
 {
-  return gst_mfx_surface_new_internal(NULL, task);
+  return gst_mfx_surface_new_internal(surface, NULL, task);
 }
 
 GstMfxSurface *
@@ -303,15 +303,8 @@ gst_mfx_surface_new_from_pool(GstMfxSurfacePool * pool)
 }
 
 GstMfxSurface *
-gst_mfx_surface_new_internal(const GstVideoInfo * info, GstMfxTask * task)
+gst_mfx_surface_new_internal(GstMfxSurface *surface, const GstVideoInfo * info, GstMfxTask * task)
 {
-  GstMfxSurface *surface;
-
-  surface = g_object_new (GST_TYPE_MFX_SURFACE, NULL);
-
-  if (!surface)
-    return NULL;
-
   GST_MFX_SURFACE_GET_PRIVATE(surface)->surface_id = GST_MFX_ID_INVALID;
 
   if (!gst_mfx_surface_create(surface, info, task))
