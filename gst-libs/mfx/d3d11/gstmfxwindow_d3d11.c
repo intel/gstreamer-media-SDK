@@ -24,7 +24,6 @@
 #include "gstmfxwindow_d3d11_priv.h"
 #include "gstmfxwindow_priv.h"
 #include "gstmfxsurface.h"
-#include "gstmfxallocator_d3d11.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -75,16 +74,10 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
       gst_mfx_surface_get_pitch(surface, 0), 0);//TODO: ensure RGB4*/
   }
   else {
-
-
-    mfxFrameSurface1* frame = (ID3D11Texture2D*)gst_mfx_surface_get_frame_surface(surface);
-    mfxHDLPair pair;
-    gst_mfx_task_frame_get_hdl(NULL, frame->Data.MemId, &pair);
-
     ID3D11DeviceContext_CopyResource(
       gst_mfx_device_get_d3d11_context(priv2->device),
       priv2->backbuffer_texture,
-      (ID3D11Texture2D*) pair.first);
+      (ID3D11Texture2D*) gst_mfx_surface_get_id(surface));
 
     /*ID3D11DeviceContext_CopyResource(priv2->d3d11_device_ctx,
       priv2->backbuffer_texture, (ID3D11Texture2D*) gst_mfx_surface_get_id(surface));*/
@@ -142,7 +135,6 @@ static gboolean
 gst_mfx_window_d3d11_create (GstMfxWindow * mfx_window,
   guint * width, guint * height)
 {
-  //GST_FIXME("unimplemented GstMfxWindowD3D11::create()");
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(mfx_window);
   GstMfxWindowD3D11Private *const priv2 = GST_MFX_WINDOW_D3D11_GET_PRIVATE(mfx_window);
   HRESULT hr = S_OK;
@@ -169,6 +161,7 @@ gst_mfx_window_d3d11_create (GstMfxWindow * mfx_window,
     adapter_idx++;
   }
   */
+
   WNDCLASS d3d11_window = { 0 };
 
   d3d11_window.lpfnWndProc = (WNDPROC)WindowProc;
@@ -198,8 +191,8 @@ gst_mfx_window_d3d11_create (GstMfxWindow * mfx_window,
 
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
 
-  swapChainDesc.Width = *width;
-  swapChainDesc.Height = *height; 
+  swapChainDesc.Width = GST_ROUND_UP_16(*width);
+  swapChainDesc.Height = GST_ROUND_UP_16(*height);
 
   swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; //TODO: handle 10bpc with DXGI_FORMAT_R10G10B10A2_UNORM
   swapChainDesc.SampleDesc.Count = 1; 
@@ -216,6 +209,7 @@ gst_mfx_window_d3d11_create (GstMfxWindow * mfx_window,
   NULL,
   NULL,
   &priv2->dxgi_swapchain);*/
+
   hr = IDXGIFactory2_CreateSwapChainForHwnd(
     gst_mfx_device_get_factory (priv2->device),
     gst_mfx_device_get_handle (priv2->device),

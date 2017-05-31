@@ -22,7 +22,6 @@
 #ifndef GST_MFX_VIDEO_FORMAT_H
 #define GST_MFX_VIDEO_FORMAT_H
 
-#include <gst/video/video.h>
 #include "sysdeps.h"
 
 G_BEGIN_DECLS

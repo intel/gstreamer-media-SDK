@@ -99,7 +99,7 @@ get_intel_device_adapter (GstMfxDevice * device, mfxSession session)
 static gboolean
 gst_mfx_device_create(GstMfxDevice * device, mfxSession session)
 {
-  ID3D10Multithread *multithread_ptr;
+  ID3D10Multithread *multithread_ptr = NULL;
   static D3D_FEATURE_LEVEL feature_levels[] = {
     D3D_FEATURE_LEVEL_11_1,
     D3D_FEATURE_LEVEL_11_0,

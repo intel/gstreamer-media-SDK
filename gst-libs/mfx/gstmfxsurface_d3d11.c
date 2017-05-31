@@ -41,12 +41,13 @@ gst_mfx_surface_d3d11_from_task(GstMfxSurface * surface,
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
   GstMfxSurfaceD3D11 *const d3d_surface = GST_MFX_SURFACE_D3D11_CAST(surface);
+
   d3d_surface->mid = gst_mfx_task_get_memory_id(task);
   if (!d3d_surface->mid)
     return FALSE;
-
+  
   priv->surface.Data.MemId = d3d_surface->mid;
-  priv->surface_id = *(GstMfxID *)d3d_surface->mid->mid;
+  priv->surface_id = d3d_surface->mid->mid;
   return TRUE;
 }
 

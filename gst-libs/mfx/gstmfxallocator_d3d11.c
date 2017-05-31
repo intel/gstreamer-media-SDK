@@ -44,12 +44,12 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   HRESULT hr = S_OK;
   ResponseData *response_data;
 
-  /*if (task->task_type & (GST_MFX_TASK_VPP_IN | GST_MFX_TASK_ENCODER))
-  request->Type |= 0x2000;
-  if (task->task_type & (GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
-  request->Type |= 0x1000;*/
+  /*if (priv->task_type & (GST_MFX_TASK_VPP_IN | GST_MFX_TASK_ENCODER))
+    request->Type |= 0x2000;*/
+  if (priv->task_type & (GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
+    request->Type |= 0x1000;
 
-  if (priv->saved_responses && (priv->task_type & GST_MFX_TASK_DECODER) == GST_MFX_TASK_DECODER) {
+  if (priv->saved_responses && (priv->task_type & GST_MFX_TASK_DECODER)) {
     GList *l = g_list_last(priv->saved_responses);
     if (l) {
       response_data = l->data;
@@ -121,19 +121,28 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     desc.MiscFlags = 0;
     //desc.MiscFlags            = D3D11_RESOURCE_MISC_SHARED;
 
-    if ((MFX_MEMTYPE_FROM_VPPIN & request->Type) &&
-      (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format)) {
+    if ((MFX_MEMTYPE_FROM_VPPIN & request->Type)
+        && (DXGI_FORMAT_YUY2 == desc.Format)
+        || (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format)) {
       desc.BindFlags = D3D11_BIND_RENDER_TARGET;
       if (desc.ArraySize > 2)
         return MFX_ERR_MEMORY_ALLOC;
     }
 
-    if ((MFX_MEMTYPE_FROM_VPPOUT & request->Type) ||
-      (MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET & request->Type)) {
+    if ((MFX_MEMTYPE_FROM_VPPOUT & request->Type)
+      || (MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET & request->Type)) {
       desc.BindFlags = D3D11_BIND_RENDER_TARGET;
       if (desc.ArraySize > 2)
         return MFX_ERR_MEMORY_ALLOC;
     }
+
+#if MSDK_CHECK_VERSION(1,19)
+    if (request->Type & MFX_MEMTYPE_SHARED_RESOURCE)
+    {
+      desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
+      desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+    }
+#endif
 
     if (DXGI_FORMAT_P8 == desc.Format)
       desc.BindFlags = 0;
