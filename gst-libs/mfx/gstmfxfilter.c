@@ -52,7 +52,7 @@ struct _GstMfxFilter
   GstObject parent_instance;
   GstMfxTaskAggregator *aggregator;
   GstMfxTask *vpp[2];
-  GstMfxSurfacePool *vpp_pool[2];
+  GstMfxSurfacePool *out_pool;
   gboolean inited;
 
   mfxSession session;
@@ -429,12 +429,13 @@ gst_mfx_filter_finalize (GObject * object)
 
   MFXVideoVPP_Close(filter->session);
 
+  gst_mfx_surface_pool_replace(&filter->out_pool, NULL);
+  gst_mfx_task_frame_free(filter->vpp[1], &filter->response[1]);
+
   for (i = 0; i < 2; i++) {
     if (!filter->vpp[i])
       continue;
-    gst_mfx_surface_pool_replace (&filter->vpp_pool[i], NULL);
     g_slice_free (mfxFrameAllocRequest, filter->shared_request[i]);
-    gst_mfx_task_frame_free (filter->vpp[i], &filter->response[i]);
     gst_mfx_task_replace (&filter->vpp[i], NULL);
   }
 
@@ -1022,9 +1023,9 @@ gst_mfx_filter_start (GstMfxFilter * filter)
 	  gst_mfx_task_ensure_memtype_is_system(filter->vpp[1]);
   }
 
-  filter->vpp_pool[1] = gst_mfx_surface_pool_new_with_task (
+  filter->out_pool = gst_mfx_surface_pool_new_with_task (
 	  g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), filter->vpp[1]);
-  if (!filter->vpp_pool[1])
+  if (!filter->out_pool)
     return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
@@ -1061,7 +1062,7 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface * surface,
   insurf = gst_mfx_surface_get_frame_surface (surface);
 
   do {
-    *out_surface = gst_mfx_surface_new_from_pool (filter->vpp_pool[1]);
+    *out_surface = gst_mfx_surface_new_from_pool (filter->out_pool);
     if (!*out_surface)
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 
@@ -1100,7 +1101,7 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface * surface,
       } while (MFX_WRN_IN_EXECUTION == sts);
 
     *out_surface =
-        gst_mfx_surface_pool_find_surface (filter->vpp_pool[1], outsurf);
+        gst_mfx_surface_pool_find_surface (filter->out_pool, outsurf);
   }
 
   if (more_surface)

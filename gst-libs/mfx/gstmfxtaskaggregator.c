@@ -157,7 +157,6 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
   }
 
   gst_mfx_task_aggregator_set_device_context (aggregator);
-
   return session;
 }
 

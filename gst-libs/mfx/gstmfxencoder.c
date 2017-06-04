@@ -939,6 +939,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   mfxFrameAllocRequest *request;
   mfxFrameAllocRequest enc_request;
   gboolean memtype_is_system = FALSE;
+  //guint shared_task_type = 0;
 
   GstMfxEncoderPrivate *const priv =
 	  GST_MFX_ENCODER_GET_PRIVATE(encoder);
@@ -1010,9 +1011,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
         (enc_request.NumFrameSuggested - priv->params.AsyncDepth + 1);
     request->NumFrameMin = request->NumFrameSuggested;
 
-    gst_mfx_task_set_task_type (priv->encode,
-      //gst_mfx_task_get_task_type (priv->encode) |
-      GST_MFX_TASK_ENCODER);
+    //shared_task_type = gst_mfx_task_get_task_type(priv->encode);
+    gst_mfx_task_set_task_type (priv->encode, GST_MFX_TASK_ENCODER);
   }
   else {
     request = &enc_request;
@@ -1043,6 +1043,10 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     GST_ERROR ("Error initializing the MFX video encoder %d", sts);
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
+
+  //if (priv->shared)
+    //gst_mfx_task_set_task_type(priv->encode,
+      //shared_task_type | GST_MFX_TASK_ENCODER);
 
   memset (&priv->params, 0, sizeof(mfxVideoParam));
   MFXVideoENCODE_GetVideoParam (priv->session, &priv->params);

@@ -44,12 +44,13 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   HRESULT hr = S_OK;
   ResponseData *response_data;
 
-  /*if (priv->task_type & (GST_MFX_TASK_VPP_IN | GST_MFX_TASK_ENCODER))
+  /*if (gst_mfx_task_has_type(task, GST_MFX_TASK_VPP_IN | GST_MFX_TASK_ENCODER))
     request->Type |= 0x2000;*/
-  if (priv->task_type & (GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
+  if (gst_mfx_task_has_type(task, GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
     request->Type |= 0x1000;
 
-  if (priv->saved_responses && (priv->task_type & GST_MFX_TASK_DECODER)) {
+  if (priv->saved_responses
+      && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
     GList *l = g_list_last(priv->saved_responses);
     if (l) {
       response_data = l->data;

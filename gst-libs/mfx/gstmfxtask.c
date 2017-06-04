@@ -86,7 +86,7 @@ gst_mfx_task_has_type (GstMfxTask * task, guint flags)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return (GST_MFX_TASK_GET_PRIVATE(task)->task_type & flags);
+  return (GST_MFX_TASK_GET_PRIVATE(task)->task_type) & flags;
 }
 
 void
@@ -201,7 +201,7 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     mfxSession session, guint type_flags, gboolean is_joined)
 {
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
-  mfxHDL device_handle = NULL;
+  mfxHDL device_handle = 0;
   mfxStatus sts = MFX_ERR_NONE;
 
   priv->is_joined = is_joined;
