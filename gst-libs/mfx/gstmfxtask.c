@@ -201,6 +201,8 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     mfxSession session, guint type_flags, gboolean is_joined)
 {
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+  mfxHDL device_handle = NULL;
+  mfxStatus sts = MFX_ERR_NONE;
 
   priv->is_joined = is_joined;
   priv->task_type |= type_flags;
@@ -209,12 +211,15 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   priv->context = gst_mfx_task_aggregator_get_context(aggregator);
   priv->memtype_is_system = FALSE;
 
-  if ((priv->task_type != 0)
-      && ((priv->task_type & (~priv->task_type + 1)) == priv->task_type)) {
-    mfxStatus sts = MFXVideoCORE_SetHandle(priv->session, MFX_HANDLE_D3D11_DEVICE,
-      gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context)));
-    //if (MFX_ERR_NONE != sts)
-      //return FALSE;
+  device_handle =
+      gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context));
+  sts = MFXVideoCORE_GetHandle(priv->session, MFX_HANDLE_D3D11_DEVICE,
+          &device_handle);
+  if (MFX_ERR_NONE != sts) {
+    sts = MFXVideoCORE_SetHandle(priv->session, MFX_HANDLE_D3D11_DEVICE,
+            device_handle);
+    if (MFX_ERR_NONE != sts)
+      return FALSE;
   }
 
   gst_mfx_task_aggregator_add_task (aggregator, task);

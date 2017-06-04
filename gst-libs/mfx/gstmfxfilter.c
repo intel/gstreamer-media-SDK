@@ -529,13 +529,6 @@ gst_mfx_filter_replace (GstMfxFilter ** old_filter_ptr,
       GST_OBJECT (new_filter));
 }
 
-GstMfxSurfacePool *
-gst_mfx_filter_get_pool (GstMfxFilter * filter, guint flags)
-{
-  return gst_mfx_surface_pool_ref (filter->vpp_pool[!!(flags &
-              GST_MFX_TASK_VPP_OUT)]);
-}
-
 gboolean
 gst_mfx_filter_set_format (GstMfxFilter * filter, mfxU32 fourcc)
 {
