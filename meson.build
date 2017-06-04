@@ -125,11 +125,11 @@ gstbase_dep = dependency('gstreamer-base-1.0', version : gst_req,
   fallback : ['gstreamer', 'gstbase_dep'])
 gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req,
   fallback : ['gstreamer', 'gstvideo_dep'])
+gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version : gst_req,
+  fallback : ['gstreamer', 'gst_dep'])
   
 if get_option('MFX_VC1_PARSER')
   gstcodecparsers_dep = dependency('gstreamer-codecparsers-1.0', version : gst_req,
-    fallback : ['gstreamer', 'gst_dep'])
-  gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version : gst_req,
     fallback : ['gstreamer', 'gst_dep'])
 endif
 

@@ -13,6 +13,7 @@ gstmfx_dependencies = [
   glib_deps,
   gstvideo_dep,
   gstbase_dep,
+  gstpbutils_dep,
 ]
 
 if get_option('MFX_DECODER')
@@ -37,6 +38,10 @@ endif
 
 if get_option('MFX_SINK')
   gstmfx_sources += 'gstmfxsink.c'
+endif
+
+if get_option('MFX_SINK_BIN')
+  gstmfx_sources += 'gstmfxsinkbin.c'
 endif
 
 if get_option('MFX_VPP')

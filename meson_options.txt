@@ -11,7 +11,7 @@ option('MFX_JPEG_ENCODER', type : 'boolean', value : true)
 
 option('MFX_VPP', type : 'boolean', value : true)
 option('MFX_SINK', type : 'boolean', value : true)
-option('MFX_SINK_BIN', type : 'boolean', value : false)
+option('MFX_SINK_BIN', type : 'boolean', value : true)
 
 option('USE_D3D11_RENDERER', type : 'boolean', value : true)
 
