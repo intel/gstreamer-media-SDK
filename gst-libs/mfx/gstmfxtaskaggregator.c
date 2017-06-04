@@ -96,9 +96,6 @@ gst_mfx_task_aggregator_set_device_context (GstMfxTaskAggregator * aggregator)
     aggregator->context =
       gst_mfx_context_new(g_object_new(GST_TYPE_MFX_CONTEXT, NULL),
         aggregator->parent_session);
-
-    MFXVideoCORE_SetHandle(aggregator->parent_session, MFX_HANDLE_D3D11_DEVICE,
-      gst_mfx_device_get_handle(gst_mfx_context_get_device(aggregator->context)));
   }
 }
 

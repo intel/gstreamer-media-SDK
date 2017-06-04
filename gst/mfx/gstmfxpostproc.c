@@ -405,6 +405,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
   gboolean srcpad_has_raw_caps =
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
+  gboolean success = TRUE;
+  GstMfxTask *task;
 
   if (vpp->filter)
     return TRUE;
@@ -412,16 +414,14 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
-  if (!plugin->sinkpad_has_dmabuf) {
-    GstMfxTask *task =
-        gst_mfx_task_aggregator_get_current_task (plugin->aggregator);
+  task = gst_mfx_task_aggregator_get_current_task(plugin->aggregator);
 
+  if (!plugin->sinkpad_has_dmabuf) {
     if (task) {
       if (sinkpad_has_raw_caps || srcpad_has_raw_caps)
         plugin->sinkpad_caps_is_raw = TRUE;
       else
         plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
-      gst_mfx_task_unref (task);
     }
   }
 
@@ -436,15 +436,43 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
   plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
 
-  vpp->filter = gst_mfx_filter_new (g_object_new(GST_TYPE_MFX_FILTER, NULL), plugin->aggregator,
-      plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
-  if (!vpp->filter)
-    return FALSE;
+  if (task && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
+    mfxFrameAllocRequest *request = gst_mfx_task_get_request(task);
+    vpp->filter =
+        gst_mfx_filter_new_with_task(g_object_new(GST_TYPE_MFX_FILTER, NULL),
+          plugin->aggregator, task, GST_MFX_TASK_VPP_IN,
+          plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
+    if (!vpp->filter) {
+      goto done;
+      success = FALSE;
+    }
+
+    vpp->async_depth = gst_mfx_task_get_video_params(task)->AsyncDepth;
+    request->Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
+    request->NumFrameSuggested += (1 - vpp->async_depth);
+
+    gst_mfx_filter_set_request(vpp->filter, request, GST_MFX_TASK_VPP_IN);
+    gst_mfx_filter_set_frame_info(vpp->filter, &request->Info);
+  }
+  else {
+    vpp->filter =
+        gst_mfx_filter_new(g_object_new(GST_TYPE_MFX_FILTER, NULL),
+          plugin->aggregator, plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
+    if (!vpp->filter) {
+      goto done;
+      success = FALSE;
+    }
+
+    gst_mfx_filter_set_frame_info_from_gst_video_info(vpp->filter,
+      &vpp->sinkpad_info);
+  }
 
   if (plugin->srcpad_caps_is_raw)
     gst_mfx_task_aggregator_update_peer_memtypes (plugin->aggregator, TRUE);
 
-  return TRUE;
+done:
+  gst_mfx_task_replace(&task, NULL);
+  return success;
 }
 
 static gboolean
@@ -853,9 +881,6 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
   if (!gst_mfxpostproc_ensure_filter (vpp))
     return FALSE;
 
-  gst_mfx_filter_set_frame_info_from_gst_video_info (vpp->filter,
-      &vpp->sinkpad_info);
-
   if (vpp->async_depth)
     gst_mfx_filter_set_async_depth (vpp->filter, vpp->async_depth);
 
@@ -896,7 +921,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
     gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d);
   }
 
-  return  gst_mfx_filter_prepare (vpp->filter);
+  return gst_mfx_filter_prepare(vpp->filter);
 }
 
 static gboolean

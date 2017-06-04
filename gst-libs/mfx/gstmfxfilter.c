@@ -242,6 +242,10 @@ init_params (GstMfxFilter * filter)
 {
   gdouble frame_rate;
 
+  if (filter->vpp[0])
+    filter->params.AsyncDepth =
+      gst_mfx_task_get_video_params(filter->vpp[0])->AsyncDepth;
+
   filter->params.vpp.In = filter->frame_info;
 
   /* Aligned frame dimensions may differ between input and output surfaces
@@ -309,6 +313,27 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
         MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
+  /* Initialize input VPP surface pool for shared VPP-decode task */
+  if (filter->vpp[0]) {
+    gboolean memtype_is_system =
+      !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
+
+    filter->shared_request[0]->NumFrameSuggested += request[0].NumFrameSuggested;
+    filter->shared_request[0]->NumFrameMin =
+      filter->shared_request[0]->NumFrameSuggested;
+
+    if (!memtype_is_system) {
+      filter->shared_request[0]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+      gst_mfx_task_use_video_memory(filter->vpp[0]);
+      gst_mfx_task_set_request(filter->vpp[0], filter->shared_request[0]);
+
+      sts = gst_mfx_task_frame_alloc(filter->vpp[0], filter->shared_request[0],
+        &filter->response[0]);
+      if (MFX_ERR_NONE != sts)
+        return FALSE;
+    }
+  }
+
   if (filter->shared_request[1]) {
     filter->shared_request[1]->NumFrameSuggested += request[1].NumFrameSuggested;
     filter->shared_request[1]->NumFrameMin =
@@ -317,34 +342,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   else {
     filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
   }
-
   gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
-
-  /* Initialize input VPP surface pool for shared VPP-decode task */
-  if (filter->vpp[0]) {
-    gboolean memtype_is_system =
-        !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
-
-    filter->shared_request[0]->NumFrameSuggested += request[0].NumFrameSuggested;
-    filter->shared_request[0]->NumFrameMin =
-        filter->shared_request[0]->NumFrameSuggested;
-
-    if (!memtype_is_system) {
-      filter->shared_request[0]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
-      gst_mfx_task_use_video_memory (filter->vpp[0]);
-      gst_mfx_task_set_request (filter->vpp[0], filter->shared_request[0]);
-
-      sts = gst_mfx_task_frame_alloc (filter->vpp[0], filter->shared_request[0],
-          &filter->response[0]);
-      if (MFX_ERR_NONE != sts)
-        return FALSE;
-    }
-
-    filter->vpp_pool[0] = gst_mfx_surface_pool_new_with_task (
-		g_object_new( GST_TYPE_MFX_SURFACE_POOL, NULL), filter->vpp[0]);
-    if (!filter->vpp_pool[0])
-      return FALSE;
-  }
 
   return TRUE;
 }

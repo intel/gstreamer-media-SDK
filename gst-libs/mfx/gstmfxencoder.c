@@ -484,29 +484,29 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
     GstMfxTask *task =
         gst_mfx_task_aggregator_get_current_task (priv->aggregator);
 
-     if (!task) {
-       GST_ERROR ("Unable to retrieve upstream MFX task from task aggregator.");
-       return FALSE;
-     }
+    if (!task) {
+      GST_ERROR ("Unable to retrieve upstream MFX task from task aggregator.");
+      return FALSE;
+    }
 
     /* This could be a potentially shared task, so get the mfxFrameInfo
      * from the current task to initialize the new encoder
      * or shared VPP / encoder task */
-    if (gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
-      mfxVideoParam *params = gst_mfx_task_get_video_params (task);
-	  priv->frame_info = params->mfx.FrameInfo;
-    }
-    else {
+    if (gst_mfx_task_has_type (task, GST_MFX_TASK_VPP_OUT)) {
       mfxFrameAllocRequest *req = gst_mfx_task_get_request(task);
       if (!req) {
-        GST_ERROR ("Unable to retrieve allocation request for encoder task.");
+        GST_ERROR("Unable to retrieve allocation request for encoder task.");
         return FALSE;
       }
-	  priv->frame_info = req->Info;
+      priv->frame_info = req->Info;
+    }
+    else {
+      mfxVideoParam *params = gst_mfx_task_get_video_params(task);
+      priv->frame_info = params->mfx.FrameInfo;
     }
 
-    if (gst_mfx_task_has_video_memory (task) &&
-		priv->frame_info.FourCC == MFX_FOURCC_NV12) {
+    if (gst_mfx_task_has_video_memory (task)
+        && priv->frame_info.FourCC == MFX_FOURCC_NV12) {
       priv->shared = TRUE;
       priv->encode = task;
       priv->session = gst_mfx_task_get_session (priv->encode);
@@ -1010,7 +1010,9 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
         (enc_request.NumFrameSuggested - priv->params.AsyncDepth + 1);
     request->NumFrameMin = request->NumFrameSuggested;
 
-    gst_mfx_task_set_task_type (priv->encode, GST_MFX_TASK_ENCODER);
+    gst_mfx_task_set_task_type (priv->encode,
+      //gst_mfx_task_get_task_type (priv->encode) |
+      GST_MFX_TASK_ENCODER);
   }
   else {
     request = &enc_request;

@@ -106,9 +106,9 @@ gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder)
 }
 
 void
-gst_mfx_decoder_skip_corrupted_frames (GstMfxDecoder * decoder)
+gst_mfx_decoder_skip_corrupted_frames(GstMfxDecoder * decoder)
 {
-  g_return_if_fail (decoder != NULL);
+  g_return_if_fail(decoder != NULL);
 
   decoder->skip_corrupted_frames = TRUE;
 }
@@ -157,29 +157,18 @@ init_decoder (GstMfxDecoder * decoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
 
-  /*if (!decoder->memtype_is_system) {
-    mfxFrameAllocResponse response;
-    decoder->request.Type |= 0x1000;
-
-    sts = gst_mfx_task_frame_alloc(decoder->decode, &decoder->request,
-      &response);
-    if (MFX_ERR_NONE != sts)
-      return FALSE;
-  }*/
-
   sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
   if (sts < 0) {
     GST_ERROR ("Error re-initializing the MFX video decoder %d", sts);
     return FALSE;
   }
 
-  if (!decoder->pool) {
-    decoder->pool =
-        gst_mfx_surface_pool_new_with_task (
-		      g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), decoder->decode);
-    if (!decoder->pool)
-      return FALSE;
-  }
+  decoder->pool =
+      gst_mfx_surface_pool_new_with_task (
+		    g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), decoder->decode);
+  if (!decoder->pool)
+    return FALSE;
+  
   return TRUE;
 }
 
@@ -558,11 +547,6 @@ init_filter (GstMfxDecoder * decoder)
     GST_ERROR ("Unable to set up postprocessing filter.");
     goto error;
   }
-
-  decoder->pool = gst_mfx_filter_get_pool (decoder->filter,
-        GST_MFX_TASK_VPP_IN);
-  if (!decoder->pool)
-    goto error;
 
   return TRUE;
 

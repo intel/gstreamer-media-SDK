@@ -196,20 +196,29 @@ gst_mfx_task_init(GstMfxTask * task)
 {
 }
 
-static void
+static gboolean
 gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     mfxSession session, guint type_flags, gboolean is_joined)
 {
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+
   priv->is_joined = is_joined;
   priv->task_type |= type_flags;
   priv->session = session;
   priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   priv->context = gst_mfx_task_aggregator_get_context(aggregator);
+  priv->memtype_is_system = FALSE;
+
+  if ((priv->task_type != 0)
+      && ((priv->task_type & (~priv->task_type + 1)) == priv->task_type)) {
+    mfxStatus sts = MFXVideoCORE_SetHandle(priv->session, MFX_HANDLE_D3D11_DEVICE,
+      gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context)));
+    //if (MFX_ERR_NONE != sts)
+      //return FALSE;
+  }
 
   gst_mfx_task_aggregator_add_task (aggregator, task);
-
-  priv->memtype_is_system = FALSE;
+  return TRUE;
 }
 
 GstMfxTask *
@@ -241,7 +250,8 @@ gst_mfx_task_new_with_session (GstMfxTask * task,
   g_return_val_if_fail (aggregator != NULL, NULL);
   g_return_val_if_fail (session != NULL, NULL);
 
-  gst_mfx_task_create (task, aggregator, session, type_flags, is_joined);
+  if (!gst_mfx_task_create(task, aggregator, session, type_flags, is_joined))
+    return NULL;
 
   return task;
 }

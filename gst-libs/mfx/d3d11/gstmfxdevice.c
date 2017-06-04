@@ -130,8 +130,7 @@ gst_mfx_device_create(GstMfxDevice * device, mfxSession session)
   if (FAILED(hr))
     return FALSE;
 
-  hr =
-      ID3D11Device_QueryInterface(device->d3d11_device,
+  hr = ID3D11Device_QueryInterface(device->d3d11_device,
         &IID_ID3D10Multithread, (void **)&multithread_ptr);
   if (SUCCEEDED(hr)) {
     ID3D10Multithread_SetMultithreadProtected(multithread_ptr, TRUE);
