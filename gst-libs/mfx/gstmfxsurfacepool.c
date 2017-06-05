@@ -76,11 +76,14 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
   GstMfxSurface *surface = NULL;
 
   for (i = 0; i < num_surfaces; i++) {
-    surface =
-        gst_mfx_surface_d3d11_new_from_task(
-          g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), pool->task);
+    surface = gst_mfx_surface_d3d11_new_from_task(
+      g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), pool->task);
     if (!surface)
       return;
+
+    if (gst_mfx_task_has_type(pool->task,
+        GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
+      gst_mfx_surface_d3d11_set_rw_flags(surface, MFX_SURFACE_READ);
 
     g_queue_push_tail(&pool->free_surfaces, surface);
   }

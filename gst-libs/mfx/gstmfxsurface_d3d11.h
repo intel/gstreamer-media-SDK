@@ -35,6 +35,11 @@ G_DECLARE_FINAL_TYPE(GstMfxSurfaceD3D11, gst_mfx_surface_d3d11, GST_MFX, SURFACE
   (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_SURFACE_D3D11, \
   GstMfxSurfaceD3D11Class))
 
+typedef enum {
+  MFX_SURFACE_READ = (1 << 0),
+  MFX_SURFACE_WRITE = (1 << 1),
+};
+
 GstMfxSurface *
 gst_mfx_surface_d3d11_new(GstMfxSurfaceD3D11 * surface,
   GstMfxContext * context, const GstVideoInfo * info);

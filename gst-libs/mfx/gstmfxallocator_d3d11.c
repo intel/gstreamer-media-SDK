@@ -33,6 +33,32 @@ find_response(gconstpointer response_data, gconstpointer response)
   return _response_data ? _response->mids != _response_data->mids : -1;
 }
 
+static void
+free_memory_ids(ResponseData *response_data)
+{
+  guint i;
+
+  if (response_data->mids) {
+    for (i = 0; i < response_data->num_surfaces; i++) {
+      if (response_data->mids[i]) {
+        GstMfxMemoryId *mem_id = (GstMfxMemoryId *)response_data->mids[i];
+        ID3D11Texture2D *surface = (ID3D11Texture2D*)mem_id->mid;
+        ID3D11Texture2D *stage = (ID3D11Texture2D*)mem_id->mid_stage;
+
+        if (surface)
+          ID3D11Texture2D_Release(surface);
+        if (stage)
+          ID3D11Texture2D_Release(stage);
+
+        g_slice_free(GstMfxMemoryId, mem_id);
+      }
+    }
+    g_slice_free1(response_data->num_surfaces * sizeof(GstMfxMemoryId*),
+      response_data->mids);
+    response_data->mids = NULL;
+  }
+}
+
 mfxStatus
 gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   mfxFrameAllocResponse * response)
@@ -43,11 +69,6 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context));
   HRESULT hr = S_OK;
   ResponseData *response_data;
-
-  /*if (gst_mfx_task_has_type(task, GST_MFX_TASK_VPP_IN | GST_MFX_TASK_ENCODER))
-    request->Type |= 0x2000;*/
-  if (gst_mfx_task_has_type(task, GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
-    request->Type |= 0x1000;
 
   if (priv->saved_responses
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
@@ -66,7 +87,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   response_data->num_surfaces = request->NumFrameSuggested;
 
   /* Allocate custom container to keep texture and stage buffers for each surface.
-  * Container also stores the intended read and/or write operation. */
+   * Container also stores the intended read and/or write operation. */
   response_data->mids =
     g_slice_alloc0(response_data->num_surfaces * sizeof(GstMfxMemoryId *));
   if (!response_data->mids)
@@ -75,17 +96,11 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   for (int i = 0; i < response_data->num_surfaces; i++) {
     response_data->mids[i] = g_slice_new0(GstMfxMemoryId);
     if (!response_data->mids[i])
-      return MFX_ERR_MEMORY_ALLOC;
-    response_data->mids[i]->rw = request->Type & 0xF000; // Set intended read/write operation
+      goto error;
   }
-
-  request->Type = request->Type & 0x0FFF;
 
   if (MFX_FOURCC_P8 == request->Info.FourCC) {
     D3D11_BUFFER_DESC desc = { 0 };
-
-    if (!request->NumFrameSuggested)
-      return MFX_ERR_MEMORY_ALLOC;
 
     desc.ByteWidth = request->Info.Width * request->Info.Height;
     desc.Usage = D3D11_USAGE_STAGING;
@@ -97,7 +112,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     ID3D11Buffer* buffer = 0;
     hr = ID3D11Device_CreateBuffer((ID3D11Device*)d3d11_device, &desc, 0, &buffer);
     if (FAILED(hr))
-      return MFX_ERR_MEMORY_ALLOC;
+      goto error;
 
     response_data->mids[0]->mid = (ID3D11Texture2D*)(buffer);
     response_data->mids[0]->info = &response_data->frame_info;
@@ -109,7 +124,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
 
     format = gst_mfx_fourcc_to_dxgi_format(request->Info.FourCC);
     if (DXGI_FORMAT_UNKNOWN == format)
-      return MFX_ERR_UNSUPPORTED;
+      goto error;
 
     desc.Width = request->Info.Width;
     desc.Height = request->Info.Height;
@@ -127,14 +142,14 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
         || (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format)) {
       desc.BindFlags = D3D11_BIND_RENDER_TARGET;
       if (desc.ArraySize > 2)
-        return MFX_ERR_MEMORY_ALLOC;
+        goto error;
     }
 
     if ((MFX_MEMTYPE_FROM_VPPOUT & request->Type)
       || (MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET & request->Type)) {
       desc.BindFlags = D3D11_BIND_RENDER_TARGET;
       if (desc.ArraySize > 2)
-        return MFX_ERR_MEMORY_ALLOC;
+        goto error;
     }
 
 #if MSDK_CHECK_VERSION(1,19)
@@ -154,7 +169,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
         ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
           NULL, &texture);
       if (FAILED(hr))
-        return MFX_ERR_MEMORY_ALLOC;
+        goto error;
 
       response_data->mids[i]->mid = texture;
     }
@@ -172,7 +187,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
         ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
           NULL, &texture);
       if (FAILED(hr))
-        return MFX_ERR_MEMORY_ALLOC;
+        goto error;
 
       response_data->mids[i]->mid_stage = texture;
     }
@@ -185,6 +200,11 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   priv->saved_responses = g_list_prepend(priv->saved_responses, response_data);
 
   return MFX_ERR_NONE;
+
+error:
+  free_memory_ids(response_data);
+  g_free(response_data);
+  return MFX_ERR_MEMORY_ALLOC;
 }
 
 mfxStatus
@@ -192,7 +212,6 @@ gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse * response)
 {
   GstMfxTask *task = pthis;
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
-  mfxU16 i, num_surfaces;
   ResponseData *response_data;
 
   GList *l = g_list_find_custom(priv->saved_responses, response,
@@ -201,26 +220,8 @@ gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse * response)
     return MFX_ERR_NOT_FOUND;
 
   response_data = l->data;
-  num_surfaces = response_data->num_surfaces;
 
-  if (response_data->mids) {
-    for (i = 0; i < num_surfaces; i++) {
-      if (response_data->mids[i]) {
-        GstMfxMemoryId *mem_id = (GstMfxMemoryId *)response_data->mids[i];
-        ID3D11Texture2D *surface = (ID3D11Texture2D*)mem_id->mid;
-        ID3D11Texture2D *stage = (ID3D11Texture2D*)mem_id->mid_stage;
-
-        if (surface)
-          ID3D11Texture2D_Release(surface);
-        if (stage)
-          ID3D11Texture2D_Release(stage);
-
-        g_slice_free(GstMfxMemoryId, mem_id);
-      }
-    }
-    g_slice_free1(num_surfaces * sizeof(GstMfxMemoryId*), response_data->mids);
-    response_data->mids = NULL;
-  }
+  free_memory_ids(response_data);
 
   priv->saved_responses = g_list_delete_link(priv->saved_responses, l);
   g_free(response_data);

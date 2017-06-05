@@ -149,7 +149,7 @@ gst_mfx_surface_d3d11_map (GstMfxSurface * surface)
       gst_mfx_device_get_d3d11_context(d3d_surface->device);
 
   /* copy data only in case of user wants to read from stored surface */
-  if (d3d_surface->mid->rw & 0x1000)
+  if (d3d_surface->mid->rw & MFX_SURFACE_READ)
     ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, stage, 0, 0, 0, 0,
       texture, 0, NULL);
 
@@ -205,7 +205,7 @@ gst_mfx_surface_d3d11_unmap(GstMfxSurface * surface)
 
   ID3D11DeviceContext_Unmap(d3d11_context, stage, 0);
   /* copy data only in case user wants to write to stored surface */
-  if (d3d_surface->mid->rw & 0x2000)
+  if (d3d_surface->mid->rw & MFX_SURFACE_WRITE)
     ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, texture, 0, 0, 0, 0,
       stage, 0, NULL);
 
@@ -261,5 +261,6 @@ gst_mfx_surface_d3d11_new_from_task(GstMfxSurfaceD3D11 * surface,
 void
 gst_mfx_surface_d3d11_set_rw_flags(GstMfxSurfaceD3D11 * surface, guint flags)
 {
+  g_return_if_fail(surface != NULL);
   surface->mid->rw = flags;
 }

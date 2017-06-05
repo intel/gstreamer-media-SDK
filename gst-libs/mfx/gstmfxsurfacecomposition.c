@@ -84,7 +84,7 @@ create_subpicture (GstMfxSurfaceComposition * composition,
         gst_mfx_surface_get_context (composition->base_surface);
     subpicture->surface = gst_mfx_surface_d3d11_new (
       g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), context, &info);
-    gst_mfx_surface_d3d11_set_rw_flags(subpicture->surface, 0x2000);
+    gst_mfx_surface_d3d11_set_rw_flags(subpicture->surface, MFX_SURFACE_WRITE);
     gst_mfx_context_unref (context);
   }
   else {
