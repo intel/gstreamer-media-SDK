@@ -27,9 +27,8 @@
 #include "gstmfxpluginutil.h"
 
 #include <gst-libs/mfx/gstmfxwindow.h>
-#include <gst-libs/mfx/d3d11/gstmfxdevice.h>
 #include <gst-libs/mfx/gstmfxcontext.h>
-//#include <gst-libs/mfx/gstmfxcompositefilter.h>
+#include <gst-libs/mfx/gstmfxcompositefilter.h>
 
 G_BEGIN_DECLS
 
@@ -78,7 +77,7 @@ struct _GstMfxSink
   GstVideoInfo               video_info;
   GstMfxRectangle            display_rect;
 
-  //GstMfxCompositeFilter     *composite_filter;
+  GstMfxCompositeFilter     *composite_filter;
   GstMfxContext             *device_context;
 
   guint                      fullscreen : 1;

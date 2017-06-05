@@ -21,7 +21,6 @@
 #include "gstmfxsurface.h"
 #include "gstmfxsurface_priv.h"
 #include "gstmfxsurfacepool.h"
-#include "gstmfxtask.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -226,6 +225,7 @@ gst_mfx_surface_init (GstMfxSurface * surface)
   GstMfxSurfacePrivate *const priv =
     gst_mfx_surface_get_instance_private(surface);
 
+  priv->surface_id = GST_MFX_ID_INVALID;
   surface->priv = priv;
 }
 
@@ -266,6 +266,7 @@ gst_mfx_surface_finalize (GObject * surface)
   if (klass->release)
     klass->release (surface);
   gst_mfx_task_replace (&priv->task, NULL);
+  gst_mfx_context_replace(&priv->context, NULL);
 }
 
 void
@@ -303,9 +304,11 @@ gst_mfx_surface_new_from_pool(GstMfxSurfacePool * pool)
 }
 
 GstMfxSurface *
-gst_mfx_surface_new_internal(GstMfxSurface *surface, const GstVideoInfo * info, GstMfxTask * task)
+gst_mfx_surface_new_internal(GstMfxSurface *surface, GstMfxContext * context,
+  const GstVideoInfo * info, GstMfxTask * task)
 {
-  GST_MFX_SURFACE_GET_PRIVATE(surface)->surface_id = GST_MFX_ID_INVALID;
+  GST_MFX_SURFACE_GET_PRIVATE(surface)->context =
+      context ? gst_mfx_context_ref(context) : NULL;
 
   if (!gst_mfx_surface_create(surface, info, task))
     goto error;
@@ -440,6 +443,14 @@ gst_mfx_surface_get_crop_rect(GstMfxSurface * surface)
   g_return_val_if_fail(surface != NULL, NULL);
 
   return &GST_MFX_SURFACE_GET_PRIVATE(surface)->crop_rect;
+}
+
+GstMfxContext *
+gst_mfx_surface_get_context(GstMfxSurface * surface)
+{
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
+  
+  return priv->context ? gst_mfx_context_ref(priv->context) : NULL;
 }
 
 gboolean

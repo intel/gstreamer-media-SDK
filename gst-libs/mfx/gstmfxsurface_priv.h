@@ -41,6 +41,7 @@ struct _GstMfxSurfacePrivate
 {
   GstMfxSurface *parent;
 
+  GstMfxContext *context;
   GstMfxTask *task;
   GstMfxMemoryId mem_id;
   GstMfxID surface_id;

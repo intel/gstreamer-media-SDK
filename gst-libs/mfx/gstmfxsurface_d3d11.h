@@ -24,7 +24,7 @@
 #include "gstmfxsurface.h"
 #include "gstmfxsurface_priv.h"
 #include "gstmfxtask.h"
-#include "d3d11/gstmfxdevice.h"
+#include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
 
@@ -36,8 +36,15 @@ G_DECLARE_FINAL_TYPE(GstMfxSurfaceD3D11, gst_mfx_surface_d3d11, GST_MFX, SURFACE
   GstMfxSurfaceD3D11Class))
 
 GstMfxSurface *
+gst_mfx_surface_d3d11_new(GstMfxSurfaceD3D11 * surface,
+  GstMfxContext * context, const GstVideoInfo * info);
+
+GstMfxSurface *
 gst_mfx_surface_d3d11_new_from_task(GstMfxSurfaceD3D11 * surface,
   GstMfxTask * task);
+
+void
+gst_mfx_surface_d3d11_set_rw_flags(GstMfxSurfaceD3D11 * surface, guint flags);
 
 G_END_DECLS
 

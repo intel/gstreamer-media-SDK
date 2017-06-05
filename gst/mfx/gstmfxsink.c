@@ -36,7 +36,7 @@
 #include "gstmfxvideomemory.h"
 
 #include <gst-libs/mfx/gstmfxsurface.h>
-//#include <gst-libs/mfx/gstmfxsurfacecomposition.h>
+#include <gst-libs/mfx/gstmfxsurfacecomposition.h>
 
 #define GST_PLUGIN_NAME "mfxsink"
 #define GST_PLUGIN_DESC "A MFX-based videosink"
@@ -346,7 +346,7 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
     gst_mfx_window_replace(&sink->window, NULL);
   }
 
-  //gst_mfx_composite_filter_replace (&sink->composite_filter, NULL);
+  gst_mfx_composite_filter_replace (&sink->composite_filter, NULL);
   gst_mfx_context_replace(&sink->device_context, NULL);
 
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (sink));
@@ -443,12 +443,12 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
   GstMfxSurface *surface, *composite_surface = NULL;
   GstMfxRectangle *surface_rect = NULL;
   GstFlowReturn ret;
-#if 0
+
   GstVideoOverlayCompositionMeta *const cmeta =
       gst_buffer_get_video_overlay_composition_meta (src_buffer);
   GstVideoOverlayComposition *overlay = NULL;
   GstMfxSurfaceComposition *composition = NULL;
-#endif
+
   meta = gst_buffer_get_mfx_video_meta (src_buffer);
 
   surface = gst_mfx_video_meta_get_surface (meta);
@@ -464,16 +464,17 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
   GST_DEBUG ("render rect (%d,%d), size %ux%u",
       surface_rect->x, surface_rect->y,
       surface_rect->width, surface_rect->height);
-#if 0
+
   if (cmeta) {
     overlay = cmeta->overlay;
 
     if (!sink->composite_filter)
-      sink->composite_filter =
-        gst_mfx_composite_filter_new (plugin->aggregator,
-            !gst_mfx_surface_has_video_memory (surface));
+      sink->composite_filter = gst_mfx_composite_filter_new (
+        g_object_new(GST_TYPE_MFX_COMPOSITE_FILTER, NULL), plugin->aggregator,
+        !gst_mfx_surface_has_video_memory (surface));
 
-    composition = gst_mfx_surface_composition_new (surface, overlay);
+    composition = gst_mfx_surface_composition_new (
+      g_object_new(GST_TYPE_MFX_SURFACE_COMPOSITION, NULL), surface, overlay);
     if (!composition) {
       GST_ERROR("Failed to create new surface composition");
       goto error;
@@ -482,7 +483,6 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
     gst_mfx_composite_filter_apply_composition (sink->composite_filter,
         composition, &composite_surface);
   }
-#endif
 
   if (!gst_mfxsink_render_surface (sink,
         composite_surface ? composite_surface : surface, surface_rect))
@@ -490,7 +490,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
 
   ret = GST_FLOW_OK;
 done:
-  //gst_mfx_surface_composition_replace (&composition, NULL);
+  gst_mfx_surface_composition_replace (&composition, NULL);
   return ret;
 
 error:

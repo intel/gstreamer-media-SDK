@@ -43,7 +43,9 @@ enum
   PROP_RENDER_DELAY,
   PROP_THROTTLE_TIME,
   PROP_MAX_BITRATE,
+#if !defined(_WIN32) || !defined(_WIN64)
   PROP_DISPLAY_TYPE,
+#endif
   PROP_FULLSCREEN,
   PROP_SHOW_PREROLL_FRAME,
   PROP_FULL_COLOR_RANGE,
@@ -434,15 +436,12 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           0.0, 10.0, 1.0,
           GST_PARAM_CONTROLLABLE |  G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-#ifndef WITH_MSS_2016
   g_properties[PROP_ROTATION] =
       g_param_spec_enum ("rotation",
           "Rotation",
           "The rotation angle",
           GST_MFX_TYPE_ROTATION,
           DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-#endif
-
 
   g_object_class_install_properties (gobject_class, N_PROPERTIES, g_properties);
 

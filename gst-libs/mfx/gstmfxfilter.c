@@ -449,7 +449,7 @@ gst_mfx_filter_finalize (GObject * object)
 }
 
 static void
-gst_mfx_filter_init(GstMfxFilter * decoder)
+gst_mfx_filter_init(GstMfxFilter * filter)
 {
 }
 
@@ -500,7 +500,6 @@ error:
   gst_object_unref (filter);
   return NULL;
 }
-
 
 GstMfxFilter *
 gst_mfx_filter_ref (GstMfxFilter * filter)

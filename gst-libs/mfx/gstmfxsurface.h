@@ -23,10 +23,9 @@
 
 #include "sysdeps.h"
 
-#include <gst/video/video.h>
+#include "gstmfxcontext.h"
 #include "gstmfxtask.h"
 #include "gstmfxtypes.h"
-#include "video-format.h"
 
 G_BEGIN_DECLS
 
@@ -100,6 +99,9 @@ gst_mfx_surface_get_pitch (GstMfxSurface * surface, guint plane);
 
 GstMfxRectangle *
 gst_mfx_surface_get_crop_rect(GstMfxSurface * surface);
+
+GstMfxContext *
+gst_mfx_surface_get_context(GstMfxSurface * surface);
 
 gboolean
 gst_mfx_surface_has_video_memory(GstMfxSurface * surface);

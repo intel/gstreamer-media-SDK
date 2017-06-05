@@ -86,7 +86,7 @@ gst_mfx_task_has_type (GstMfxTask * task, guint flags)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return (GST_MFX_TASK_GET_PRIVATE(task)->task_type) & flags;
+  return ((GST_MFX_TASK_GET_PRIVATE(task)->task_type & flags) != 0);
 }
 
 void

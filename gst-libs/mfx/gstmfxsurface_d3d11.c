@@ -55,16 +55,82 @@ static gboolean
 gst_mfx_surface_d3d11_allocate(GstMfxSurface * surface, GstMfxTask * task)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
+  GstMfxSurfaceD3D11 *const d3d_surface = GST_MFX_SURFACE_D3D11_CAST(surface);
   
   priv->has_video_memory = TRUE;
 
-  return gst_mfx_surface_d3d11_from_task(surface, task);
+  if (task) {
+    return gst_mfx_surface_d3d11_from_task(surface, task);
+  }
+  else {
+    mfxFrameInfo *frame_info = &priv->surface.Info;
+    ID3D11Device *d3d11_device;
+    ID3D11Texture2D *texture;
+    DXGI_FORMAT format;
+    D3D11_TEXTURE2D_DESC desc = { 0 };
+    HRESULT hr = S_OK;
+
+    d3d_surface->device = gst_mfx_context_get_device(priv->context);
+    d3d11_device = gst_mfx_device_get_handle(d3d_surface->device);
+
+    format = gst_mfx_fourcc_to_dxgi_format(frame_info->FourCC);
+    if (DXGI_FORMAT_UNKNOWN == format)
+      return FALSE;
+
+    /* Create surface textures */
+    desc.Width = frame_info->Width;
+    desc.Height = frame_info->Height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1; // number of subresources is 1 in this case
+    desc.Format = format;
+    desc.SampleDesc.Count = 1;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.MiscFlags = 0;
+
+    hr =
+      ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
+        NULL, &texture);
+    if (FAILED(hr))
+      return FALSE;
+
+    priv->mem_id.mid = texture;
+    priv->mem_id.info = frame_info;
+
+    /* Create surface staging texture */
+    desc.ArraySize = 1;
+    desc.Usage = D3D11_USAGE_STAGING;
+    desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    desc.BindFlags = 0;
+    desc.MiscFlags = 0;
+
+    hr =
+      ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
+        NULL, &texture);
+    if (FAILED(hr))
+      return FALSE;
+
+    priv->mem_id.mid_stage = texture;
+
+    d3d_surface->mid = priv->surface.Data.MemId = &priv->mem_id;
+    priv->surface_id = priv->mem_id.mid;
+  }
+  return TRUE;
 }
 
 static void
 gst_mfx_surface_d3d11_release(GstMfxSurface * surface)
 {
-  
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
+
+  if (!priv->task) {
+    ID3D11Texture2D *surface = (ID3D11Texture2D*)priv->mem_id.mid;
+    ID3D11Texture2D *stage = (ID3D11Texture2D*)priv->mem_id.mid_stage;
+
+    if (surface)
+      ID3D11Texture2D_Release(surface);
+    if (stage)
+      ID3D11Texture2D_Release(stage);
+  }
 }
 
 static gboolean
@@ -82,7 +148,7 @@ gst_mfx_surface_d3d11_map (GstMfxSurface * surface)
   ID3D11DeviceContext *d3d11_context =
       gst_mfx_device_get_d3d11_context(d3d_surface->device);
 
-  // copy data only in case of user wants to read from stored surface
+  /* copy data only in case of user wants to read from stored surface */
   if (d3d_surface->mid->rw & 0x1000)
     ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, stage, 0, 0, 0, 0,
       texture, 0, NULL);
@@ -167,6 +233,15 @@ gst_mfx_surface_d3d11_init(GstMfxSurfaceD3D11 * surface)
 }
 
 GstMfxSurface *
+gst_mfx_surface_d3d11_new(GstMfxSurfaceD3D11 * surface,
+  GstMfxContext * context, const GstVideoInfo * info)
+{
+  return
+    gst_mfx_surface_new_internal(GST_MFX_SURFACE(surface),
+      context, info, NULL);
+}
+
+GstMfxSurface *
 gst_mfx_surface_d3d11_new_from_task(GstMfxSurfaceD3D11 * surface,
   GstMfxTask * task)
 {
@@ -179,5 +254,12 @@ gst_mfx_surface_d3d11_new_from_task(GstMfxSurfaceD3D11 * surface,
   gst_mfx_context_unref(context);
 
   return
-    gst_mfx_surface_new_internal(GST_MFX_SURFACE(surface), NULL, task);
+    gst_mfx_surface_new_internal(GST_MFX_SURFACE(surface),
+      context, NULL, task);
+}
+
+void
+gst_mfx_surface_d3d11_set_rw_flags(GstMfxSurfaceD3D11 * surface, guint flags)
+{
+  surface->mid->rw = flags;
 }
