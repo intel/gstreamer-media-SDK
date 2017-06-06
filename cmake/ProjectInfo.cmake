@@ -1,6 +1,6 @@
 set(GstMfx_VERSION_MAJOR   1)
 set(GstMfx_VERSION_MINOR   3)
-set(GstMfx_VERSION_PATCH   1)
+set(GstMfx_VERSION_PATCH   2)
 set(GstMfx_PACKAGE         "gstmfx")
 set(GstMfx_PACKAGE_NAME    "GStreamer Media SDK")
 set(GstMfx_PACKAGE_TARNAME "gstreamer-msdk")
