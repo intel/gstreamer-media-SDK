@@ -1,0 +1,41 @@
+option('MFX_DECODER', type : 'boolean', value : true, description : 'Build MSDK decoder plugins.')
+option('USE_HEVC_DECODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build MSDK decoder plugin with HEVC support.')
+option('USE_VP8_DECODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build MSDK decoder plugin with VP8 support.')
+option('USE_VP9_DECODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'no',
+	description : 'Build MSDK decoder plugin with VP9 support.')
+
+option('MFX_ENCODER', type : 'boolean', value : true, description : 'Build MSDK encoder plugin.')
+option('MFX_H264_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build H.264 encoder plugin.')
+option('MFX_H265_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build H.265 encoder plugin.')
+option('MFX_MPEG2_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build MPEG2 encoder plugin.')
+option('MFX_JPEG_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build JPEG encoder plugin.')
+
+option('MFX_VPP', type : 'boolean', value : true, description : 'Build MSDK VPP plugin.')
+
+option('MFX_SINK', type : 'boolean', value : true, description : 'Build MSDK sink plugin.')
+option('WITH_WAYLAND', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Enable Wayland support.')
+option('WITH_X11', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Enable X11 support.')
+option('USE_EGL_RENDERER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build sink plugin with EGL backend.')
+option('USE_WAYLAND_RENDERER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build sink plugin with Wayland backend.')
+option('USE_DRI3_RENDERER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build sink plugin with X11 DRI3 backend.')
+
+option('MFX_SINK_BIN', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build MSDK sink bin plugin.')
+
+option('WITH_MSS_2016', type : 'boolean', value : true, description : 'Build plugins for MSS 2016.')
+
+option('MFX_VC1_PARSER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+	description : 'Build VC1 parser plugin')
+
+option('MFX_HOME', type: 'string', value: '/opt/intel/mediasdk', description: 'path to the media SDK, defaults to "/opt/intel/mediasdk"')
