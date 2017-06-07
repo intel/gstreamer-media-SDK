@@ -34,8 +34,8 @@ G_DECLARE_FINAL_TYPE(GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_MFX, WINDOW_D3
   GstMfxWindowD3D11Class))
 
 GstMfxWindow *
-gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context,
-  guint width, guint height, GstVideoInfo * info);
+gst_mfx_window_d3d11_new(GstMfxWindowD3D11 * window, GstMfxContext * context,
+  GstVideoInfo * info, gboolean keep_aspect);
 
 G_END_DECLS
 

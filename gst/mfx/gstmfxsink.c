@@ -108,7 +108,7 @@ gst_mfxsink_d3d11_create_window (GstMfxSink * sink, guint width, guint height)
   g_return_val_if_fail (sink->window == NULL, FALSE);
   sink->window =
       gst_mfx_window_d3d11_new (g_object_new(GST_TYPE_MFX_WINDOW_D3D11, NULL),
-        sink->device_context, width, height, info);
+        sink->device_context, info, sink->keep_aspect);
   if (!sink->window)
     return FALSE;
   return TRUE;
@@ -178,27 +178,6 @@ gst_mfxsink_navigation_iface_init (GstNavigationInterface * iface)
 /* ------------------------------------------------------------------------ */
 /* --- Common implementation                                            --- */
 /* ------------------------------------------------------------------------ */
-
-static gboolean
-gst_mfxsink_reconfigure_window (GstMfxSink * sink)
-{
-  guint win_width, win_height;
-
-  if (sink->window) {
-    gst_mfx_window_reconfigure (sink->window);
-    gst_mfx_window_get_size (sink->window, &win_width, &win_height);
-    if (win_width != sink->window_width || win_height != sink->window_height) {
-      if (!gst_mfxsink_ensure_render_rect (sink, win_width, win_height))
-        return FALSE;
-      GST_INFO ("window was resized from %ux%u to %ux%u",
-          sink->window_width, sink->window_height, win_width, win_height);
-      sink->window_width = win_width;
-      sink->window_height = win_height;
-      return TRUE;
-    }
-  }
-  return FALSE;
-}
 
 static void
 gst_mfxsink_set_render_backend (GstMfxSink * sink)
@@ -410,10 +389,6 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
       sink->video_par_n, sink->video_par_d);
 
   gst_caps_replace (&sink->caps, caps);
-
-  /* Temporary - in order to avoid scaling textures */
-  win_width = sink->video_width; //TODO: remove
-  win_height = sink->video_height;
 
   gst_mfxsink_ensure_window_size (sink, &win_width, &win_height);
   if (sink->window) {

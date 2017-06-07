@@ -66,6 +66,7 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
     rect.right = GST_MFX_SURFACE_FRAME_SURFACE(surface)->Info.CropW;
     rect.bottom = GST_MFX_SURFACE_FRAME_SURFACE(surface)->Info.CropH;
 
+
     hr = ID3D11VideoDevice_CreateVideoProcessorInputView(
       (ID3D11VideoDevice*)priv2->d3d11_video_device,
       (ID3D11Texture2D*)gst_mfx_surface_get_id(surface),
@@ -89,6 +90,37 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
 
     ID3D11VideoContext_VideoProcessorSetStreamSourceRect(priv2->d3d11_video_context,
       priv2->processor, 0, TRUE, &rect);
+
+    if (priv2->keep_aspect) {
+      RECT dest_rect = { 0 };
+      gdouble src_ratio, dst_ratio;
+
+      src_ratio = (gdouble)rect.right / rect.bottom;
+      dst_ratio = (gdouble)priv->width / priv->height;
+
+      if (src_ratio > dst_ratio) {
+        gdouble new_height = priv->width / (gdouble)src_ratio;
+
+        dest_rect.right = priv->width;
+        dest_rect.top = (priv->height - new_height) / 2;
+        dest_rect.bottom = new_height + dest_rect.top;
+        dest_rect.left = 0;
+      }
+      else if (src_ratio < dst_ratio) {
+        gdouble new_width = src_ratio * priv->height;
+
+        dest_rect.bottom = priv->height;
+        dest_rect.left = (priv->width - new_width) / 2;
+        dest_rect.right = dest_rect.left + new_width;
+        dest_rect.top = 0;
+      }
+      else {
+        dest_rect.right = priv->width;
+        dest_rect.bottom = priv->height;
+      }
+      ID3D11VideoContext_VideoProcessorSetStreamDestRect(priv2->d3d11_video_context,
+        priv2->processor, 0, TRUE, &dest_rect);
+    }
 
     ID3D11VideoContext_VideoProcessorGetStreamFrameFormat(priv2->d3d11_video_context,
       priv2->processor, 0, D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE);
@@ -115,7 +147,7 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
 
       /*ID3D11DeviceContext_UpdateSubresource(priv2->d3d11_device_ctx, priv2->backbuffer_texture,
       0, &destRegion, gst_mfx_surface_get_plane(surface, 0),
-      gst_mfx_surface_get_pitch(surface, 0), 0);//TODO: ensure RGB4*/
+      gst_mfx_surface_get_pitch(surface, 0), 0);*/
   }
 
   IDXGISwapChain1_Present(priv2->dxgi_swapchain, 0, 0);
@@ -123,12 +155,13 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
   return TRUE;
 }
 
-gst_mfx_window_d3d11_show(GstMfxWindow * mfx_window)
+gst_mfx_window_d3d11_show(GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv2 = GST_MFX_WINDOW_D3D11_GET_PRIVATE(mfx_window);
+  GstMfxWindowD3D11Private *const priv =
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
 
-  ShowWindow(priv2->hwnd, SW_SHOWDEFAULT);
-  UpdateWindow(priv2->hwnd);
+  ShowWindow(priv->hwnd, SW_SHOWDEFAULT);
+  UpdateWindow(priv->hwnd);
 
   return TRUE;
 }
@@ -153,16 +186,16 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 {
   GstMfxWindow* window = (GstMfxWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
-  if (window)
-  {
-    switch (message)
-    {
+  if (window) {
+    switch (message) {
     case WM_DESTROY:
       gst_mfx_window_d3d11_destroy(window);
       break;
+    case WM_SIZE:
+      gst_mfx_window_d3d11_resize(window);
+      break;
     }
   }
-
   return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
@@ -188,21 +221,21 @@ gst_mfx_window_d3d11_create_output_view(GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_d3d11_create_video_processor(GstMfxWindow * window, GstVideoInfo * info)
+gst_mfx_window_d3d11_create_video_processor(GstMfxWindow * window)
 {
   GstMfxWindowD3D11Private *const priv = GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   D3D11_VIDEO_PROCESSOR_CONTENT_DESC content_desc;
   HRESULT hr = S_OK;
 
   content_desc.InputFrameFormat = D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE;
-  content_desc.InputFrameRate.Numerator = info->fps_n;
-  content_desc.InputFrameRate.Denominator = info->fps_d;
-  content_desc.InputWidth = info->width;
-  content_desc.InputHeight = info->height;
-  content_desc.OutputWidth = info->width;
-  content_desc.OutputHeight = info->height;
-  content_desc.OutputFrameRate.Numerator = info->fps_n;
-  content_desc.OutputFrameRate.Denominator = info->fps_d;
+  content_desc.InputFrameRate.Numerator = priv->info.fps_n;
+  content_desc.InputFrameRate.Denominator = priv->info.fps_d;
+  content_desc.InputWidth = priv->info.width;
+  content_desc.InputHeight = priv->info.height;
+  content_desc.OutputWidth = priv->info.width;
+  content_desc.OutputHeight = priv->info.height;
+  content_desc.OutputFrameRate.Numerator = priv->info.fps_n;
+  content_desc.OutputFrameRate.Denominator = priv->info.fps_d;
 
   content_desc.Usage = D3D11_VIDEO_USAGE_PLAYBACK_NORMAL;
 
@@ -281,13 +314,13 @@ gst_mfx_window_d3d11_init_video_context(GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_d3d11_create_render_context(GstMfxWindow * window, GstVideoInfo * info)
+d3d11_create_render_context(GstMfxWindow * window)
 {
   if (!gst_mfx_window_d3d11_init_video_context(window))
     goto error;
   if (!gst_mfx_window_d3d11_init_swap_chain(window))
     goto error;
-  if (!gst_mfx_window_d3d11_create_video_processor(window, info))
+  if (!gst_mfx_window_d3d11_create_video_processor(window))
     goto error;
   if (!gst_mfx_window_d3d11_create_output_view(window))
     goto error;
@@ -299,11 +332,76 @@ error:
 }
 
 static gboolean
-gst_mfx_window_d3d11_create (GstMfxWindow * mfx_window,
-  guint * width, guint * height, GstVideoInfo * info)
+d3d11_create_window(GstMfxWindow * window)
 {
-  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(mfx_window);
-  GstMfxWindowD3D11Private *const priv2 = GST_MFX_WINDOW_D3D11_GET_PRIVATE(mfx_window);
+  GstMfxWindowD3D11Private *const priv =
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  int width, height;
+  int offx, offy;
+  RECT rect;
+  DWORD exstyle, style;
+  int screenwidth;
+  int screenheight;
+
+  WNDCLASS d3d11_window = { 0 };
+
+  d3d11_window.lpfnWndProc = (WNDPROC)WindowProc;
+  d3d11_window.hInstance = GetModuleHandle(NULL);;
+  d3d11_window.hCursor = LoadCursor(NULL, IDC_ARROW);
+  d3d11_window.lpszClassName = "GstMfxWindowD3D11";
+
+  if (!RegisterClass(&d3d11_window))
+    return FALSE;
+
+  width = GetSystemMetrics(SM_CXSCREEN);
+  height = GetSystemMetrics(SM_CYSCREEN);
+
+  SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+  screenwidth = rect.right - rect.left;
+  screenheight = rect.bottom - rect.top;
+  offx = rect.left;
+  offy = rect.top;
+
+  /* Make it fit into the screen without changing the aspect ratio. */
+  if (width > screenwidth) {
+    double ratio = (double)screenwidth / (double)width;
+    width = screenwidth;
+    height = (int)(height * ratio);
+  }
+
+  if (height > screenheight) {
+    double ratio = (double)screenheight / (double)height;
+    height = screenheight;
+    width = (int)(width * ratio);
+  }
+
+  style = WS_OVERLAPPEDWINDOW;  /* Normal top-level window */
+  exstyle = 0;
+  priv->hwnd = CreateWindowEx(exstyle,
+    d3d11_window.lpszClassName,
+    TEXT("MFX D3D11 Renderer"),
+    style, offx, offy, width, height,
+    NULL, NULL, d3d11_window.hInstance, NULL);
+
+  if (!priv->hwnd) {
+    GST_ERROR("Failed to create internal window: %lu",
+      GetLastError());
+    return FALSE;
+  }
+
+  SetWindowLongPtr(priv->hwnd, GWLP_USERDATA, (LONG_PTR)window);
+
+  return TRUE;
+}
+
+static gboolean
+gst_mfx_window_d3d11_create (GstMfxWindow * window,
+  guint * width, guint * height)
+{
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv2 =
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  RECT rect;
 
   /*HRESULT hr = S_OK;
 #ifdef DEBUG
@@ -327,35 +425,17 @@ gst_mfx_window_d3d11_create (GstMfxWindow * mfx_window,
     adapter_idx++;
   }
   */
-  WNDCLASS d3d11_window = { 0 };
 
-  d3d11_window.lpfnWndProc = (WNDPROC)WindowProc;
-  d3d11_window.hInstance = GetModuleHandle(NULL);;
-  d3d11_window.hCursor = LoadCursor(NULL, IDC_ARROW);
-  d3d11_window.lpszClassName = "GstMfxWindowD3D11";
-
-  if (!RegisterClass(&d3d11_window))
+  if (!d3d11_create_window(window))
     return FALSE;
 
-  priv2->hwnd = CreateWindowEx(0,
-    d3d11_window.lpszClassName,
-    "GstMfxWindow D3D11 Sink",
-    WS_OVERLAPPEDWINDOW,
-    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-    NULL,
-    NULL,
-    d3d11_window.hInstance,
-    NULL);
-
-  g_return_val_if_fail(priv2->hwnd != NULL, FALSE);
-
-  SetWindowLongPtr(priv2->hwnd, GWLP_USERDATA, (LONG_PTR)mfx_window);
-
-  ShowWindow(priv2->hwnd, SW_SHOWDEFAULT);
-  UpdateWindow(priv2->hwnd);
-
-  if (!gst_mfx_window_d3d11_create_render_context(mfx_window, info))
+  if (!d3d11_create_render_context(window))
     return FALSE;
+
+  GetClientRect(priv2->hwnd, &rect);
+
+  priv->width = *width = MAX(1, ABS(rect.right - rect.left));
+  priv->height = *height = MAX(1, ABS(rect.bottom - rect.top));
 
   //TODO: share device with input
 
@@ -366,7 +446,8 @@ gst_mfx_window_d3d11_create (GstMfxWindow * mfx_window,
 static gboolean
 gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv = GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv =
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
 
   if (priv->d3d11_video_context)
     ID3D11VideoContext_Release(priv->d3d11_video_context);
@@ -382,7 +463,16 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
 static gboolean
 gst_mfx_window_d3d11_resize (GstMfxWindow * window, guint width, guint height)
 {
-  GST_FIXME("unimplemented GstMfxWindowD3D11::resize()");
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv2 =
+    GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  RECT rect = { 0 };
+
+  GetClientRect(priv2->hwnd, &rect);
+
+  priv->width = MAX(1, ABS(rect.right - rect.left));
+  priv->height = MAX(1, ABS(rect.bottom - rect.top));
+
   return TRUE;
 }
 
@@ -407,14 +497,14 @@ gst_mfx_window_d3d11_init(GstMfxWindowD3D11 * window)
 
 GstMfxWindow *
 gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context,
-  guint width, guint height)
+  GstVideoInfo * info, gboolean keep_aspect)
 {
-  GST_DEBUG ("new window, size %ux%u", width, height);
-
   GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->device =
       gst_mfx_context_get_device(context);
+  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->info = *info;
+  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->keep_aspect = keep_aspect;
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW(window), context,
     //GST_MFX_ID_INVALID, 
-    width, height);
+    1, 1);
 }

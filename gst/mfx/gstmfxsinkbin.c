@@ -122,7 +122,7 @@ gst_mfx_sink_bin_set_property (GObject * object,
 
   switch (prop_id) {
     /* Sink */
-#if !defined(_WIN32) || !defined(_WIN64)
+#ifdef WITH_LIBVA_BACKEND
     case PROP_DISPLAY_TYPE:
       g_object_set (G_OBJECT (mfxsinkbin->sink),
           pspec->name,
@@ -207,7 +207,7 @@ gst_mfx_sink_bin_get_property (GObject * object,
 
   switch (prop_id) {
     /* Sink */
-#if !defined(_WIN32) || !defined(_WIN64)
+#ifdef WITH_LIBVA_BACKEND
     case PROP_DISPLAY_TYPE:
 #endif
     case PROP_SYNC:

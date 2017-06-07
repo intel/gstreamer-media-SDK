@@ -43,15 +43,19 @@ typedef struct _GstMfxWindowD3D11Private   GstMfxWindowD3D11Private;
 struct _GstMfxWindowD3D11Private
 {
   GstMfxDevice *device;
+
   IDXGISwapChain1 * dxgi_swapchain;
   ID3D11Texture2D * backbuffer_texture;
-  HWND hwnd;
 
   ID3D11VideoDevice *d3d11_video_device;
   ID3D11VideoContext *d3d11_video_context;
   ID3D11VideoProcessor *processor;
   ID3D11VideoProcessorEnumerator *processor_enum;
   ID3D11VideoProcessorOutputView *output_view;
+
+  gboolean keep_aspect;
+  GstVideoInfo info;
+  HWND hwnd;
 };
 
 /**
