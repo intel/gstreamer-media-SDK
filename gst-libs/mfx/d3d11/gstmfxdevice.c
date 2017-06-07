@@ -178,7 +178,7 @@ gst_mfx_device_replace(GstMfxDevice ** old_device_ptr,
     GST_OBJECT(new_device));
 }
 
-ID3D11Device *
+guintptr
 gst_mfx_device_get_handle(GstMfxDevice * device)
 {
   g_return_val_if_fail(device != NULL, NULL);

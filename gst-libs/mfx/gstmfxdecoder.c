@@ -62,6 +62,7 @@ struct _GstMfxDecoder
 	gboolean enable_deinterlace;
 	gboolean skip_corrupted_frames;
 	gboolean can_double_deinterlace;
+  guint num_partial_frames;
 
 	/* For special double frame rate deinterlacing case */
 	GstClockTime current_pts;
@@ -382,8 +383,6 @@ gst_mfx_decoder_create(GstMfxDecoder * decoder,
 		if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
 			decoder->params.mfx.DecodedOrder = 1;
 	}
-
-  //decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY; //TODO: remove
 	decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
 	decoder->inited = FALSE;
 	decoder->bs.MaxLength = 1024 * 16;
@@ -601,6 +600,7 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 
   decoder->was_reset = TRUE;
   decoder->has_ready_frames = FALSE;
+  decoder->num_partial_frames = 0;
 
   MFXVideoDECODE_Reset (decoder->session, &decoder->params);
 }
@@ -659,18 +659,18 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
-  if (!decoder->can_double_deinterlace) {
-    /* Save frames for later synchronization with decoded MFX surfaces */
-    g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
-  }
-  else {
-    g_queue_push_head(&decoder->discarded_frames, frame);
-  }
-
   if (!GST_CLOCK_TIME_IS_VALID(decoder->pts_offset)
       && GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)
       && GST_CLOCK_TIME_IS_VALID (frame->pts))
     decoder->pts_offset = frame->pts;
+
+  if (!decoder->can_double_deinterlace) {
+    /* Save frames for later synchronization with decoded MFX surfaces */
+    g_queue_insert_sorted(&decoder->pending_frames, frame, sort_pts, NULL);
+  }
+  else {
+    g_queue_push_head(&decoder->discarded_frames, frame);
+  }
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
     GST_ERROR ("Failed to map input buffer");
@@ -736,6 +736,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
   if (MFX_ERR_MORE_DATA == sts) {
+    if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
+      decoder->num_partial_frames++;
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
@@ -747,6 +749,22 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
+    if (decoder->num_partial_frames) {
+      GstVideoCodecFrame *cur_frame;
+      guint n = g_queue_get_length(&decoder->pending_frames) - 1;
+
+      /* Discard partial frames */
+      while (decoder->num_partial_frames
+          && (cur_frame = g_queue_peek_nth(&decoder->pending_frames, n))) {
+        if ((cur_frame->pts - decoder->pts_offset) % decoder->duration) {
+          g_queue_push_head(&decoder->discarded_frames,
+            g_queue_pop_nth(&decoder->pending_frames, n));
+          decoder->num_partial_frames--;
+        }
+        n--;
+      }
+    }
+
     if (decoder->skip_corrupted_frames
         && insurf->Data.Corrupted & MFX_CORRUPTION_MAJOR) {
       gst_mfx_decoder_reset (decoder);

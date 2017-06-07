@@ -103,10 +103,12 @@ gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
 static gboolean
 gst_mfxsink_d3d11_create_window (GstMfxSink * sink, guint width, guint height)
 {
+  GstVideoInfo *const info = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
+
   g_return_val_if_fail (sink->window == NULL, FALSE);
   sink->window =
       gst_mfx_window_d3d11_new (g_object_new(GST_TYPE_MFX_WINDOW_D3D11, NULL),
-        sink->device_context, width, height);
+        sink->device_context, width, height, info);
   if (!sink->window)
     return FALSE;
   return TRUE;
@@ -359,13 +361,13 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
   GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
   GstCaps *out_caps;
 
-  //if (sink->full_color_range)
+  if (sink->full_color_range)
     out_caps =
         gst_mfx_video_format_new_template_caps_with_features
         (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
-  /*else
+  else
     out_caps =
-        gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);*/
+        gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
 
   return out_caps;
 }
