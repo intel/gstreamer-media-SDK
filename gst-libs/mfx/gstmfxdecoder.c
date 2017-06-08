@@ -55,6 +55,7 @@ struct _GstMfxDecoder
 
 	GstVideoInfo info;
 	gboolean inited;
+  gboolean filter_inited;
 	gboolean was_reset;
 	gboolean has_ready_frames;
 	gboolean memtype_is_system;
@@ -804,13 +805,15 @@ update:
           if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
             decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
         }
-        gdouble frame_rate;
+        if (!decoder->filter_inited) {
+          gdouble frame_rate;
 
-        gst_util_fraction_to_double (decoder->info.fps_n,
-          decoder->info.fps_d, &frame_rate);
-        if ((int)(frame_rate + 0.5) == 60)
-          decoder->can_double_deinterlace = TRUE;
-        decoder->enable_deinterlace = TRUE;
+          gst_util_fraction_to_double(decoder->info.fps_n,
+            decoder->info.fps_d, &frame_rate);
+          if ((int)(frame_rate + 0.5) == 60)
+            decoder->can_double_deinterlace = TRUE;
+          decoder->enable_deinterlace = TRUE;
+        }
 
         break;
       }
@@ -822,12 +825,20 @@ update:
      * MFX session. This re-initialization can only occur if no other peer
      * MFX task from a downstream element marked the decoder task with
      * another task type at this point. */
-    if ((decoder->enable_csc || decoder->enable_deinterlace)
-        && (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER)) {
-      if (!gst_mfx_decoder_reinit (decoder, &outsurf->Info))
-        ret = GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
-      else
-        ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
+    if (!decoder->filter_inited
+        && (decoder->enable_csc || decoder->enable_deinterlace)) {
+      if (gst_mfx_task_get_task_type(decoder->decode) == GST_MFX_TASK_DECODER) {
+        if (!gst_mfx_decoder_reinit(decoder, &outsurf->Info))
+          ret = GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
+        else
+          ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
+      }
+      else if (gst_mfx_task_has_type(decoder->decode, GST_MFX_TASK_VPP_IN)) {
+        decoder->params.mfx.FrameInfo = outsurf->Info;
+        gst_mfx_task_set_video_params(decoder->decode, &decoder->params);
+        decoder->can_double_deinterlace = FALSE;
+      }
+      decoder->filter_inited = TRUE;
       goto end;
     }
 

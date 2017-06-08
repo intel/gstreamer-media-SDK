@@ -307,7 +307,7 @@ GstMfxSurface *
 gst_mfx_surface_new_internal(GstMfxSurface *surface, GstMfxContext * context,
   const GstVideoInfo * info, GstMfxTask * task)
 {
-  GST_MFX_SURFACE_GET_PRIVATE(surface)->context = context ?
+  GST_MFX_SURFACE_GET_PRIVATE(surface)->context = context && !task ?
     gst_mfx_context_ref(context) : NULL;
   if (!gst_mfx_surface_create(surface, info, task))
     goto error;

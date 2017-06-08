@@ -971,6 +971,14 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   return TRUE;
 }
 
+GstMfxTask *
+gst_mfx_filter_get_task(GstMfxFilter * filter, guint type)
+{
+  g_return_val_if_fail(filter != NULL, NULL);
+
+  return gst_mfx_task_ref(filter->vpp[!!(type & GST_MFX_TASK_VPP_OUT)]);
+}
+
 GstMfxFilterStatus
 gst_mfx_filter_reset (GstMfxFilter * filter)
 {

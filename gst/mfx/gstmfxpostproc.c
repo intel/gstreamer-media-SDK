@@ -97,7 +97,7 @@ enum
 
 #define DEFAULT_ASYNC_DEPTH             0
 #define DEFAULT_FORMAT                  GST_VIDEO_FORMAT_NV12
-#define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
+#define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_ADVANCED
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 #define DEFAULT_FRC_ALG                 GST_MFX_FRC_NONE
 #define DEFAULT_BRIGHTNESS              0.0
@@ -578,6 +578,28 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
     GstBuffer * buf)
 {
   GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
+  GstMfxTask *vpp_shared =
+      gst_mfx_filter_get_task(vpp->filter, GST_MFX_TASK_VPP_IN);
+  if (vpp_shared && gst_mfx_task_has_type(vpp_shared, GST_MFX_TASK_DECODER)
+      && !(vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)) {
+    mfxFrameInfo *info =
+        &gst_mfx_task_get_video_params(vpp_shared)->mfx.FrameInfo;
+
+    if (info->PicStruct != MFX_PICSTRUCT_PROGRESSIVE) {
+      GstMfxDeinterlaceMode di_mode = DEFAULT_DEINTERLACE_MODE;
+      gdouble frame_rate;
+
+      gst_util_fraction_to_double(info->FrameRateExtN,
+        info->FrameRateExtD, &frame_rate);
+      if ((int)(frame_rate + 0.5) == 60) {
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+        di_mode = GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF;
+      }
+      gst_mfx_filter_set_deinterlace_mode(vpp->filter, di_mode);
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
+    }
+    gst_mfx_task_unref(vpp_shared);
+  }
 
   if (!vpp->flags &&
       (vpp->hue == DEFAULT_HUE ||
