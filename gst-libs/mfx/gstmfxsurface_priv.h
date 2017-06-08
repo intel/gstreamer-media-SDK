@@ -87,7 +87,8 @@ struct _GstMfxSurfaceClass
 };
 
 GstMfxSurface *
-gst_mfx_surface_new_internal (GstMfxSurface * surface, const GstVideoInfo * info, GstMfxTask * task);
+gst_mfx_surface_new_internal (GstMfxSurface * surface, GstMfxContext * context,
+  const GstVideoInfo * info, GstMfxTask * task);
 
 #define gst_mfx_surface_ref_internal(surface) \
   ((gpointer)gst_object_ref(GST_OBJECT(surface)))

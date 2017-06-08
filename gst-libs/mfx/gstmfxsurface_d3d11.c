@@ -60,6 +60,7 @@ gst_mfx_surface_d3d11_allocate(GstMfxSurface * surface, GstMfxTask * task)
   priv->has_video_memory = TRUE;
 
   if (task) {
+    priv->context = gst_mfx_task_get_context(task);
     return gst_mfx_surface_d3d11_from_task(surface, task);
   }
   else {

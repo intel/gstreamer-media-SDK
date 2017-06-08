@@ -67,8 +67,6 @@ release_surfaces (gpointer surface, gpointer pool)
     gst_mfx_surface_pool_put_surface (_pool, _surface);
 }
 
-
-
 static void
 gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
 {

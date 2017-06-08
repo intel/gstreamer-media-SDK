@@ -286,13 +286,13 @@ gst_mfx_surface_class_init(GstMfxSurfaceClass * klass)
 GstMfxSurface *
 gst_mfx_surface_new (GstMfxSurface * surface, const GstVideoInfo * info)
 {
-  return gst_mfx_surface_new_internal(surface, info, NULL);
+  return gst_mfx_surface_new_internal(surface, NULL, info, NULL);
 }
 
 GstMfxSurface *
 gst_mfx_surface_new_from_task (GstMfxSurface * surface, GstMfxTask * task)
 {
-  return gst_mfx_surface_new_internal(surface, NULL, task);
+  return gst_mfx_surface_new_internal(surface, NULL, NULL, task);
 }
 
 GstMfxSurface *
@@ -307,9 +307,8 @@ GstMfxSurface *
 gst_mfx_surface_new_internal(GstMfxSurface *surface, GstMfxContext * context,
   const GstVideoInfo * info, GstMfxTask * task)
 {
-  GST_MFX_SURFACE_GET_PRIVATE(surface)->context =
-      context ? gst_mfx_context_ref(context) : NULL;
-
+  GST_MFX_SURFACE_GET_PRIVATE(surface)->context = context ?
+    gst_mfx_context_ref(context) : NULL;
   if (!gst_mfx_surface_create(surface, info, task))
     goto error;
   return surface;

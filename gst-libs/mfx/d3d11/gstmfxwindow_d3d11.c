@@ -66,13 +66,12 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
     rect.right = GST_MFX_SURFACE_FRAME_SURFACE(surface)->Info.CropW;
     rect.bottom = GST_MFX_SURFACE_FRAME_SURFACE(surface)->Info.CropH;
 
-
     hr = ID3D11VideoDevice_CreateVideoProcessorInputView(
-      (ID3D11VideoDevice*)priv2->d3d11_video_device,
-      (ID3D11Texture2D*)gst_mfx_surface_get_id(surface),
-      priv2->processor_enum,
-      &input_view_desc,
-      &input_view);
+            (ID3D11VideoDevice*)priv2->d3d11_video_device,
+            (ID3D11Texture2D*)gst_mfx_surface_get_id(surface),
+            priv2->processor_enum,
+            &input_view_desc,
+            &input_view);
     if (FAILED(hr))
       return FALSE;
 
@@ -95,7 +94,7 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
       RECT dest_rect = { 0 };
       gdouble src_ratio, dst_ratio;
 
-      src_ratio = (gdouble)rect.right / rect.bottom;
+      src_ratio = (gdouble)src_rect->width / src_rect->height;
       dst_ratio = (gdouble)priv->width / priv->height;
 
       if (src_ratio > dst_ratio) {
@@ -295,7 +294,8 @@ gst_mfx_window_d3d11_init_swap_chain(GstMfxWindow * window)
 static gboolean
 gst_mfx_window_d3d11_init_video_context(GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv = GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv =
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   HRESULT hr = S_OK;
 
   hr = ID3D11Device_QueryInterface((ID3D11Device*)
