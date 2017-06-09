@@ -444,6 +444,14 @@ gst_mfx_surface_get_crop_rect(GstMfxSurface * surface)
   return &GST_MFX_SURFACE_GET_PRIVATE(surface)->crop_rect;
 }
 
+guint
+gst_mfx_surface_get_data_size(GstMfxSurface * surface)
+{
+  g_return_val_if_fail(surface != NULL, 0);
+
+  return GST_MFX_SURFACE_GET_PRIVATE(surface)->data_size;
+}
+
 GstMfxContext *
 gst_mfx_surface_get_context(GstMfxSurface * surface)
 {

@@ -43,6 +43,7 @@ typedef struct _GstMfxWindowD3D11Private   GstMfxWindowD3D11Private;
 struct _GstMfxWindowD3D11Private
 {
   GstMfxDevice *device;
+  GstMfxSurface *mapped_surface;
 
   IDXGISwapChain1 * dxgi_swapchain;
   ID3D11Texture2D * backbuffer_texture;

@@ -74,12 +74,12 @@ gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
     GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
 
-#if defined(_WIN32) || defined(_WIN64)
-#define GST_MFX_SUPPORTED_INPUT_FORMATS \
-    "{ NV12, YUY2, BGRA, BGRx }"
-#else
+#ifdef WITH_LIBVA_BACKEND
 #define GST_MFX_SUPPORTED_INPUT_FORMATS \
     "{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }"
+#else
+#define GST_MFX_SUPPORTED_INPUT_FORMATS \
+    "{ NV12, YUY2, BGRA, BGRx }"
 #endif
 
 
