@@ -33,7 +33,7 @@ EXPORTS
 	gst_mfx_filter_set_denoising_level
 	gst_mfx_filter_set_detail_level
 	gst_mfx_filter_set_rotation
-	gst_mfx_filter_set_deinterlace_mode
+	gst_mfx_filter_set_deinterlace_method
 	gst_mfx_filter_set_framerate
 	gst_mfx_filter_set_async_depth
 	gst_mfx_filter_set_frc_algorithm

@@ -21,7 +21,7 @@
 #include "gstmfxtask.h"
 #include "gstmfxtask_priv.h"
 #include "gstmfxtaskaggregator.h"
-#include "gstmfxallocator_d3d11.h"
+#include "gstmfxallocator.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"

@@ -18,7 +18,7 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#include "gstmfxallocator_d3d11.h"
+#include "gstmfxallocator.h"
 #include "gstmfxtask.h"
 #include "gstmfxtask_priv.h"
 #include "gstmfxcontext.h"

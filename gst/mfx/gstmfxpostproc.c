@@ -84,6 +84,7 @@ enum
   PROP_HEIGHT,
   PROP_FORCE_ASPECT_RATIO,
   PROP_DEINTERLACE_MODE,
+  PROP_DEINTERLACE_METHOD,
   PROP_DENOISE,
   PROP_DETAIL,
   PROP_HUE,
@@ -97,13 +98,40 @@ enum
 
 #define DEFAULT_ASYNC_DEPTH             0
 #define DEFAULT_FORMAT                  GST_VIDEO_FORMAT_NV12
-#define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_ADVANCED
+#define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_AUTO
+#define DEFAULT_DEINTERLACE_METHOD      GST_MFX_DEINTERLACE_METHOD_ADVANCED
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 #define DEFAULT_FRC_ALG                 GST_MFX_FRC_NONE
 #define DEFAULT_BRIGHTNESS              0.0
 #define DEFAULT_SATURATION              1.0
 #define DEFAULT_HUE                     0.0
 #define DEFAULT_CONTRAST                1.0
+
+
+#define GST_MFX_TYPE_DEINTERLACE_MODE \
+    gst_mfx_deinterlace_mode_get_type()
+
+static GType
+gst_mfx_deinterlace_mode_get_type(void)
+{
+  static GType deinterlace_mode_type = 0;
+
+  static const GEnumValue mode_types[] = {
+    { GST_MFX_DEINTERLACE_MODE_AUTO,
+      "Auto detection", "auto" },
+    { GST_MFX_DEINTERLACE_MODE_FORCED,
+      "Force deinterlacing", "forced" },
+    { GST_MFX_DEINTERLACE_MODE_DISABLED,
+      "Never deinterlace", "disabled" },
+    { 0, NULL, NULL },
+  };
+
+  if (!deinterlace_mode_type) {
+    deinterlace_mode_type =
+      g_enum_register_static("GstMfxDeinterlaceMode", mode_types);
+  }
+  return deinterlace_mode_type;
+}
 
 GType
 gst_mfx_rotation_get_type (void)
@@ -112,13 +140,13 @@ gst_mfx_rotation_get_type (void)
 
   static const GEnumValue rotation_values[] = {
     {GST_MFX_ROTATION_0,
-        "Unrotated", "0"},
+      "Unrotated", "0"},
     {GST_MFX_ROTATION_90,
-        "Rotate by 90 degrees clockwise", "90"},
+      "Rotate by 90 degrees clockwise", "90"},
     {GST_MFX_ROTATION_180,
-        "Rotate by 180  degrees clockwise", "180"},
+      "Rotate by 180  degrees clockwise", "180"},
     {GST_MFX_ROTATION_270,
-        "Rotate by 270  degrees clockwise", "270"},
+      "Rotate by 270  degrees clockwise", "270"},
     {0, NULL, NULL},
   };
 
@@ -130,31 +158,31 @@ gst_mfx_rotation_get_type (void)
 }
 
 GType
-gst_mfx_deinterlace_mode_get_type (void)
+gst_mfx_deinterlace_method_get_type (void)
 {
-  static GType deinterlace_mode_type = 0;
+  static GType deinterlace_method_type = 0;
 
-  static const GEnumValue mode_types[] = {
-    {GST_MFX_DEINTERLACE_MODE_BOB,
+  static const GEnumValue method_types[] = {
+    {GST_MFX_DEINTERLACE_METHOD_BOB,
         "Bob deinterlacing", "bob"},
-    {GST_MFX_DEINTERLACE_MODE_ADVANCED,
+    {GST_MFX_DEINTERLACE_METHOD_ADVANCED,
         "Advanced deinterlacing", "adi"},
-    {GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF,
+    {GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF,
         "Advanced deinterlacing with no reference", "adi-noref"},
 #if MSDK_CHECK_VERSION(1,19)
-    {GST_MFX_DEINTERLACE_MODE_ADVANCED_SCD,
+    {GST_MFX_DEINTERLACE_METHOD_ADVANCED_SCD,
         "Advanced deinterlacing with scene change detection", "adi-scd"},
-    {GST_MFX_DEINTERLACE_MODE_FIELD_WEAVING,
+    {GST_MFX_DEINTERLACE_METHOD_FIELD_WEAVING,
         "Field weaving", "weave"},
 #endif // MSDK_CHECK_VERSION
     {0, NULL, NULL},
   };
 
-  if (!deinterlace_mode_type) {
-    deinterlace_mode_type =
-        g_enum_register_static ("GstMfxDeinterlaceMode", mode_types);
+  if (!deinterlace_method_type) {
+    deinterlace_method_type =
+        g_enum_register_static ("GstMfxDeinterlaceMethod", method_types);
   }
-  return deinterlace_mode_type;
+  return deinterlace_method_type;
 }
 
 GType
@@ -163,18 +191,18 @@ gst_mfx_frc_algorithm_get_type (void)
   static GType alg = 0;
   static const GEnumValue frc_alg[] = {
     {GST_MFX_FRC_NONE,
-        "No framerate conversion algorithm", "0"},
+      "No framerate conversion algorithm", "0"},
     {GST_MFX_FRC_PRESERVE_TIMESTAMP,
-        "FRC with preserved original timestamps.", "frc-preserve-ts"},
+      "FRC with preserved original timestamps.", "frc-preserve-ts"},
     {GST_MFX_FRC_DISTRIBUTED_TIMESTAMP,
-        "FRC with distributed timestamps.", "frc-distributed-ts"},
+      "FRC with distributed timestamps.", "frc-distributed-ts"},
 #if 0
-    { GST_MFX_FRC_FRAME_INTERPOLATION,
-       "Frame interpolation FRC.", "fi"},
-       { GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
-       "Frame dropping/repetition and frame interpolation FRC with preserved original timestamps.", "fi-preserve-ts"},
-       { GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
-       "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"},
+    {GST_MFX_FRC_FRAME_INTERPOLATION,
+      "Frame interpolation FRC.", "fi"},
+    {GST_MFX_FRC_FI_PRESERVE_TIMESTAMP,
+      "Frame dropping/repetition and frame interpolation FRC with preserved original timestamps.", "fi-preserve-ts"},
+    {GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP,
+      "Frame dropping/repetition and frame interpolation FRC with distributed timestamps.", "fi-distributed-ts"},
 #endif
     {0, NULL, NULL},
   };
@@ -578,27 +606,30 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
     GstBuffer * buf)
 {
   GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
-  GstMfxTask *vpp_shared =
-      gst_mfx_filter_get_task(vpp->filter, GST_MFX_TASK_VPP_IN);
-  if (vpp_shared && gst_mfx_task_has_type(vpp_shared, GST_MFX_TASK_DECODER)
+  GstMfxVideoMeta *inbuf_meta;
+  GstMfxSurface *surface;
+
+  inbuf_meta = gst_buffer_get_mfx_video_meta(buf);
+  surface = gst_mfx_video_meta_get_surface(inbuf_meta);
+
+  if (surface
+      && (vpp->deinterlace_mode != GST_MFX_DEINTERLACE_MODE_DISABLED)
       && !(vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)) {
-    mfxFrameInfo *info =
-        &gst_mfx_task_get_video_params(vpp_shared)->mfx.FrameInfo;
+    mfxFrameInfo *info = &GST_MFX_SURFACE_FRAME_SURFACE(surface)->Info;
 
     if (info->PicStruct != MFX_PICSTRUCT_PROGRESSIVE) {
-      GstMfxDeinterlaceMode di_mode = DEFAULT_DEINTERLACE_MODE;
+      GstMfxDeinterlaceMethod di_method = vpp->deinterlace_method;
       gdouble frame_rate;
 
       gst_util_fraction_to_double(info->FrameRateExtN,
         info->FrameRateExtD, &frame_rate);
       if ((int)(frame_rate + 0.5) == 60) {
         vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
-        di_mode = GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF;
+        di_method = GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF;
       }
-      gst_mfx_filter_set_deinterlace_mode(vpp->filter, di_mode);
+      gst_mfx_filter_set_deinterlace_method(vpp->filter, di_method);
       vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
     }
-    gst_mfx_task_unref(vpp_shared);
   }
 
   if (!vpp->flags &&
@@ -817,8 +848,15 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   if (!gst_video_info_from_caps (&vi, caps))
     return NULL;
 
-  if (vpp->deinterlace_mode)
-    GST_VIDEO_INFO_INTERLACE_MODE (&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+  if (vpp->deinterlace_mode != GST_MFX_DEINTERLACE_MODE_DISABLED) {
+    GstVideoInterlaceMode di_mode = GST_VIDEO_INFO_INTERLACE_MODE(&vi);
+    if (vpp->deinterlace_mode == GST_MFX_DEINTERLACE_MODE_AUTO
+        && di_mode != GST_VIDEO_INTERLACE_MODE_PROGRESSIVE)
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
+    else
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
+    GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+  }
 
   /* Update size from user-specified parameters */
   find_best_size (vpp, &vi, &width, &height);
@@ -936,7 +974,8 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
     gst_mfx_filter_set_rotation (vpp->filter, vpp->angle);
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)
-    gst_mfx_filter_set_deinterlace_mode (vpp->filter, vpp->deinterlace_mode);
+    gst_mfx_filter_set_deinterlace_method (vpp->filter,
+      vpp->deinterlace_method);
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
     gst_mfx_filter_set_frc_algorithm (vpp->filter, vpp->alg);
@@ -1040,8 +1079,10 @@ gst_mfxpostproc_set_property (GObject * object,
       vpp->keep_aspect = g_value_get_boolean (value);
       break;
     case PROP_DEINTERLACE_MODE:
-      vpp->deinterlace_mode = g_value_get_enum (value);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
+      vpp->deinterlace_mode = g_value_get_enum(value);
+      break;
+    case PROP_DEINTERLACE_METHOD:
+      vpp->deinterlace_method = g_value_get_enum (value);
       break;
     case PROP_DENOISE:
       vpp->denoise_level = g_value_get_uint (value);
@@ -1122,6 +1163,9 @@ gst_mfxpostproc_get_property (GObject * object,
     case PROP_DEINTERLACE_MODE:
       g_value_set_enum (value, vpp->deinterlace_mode);
       break;
+    case PROP_DEINTERLACE_METHOD:
+      g_value_set_enum(value, vpp->deinterlace_method);
+      break;
     case PROP_DENOISE:
       g_value_set_uint (value, vpp->denoise_level);
       break;
@@ -1166,7 +1210,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   GstPadTemplate *pad_template;
 
   GST_DEBUG_CATEGORY_INIT (gst_debug_mfxpostproc,
-      GST_PLUGIN_NAME, 0, GST_PLUGIN_DESC);
+    GST_PLUGIN_NAME, 0, GST_PLUGIN_DESC);
 
   gst_mfx_plugin_base_class_init (GST_MFX_PLUGIN_BASE_CLASS (klass));
 
@@ -1183,10 +1227,10 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   trans_class->before_transform = gst_mfxpostproc_before_transform;
 
   gst_element_class_set_static_metadata (element_class,
-      "MFX video postprocessing",
-      "Filter/Converter/Video;Filter/Converter/Video/Scaler;"
-      "Filter/Effect/Video;Filter/Effect/Video/Deinterlace",
-      GST_PLUGIN_DESC, "Ishmael Sameen <ishmael.visayana.sameen@intel.com>");
+    "MFX video postprocessing",
+    "Filter/Converter/Video;Filter/Converter/Video/Scaler;"
+    "Filter/Effect/Video;Filter/Effect/Video/Deinterlace",
+    GST_PLUGIN_DESC, "Ishmael Sameen <ishmael.visayana.sameen@intel.com>");
 
   /* sink pad */
   pad_template = gst_static_pad_template_get (&gst_mfxpostproc_sink_factory);
@@ -1197,11 +1241,11 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   gst_element_class_add_pad_template (element_class, pad_template);
 
   g_object_class_install_property (object_class,
-      PROP_ASYNC_DEPTH,
-      g_param_spec_uint ("async-depth", "Asynchronous Depth",
-          "Number of async operations before explicit sync",
-          0, 20, DEFAULT_ASYNC_DEPTH,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    PROP_ASYNC_DEPTH,
+    g_param_spec_uint ("async-depth", "Asynchronous Depth",
+      "Number of async operations before explicit sync",
+      0, 20, DEFAULT_ASYNC_DEPTH,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:deinterlace-mode
@@ -1211,14 +1255,29 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * "interlaced" flag on the caps.
    */
   g_object_class_install_property
-      (object_class,
-      PROP_DEINTERLACE_MODE,
-      g_param_spec_enum ("deinterlace-mode",
-          "Deinterlace mode",
-          "Deinterlace mode to use",
-          GST_MFX_TYPE_DEINTERLACE_MODE,
-          DEFAULT_DEINTERLACE_MODE,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    (object_class,
+    PROP_DEINTERLACE_MODE,
+    g_param_spec_enum ("deinterlace-mode",
+      "Deinterlace mode",
+      "Deinterlace mode to use",
+      GST_MFX_TYPE_DEINTERLACE_MODE,
+      DEFAULT_DEINTERLACE_MODE,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstMfxPostproc:deinterlace-method:
+   *
+   * This selects the deinterlacing method to apply.
+   */
+  g_object_class_install_property
+    (object_class,
+      PROP_DEINTERLACE_METHOD,
+      g_param_spec_enum("deinterlace-method",
+        "Deinterlace method",
+        "Deinterlace method to use",
+        GST_MFX_TYPE_DEINTERLACE_METHOD,
+        DEFAULT_DEINTERLACE_METHOD,
+        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:width
@@ -1228,12 +1287,12 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * inherited from the sink caps width
    */
   g_object_class_install_property
-      (object_class,
-      PROP_WIDTH,
-      g_param_spec_uint ("width",
-          "Width",
-          "Forced output width",
-          0, 8192, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    (object_class,
+    PROP_WIDTH,
+    g_param_spec_uint ("width",
+      "Width",
+      "Forced output width",
+      0, 8192, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:height
@@ -1243,12 +1302,12 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * inherited from the sink caps height
    */
   g_object_class_install_property
-      (object_class,
-      PROP_HEIGHT,
-      g_param_spec_uint ("height",
-          "Height",
-          "Forced output height",
-          0, 8192, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    (object_class,
+    PROP_HEIGHT,
+    g_param_spec_uint ("height",
+      "Height",
+      "Forced output height",
+      0, 8192, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:force-aspect-ratio
@@ -1257,12 +1316,12 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * the video is distorted to fit the width and height properties.
    */
   g_object_class_install_property
-      (object_class,
-      PROP_FORCE_ASPECT_RATIO,
-      g_param_spec_boolean ("force-aspect-ratio",
-          "Force aspect ratio",
-          "When enabled, scaling will respect original aspect ratio",
-          TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    (object_class,
+    PROP_FORCE_ASPECT_RATIO,
+    g_param_spec_boolean ("force-aspect-ratio",
+      "Force aspect ratio",
+      "When enabled, scaling will respect original aspect ratio",
+      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:framerate
@@ -1270,13 +1329,13 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * The forced output frame rate specified as a floating-point value
    */
   g_object_class_install_property
-      (object_class,
-      PROP_FRAMERATE,
-      gst_param_spec_fraction ("framerate",
-          "Frame rate",
-          "Forced output frame rate",
-          0, 1, G_MAXINT, 1, 0, 1,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    (object_class,
+    PROP_FRAMERATE,
+    gst_param_spec_fraction ("framerate",
+      "Frame rate",
+      "Forced output frame rate",
+      0, 1, G_MAXINT, 1, 0, 1,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:denoise
@@ -1284,11 +1343,11 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * The level of noise reduction to apply.
    */
   g_object_class_install_property (object_class,
-      PROP_DENOISE,
-      g_param_spec_uint ("denoise",
-          "Denoising Level",
-          "The level of denoising to apply",
-          0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    PROP_DENOISE,
+    g_param_spec_uint ("denoise",
+      "Denoising Level",
+      "The level of denoising to apply",
+      0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:detail
@@ -1296,11 +1355,11 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * The level of detail / edge enhancement to apply for positive values.
    */
   g_object_class_install_property (object_class,
-      PROP_DETAIL,
-      g_param_spec_uint ("detail",
-          "Detail Level",
-          "The level of detail / edge enhancement to apply",
-          0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    PROP_DETAIL,
+    g_param_spec_uint ("detail",
+      "Detail Level",
+      "The level of detail / edge enhancement to apply",
+      0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:hue
@@ -1309,12 +1368,12 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * 180.0. Default value is 0.0 and represents no modification.
    */
   g_object_class_install_property (object_class,
-      PROP_HUE,
-      g_param_spec_float ("hue",
-          "Hue",
-          "The color hue value",
-          -180.0, 180.0, 0.0, GST_PARAM_CONTROLLABLE |
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    PROP_HUE,
+    g_param_spec_float ("hue",
+      "Hue",
+      "The color hue value",
+      -180.0, 180.0, 0.0, GST_PARAM_CONTROLLABLE |
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:saturation
@@ -1323,12 +1382,12 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * 10.0. Default value is 1.0 and represents no modification.
    */
   g_object_class_install_property (object_class,
-      PROP_SATURATION,
-      g_param_spec_float ("saturation",
-          "Saturation",
-          "The color saturation value",
-          0.0, 10.0, 1.0, GST_PARAM_CONTROLLABLE |
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    PROP_SATURATION,
+    g_param_spec_float ("saturation",
+      "Saturation",
+      "The color saturation value",
+      0.0, 10.0, 1.0, GST_PARAM_CONTROLLABLE |
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:brightness
@@ -1337,12 +1396,12 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * to 100.0. Default value is 0.0 and represents no modification.
    */
   g_object_class_install_property (object_class,
-      PROP_BRIGHTNESS,
-      g_param_spec_float ("brightness",
-          "Brightness",
-          "The color brightness value",
-          -100.0, 100.0, 0.0, GST_PARAM_CONTROLLABLE |
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    PROP_BRIGHTNESS,
+    g_param_spec_float ("brightness",
+      "Brightness",
+      "The color brightness value",
+      -100.0, 100.0, 0.0, GST_PARAM_CONTROLLABLE |
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc:contrast
@@ -1351,27 +1410,25 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * 10.0. Default value is 1.0 and represents no modification.
    */
   g_object_class_install_property (object_class,
-      PROP_CONTRAST,
-      g_param_spec_float ("contrast",
-          "Contrast",
-          "The color contrast value",
-          0.0, 10.0, 1.0, GST_PARAM_CONTROLLABLE |
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    PROP_CONTRAST,
+    g_param_spec_float ("contrast",
+      "Contrast",
+      "The color contrast value",
+      0.0, 10.0, 1.0, GST_PARAM_CONTROLLABLE |
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-#ifndef WITH_MSS_2016
   /**
    * GstMfxPostproc:rotation
    *
    * The rotation angle  for the surface, expressed in GstMfxRotation.
    */
   g_object_class_install_property (object_class,
-      PROP_ROTATION,
-      g_param_spec_enum ("rotation",
-          "Rotation",
-          "The rotation angle",
-          GST_MFX_TYPE_ROTATION,
-          DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-#endif
+    PROP_ROTATION,
+    g_param_spec_enum ("rotation",
+      "Rotation",
+      "The rotation angle",
+      GST_MFX_TYPE_ROTATION,
+      DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstMfxPostproc: frc-algorithm
@@ -1379,12 +1436,12 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
    * expressed in GstMfxFrcAlgorithm.
    */
   g_object_class_install_property (object_class,
-      PROP_FRC_ALGORITHM,
-      g_param_spec_enum ("frc-algorithm",
-          "Algorithm",
-          "The algorithm type",
-          GST_MFX_TYPE_FRC_ALGORITHM,
-          DEFAULT_FRC_ALG, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    PROP_FRC_ALGORITHM,
+    g_param_spec_enum ("frc-algorithm",
+      "Algorithm",
+      "The algorithm type",
+      GST_MFX_TYPE_FRC_ALGORITHM,
+      DEFAULT_FRC_ALG, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -1395,6 +1452,7 @@ gst_mfxpostproc_init (GstMfxPostproc * vpp)
   vpp->async_depth = DEFAULT_ASYNC_DEPTH;
   vpp->format = DEFAULT_FORMAT;
   vpp->deinterlace_mode = DEFAULT_DEINTERLACE_MODE;
+  vpp->deinterlace_method = DEFAULT_DEINTERLACE_METHOD;
   vpp->keep_aspect = TRUE;
   vpp->alg = DEFAULT_FRC_ALG;
   vpp->brightness = DEFAULT_BRIGHTNESS;

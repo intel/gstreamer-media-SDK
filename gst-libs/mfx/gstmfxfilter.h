@@ -118,15 +118,14 @@ typedef enum {
 } GstMfxFilterType;
 
 typedef enum {
-  GST_MFX_DEINTERLACE_MODE_NONE = 0,
-  GST_MFX_DEINTERLACE_MODE_BOB = MFX_DEINTERLACING_BOB,
-  GST_MFX_DEINTERLACE_MODE_ADVANCED = MFX_DEINTERLACING_ADVANCED,
-  GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF = MFX_DEINTERLACING_ADVANCED_NOREF,
+  GST_MFX_DEINTERLACE_METHOD_BOB = MFX_DEINTERLACING_BOB,
+  GST_MFX_DEINTERLACE_METHOD_ADVANCED = MFX_DEINTERLACING_ADVANCED,
+  GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF = MFX_DEINTERLACING_ADVANCED_NOREF,
 #if MSDK_CHECK_VERSION(1,19)
-  GST_MFX_DEINTERLACE_MODE_ADVANCED_SCD = MFX_DEINTERLACING_ADVANCED_SCD,
-  GST_MFX_DEINTERLACE_MODE_FIELD_WEAVING = MFX_DEINTERLACING_FIELD_WEAVING,
+  GST_MFX_DEINTERLACE_METHOD_ADVANCED_SCD = MFX_DEINTERLACING_ADVANCED_SCD,
+  GST_MFX_DEINTERLACE_METHOD_FIELD_WEAVING = MFX_DEINTERLACING_FIELD_WEAVING,
 #endif
-} GstMfxDeinterlaceMode;
+} GstMfxDeinterlaceMethod;
 
 typedef enum {
     GST_MFX_FRC_NONE,
@@ -223,8 +222,8 @@ gboolean
 gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle);
 
 gboolean
-gst_mfx_filter_set_deinterlace_mode (GstMfxFilter *filter,
-    GstMfxDeinterlaceMode mode);
+gst_mfx_filter_set_deinterlace_method (GstMfxFilter *filter,
+    GstMfxDeinterlaceMethod method);
 
 gboolean
 gst_mfx_filter_set_framerate (GstMfxFilter *filter,
@@ -236,9 +235,6 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter *filter,
 
 gboolean
 gst_mfx_filter_set_async_depth (GstMfxFilter * filter, mfxU16 async_depth);
-
-GstMfxTask *
-gst_mfx_filter_get_task(GstMfxFilter * filter, guint type);
 
 
 #endif /* GST_MFX_FILTER_H */

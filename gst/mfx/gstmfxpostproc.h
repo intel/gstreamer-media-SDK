@@ -51,6 +51,19 @@ G_BEGIN_DECLS
 typedef struct _GstMfxPostproc GstMfxPostproc;
 typedef struct _GstMfxPostprocClass GstMfxPostprocClass;
 
+/**
+* GstMfxDeinterlaceMode:
+* @GST_MFX_DEINTERLACE_MODE_AUTO: Auto detect needs for deinterlacing.
+* @GST_MFX_DEINTERLACE_MODE_INTERLACED: Force deinterlacing.
+* @GST_MFX_DEINTERLACE_MODE_DISABLED: Never perform deinterlacing.
+*/
+typedef enum
+{
+  GST_MFX_DEINTERLACE_MODE_AUTO = 0,
+  GST_MFX_DEINTERLACE_MODE_FORCED,
+  GST_MFX_DEINTERLACE_MODE_DISABLED,
+} GstMfxDeinterlaceMode;
+
 
 /**
 * GstMfxPostprocFlags:
@@ -105,6 +118,7 @@ struct _GstMfxPostproc
 
   /* Deinterlacing */
   GstMfxDeinterlaceMode   deinterlace_mode;
+  GstMfxDeinterlaceMethod deinterlace_method;
 
   /* Basic filter values */
   guint                   denoise_level;

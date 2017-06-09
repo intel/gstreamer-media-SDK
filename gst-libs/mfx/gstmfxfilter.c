@@ -24,6 +24,7 @@
 #include "gstmfxfilter.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxtask.h"
+#include "gstmfxallocator.h"
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
 
@@ -864,8 +865,8 @@ gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle)
 }
 
 gboolean
-gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter,
-    GstMfxDeinterlaceMode mode)
+gst_mfx_filter_set_deinterlace_method (GstMfxFilter * filter,
+    GstMfxDeinterlaceMethod method)
 {
   GstMfxFilterOpData *op;
   mfxExtVPPDeinterlacing *ext_deinterlacing;
@@ -873,17 +874,17 @@ gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter,
   g_return_val_if_fail (filter != NULL, FALSE);
 
 #if MSDK_CHECK_VERSION(1,19)
-  g_return_val_if_fail (GST_MFX_DEINTERLACE_MODE_BOB == mode
-      || GST_MFX_DEINTERLACE_MODE_ADVANCED == mode
-      || GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF == mode
-      || GST_MFX_DEINTERLACE_MODE_ADVANCED_SCD == mode
-      || GST_MFX_DEINTERLACE_MODE_FIELD_WEAVING == mode
-      , FALSE);
+  g_return_val_if_fail (GST_MFX_DEINTERLACE_METHOD_BOB == method
+    || GST_MFX_DEINTERLACE_METHOD_ADVANCED == method
+    || GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF == method
+    || GST_MFX_DEINTERLACE_METHOD_ADVANCED_SCD == method
+    || GST_MFX_DEINTERLACE_METHOD_FIELD_WEAVING == method
+    , FALSE);
 #else
-		   g_return_val_if_fail (GST_MFX_DEINTERLACE_MODE_BOB == mode
-      || GST_MFX_DEINTERLACE_MODE_ADVANCED == mode
-      || GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF == mode
-      , FALSE); 
+  g_return_val_if_fail (GST_MFX_DEINTERLACE_METHOD_BOB == method
+    || GST_MFX_DEINTERLACE_METHOD_ADVANCED == method
+    || GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF == method
+    , FALSE); 
 #endif
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_DEINTERLACING);
@@ -903,7 +904,7 @@ gst_mfx_filter_set_deinterlace_mode (GstMfxFilter * filter,
   }
 
   ext_deinterlacing = (mfxExtVPPDeinterlacing *) op->filter;
-  ext_deinterlacing->Mode = mode;
+  ext_deinterlacing->Mode = method;
 
   return TRUE;
 }
@@ -939,11 +940,11 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   g_return_val_if_fail (filter != NULL, FALSE);
 #if 0
   g_return_val_if_fail (GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
-      || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
-      || GST_MFX_FRC_FRAME_INTERPOLATION == alg
-      || GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg
-      || GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg
-      , FALSE);
+    || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
+    || GST_MFX_FRC_FRAME_INTERPOLATION == alg
+    || GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg
+    || GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg
+    , FALSE);
 #else
   g_return_val_if_fail (GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
       || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
@@ -969,14 +970,6 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
   ext_frc = (mfxExtVPPFrameRateConversion *) op->filter;
   ext_frc->Algorithm = alg;
   return TRUE;
-}
-
-GstMfxTask *
-gst_mfx_filter_get_task(GstMfxFilter * filter, guint type)
-{
-  g_return_val_if_fail(filter != NULL, NULL);
-
-  return gst_mfx_task_ref(filter->vpp[!!(type & GST_MFX_TASK_VPP_OUT)]);
 }
 
 GstMfxFilterStatus

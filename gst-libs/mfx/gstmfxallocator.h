@@ -18,8 +18,8 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef GST_MFX_ALLOCATOR_D3D11_FORMAT_H
-#define GST_MFX_ALLOCATOR_D3D11_FORMAT_H
+#ifndef GST_MFX_ALLOCATOR_FORMAT_H
+#define GST_MFX_ALLOCATOR_FORMAT_H
 
 #include <mfxvideo.h>
 
@@ -39,4 +39,4 @@ gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 mfxStatus
 gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL * hdl);
 
-#endif /* GST_MFX_ALLOCATOR_D3D11_FORMAT_H */
+#endif /* GST_MFX_ALLOCATOR_FORMAT_H */

@@ -32,43 +32,43 @@
 
 struct _GstMfxDecoder
 {
-	/*< private > */
-	GstObject parent_instance;
+  /*< private > */
+  GstObject parent_instance;
 
-	GstMfxTaskAggregator *aggregator;
-	GstMfxTask *decode;
-	GstMfxProfile profile;
-	GstMfxSurfacePool *pool;
-	GstMfxFilter *filter;
-	GByteArray *bitstream;
-	GByteArray *codec_data;
+  GstMfxTaskAggregator *aggregator;
+  GstMfxTask *decode;
+  GstMfxProfile profile;
+  GstMfxSurfacePool *pool;
+  GstMfxFilter *filter;
+  GByteArray *bitstream;
+  GByteArray *codec_data;
 
-	GQueue decoded_frames;
-	GQueue pending_frames;
-	GQueue discarded_frames;
+  GQueue decoded_frames;
+  GQueue pending_frames;
+  GQueue discarded_frames;
 
-	mfxSession session;
-	mfxVideoParam params;
-	mfxFrameAllocRequest request;
-	mfxBitstream bs;
-	mfxPluginUID plugin_uid;
+  mfxSession session;
+  mfxVideoParam params;
+  mfxFrameAllocRequest request;
+  mfxBitstream bs;
+  mfxPluginUID plugin_uid;
 
-	GstVideoInfo info;
-	gboolean inited;
+  GstVideoInfo info;
+  gboolean inited;
   gboolean filter_inited;
-	gboolean was_reset;
-	gboolean has_ready_frames;
-	gboolean memtype_is_system;
-	gboolean enable_csc;
-	gboolean enable_deinterlace;
-	gboolean skip_corrupted_frames;
-	gboolean can_double_deinterlace;
+  gboolean was_reset;
+  gboolean has_ready_frames;
+  gboolean memtype_is_system;
+  gboolean enable_csc;
+  gboolean enable_deinterlace;
+  gboolean skip_corrupted_frames;
+  gboolean can_double_deinterlace;
   guint num_partial_frames;
 
-	/* For special double frame rate deinterlacing case */
-	GstClockTime current_pts;
-	GstClockTime duration;
-	GstClockTime pts_offset;
+  /* For special double frame rate deinterlacing case */
+  GstClockTime current_pts;
+  GstClockTime duration;
+  GstClockTime pts_offset;
 };
 
 G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
@@ -536,10 +536,10 @@ init_filter (GstMfxDecoder * decoder)
   if (decoder->enable_csc)
     gst_mfx_filter_set_format (decoder->filter, output_fourcc);
   if (decoder->enable_deinterlace) {
-    GstMfxDeinterlaceMode di_mode =
-      decoder->can_double_deinterlace ? GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF
-        : GST_MFX_DEINTERLACE_MODE_ADVANCED;
-    gst_mfx_filter_set_deinterlace_mode (decoder->filter, di_mode);
+    GstMfxDeinterlaceMethod di_method = decoder->can_double_deinterlace ?
+      GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF
+        : GST_MFX_DEINTERLACE_METHOD_ADVANCED;
+    gst_mfx_filter_set_deinterlace_method (decoder->filter, di_method);
   }
   gst_mfx_filter_set_async_depth (decoder->filter, decoder->params.AsyncDepth);
 

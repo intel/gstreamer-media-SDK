@@ -8,41 +8,12 @@ G_BEGIN_DECLS
 
 #define GST_MFX_TYPE_OPTION gst_mfx_option_get_type ()
 
-/**
- * GST_MFX_TYPE_ROTATION:
- *
- * A type that represents the MFX surface rotation.
- *
- * Return value: the #GType of GstMfxRotation
- */
 #define GST_MFX_TYPE_ROTATION gst_mfx_rotation_get_type ()
 
-/**
- * GST_MFX_TYPE_RATE_CONTROL:
- *
- * A type that represents the MFX rate control algorithm.
- *
- * Return value: the #GType of GstMfxRateControl
- */
 #define GST_MFX_TYPE_RATE_CONTROL gst_mfx_rate_control_get_type ()
 
-/**
- * GST_MFX_TYPE_DEINTERLACE_MODE:
- *
- * A type that represents the MFX deinterlace mode.
- *
- * Return value: the #GType of GstMfxDeinterlaceMode
- */
-#define GST_MFX_TYPE_DEINTERLACE_MODE \
-    gst_mfx_deinterlace_mode_get_type ()
-
-/**
- * GST_MFX_TYPE_FRC_ALGORITHM:
- *
- * A type that represents the MFX frame rate conversion algorithm.
- *
- * Return value: the #GType of GstMfxFrcAlgorithm
- */
+#define GST_MFX_TYPE_DEINTERLACE_METHOD \
+    gst_mfx_deinterlace_method_get_type ()
 
 #define GST_MFX_TYPE_FRC_ALGORITHM \
     gst_mfx_frc_algorithm_get_type ()
