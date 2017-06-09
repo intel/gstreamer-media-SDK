@@ -91,32 +91,36 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
       priv2->processor, 0, TRUE, &rect);
 
     if (priv2->keep_aspect) {
+      D3D11_TEXTURE2D_DESC outputDesc;
       RECT dest_rect = { 0 };
-      gdouble src_ratio, dst_ratio;
+      gdouble src_ratio, window_ratio;
+
+      ID3D11Texture2D_GetDesc(priv2->backbuffer_texture, &outputDesc);
 
       src_ratio = (gdouble)src_rect->width / src_rect->height;
-      dst_ratio = (gdouble)priv->width / priv->height;
+      window_ratio = (gdouble)priv->width / priv->height;
 
-      if (src_ratio > dst_ratio) {
-        gdouble new_height = priv->width / (gdouble)src_ratio;
-
-        dest_rect.right = priv->width;
-        dest_rect.top = (priv->height - new_height) / 2;
+      if (src_ratio > window_ratio) {
+        gdouble new_height = (gdouble)outputDesc.Height * window_ratio / src_ratio;
+        dest_rect.top = (outputDesc.Height - new_height) / 2;
         dest_rect.bottom = new_height + dest_rect.top;
         dest_rect.left = 0;
+        dest_rect.right = outputDesc.Width;
       }
-      else if (src_ratio < dst_ratio) {
-        gdouble new_width = src_ratio * priv->height;
-
-        dest_rect.bottom = priv->height;
-        dest_rect.left = (priv->width - new_width) / 2;
-        dest_rect.right = dest_rect.left + new_width;
+      else if (src_ratio < window_ratio) {
+        gdouble new_width = (gdouble)outputDesc.Width * src_ratio / window_ratio;
         dest_rect.top = 0;
+        dest_rect.bottom = outputDesc.Height;
+        dest_rect.left = (outputDesc.Width - new_width) / 2;
+        dest_rect.right = dest_rect.left + new_width;
       }
       else {
-        dest_rect.right = priv->width;
-        dest_rect.bottom = priv->height;
+        dest_rect.top = 0;
+        dest_rect.bottom = outputDesc.Height;
+        dest_rect.left = 0;
+        dest_rect.right = outputDesc.Width;
       }
+
       ID3D11VideoContext_VideoProcessorSetStreamDestRect(priv2->d3d11_video_context,
         priv2->processor, 0, TRUE, &dest_rect);
     }
@@ -268,8 +272,8 @@ gst_mfx_window_d3d11_init_swap_chain(GstMfxWindow * window)
   swap_chain_desc.SampleDesc.Quality = 0;
   swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
   swap_chain_desc.BufferCount = 2;
-  //swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-  swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+  swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+  //swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
   swap_chain_desc.Scaling = DXGI_SCALING_STRETCH;
   swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
@@ -403,29 +407,6 @@ gst_mfx_window_d3d11_create (GstMfxWindow * window,
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   RECT rect;
 
-  /*HRESULT hr = S_OK;
-#ifdef DEBUG
-  UINT creationFlags = D3D11_CREATE_DEVICE_DEBUG;
-#else
-  UINT creationFlags = 0;
-#endif
-
-  UINT adapter_idx = 0;
-  hr = CreateDXGIFactory(&IID_IDXGIFactory, (void**)(&priv2->dxgi_factory));
-
-  while (IDXGIFactory2_EnumAdapters(priv2->dxgi_factory, adapter_idx, &priv2->dxgi_adapter) != DXGI_ERROR_NOT_FOUND)
-  {
-    DXGI_ADAPTER_DESC desc;
-    IDXGIAdapter_GetDesc(priv2->dxgi_adapter, &desc);
-    if (desc.VendorId == 0x8086) {//TODO: we can enable D3D11 rendering with frames on a separate device.
-      D3D11CreateDevice(priv2->dxgi_adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, creationFlags, NULL,
-        0, D3D11_SDK_VERSION, &priv2->d3d11_device, NULL, &priv2->d3d11_device_ctx);
-      break;
-    }
-    adapter_idx++;
-  }
-  */
-
   if (!d3d11_create_window(window))
     return FALSE;
 
@@ -436,9 +417,6 @@ gst_mfx_window_d3d11_create (GstMfxWindow * window,
 
   priv->width = *width = MAX(1, ABS(rect.right - rect.left));
   priv->height = *height = MAX(1, ABS(rect.bottom - rect.top));
-
-  //TODO: share device with input
-
 
   return TRUE;
 }
