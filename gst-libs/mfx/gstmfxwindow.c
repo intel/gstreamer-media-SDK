@@ -118,9 +118,9 @@ gst_mfx_window_class_init (GstMfxWindowClass * klass)
 
 GstMfxWindow *
 gst_mfx_window_new_internal (GstMfxWindow *window, GstMfxContext * context,
-  /*GstMfxID id,*/ guint width, guint height)
+  GstMfxID id, guint width, guint height)
 {
-  /*if (id != GST_MFX_ID_INVALID) {
+  if (id != GST_MFX_ID_INVALID) {
     g_return_val_if_fail (width == 0, NULL);
     g_return_val_if_fail (height == 0, NULL);
   } else {
@@ -130,7 +130,7 @@ gst_mfx_window_new_internal (GstMfxWindow *window, GstMfxContext * context,
 
   GST_MFX_WINDOW_GET_PRIVATE(window)->handle = id;
   GST_MFX_WINDOW_GET_PRIVATE(window)->use_foreign_window =
-      id != GST_MFX_ID_INVALID;*/
+      id != GST_MFX_ID_INVALID;
   GST_MFX_WINDOW_GET_PRIVATE(window)->context =
     gst_mfx_context_ref(context);
   if (!gst_mfx_window_create (window, width, height))

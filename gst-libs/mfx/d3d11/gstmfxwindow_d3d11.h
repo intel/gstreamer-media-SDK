@@ -35,7 +35,7 @@ G_DECLARE_FINAL_TYPE(GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_MFX, WINDOW_D3
 
 GstMfxWindow *
 gst_mfx_window_d3d11_new(GstMfxWindowD3D11 * window, GstMfxContext * context,
-  GstVideoInfo * info, gboolean keep_aspect);
+  GstVideoInfo * info, gboolean keep_aspect, gboolean fullscreen);
 
 G_END_DECLS
 

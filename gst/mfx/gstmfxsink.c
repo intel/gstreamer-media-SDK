@@ -105,7 +105,7 @@ gst_mfxsink_d3d11_create_window (GstMfxSink * sink, guint width, guint height)
   g_return_val_if_fail (sink->window == NULL, FALSE);
   sink->window =
       gst_mfx_window_d3d11_new (g_object_new(GST_TYPE_MFX_WINDOW_D3D11, NULL),
-        sink->device_context, info, sink->keep_aspect);
+        sink->device_context, info, sink->keep_aspect, sink->fullscreen);
   if (!sink->window)
     return FALSE;
   return TRUE;

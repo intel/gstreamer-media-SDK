@@ -126,8 +126,8 @@ void
 gst_mfx_window_class_init(GstMfxWindowClass * klass);
 
 GstMfxWindow *
-gst_mfx_window_new_internal(GstMfxWindow * window,
-  GstMfxContext* context, guint width, guint height);
+gst_mfx_window_new_internal(GstMfxWindow * window, GstMfxContext* context,
+  GstMfxID id, guint width, guint height);
 
 #define gst_mfx_window_ref_internal(window) \
   ((gpointer)gst_object_ref(GST_OBJECT(window)))

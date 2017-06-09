@@ -61,7 +61,8 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
         priv->context, &priv2->info);
       if (!priv2->mapped_surface)
         return FALSE;
-      gst_mfx_surface_d3d11_set_rw_flags(priv2->mapped_surface, MFX_SURFACE_WRITE);
+      gst_mfx_surface_d3d11_set_rw_flags(priv2->mapped_surface,
+        MFX_SURFACE_WRITE);
     }
 
     if (!gst_mfx_surface_map(priv2->mapped_surface))
@@ -100,34 +101,34 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
     priv2->processor, 0, TRUE, &rect);
 
   if (priv2->keep_aspect) {
-    D3D11_TEXTURE2D_DESC outputDesc;
+    D3D11_TEXTURE2D_DESC output_desc;
     RECT dest_rect = { 0 };
     gdouble src_ratio, window_ratio;
 
-    ID3D11Texture2D_GetDesc(priv2->backbuffer_texture, &outputDesc);
+    ID3D11Texture2D_GetDesc(priv2->backbuffer_texture, &output_desc);
 
     src_ratio = (gdouble)src_rect->width / src_rect->height;
     window_ratio = (gdouble)priv->width / priv->height;
 
     if (src_ratio > window_ratio) {
-      gdouble new_height = (gdouble)outputDesc.Height * window_ratio / src_ratio;
-      dest_rect.top = (outputDesc.Height - new_height) / 2;
+      gdouble new_height = (gdouble)output_desc.Height * window_ratio / src_ratio;
+      dest_rect.top = (output_desc.Height - new_height) / 2;
       dest_rect.bottom = new_height + dest_rect.top;
       dest_rect.left = 0;
-      dest_rect.right = outputDesc.Width;
+      dest_rect.right = output_desc.Width;
     }
     else if (src_ratio < window_ratio) {
-      gdouble new_width = (gdouble)outputDesc.Width * src_ratio / window_ratio;
+      gdouble new_width = (gdouble)output_desc.Width * src_ratio / window_ratio;
       dest_rect.top = 0;
-      dest_rect.bottom = outputDesc.Height;
-      dest_rect.left = (outputDesc.Width - new_width) / 2;
+      dest_rect.bottom = output_desc.Height;
+      dest_rect.left = (output_desc.Width - new_width) / 2;
       dest_rect.right = dest_rect.left + new_width;
     }
     else {
       dest_rect.top = 0;
-      dest_rect.bottom = outputDesc.Height;
+      dest_rect.bottom = output_desc.Height;
       dest_rect.left = 0;
-      dest_rect.right = outputDesc.Width;
+      dest_rect.right = output_desc.Width;
     }
 
     ID3D11VideoContext_VideoProcessorSetStreamDestRect(priv2->d3d11_video_context,
@@ -163,14 +164,6 @@ static gboolean
 gst_mfx_window_d3d11_hide (GstMfxWindow * window)
 {
   GST_FIXME ("unimplemented GstMfxWindowD3D11::hide()");
-  return TRUE;
-}
-
-static gboolean
-gst_mfx_window_d3d11_set_fullscreen (GstMfxWindow * window,
-    gboolean fullscreen)
-{
-  GST_FIXME("unimplemented GstMfxWindowD3D11::set_fullscreen()");
   return TRUE;
 }
 
@@ -267,13 +260,13 @@ gst_mfx_window_d3d11_init_swap_chain(GstMfxWindow * window)
   swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
   hr = IDXGIFactory2_CreateSwapChainForHwnd(
-    gst_mfx_device_get_factory(priv->device),
-    gst_mfx_device_get_handle(priv->device),
-    priv->hwnd,
-    &swap_chain_desc,
-    NULL,
-    NULL,
-    &priv->dxgi_swapchain);
+          gst_mfx_device_get_factory(priv->device),
+          gst_mfx_device_get_handle(priv->device),
+          priv->hwnd,
+          &swap_chain_desc,
+          NULL,
+          NULL,
+          &priv->dxgi_swapchain);
   if (FAILED(hr))
     return FALSE;
 
@@ -412,26 +405,33 @@ d3d11_create_window_internal (GstMfxWindow * window)
   width = GetSystemMetrics(SM_CXSCREEN);
   height = GetSystemMetrics(SM_CYSCREEN);
 
-  SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
-  screenwidth = rect.right - rect.left;
-  screenheight = rect.bottom - rect.top;
-  offx = rect.left;
-  offy = rect.top;
+  if (!GST_MFX_WINDOW_GET_PRIVATE(window)->is_fullscreen) {
+    SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+    screenwidth = rect.right - rect.left;
+    screenheight = rect.bottom - rect.top;
+    offx = rect.left;
+    offy = rect.top;
 
-  /* Make it fit into the screen without changing the aspect ratio. */
-  if (width > screenwidth) {
-    double ratio = (double)screenwidth / (double)width;
-    width = screenwidth;
-    height = (int)(height * ratio);
+    /* Make it fit into the screen without changing the aspect ratio. */
+    if (width > screenwidth) {
+      double ratio = (double)screenwidth / (double)width;
+      width = screenwidth;
+      height = (int)(height * ratio);
+    }
+
+    if (height > screenheight) {
+      double ratio = (double)screenheight / (double)height;
+      height = screenheight;
+      width = (int)(width * ratio);
+    }
+
+    style = WS_OVERLAPPEDWINDOW;  /* Normal top-level window */
   }
-
-  if (height > screenheight) {
-    double ratio = (double)screenheight / (double)height;
-    height = screenheight;
-    width = (int)(width * ratio);
+  else {
+    offx = 0;
+    offy = 0;
+    style = WS_POPUP;
   }
-
-  style = WS_OVERLAPPEDWINDOW;  /* Normal top-level window */
   exstyle = 0;
   priv->hwnd = CreateWindowEx(exstyle,
     d3d11_window.lpszClassName,
@@ -524,7 +524,6 @@ gst_mfx_window_d3d11_class_init (GstMfxWindowD3D11Class * klass)
   window_class->render = gst_mfx_window_d3d11_render;
   window_class->hide = gst_mfx_window_d3d11_hide;
   window_class->resize = gst_mfx_window_d3d11_resize;
-  window_class->set_fullscreen = gst_mfx_window_d3d11_set_fullscreen;
 }
 
 static void
@@ -534,14 +533,14 @@ gst_mfx_window_d3d11_init(GstMfxWindowD3D11 * window)
 
 GstMfxWindow *
 gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context,
-  GstVideoInfo * info, gboolean keep_aspect)
+  GstVideoInfo * info, gboolean keep_aspect, gboolean fullscreen)
 {
   GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->device =
       gst_mfx_context_get_device(context);
   GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->info = *info;
   GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->keep_aspect = keep_aspect;
+  GST_MFX_WINDOW_GET_PRIVATE(window)->is_fullscreen = fullscreen;
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW(window), context,
-    //GST_MFX_ID_INVALID, 
-    1, 1);
+    GST_MFX_ID_INVALID, 1, 1);
 }
