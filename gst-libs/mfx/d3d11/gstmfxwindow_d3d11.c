@@ -41,18 +41,6 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
   HRESULT hr = S_OK;
   MSG msg;
 
-  while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-  {
-    // Translate the message and dispatch it to WindowProc()
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-  }
-
-  // If the message is WM_QUIT, exit
-  if (msg.message == WM_QUIT) {
-    gst_mfx_window_d3d11_destroy(mfx_window);
-  }
-
   if (gst_mfx_surface_has_video_memory(surface)) {
     ID3D11VideoProcessorInputView *input_view = NULL;
     D3D11_VIDEO_PROCESSOR_STREAM stream_data;
@@ -158,6 +146,7 @@ gst_mfx_window_d3d11_render (GstMfxWindow * mfx_window,
   return TRUE;
 }
 
+
 gst_mfx_window_d3d11_show(GstMfxWindow * window)
 {
   GstMfxWindowD3D11Private *const priv =
@@ -183,7 +172,6 @@ gst_mfx_window_d3d11_set_fullscreen (GstMfxWindow * window,
   GST_FIXME("unimplemented GstMfxWindowD3D11::set_fullscreen()");
   return TRUE;
 }
-
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -335,8 +323,71 @@ error:
   return FALSE;
 }
 
+typedef struct
+{
+  GstMfxWindowD3D11 *window;
+  gboolean running;
+} D3D11WindowThreadData;
+
+static gpointer
+d3d11_window_thread (D3D11WindowThreadData * data)
+{
+  GstMfxWindowD3D11 *window;
+  MSG msg;
+
+  g_return_val_if_fail (data != NULL, NULL);
+
+  window = data->window;
+
+  if (!d3d11_create_window_internal (window)) {
+    GST_ERROR_OBJECT (window, "Failed to create D3D11 window");
+    return NULL;
+  }
+
+  data->running = TRUE;
+
+  while (GetMessage (&msg, NULL, 0, 0)) {
+    if (msg.message == WM_QUIT)
+      break;
+    TranslateMessage (&msg);
+    DispatchMessage (&msg);
+  }
+
+  GST_DEBUG_OBJECT (window, "Exiting D3D11 window thread: %p",
+    g_thread_self ());
+
+  return NULL;
+}
+
 static gboolean
-d3d11_create_window(GstMfxWindow * window)
+d3d11_create_threaded_window (GstMfxWindow * window)
+{
+  GThread *thread;
+  D3D11WindowThreadData thread_data;
+  gulong timeout_interval = 10000;
+  gulong intervals = (10000000 / timeout_interval); // 10 secs - huge delay but coherent with sys/d3dvideosink/d3dhelpers.
+  gulong i;
+
+  thread_data.window = window;
+  thread_data.running = FALSE;
+
+  thread = g_thread_new ("gstmfxwindow-d3d11-window-thread",
+    (GThreadFunc)d3d11_window_thread, &thread_data);
+  if (!thread) {
+    GST_ERROR ("Failed to created internal window thread");
+    return FALSE;
+  }
+
+  /* Wait 10 seconds for window proc loop to start up */
+  for (i = 0; thread_data.running == FALSE && i < intervals; i++) {
+    g_usleep (timeout_interval);
+  }
+
+  return TRUE;
+}
+
+static gboolean
+d3d11_create_window_internal (GstMfxWindow * window)
 {
   GstMfxWindowD3D11Private *const priv =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
@@ -407,7 +458,7 @@ gst_mfx_window_d3d11_create (GstMfxWindow * window,
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   RECT rect;
 
-  if (!d3d11_create_window(window))
+  if (!d3d11_create_threaded_window(window))
     return FALSE;
 
   if (!d3d11_create_render_context(window))
