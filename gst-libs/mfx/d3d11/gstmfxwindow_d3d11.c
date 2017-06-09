@@ -427,12 +427,18 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
   GstMfxWindowD3D11Private *const priv =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
 
-  if (priv->d3d11_video_context)
+  if (priv->d3d11_video_context) {
     ID3D11VideoContext_Release(priv->d3d11_video_context);
-  if (priv->processor)
+    priv->d3d11_video_context = NULL;
+  }
+  if (priv->processor) {
     ID3D11VideoProcessor_Release(priv->processor);
-  if (priv->processor_enum)
+    priv->processor = NULL;
+  }
+  if (priv->processor_enum) {
     ID3D11VideoProcessorEnumerator_Release(priv->processor_enum);
+    priv->processor_enum = NULL;
+  }
 
   gst_mfx_device_replace(&priv->device, NULL);
   return TRUE;

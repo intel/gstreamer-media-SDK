@@ -84,9 +84,6 @@ static gboolean gst_mfxsink_reconfigure_window (GstMfxSink * sink);
 static GstFlowReturn
 gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * buffer);
 
-static gboolean
-gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height);
-
 static inline gboolean
 gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
     const GstMfxRectangle * surface_rect)
@@ -183,73 +180,6 @@ static void
 gst_mfxsink_set_render_backend (GstMfxSink * sink)
 {
   sink->backend = gst_mfxsink_backend_d3d11();
-}
-
-static gboolean
-gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height)
-{
-  GstMfxRectangle *const display_rect = &sink->display_rect;
-  guint num, den, display_par_n, display_par_d;
-  gboolean success;
-
-  /* Return success if caps are not set yet */
-  if (!sink->caps)
-    return TRUE;
-
-#if 0
-  if (!sink->keep_aspect) {
-    display_rect->width = width;
-    display_rect->height = height;
-    display_rect->x = 0;
-    display_rect->y = 0;
-
-    GST_DEBUG ("force-aspect-ratio is false; distorting while scaling video");
-    GST_DEBUG ("render rect (%d,%d):%ux%u",
-        display_rect->x, display_rect->y,
-        display_rect->width, display_rect->height);
-    return TRUE;
-  }
-
-  GST_DEBUG ("ensure render rect within %ux%u bounds", width, height);
-
-  /* FIXME: Get pixel aspect ratio for Windows D3D11 device */
-  gst_mfx_display_get_pixel_aspect_ratio (sink->display,
-      &display_par_n, &display_par_d);
-  GST_DEBUG ("display pixel-aspect-ratio %d/%d", display_par_n, display_par_d);
-
-  success = gst_video_calculate_display_ratio (&num, &den,
-      sink->video_width, sink->video_height,
-      sink->video_par_n, sink->video_par_d, display_par_n, display_par_d);
-  if (!success)
-    return FALSE;
-  GST_DEBUG ("video size %dx%d, calculated ratio %d/%d",
-      sink->video_width, sink->video_height, num, den);
-
-  display_rect->width = gst_util_uint64_scale_int (height, num, den);
-  if (display_rect->width <= width) {
-    GST_DEBUG ("keeping window height");
-    display_rect->height = height;
-  } else {
-    GST_DEBUG ("keeping window width");
-    display_rect->width = width;
-    display_rect->height = gst_util_uint64_scale_int (width, den, num);
-  }
-  GST_DEBUG ("scaling video to %ux%u", display_rect->width,
-      display_rect->height);
-
-  g_assert (display_rect->width <= width);
-  g_assert (display_rect->height <= height);
-
-  display_rect->x = (width - display_rect->width) / 2;
-  display_rect->y = (height - display_rect->height) / 2;
-
-#endif
-
-  GST_DEBUG ("render rect (%d,%d):%ux%u",
-      display_rect->x, display_rect->y,
-      display_rect->width, display_rect->height);
-
-  return TRUE;
 }
 
 static inline gboolean
@@ -408,7 +338,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   sink->window_height = win_height;
   GST_DEBUG ("window size %ux%u", win_width, win_height);
 
-  return gst_mfxsink_ensure_render_rect (sink, win_width, win_height);
+  return TRUE;
 }
 
 static GstFlowReturn
