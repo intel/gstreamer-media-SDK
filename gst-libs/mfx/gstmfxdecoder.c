@@ -588,8 +588,35 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
   if (!init_decoder (decoder))
     goto error;
 
-  memset(&decoder->bs, 0, sizeof(mfxBitstream));
+  //memset(&decoder->bs, 0, sizeof(mfxBitstream));
+  decoder->bs.DataLength += decoder->bs.DataOffset;
+  decoder->bs.DataOffset = 0;
 
+  GstMfxSurface *surface;
+  mfxFrameSurface1 *insurf, *outsurf = NULL;
+  mfxSyncPoint syncp;
+  mfxStatus sts = MFX_ERR_NONE;
+
+  do {
+    surface = gst_mfx_surface_new_from_pool (decoder->pool);
+    if (!surface)
+      return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
+
+    insurf = gst_mfx_surface_get_frame_surface (surface);
+    sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, &decoder->bs,
+	    insurf, &outsurf, &syncp);
+    GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
+
+    if (MFX_WRN_DEVICE_BUSY == sts)
+      g_usleep (100);
+  } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
+
+  if (syncp) {
+    do {
+      sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 100);
+      GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
+    } while (MFX_WRN_IN_EXECUTION == sts);
+  }
   return TRUE;
 
 error:
