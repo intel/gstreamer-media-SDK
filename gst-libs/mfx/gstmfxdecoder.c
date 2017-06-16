@@ -790,6 +790,15 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     goto end;
   }
 
+  if (MFX_ERR_INCOMPATIBLE_VIDEO_PARAM == sts) {
+    if (!gst_mfx_decoder_reinit(decoder, &insurf->Info)) {
+      ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+      goto end;
+    }
+    ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
+    goto end;
+  }
+
   if (MFX_ERR_NONE != sts && MFX_ERR_MORE_DATA != sts) {
     GST_ERROR ("Status %d : Error during MFX decoding", sts);
     ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
