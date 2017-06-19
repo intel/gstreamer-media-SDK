@@ -52,9 +52,6 @@ GstMfxEncoder *
 gst_mfx_encoder_h265_new (GstMfxEncoderH265 * encoder, GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped);
 
-void
-gst_mfx_encoder_h265_init(GstMfxEncoderH265 * encoder);
-
 GPtrArray *
 gst_mfx_encoder_h265_get_default_properties (void);
 

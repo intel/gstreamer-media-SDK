@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2012-2013 Intel Corporation
+ *    Author: Sreerenj Balachandran <sreerenj.balachandran@intel.com>
  *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
  *
  *  This library is free software; you can redistribute it and/or
@@ -18,39 +19,25 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef SYSDEPS_H
-#define SYSDEPS_H
+#ifndef GST_MFX_DISPLAY_WAYLAND_H
+#define GST_MFX_DISPLAY_WAYLAND_H
 
-#include "version.h"
+#include <wayland-client.h>
+#include "gstmfxdisplay.h"
+#include "gstmfxdisplay_priv.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+G_BEGIN_DECLS
 
-#ifdef WITH_LIBVA_BACKEND
-# include <unistd.h>
-# include <va/va.h>
-# include <drm.h>
-#else
-# if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
-# undef _WIN32_WINNT
-# define _WIN32_WINNT 0x0600
-# endif
-# define COBJMACROS
+#define GST_TYPE_MFX_DISPLAY_WAYLAND (gst_mfx_display_wayland_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxDisplayWayland, gst_mfx_display_wayland, GST_MFX, DISPLAY_WAYLAND, GstMfxDisplay)
 
-# include <initguid.h>
-# include <d3d11.h>
-# include <dxgi1_2.h>
-#endif
+#define GST_MFX_DISPLAY_WAYLAND_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_DISPLAY_WAYLAND, \
+  GstMfxDisplayWaylandClass))
 
-#include <gst/gst.h>
-#include <gst/video/video.h>
-#include <mfxvideo.h>
+GstMfxDisplay *
+gst_mfx_display_wayland_new (GstMfxDisplayWayland * display, const gchar * display_name);
 
-/* Media SDK API version check  */
-#define	MSDK_CHECK_VERSION(major,minor)	\
-    (MFX_VERSION_MAJOR > major || \
-     (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR > minor) || \
-     (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR == minor))
+G_END_DECLS
 
-#endif /* SYSDEPS_H */
+#endif /* GST_MFX_DISPLAY_WAYLAND_H */

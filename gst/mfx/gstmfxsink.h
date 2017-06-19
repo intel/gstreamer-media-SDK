@@ -26,6 +26,10 @@
 #include "gstmfxpluginbase.h"
 #include "gstmfxpluginutil.h"
 
+#ifdef WITH_LIBVA_BACKEND
+# include <gst-libs/mfx/gstmfxdisplay.h>
+#endif // WITH_LIBVA_BACKEND
+
 #include <gst-libs/mfx/gstmfxwindow.h>
 #include <gst-libs/mfx/gstmfxcontext.h>
 #include <gst-libs/mfx/gstmfxcompositefilter.h>
@@ -53,12 +57,22 @@ typedef struct _GstMfxSinkBackend             GstMfxSinkBackend;
 
 typedef gboolean(*GstMfxSinkCreateWindowFunc) (GstMfxSink * sink,
     guint width, guint height);
+typedef gboolean(*GstMfxSinkCreateWindowFromHandleFunc) (GstMfxSink * sink,
+    guintptr window);
+typedef gboolean(*GstMfxSinkHandleEventsFunc) (GstMfxSink * sink);
+typedef gboolean(*GstMfxSinkPreStartEventThreadFunc) (GstMfxSink * sink);
+typedef gboolean(*GstMfxSinkPreStopEventThreadFunc) (GstMfxSink * sink);
 
 struct _GstMfxSinkBackend
 {
   GstMfxSinkCreateWindowFunc              create_window;
-};
+  GstMfxSinkCreateWindowFromHandleFunc    create_window_from_handle;
 
+  /* Event threads handling */
+  GstMfxSinkHandleEventsFunc              handle_events;
+  GstMfxSinkPreStartEventThreadFunc       pre_start_event_thread;
+  GstMfxSinkPreStopEventThreadFunc        pre_stop_event_thread;
+};
 struct _GstMfxSink
 {
   /*< private >*/
@@ -76,10 +90,19 @@ struct _GstMfxSink
   gint                       video_par_d;
   GstVideoInfo               video_info;
   GstMfxRectangle            display_rect;
+  GThread                   *event_thread;
+  volatile                   gboolean event_thread_cancel;
 
   GstMfxCompositeFilter     *composite_filter;
   GstMfxContext             *device_context;
+#ifdef WITH_LIBVA_BACKEND
+  GstMfxDisplay             *display;
+  GstMfxDisplayType          display_type;
+  GstMfxDisplayType          display_type_req;
+  gchar                     *display_name;
+#endif
 
+  guint                      handle_events : 1;
   guint                      fullscreen : 1;
   guint                      foreign_window : 1;
   guint                      keep_aspect : 1;

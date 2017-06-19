@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 
 #undef GST_MFX_WINDOW_ID
 #define GST_MFX_WINDOW_ID(window) \
-  (GST_MFX_WINDOW (window)->handle)
+  (GST_MFX_WINDOW_GET_PRIVATE (window)->handle)
 
 typedef struct _GstMfxWindowClass            GstMfxWindowClass;
 typedef struct _GstMfxWindowPrivate          GstMfxWindowPrivate;
@@ -121,9 +121,6 @@ struct _GstMfxWindowClass
   GstMfxWindowResizeFunc resize;
   GstMfxWindowRenderFunc render;
 };
-
-void
-gst_mfx_window_class_init(GstMfxWindowClass * klass);
 
 GstMfxWindow *
 gst_mfx_window_new_internal(GstMfxWindow * window, GstMfxContext* context,

@@ -27,7 +27,13 @@
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxtask.h"
 #include "gstmfxsurface.h"
-#include "gstmfxsurface_d3d11.h"
+
+#ifdef WITH_LIBVA_BACKEND
+# include "gstmfxsurface_vaapi.h"
+#else
+# include "gstmfxsurface_d3d11.h"
+#endif // WITH_LIBVA_BACKEND
+
 #include "gstmfxsurfacecomposition.h"
 #include "gstmfxsurfacepool.h"
 
@@ -255,7 +261,7 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
 {
   GstMfxSurface *base_surface;
   mfxStatus sts = MFX_ERR_NONE;
-  
+
   base_surface = gst_mfx_surface_composition_get_base_surface (composition);
   filter->frame_info = gst_mfx_surface_get_frame_surface (base_surface)->Info;
 

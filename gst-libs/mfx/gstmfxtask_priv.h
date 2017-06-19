@@ -22,6 +22,9 @@
 #define GST_MFX_TASK_PRIV_H
 
 #include "gstmfxtypes.h"
+#ifdef WITH_LIBVA_BACKEND
+# include "gstmfxutils_vaapi.h"
+#endif // WITH_LIBVA_BACKEND
 
 G_BEGIN_DECLS
 
@@ -37,7 +40,14 @@ typedef struct _ResponseData ResponseData;
 
 struct _ResponseData
 {
+#ifdef WITH_LIBVA_BACKEND
+  GstMfxMemoryId *mem_ids;
+  mfxMemId *mids;
+  VASurfaceID *surfaces;
+  VABufferID *coded_buf;
+#else
   GstMfxMemoryId **mids;
+#endif // WITH_LIBVA_BACKEND
   mfxU16 num_surfaces;
   mfxFrameAllocResponse *response;
   mfxFrameInfo frame_info;

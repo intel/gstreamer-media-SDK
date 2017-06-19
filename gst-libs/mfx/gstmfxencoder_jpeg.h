@@ -44,9 +44,6 @@ GstMfxEncoder *
 gst_mfx_encoder_jpeg_new(GstMfxEncoderJpeg * encoder, GstMfxTaskAggregator * aggregator,
   	const GstVideoInfo * info, gboolean mapped);
 
-void
-gst_mfx_encoder_jpeg_init(GstMfxEncoderJpeg * encoder);
-
 GPtrArray *
 gst_mfx_encoder_jpeg_get_default_properties (void);
 

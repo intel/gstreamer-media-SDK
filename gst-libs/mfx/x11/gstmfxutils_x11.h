@@ -1,6 +1,8 @@
 /*
- *  Copyright (C) 2017
- *    Author: Ishmael Visayana Sameen <ishmael1985@gmail.com>
+ *  Copyright (C) 2010-2011 Splitted-Desktop Systems
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@splitted-desktop.com>
+ *  Copyright (C) 2012-2013 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -18,34 +20,24 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef GST_MFX_CONTEXT_H
-#define GST_MFX_CONTEXT_H
+#ifndef GST_MFX_UTILS_X11_H
+#define GST_MFX_UTILS_X11_H
 
-#include "sysdeps.h"
-
-G_BEGIN_DECLS
-
-#define GST_TYPE_MFX_CONTEXT (gst_mfx_context_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxContext, gst_mfx_context, GST_MFX, CONTEXT, GstObject)
-
-#define GST_MFX_CONTEXT(obj) ((GstMfxContext *) (obj))
-
-GstMfxContext *
-gst_mfx_context_new (GstMfxContext * context, mfxSession session);
-
-GstMfxContext *
-gst_mfx_context_ref (GstMfxContext * context);
+#include <X11/Xlib.h>
+#include <glib.h>
+#include <gst/gst.h>
 
 void
-gst_mfx_context_unref (GstMfxContext * context);
+x11_trap_errors (void);
 
-void
-gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
-    GstMfxContext * new_context);
+int
+x11_untrap_errors (void);
 
-guintptr
-gst_mfx_context_get_device(GstMfxContext * context);
+Window
+x11_create_window (Display * dpy, guint w, guint h, guint vid, Colormap cmap);
 
-G_END_DECLS
+gboolean
+x11_get_geometry (Display * dpy, Drawable drawable, gint * px, gint * py,
+    guint * pwidth, guint * pheight, guint * pdepth);
 
-#endif /* GST_MFX_CONTEXT_H */
+#endif /* GST_MFX_UTILS_X11_H */

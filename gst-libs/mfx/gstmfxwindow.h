@@ -29,9 +29,13 @@
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_MFX_WINDOW (gst_mfx_window_get_type())
+#define GST_TYPE_MFX_WINDOW (gst_mfx_window_get_type ())
 #define GST_MFX_WINDOW(obj) ((GstMfxWindow *)(obj))
-typedef struct _GstMfxWindow                GstMfxWindow;
+
+typedef struct _GstMfxWindow  GstMfxWindow;
+
+GType
+gst_mfx_window_get_type (void);
 
 GstMfxWindow *
 gst_mfx_window_ref (GstMfxWindow * window);

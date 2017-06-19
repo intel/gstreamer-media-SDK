@@ -22,7 +22,12 @@
 
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
-#include "gstmfxsurface_d3d11.h"
+
+#ifdef WITH_LIBVA_BACKEND
+# include "gstmfxsurface_vaapi.h"
+#else
+# include "gstmfxsurface_d3d11.h"
+#endif
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -74,14 +79,19 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
   GstMfxSurface *surface = NULL;
 
   for (i = 0; i < num_surfaces; i++) {
+#ifdef WITH_LIBVA_BACKEND
+    surface = gst_mfx_surface_vaapi_new_from_task(
+      g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL), pool->task);
+#else
     surface = gst_mfx_surface_d3d11_new_from_task(
       g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), pool->task);
-    if (!surface)
-      return;
 
     if (gst_mfx_task_has_type(pool->task,
         GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
       gst_mfx_surface_d3d11_set_rw_flags(surface, MFX_SURFACE_READ);
+#endif // WITH_LIBVA_BACKEND
+    if (!surface)
+      return;
 
     g_queue_push_tail(&pool->free_surfaces, surface);
   }
@@ -116,7 +126,7 @@ gst_mfx_surface_pool_finalize (GObject * object)
       (GFunc) gst_mfx_surface_unref, NULL);
   g_queue_clear (&pool->free_surfaces);
   g_mutex_clear (&pool->mutex);
-  
+
   gst_mfx_task_replace (&pool->task, NULL);
 }
 
@@ -138,7 +148,7 @@ gst_mfx_surface_pool_new (GstMfxSurfacePool * pool,
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new_with_task (GstMfxSurfacePool * pool, GstMfxTask * task)
-{ 
+{
   g_return_val_if_fail (pool != NULL, NULL);
   g_return_val_if_fail (task != NULL, NULL);
 

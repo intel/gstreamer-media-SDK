@@ -22,6 +22,10 @@
 #include "gstmfxpluginbase.h"
 #include "gstmfxsinkbin.h"
 
+#ifdef WITH_LIBVA_BACKEND
+# include <gst-libs/mfx/gstmfxdisplay.h>
+#endif
+
 #define GST_PLUGIN_NAME "mfxsinkbin"
 #define GST_PLUGIN_DESC "An MSDK-based bin with postprocessor and a sink"
 

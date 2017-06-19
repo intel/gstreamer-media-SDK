@@ -73,7 +73,7 @@ gst_mfx_window_ensure_size (GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_create (GstMfxWindow * window, guint width, guint height)
+gst_mfx_window_create (GstMfxWindow * window, GstMfxID id, guint width, guint height)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
 
@@ -106,7 +106,7 @@ gst_mfx_window_finalize (GObject * object)
   gst_mfx_context_replace (&priv->context, NULL);
 }
 
-void
+static void
 gst_mfx_window_class_init (GstMfxWindowClass * klass)
 {
   GObjectClass *const object_class = G_OBJECT_CLASS(klass);
@@ -131,9 +131,9 @@ gst_mfx_window_new_internal (GstMfxWindow *window, GstMfxContext * context,
   GST_MFX_WINDOW_GET_PRIVATE(window)->handle = id;
   GST_MFX_WINDOW_GET_PRIVATE(window)->use_foreign_window =
       id != GST_MFX_ID_INVALID;
-  GST_MFX_WINDOW_GET_PRIVATE(window)->context =
-    gst_mfx_context_ref(context);
-  if (!gst_mfx_window_create (window, width, height))
+  GST_MFX_WINDOW_GET_PRIVATE(window)->context = context ?
+    gst_mfx_context_ref(context) : NULL;
+  if (!gst_mfx_window_create (window, id, width, height))
     goto error;
   return window;
 

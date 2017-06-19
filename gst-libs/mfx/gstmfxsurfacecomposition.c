@@ -24,7 +24,12 @@
 
 #include "gstmfxsurfacecomposition.h"
 #include "gstmfxsurface.h"
-#include "gstmfxsurface_d3d11.h"
+
+#ifdef WITH_LIBVA_BACKEND
+# include "gstmfxsurface_vaapi.h"
+#else
+# include "gstmfxsurface_d3d11.h"
+#endif
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -82,9 +87,14 @@ create_subpicture (GstMfxSurfaceComposition * composition,
   if (gst_mfx_surface_has_video_memory (composition->base_surface)) {
     GstMfxContext *context =
         gst_mfx_surface_get_context (composition->base_surface);
+#ifdef WITH_LIBVA_BACKEND
+    subpicture->surface = gst_mfx_surface_vaapi_new (
+      g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL), context, &info);
+#else
     subpicture->surface = gst_mfx_surface_d3d11_new (
       g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), context, &info);
     gst_mfx_surface_d3d11_set_rw_flags(subpicture->surface, MFX_SURFACE_WRITE);
+#endif // WITH_LIBVA_BACKEND
     gst_mfx_context_unref (context);
   }
   else {

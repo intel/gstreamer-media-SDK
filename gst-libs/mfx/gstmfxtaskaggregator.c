@@ -96,6 +96,9 @@ gst_mfx_task_aggregator_set_device_context (GstMfxTaskAggregator * aggregator)
     aggregator->context =
       gst_mfx_context_new(g_object_new(GST_TYPE_MFX_CONTEXT, NULL),
         aggregator->parent_session);
+#ifdef WITH_LIBVA_BACKEND
+    gst_mfx_display_init_vaapi (gst_mfx_context_get_device(aggregator->context));
+#endif
   }
 }
 
@@ -115,7 +118,9 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
 
   //init_params.GPUCopy = MFX_GPUCOPY_ON;
   init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
+#if defined(_WIN32) || defined(_WIN64)
   init_params.Implementation |= MFX_IMPL_VIA_D3D11;
+#endif
   init_params.Version.Major = 1;
   init_params.Version.Minor = 17;
 

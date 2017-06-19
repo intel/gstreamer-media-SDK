@@ -42,9 +42,6 @@ GstMfxEncoder *
 gst_mfx_encoder_mpeg2_new (GstMfxEncoderMpeg2 *, GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped);
 
-void 
-gst_mfx_encoder_mpeg2_init (GstMfxEncoderMpeg2 * base_encoder);
-
 GPtrArray *
 gst_mfx_encoder_mpeg2_get_default_properties (void);
 

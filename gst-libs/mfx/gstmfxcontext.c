@@ -19,7 +19,11 @@
  */
 
 #include "gstmfxcontext.h"
-#include "d3d11/gstmfxdevice.h"
+#ifdef WITH_LIBVA_BACKEND
+# include "gstmfxdisplay.h"
+#else
+# include "d3d11/gstmfxdevice.h"
+#endif
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -33,8 +37,11 @@ struct _GstMfxContext
 {
   /*< private > */
   GstObject parent_instance;
-
+#ifdef WITH_LIBVA_BACKEND
+  GstMfxDisplay * device;
+#else
   GstMfxDevice * device;
+#endif
 };
 
 G_DEFINE_TYPE(GstMfxContext, gst_mfx_context, GST_TYPE_OBJECT);
@@ -43,8 +50,11 @@ static void
 gst_mfx_context_finalize (GObject * object)
 {
   GstMfxContext* context = GST_MFX_CONTEXT(object);
-  
+#ifdef WITH_LIBVA_BACKEND
+  gst_mfx_display_replace(&context->device, NULL);
+#else
   gst_mfx_device_replace(&context->device, NULL);
+#endif
 }
 
 static void
@@ -62,8 +72,13 @@ gst_mfx_context_init(GstMfxContext * context)
 GstMfxContext *
 gst_mfx_context_new(GstMfxContext * context, mfxSession session)
 {
+#ifdef WITH_LIBVA_BACKEND
+  context->device =
+      gst_mfx_display_new(g_object_new(GST_TYPE_MFX_DISPLAY, NULL));
+#else
   context->device =
       gst_mfx_device_new(g_object_new(GST_TYPE_MFX_DEVICE, NULL), session);
+#endif
 
   return context;
 }
@@ -92,7 +107,7 @@ gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
 	  GST_OBJECT(new_context));
 }
 
-GstMfxDevice*
+guintptr
 gst_mfx_context_get_device(GstMfxContext * context)
 {
   return context->device;

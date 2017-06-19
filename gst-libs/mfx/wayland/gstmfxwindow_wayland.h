@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2017
- *    Author: Ishmael Visayana Sameen <ishmael1985@gmail.com>
+ *  Copyright (C) 2012-2013 Intel Corporation
+ *    Author: Sreerenj Balachandran <sreerenj.balachandran@intel.com>
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -18,34 +19,24 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef GST_MFX_CONTEXT_H
-#define GST_MFX_CONTEXT_H
+#ifndef GST_MFX_WINDOW_WAYLAND_H
+#define GST_MFX_WINDOW_WAYLAND_H
 
-#include "sysdeps.h"
+#include "gstmfxdisplay.h"
+#include "gstmfxwindow.h"
+#include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_MFX_CONTEXT (gst_mfx_context_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxContext, gst_mfx_context, GST_MFX, CONTEXT, GstObject)
+#define GST_TYPE_MFX_WINDOW_WAYLAND (gst_mfx_window_wayland_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxWindowWayland, gst_mfx_window_wayland, GST_MFX, WINDOW_WAYLAND, GstMfxWindow)
 
-#define GST_MFX_CONTEXT(obj) ((GstMfxContext *) (obj))
+#define GST_MFX_WINDOW_WAYLAND(obj) ((GstMfxWindowWayland *)(obj))
 
-GstMfxContext *
-gst_mfx_context_new (GstMfxContext * context, mfxSession session);
-
-GstMfxContext *
-gst_mfx_context_ref (GstMfxContext * context);
-
-void
-gst_mfx_context_unref (GstMfxContext * context);
-
-void
-gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
-    GstMfxContext * new_context);
-
-guintptr
-gst_mfx_context_get_device(GstMfxContext * context);
+GstMfxWindow *
+gst_mfx_window_wayland_new (GstMfxWindowWayland * window,
+  GstMfxDisplay * display, guint width, guint height);
 
 G_END_DECLS
 
-#endif /* GST_MFX_CONTEXT_H */
+#endif /* GST_MFX_WINDOW_WAYLAND_H */

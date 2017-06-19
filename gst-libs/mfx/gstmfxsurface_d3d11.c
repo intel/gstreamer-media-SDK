@@ -19,6 +19,7 @@
 */
 
 #include "gstmfxsurface_d3d11.h"
+#include "d3d11/gstmfxdevice.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"

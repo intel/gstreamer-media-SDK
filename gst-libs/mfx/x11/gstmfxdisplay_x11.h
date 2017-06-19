@@ -1,4 +1,6 @@
 /*
+ *  Copyright (C) 2010-2011 Splitted-Desktop Systems
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@splitted-desktop.com>
  *  Copyright (C) 2012-2013 Intel Corporation
  *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
  *
@@ -18,39 +20,29 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef SYSDEPS_H
-#define SYSDEPS_H
+#ifndef GST_MFX_DISPLAY_X11_H
+#define GST_MFX_DISPLAY_X11_H
 
-#include "version.h"
+#include "gstmfxdisplay.h"
+#include "gstmfxdisplay_priv.h"
+#include <X11/Xlib.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+G_BEGIN_DECLS
 
-#ifdef WITH_LIBVA_BACKEND
-# include <unistd.h>
-# include <va/va.h>
-# include <drm.h>
-#else
-# if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
-# undef _WIN32_WINNT
-# define _WIN32_WINNT 0x0600
-# endif
-# define COBJMACROS
+#define GST_TYPE_MFX_DISPLAY_X11 (gst_mfx_display_x11_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxDisplayX11, gst_mfx_display_x11, GST_MFX, DISPLAY_X11, GstMfxDisplay)
 
-# include <initguid.h>
-# include <d3d11.h>
-# include <dxgi1_2.h>
-#endif
+#define GST_MFX_DISPLAY_X11_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_DISPLAY_X11, \
+  GstMfxDisplayX11Class))
 
-#include <gst/gst.h>
-#include <gst/video/video.h>
-#include <mfxvideo.h>
+GstMfxDisplay *
+gst_mfx_display_x11_new (GstMfxDisplayX11 * display, const gchar * display_name);
 
-/* Media SDK API version check  */
-#define	MSDK_CHECK_VERSION(major,minor)	\
-    (MFX_VERSION_MAJOR > major || \
-     (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR > minor) || \
-     (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR == minor))
+Display *
+gst_mfx_display_x11_get_display (GstMfxDisplay * display);
 
-#endif /* SYSDEPS_H */
+G_END_DECLS
+
+
+#endif /* GST_MFX_DISPLAY_X11_H */

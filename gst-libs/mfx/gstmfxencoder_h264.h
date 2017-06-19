@@ -64,9 +64,6 @@ gst_mfx_encoder_h264_new (GstMfxEncoderH264 * encoder, GstMfxTaskAggregator * ag
 GPtrArray *
 gst_mfx_encoder_h264_get_default_properties (void);
 
-void
-gst_mfx_encoder_h264_init(GstMfxEncoderH264 * encoder);
-
 gboolean
 gst_mfx_encoder_h264_set_max_profile (GstMfxEncoder * encoder, mfxU16 profile);
 

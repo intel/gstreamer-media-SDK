@@ -32,7 +32,10 @@ GST_DEBUG_CATEGORY(gst_debug_mfx);
 #undef gst_mfx_surface_unref
 #undef gst_mfx_surface_replace
 
-G_DEFINE_TYPE_WITH_CODE (GstMfxSurface, gst_mfx_surface, GST_TYPE_OBJECT, G_ADD_PRIVATE(GstMfxSurface));
+G_DEFINE_TYPE_WITH_CODE (GstMfxSurface,
+  gst_mfx_surface,
+  GST_TYPE_OBJECT,
+  G_ADD_PRIVATE(GstMfxSurface));
 
 static gboolean
 gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
@@ -327,7 +330,7 @@ gst_mfx_surface_copy(GstMfxSurface * surface)
 
   g_return_val_if_fail(surface != NULL, NULL);
 
-  copy = g_object_new(GST_TYPE_MFX_SURFACE, NULL); 
+  copy = g_object_new(GST_TYPE_MFX_SURFACE, NULL);
   if (!copy)
     return NULL;
   copy_priv = GST_MFX_SURFACE_GET_PRIVATE(copy);
@@ -456,7 +459,7 @@ GstMfxContext *
 gst_mfx_surface_get_context(GstMfxSurface * surface)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
-  
+
   return priv->context ? gst_mfx_context_ref(priv->context) : NULL;
 }
 

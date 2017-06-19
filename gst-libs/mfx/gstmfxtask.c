@@ -48,7 +48,11 @@ gst_mfx_task_get_memory_id (GstMfxTask * task)
   l = g_list_first (GST_MFX_TASK_GET_PRIVATE(task)->saved_responses);
   response_data = l->data;
 
-  return response_data->mids[response_data->num_used++];
+  #ifdef WITH_LIBVA_BACKEND
+    return &response_data->mem_ids[response_data->num_used++];
+  #else
+    return response_data->mids[response_data->num_used++];
+  #endif // WITH_LIBVA_BACKEND
 }
 
 guint
@@ -210,18 +214,22 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   priv->context = gst_mfx_task_aggregator_get_context(aggregator);
   priv->memtype_is_system = FALSE;
-
+#ifdef WITH_LIBVA_BACKEND
+  mfxHandleType handle_type = MFX_HANDLE_VA_DISPLAY;
+  device_handle =
+      GST_MFX_DISPLAY_VADISPLAY(gst_mfx_context_get_device(priv->context));
+#else
+  mfxHandleType handle_type = MFX_HANDLE_D3D11_DEVICE;
   device_handle =
       gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context));
-  sts = MFXVideoCORE_GetHandle(priv->session, MFX_HANDLE_D3D11_DEVICE,
-          &device_handle);
+#endif
+
+  sts = MFXVideoCORE_GetHandle(priv->session, handle_type, &device_handle);
   if (MFX_ERR_NONE != sts) {
-    sts = MFXVideoCORE_SetHandle(priv->session, MFX_HANDLE_D3D11_DEVICE,
-            device_handle);
+    sts = MFXVideoCORE_SetHandle(priv->session, handle_type, device_handle);
     if (MFX_ERR_NONE != sts)
       return FALSE;
   }
-
   gst_mfx_task_aggregator_add_task (aggregator, task);
   return TRUE;
 }
