@@ -146,16 +146,15 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
   XEvent e;
 
   if (sink->window) {
-    GstMfxDisplay *const display = GST_MFX_WINDOW_DISPLAY (sink->window);
     Display *const x11_dpy =
-        gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11 (display));
+        gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11 (sink->display));
     Window x11_win = GST_MFX_WINDOW_ID (sink->window);
 
     /* Track MousePointer interaction */
     for (;;) {
-      gst_mfx_display_lock (display);
+      gst_mfx_display_lock (sink->display);
       has_events = XCheckWindowEvent (x11_dpy, x11_win, PointerMotionMask, &e);
-      gst_mfx_display_unlock (display);
+      gst_mfx_display_unlock (sink->display);
       if (!has_events)
         break;
       switch (e.type) {
@@ -169,20 +168,20 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
       }
     }
     if (pointer_moved) {
-      gst_mfx_display_lock (display);
+      gst_mfx_display_lock (sink->display);
       gst_navigation_send_mouse_event (GST_NAVIGATION (sink),
           "mouse-move", 0, pointer_x, pointer_y);
-      gst_mfx_display_unlock (display);
+      gst_mfx_display_unlock (sink->display);
     }
     /* Track KeyPress, KeyRelease, ButtonPress, ButtonRelease */
     for (;;) {
       KeySym keysym;
       const char *key_str = NULL;
-      gst_mfx_display_lock (display);
+      gst_mfx_display_lock (sink->display);
       has_events = XCheckWindowEvent (x11_dpy, x11_win,
           KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask,
           &e);
-      gst_mfx_display_unlock (display);
+      gst_mfx_display_unlock (sink->display);
       if (!has_events)
         break;
       switch (e.type) {
@@ -197,14 +196,14 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
           break;
         case KeyPress:
         case KeyRelease:
-          gst_mfx_display_lock (display);
+          gst_mfx_display_lock (sink->display);
           keysym = x11_keycode_to_keysym (x11_dpy, e.xkey.keycode);
           if (keysym != NoSymbol) {
             key_str = XKeysymToString (keysym);
           } else {
             key_str = "unknown";
           }
-          gst_mfx_display_unlock (display);
+          gst_mfx_display_unlock (sink->display);
           gst_navigation_send_key_event (GST_NAVIGATION (sink),
               e.type == KeyPress ? "key-press" : "key-release", key_str);
           break;
@@ -215,12 +214,10 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
     /* Handle Expose + ConfigureNotify */
     /* Need to lock whole loop or we corrupt the XEvent queue: */
     for (;;) {
-      gst_mfx_display_lock (display);
+      gst_mfx_display_lock (sink->display);
       has_events = XCheckWindowEvent (x11_dpy, x11_win,
           StructureNotifyMask | ExposureMask, &e);
-      gst_mfx_display_unlock (display);
-      if (!has_events)
-        break;
+      gst_mfx_display_unlock (sink->display);
       switch (e.type) {
         case Expose:
         case ConfigureNotify:
@@ -229,6 +226,8 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
         default:
           break;
       }
+      if (!has_events)
+        break;
     }
   }
   return TRUE;
@@ -822,12 +821,8 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
 
-  if (!sink->foreign_window) {
+  if (!sink->foreign_window)
     gst_mfx_window_replace(&sink->window, NULL);
-#ifdef WITH_LIBVA_BACKEND
-    gst_mfx_display_replace(&sink->display, NULL);
-#endif  // WITH_LIBVA_BACKEND
-  }
 
   gst_mfx_composite_filter_replace (&sink->composite_filter, NULL);
   gst_mfx_context_replace(&sink->device_context, NULL);

@@ -170,7 +170,7 @@ init_decoder (GstMfxDecoder * decoder)
 		    g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), decoder->decode);
   if (!decoder->pool)
     return FALSE;
-  
+
   return TRUE;
 }
 
@@ -516,7 +516,7 @@ init_filter (GstMfxDecoder * decoder)
   mfxU32 output_fourcc =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
 
-  decoder->filter = gst_mfx_filter_new_with_task (g_object_new(GST_TYPE_MFX_FILTER, NULL), 
+  decoder->filter = gst_mfx_filter_new_with_task (g_object_new(GST_TYPE_MFX_FILTER, NULL),
 	  decoder->aggregator, decoder->decode, GST_MFX_TASK_VPP_IN,
     decoder->memtype_is_system, decoder->memtype_is_system);
   if (!decoder->filter) {
@@ -736,29 +736,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       g_usleep (100);
   } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
-  /*if (MFX_ERR_INCOMPATIBLE_VIDEO_PARAM == sts || decoder->recovery_mode) {
-    mfxVideoParam params = { 0 };
-    mfxBitstream bs = { 0 };
-
-    bs.Data = minfo.data;
-    bs.DataLength = bs.MaxLength = minfo.size;
-    params.mfx.CodecId = decoder->params.mfx.CodecId;
-
-    sts = MFXVideoDECODE_DecodeHeader(decoder->session, &bs, &params);
-    if (MFX_ERR_NONE == sts) {
-      if (!gst_mfx_decoder_reinit(decoder, &params.mfx.FrameInfo)) {
-        ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
-        goto end;
-      }
-      decoder->recovery_mode = FALSE;
-    }
-    else {
-      decoder->recovery_mode = TRUE;
-    }
-    ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
-    goto end;
-  }*/
-
   if (MFX_ERR_MORE_DATA == sts) {
     if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
       decoder->num_partial_frames++;
@@ -795,7 +772,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
       goto end;
     }
-    decoder->has_ready_frames = TRUE;
 
     if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
       do {
@@ -882,6 +858,7 @@ update:
       queue_output_frame (decoder, surface);
     }
 
+    decoder->has_ready_frames = TRUE;
     decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
       decoder->bs.DataOffset);
     decoder->bs.DataOffset = 0;

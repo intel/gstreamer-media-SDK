@@ -46,6 +46,8 @@ static void
 gst_mfx_task_aggregator_finalize (GObject * object)
 {
   GstMfxTaskAggregator* aggregator = GST_MFX_TASK_AGGREGATOR(object);
+
+  gst_mfx_context_unref(aggregator->context);
   MFXClose (aggregator->parent_session);
   g_list_free(aggregator->cache);
 }

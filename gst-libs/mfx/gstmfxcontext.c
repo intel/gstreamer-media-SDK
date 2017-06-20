@@ -19,11 +19,6 @@
  */
 
 #include "gstmfxcontext.h"
-#ifdef WITH_LIBVA_BACKEND
-# include "gstmfxdisplay.h"
-#else
-# include "d3d11/gstmfxdevice.h"
-#endif
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -107,8 +102,13 @@ gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
 	  GST_OBJECT(new_context));
 }
 
-guintptr
+#ifdef WITH_LIBVA_BACKEND
+GstMfxDisplay *
+#else
+GstMfxDevice *
+#endif // WITH_LIBVA_BACKEND
 gst_mfx_context_get_device(GstMfxContext * context)
 {
+  g_return_val_if_fail (context != NULL, NULL);
   return context->device;
 }
