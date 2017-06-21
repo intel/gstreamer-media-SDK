@@ -119,7 +119,7 @@ gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
 }
 
 #ifdef WITH_LIBVA_BACKEND
-#ifdef WITH_X11
+#ifdef USE_DRI3
 # include <x11/gstmfxdisplay_x11.h>
 # include <x11/gstmfxwindow_x11.h>
 
@@ -371,12 +371,12 @@ gst_mfxsink_backend_x11 (void)
   };
   return &GstMfxSinkBackendX11;
 }
-#endif // WITH_X11
+#endif // USE_X11
 
 /* ------------------------------------------------------------------------ */
 /* --- Wayland Backend                                                  --- */
 /* -------------------------------------------------------------------------*/
-#ifdef WITH_WAYLAND
+#ifdef USE_WAYLAND
 # include <wayland/gstmfxdisplay_wayland.h>
 # include <wayland/gstmfxwindow_wayland.h>
 
@@ -399,7 +399,7 @@ gst_mfxsink_backend_wayland (void)
   };
   return &GstMfxSinkBackendWayland;
 }
-#endif // WITH_WAYLAND
+#endif // USE_WAYLAND
 
 #else
 /* ------------------------------------------------------------------------ */
@@ -838,18 +838,16 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
   GstCaps *out_caps;
 #ifdef WITH_LIBVA_BACKEND
   if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
-#ifdef WITH_WAYLAND
+#ifdef USE_WAYLAND
     GstMfxDisplay *display = gst_mfx_display_wayland_new (
         g_object_new(GST_TYPE_MFX_DISPLAY_WAYLAND, NULL), sink->display_name);
     if (display) {
-# ifdef USE_WAYLAND
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_WAYLAND;
-# endif
       gst_mfx_display_replace (&sink->display, display);
       gst_mfx_display_unref (display);
     }
     else
-#endif  // WITH_WAYLAND
+#endif  // USE_WAYLAND
 #ifdef USE_DRI3
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_X11;
 #endif // USE_DRI3

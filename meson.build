@@ -20,9 +20,6 @@ gst_req = '>= @0@.@1@.0'.format(gst_version_major, gst_version_minor)
 
 api_version = '1.0'
 soversion = 0
-# maintaining compatibility with the previous libtool versioning
-# current = minor * 100 + micro
-# FIXME: should be able to convert string to int somehow so we can just do maths
 libversion = '@0@.@1@.0'.format(soversion, gst_version_minor.to_int() * 100 + gst_version_micro.to_int())
 
 plugins_install_dir = '@0@/gstreamer-1.0'.format(get_option('libdir'))
@@ -60,119 +57,136 @@ core_conf.set('GST_INSTALL_PLUGINS_HELPER', '/FIXME')
 core_conf.set('GST_DATADIR', '/FIXME')
 core_conf.set('GST_LICENSE', 'LGPL')
 
+gst_mfx_args = []
+gst_mfx_deps = []
+gst_mfx_sources = []
 
-gst_mfx_args = ['-DHAVE_CONFIG_H']
+# GStreamer base dependencies
+glib_deps = [dependency('glib-2.0'), dependency('gobject-2.0'), dependency('gio-2.0'), dependency('gmodule-2.0')]
+gst_mfx_deps += glib_deps
 
-if get_option('MFX_DECODER')
-  gst_mfx_args += ['-DMFX_DECODER']
-  if get_option('USE_HEVC_DECODER')
-    gst_mfx_args += ['-DUSE_HEVC_DECODER']
-  endif
-  if get_option('USE_VP8_DECODER')
-    gst_mfx_args += ['-DUSE_VP8_DECODER']
-  endif
-  if get_option('USE_VP9_DECODER')
-    gst_mfx_args += ['-DUSE_VP9_DECODER']
-  endif
+gst_req = '>= 1.6.0'
+
+gst_dep = dependency('gstreamer-1.0', version: gst_req,
+  fallback : ['gstreamer', 'gst_dep'])
+gstbase_dep = dependency('gstreamer-base-1.0', version : gst_req,
+  fallback : ['gstreamer', 'gstbase_dep'])
+gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req,
+  fallback : ['gst-plugins-base', 'gstvideo_dep'])
+gstallocators_dep = dependency('gstreamer-allocators-1.0', version: gst_req,
+  fallback : ['gst-plugins-base', 'gstallocators_dep'])
+gstcodecparsers_dep = dependency('gstreamer-codecparsers-1.0', version: gst_req,
+  fallback : ['gst-plugins-bad', 'gstcodecparsers_dep'], required: false)
+gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version: gst_req,
+  fallback : ['gst-plugins-base', 'gstpbutils_dep'], required: false)
+  
+gst_mfx_deps += [gst_dep, gstvideo_dep, gstallocators_dep]
+
+with_codecparsers = false
+if gstcodecparsers_dep.found()
+  gst_mfx_deps += [gstcodecparsers_dep]
+  with_codecparsers = true
 endif
 
-if get_option('MFX_ENCODER')
-  gst_mfx_args += ['-DMFX_ENCODER']
-  if get_option('MFX_H264_ENCODER')
-    gst_mfx_args += ['-DMFX_H264_ENCODER']
-  endif
-  if get_option('MFX_H265_ENCODER')
-    gst_mfx_args += ['-DMFX_H265_ENCODER']
-  endif
-  if get_option('MFX_MPEG2_ENCODER')
-    gst_mfx_args += ['-DMFX_MPEG2_ENCODER']
-  endif
-  if get_option('MFX_JPEG_ENCODER')
-    gst_mfx_args += ['-DMFX_JPEG_ENCODER']
-  endif
+with_pbutils = false
+if gstpbutils_dep.found()
+  gst_mfx_deps += [gstpbutils_dep]
+  with_pbutils = true
+endif
+
+if host_machine.system() == 'windows'
+  legacy_stdio_dep = cc.find_library('legacy_stdio_definitions')
+  d3d11_dep = cc.find_library('d3d11')
+  gst_mfx_deps += [legacy_stdio_dep, d3d11_dep]
+else
+  gst_mfx_args += ['-DWITH_LIBVA_BACKEND']
+  driver_deps = [dependency ('libva'), dependency ('libdrm'), dependency ('libdrm_intel'),
+    dependency ('libva-drm'), dependency('libudev')]
+  gst_mfx_deps += driver_deps
+  gst_mfx_deps += cc.find_library('stdc++')
+  gst_mfx_deps += cc.find_library('dl')
+endif
+
+python = find_program('python')
+mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", os.environ.get("MFX_HOME", "")))').stdout().strip()
+
+if mfx_home != ''
+  mfx_libdir = [mfx_home + '/lib/lin_x64', mfx_home + '/lib/x64']
+  mfx_incdir = include_directories(mfx_home + '/include')
+  mfx_lib = cc.find_library('mfx', dirs: mfx_libdir)
+  mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: [mfx_lib])
+  gst_mfx_deps += mfx_dep
+endif
+
+mfx_inc = include_directories(['.', 'gst/mfx', 'gst-libs/mfx', 'parsers', '@0@/include'.format(mfx_home)])
+
+mfx_decoder = get_option('MFX_DECODER')
+if mfx_decoder
+  gst_mfx_args += ['-DMFX_DECODER']
 endif
 
 if get_option('MFX_VPP')
   gst_mfx_args += ['-DMFX_VPP']
 endif
 
-if get_option('MFX_SINK')
-  gst_mfx_args += ['-DMFX_SINK']
-endif
-
-if get_option('MFX_SINK_BIN')
-  gst_mfx_args += ['-DMFX_SINK_BIN']
-endif
-
-if get_option('MFX_VC1_PARSER')
-  gst_mfx_args += ['-DMFX_VC1_PARSER']
-endif
-
-configinc = include_directories('.')
-libsinc = include_directories('gst-libs/mfx')
-
-vs_module_defs_dir = meson.current_source_dir() + '/win32/common/'
-
-
-# To use the subproject make subprojects directory
-# and put gstreamer meson git there (symlinking is fine)
-# Mandatory GST deps
-glib_deps = [dependency('glib-2.0', version : glib_req),
-     dependency('gobject-2.0', version : glib_req)]
-gst_dep = dependency('gstreamer-1.0', version : gst_req,
-  fallback : ['gstreamer', 'gst_dep'])
-gstbase_dep = dependency('gstreamer-base-1.0', version : gst_req,
-  fallback : ['gstreamer', 'gstbase_dep'])
-gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req,
-  fallback : ['gstreamer', 'gstvideo_dep'])
-gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version : gst_req,
-  fallback : ['gstreamer', 'gst_dep'])
+mfx_sink = false
+with_wayland = false
+with_x11 = false
+with_d3d11 = false
+if host_machine.system() == 'windows'
+  if get_option('USE_D3D11_RENDERER')
+	gst_mfx_args += ['-DMFX_SINK']
+	with_d3d11 = true
+	mfx_sink = true
+  endif
+else
+  if get_option ('USE_WAYLAND_RENDERER')
+    gst_mfx_args += ['-DUSE_WAYLAND']
+	mfx_sink = true
+	
+    wayland_client_dep = dependency('wayland-client', required: true)
+    if wayland_client_dep.found()
+      gst_mfx_deps += wayland_client_dep
+	  with_wayland = true
+    endif
+    wayland_cursor_dep = dependency('wayland-cursor', required: false)
+    if wayland_cursor_dep.found()
+	  gst_mfx_deps += wayland_cursor_dep
+    endif
+  endif
   
-if get_option('MFX_VC1_PARSER')
-  gstcodecparsers_dep = dependency('gstreamer-codecparsers-1.0', version : gst_req,
-    fallback : ['gstreamer', 'gst_dep'])
+  if get_option ('USE_DRI3_RENDERER')
+    gst_mfx_args += ['-DUSE_DRI3']
+	mfx_sink = true
+	
+    x11_dep = dependency('x11', required: true)
+    if x11_dep.found()
+	  gst_mfx_deps += [x11_dep]
+	  with_x11 = true
+    endif
+    x11_optional_deps = [
+      ['xcb-dri3', '-DHAVE_XCBDRI3'],
+      ['xcb-present', '-DHAVE_XCBPRESENT'],
+      ['xkb-common', '-DHAVE_XKBLIB'],
+      ['xrandr', '-DHAVE_XRANDR'],
+      ['xrender', '-DHAVE_XRENDER'],
+      ['x11-xcb', '-DHAVE_X11XCB'],
+    ]
+    foreach d: x11_optional_deps
+      dep = dependency(d.get(0), required: false)
+      if dep.found()
+        gst_mfx_deps += [dep]
+        gst_mfx_args += [d.get(1)]
+	  endif
+    endforeach
+  endif
+  
+  if mfx_sink
+    gst_mfx_args += ['-DMFX_SINK']
+  endif
 endif
 
-#TODO: check if needed: vs_module_defs_dir = meson.current_source_dir() + '/win32/common/'
-
-#if gst_dep.type_name() == 'internal'
-#    gst_proj = subproject('gstreamer')
-#
-#    if gst_proj.get_variable('disable_gst_debug')
-#        message('GStreamer debug system is disabled')
-#        add_project_arguments('-Wno-unused', language: 'c')
-#    else
-#        message('GStreamer debug system is enabled')
-#    endif
-#else
-#    # We can't check that in the case of subprojects as we won't
-#    # be able to build against an internal dependency (which is not built yet)
-#    if not cc.compiles('''
-##include <gst/gstconfig.h>
-##ifdef GST_DISABLE_GST_DEBUG
-##error "debugging disabled, make compiler fail"
-##endif''' , dependencies: gst_dep)
-#        message('GStreamer debug system is disabled')
-#        add_project_arguments('-Wno-unused', language: 'c')
-#    else
-#        message('GStreamer debug system is enabled')
-#    endif
-#endif
-
-mfx_home = get_option('MFX_HOME')
-if mfx_home == ''
-  python = find_program('python')		 
-  mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", ""))').stdout().strip()#todo check how to better get env var.
-endif
-
-if mfx_home != ''
-    mfx_libdir = [mfx_home + '/lib/x64']
-    mfx_incdir = include_directories(mfx_home + '/include')
-    mfx_lib = cc.find_library('mfx', dirs: mfx_libdir)
-    legacy_stdio_dep = cc.find_library('legacy_stdio_definitions') #needed for 2016 R2 and VS2015
-    d3d11_dep = cc.find_library('d3d11')
-    mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: [mfx_lib, d3d11_dep, legacy_stdio_dep])
-endif
+mfx_encoder = get_option('MFX_ENCODER')
 
 configure_file(input : 'version.h.in',
                output : 'version.h',
@@ -181,3 +195,12 @@ configure_file(input : 'version.h.in',
 subdir('gst-libs')
 subdir('parsers')
 subdir('gst')
+
+gstmfxtag = library('gstmfx',
+  gst_mfx_sources,
+  c_args : gst_mfx_args,
+  include_directories : mfx_inc,
+  dependencies : gst_mfx_deps,
+  install : true,
+  install_dir : plugins_install_dir,
+)

@@ -1,62 +1,77 @@
-gstmfx_sources = [
+sources = [
   'gstmfx.c',
   'gstmfxpluginbase.c',
   'gstmfxpluginutil.c',
   'gstmfxvideobufferpool.c',
   'gstmfxvideocontext.c',
   'gstmfxvideomemory.c',
-  'gstmfxvideometa.c',
+  'gstmfxvideometa.c'
 ]
 
-gstmfx_dependencies = [
-  gstmfx_dep,
-  glib_deps,
-  gstvideo_dep,
-  gstbase_dep,
-  gstpbutils_dep,
-]
-
-if get_option('MFX_DECODER')
-  gstmfx_sources += 'gstmfxdec.c'
-endif
-
-if get_option('MFX_ENCODER')
-  gstmfx_sources += 'gstmfxenc.c'
-  if get_option('MFX_H264_ENCODER')
-    gstmfx_sources += 'gstmfxenc_h264.c'
+if mfx_decoder
+  sources += ['gstmfxdec.c']
+  if get_option ('USE_HEVC_DECODER')
+    gst_mfx_args += '-DUSE_HEVC_DECODER'
   endif
-  if get_option('MFX_H265_ENCODER')
-    gstmfx_sources += 'gstmfxenc_h265.c'
+  if get_option ('USE_VP8_DECODER')
+    gst_mfx_args += '-DUSE_VP8_DECODER'
   endif
-  if get_option('MFX_MPEG2_ENCODER')
-    gstmfx_sources += 'gstmfxenc_mpeg2.c'
+  if get_option ('USE_VP9_DECODER')
+    gst_mfx_args += '-DUSE_VP9_DECODER'
   endif
-  if get_option('MFX_JPEG_ENCODER')
-    gstmfx_sources += 'gstmfxenc_jpeg.c'
+else
+  if get_option ('USE_HEVC_DECODER')
+    error('USE_HEVC_DECODER required but MFX_DECODER is false')
+  endif
+  if get_option ('USE_VP8_DECODER')
+    error('USE_VP8_DECODER required but MFX_DECODER is false')
+  endif
+  if get_option ('USE_VP9_DECODER')
+    error('USE_VP9_DECODER required but MFX_DECODER is false')
   endif
 endif
 
-if get_option('MFX_SINK')
-  gstmfx_sources += 'gstmfxsink.c'
+if mfx_sink
+  sources += 'gstmfxsink.c'
 endif
 
-if get_option('MFX_SINK_BIN')
-  gstmfx_sources += 'gstmfxsinkbin.c'
+mfx_vpp = get_option('MFX_VPP')
+if mfx_vpp
+  sources += 'gstmfxpostproc.c'
+  gst_mfx_args += '-DMFX_VPP'
 endif
 
-if get_option('MFX_VPP')
-  gstmfx_sources += 'gstmfxpostproc.c'
+if mfx_sink and mfx_vpp and with_pbutils
+  if get_option('MFX_SINK_BIN')
+    sources += 'gstmfxsinkbin.c'
+    gst_mfx_args += '-DMFX_SINK_BIN'
+  endif
+elif get_option('MFX_SINK_BIN')
+  error('MFX_SINK_BIN required but MFX_SINK or MFX_VPP is false')
 endif
 
-if get_option('MFX_VC1_PARSER')
-  gstmfx_dependencies += gstmfxvc1parse_dep
+if mfx_encoder
+  sources += 'gstmfxenc.c'
+  encoders = [
+    ['MFX_H264_ENCODER', '-DMFX_H264_ENCODER', 'gstmfxenc_h264.c'],
+    ['MFX_H265_ENCODER', '-DMFX_H265_ENCODER', 'gstmfxenc_h265.c'],
+    ['MFX_MPEG2_ENCODER', '-DMFX_MPEG2_ENCODER', 'gstmfxenc_mpeg2.c'],
+    ['MFX_JPEG_ENCODER', '-DMFX_JPEG_ENCODER', 'gstmfxenc_jpeg.c']
+  ]
+  foreach e: encoders
+    if get_option (e.get(0)) != 'no'
+	  gst_mfx_args += [e.get(1)]
+      sources += [e.get(2)]
+    endif
+  endforeach
+else
+  foreach opt: ['MFX_H264_ENCODER', 'MFX_H265_ENCODER', 'MFX_MPEG2_ENCODER', 'MFX_JPEG_ENCODER']
+    if get_option (opt) == 'yes'
+      error('@0@ required but MFX_ENCODER is false'.format(opt))
+    endif
+  endforeach
 endif
 
-gstmfx = library('gst_mfx',
-  gstmfx_sources,
-  c_args : gst_mfx_args,
-  include_directories: [configinc, libsinc],
-  dependencies : gstmfx_dependencies,
-  install : true,
-  install_dir : plugins_install_dir,
-)
+foreach s: sources
+  gst_mfx_sources += ['@0@/@1@'.format(meson.current_source_dir(), s)]
+endforeach
