@@ -94,6 +94,17 @@ if gstpbutils_dep.found()
   with_pbutils = true
 endif
 
+python = find_program('python')
+mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", os.environ.get("MFX_HOME", "")))').stdout().strip()
+
+if mfx_home != ''
+  mfx_libdir = [mfx_home + '/lib/lin_x64', mfx_home + '/lib/x64']
+  mfx_incdir = include_directories(mfx_home + '/include')
+  mfx_lib = cc.find_library('mfx', dirs: mfx_libdir)
+  mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: [mfx_lib])
+  gst_mfx_deps += mfx_dep
+endif
+
 if host_machine.system() == 'windows'
   legacy_stdio_dep = cc.find_library('legacy_stdio_definitions')
   d3d11_dep = cc.find_library('d3d11')
@@ -105,17 +116,6 @@ else
   gst_mfx_deps += driver_deps
   gst_mfx_deps += cc.find_library('stdc++')
   gst_mfx_deps += cc.find_library('dl')
-endif
-
-python = find_program('python')
-mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", os.environ.get("MFX_HOME", "")))').stdout().strip()
-
-if mfx_home != ''
-  mfx_libdir = [mfx_home + '/lib/lin_x64', mfx_home + '/lib/x64']
-  mfx_incdir = include_directories(mfx_home + '/include')
-  mfx_lib = cc.find_library('mfx', dirs: mfx_libdir)
-  mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: [mfx_lib])
-  gst_mfx_deps += mfx_dep
 endif
 
 mfx_inc = include_directories(['.', 'gst/mfx', 'gst-libs/mfx', 'parsers', '@0@/include'.format(mfx_home)])
