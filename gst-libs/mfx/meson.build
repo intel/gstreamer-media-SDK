@@ -76,8 +76,12 @@ if mfx_encoder
   endforeach
 endif
 
+gstmfx_libs_tag = static_library('gstmfx-@0@'.format(api_version),
+  sources,
+  c_args : gst_mfx_args,
+  include_directories : config_inc,
+  dependencies : gst_mfx_deps,
+)
 
-foreach s: sources
-  gst_mfx_sources += ['@0@/@1@'.format(meson.current_source_dir(), s)]
-endforeach
-  
+gstmfx_libs_dep = declare_dependency(link_with: gstmfx_libs_tag,
+  include_directories : [config_inc, include_directories('.')])
