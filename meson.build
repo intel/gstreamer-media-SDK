@@ -59,7 +59,6 @@ core_conf.set('GST_LICENSE', 'LGPL')
 
 gst_mfx_args = []
 gst_mfx_deps = []
-gst_mfx_sources = []
 
 # GStreamer base dependencies
 glib_deps = [dependency('glib-2.0'), dependency('gobject-2.0'), dependency('gio-2.0'), dependency('gmodule-2.0')]
@@ -111,6 +110,7 @@ if host_machine.system() == 'windows'
   gst_mfx_deps += [legacy_stdio_dep, d3d11_dep]
 else
   gst_mfx_args += ['-DWITH_LIBVA_BACKEND']
+  gst_mfx_args += ['-std=gnu99', '-fPIC']
   driver_deps = [dependency ('libva'), dependency ('libdrm'), dependency ('libdrm_intel'),
     dependency ('libva-drm'), dependency('libudev')]
   gst_mfx_deps += driver_deps
@@ -135,14 +135,14 @@ with_x11 = false
 with_d3d11 = false
 if host_machine.system() == 'windows'
   if get_option('USE_D3D11_RENDERER')
-	gst_mfx_args += ['-DMFX_SINK']
-	with_d3d11 = true
-	mfx_sink = true
+    gst_mfx_args += ['-DMFX_SINK']
+    with_d3d11 = true
+    mfx_sink = true
   endif
 else
   if get_option ('USE_WAYLAND_RENDERER')
     gst_mfx_args += ['-DUSE_WAYLAND']
-	mfx_sink = true
+    mfx_sink = true
 	
     wayland_client_dep = dependency('wayland-client', required: true)
     if wayland_client_dep.found()
@@ -157,12 +157,12 @@ else
   
   if get_option ('USE_DRI3_RENDERER')
     gst_mfx_args += ['-DUSE_DRI3']
-	mfx_sink = true
+    mfx_sink = true
 	
     x11_dep = dependency('x11', required: true)
     if x11_dep.found()
-	  gst_mfx_deps += [x11_dep]
-	  with_x11 = true
+      gst_mfx_deps += [x11_dep]
+      with_x11 = true
     endif
     x11_optional_deps = [
       ['xcb-dri3', '-DHAVE_XCBDRI3'],
@@ -177,7 +177,7 @@ else
       if dep.found()
         gst_mfx_deps += [dep]
         gst_mfx_args += [d.get(1)]
-	  endif
+      endif
     endforeach
   endif
   
