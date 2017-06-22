@@ -41,7 +41,7 @@
 	((GstMfxWindowWayland *)(obj))
 
 #define GST_MFX_WINDOW_WAYLAND_GET_PRIVATE(window) \
-  (GST_MFX_WINDOW_WAYLAND_CAST (window)->priv)
+  (&GST_MFX_WINDOW_WAYLAND_CAST (window)->priv)
 
 
 typedef struct _GstMfxWindowWaylandPrivate GstMfxWindowWaylandPrivate;
@@ -75,7 +75,7 @@ struct _GstMfxWindowWayland
   /*< private > */
   GstMfxWindow parent_instance;
 
-  GstMfxWindowWaylandPrivate *priv;
+  GstMfxWindowWaylandPrivate priv;
 };
 
 G_DEFINE_TYPE(GstMfxWindowWayland, gst_mfx_window_wayland, GST_TYPE_MFX_WINDOW);
