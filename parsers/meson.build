@@ -10,6 +10,7 @@ if get_option ('MFX_VC1_PARSER')
     include_directories: include_directories('.'),
     version : libversion,
     dependencies : [glib_deps, gst_dep, gstbase_dep, mfx_dep, gstvideo_dep, gstcodecparsers_dep, gstpbutils_dep],
+    pic : true
   )
 
   gstmfxvc1parse_dep = declare_dependency(link_with: gstmfxvc1parse,

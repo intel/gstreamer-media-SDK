@@ -81,6 +81,7 @@ gstmfx_libs_tag = static_library('gstmfx-@0@'.format(api_version),
   c_args : gst_mfx_args,
   include_directories : config_inc,
   dependencies : gst_mfx_deps,
+  pic : true
 )
 
 gstmfx_libs_dep = declare_dependency(link_with: gstmfx_libs_tag,

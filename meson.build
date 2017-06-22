@@ -109,7 +109,6 @@ if host_machine.system() == 'windows'
   d3d11_dep = cc.find_library('d3d11')
   gst_mfx_deps += [legacy_stdio_dep, d3d11_dep]
 else
-  gst_mfx_args += ['-std=gnu99', '-fPIC']
   driver_deps = [dependency ('libva'), dependency ('libdrm'), dependency ('libdrm_intel'),
     dependency ('libva-drm'), dependency('libudev')]
   gst_mfx_deps += driver_deps
