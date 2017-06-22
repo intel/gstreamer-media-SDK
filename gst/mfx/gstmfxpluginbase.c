@@ -29,6 +29,15 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
 
+
+#if defined(WITH_LIBVA_BACKEND) && defined(HAVE_GST_GL_LIBS)
+#if GST_CHECK_VERSION(1,11,1)
+# include <gst/gl/gstglcontext.h>
+#else
+# include <gst/gl/egl/gstglcontext_egl.h>
+#endif
+#endif
+
 /* Default debug category is from the subclass */
 #define GST_CAT_DEFAULT (plugin->debug_category)
 
@@ -135,6 +144,65 @@ gst_mfx_plugin_base_ensure_aggregator (GstMfxPluginBase * plugin)
   return gst_mfx_ensure_aggregator (GST_ELEMENT (plugin));
 }
 
+#ifdef WITH_LIBVA_BACKEND
+/* Checks whether the supplied pad peer element supports DMABUF sharing */
+/* XXX: this is a workaround to the absence of any proposer way to
+specify DMABUF memory capsfeatures or bufferpool option to downstream */
+static gboolean
+has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
+{
+  GstPad *other_pad = NULL;
+  GstElement *element = NULL;
+  gchar *element_name = NULL;
+  gboolean is_dmabuf_capable = FALSE;
+  gint v;
+
+  gst_object_ref (pad);
+
+  for (;;) {
+    other_pad = gst_pad_get_peer (pad);
+    gst_object_unref (pad);
+    if (!other_pad)
+      break;
+
+    element = gst_pad_get_parent_element (other_pad);
+    gst_object_unref (other_pad);
+    if (!element)
+      break;
+
+    element_name = gst_element_get_name (element);
+    if (!element_name)
+      break;
+
+    if (strstr (element_name, "v4l2src")
+        || strstr (element_name, "camerasrc")) {
+      g_object_get (element, "io-mode", &v, NULL);
+      if (strncmp (element_name, "camerasrc", 9) == 0)
+        is_dmabuf_capable = v == 3;
+      else
+        is_dmabuf_capable = v == 5;     /* "dmabuf-import" enum value */
+      break;
+    } else if (GST_IS_BASE_TRANSFORM (element)) {
+      if (sscanf (element_name, "capsfilter%d", &v) != 1)
+        break;
+
+      pad = gst_element_get_static_pad (element, "sink");
+      if (!pad)
+        break;
+    } else
+      break;
+
+    g_free (element_name);
+    element_name = NULL;
+    g_clear_object (&element);
+  }
+
+  g_free (element_name);
+  g_clear_object (&element);
+  return is_dmabuf_capable;
+}
+#endif // WITH_LIBVA_BACKEND
+
 /**
  * ensure_sinkpad_buffer_pool:
  * @plugin: a #GstMfxPluginBase
@@ -154,6 +222,12 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   GstVideoInfo vi;
   gboolean need_pool;
 
+#ifdef WITH_LIBVA_BACKEND
+  if (!plugin->sinkpad_buffer_pool)
+    plugin->sinkpad_has_dmabuf =
+        has_dmabuf_capable_peer (plugin, plugin->sinkpad);
+#endif // WITH_LIBVA_BACKEND
+
   plugin->sinkpad_caps_is_raw = !plugin->sinkpad_has_dmabuf &&
       !gst_caps_has_mfx_surface (caps);
 
@@ -171,8 +245,8 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
     plugin->sinkpad_buffer_size = 0;
   }
 
-  pool =
-      gst_mfx_video_buffer_pool_new (plugin->sinkpad_caps_is_raw);
+  pool = gst_mfx_video_buffer_pool_new (plugin->aggregator,
+            plugin->sinkpad_caps_is_raw);
   if (!pool)
     goto error_create_pool;
 
@@ -268,6 +342,17 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
       return FALSE;
     gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
         plugin->sinkpad_buffer_size, 0, 0);
+#ifdef WITH_LIBVA_BACKEND
+    if (plugin->sinkpad_has_dmabuf) {
+      GstStructure *const config =
+          gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
+
+      gst_buffer_pool_config_add_option (config,
+          GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
+      if (!gst_buffer_pool_set_config (plugin->sinkpad_buffer_pool, config))
+        goto error_pool_config;
+    }
+#endif // WITH_LIBVA_BACKEND
   }
 
   gst_query_add_allocation_meta (query, GST_MFX_VIDEO_META_API_TYPE, NULL);
@@ -335,7 +420,39 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   has_video_meta = gst_query_find_allocation_meta (query,
       GST_VIDEO_META_API_TYPE, NULL);
 
-  plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps);
+#if defined(WITH_LIBVA_BACKEND) && defined(HAVE_GST_GL_LIBS)
+#if GST_CHECK_VERSION(1,8,0)
+  if (gst_query_find_allocation_meta(query,
+      GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
+    gst_query_parse_nth_allocation_meta (query, idx, &params);
+    if (params) {
+      GstObject *gl_context;
+#if GST_CHECK_VERSION(1,11,1)
+      if (gst_structure_get (params, "gst.gl.GstGLContext", GST_TYPE_GL_CONTEXT,
+          &gl_context, NULL) && gl_context) {
+        plugin->srcpad_has_dmabuf =
+            !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
+            gst_gl_context_check_feature (gl_context, "EGL_EXT_image_dma_buf_import");
+        gst_object_unref (gl_context);
+      }
+#else
+      if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
+          &gl_context, NULL) && gl_context) {
+        plugin->srcpad_has_dmabuf =
+            (GST_IS_GL_CONTEXT_EGL (gl_context) &&
+            !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
+            gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
+              GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
+        gst_object_unref (gl_context);
+      }
+#endif
+    }
+  }
+#endif
+#endif // WITH_LIBVA_BACKEND
+
+  if (!plugin->srcpad_has_dmabuf)
+    plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     goto error_ensure_aggregator;
@@ -360,8 +477,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
         "Pool not configured with GstMfxVideoMeta option");
     if (pool)
       gst_object_unref (pool);
-    pool =
-        gst_mfx_video_buffer_pool_new (plugin->srcpad_caps_is_raw);
+    pool = gst_mfx_video_buffer_pool_new (plugin->aggregator,
+                plugin->srcpad_caps_is_raw);
     if (!pool)
       goto error_create_pool;
 
@@ -530,3 +647,73 @@ error_copy_buffer:
     return GST_FLOW_NOT_SUPPORTED;
   }
 }
+
+#ifdef WITH_LIBVA_BACKEND
+#if GST_CHECK_VERSION(1,8,0)
+gboolean
+gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
+    GstBuffer * outbuf)
+{
+  GstMfxVideoMeta *vmeta;
+  GstVideoMeta *meta = gst_buffer_get_video_meta (outbuf);
+  GstMfxSurface *surface;
+  GstMfxPrimeBufferProxy *dmabuf_proxy;
+  GstMemory *mem;
+  VaapiImage *image;
+  GstBuffer *buf;
+  guint i;
+
+  g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf), FALSE);
+
+  if (!plugin->srcpad_has_dmabuf)
+    return FALSE;
+
+  vmeta = gst_buffer_get_mfx_video_meta (outbuf);
+  if (!vmeta)
+    return FALSE;
+  surface = gst_mfx_video_meta_get_surface (vmeta);
+  if (!surface || !gst_mfx_surface_has_video_memory(surface))
+    return FALSE;
+
+  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (
+    g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL), surface);
+  if (!dmabuf_proxy)
+    return FALSE;
+
+  if (!plugin->dmabuf_allocator)
+    plugin->dmabuf_allocator = gst_dmabuf_allocator_new ();
+
+  mem = gst_dmabuf_allocator_alloc (plugin->dmabuf_allocator,
+      gst_mfx_prime_buffer_proxy_get_handle (dmabuf_proxy),
+      gst_mfx_prime_buffer_proxy_get_size (dmabuf_proxy));
+  if (!mem)
+    goto error_dmabuf_handle;
+
+  gst_mini_object_set_qdata (GST_MINI_OBJECT_CAST (mem),
+      g_quark_from_static_string ("GstMfxPrimeBufferProxy"), dmabuf_proxy,
+      (GDestroyNotify) gst_mfx_prime_buffer_proxy_unref);
+
+  buf = gst_buffer_copy(outbuf);
+  gst_buffer_prepend_memory (buf, gst_buffer_get_memory (outbuf, 0));
+  gst_buffer_add_parent_buffer_meta (outbuf, buf);
+  gst_buffer_replace_memory (outbuf, 0, mem);
+
+  gst_buffer_unref (buf);
+
+  image = gst_mfx_prime_buffer_proxy_get_vaapi_image (dmabuf_proxy);
+  for (i = 0; i < vaapi_image_get_plane_count (image); i++) {
+    meta->offset[i] = vaapi_image_get_offset (image, i);
+    meta->stride[i] = vaapi_image_get_pitch (image, i);
+  }
+
+  vaapi_image_unref(image);
+  return TRUE;
+  /* ERRORS */
+error_dmabuf_handle:
+  {
+    gst_mfx_prime_buffer_proxy_unref (dmabuf_proxy);
+    return FALSE;
+  }
+}
+#endif
+#endif // WITH_LIBVA_BACKEND

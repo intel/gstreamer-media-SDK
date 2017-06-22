@@ -76,6 +76,8 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
     attrib.value.type = VAGenericValueTypeInteger;
     attrib.value.value.i = fourcc;
 
+    vaapi_surface->display = gst_mfx_context_get_device(priv->context);
+
     GST_MFX_DISPLAY_LOCK(vaapi_surface->display);
     sts = vaCreateSurfaces(GST_MFX_DISPLAY_VADISPLAY(vaapi_surface->display),
       gst_mfx_video_format_to_va_format(frame_info->FourCC),

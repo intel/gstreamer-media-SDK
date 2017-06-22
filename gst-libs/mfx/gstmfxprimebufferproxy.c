@@ -45,7 +45,9 @@ struct _GstMfxPrimeBufferProxy
   guint data_size;
 };
 
-G_DEFINE_TYPE(GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy, GST_TYPE_OBJECT);
+G_DEFINE_TYPE(GstMfxPrimeBufferProxy,
+  gst_mfx_prime_buffer_proxy,
+  GST_TYPE_OBJECT);
 
 typedef VAStatus (*vaExtGetSurfaceHandle) (VADisplay dpy,
   VASurfaceID * surface, int *prime_fd);

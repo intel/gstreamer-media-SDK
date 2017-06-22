@@ -608,10 +608,11 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
 {
   GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
   GstMfxVideoMeta *inbuf_meta;
-  GstMfxSurface *surface;
+  GstMfxSurface *surface = NULL;
 
   inbuf_meta = gst_buffer_get_mfx_video_meta(buf);
-  surface = gst_mfx_video_meta_get_surface(inbuf_meta);
+  if (inbuf_meta)
+    surface = gst_mfx_video_meta_get_surface(inbuf_meta);
 
   if (surface
       && (vpp->deinterlace_mode != GST_MFX_DEINTERLACE_MODE_DISABLED)
@@ -741,6 +742,12 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     }
   } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status
            && GST_FLOW_OK == ret);
+
+#ifdef WITH_LIBVA_BACKEND
+#if GST_CHECK_VERSION(1,8,0)
+  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp), outbuf);
+#endif
+#endif
 
   gst_buffer_unref (buf);
   return ret;

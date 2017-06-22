@@ -443,7 +443,7 @@ gst_mfx_video_allocator_init (GstMfxVideoAllocator * allocator)
 }
 
 GstAllocator *
-gst_mfx_video_allocator_new (
+gst_mfx_video_allocator_new (GstMfxContext * context,
     const GstVideoInfo * vip, gboolean mapped)
 {
   GstMfxVideoAllocator *allocator;
@@ -457,8 +457,8 @@ gst_mfx_video_allocator_new (
   allocator->image_info = *vip;
 
   allocator->surface_pool = gst_mfx_surface_pool_new (
-	  g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL),
-      &allocator->image_info, mapped);
+	    g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL),
+      context, &allocator->image_info, mapped);
   if (!allocator->surface_pool)
     goto error_create_surface_pool;
 
@@ -471,3 +471,89 @@ error_create_surface_pool:
     return NULL;
   }
 }
+
+/* ------------------------------------------------------------------------ */
+/* --- GstMfxDmaBufMemory                                             --- */
+/* ------------------------------------------------------------------------ */
+
+#define GST_MFX_PRIME_BUFFER_PROXY_QUARK gst_mfx_prime_buffer_proxy_quark_get ()
+static GQuark
+gst_mfx_prime_buffer_proxy_quark_get (void)
+{
+  static gsize g_quark;
+
+  if (g_once_init_enter (&g_quark)) {
+    gsize quark = (gsize) g_quark_from_static_string ("GstMfxPrimeBufferProxy");
+    g_once_init_leave (&g_quark, quark);
+  }
+  return g_quark;
+}
+
+#ifdef WITH_LIBVA_BACKEND
+GstMemory *
+gst_mfx_dmabuf_memory_new (GstAllocator * allocator, GstMfxContext * context,
+    const GstVideoInfo * vip, GstMfxVideoMeta * meta)
+{
+  GstMemory *mem;
+  GstMfxSurface *surface;
+  GstMfxPrimeBufferProxy *dmabuf_surface;
+  gint dmabuf_fd;
+
+  g_return_val_if_fail (allocator != NULL, NULL);
+  g_return_val_if_fail (meta != NULL, NULL);
+
+  surface = gst_mfx_surface_vaapi_new (
+    g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL), context, vip);
+  if (!surface)
+    goto error_create_surface;
+
+  dmabuf_surface = gst_mfx_prime_buffer_proxy_new_from_surface (
+    g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL), surface);
+  if (!dmabuf_surface)
+    goto error_create_dmabuf_surface;
+
+  gst_mfx_video_meta_set_surface (meta, surface);
+  gst_mfx_surface_unref (surface);
+
+  dmabuf_fd = gst_mfx_prime_buffer_proxy_get_handle (dmabuf_surface);
+  if (dmabuf_fd < 0 || (dmabuf_fd = dup (dmabuf_fd)) < 0)
+    goto error_create_dmabuf_handle;
+
+  mem = gst_dmabuf_allocator_alloc (allocator, dmabuf_fd,
+      gst_mfx_prime_buffer_proxy_get_size (dmabuf_surface));
+  if (!mem)
+    goto error_create_dmabuf_memory;
+
+  gst_mini_object_set_qdata (GST_MINI_OBJECT_CAST (mem),
+      GST_MFX_PRIME_BUFFER_PROXY_QUARK, dmabuf_surface,
+      (GDestroyNotify) gst_mfx_prime_buffer_proxy_unref);
+
+  return mem;
+  /* ERRORS */
+error_create_surface:
+  {
+    GST_ERROR ("failed to create VA surface (format:%s size:%ux%u)",
+        gst_video_format_to_string (GST_VIDEO_INFO_FORMAT (vip)),
+        GST_VIDEO_INFO_WIDTH (vip), GST_VIDEO_INFO_HEIGHT (vip));
+    return NULL;
+  }
+error_create_dmabuf_surface:
+  {
+    GST_ERROR ("failed to export MFX surface to DMABUF");
+    gst_mfx_surface_unref (surface);
+    return NULL;
+  }
+error_create_dmabuf_handle:
+  {
+    GST_ERROR ("failed to duplicate DMABUF handle");
+    gst_mfx_prime_buffer_proxy_unref (dmabuf_surface);
+    return NULL;
+  }
+error_create_dmabuf_memory:
+  {
+    GST_ERROR ("failed to create DMABUF memory");
+    gst_mfx_prime_buffer_proxy_unref (dmabuf_surface);
+    return NULL;
+  }
+}
+#endif

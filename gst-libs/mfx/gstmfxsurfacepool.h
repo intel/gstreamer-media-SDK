@@ -34,7 +34,7 @@ G_DECLARE_FINAL_TYPE(GstMfxSurfacePool, gst_mfx_surface_pool, GST_MFX, SURFACE_P
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new (GstMfxSurfacePool * pool,
-  const GstVideoInfo * info,
+  GstMfxContext * context, const GstVideoInfo * info,
   gboolean memtype_is_system);
 
 GstMfxSurfacePool *

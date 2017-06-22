@@ -34,6 +34,11 @@
 #include <gst-libs/mfx/gstmfxsurface.h>
 #include <gst-libs/mfx/gstmfxsurfacepool.h>
 
+#ifdef WITH_LIBVA_BACKEND
+# include <gst-libs/mfx/gstmfxsurface_vaapi.h>
+# include <gst-libs/mfx/gstmfxprimebufferproxy.h>
+#endif
+
 G_BEGIN_DECLS
 
 typedef struct _GstMfxVideoMemory           GstMfxVideoMemory;
@@ -155,8 +160,18 @@ GType
 gst_mfx_video_allocator_get_type(void);
 
 GstAllocator *
-gst_mfx_video_allocator_new(
+gst_mfx_video_allocator_new(GstMfxContext * context,
     const GstVideoInfo * vip, gboolean mapped);
+
+#ifdef WITH_LIBVA_BACKEND
+/* ------------------------------------------------------------------------ */
+/* --- GstMfxDmaBufMemory                                               --- */
+/* ------------------------------------------------------------------------ */
+
+GstMemory *
+gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxContext * context,
+    const GstVideoInfo *vip, GstMfxVideoMeta * meta);
+#endif
 
 G_END_DECLS
 

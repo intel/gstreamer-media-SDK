@@ -37,6 +37,7 @@ struct _GstMfxSurfacePool
   /*< private > */
   GstObject parent_instance;
 
+  GstMfxContext *context;
   GstMfxTask *task;
   GstVideoInfo info;
   gboolean memtype_is_system;
@@ -128,16 +129,18 @@ gst_mfx_surface_pool_finalize (GObject * object)
   g_mutex_clear (&pool->mutex);
 
   gst_mfx_task_replace (&pool->task, NULL);
+  gst_mfx_context_replace (&pool->context, NULL);
 }
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new (GstMfxSurfacePool * pool,
-  const GstVideoInfo * info,
+  GstMfxContext * context, const GstVideoInfo * info,
 	gboolean memtype_is_system)
 {
   g_return_val_if_fail(pool != NULL, NULL);
   g_return_val_if_fail(info != NULL, NULL);
 
+  pool->context = context ? gst_mfx_context_ref(context) : NULL;
   pool->memtype_is_system = memtype_is_system;
   pool->info = *info;
 
@@ -225,9 +228,18 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
         g_object_new(GST_TYPE_MFX_SURFACE, NULL), pool->task);
     }
     else {
-      surface =
-          gst_mfx_surface_new(g_object_new(GST_TYPE_MFX_SURFACE, NULL),
-            &pool->info);
+      if (!pool->memtype_is_system)
+#ifdef WITH_LIBVA_BACKEND
+        surface = gst_mfx_surface_vaapi_new (
+            g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL), pool->context, &pool->info);
+#else
+        surface = gst_mfx_surface_d3d11_new (
+            g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), pool->context, &pool->info);
+#endif
+      else
+        surface =
+            gst_mfx_surface_new(g_object_new(GST_TYPE_MFX_SURFACE, NULL),
+              &pool->info);
     }
 
     g_mutex_lock (&pool->mutex);

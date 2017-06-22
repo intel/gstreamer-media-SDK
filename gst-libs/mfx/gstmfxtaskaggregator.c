@@ -47,7 +47,7 @@ gst_mfx_task_aggregator_finalize (GObject * object)
 {
   GstMfxTaskAggregator* aggregator = GST_MFX_TASK_AGGREGATOR(object);
 
-  gst_mfx_context_unref(aggregator->context);
+  gst_mfx_context_replace(&aggregator->context, NULL);
   MFXClose (aggregator->parent_session);
   g_list_free(aggregator->cache);
 }
@@ -86,7 +86,7 @@ gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
 GstMfxContext *
 gst_mfx_task_aggregator_get_context (GstMfxTaskAggregator * aggregator)
 {
-  g_return_val_if_fail(aggregator != NULL, 0);
+  g_return_val_if_fail(aggregator != NULL, NULL);
 
   return aggregator->context ? gst_mfx_context_ref (aggregator->context) : NULL;
 }
