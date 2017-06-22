@@ -118,7 +118,7 @@ else
   gst_mfx_deps += cc.find_library('dl')
 endif
 
-mfx_inc = include_directories(['.', 'gst/mfx', 'gst-libs/mfx', 'parsers', '@0@/include'.format(mfx_home)])
+config_inc = include_directories('.')
 
 mfx_decoder = get_option('MFX_DECODER')
 if mfx_decoder
@@ -195,12 +195,3 @@ configure_file(input : 'version.h.in',
 subdir('gst-libs')
 subdir('parsers')
 subdir('gst')
-
-gstmfxtag = library('gstmfx',
-  gst_mfx_sources,
-  c_args : gst_mfx_args,
-  include_directories : mfx_inc,
-  dependencies : gst_mfx_deps,
-  install : true,
-  install_dir : plugins_install_dir,
-)

@@ -72,6 +72,11 @@ else
   endforeach
 endif
 
-foreach s: sources
-  gst_mfx_sources += ['@0@/@1@'.format(meson.current_source_dir(), s)]
-endforeach
+gstmfxtag = library('gstmfx',
+  sources,
+  c_args : gst_mfx_args,
+  include_directories : include_directories('.'),
+  dependencies : [gst_mfx_deps, gstmfx_libs_dep],
+  install : true,
+  install_dir : plugins_install_dir,
+)
