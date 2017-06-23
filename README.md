@@ -20,9 +20,9 @@ Features
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
  - Support for zero-copy rendering with glimagesink using EGL
+ - Support Direct3D 11 zero-copy rendering on Windows
  - Support rendering using Wayland renderer
  - Support rendering using X11 renderer with DRI3 backend
- - Support X11 / Wayland rendering using EGL renderer
  - Support VPP acceleration of dynamic procamp control during video playback
  - Support for subtitles (text overlay) via MFX VPP surface composition
  - Support all Media SDK postprocessing capabilities as exposed by the MSDK API
@@ -34,8 +34,8 @@ Requirements
 
 **Software requirements**
 
-  * Media Server Studio 2016 Community / Professional Edition (Haswell / Broadwell)  
-    Media Server Studio 2017 Community / Professional Edition (Broadwell / Skylake)  
+  * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows
+    Media Server Studio 2017 R2 Community / Professional Edition (Haswell / Broadwell / Skylake)  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake)
   * GStreamer 1.6.x (tested up to GStreamer 1.10.x)
   * gst-plugins-* 1.6.x (tested up to GStreamer 1.10.x)
@@ -45,7 +45,7 @@ Requirements
   * Renderers:  
     Wayland (>=1.7)  
     X11 (DRI 3)  
-    EGL
+    Direct3D 11 (Windows 8/8.1/10)
 
 **Hardware requirements**
 
@@ -56,6 +56,7 @@ Requirements
 Compiling
 ---------
 GStreamer-MSDK uses the Meson build tool to build the plugins.
+You can install the latest meson packages using the pip installer program generally bundled with recent Python 3 installer packages.
 On Windows, open VS x64 native tools command prompt, and add gstreamer pkgconfig path to PKG_CONFIG_PATH if not already done:
 
 	set PKG_CONFIG_PATH=%GSTREAMER_1_0_ROOT_X86_64%lib\pkgconfig
@@ -96,11 +97,6 @@ Usage
 -----
 Please refer to README.USAGE for examples on how to accomplish various
 video-related tasks with the GStreamer-MSDK plugins.
-
-
-In-progress
-----
- - Microsoft&reg; Windows 10 support
 
 
 License
