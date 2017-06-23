@@ -167,7 +167,8 @@ gst_mfx_window_d3d11_hide (GstMfxWindow * window)
   return TRUE;
 }
 
-LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK
+WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   GstMfxWindow* window = (GstMfxWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
@@ -175,6 +176,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
     switch (message) {
     case WM_DESTROY:
       gst_mfx_window_d3d11_destroy(window);
+      PostQuitMessage(0);
       break;
     case WM_SIZE:
       gst_mfx_window_d3d11_resize(window);
@@ -391,16 +393,21 @@ d3d11_create_window_internal (GstMfxWindow * window)
   DWORD exstyle, style;
   int screenwidth;
   int screenheight;
+  gchar *wnd_classname =
+      g_strdup_printf("GstMfxWindowD3D11_%u", GetCurrentThreadId());
 
-  WNDCLASS d3d11_window = { 0 };
+  priv->d3d11_window.lpfnWndProc = (WNDPROC)WindowProc;
+  priv->d3d11_window.hInstance = GetModuleHandle(NULL);
+  priv->d3d11_window.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+  priv->d3d11_window.hCursor = LoadCursor(NULL, IDC_ARROW);
+  priv->d3d11_window.lpszClassName = TEXT(wnd_classname);
 
-  d3d11_window.lpfnWndProc = (WNDPROC)WindowProc;
-  d3d11_window.hInstance = GetModuleHandle(NULL);;
-  d3d11_window.hCursor = LoadCursor(NULL, IDC_ARROW);
-  d3d11_window.lpszClassName = "GstMfxWindowD3D11";
+  g_free(wnd_classname);
 
-  if (!RegisterClass(&d3d11_window))
+  if (RegisterClass(&priv->d3d11_window) == 0) {
+    GST_ERROR("Failed to register window class: %lu", GetLastError());
     return FALSE;
+  }
 
   width = GetSystemMetrics(SM_CXSCREEN);
   height = GetSystemMetrics(SM_CYSCREEN);
@@ -434,10 +441,10 @@ d3d11_create_window_internal (GstMfxWindow * window)
   }
   exstyle = 0;
   priv->hwnd = CreateWindowEx(exstyle,
-    d3d11_window.lpszClassName,
+    priv->d3d11_window.lpszClassName,
     TEXT("MFX D3D11 Renderer"),
     style, offx, offy, width, height,
-    NULL, NULL, d3d11_window.hInstance, NULL);
+    NULL, NULL, priv->d3d11_window.hInstance, NULL);
 
   if (!priv->hwnd) {
     GST_ERROR("Failed to create internal window: %lu",
@@ -446,6 +453,8 @@ d3d11_create_window_internal (GstMfxWindow * window)
   }
 
   SetWindowLongPtr(priv->hwnd, GWLP_USERDATA, (LONG_PTR)window);
+
+  
 
   return TRUE;
 }
@@ -490,6 +499,12 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
   if (priv->processor_enum) {
     ID3D11VideoProcessorEnumerator_Release(priv->processor_enum);
     priv->processor_enum = NULL;
+  }
+
+  if (priv->d3d11_window.hInstance) {
+    UnregisterClass(priv->d3d11_window.lpszClassName,
+      priv->d3d11_window.hInstance);
+    memset(&priv->d3d11_window, 0, sizeof(WNDCLASS));
   }
 
   gst_mfx_device_replace(&priv->device, NULL);

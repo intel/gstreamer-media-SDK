@@ -57,6 +57,7 @@ struct _GstMfxWindowD3D11Private
   gboolean keep_aspect;
   GstVideoInfo info;
   HWND hwnd;
+  WNDCLASS d3d11_window;
 };
 
 /**
