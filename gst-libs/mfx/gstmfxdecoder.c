@@ -899,6 +899,8 @@ update:
     decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
       decoder->bs.DataOffset);
     decoder->bs.DataOffset = 0;
+    decoder->bs.Data = decoder->bitstream->data;
+    decoder->bs.MaxLength = decoder->bitstream->len;
 
     ret = GST_MFX_DECODER_STATUS_SUCCESS;
   }
