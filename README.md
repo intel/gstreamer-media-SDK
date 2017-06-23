@@ -34,7 +34,7 @@ Requirements
 
 **Software requirements**
 
-  * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows
+  * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows  
     Media Server Studio 2017 R2 Community / Professional Edition (Haswell / Broadwell / Skylake)  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake)
   * GStreamer 1.6.x (tested up to GStreamer 1.10.x)
@@ -45,12 +45,12 @@ Requirements
   * Renderers:  
     Wayland (>=1.7)  
     X11 (DRI 3)  
-    Direct3D 11 (Windows 8/8.1/10)
+    Direct3D 11 (Windows 8 / 8.1 / 10)
 
 **Hardware requirements**
 
-  * Intel Haswell / Broadwell / Skylake with Intel HD / Iris Pro graphics
-  * Intel Apollo Lake
+  * Intel IvyBridge / Haswell / Broadwell / Skylake with Intel HD / Iris Pro graphics
+  * Intel Baytrail / Cherrytrail / Apollo Lake
 
 
 Compiling
