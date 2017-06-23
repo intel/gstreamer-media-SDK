@@ -176,13 +176,14 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
   guint num_structures;
-  GstCaps *caps = NULL;
-  GstCaps *out_caps, *templ;
+  GstCaps *out_caps, *templ = NULL;
+  GstCaps *in_caps = NULL;
   GstStructure *structure;
   const gchar *format = NULL;
 
   templ = gst_pad_get_pad_template_caps (pad);
-  out_caps = gst_caps_intersect_full (gst_pad_peer_query_caps (pad, templ),
+  in_caps = gst_pad_peer_query_caps(pad, templ);
+  out_caps = gst_caps_intersect_full (in_caps,
       templ, GST_CAPS_INTERSECT_FIRST);
   gst_caps_unref (templ);
   if (!out_caps) {
@@ -205,7 +206,8 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   gst_structure_free (structure);
 
 cleanup:
-  gst_caps_replace (&caps, NULL);
+  if (in_caps)
+    gst_caps_unref(in_caps);
   gst_caps_replace (&out_caps, NULL);
   return feature;
 }

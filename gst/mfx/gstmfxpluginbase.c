@@ -382,6 +382,7 @@ gst_mfx_plugin_base_set_pool_config (GstBufferPool * pool, const gchar * option)
     gst_buffer_pool_config_add_option (config, option);
     return gst_buffer_pool_set_config (pool, config);
   }
+  gst_structure_free(config);
   return TRUE;
 }
 

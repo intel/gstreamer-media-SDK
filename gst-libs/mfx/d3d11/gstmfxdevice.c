@@ -48,8 +48,22 @@ gst_mfx_device_finalize(GObject * object)
 {
   GstMfxDevice* device = GST_MFX_DEVICE(object);
 
-  IDXGIAdapter_Release(device->dxgi_adapter);
-  IDXGIFactory2_Release(device->dxgi_factory);
+  if (device->dxgi_adapter) {
+    IDXGIAdapter_Release(device->dxgi_adapter);
+    device->dxgi_adapter = NULL;
+  }
+  if (device->dxgi_factory) {
+    IDXGIFactory2_Release(device->dxgi_factory);
+    device->dxgi_factory = NULL;
+  }
+  if (device->d3d11_context) {
+    ID3D11DeviceContext_Release(device->d3d11_context);
+    device->d3d11_context = NULL;
+  }
+  if (device->d3d11_device) {
+    ID3D11Device_Release(device->d3d11_device);
+    device->d3d11_device = NULL;
+  }
 }
 
 static void

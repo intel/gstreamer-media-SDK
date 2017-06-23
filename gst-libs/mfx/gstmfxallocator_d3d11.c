@@ -268,8 +268,8 @@ gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 
   if (mem_id->info->FourCC == MFX_FOURCC_P8) {
     ID3D11Texture2D *texture = (ID3D11Texture2D *)mem_id->mid;
-    ID3D11DeviceContext *d3d11_context =
-      gst_mfx_device_get_d3d11_context(gst_mfx_context_get_device(priv->context));
+    ID3D11DeviceContext *d3d11_context = gst_mfx_device_get_d3d11_context(
+      gst_mfx_context_get_device(priv->context));
     ID3D11DeviceContext_Unmap(d3d11_context, texture, 0);
   }
   else {

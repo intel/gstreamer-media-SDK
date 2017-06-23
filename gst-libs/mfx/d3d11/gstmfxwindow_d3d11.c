@@ -167,7 +167,7 @@ gst_mfx_window_d3d11_hide (GstMfxWindow * window)
   return TRUE;
 }
 
-LRESULT CALLBACK
+static LRESULT CALLBACK
 WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   GstMfxWindow* window = (GstMfxWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);

@@ -371,7 +371,7 @@ gst_mfxsink_backend_x11 (void)
   };
   return &GstMfxSinkBackendX11;
 }
-#endif // USE_X11
+#endif // USE_DRI3
 
 /* ------------------------------------------------------------------------ */
 /* --- Wayland Backend                                                  --- */
