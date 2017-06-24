@@ -351,7 +351,7 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
 
   if (mfxdec->decoder && !hard) {
     profile = gst_mfx_profile_from_caps (caps);
-    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder)) {
+    if (profile.profile == gst_mfx_decoder_get_profile (mfxdec->decoder).profile) {
       gst_mfx_decoder_reset (mfxdec->decoder);
       gst_mfxdec_flush_discarded_frames (mfxdec);
       return TRUE;
@@ -403,7 +403,7 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
   g_return_val_if_fail (info != NULL, FALSE);
 
   if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED
-      && gst_mfx_profile_get_codec(profile) == MFX_CODEC_AVC)
+      && profile.codec == MFX_CODEC_AVC)
     hard = TRUE;
 
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);

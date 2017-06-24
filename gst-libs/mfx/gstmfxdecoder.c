@@ -76,7 +76,7 @@ G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
 GstMfxProfile
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
 {
-  g_return_val_if_fail (decoder != NULL, 0);
+  //g_return_val_if_fail (decoder != NULL, 0);
 
   return decoder->profile;
 }
@@ -229,7 +229,8 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
       };
 #ifdef WITH_LIBVA_BACKEND
       /* HEVC main10 profiles can only be decoded through SW decoder */
-      if (decoder->profile == GST_MFX_PROFILE_HEVC_MAIN10)
+      if (decoder->profile.codec == MFX_CODEC_HEVC
+          && decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10)
         i = 1;
 #endif  //  WITH_LIBVA_BACKEND
       for (; uids[i]; i++) {
@@ -269,7 +270,8 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-  if (decoder->profile == GST_MFX_PROFILE_HEVC_MAIN10) {
+  if (decoder->profile.codec == MFX_CODEC_HEVC
+      && decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10) {
     frame_info->FourCC = MFX_FOURCC_P010;
     frame_info->BitDepthChroma = 10;
     frame_info->BitDepthLuma = 10;
@@ -306,8 +308,8 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
         GST_ROUND_UP_32(decoder->info.height);
   }
 
-  decoder->params.mfx.CodecProfile =
-      gst_mfx_profile_get_codec_profile(decoder->profile);
+  decoder->params.mfx.CodecProfile = decoder->profile.profile;
+  decoder->params.mfx.CodecLevel = decoder->profile.level;
 }
 
 static gboolean
@@ -380,7 +382,7 @@ gst_mfx_decoder_create(GstMfxDecoder * decoder,
 	decoder->duration =
 		(decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
 
-	decoder->params.mfx.CodecId = gst_mfx_profile_get_codec(profile);
+	decoder->params.mfx.CodecId = profile.codec;
 	decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
 	if (live_mode) {
 		decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;

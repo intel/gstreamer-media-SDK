@@ -28,48 +28,129 @@ typedef struct _GstMfxProfileMap GstMfxProfileMap;
 
 struct _GstMfxProfileMap
 {
-  GstMfxProfile profile;
+  mfxU16 profile;
   mfxU32 codec;
   const char *media_str;
   const gchar *profile_str;
 };
 
+struct map
+{
+  mfxU16 level;
+  const gchar *level_str;
+};
+
 /* Profiles */
 static const GstMfxProfileMap gst_mfx_profiles[] = {
-  {GST_MFX_PROFILE_MPEG2_SIMPLE, MFX_CODEC_MPEG2,
+  {MFX_PROFILE_MPEG2_SIMPLE, MFX_CODEC_MPEG2,
       "video/mpeg, mpegversion=2", "simple"},
-  {GST_MFX_PROFILE_MPEG2_MAIN, MFX_CODEC_MPEG2,
+  {MFX_PROFILE_MPEG2_MAIN , MFX_CODEC_MPEG2,
       "video/mpeg, mpegversion=2", "main"},
-  {GST_MFX_PROFILE_MPEG2_HIGH, MFX_CODEC_MPEG2,
+  {MFX_PROFILE_MPEG2_HIGH, MFX_CODEC_MPEG2,
       "video/mpeg, mpegversion=2", "high"},
-  {GST_MFX_PROFILE_AVC_BASELINE, MFX_CODEC_AVC,
+  {MFX_PROFILE_AVC_BASELINE, MFX_CODEC_AVC,
       "video/x-h264", "baseline"},
-  {GST_MFX_PROFILE_AVC_CONSTRAINED_BASELINE, MFX_CODEC_AVC,
+  {MFX_PROFILE_AVC_CONSTRAINED_BASELINE, MFX_CODEC_AVC,
       "video/x-h264", "constrained-baseline"},
-  {GST_MFX_PROFILE_AVC_MAIN, MFX_CODEC_AVC,
+  {MFX_PROFILE_AVC_MAIN, MFX_CODEC_AVC,
       "video/x-h264", "main"},
-  {GST_MFX_PROFILE_AVC_HIGH, MFX_CODEC_AVC,
+  {MFX_PROFILE_AVC_HIGH, MFX_CODEC_AVC,
       "video/x-h264", "high"},
-  {GST_MFX_PROFILE_VC1_SIMPLE, MFX_CODEC_VC1,
+  {MFX_PROFILE_VC1_SIMPLE, MFX_CODEC_VC1,
       "video/x-wmv, wmvversion=3", "simple"},
-  {GST_MFX_PROFILE_VC1_MAIN, MFX_CODEC_VC1,
+  {MFX_PROFILE_VC1_MAIN, MFX_CODEC_VC1,
       "video/x-wmv, wmvversion=3", "main"},
-  {GST_MFX_PROFILE_VC1_ADVANCED, MFX_CODEC_VC1,
+  {MFX_PROFILE_VC1_ADVANCED, MFX_CODEC_VC1,
       "video/x-wmv, wmvversion=3, format=(string)WVC1", "advanced"},
-  {GST_MFX_PROFILE_JPEG_BASELINE, MFX_CODEC_JPEG,
+  {MFX_PROFILE_JPEG_BASELINE, MFX_CODEC_JPEG,
       "image/jpeg", NULL},
-  {GST_MFX_PROFILE_VP8, MFX_CODEC_VP8,
+  {MFX_PROFILE_VP8_0, MFX_CODEC_VP8,
       "video/x-vp8", NULL},
 #ifdef USE_VP9_DECODER
-  {GST_MFX_PROFILE_VP9, MFX_CODEC_VP9,
+  {MFX_PROFILE_VP9_0, MFX_CODEC_VP9,
       "video/x-vp9", NULL},
 #endif
-  {GST_MFX_PROFILE_HEVC_MAIN, MFX_CODEC_HEVC,
+  {MFX_PROFILE_HEVC_MAIN, MFX_CODEC_HEVC,
       "video/x-h265", "main"},
-  {GST_MFX_PROFILE_HEVC_MAIN10, MFX_CODEC_HEVC,
+  {MFX_PROFILE_HEVC_MAIN10, MFX_CODEC_HEVC,
       "video/x-h265", "main-10"},
-  {0,}
+  {MFX_PROFILE_UNKNOWN,}
 };
+
+static const struct map gst_mfx_h264_level_map[] = {
+  { MFX_LEVEL_AVC_1,    "1"    },
+  { MFX_LEVEL_AVC_1b,   "1b"   },
+  { MFX_LEVEL_AVC_11,  "1.1"   },
+  { MFX_LEVEL_AVC_12,  "1.2"   },
+  { MFX_LEVEL_AVC_13,  "1.3"   },
+  { MFX_LEVEL_AVC_2,    "2"    },
+  { MFX_LEVEL_AVC_21,  "2.1"   },
+  { MFX_LEVEL_AVC_22,  "2.2"   },
+  { MFX_LEVEL_AVC_3,    "3"    },
+  { MFX_LEVEL_AVC_31,  "3.1"   },
+  { MFX_LEVEL_AVC_32,  "3.2"   },
+  { MFX_LEVEL_AVC_4,    "4"    },
+  { MFX_LEVEL_AVC_41,  "4.1"   },
+  { MFX_LEVEL_AVC_42,  "4.2"   },
+  { MFX_LEVEL_AVC_5,    "5"    },
+  { MFX_LEVEL_AVC_51,  "5.1"   },
+  { MFX_LEVEL_AVC_52,  "5.2"   },
+  { 0, NULL }
+};
+
+static const struct map gst_mfx_hevc_level_map[] = {
+  { MFX_LEVEL_HEVC_1,    "1"    },
+  { MFX_LEVEL_HEVC_2,    "2"    },
+  { MFX_LEVEL_HEVC_21,  "2.1"   },
+  { MFX_LEVEL_HEVC_3,    "3"    },
+  { MFX_LEVEL_HEVC_31,  "3.1"   },
+  { MFX_LEVEL_HEVC_4,    "4"    },
+  { MFX_LEVEL_HEVC_41,  "4.1"   },
+  { MFX_LEVEL_HEVC_5,    "5"    },
+  { MFX_LEVEL_HEVC_51,  "5.1"   },
+  { MFX_LEVEL_HEVC_52,  "5.2"   },
+  { MFX_LEVEL_HEVC_6,    "6"    },
+  { MFX_LEVEL_HEVC_61,  "6.1"   },
+  { MFX_LEVEL_HEVC_62,  "6.2"   },
+  { 0, NULL }
+};
+
+static const struct map gst_mfx_mpeg2_level_map[] = {
+  { MFX_LEVEL_MPEG2_LOW,          "low"           },
+  { MFX_LEVEL_MPEG2_MAIN,         "main"          },
+  { MFX_LEVEL_MPEG2_HIGH,         "high-1440"     },
+  { MFX_LEVEL_MPEG2_HIGH1440,     "high"          },
+  { 0, NULL }
+};
+
+static mfxU16
+map_lookup_value(const struct map *m, gchar * level_str)
+{
+  for (; m && m->level; m++)
+    if (strcmp (level_str, m->level_str) == 0)
+      return m->level;
+  return MFX_LEVEL_UNKNOWN;
+}
+
+static mfxU16
+gst_mfx_profile_get_level(mfxU32 codec, gchar * level_str)
+{
+  const struct map *m = NULL;
+  switch (codec) {
+    case MFX_CODEC_AVC:
+      m = gst_mfx_h264_level_map;
+      break;
+    case MFX_CODEC_HEVC:
+      m = gst_mfx_hevc_level_map;
+      break;
+    case MFX_CODEC_MPEG2:
+      m = gst_mfx_mpeg2_level_map;
+      break;
+    default:
+      break;
+  }
+  return map_lookup_value(m, level_str);
+}
 
 static const GstMfxProfileMap *
 get_profiles_map (GstMfxProfile profile)
@@ -77,7 +158,7 @@ get_profiles_map (GstMfxProfile profile)
   const GstMfxProfileMap *m;
 
   for (m = gst_mfx_profiles; m->profile; m++)
-    if (m->profile == profile)
+    if ((m->profile == profile.profile) && (m->codec == profile.codec))
       return m;
   return NULL;
 }
@@ -116,16 +197,7 @@ gst_mfx_profile_get_media_type_name (GstMfxProfile profile)
   return m ? m->media_str : NULL;
 }
 
-/**
- * gst_mfx_profile_from_codec_data:
- * @codec: a #GstMfxCodec
- * @buffer: a #GstBuffer holding code data
- *
- * Tries to parse MFX profile from @buffer data and @codec information.
- *
- * Return value: the #GstMfxProfile described in @buffer
- */
-static GstMfxProfile
+static mfxU16
 gst_mfx_profile_from_codec_data_h264 (GstBuffer * buffer)
 {
   /* MPEG-4 Part 15: Advanced Video Coding (AVC) file format */
@@ -140,18 +212,18 @@ gst_mfx_profile_from_codec_data_h264 (GstBuffer * buffer)
   switch (buf[1]) {             /* AVCProfileIndication */
     case 66:
       return ((buf[2] & 0x40) ?
-          GST_MFX_PROFILE_AVC_CONSTRAINED_BASELINE :
-          GST_MFX_PROFILE_AVC_BASELINE);
+          MFX_PROFILE_AVC_CONSTRAINED_BASELINE :
+          MFX_PROFILE_AVC_BASELINE);
     case 77:
-      return GST_MFX_PROFILE_AVC_MAIN;
+      return MFX_PROFILE_AVC_MAIN;
     case 100:
-      return GST_MFX_PROFILE_AVC_HIGH;
+      return MFX_PROFILE_AVC_HIGH;
 
   }
   return 0;
 }
 
-static GstMfxProfile
+static mfxU16
 gst_mfx_profile_from_codec_data_h265 (GstBuffer * buffer)
 {
   /* ISO/IEC 14496-15:  HEVC file format */
@@ -168,11 +240,11 @@ gst_mfx_profile_from_codec_data_h265 (GstBuffer * buffer)
 
   switch (buf[1] & 0x1f) {      /* HEVCProfileIndication */
     case 1:
-      return GST_MFX_PROFILE_HEVC_MAIN;
+      return MFX_PROFILE_HEVC_MAIN;
     case 2:
-      return GST_MFX_PROFILE_HEVC_MAIN10;
+      return MFX_PROFILE_HEVC_MAIN10;
     case 3:
-      return GST_MFX_PROFILE_HEVC_MAIN_STILL_PICTURE;
+      return MFX_PROFILE_HEVC_MAINSP;
   }
   return 0;
 }
@@ -180,20 +252,21 @@ gst_mfx_profile_from_codec_data_h265 (GstBuffer * buffer)
 static GstMfxProfile
 gst_mfx_profile_from_codec_data (mfxU32 codec, GstBuffer * buffer)
 {
-  GstMfxProfile profile;
+  GstMfxProfile profile = { 0 };
 
   if (!codec || !buffer)
-    return 0;
+    return profile;
 
+  profile.codec = codec;
   switch (codec) {
     case MFX_CODEC_AVC:
-      profile = gst_mfx_profile_from_codec_data_h264 (buffer);
+      profile.profile = gst_mfx_profile_from_codec_data_h264 (buffer);
       break;
     case MFX_CODEC_HEVC:
-      profile = gst_mfx_profile_from_codec_data_h265 (buffer);
+      profile.profile = gst_mfx_profile_from_codec_data_h265 (buffer);
       break;
     default:
-      profile = 0;
+      profile.profile = 0;
       break;
   }
   return profile;
@@ -215,18 +288,18 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
   const GstMfxProfileMap *m;
   GstCaps *caps_test;
   GstStructure *structure;
-  const gchar *profile_str;
-  GstMfxProfile profile, best_profile;
+  const gchar *profile_str, *level_str;
+  GstMfxProfile profile = { 0 }, best_profile = { 0 };
   GstBuffer *codec_data = NULL;
   const gchar *name;
   gsize namelen;
 
   if (!caps)
-    return 0;
+    return profile;
 
   structure = gst_caps_get_structure (caps, 0);
   if (!structure)
-    return 0;
+    return profile;
 
   name = gst_structure_get_name (structure);
   namelen = strlen (name);
@@ -239,26 +312,30 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
       codec_data = gst_value_get_buffer (v_codec_data);
   }
 
-  profile = 0;
-  best_profile = 0;
-  for (m = gst_mfx_profiles; !profile && m->profile; m++) {
+  for (m = gst_mfx_profiles; !profile.profile && m->profile; m++) {
     if (strncmp (name, m->media_str, namelen) != 0)
       continue;
     caps_test = gst_caps_from_string (m->media_str);
     if (gst_caps_is_always_compatible (caps, caps_test)) {
-      best_profile = m->profile;
+      best_profile.codec = m->codec;
+      best_profile.profile = m->profile;
       if (profile_str && m->profile_str &&
           strcmp (profile_str, m->profile_str) == 0)
         profile = best_profile;
     }
-    if (!profile) {
+    if (!profile.profile) {
       profile =
-          gst_mfx_profile_from_codec_data (gst_mfx_profile_get_codec
-          (m->profile), codec_data);
+          gst_mfx_profile_from_codec_data (m->codec, codec_data);
     }
     gst_caps_unref (caps_test);
   }
-  return profile ? profile : best_profile;
+
+  if (!profile.profile)
+    profile = best_profile;
+  level_str = gst_structure_get_string (structure, "level");
+  profile.level = gst_mfx_profile_get_level(profile.codec, level_str);
+
+  return profile;
 }
 
 /**
@@ -281,7 +358,7 @@ gst_mfx_profile_get_caps (GstMfxProfile profile)
     return NULL;
 
   for (m = gst_mfx_profiles; m->profile; m++) {
-    if (m->profile != profile)
+    if ((m->profile != profile.profile) || (m->codec != profile.codec))
       continue;
     caps = gst_caps_from_string (m->media_str);
     if (!caps)
@@ -290,22 +367,4 @@ gst_mfx_profile_get_caps (GstMfxProfile profile)
     out_caps = gst_caps_merge (out_caps, caps);
   }
   return out_caps;
-}
-
-mfxU32
-gst_mfx_profile_get_codec (GstMfxProfile profile)
-{
-  const GstMfxProfileMap *m;
-
-  for (m = gst_mfx_profiles; m->profile; m++)
-    if (m->profile == profile)
-      return m->codec;
-
-  return 0;
-}
-
-mfxU32
-gst_mfx_profile_get_codec_profile (GstMfxProfile profile)
-{
-  return gst_mfx_profile_get_codec (profile) ^ profile;
 }
