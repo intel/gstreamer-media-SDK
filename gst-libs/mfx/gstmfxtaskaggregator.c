@@ -189,7 +189,7 @@ gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator)
   g_return_val_if_fail (aggregator != NULL, NULL);
 
   GList *l = g_list_first (aggregator->cache);
-  return gst_mfx_task_ref(GST_MFX_TASK(l->data));
+  return l ? gst_mfx_task_ref(GST_MFX_TASK(l->data)) : NULL;
 }
 
 void

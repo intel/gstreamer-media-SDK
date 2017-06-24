@@ -544,11 +544,9 @@ init_filter (GstMfxDecoder * decoder)
   }
 
 #ifdef WITH_LIBVA_BACKEND
-  decoder->request.Type |=
-      MFX_MEMTYPE_EXPORT_FRAME | MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
-#else
-  decoder->request.Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
+  decoder->request.Type |= MFX_MEMTYPE_EXPORT_FRAME;
 #endif // WITH_LIBVA_BACKEND
+  decoder->request.Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
 
   decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
 
