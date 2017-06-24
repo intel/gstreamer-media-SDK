@@ -170,11 +170,10 @@ gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  return aggregator->current_task ?
-    gst_mfx_task_ref (aggregator->current_task) : NULL;
+  return aggregator->current_task;
 }
 
-gboolean
+void
 gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task)
 {
@@ -182,8 +181,15 @@ gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
   g_return_val_if_fail (task != NULL, FALSE);
 
   aggregator->current_task = task;
+}
 
-  return TRUE;
+GstMfxTask *
+gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator)
+{
+  g_return_val_if_fail (aggregator != NULL, NULL);
+
+  GList *l = g_list_first (aggregator->cache);
+  return gst_mfx_task_ref(GST_MFX_TASK(l->data));
 }
 
 void

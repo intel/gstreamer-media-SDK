@@ -37,9 +37,12 @@ G_DECLARE_FINAL_TYPE( GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_MFX, TA
 GstMfxTask *
 gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator);
 
-gboolean
+void
 gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task);
+
+GstMfxTask *
+gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator);
 
 void
 gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,

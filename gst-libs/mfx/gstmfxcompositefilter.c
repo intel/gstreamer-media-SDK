@@ -67,7 +67,9 @@ gst_mfx_composite_filter_finalize (GstMfxCompositeFilter * filter)
   /* Free allocated memory for filters */
   g_slice_free1 ((sizeof (mfxExtBuffer *)), filter->ext_buffer);
   gst_mfx_surface_pool_replace(&filter->out_pool, NULL);
-  gst_mfx_task_frame_free(filter->vpp, &filter->response);
+
+  gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp);
+  gst_mfx_task_frame_free(filter->aggregator, &filter->response);
 
   MFXVideoVPP_Close (filter->session);
 
@@ -276,7 +278,8 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
 
     MFXVideoVPP_QueryIOSurf(filter->session, &filter->params, filter->request);
 
-    mfxStatus sts = gst_mfx_task_frame_alloc(filter->vpp, &filter->request[1],
+    gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp);
+    mfxStatus sts = gst_mfx_task_frame_alloc(filter->aggregator, &filter->request[1],
                       &filter->response);
     if (MFX_ERR_NONE != sts)
       return FALSE;

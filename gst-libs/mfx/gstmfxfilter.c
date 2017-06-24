@@ -328,7 +328,8 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
       gst_mfx_task_use_video_memory(filter->vpp[0]);
       gst_mfx_task_set_request(filter->vpp[0], filter->shared_request[0]);
 
-      sts = gst_mfx_task_frame_alloc(filter->vpp[0], filter->shared_request[0],
+      gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp[0]);
+      sts = gst_mfx_task_frame_alloc(filter->aggregator, filter->shared_request[0],
         &filter->response[0]);
       if (MFX_ERR_NONE != sts)
         return FALSE;
@@ -394,7 +395,7 @@ gst_mfx_filter_create (GstMfxFilter * filter,
   if (!filter->vpp[1]) {
     if (!filter->session) {
       filter->vpp[1] =
-          gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL), 
+          gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL),
 			  filter->aggregator, GST_MFX_TASK_VPP_OUT);
       filter->session = gst_mfx_task_get_session (filter->vpp[1]);
     }
@@ -406,8 +407,6 @@ gst_mfx_filter_create (GstMfxFilter * filter,
     }
     if (!filter->vpp[1])
       return FALSE;
-    gst_mfx_task_aggregator_set_current_task (filter->aggregator,
-        filter->vpp[1]);
   }
 
   if (filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY)
@@ -431,7 +430,8 @@ gst_mfx_filter_finalize (GObject * object)
   MFXVideoVPP_Close(filter->session);
 
   gst_mfx_surface_pool_replace(&filter->out_pool, NULL);
-  gst_mfx_task_frame_free(filter->vpp[1], &filter->response[1]);
+  gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp[1]);
+  gst_mfx_task_frame_free(filter->aggregator, &filter->response[1]);
 
   for (i = 0; i < 2; i++) {
     if (!filter->vpp[i])
@@ -882,7 +882,7 @@ gst_mfx_filter_set_deinterlace_method (GstMfxFilter * filter,
   g_return_val_if_fail (GST_MFX_DEINTERLACE_METHOD_BOB == method
     || GST_MFX_DEINTERLACE_METHOD_ADVANCED == method
     || GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF == method
-    , FALSE); 
+    , FALSE);
 #endif
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_DEINTERLACING);
@@ -1012,7 +1012,8 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   if (!memtype_is_system) {
     gst_mfx_task_use_video_memory (filter->vpp[1]);
 
-    sts = gst_mfx_task_frame_alloc (filter->vpp[1], filter->shared_request[1],
+    gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp[1]);
+    sts = gst_mfx_task_frame_alloc (filter->aggregator, filter->shared_request[1],
         &filter->response[1]);
     if (MFX_ERR_NONE != sts)
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;

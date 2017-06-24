@@ -21,6 +21,7 @@
 #include "gstmfxallocator.h"
 #include "gstmfxtask.h"
 #include "gstmfxtask_priv.h"
+#include "gstmfxtaskaggregator.h"
 #include "gstmfxcontext.h"
 
 #ifdef WITH_LIBVA_BACKEND
@@ -42,7 +43,8 @@ mfxStatus
 gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
     mfxFrameAllocResponse * resp)
 {
-  GstMfxTask *task = pthis;
+  GstMfxTask *task =
+      gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   GstMfxDisplay *const display = gst_mfx_context_get_device(priv->context);
   mfxFrameInfo *info;
@@ -53,11 +55,12 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   mfxU16 num_surfaces;
   ResponseData *response_data;
 
-  if (priv->saved_responses && priv->task_type & GST_MFX_TASK_DECODER) {
+  if (priv->saved_responses
+      && gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
     GList *l = g_list_last (priv->saved_responses);
     if (l) {
       response_data = l->data;
-      *resp = *response_data->response;
+      *resp = response_data->response;
       return MFX_ERR_NONE;
     }
   }
@@ -152,7 +155,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   resp->mids = response_data->mids;
   resp->NumFrameActual = num_surfaces;
 
-  response_data->response = resp;
+  response_data->response = *resp;
   priv->saved_responses = g_list_prepend (priv->saved_responses, response_data);
 
   return MFX_ERR_NONE;
@@ -174,7 +177,8 @@ error_allocate_memory:
 mfxStatus
 gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
 {
-  GstMfxTask *task = pthis;
+  GstMfxTask *task =
+      gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   GstMfxDisplay *const display = gst_mfx_context_get_device(priv->context);
   mfxFrameInfo *info;
@@ -223,7 +227,8 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
 mfxStatus
 gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
-  GstMfxTask *task = pthis;
+  GstMfxTask *task =
+      gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   GstMfxDisplay *const display = gst_mfx_context_get_device(priv->context);
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;
@@ -250,7 +255,8 @@ gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 mfxStatus
 gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
-  GstMfxTask *task = pthis;
+  GstMfxTask *task =
+      gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   GstMfxDisplay *const display = gst_mfx_context_get_device(priv->context);
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;

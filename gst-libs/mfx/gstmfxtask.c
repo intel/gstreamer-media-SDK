@@ -130,7 +130,7 @@ gst_mfx_task_use_video_memory (GstMfxTask * task)
 {
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   mfxFrameAllocator frame_allocator = {
-    .pthis = task,
+    .pthis = priv->aggregator,
     .Alloc = gst_mfx_task_frame_alloc,
     .Lock = gst_mfx_task_frame_lock,
     .Unlock = gst_mfx_task_frame_unlock,

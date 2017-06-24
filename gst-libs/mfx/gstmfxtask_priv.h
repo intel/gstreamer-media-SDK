@@ -49,7 +49,7 @@ struct _ResponseData
   GstMfxMemoryId **mids;
 #endif // WITH_LIBVA_BACKEND
   mfxU16 num_surfaces;
-  mfxFrameAllocResponse *response;
+  mfxFrameAllocResponse response;
   mfxFrameInfo frame_info;
   guint num_used;
 };

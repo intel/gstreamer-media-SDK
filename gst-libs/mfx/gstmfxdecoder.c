@@ -159,9 +159,11 @@ init_decoder (GstMfxDecoder * decoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
 
+  gst_mfx_task_aggregator_set_current_task(decoder->aggregator, decoder->decode);
+
   sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
   if (sts < 0) {
-    GST_ERROR ("Error re-initializing the MFX video decoder %d", sts);
+    GST_ERROR ("Error initializing the MFX video decoder %d", sts);
     return FALSE;
   }
 
@@ -178,7 +180,7 @@ static void
 close_decoder (GstMfxDecoder * decoder)
 {
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
-
+  gst_mfx_task_aggregator_set_current_task(decoder->aggregator, decoder->decode);
   MFXVideoDECODE_Close (decoder->session);
 }
 
@@ -191,7 +193,6 @@ gst_mfx_decoder_finalize (GObject * object)
   g_byte_array_unref (decoder->bitstream);
   if (decoder->codec_data)
     g_byte_array_unref (decoder->codec_data);
-  gst_mfx_task_aggregator_unref (decoder->aggregator);
 
   g_queue_foreach (&decoder->pending_frames,
       (GFunc) gst_video_codec_frame_unref, NULL);
@@ -209,7 +210,7 @@ gst_mfx_decoder_finalize (GObject * object)
     MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
 
   close_decoder (decoder);
-
+  gst_mfx_task_aggregator_unref (decoder->aggregator);
   gst_mfx_task_replace (&decoder->decode, NULL);
 }
 
@@ -320,10 +321,8 @@ task_init (GstMfxDecoder * decoder)
   if (!decoder->decode)
     return FALSE;
 
-  gst_mfx_task_aggregator_set_current_task (decoder->aggregator,
-      decoder->decode);
   decoder->session = gst_mfx_task_get_session (decoder->decode);
-  
+
   gst_mfx_decoder_set_video_properties (decoder);
 
   sts = gst_mfx_decoder_configure_plugins (decoder);
@@ -544,7 +543,12 @@ init_filter (GstMfxDecoder * decoder)
     return FALSE;
   }
 
+#ifdef WITH_LIBVA_BACKEND
+  decoder->request.Type |=
+      MFX_MEMTYPE_EXPORT_FRAME | MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
+#else
   decoder->request.Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
+#endif // WITH_LIBVA_BACKEND
 
   decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
 

@@ -442,7 +442,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
-  task = gst_mfx_task_aggregator_get_current_task(plugin->aggregator);
+  task = gst_mfx_task_aggregator_get_last_task(plugin->aggregator);
 
   if (!plugin->sinkpad_has_dmabuf) {
     if (task) {

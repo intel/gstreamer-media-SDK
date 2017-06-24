@@ -21,6 +21,7 @@
 #include "gstmfxallocator.h"
 #include "gstmfxtask.h"
 #include "gstmfxtask_priv.h"
+#include "gstmfxtaskaggregator.h"
 #include "gstmfxcontext.h"
 #include "d3d11/gstmfxdevice.h"
 
@@ -63,19 +64,21 @@ mfxStatus
 gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   mfxFrameAllocResponse * response)
 {
-  GstMfxTask *task = pthis;
+  GstMfxTask *task =
+    gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   ID3D11Device *d3d11_device =
     gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context));
   HRESULT hr = S_OK;
   ResponseData *response_data;
+  guint i;
 
   if (priv->saved_responses
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
     GList *l = g_list_last(priv->saved_responses);
     if (l) {
       response_data = l->data;
-      *response = *response_data->response;
+      *response = response_data->response;
       return MFX_ERR_NONE;
     }
   }
@@ -93,7 +96,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   if (!response_data->mids)
     return MFX_ERR_MEMORY_ALLOC;
 
-  for (int i = 0; i < response_data->num_surfaces; i++) {
+  for (i = 0; i < response_data->num_surfaces; i++) {
     response_data->mids[i] = g_slice_new0(GstMfxMemoryId);
     if (!response_data->mids[i])
       goto error;
@@ -164,7 +167,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
       desc.BindFlags = 0;
 
     /* Create surface textures */
-    for (size_t i = 0; i < request->NumFrameSuggested / desc.ArraySize; i++) {
+    for (i = 0; i < request->NumFrameSuggested / desc.ArraySize; i++) {
       hr =
         ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
           NULL, &texture);
@@ -182,7 +185,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     //desc.MiscFlags        = D3D11_RESOURCE_MISC_SHARED;
 
     /* Create surface staging textures */
-    for (size_t i = 0; i < request->NumFrameSuggested; i++) {
+    for (i = 0; i < request->NumFrameSuggested; i++) {
       hr =
         ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
           NULL, &texture);
@@ -196,7 +199,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   response->mids = (mfxMemId *)response_data->mids;
   response->NumFrameActual = request->NumFrameSuggested;
 
-  response_data->response = response;
+  response_data->response = *response;
   priv->saved_responses = g_list_prepend(priv->saved_responses, response_data);
 
   return MFX_ERR_NONE;
@@ -210,7 +213,8 @@ error:
 mfxStatus
 gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse * response)
 {
-  GstMfxTask *task = pthis;
+  GstMfxTask *task =
+    gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   ResponseData *response_data;
 
@@ -232,7 +236,8 @@ gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse * response)
 mfxStatus
 gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
-  GstMfxTask *task = pthis;
+  GstMfxTask *task =
+    gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
 
@@ -262,7 +267,8 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 mfxStatus
 gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
-  GstMfxTask *task = pthis;
+  GstMfxTask *task =
+    gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
 

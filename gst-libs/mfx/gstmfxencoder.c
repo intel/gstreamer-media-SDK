@@ -466,8 +466,6 @@ init_encoder_task (GstMfxEncoder * encoder)
 	priv->encode = gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL),
 		priv->aggregator, GST_MFX_TASK_ENCODER);
 	priv->session = gst_mfx_task_get_session (priv->encode);
-  gst_mfx_task_aggregator_set_current_task (priv->aggregator,
-	  priv->encode);
 }
 
 static gboolean
@@ -482,7 +480,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   if ((GST_VIDEO_INFO_FORMAT (info) == GST_VIDEO_FORMAT_NV12) &&
       !memtype_is_system) {
     GstMfxTask *task =
-        gst_mfx_task_aggregator_get_current_task (priv->aggregator);
+        gst_mfx_task_aggregator_get_last_task (priv->aggregator);
 
     if (!task) {
       GST_ERROR ("Unable to retrieve upstream MFX task from task aggregator.");
@@ -610,15 +608,16 @@ gst_mfx_encoder_finalize (GObject * object)
   klass->finalize (encoder);
 
   g_byte_array_unref (priv->bitstream);
-  gst_mfx_task_aggregator_unref (priv->aggregator);
 
   if (priv->properties) {
     g_ptr_array_unref (priv->properties);
 	priv->properties = NULL;
   }
 
+  gst_mfx_task_aggregator_set_current_task(priv->aggregator, priv->encode);
   MFXVideoENCODE_Close (priv->session);
 
+  gst_mfx_task_aggregator_unref (priv->aggregator);
   gst_mfx_filter_replace (&priv->filter, NULL);
   gst_mfx_task_replace (&priv->encode, NULL);
 }
@@ -937,7 +936,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
   mfxFrameAllocRequest *request;
   mfxFrameAllocRequest enc_request;
   gboolean memtype_is_system = FALSE;
-  //guint shared_task_type = 0;
+  guint shared_task_type = 0;
 
   GstMfxEncoderPrivate *const priv =
 	  GST_MFX_ENCODER_GET_PRIVATE(encoder);
@@ -1009,7 +1008,7 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
         (enc_request.NumFrameSuggested - priv->params.AsyncDepth + 1);
     request->NumFrameMin = request->NumFrameSuggested;
 
-    //shared_task_type = gst_mfx_task_get_task_type(priv->encode);
+    shared_task_type = gst_mfx_task_get_task_type(priv->encode);
     gst_mfx_task_set_task_type (priv->encode, GST_MFX_TASK_ENCODER);
   }
   else {
@@ -1035,6 +1034,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     if (!gst_mfx_filter_prepare (priv->filter))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
+
+  gst_mfx_task_aggregator_set_current_task(priv->aggregator, priv->encode);
 
   sts = MFXVideoENCODE_Init (priv->session, &priv->params);
   if (sts < 0) {
