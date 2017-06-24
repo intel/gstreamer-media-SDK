@@ -1,15 +1,15 @@
-GStreamer-MSDK
+GST-MFX
 ==============
 GStreamer plugins for Intel&reg; Media SDK
 
 
 Overview
 --------
-GStreamer-MSDK consists of a collection of GStreamer plugins for Intel&reg; Media SDK (MSDK).
+GST-MFX consists of a collection of GStreamer plugins for Intel&reg; Media SDK (MSDK).
 This allows users to use MSDK in their GStreamer-based applications with minimal knowledge of 
 the MSDK API.
 
-GStreamer-MSDK includes plugins to perform decode, encode, video postprocessing (VPP)
+GST-MFX includes plugins to perform decode, encode, video postprocessing (VPP)
 and high performance rendering. Please refer to README.USAGE for more information about these
 plugins and their usage.
 
@@ -35,7 +35,7 @@ Requirements
 **Software requirements**
 
   * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows  
-    Media Server Studio 2017 R2 Community / Professional Edition (Haswell / Broadwell / Skylake)  
+    Media Server Studio 2017 R2 Community / Professional Edition (Windows / Linux)  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake)
   * GStreamer 1.6.x (tested up to GStreamer 1.10.x)
   * gst-plugins-* 1.6.x (tested up to GStreamer 1.10.x)
@@ -49,13 +49,13 @@ Requirements
 
 **Hardware requirements**
 
-  * Intel IvyBridge / Haswell / Broadwell / Skylake with Intel HD / Iris Pro graphics
+  * Intel IvyBridge / Haswell / Broadwell / Skylake / Kabylake with Intel HD / Iris Pro graphics
   * Intel Baytrail / Cherrytrail / Apollo Lake
 
 
 Compiling
 ---------
-GStreamer-MSDK uses the Meson build tool to build the plugins.
+GST-MFX uses the Meson build tool to build the plugins.
 You can install the latest meson packages using the pip installer program generally bundled with recent Python 3 installer packages.
 On Windows, open VS x64 native tools command prompt, and add gstreamer pkgconfig path to PKG_CONFIG_PATH if not already done:
 
@@ -79,14 +79,10 @@ Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 
 
 For a list of more options when configuring the build, refer to the meson_options.txt file inside the source directory or run mesonconf inside the build directory.
 
-Next step is to compile and install the GStreamer-MSDK plugins:
+Next step is to compile the GST-MFX plugins:
 
 	cd ../gst-msdk-build
 	ninja
-
-To uninstall the plugins:
-
-	make uninstall
 
 If you intend to rebuild the plugins after making changes to the source code or you would
 want to change some of the build options after uninstalling the plugins, it is highly recommended to
@@ -96,12 +92,12 @@ simply delete the build folder that you have created and repeat the build proces
 Usage
 -----
 Please refer to README.USAGE for examples on how to accomplish various
-video-related tasks with the GStreamer-MSDK plugins.
+video-related tasks with the GST-MFX plugins.
 
 
 License
 -------
-GStreamer-MSDK libraries and plugins are available under the
+GST-MFX libraries and plugins are available under the
 terms of the GNU Lesser General Public License v2.1+.
 
 

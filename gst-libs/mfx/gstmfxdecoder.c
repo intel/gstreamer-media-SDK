@@ -268,10 +268,16 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-  if (decoder->profile == GST_MFX_PROFILE_HEVC_MAIN10)
+  if (decoder->profile == GST_MFX_PROFILE_HEVC_MAIN10) {
     frame_info->FourCC = MFX_FOURCC_P010;
-  else
+    frame_info->BitDepthChroma = 10;
+    frame_info->BitDepthLuma = 10;
+  }
+  else {
     frame_info->FourCC = MFX_FOURCC_NV12;
+    frame_info->BitDepthChroma = 8;
+    frame_info->BitDepthLuma = 8;
+  }
 
   frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ?
       (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
@@ -287,8 +293,6 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   frame_info->FrameRateExtD = decoder->info.fps_d;
   frame_info->AspectRatioW = decoder->info.par_n;
   frame_info->AspectRatioH = decoder->info.par_d;
-  frame_info->BitDepthChroma = 8;
-  frame_info->BitDepthLuma = 8;
 
   frame_info->Width = GST_ROUND_UP_16 (decoder->info.width);
   if (decoder->params.mfx.CodecId == MFX_CODEC_HEVC) {

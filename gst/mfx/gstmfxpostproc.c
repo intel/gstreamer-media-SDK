@@ -860,10 +860,9 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
 
   if (vpp->deinterlace_mode != GST_MFX_DEINTERLACE_MODE_DISABLED) {
     GstVideoInterlaceMode di_mode = GST_VIDEO_INFO_INTERLACE_MODE(&vi);
-    if (vpp->deinterlace_mode == GST_MFX_DEINTERLACE_MODE_AUTO
-        && di_mode != GST_VIDEO_INTERLACE_MODE_PROGRESSIVE)
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
-    else
+    if (vpp->deinterlace_mode == GST_MFX_DEINTERLACE_MODE_FORCED
+        || (vpp->deinterlace_mode == GST_MFX_DEINTERLACE_MODE_AUTO
+        && di_mode != GST_VIDEO_INTERLACE_MODE_PROGRESSIVE))
       vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
     GST_VIDEO_INFO_INTERLACE_MODE(&vi) = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
   }
