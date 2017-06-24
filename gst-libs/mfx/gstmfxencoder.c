@@ -621,7 +621,6 @@ gst_mfx_encoder_finalize (GObject * object)
 
   gst_mfx_filter_replace (&priv->filter, NULL);
   gst_mfx_task_replace (&priv->encode, NULL);
-
 }
 
 GstMfxEncoder *
@@ -652,7 +651,7 @@ gst_mfx_encoder_ref (GstMfxEncoder * encoder)
 void
 gst_mfx_encoder_unref (GstMfxEncoder * encoder)
 {
-	gst_object_unref(GST_OBJECT (encoder));
+  gst_object_unref(GST_OBJECT (encoder));
 }
 
 void
@@ -661,8 +660,7 @@ gst_mfx_encoder_replace (GstMfxEncoder ** old_encoder_ptr,
 {
   g_return_if_fail (old_encoder_ptr != NULL);
 
-  gst_object_replace((GstObject **) old_encoder_ptr,
-      GST_OBJECT (new_encoder));
+  gst_object_replace((GstObject **) old_encoder_ptr, GST_OBJECT (new_encoder));
 }
 
 gboolean
@@ -1223,10 +1221,9 @@ gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
 static GstMfxEncoderStatus
 set_property (GstMfxEncoder * encoder, gint prop_id, const GValue * value)
 {
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   GstMfxEncoderStatus status = GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
   gboolean success = TRUE;
-  GstMfxEncoderPrivate *const priv =
-	  GST_MFX_ENCODER_GET_PRIVATE(encoder);
   g_assert (value != NULL);
 
   /* Handle codec-specific properties */
@@ -1245,77 +1242,77 @@ set_property (GstMfxEncoder * encoder, gint prop_id, const GValue * value)
       priv->rc_method = g_value_get_enum (value);
       break;
     case GST_MFX_ENCODER_PROP_BITRATE:
-		priv->bitrate = g_value_get_uint (value);
+      priv->bitrate = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_MAX_BUFFER_SIZE:
-		priv->max_buffer_size = g_value_get_uint (value);
+      priv->max_buffer_size = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_VBV_MAX_BITRATE:
-		priv->vbv_max_bitrate = g_value_get_uint (value);
+      priv->vbv_max_bitrate = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_BRC_MULTIPLIER:
-		priv->brc_multiplier = g_value_get_uint (value);
+      priv->brc_multiplier = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_IDR_INTERVAL:
-		priv->idr_interval = g_value_get_int (value);
+      priv->idr_interval = g_value_get_int (value);
       break;
     case GST_MFX_ENCODER_PROP_GOP_SIZE:
-		priv->gop_size = g_value_get_uint (value);
+      priv->gop_size = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_GOP_REFDIST:
       success = gst_mfx_encoder_set_gop_refdist (encoder,
-          g_value_get_int (value));
+                  g_value_get_int (value));
       break;
     case GST_MFX_ENCODER_PROP_NUM_REFS:
       success = gst_mfx_encoder_set_num_references (encoder,
-          g_value_get_uint (value));
+                  g_value_get_uint (value));
       break;
     case GST_MFX_ENCODER_PROP_NUM_SLICES:
-		priv->num_slices = g_value_get_uint (value);
+      priv->num_slices = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_QUANTIZER:
       success = gst_mfx_encoder_set_quantizer (encoder,
-          g_value_get_uint (value));
+                  g_value_get_uint (value));
       break;
     case GST_MFX_ENCODER_PROP_QPI:
       success = gst_mfx_encoder_set_qpi_offset (encoder,
-          g_value_get_uint (value));
+                  g_value_get_uint (value));
       break;
     case GST_MFX_ENCODER_PROP_QPP:
       success = gst_mfx_encoder_set_qpp_offset (encoder,
-          g_value_get_uint (value));
+                  g_value_get_uint (value));
       break;
     case GST_MFX_ENCODER_PROP_QPB:
       success = gst_mfx_encoder_set_qpb_offset (encoder,
-          g_value_get_uint (value));
+                  g_value_get_uint (value));
       break;
     case GST_MFX_ENCODER_PROP_MBBRC:
-		priv->mbbrc = g_value_get_enum (value);
+      priv->mbbrc = g_value_get_enum (value);
       break;
     case GST_MFX_ENCODER_PROP_EXTBRC:
-		priv->extbrc = g_value_get_enum (value);
+      priv->extbrc = g_value_get_enum (value);
       break;
     case GST_MFX_ENCODER_PROP_ADAPTIVE_I:
-		priv->adaptive_i = g_value_get_enum (value);
+      priv->adaptive_i = g_value_get_enum (value);
       break;
     case GST_MFX_ENCODER_PROP_ADAPTIVE_B:
-		priv->adaptive_b = g_value_get_enum (value);
+      priv->adaptive_b = g_value_get_enum (value);
       break;
     case GST_MFX_ENCODER_PROP_B_PYRAMID:
-		priv->b_strategy = g_value_get_enum (value);
+      priv->b_strategy = g_value_get_enum (value);
       break;
     case GST_MFX_ENCODER_PROP_ACCURACY:
-		priv->avbr_accuracy = g_value_get_uint (value);
+      priv->avbr_accuracy = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_CONVERGENCE:
-		priv->avbr_convergence = g_value_get_uint (value);
+      priv->avbr_convergence = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_PROP_PRESET:
-		priv->preset = g_value_get_enum (value);
+      priv->preset = g_value_get_enum (value);
       break;
     case GST_MFX_ENCODER_PROP_ASYNC_DEPTH:
       success = gst_mfx_encoder_set_async_depth (encoder,
-          g_value_get_uint (value));
+                  g_value_get_uint (value));
       break;
     default:
       success = FALSE;
@@ -1518,6 +1515,6 @@ gst_mfx_encoder_lookahead_ds_get_type (void)
 static void
 gst_mfx_encoder_class_init(GstMfxEncoderClass * klass)
 {
-	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
-	object_class->finalize = gst_mfx_encoder_finalize;
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_encoder_finalize;
 }

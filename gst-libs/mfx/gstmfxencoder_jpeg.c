@@ -60,8 +60,8 @@ gst_mfx_encoder_jpeg_init(GstMfxEncoderJpeg * base_encoder)
 static gboolean
 gst_mfx_encoder_jpeg_create(GstMfxEncoder * base_encoder)
 {
-	GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_JPEG;
-	return TRUE;
+  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_JPEG;
+  return TRUE;
 }
 
 static void
@@ -75,7 +75,8 @@ gst_mfx_encoder_jpeg_set_property (GstMfxEncoder * base_encoder,
 {
   switch (prop_id) {
     case GST_MFX_ENCODER_JPEG_PROP_QUALITY:
-		GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->jpeg_quality = g_value_get_uint (value);
+      GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->jpeg_quality =
+          g_value_get_uint (value);
       break;
     default:
       return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
@@ -89,7 +90,7 @@ gst_mfx_encoder_jpeg_new (GstMfxEncoderJpeg * encoder,
   const GstVideoInfo * info, gboolean mapped)
 {
   return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder),
-      aggregator, info, mapped);
+            aggregator, info, mapped);
 }
 
 /**
@@ -127,13 +128,13 @@ GST_MFX_ENCODER_DEFINE_CLASS_DATA(JPEG);
 static void
 gst_mfx_encoder_jpeg_class_init(GstMfxEncoderJpegClass * klass)
 {
-	GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
+  GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
 
-	encoder_class->class_data = &g_class_data;
-	encoder_class->create = gst_mfx_encoder_jpeg_create;
-	encoder_class->finalize = gst_mfx_encoder_jpeg_finalize;
-	encoder_class->reconfigure = gst_mfx_encoder_jpeg_reconfigure;
-	encoder_class->get_default_properties = gst_mfx_encoder_jpeg_get_default_properties;
+  encoder_class->class_data = &g_class_data;
+  encoder_class->create = gst_mfx_encoder_jpeg_create;
+  encoder_class->finalize = gst_mfx_encoder_jpeg_finalize;
+  encoder_class->reconfigure = gst_mfx_encoder_jpeg_reconfigure;
+  encoder_class->get_default_properties = gst_mfx_encoder_jpeg_get_default_properties;
 
-	encoder_class->set_property = gst_mfx_encoder_jpeg_set_property;
+  encoder_class->set_property = gst_mfx_encoder_jpeg_set_property;
 }

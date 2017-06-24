@@ -140,8 +140,8 @@ gst_mfx_encoder_h264_init(GstMfxEncoderH264 * base_encoder)
 static gboolean
 gst_mfx_encoder_h264_create(GstMfxEncoder * base_encoder)
 {
-	GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_AVC;
-	return TRUE;
+  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_AVC;
+  return TRUE;
 }
 
 static void
@@ -252,16 +252,16 @@ gst_mfx_encoder_h264_set_property (GstMfxEncoder * base_encoder,
       priv->max_slice_size = g_value_get_int (value);
       break;
     case GST_MFX_ENCODER_H264_PROP_LA_DEPTH:
-	  priv->la_depth = g_value_get_uint (value);
+      priv->la_depth = g_value_get_uint (value);
       break;
     case GST_MFX_ENCODER_H264_PROP_CABAC:
-	  priv->use_cabac = g_value_get_boolean (value);
+      priv->use_cabac = g_value_get_boolean (value);
       break;
     case GST_MFX_ENCODER_H264_PROP_TRELLIS:
-	  priv->trellis = g_value_get_enum (value);
+      priv->trellis = g_value_get_enum (value);
       break;
     case GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS:
-	  priv->look_ahead_downsampling = g_value_get_enum (value);
+      priv->look_ahead_downsampling = g_value_get_enum (value);
       break;
     default:
       return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
@@ -275,7 +275,7 @@ gst_mfx_encoder_h264_new (GstMfxEncoderH264 * encoder,
   const GstVideoInfo * info, gboolean mapped)
 {
   return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder),
-      aggregator, info, mapped);
+            aggregator, info, mapped);
 }
 
 /**
@@ -383,14 +383,14 @@ GST_MFX_ENCODER_DEFINE_CLASS_DATA(H264);
 static void
 gst_mfx_encoder_h264_class_init(GstMfxEncoderH264Class * klass)
 {
-	GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
+  GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
 
-	encoder_class->class_data = &g_class_data;
-	encoder_class->create = gst_mfx_encoder_h264_create;
-	encoder_class->finalize = gst_mfx_encoder_h264_finalize;
-	encoder_class->reconfigure = gst_mfx_encoder_h264_reconfigure;
-	encoder_class->get_default_properties = gst_mfx_encoder_h264_get_default_properties;
+  encoder_class->class_data = &g_class_data;
+  encoder_class->create = gst_mfx_encoder_h264_create;
+  encoder_class->finalize = gst_mfx_encoder_h264_finalize;
+  encoder_class->reconfigure = gst_mfx_encoder_h264_reconfigure;
+  encoder_class->get_default_properties = gst_mfx_encoder_h264_get_default_properties;
 
-	encoder_class->set_property = gst_mfx_encoder_h264_set_property;
-	encoder_class->get_codec_data = gst_mfx_encoder_h264_get_codec_data;
+  encoder_class->set_property = gst_mfx_encoder_h264_set_property;
+  encoder_class->get_codec_data = gst_mfx_encoder_h264_get_codec_data;
 }

@@ -191,8 +191,8 @@ gst_mfx_task_finalize (GObject * object)
 static void
 gst_mfx_task_class_init (GstMfxTaskClass * klass)
 {
-	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
-	object_class->finalize = gst_mfx_task_finalize;
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_task_finalize;
 }
 
 static void
@@ -280,7 +280,7 @@ gst_mfx_task_ref (GstMfxTask * task)
 void
 gst_mfx_task_unref (GstMfxTask * task)
 {
-	gst_object_unref (GST_OBJECT(task));
+  gst_object_unref (GST_OBJECT(task));
 }
 
 void
@@ -288,8 +288,7 @@ gst_mfx_task_replace (GstMfxTask ** old_task_ptr, GstMfxTask * new_task)
 {
   g_return_if_fail (old_task_ptr != NULL);
 
-  gst_object_replace ((GstObject **) old_task_ptr,
-      GST_OBJECT (new_task));
+  gst_object_replace ((GstObject **) old_task_ptr, GST_OBJECT (new_task));
 }
 
 

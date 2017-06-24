@@ -420,14 +420,14 @@ GST_MFX_ENCODER_DEFINE_CLASS_DATA(H265);
 static void
 gst_mfx_encoder_h265_class_init(GstMfxEncoderH265Class * klass)
 {
-	GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
+  GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
 
-	encoder_class->class_data = &g_class_data;
-	encoder_class->create = gst_mfx_encoder_h265_create;
-	encoder_class->finalize = gst_mfx_encoder_h265_finalize;
-	encoder_class->reconfigure = gst_mfx_encoder_h265_reconfigure;
-	encoder_class->get_default_properties = gst_mfx_encoder_h265_get_default_properties;
+  encoder_class->class_data = &g_class_data;
+  encoder_class->create = gst_mfx_encoder_h265_create;
+  encoder_class->finalize = gst_mfx_encoder_h265_finalize;
+  encoder_class->reconfigure = gst_mfx_encoder_h265_reconfigure;
+  encoder_class->get_default_properties = gst_mfx_encoder_h265_get_default_properties;
 
-	encoder_class->set_property = gst_mfx_encoder_h265_set_property;
-	encoder_class->get_codec_data = gst_mfx_encoder_h265_get_codec_data;
+  encoder_class->set_property = gst_mfx_encoder_h265_set_property;
+  encoder_class->get_codec_data = gst_mfx_encoder_h265_get_codec_data;
 }

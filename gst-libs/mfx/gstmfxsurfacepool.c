@@ -173,7 +173,7 @@ gst_mfx_surface_pool_ref (GstMfxSurfacePool * pool)
 void
 gst_mfx_surface_pool_unref (GstMfxSurfacePool * pool)
 {
-	gst_object_unref (GST_OBJECT(pool));
+  gst_object_unref (GST_OBJECT(pool));
 }
 
 void
@@ -182,8 +182,7 @@ gst_mfx_surface_pool_replace (GstMfxSurfacePool ** old_pool_ptr,
 {
   g_return_if_fail (old_pool_ptr != NULL);
 
-  gst_object_replace ((GstObject **) old_pool_ptr,
-	  GST_OBJECT (new_pool));
+  gst_object_replace ((GstObject **) old_pool_ptr, GST_OBJECT (new_pool));
 }
 
 
@@ -289,6 +288,6 @@ gst_mfx_surface_pool_init(GstMfxSurfacePool * pool)
 static void
 gst_mfx_surface_pool_class_init(GstMfxSurfacePoolClass * klass)
 {
-	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
-	object_class->finalize = gst_mfx_surface_pool_finalize;
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_surface_pool_finalize;
 }

@@ -114,13 +114,11 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
   mfxSession session;
   const char *desc;
 
-  mfxInitParam init_params;
-
-  memset (&init_params, 0, sizeof (init_params));
+  mfxInitParam init_params = { 0 };
 
   //init_params.GPUCopy = MFX_GPUCOPY_ON;
   init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
-#if defined(_WIN32) || defined(_WIN64)
+#if WITH_D3D11_BACKEND
   init_params.Implementation |= MFX_IMPL_VIA_D3D11;
 #endif
   init_params.Version.Major = 1;
@@ -253,6 +251,6 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
 static void
 gst_mfx_task_aggregator_class_init(GstMfxTaskAggregatorClass * klass)
 {
-	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
-	object_class->finalize = gst_mfx_task_aggregator_finalize;
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_task_aggregator_finalize;
 }

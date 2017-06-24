@@ -111,7 +111,7 @@ gst_mfx_encoder_mpeg2_new (GstMfxEncoderMpeg2 * encoder,
   const GstVideoInfo * info, gboolean mapped)
 {
   return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder),
-      aggregator, info, mapped);
+            aggregator, info, mapped);
 }
 
 /**
@@ -145,11 +145,11 @@ GST_MFX_ENCODER_DEFINE_CLASS_DATA(MPEG2);
 static void
 gst_mfx_encoder_mpeg2_class_init(GstMfxEncoderMpeg2Class * klass)
 {
-	GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
+  GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
 
-	encoder_class->class_data = &g_class_data;
-	encoder_class->create = gst_mfx_encoder_mpeg2_create;
-	encoder_class->finalize = gst_mfx_encoder_mpeg2_finalize;
-	encoder_class->reconfigure = gst_mfx_encoder_mpeg2_reconfigure;
-	encoder_class->get_default_properties = gst_mfx_encoder_mpeg2_get_default_properties;
+  encoder_class->class_data = &g_class_data;
+  encoder_class->create = gst_mfx_encoder_mpeg2_create;
+  encoder_class->finalize = gst_mfx_encoder_mpeg2_finalize;
+  encoder_class->reconfigure = gst_mfx_encoder_mpeg2_reconfigure;
+  encoder_class->get_default_properties = gst_mfx_encoder_mpeg2_get_default_properties;
 }

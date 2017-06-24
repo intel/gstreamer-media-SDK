@@ -457,13 +457,13 @@ gst_mfx_filter_init(GstMfxFilter * filter)
 static void
 gst_mfx_filter_class_init(GstMfxFilterClass * klass)
 {
-	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
-	object_class->finalize = gst_mfx_filter_finalize;
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_filter_finalize;
 }
 
 GstMfxFilter *
 gst_mfx_filter_new (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
-    gboolean is_system_in, gboolean is_system_out)
+  gboolean is_system_in, gboolean is_system_out)
 {
   g_return_val_if_fail(filter != NULL, NULL);
   g_return_val_if_fail (aggregator != NULL, NULL);
@@ -507,8 +507,7 @@ gst_mfx_filter_ref (GstMfxFilter * filter)
 {
   g_return_val_if_fail (filter != NULL, NULL);
 
-  return
-      GST_MFX_FILTER (gst_object_ref (GST_OBJECT (filter)));
+  return gst_object_ref (GST_OBJECT (filter));
 }
 
 void
@@ -526,8 +525,7 @@ gst_mfx_filter_replace (GstMfxFilter ** old_filter_ptr,
 {
   g_return_if_fail (old_filter_ptr != NULL);
 
-  gst_object_replace ((GstObject **) old_filter_ptr,
-      GST_OBJECT (new_filter));
+  gst_object_replace ((GstObject **) old_filter_ptr, GST_OBJECT (new_filter));
 }
 
 gboolean

@@ -441,21 +441,20 @@ error:
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder)
 {
-	return ((gpointer)gst_object_ref (GST_OBJECT(decoder)));
+  return gst_object_ref (GST_OBJECT(decoder));
 }
 
 void
 gst_mfx_decoder_unref (GstMfxDecoder * decoder)
 {
-	gst_object_unref (GST_OBJECT(decoder));
+  gst_object_unref (GST_OBJECT(decoder));
 }
 
 void
 gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
     GstMfxDecoder * new_decoder)
 {
-	gst_object_replace((GstObject **) old_decoder_ptr,
-		GST_OBJECT (new_decoder));
+  gst_object_replace((GstObject **) old_decoder_ptr, GST_OBJECT (new_decoder));
 }
 
 static GstMfxDecoderStatus
@@ -947,6 +946,6 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
 static void
 gst_mfx_decoder_class_init(GstMfxDecoderClass * klass)
 {
-	GObjectClass *const object_class = G_OBJECT_CLASS(klass);
-	object_class->finalize = gst_mfx_decoder_finalize;
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_decoder_finalize;
 }
