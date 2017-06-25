@@ -333,7 +333,8 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
   if (!profile.profile)
     profile = best_profile;
   level_str = gst_structure_get_string (structure, "level");
-  profile.level = gst_mfx_profile_get_level(profile.codec, level_str);
+  if (level_str)
+    profile.level = gst_mfx_profile_get_level(profile.codec, level_str);
 
   return profile;
 }
