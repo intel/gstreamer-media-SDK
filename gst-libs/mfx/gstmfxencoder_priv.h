@@ -150,7 +150,7 @@ gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass);
 
 typedef struct _GstMfxEncoderPrivate          GstMfxEncoderPrivate;
 
-struct _GstMfxEncoderPrivate 
+struct _GstMfxEncoderPrivate
 {
   GstMfxEncoder			 *parent;
   GPtrArray              *properties;
@@ -162,6 +162,7 @@ struct _GstMfxEncoderPrivate
   GByteArray             *bitstream;
   gboolean                memtype_is_system;
   gboolean                shared;
+  gboolean                inited;
 
   mfxSession              session;
   mfxVideoParam           params;

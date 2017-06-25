@@ -930,16 +930,13 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 }
 
 GstMfxEncoderStatus
-gst_mfx_encoder_start (GstMfxEncoder *encoder)
+gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
 {
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   mfxStatus sts = MFX_ERR_NONE;
   mfxFrameAllocRequest *request;
   mfxFrameAllocRequest enc_request;
   gboolean memtype_is_system = FALSE;
-  guint shared_task_type = 0;
-
-  GstMfxEncoderPrivate *const priv =
-	  GST_MFX_ENCODER_GET_PRIVATE(encoder);
 
   /* Use input system memory with SW HEVC encoder or when linked directly
    * with SW HEVC decoder decoding HEVC main-10 streams */
@@ -1008,8 +1005,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
         (enc_request.NumFrameSuggested - priv->params.AsyncDepth + 1);
     request->NumFrameMin = request->NumFrameSuggested;
 
-    shared_task_type = gst_mfx_task_get_task_type(priv->encode);
-    gst_mfx_task_set_task_type (priv->encode, GST_MFX_TASK_ENCODER);
+    gst_mfx_task_set_task_type(priv->encode,
+      gst_mfx_task_get_task_type(priv->encode) | GST_MFX_TASK_ENCODER);
   }
   else {
     request = &enc_request;
@@ -1035,6 +1032,18 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
+  GST_INFO ("Preparing MFX encoder task using input %s memory surfaces",
+    memtype_is_system ? "system" : "video");
+
+  return GST_MFX_ENCODER_STATUS_SUCCESS;
+}
+
+static GstMfxEncoderStatus
+gst_mfx_encoder_start (GstMfxEncoder * encoder)
+{
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  mfxStatus sts = MFX_ERR_NONE;
+
   gst_mfx_task_aggregator_set_current_task(priv->aggregator, priv->encode);
 
   sts = MFXVideoENCODE_Init (priv->session, &priv->params);
@@ -1043,15 +1052,8 @@ gst_mfx_encoder_start (GstMfxEncoder *encoder)
     return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
   }
 
-  //if (priv->shared)
-    //gst_mfx_task_set_task_type(priv->encode,
-      //shared_task_type | GST_MFX_TASK_ENCODER);
-
   memset (&priv->params, 0, sizeof(mfxVideoParam));
   MFXVideoENCODE_GetVideoParam (priv->session, &priv->params);
-
-  GST_INFO ("Initialized MFX encoder task using input %s memory surfaces",
-    memtype_is_system ? "system" : "video");
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
@@ -1089,6 +1091,13 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
     }
     surface = filter_surface;
+  }
+
+  if (G_UNLIKELY (!priv->inited)) {
+    GstMfxEncoderStatus ret = gst_mfx_encoder_start (encoder);
+    if (ret != GST_MFX_ENCODER_STATUS_SUCCESS)
+      return ret;
+    priv->inited = TRUE;
   }
 
   insurf = gst_mfx_surface_get_frame_surface (surface);

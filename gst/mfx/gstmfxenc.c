@@ -367,7 +367,7 @@ gst_mfxenc_set_format (GstVideoEncoder * venc, GstVideoCodecState * state)
   if (!set_codec_state (encode, state))
     return FALSE;
 
-  status = gst_mfx_encoder_start (encode->encoder);
+  status = gst_mfx_encoder_prepare (encode->encoder);
   if (GST_MFX_ENCODER_STATUS_SUCCESS != status)
     return FALSE;
 

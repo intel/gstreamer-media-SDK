@@ -192,7 +192,7 @@ gboolean
 gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth);
 
 GstMfxEncoderStatus
-gst_mfx_encoder_start (GstMfxEncoder * encoder);
+gst_mfx_encoder_prepare (GstMfxEncoder * encoder);
 
 GstMfxEncoderStatus
 gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame);

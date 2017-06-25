@@ -40,8 +40,8 @@ find_response (gconstpointer response_data, gconstpointer response)
 }
 
 mfxStatus
-gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
-    mfxFrameAllocResponse * resp)
+gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
+    mfxFrameAllocResponse * response)
 {
   GstMfxTask *task =
       gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
@@ -56,36 +56,32 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   ResponseData *response_data;
 
   if (priv->saved_responses
-      && gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
+      && gst_mfx_task_has_type(task,
+          GST_MFX_TASK_DECODER | GST_MFX_TASK_VPP_OUT)
+      && (request->Type & MFX_MEMTYPE_INTERNAL_FRAME) == 0) {
     GList *l = g_list_last (priv->saved_responses);
     if (l) {
       response_data = l->data;
-      *resp = response_data->response;
+      *response = response_data->response;
       return MFX_ERR_NONE;
     }
   }
 
-  memset (resp, 0, sizeof (mfxFrameAllocResponse));
-
-  if (!(req->Type
+  if (!(request->Type
       & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET
         | MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
-    GST_ERROR ("Unsupported surface type: %d\n", req->Type);
+    GST_ERROR ("Unsupported surface type: %d\n", request->Type);
     return MFX_ERR_UNSUPPORTED;
   }
 
   response_data = g_malloc0 (sizeof (ResponseData));
-  response_data->frame_info = req->Info;
+  response_data->frame_info = request->Info;
   info = &response_data->frame_info;
 
-  if (info->FourCC != MFX_FOURCC_P8) {
-    response_data->num_surfaces =
-        priv->request.NumFrameSuggested < req->NumFrameSuggested ?
-        req->NumFrameSuggested : priv->request.NumFrameSuggested;
-  }
-  else {
-    response_data->num_surfaces = req->NumFrameSuggested;
-  }
+  if (request->Type & MFX_MEMTYPE_INTERNAL_FRAME)
+    response_data->num_surfaces = request->NumFrameSuggested;
+  else
+    response_data->num_surfaces = priv->request.NumFrameSuggested;
 
   num_surfaces = response_data->num_surfaces;
 
@@ -112,7 +108,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
     GST_MFX_DISPLAY_LOCK (display);
     sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (display),
         gst_mfx_video_format_to_va_format (info->FourCC),
-        req->Info.Width, req->Info.Height,
+        request->Info.Width, request->Info.Height,
         response_data->surfaces, num_surfaces, &attrib, 1);
     GST_MFX_DISPLAY_UNLOCK (display);
     if (!vaapi_check_status (sts, "vaCreateSurfaces ()")) {
@@ -128,9 +124,9 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
       response_data->mids[i] = mid;
     }
   } else {
-    VAContextID context_id = req->reserved[0];
-    int width32 =  32 * ((req->Info.Width + 31) >> 5);
-    int height32 = 32 * ((req->Info.Height + 31) >> 5);
+    VAContextID context_id = request->reserved[0];
+    int width32 =  32 * ((request->Info.Width + 31) >> 5);
+    int height32 = 32 * ((request->Info.Height + 31) >> 5);
     int codedbuf_size = (width32 * height32) * 400LL / (16 * 16);
 
     response_data->coded_buf =
@@ -152,10 +148,10 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
     }
   }
 
-  resp->mids = response_data->mids;
-  resp->NumFrameActual = num_surfaces;
+  response->mids = response_data->mids;
+  response->NumFrameActual = num_surfaces;
 
-  response_data->response = *resp;
+  response_data->response = *response;
   priv->saved_responses = g_list_prepend (priv->saved_responses, response_data);
 
   return MFX_ERR_NONE;
@@ -175,7 +171,7 @@ error_allocate_memory:
 }
 
 mfxStatus
-gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
+gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * response)
 {
   GstMfxTask *task =
       gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
@@ -185,7 +181,7 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
   mfxU16 i, num_surfaces;
   ResponseData *response_data;
 
-  GList *l = g_list_find_custom (priv->saved_responses, resp,
+  GList *l = g_list_find_custom (priv->saved_responses, response,
       find_response);
   if (!l)
     return MFX_ERR_NOT_FOUND;

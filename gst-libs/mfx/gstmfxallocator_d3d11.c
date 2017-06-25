@@ -74,7 +74,9 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   guint i;
 
   if (priv->saved_responses
-      && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
+      && gst_mfx_task_has_type(task,
+          GST_MFX_TASK_DECODER | GST_MFX_TASK_VPP_OUT)
+      && (request->Type & MFX_MEMTYPE_INTERNAL_FRAME) == 0) {
     GList *l = g_list_last(priv->saved_responses);
     if (l) {
       response_data = l->data;
@@ -83,11 +85,13 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     }
   }
 
-  memset(response, 0, sizeof(mfxFrameAllocResponse));
-
   response_data = g_malloc0(sizeof(ResponseData));
   response_data->frame_info = request->Info;
-  response_data->num_surfaces = request->NumFrameSuggested;
+
+  if (request->Type & MFX_MEMTYPE_INTERNAL_FRAME)
+    response_data->num_surfaces = request->NumFrameSuggested;
+  else
+    response_data->num_surfaces = priv->request.NumFrameSuggested;
 
   /* Allocate custom container to keep texture and stage buffers for each surface.
    * Container also stores the intended read and/or write operation. */
@@ -167,7 +171,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
       desc.BindFlags = 0;
 
     /* Create surface textures */
-    for (i = 0; i < request->NumFrameSuggested / desc.ArraySize; i++) {
+    for (i = 0; i < response_data->num_surfaces / desc.ArraySize; i++) {
       hr =
         ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
           NULL, &texture);
@@ -185,7 +189,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     //desc.MiscFlags        = D3D11_RESOURCE_MISC_SHARED;
 
     /* Create surface staging textures */
-    for (i = 0; i < request->NumFrameSuggested; i++) {
+    for (i = 0; i < response_data->num_surfaces; i++) {
       hr =
         ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
           NULL, &texture);
@@ -197,7 +201,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   }
 
   response->mids = (mfxMemId *)response_data->mids;
-  response->NumFrameActual = request->NumFrameSuggested;
+  response->NumFrameActual = response_data->num_surfaces;
 
   response_data->response = *response;
   priv->saved_responses = g_list_prepend(priv->saved_responses, response_data);
