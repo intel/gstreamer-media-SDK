@@ -498,8 +498,13 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       &vpp->sinkpad_info);
   }
 
-  if (plugin->srcpad_caps_is_raw)
-    gst_mfx_task_aggregator_update_peer_memtypes (plugin->aggregator, TRUE);
+  if (plugin->srcpad_caps_is_raw) {
+    GstMfxTask *vpp_task =
+        gst_mfx_task_aggregator_get_last_task(plugin->aggregator);
+    gst_mfx_task_aggregator_update_peer_memtypes(plugin->aggregator,
+      vpp_task, TRUE);
+    gst_mfx_task_unref(vpp_task);
+  }
 
 done:
   gst_mfx_task_replace(&task, NULL);

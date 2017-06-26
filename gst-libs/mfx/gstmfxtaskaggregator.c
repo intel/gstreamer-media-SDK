@@ -220,15 +220,16 @@ gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
 
 void
 gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
-    gboolean memtype_is_system)
+  GstMfxTask * task, gboolean memtype_is_system)
 {
   GstMfxTask *upstream_task;
   guint task_index;
   mfxVideoParam *params;
 
-  g_return_if_fail (aggregator != NULL);
+  g_return_if_fail(aggregator != NULL);
+  g_return_if_fail(task != NULL);
 
-  task_index = g_list_index (aggregator->tasks, aggregator->current_task);
+  task_index = g_list_index (aggregator->tasks, task);
 
   do {
     upstream_task = g_list_nth_data (aggregator->tasks, task_index++);

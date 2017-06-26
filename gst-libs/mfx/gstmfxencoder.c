@@ -988,7 +988,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
     }
 
     gst_mfx_task_aggregator_update_peer_memtypes (priv->aggregator,
-      memtype_is_system);
+      priv->encode, memtype_is_system);
 
     request = gst_mfx_task_get_request(priv->encode);
 
@@ -1017,9 +1017,10 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
   }
 
   if (MFX_FOURCC_NV12 != priv->frame_info.FourCC) {
-    priv->filter = gst_mfx_filter_new_with_task (g_object_new(GST_TYPE_MFX_FILTER, NULL),
-		priv->aggregator, priv->encode, GST_MFX_TASK_VPP_OUT,
-        priv->memtype_is_system, memtype_is_system);
+    priv->filter = gst_mfx_filter_new_with_task (
+      g_object_new(GST_TYPE_MFX_FILTER, NULL), priv->aggregator,
+      priv->encode, GST_MFX_TASK_VPP_OUT,
+      priv->memtype_is_system, memtype_is_system);
 
     request->NumFrameSuggested += (1 - priv->params.AsyncDepth);
 
