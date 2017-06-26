@@ -93,16 +93,20 @@ if gstpbutils_dep.found()
   with_pbutils = true
 endif
 
-python = find_program('python')
-mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", os.environ.get("MFX_HOME", "")))').stdout().strip()
-
-if mfx_home != ''
-  mfx_libdir = [mfx_home + '/lib/lin_x64', mfx_home + '/lib/x64']
-  mfx_incdir = include_directories(mfx_home + '/include')
-  mfx_lib = cc.find_library('mfx', dirs: mfx_libdir)
-  mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: [mfx_lib])
-  gst_mfx_deps += mfx_dep
+mfx_dep = dependency('mfx', required: false) #find libmfx using pkgconfig first
+if mfx_dep.found() == false # otherwise look into Media SDK/Media Server Studio directories
+  python = find_program('python')
+  mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", os.environ.get("MFX_HOME", "")))').stdout().strip()
+  
+  if mfx_home != ''
+    mfx_libdir = [mfx_home + '/lib/lin_x64', mfx_home + '/lib/x64']
+    mfx_incdir = include_directories(mfx_home + '/include')
+    mfx_lib = cc.find_library('mfx', dirs: mfx_libdir)
+    mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: [mfx_lib])
+  endif
 endif
+
+gst_mfx_deps += mfx_dep
 
 if host_machine.system() == 'windows'
   legacy_stdio_dep = cc.find_library('legacy_stdio_definitions')
