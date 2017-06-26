@@ -123,6 +123,18 @@ static const struct map gst_mfx_mpeg2_level_map[] = {
   { 0, NULL }
 };
 
+static const struct map gst_mfx_vc1_level_map[] = {
+  { MFX_LEVEL_VC1_LOW,      "low"     },
+  { MFX_LEVEL_VC1_MEDIAN,   "medium"  },
+  { MFX_LEVEL_VC1_HIGH,     "high"    },
+  { MFX_LEVEL_VC1_0,        "0"       },
+  { MFX_LEVEL_VC1_1,        "1"       },
+  { MFX_LEVEL_VC1_2,        "2"       },
+  { MFX_LEVEL_VC1_3,        "3"       },
+  { MFX_LEVEL_VC1_4,        "4"       },
+  { 0, NULL }
+};
+
 static mfxU16
 map_lookup_value(const struct map *m, gchar * level_str)
 {
@@ -145,6 +157,9 @@ gst_mfx_profile_get_level(mfxU32 codec, gchar * level_str)
       break;
     case MFX_CODEC_MPEG2:
       m = gst_mfx_mpeg2_level_map;
+      break;
+    case MFX_CODEC_VC1:
+      m = gst_mfx_vc1_level_map;
       break;
     default:
       break;

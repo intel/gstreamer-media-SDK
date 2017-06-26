@@ -56,8 +56,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
   ResponseData *response_data;
 
   if (priv->saved_responses
-      && gst_mfx_task_has_type(task,
-          GST_MFX_TASK_DECODER | GST_MFX_TASK_VPP_OUT)
+      && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)
       && (request->Type & MFX_MEMTYPE_INTERNAL_FRAME) == 0) {
     GList *l = g_list_last (priv->saved_responses);
     if (l) {

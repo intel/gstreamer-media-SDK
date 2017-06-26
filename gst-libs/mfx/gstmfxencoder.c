@@ -614,7 +614,10 @@ gst_mfx_encoder_finalize (GObject * object)
 	priv->properties = NULL;
   }
 
+  /* Make sure frame allocator points to the right task
+  * to free up all internally allocated surfaces */
   gst_mfx_task_aggregator_set_current_task(priv->aggregator, priv->encode);
+  /* calls gst_mfx_task_frame_free() when configured with video memory */
   MFXVideoENCODE_Close (priv->session);
 
   gst_mfx_task_aggregator_unref (priv->aggregator);
@@ -1044,8 +1047,10 @@ gst_mfx_encoder_start (GstMfxEncoder * encoder)
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   mfxStatus sts = MFX_ERR_NONE;
 
+  /* Make sure frame allocator points to the right task
+   * to allocate any internal surfaces */
   gst_mfx_task_aggregator_set_current_task(priv->aggregator, priv->encode);
-
+  /* calls gst_mfx_task_frame_alloc() when configured with video memory */
   sts = MFXVideoENCODE_Init (priv->session, &priv->params);
   if (sts < 0) {
     GST_ERROR ("Error initializing the MFX video encoder %d", sts);

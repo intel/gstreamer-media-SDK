@@ -35,7 +35,7 @@ struct _GstMfxTaskAggregator
   GstObject parent_instance;
 
   GstMfxContext *context;
-  GList *cache;
+  GList *tasks;
   GstMfxTask *current_task;
   mfxSession parent_session;
 };
@@ -49,13 +49,13 @@ gst_mfx_task_aggregator_finalize (GObject * object)
 
   gst_mfx_context_replace(&aggregator->context, NULL);
   MFXClose (aggregator->parent_session);
-  g_list_free(aggregator->cache);
+  g_list_free(aggregator->tasks);
 }
 
 static void
 gst_mfx_task_aggregator_init(GstMfxTaskAggregator * aggregator)
 {
-	aggregator->cache = NULL;
+	aggregator->tasks = NULL;
   aggregator->context = NULL;
 }
 
@@ -188,7 +188,7 @@ gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  GList *l = g_list_first (aggregator->cache);
+  GList *l = g_list_first (aggregator->tasks);
   return l ? gst_mfx_task_ref(GST_MFX_TASK(l->data)) : NULL;
 }
 
@@ -199,7 +199,7 @@ gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
   g_return_if_fail (aggregator != NULL);
   g_return_if_fail (task != NULL);
 
-  aggregator->cache = g_list_prepend (aggregator->cache, task);
+  aggregator->tasks = g_list_prepend (aggregator->tasks, task);
 }
 
 void
@@ -211,11 +211,11 @@ gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
   g_return_if_fail (aggregator != NULL);
   g_return_if_fail (task != NULL);
 
-  elem = g_list_find (aggregator->cache, task);
+  elem = g_list_find (aggregator->tasks, task);
   if (!elem)
     return;
 
-  aggregator->cache = g_list_delete_link (aggregator->cache, elem);
+  aggregator->tasks = g_list_delete_link (aggregator->tasks, elem);
 }
 
 void
@@ -228,10 +228,10 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
 
   g_return_if_fail (aggregator != NULL);
 
-  task_index = g_list_index (aggregator->cache, aggregator->current_task);
+  task_index = g_list_index (aggregator->tasks, aggregator->current_task);
 
   do {
-    upstream_task = g_list_nth_data (aggregator->cache, task_index++);
+    upstream_task = g_list_nth_data (aggregator->tasks, task_index++);
     if (!upstream_task)
       break;
     params = gst_mfx_task_get_video_params (upstream_task);

@@ -68,6 +68,7 @@ gst_mfx_composite_filter_finalize (GstMfxCompositeFilter * filter)
   g_slice_free1 ((sizeof (mfxExtBuffer *)), filter->ext_buffer);
   gst_mfx_surface_pool_replace(&filter->out_pool, NULL);
 
+  /* Make sure frame allocator points to the right task to free surfaces */
   gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp);
   gst_mfx_task_frame_free(filter->aggregator, &filter->response);
 
@@ -106,7 +107,7 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
   filter->num_rect = num_rect;
 
   /* Set number of input stream to composed
-   * Input Stream = Number of rectangle + number of base surface*/
+   * Input Stream = Number of rectangle + base surface */
   filter->composite.NumInputStream = num_rect + 1;
 
   if(!filter->composite.InputStream) {
@@ -275,20 +276,23 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
   /* Allocate output surface for final composition */
   if (filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY) {
     gst_mfx_task_use_video_memory(filter->vpp);
-
     MFXVideoVPP_QueryIOSurf(filter->session, &filter->params, filter->request);
 
+    gst_mfx_task_set_request(filter->vpp, &filter->request[1]);
+    /* Make sure frame allocator points to the right task to allocate surfaces */
     gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp);
-    mfxStatus sts = gst_mfx_task_frame_alloc(filter->aggregator, &filter->request[1],
-                      &filter->response);
+
+    mfxStatus sts = gst_mfx_task_frame_alloc(filter->aggregator,
+                      &filter->request[1], &filter->response);
     if (MFX_ERR_NONE != sts)
       return FALSE;
-  } else {
-    MFXVideoVPP_QueryIOSurf(filter->session, &filter->params, filter->request);
-    gst_mfx_task_ensure_memtype_is_system(filter->vpp);
   }
+  else {
+    gst_mfx_task_ensure_memtype_is_system(filter->vpp);
+    MFXVideoVPP_QueryIOSurf(filter->session, &filter->params, filter->request);
 
-  gst_mfx_task_set_request(filter->vpp, &filter->request[1]);
+    gst_mfx_task_set_request(filter->vpp, &filter->request[1]);
+  }
 
   filter->out_pool = gst_mfx_surface_pool_new_with_task(
     g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), filter->vpp);

@@ -159,8 +159,10 @@ init_decoder (GstMfxDecoder * decoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
 
-  gst_mfx_task_aggregator_set_current_task(decoder->aggregator, decoder->decode);
-
+  /* Make sure frame allocator points to the right task to allocate surfaces */
+  gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
+    decoder->decode);
+  /* calls gst_mfx_task_frame_alloc() when configured with video memory */
   sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
   if (sts < 0) {
     GST_ERROR ("Error initializing the MFX video decoder %d", sts);
@@ -180,7 +182,10 @@ static void
 close_decoder (GstMfxDecoder * decoder)
 {
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
-  gst_mfx_task_aggregator_set_current_task(decoder->aggregator, decoder->decode);
+  /* Make sure frame allocator points to the right task to free surfaces */
+  gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
+    decoder->decode);
+  /* calls gst_mfx_task_frame_free() when configured with video memory */
   MFXVideoDECODE_Close (decoder->session);
 }
 
@@ -343,7 +348,7 @@ task_init (GstMfxDecoder * decoder)
   }
 
   decoder->memtype_is_system =
-    !!(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+      !!(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   decoder->request.Type = decoder->memtype_is_system ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
