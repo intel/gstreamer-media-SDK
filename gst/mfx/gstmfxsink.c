@@ -912,7 +912,8 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   if (sink->window) {
     if (!sink->foreign_window || sink->fullscreen)
       gst_mfx_window_set_size (sink->window, win_width, win_height);
-  } else {
+  }
+  else {
     gst_video_overlay_prepare_window_handle (GST_VIDEO_OVERLAY (sink));
     if (sink->window)
       return TRUE;

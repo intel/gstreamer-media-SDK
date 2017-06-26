@@ -42,6 +42,11 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
   HRESULT hr = S_OK;
   MSG msg;
 
+  if (!priv2->d3d11_video_context) {
+    GST_ERROR("Failed to render surface : D3D11 context does not exist.");
+    return FALSE;
+  }
+
   ID3D11VideoProcessorInputView *input_view = NULL;
   D3D11_VIDEO_PROCESSOR_STREAM stream_data;
   D3D11_VIDEO_PROCESSOR_INPUT_VIEW_DESC input_view_desc = {
@@ -97,8 +102,8 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
   stream_data.ppFutureSurfacesRight = NULL;
   stream_data.pInputSurfaceRight = NULL;
 
-  ID3D11VideoContext_VideoProcessorSetStreamSourceRect(priv2->d3d11_video_context,
-    priv2->processor, 0, TRUE, &rect);
+  ID3D11VideoContext_VideoProcessorSetStreamSourceRect(
+    priv2->d3d11_video_context, priv2->processor, 0, TRUE, &rect);
 
   if (priv2->keep_aspect) {
     D3D11_TEXTURE2D_DESC output_desc;
@@ -111,14 +116,16 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
     window_ratio = (gdouble)priv->width / priv->height;
 
     if (src_ratio > window_ratio) {
-      gdouble new_height = (gdouble)output_desc.Height * window_ratio / src_ratio;
+      gdouble new_height =
+          (gdouble)output_desc.Height * window_ratio / src_ratio;
       dest_rect.top = (output_desc.Height - new_height) / 2;
       dest_rect.bottom = new_height + dest_rect.top;
       dest_rect.left = 0;
       dest_rect.right = output_desc.Width;
     }
     else if (src_ratio < window_ratio) {
-      gdouble new_width = (gdouble)output_desc.Width * src_ratio / window_ratio;
+      gdouble new_width =
+          (gdouble)output_desc.Width * src_ratio / window_ratio;
       dest_rect.top = 0;
       dest_rect.bottom = output_desc.Height;
       dest_rect.left = (output_desc.Width - new_width) / 2;
@@ -131,12 +138,13 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
       dest_rect.right = output_desc.Width;
     }
 
-    ID3D11VideoContext_VideoProcessorSetStreamDestRect(priv2->d3d11_video_context,
-      priv2->processor, 0, TRUE, &dest_rect);
+    ID3D11VideoContext_VideoProcessorSetStreamDestRect(
+      priv2->d3d11_video_context, priv2->processor, 0, TRUE, &dest_rect);
   }
 
-  ID3D11VideoContext_VideoProcessorGetStreamFrameFormat(priv2->d3d11_video_context,
-    priv2->processor, 0, D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE);
+  ID3D11VideoContext_VideoProcessorGetStreamFrameFormat(
+    priv2->d3d11_video_context, priv2->processor,
+    0, D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE);
 
   hr = ID3D11VideoContext_VideoProcessorBlt(priv2->d3d11_video_context,
     priv2->processor, priv2->output_view, 0, 1, &stream_data);
@@ -147,7 +155,6 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
 
   return TRUE;
 }
-
 
 gst_mfx_window_d3d11_show(GstMfxWindow * window)
 {
@@ -189,7 +196,8 @@ WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 static gboolean
 gst_mfx_window_d3d11_create_output_view(GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv = GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv =
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   D3D11_VIDEO_PROCESSOR_OUTPUT_VIEW_DESC output_view_desc = {
     .ViewDimension = D3D11_VPOV_DIMENSION_TEXTURE2D,
     .Texture2D.MipSlice = 0,
@@ -210,7 +218,8 @@ gst_mfx_window_d3d11_create_output_view(GstMfxWindow * window)
 static gboolean
 gst_mfx_window_d3d11_create_video_processor(GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv = GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv =
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   D3D11_VIDEO_PROCESSOR_CONTENT_DESC content_desc;
   HRESULT hr = S_OK;
 
@@ -244,7 +253,8 @@ gst_mfx_window_d3d11_create_video_processor(GstMfxWindow * window)
 static gboolean
 gst_mfx_window_d3d11_init_swap_chain(GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv = GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv =
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = { 0 };
   HRESULT hr = S_OK;
 
@@ -453,8 +463,6 @@ d3d11_create_window_internal (GstMfxWindow * window)
   }
 
   SetWindowLongPtr(priv->hwnd, GWLP_USERDATA, (LONG_PTR)window);
-
-  
 
   return TRUE;
 }
