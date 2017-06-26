@@ -515,8 +515,8 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
     memset(&priv->d3d11_window, 0, sizeof(WNDCLASS));
   }
 
-  gst_mfx_device_replace(&priv->device, NULL);
   gst_mfx_surface_replace(&priv->mapped_surface, NULL);
+  gst_mfx_device_unref(priv->device);
   return TRUE;
 }
 
@@ -558,8 +558,11 @@ GstMfxWindow *
 gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context,
   GstVideoInfo * info, gboolean keep_aspect, gboolean fullscreen)
 {
+  g_return_val_if_fail(context != NULL, NULL);
+  g_return_val_if_fail(info != NULL, NULL);
+
   GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->device =
-      gst_mfx_context_get_device(context);
+      gst_mfx_device_ref(gst_mfx_context_get_device(context));
   GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->info = *info;
   GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->keep_aspect = keep_aspect;
   GST_MFX_WINDOW_GET_PRIVATE(window)->is_fullscreen = fullscreen;

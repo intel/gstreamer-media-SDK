@@ -74,8 +74,6 @@ gst_mfx_surface_d3d11_allocate(GstMfxSurface * surface, GstMfxTask * task)
 
     d3d_surface->device = gst_mfx_context_get_device(priv->context);
     d3d11_device = gst_mfx_device_get_handle(d3d_surface->device);
-    if (!d3d11_device)
-      return FALSE;
 
     format = gst_mfx_fourcc_to_dxgi_format(frame_info->FourCC);
     if (DXGI_FORMAT_UNKNOWN == format)
