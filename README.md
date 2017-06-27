@@ -55,23 +55,27 @@ Requirements
 
 Compiling
 ---------
-GST-MFX uses the Meson build tool to build the plugins.
-You can install the latest meson packages using the pip installer program generally bundled with recent Python 3 installer packages.
+GST-MFX uses the Meson and Ninja build tools for building and installation.
+You can install the latest meson and ninja packages using the pip installer program generally bundled with recent Python 3 installer packages.
+In Linux for example, you can easily setup both meson and ninja in your system via the following command:
+
+	sudo python3 /usr/bin/pip install meson ninja
+
 On Windows, open VS x64 native tools command prompt, and add gstreamer pkgconfig path to PKG_CONFIG_PATH if not already done:
 
 	set PKG_CONFIG_PATH=%GSTREAMER_1_0_ROOT_X86_64%lib\pkgconfig
 
 Run the Meson command to configure the out-of-source build.
 
-	meson ../gst-msdk-build 
+	meson ../gst-mfx-build 
 
 To setup a release build:
 
-	meson ../gst-msdk-build_release --buildtype=release
+	meson ../gst-mfx-build_release --buildtype=release
 	
 To setup a VS2015 project:
 
-	meson ../gst-msdk-build_msvc --backend=vs2015
+	meson ../gst-mfx-build_msvc --backend=vs2015
 		
 Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 decode support, from your build dir:
 
@@ -79,10 +83,15 @@ Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 
 
 For a list of more options when configuring the build, refer to the meson_options.txt file inside the source directory or run mesonconf inside the build directory.
 
-Next step is to compile the GST-MFX plugins:
+Next step is to compile and install the GST-MFX plugins:
 
-	cd ../gst-msdk-build
+	cd ../gst-mfx-build
 	ninja
+	sudo ninja install
+
+To uninstall the plugins:
+
+	sudo ninja uninstall
 
 If you intend to rebuild the plugins after making changes to the source code or you would
 want to change some of the build options after uninstalling the plugins, it is highly recommended to
