@@ -155,13 +155,12 @@ static void
 check_supported_filters (GstMfxFilter * filter)
 {
   mfxVideoParam param;
-  mfxExtVPPDoUse vpp_use;
+  mfxExtVPPDoUse vpp_use = { 0 };
   mfxExtBuffer *extbuf[1];
   mfxStatus sts;
   const GstMfxFilterMap *m;
 
   filter->supported_filters = GST_MFX_FILTER_NONE;
-  memset (&vpp_use, 0, sizeof (mfxExtVPPDoUse));
 
   vpp_use.NumAlg = 1;
   vpp_use.AlgList = g_slice_alloc ( 1 * sizeof (mfxU32));
@@ -404,8 +403,9 @@ gst_mfx_filter_create (GstMfxFilter * filter,
     else {
       /* is_joined is FALSE since parent task will take care of
        * disjoining / closing the session when it is destroyed */
-      filter->vpp[1] = gst_mfx_task_new_with_session (g_object_new(GST_TYPE_MFX_TASK, NULL),
-		  filter->aggregator, filter->session, GST_MFX_TASK_VPP_OUT, FALSE);
+      filter->vpp[1] = gst_mfx_task_new_with_session (
+        g_object_new(GST_TYPE_MFX_TASK, NULL),
+        filter->aggregator, filter->session, GST_MFX_TASK_VPP_OUT, FALSE);
     }
     if (!filter->vpp[1])
       return FALSE;
@@ -517,8 +517,6 @@ gst_mfx_filter_ref (GstMfxFilter * filter)
 void
 gst_mfx_filter_unref (GstMfxFilter * filter)
 {
-  g_return_if_fail (filter != NULL);
-
   gst_object_unref (GST_OBJECT(filter));
 }
 
