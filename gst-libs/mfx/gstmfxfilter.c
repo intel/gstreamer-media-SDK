@@ -240,12 +240,6 @@ configure_filters (GstMfxFilter * filter)
 static void
 init_params (GstMfxFilter * filter)
 {
-  gdouble frame_rate;
-
-  if (filter->vpp[0])
-    filter->params.AsyncDepth =
-      gst_mfx_task_get_video_params(filter->vpp[0])->AsyncDepth;
-
   filter->params.vpp.In = filter->frame_info;
 
   /* Aligned frame dimensions may differ between input and output surfaces
@@ -271,26 +265,11 @@ init_params (GstMfxFilter * filter)
     filter->params.vpp.Out.CropH = filter->height;
     filter->params.vpp.Out.Height = GST_ROUND_UP_16 (filter->height);
   }
-  if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
-    /* Setup special double frame rate deinterlace mode */
-    gst_util_fraction_to_double (filter->params.vpp.In.FrameRateExtN,
-      filter->params.vpp.In.FrameRateExtD, &frame_rate);
-    if ((filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_TFF ||
-          filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_BFF) &&
-        (int)(frame_rate + 0.5) == 60)
-    filter->params.vpp.In.FrameRateExtN /= 2;
-
-    filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
-    filter->params.vpp.Out.Height =
-        GST_ROUND_UP_16 (filter->params.vpp.Out.CropH);
-  }
   if (filter->filter_op & GST_MFX_FILTER_FRAMERATE_CONVERSION &&
       (filter->fps_n && filter->fps_d)) {
     filter->params.vpp.Out.FrameRateExtN = filter->fps_n;
     filter->params.vpp.Out.FrameRateExtD = filter->fps_d;
   }
-
-  configure_filters (filter);
 }
 
 gboolean
@@ -304,7 +283,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   sts =
-      MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, request);
+      MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, &request);
   if (sts < 0) {
     GST_ERROR ("Unable to query VPP allocation request %d", sts);
     return FALSE;
@@ -312,6 +291,17 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     filter->params.IOPattern =
         MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
+
+  if (filter->shared_request[1]) {
+    filter->shared_request[1]->NumFrameSuggested += request[1].NumFrameSuggested;
+    filter->shared_request[1]->NumFrameMin =
+        filter->shared_request[1]->NumFrameSuggested;
+  }
+  else {
+    filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
+  }
+
+  gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
 
   /* Initialize input VPP surface pool for shared VPP-decode task */
   if (filter->vpp[0]) {
@@ -323,7 +313,6 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
       filter->shared_request[0]->NumFrameSuggested;
 
     if (!memtype_is_system) {
-      filter->shared_request[0]->Type |= MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
       gst_mfx_task_use_video_memory(filter->vpp[0]);
       gst_mfx_task_set_request(filter->vpp[0], filter->shared_request[0]);
 
@@ -336,16 +325,6 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
         return FALSE;
     }
   }
-
-  if (filter->shared_request[1]) {
-    filter->shared_request[1]->NumFrameSuggested += request[1].NumFrameSuggested;
-    filter->shared_request[1]->NumFrameMin =
-        filter->shared_request[1]->NumFrameSuggested;
-  }
-  else {
-    filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
-  }
-  gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
 
   return TRUE;
 }
@@ -992,17 +971,37 @@ gst_mfx_filter_reset (GstMfxFilter * filter)
   return GST_MFX_FILTER_STATUS_SUCCESS;
 }
 
+static void
+update_params (GstMfxFilter * filter)
+{
+  if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
+    gdouble frame_rate;
+    /* Setup special double frame rate deinterlace mode */
+    gst_util_fraction_to_double (filter->params.vpp.In.FrameRateExtN,
+      filter->params.vpp.In.FrameRateExtD, &frame_rate);
+    if ((filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_TFF ||
+          filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_BFF) &&
+        (int)(frame_rate + 0.5) == 60)
+    filter->params.vpp.In.FrameRateExtN /= 2;
+
+    filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+    filter->params.vpp.Out.Height =
+        GST_ROUND_UP_16 (filter->params.vpp.Out.CropH);
+  }
+  configure_filters (filter);
+}
+
 static GstMfxFilterStatus
 gst_mfx_filter_start (GstMfxFilter * filter)
 {
+  mfxFrameAllocRequest *request;
   mfxStatus sts = MFX_ERR_NONE;
   gboolean memtype_is_system;
-  mfxFrameAllocRequest *request;
+
+  update_params (filter);
 
   /* Get updated video params if modified by peer MFX element*/
   gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
-
-  memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
 
   request =  gst_mfx_task_get_request (filter->vpp[1]);
   if (!request) {
@@ -1011,6 +1010,7 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   }
   memcpy (filter->shared_request[1], request, sizeof(mfxFrameAllocRequest));
 
+  memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
   if (!memtype_is_system) {
     gst_mfx_task_use_video_memory (filter->vpp[1]);
 
