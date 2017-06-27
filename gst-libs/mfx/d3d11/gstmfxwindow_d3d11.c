@@ -40,7 +40,7 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
   GstMfxWindowD3D11Private *const priv2 =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   HRESULT hr = S_OK;
-  MSG msg;
+  gboolean ret = FALSE;
 
   if (!priv2->d3d11_video_context) {
     GST_ERROR("Failed to render surface : D3D11 context does not exist.");
@@ -148,12 +148,14 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
 
   hr = ID3D11VideoContext_VideoProcessorBlt(priv2->d3d11_video_context,
     priv2->processor, priv2->output_view, 0, 1, &stream_data);
-  if (FAILED(hr))
-    return FALSE;
+  if (SUCCEEDED(hr)) {
+    IDXGISwapChain1_Present(priv2->dxgi_swapchain, 0, 0);
+    ret = TRUE;
+  }
 
-  IDXGISwapChain1_Present(priv2->dxgi_swapchain, 0, 0);
+  ID3D11VideoProcessorInputView_Release(input_view);
 
-  return TRUE;
+  return ret;
 }
 
 gst_mfx_window_d3d11_show(GstMfxWindow * window)
@@ -452,7 +454,7 @@ d3d11_create_window_internal (GstMfxWindow * window)
   exstyle = 0;
   priv->hwnd = CreateWindowEx(exstyle,
     priv->d3d11_window.lpszClassName,
-    TEXT("MFX D3D11 Renderer"),
+    TEXT("MFX D3D11 Internal Window"),
     style, offx, offy, width, height,
     NULL, NULL, priv->d3d11_window.hInstance, NULL);
 
@@ -496,9 +498,9 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
   GstMfxWindowD3D11Private *const priv =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
 
-  if (priv->d3d11_video_context) {
-    ID3D11VideoContext_Release(priv->d3d11_video_context);
-    priv->d3d11_video_context = NULL;
+  if (priv->output_view) {
+    ID3D11VideoProcessorOutputView_Release(priv->output_view);
+    priv->output_view = NULL;
   }
   if (priv->processor) {
     ID3D11VideoProcessor_Release(priv->processor);
@@ -507,6 +509,14 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
   if (priv->processor_enum) {
     ID3D11VideoProcessorEnumerator_Release(priv->processor_enum);
     priv->processor_enum = NULL;
+  }
+  if (priv->dxgi_swapchain) {
+    IDXGISwapChain1_Release(priv->dxgi_swapchain);
+    priv->dxgi_swapchain = NULL;
+  }
+  if (priv->d3d11_video_context) {
+    ID3D11VideoContext_Release(priv->d3d11_video_context);
+    priv->d3d11_video_context = NULL;
   }
 
   if (priv->d3d11_window.hInstance) {
