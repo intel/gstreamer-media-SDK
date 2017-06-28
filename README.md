@@ -57,11 +57,13 @@ Compiling
 ---------
 GST-MFX uses the Meson and Ninja build tools for building and installation.
 You can install the latest meson and ninja packages using the pip installer program generally bundled with recent Python 3 installer packages.
-In Linux for example, you can easily setup both meson and ninja in your system via the following command:
+This can be done via the following command (sudo privileges may be required on Linux systems):
 
-	sudo python3 /usr/bin/pip install meson ninja
+	pip3 install --upgrade meson ninja
 
-On Windows, open VS x64 native tools command prompt, and add gstreamer pkgconfig path to PKG_CONFIG_PATH if not already done:
+On Windows, you will need to setup pkg-config and add to PATH.
+You can get pkg-config from here (https://sourceforge.net/projects/pkgconfiglite/files/).
+Then open VS x64 native tools command prompt, and add gstreamer pkgconfig path to PKG_CONFIG_PATH if not already done:
 
 	set PKG_CONFIG_PATH=%GSTREAMER_1_0_ROOT_X86_64%lib\pkgconfig
 
@@ -77,13 +79,15 @@ To setup a VS2015 project:
 
 	meson ../gst-mfx-build_msvc --backend=vs2015
 		
-Only Media SDK 2017 Embedded Edition supports VP9 decode for now. To enable VP9 decode support, from your build dir:
+Newer platforms such as Skylake and Kabylake have added video codec support such as HEVC decode / encode and VP9 decode,
+but are disabled by default to maximize compatibility with older systems such as Baytrail and Haswell.
+To enable these features such VP9 decode support, from your build dir:
 
 	mesonconf -DUSE_VP9_DECODER=true
 
 For a list of more options when configuring the build, refer to the meson_options.txt file inside the source directory or run mesonconf inside the build directory.
 
-Next step is to compile and install the GST-MFX plugins:
+Next step is to build and install the GST-MFX plugins:
 
 	cd ../gst-mfx-build
 	ninja
