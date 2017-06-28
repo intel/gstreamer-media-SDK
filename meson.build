@@ -126,6 +126,7 @@ else
     gst_mfx_args += ['-DHAVE_GST_GL_LIBS']
   endif
   gst_mfx_args += ['-DWITH_LIBVA_BACKEND']
+  gst_mfx_args += ['-std=gnu99']
 endif
 
 config_inc = include_directories('.')
