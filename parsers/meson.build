@@ -3,8 +3,7 @@ if get_option ('MFX_VC1_PARSER')
     sources = [
       'gstvc1parse.c',
     ]
-	
-	gst_mfx_args += ['-DMFX_VC1_PARSER', '-DGST_USE_UNSTABLE_API']
+    gst_mfx_args += ['-DMFX_VC1_PARSER', '-DGST_USE_UNSTABLE_API']
 
     gstmfxvc1parse = static_library('gst-mfx-vc1parse-@0@'.format(api_version),
       sources,

@@ -314,7 +314,7 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   }
 
   decoder->params.mfx.CodecProfile = decoder->profile.profile;
-  decoder->params.mfx.CodecLevel = decoder->profile.level;
+  //decoder->params.mfx.CodecLevel = decoder->profile.level;
 }
 
 static gboolean
