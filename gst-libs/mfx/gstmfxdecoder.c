@@ -582,8 +582,10 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
   if (info)
     decoder->params.mfx.FrameInfo = *info;
 
-  if (!init_filter (decoder))
-    return FALSE;
+  /* Only initialize filter when need to use CSC or deinterlacing. */
+  if (decoder->enable_csc || decoder->enable_deinterlace)
+    if (!init_filter (decoder))
+      return FALSE;
 
   if (!init_decoder (decoder))
     goto error;
