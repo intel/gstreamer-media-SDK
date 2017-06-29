@@ -598,7 +598,6 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
   if (!init_decoder (decoder))
     goto error;
 
-  //memset(&decoder->bs, 0, sizeof(mfxBitstream));
   decoder->bs.DataLength += decoder->bs.DataOffset;
   decoder->bs.DataOffset = 0;
 
