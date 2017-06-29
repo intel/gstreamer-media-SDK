@@ -577,6 +577,14 @@ error:
 static gboolean
 gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
 {
+  /*
+   * Only CSC and deinterlacing didn't involve, it will be re-use back
+   * VASurfaces when restart back MSDK decoder.
+   */
+  if (!(decoder->enable_csc || decoder->enable_deinterlace) && decoder->decode) {
+    gst_mfx_task_set_soft_reinit(decoder->decode, TRUE);
+  }
+
   close_decoder(decoder);
 
   if (info)
@@ -622,6 +630,7 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
   return TRUE;
 
 error:
+  gst_mfx_task_set_soft_reinit(decoder->decode, FALSE);
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
   gst_mfx_filter_replace (&decoder->filter, NULL);
   return FALSE;
