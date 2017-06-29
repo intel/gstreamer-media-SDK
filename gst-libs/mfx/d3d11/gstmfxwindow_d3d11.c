@@ -158,6 +158,7 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
   return ret;
 }
 
+static void
 gst_mfx_window_d3d11_show(GstMfxWindow * window)
 {
   GstMfxWindowD3D11Private *const priv =
@@ -165,8 +166,6 @@ gst_mfx_window_d3d11_show(GstMfxWindow * window)
 
   ShowWindow(priv->hwnd, SW_SHOWDEFAULT);
   UpdateWindow(priv->hwnd);
-
-  return TRUE;
 }
 
 static gboolean
@@ -478,7 +477,7 @@ gst_mfx_window_d3d11_create (GstMfxWindow * window,
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   RECT rect;
 
-  if (!d3d11_create_threaded_window(window))
+  if (!priv2->hwnd && !d3d11_create_threaded_window(window))
     return FALSE;
 
   if (!d3d11_create_render_context(window))
@@ -579,4 +578,21 @@ gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context,
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW(window), context,
     GST_MFX_ID_INVALID, 1, 1);
+}
+
+GstMfxWindow *
+gst_mfx_window_d3d11_new_from_id(GstMfxWindowD3D11 * window, GstMfxContext * context,
+  GstVideoInfo * info, guintptr id, gboolean keep_aspect)
+{
+  g_return_val_if_fail(context != NULL, NULL);
+  g_return_val_if_fail(info != NULL, NULL);
+
+  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->device =
+    gst_mfx_device_ref(gst_mfx_context_get_device(context));
+  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->info = *info;
+  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->keep_aspect = keep_aspect;
+  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->hwnd = id;
+
+  return gst_mfx_window_new_internal(GST_MFX_WINDOW(window), context,
+    id, 0, 0);
 }

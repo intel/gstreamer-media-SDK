@@ -58,7 +58,6 @@ gst_mfxsink_video_overlay_iface_init (GstVideoOverlayInterface * iface);
 
 static void gst_mfxsink_navigation_iface_init (GstNavigationInterface * iface);
 
-#ifdef WITH_LIBVA_BACKEND
 G_DEFINE_TYPE_WITH_CODE (GstMfxSink,
     gst_mfxsink,
     GST_TYPE_VIDEO_SINK,
@@ -67,14 +66,6 @@ G_DEFINE_TYPE_WITH_CODE (GstMfxSink,
         gst_mfxsink_video_overlay_iface_init);
     G_IMPLEMENT_INTERFACE (GST_TYPE_NAVIGATION,
         gst_mfxsink_navigation_iface_init));
-#else
-G_DEFINE_TYPE_WITH_CODE (GstMfxSink,
-    gst_mfxsink,
-    GST_TYPE_VIDEO_SINK,
-    GST_MFX_PLUGIN_BASE_INIT_INTERFACES
-    G_IMPLEMENT_INTERFACE (GST_TYPE_NAVIGATION,
-        gst_mfxsink_navigation_iface_init));
-#endif
 
 enum
 {
@@ -421,37 +412,61 @@ gst_mfxsink_d3d11_create_window (GstMfxSink * sink, guint width, guint height)
   return TRUE;
 }
 
+static gboolean
+gst_mfxsink_d3d11_create_window_from_handle(GstMfxSink * sink,
+  guintptr handle)
+{
+  if (!sink->window || GST_MFX_WINDOW_ID(sink->window) != handle) {
+    GstVideoInfo *const info = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
+    guint width = 0, height = 0;
+
+    sink->window =
+      gst_mfx_window_d3d11_new_from_id(g_object_new(GST_TYPE_MFX_WINDOW_D3D11, NULL),
+        sink->device_context, info, handle, sink->keep_aspect);
+    if (!sink->window)
+      return FALSE;
+
+    gst_mfx_window_get_size(sink->window, &width, &height);
+
+    if (width != sink->window_width || height != sink->window_height) {
+      sink->window_width = width;
+      sink->window_height = height;
+    }
+  }
+
+  return TRUE;
+}
+
 static const inline GstMfxSinkBackend *
 gst_mfxsink_backend_d3d11 (void)
 {
   static const GstMfxSinkBackend GstMfxSinkBackendD3D11 = {
     .create_window = gst_mfxsink_d3d11_create_window,
+    .create_window_from_handle = gst_mfxsink_d3d11_create_window_from_handle,
   };
   return &GstMfxSinkBackendD3D11;
 }
 #endif // WITH_LIBVA_BACKEND
 
-#ifdef WITH_LIBVA_BACKEND
 /* ------------------------------------------------------------------------ */
 /* --- GstVideoOverlay interface                                        --- */
 /* ------------------------------------------------------------------------ */
 
+#ifdef WITH_LIBVA_BACKEND
 static void
-gst_mfxsink_video_overlay_set_window_handle (GstVideoOverlay * overlay,
-    guintptr window)
+gst_mfxsink_video_overlay_set_event_handling(GstVideoOverlay * overlay,
+  gboolean handle_events)
 {
-  GstMfxSink *const sink = GST_MFXSINK (overlay);
+  GstMfxSink *const sink = GST_MFXSINK(overlay);
 
-  sink->foreign_window = TRUE;
-  if (sink->backend && sink->backend->create_window_from_handle)
-    sink->backend->create_window_from_handle (sink, window);
+  gst_mfxsink_set_event_handling(sink, handle_events);
 }
 
 static void
-gst_mfxsink_video_overlay_set_render_rectangle (GstVideoOverlay * overlay,
-    gint x, gint y, gint width, gint height)
+gst_mfxsink_video_overlay_set_render_rectangle(GstVideoOverlay * overlay,
+  gint x, gint y, gint width, gint height)
 {
-  GstMfxSink *const sink = GST_MFXSINK (overlay);
+  GstMfxSink *const sink = GST_MFXSINK(overlay);
   GstMfxRectangle *const display_rect = &sink->display_rect;
 
   display_rect->x = x;
@@ -459,38 +474,42 @@ gst_mfxsink_video_overlay_set_render_rectangle (GstVideoOverlay * overlay,
   display_rect->width = width;
   display_rect->height = height;
 
-  GST_DEBUG ("render rect (%d,%d):%ux%u",
-      display_rect->x, display_rect->y,
-      display_rect->width, display_rect->height);
+  GST_DEBUG("render rect (%d,%d):%ux%u",
+    display_rect->x, display_rect->y,
+    display_rect->width, display_rect->height);
 }
 
 static void
-gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay)
+gst_mfxsink_video_overlay_expose(GstVideoOverlay * overlay)
 {
-  GstMfxSink *const sink = GST_MFXSINK (overlay);
+  GstMfxSink *const sink = GST_MFXSINK(overlay);
 
-  gst_mfxsink_reconfigure_window (sink);
+  gst_mfxsink_reconfigure_window(sink);
 }
+#endif  // WITH_LIBVA_BACKEND
 
 static void
-gst_mfxsink_video_overlay_set_event_handling (GstVideoOverlay * overlay,
-    gboolean handle_events)
+gst_mfxsink_video_overlay_set_window_handle(GstVideoOverlay * overlay,
+  guintptr window)
 {
-  GstMfxSink *const sink = GST_MFXSINK (overlay);
+  GstMfxSink *const sink = GST_MFXSINK(overlay);
 
-  gst_mfxsink_set_event_handling (sink, handle_events);
+  sink->foreign_window = TRUE;
+  if (sink->backend && sink->backend->create_window_from_handle)
+    sink->backend->create_window_from_handle(sink, window);
 }
 
 static void
 gst_mfxsink_video_overlay_iface_init (GstVideoOverlayInterface * iface)
 {
   iface->set_window_handle = gst_mfxsink_video_overlay_set_window_handle;
+#if 0
   iface->set_render_rectangle =
       gst_mfxsink_video_overlay_set_render_rectangle;
   iface->expose = gst_mfxsink_video_overlay_expose;
   iface->handle_events = gst_mfxsink_video_overlay_set_event_handling;
+#endif
 }
-#endif  // WITH_LIBVA_BACKEND
 
 /* ------------------------------------------------------------------------ */
 /* --- GstNavigation interface                                          --- */

@@ -84,6 +84,7 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
 {
   GstMfxSubpicture *subpicture = NULL;
   guint num_rect = 0;
+  guint i;
 
   g_return_val_if_fail (filter != NULL, FALSE);
   g_return_val_if_fail (composition != NULL, FALSE);
@@ -125,7 +126,7 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
   filter->composite.InputStream[0].DstH = filter->frame_info.CropH;
 
   /* Fill the subpicture info */
-  for (guint i=1; i < filter->composite.NumInputStream; i++) {
+  for (i = 1; i < filter->composite.NumInputStream; i++) {
     subpicture = gst_mfx_surface_composition_get_subpicture (composition, i-1);
     if (!subpicture)
       return FALSE;

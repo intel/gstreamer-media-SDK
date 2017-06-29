@@ -37,6 +37,10 @@ GstMfxWindow *
 gst_mfx_window_d3d11_new(GstMfxWindowD3D11 * window, GstMfxContext * context,
   GstVideoInfo * info, gboolean keep_aspect, gboolean fullscreen);
 
+GstMfxWindow *
+gst_mfx_window_d3d11_new_from_id(GstMfxWindowD3D11 * window, GstMfxContext * context,
+  GstVideoInfo * info, guintptr id, gboolean keep_aspect);
+
 G_END_DECLS
 
 #endif /* GST_MFX_WINDOW_D3D11_H */
