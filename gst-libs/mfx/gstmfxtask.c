@@ -202,13 +202,20 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
 
 error_allocate_memory:
   {
-    g_slice_free1 (num_surfaces * sizeof (VABufferID),
-        response_data->coded_buf);
-    g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId),
-        response_data->mem_ids);
-    g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
-    g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
-        response_data->surfaces);
+    if (response_data->coded_buf)
+      g_slice_free1 (num_surfaces * sizeof (VABufferID),
+          response_data->coded_buf);
+
+    if (response_data->mem_ids)
+      g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId),
+          response_data->mem_ids);
+
+    if (response_data->mids)
+      g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
+
+    if (response_data->surfaces)
+      g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
+          response_data->surfaces);
 
     return MFX_ERR_MEMORY_ALLOC;
   }
