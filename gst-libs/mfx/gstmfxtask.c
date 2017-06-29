@@ -53,6 +53,7 @@ struct _GstMfxTask
   guint task_type;
   gboolean memtype_is_system;
   gboolean is_joined;
+  gboolean soft_reinit;
 };
 
 static gint
@@ -475,6 +476,7 @@ gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
       GST_MFX_DISPLAY_VADISPLAY (task->display));
 
   task->memtype_is_system = FALSE;
+  task->soft_reinit = FALSE;
 }
 
 GstMfxTask *
@@ -534,4 +536,18 @@ gst_mfx_task_replace (GstMfxTask ** old_task_ptr, GstMfxTask * new_task)
       GST_MFX_MINI_OBJECT (new_task));
 }
 
+void
+gst_mfx_task_set_soft_reinit (GstMfxTask *task, gboolean reinit_status)
+{
+  g_return_if_fail (task != NULL);
 
+  task->soft_reinit = reinit_status;
+}
+
+gboolean
+gst_mfx_task_get_soft_reinit (GstMfxTask *task)
+{
+  g_return_if_fail (task != NULL);
+
+  return task->soft_reinit;
+}

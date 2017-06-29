@@ -114,6 +114,12 @@ gst_mfx_task_get_num_surfaces (GstMfxTask * task);
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task);
 
+void
+gst_mfx_task_set_soft_reinit (GstMfxTask * task, gboolean reinit_status);
+
+gboolean
+gst_mfx_task_get_soft_reinit (GstMfxTask * task);
+
 /* ------------------------------------------------------------------------ */
 /* --- MFX Frame Allocator                                              --- */
 /* ------------------------------------------------------------------------ */
