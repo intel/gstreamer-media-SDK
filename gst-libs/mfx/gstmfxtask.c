@@ -53,7 +53,11 @@ struct _GstMfxTask
   guint task_type;
   gboolean memtype_is_system;
   gboolean is_joined;
+
+  /* This variable use to handle re-use back VASurfaces */
   gboolean soft_reinit;
+  mfxU16 backup_num_surfaces;
+  VASurfaceID *backup_surfaces;
 };
 
 static gint
@@ -477,6 +481,8 @@ gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 
   task->memtype_is_system = FALSE;
   task->soft_reinit = FALSE;
+  task->backup_num_surfaces = 0;
+  task->backup_surfaces = NULL;
 }
 
 GstMfxTask *
