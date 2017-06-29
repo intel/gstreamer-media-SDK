@@ -113,6 +113,10 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
     response_data->num_surfaces = req->NumFrameSuggested;
   }
 
+  if (task->soft_reinit && (response_data->num_surfaces != task->backup_num_surfaces)
+      && (info->FourCC != MFX_FOURCC_P8))
+    response_data->num_surfaces = task->backup_num_surfaces;
+
   num_surfaces = response_data->num_surfaces;
 
   response_data->mem_ids =
@@ -123,29 +127,39 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
     goto error_allocate_memory;
 
   if (info->FourCC != MFX_FOURCC_P8) {
-    response_data->surfaces =
-        g_slice_alloc0 (num_surfaces * sizeof (VASurfaceID));
+    if (task->soft_reinit) {
+      if (task->backup_surfaces == NULL) {
+	GST_ERROR ("Failed reuse back VA surfaces");
+	goto error_allocate_memory;
+      }
+      response_data->surfaces = task->backup_surfaces;
+      task->soft_reinit = FALSE;
+      task->backup_num_surfaces = 0;
+      task->backup_surfaces = NULL;
+    } else {
+      response_data->surfaces =
+          g_slice_alloc0 (num_surfaces * sizeof (VASurfaceID));
 
-    if (!response_data->surfaces)
-      goto error_allocate_memory;
+      if (!response_data->surfaces)
+        goto error_allocate_memory;
 
-    fourcc = gst_mfx_video_format_to_va_fourcc (info->FourCC);
-    attrib.type = VASurfaceAttribPixelFormat;
-    attrib.flags = VA_SURFACE_ATTRIB_SETTABLE;
-    attrib.value.type = VAGenericValueTypeInteger;
-    attrib.value.value.i = fourcc;
+      fourcc = gst_mfx_video_format_to_va_fourcc (info->FourCC);
+      attrib.type = VASurfaceAttribPixelFormat;
+      attrib.flags = VA_SURFACE_ATTRIB_SETTABLE;
+      attrib.value.type = VAGenericValueTypeInteger;
+      attrib.value.value.i = fourcc;
 
-    GST_MFX_DISPLAY_LOCK (task->display);
-    sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
-        gst_mfx_video_format_to_va_format (info->FourCC),
-        req->Info.Width, req->Info.Height,
-        response_data->surfaces, num_surfaces, &attrib, 1);
-    GST_MFX_DISPLAY_UNLOCK (task->display);
-    if (!vaapi_check_status (sts, "vaCreateSurfaces ()")) {
-      GST_ERROR ("Error allocating VA surfaces %d", sts);
-      goto error_allocate_memory;
+      GST_MFX_DISPLAY_LOCK (task->display);
+      sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
+          gst_mfx_video_format_to_va_format (info->FourCC),
+          req->Info.Width, req->Info.Height,
+          response_data->surfaces, num_surfaces, &attrib, 1);
+      GST_MFX_DISPLAY_UNLOCK (task->display);
+      if (!vaapi_check_status (sts, "vaCreateSurfaces ()")) {
+        GST_ERROR ("Error allocating VA surfaces %d", sts);
+        goto error_allocate_memory;
+      }
     }
-
     for (i = 0; i < num_surfaces; i++) {
       mid = &response_data->mem_ids[i];
       mid->mid = &response_data->surfaces[i];
@@ -219,13 +233,18 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
   num_surfaces = response_data->num_surfaces;
 
   if (info->FourCC != MFX_FOURCC_P8) {
-    GST_MFX_DISPLAY_LOCK (task->display);
-    vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
-        response_data->surfaces, num_surfaces);
-    GST_MFX_DISPLAY_UNLOCK (task->display);
+    if (task->soft_reinit) {
+      task->backup_num_surfaces = num_surfaces;
+      task->backup_surfaces = response_data->surfaces;
+    } else {
+      GST_MFX_DISPLAY_LOCK (task->display);
+      vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
+          response_data->surfaces, num_surfaces);
+      GST_MFX_DISPLAY_UNLOCK (task->display);
 
-    g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
-        response_data->surfaces);
+      g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
+          response_data->surfaces);
+    }
   } else {
     for (i = 0; i < num_surfaces; i++) {
       GST_MFX_DISPLAY_LOCK (task->display);
