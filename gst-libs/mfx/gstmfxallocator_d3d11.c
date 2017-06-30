@@ -23,7 +23,7 @@
 #include "gstmfxtask_priv.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxcontext.h"
-#include "d3d11/gstmfxdevice.h"
+#include "video-format.h"
 
 static gint
 find_response(gconstpointer response_data, gconstpointer response)

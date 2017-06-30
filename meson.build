@@ -117,7 +117,7 @@ gst_mfx_deps += mfx_dep
 if host_machine.system() == 'windows'
   gst_mfx_deps += cc.find_library('d3d11')
   gst_mfx_args += ['-DWITH_D3D11_BACKEND']
-  gst_mfx_deps += cc.find_library('stdc++')
+  gst_mfx_deps += cc.find_library('stdc++', required: false)
 else
   driver_deps = [dependency ('libva'), dependency ('libdrm'), dependency ('libdrm_intel'),
     dependency ('libva-drm'), dependency('libudev')]

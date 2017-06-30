@@ -25,12 +25,6 @@
 #include "gstmfxcontext.h"
 #include "video-format.h"
 
-#ifdef WITH_LIBVA_BACKEND
-# include "gstmfxdisplay.h"
-#else
-# include "d3d11/gstmfxdevice.h"
-#endif // WITH_LIBVA_BACKEND
-
 static gint
 find_response (gconstpointer response_data, gconstpointer response)
 {
