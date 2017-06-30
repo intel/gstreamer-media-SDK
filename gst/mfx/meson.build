@@ -59,14 +59,14 @@ if mfx_encoder
     ['MFX_JPEG_ENCODER', '-DMFX_JPEG_ENCODER', 'gstmfxenc_jpeg.c']
   ]
   foreach e: encoders
-    if get_option (e.get(0)) != 'no'
-	  gst_mfx_args += [e.get(1)]
+    if get_option (e.get(0))
+      gst_mfx_args += [e.get(1)]
       sources += [e.get(2)]
     endif
   endforeach
 else
   foreach opt: ['MFX_H264_ENCODER', 'MFX_H265_ENCODER', 'MFX_MPEG2_ENCODER', 'MFX_JPEG_ENCODER']
-    if get_option (opt) == 'yes'
+    if get_option (opt)
       error('@0@ required but MFX_ENCODER is false'.format(opt))
     endif
   endforeach

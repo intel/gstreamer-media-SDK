@@ -69,7 +69,7 @@ if mfx_encoder
     ['MFX_JPEG_ENCODER', '-DMFX_JPEG_ENCODER', ['gstmfxencoder_jpeg.c']]
   ]
   foreach e: encoders
-    if get_option (e.get(0)) != 'no'
+    if get_option (e.get(0))
       gst_mfx_args += [e.get(1)]
       sources += e.get(2)
     endif
