@@ -219,7 +219,7 @@ gst_mfx_surface_d3d11_unmap(GstMfxSurface * surface)
 }
 
 void
-gst_mfx_surface_d3d11_class_init(GstMfxSurfaceClass * klass)
+gst_mfx_surface_d3d11_class_init(GstMfxSurfaceD3D11Class * klass)
 {
   GstMfxSurfaceClass *const surface_class = GST_MFX_SURFACE_CLASS(klass);
 
