@@ -31,7 +31,6 @@ G_DEFINE_TYPE(GstMfxTask, gst_mfx_task, GST_TYPE_OBJECT);
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task)
 {
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   g_return_val_if_fail (task != NULL, 0);
 
   return GST_MFX_TASK_GET_PRIVATE(task)->session;

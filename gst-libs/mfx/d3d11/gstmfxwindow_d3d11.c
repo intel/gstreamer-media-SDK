@@ -161,11 +161,10 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
 static void
 gst_mfx_window_d3d11_show(GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv =
-      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
 
-  ShowWindow(priv->hwnd, SW_SHOWDEFAULT);
-  UpdateWindow(priv->hwnd);
+  ShowWindow(priv->handle, SW_SHOWDEFAULT);
+  UpdateWindow(priv->handle);
 }
 
 static gboolean
@@ -181,14 +180,19 @@ WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
   GstMfxWindow* window = (GstMfxWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
   if (window) {
+    GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+
     switch (message) {
-    case WM_DESTROY:
-      gst_mfx_window_d3d11_destroy(window);
-      PostQuitMessage(0);
-      break;
-    case WM_SIZE:
-      gst_mfx_window_d3d11_resize(window);
-      break;
+      case WM_SIZE:
+        gst_mfx_window_d3d11_get_geometry(window, NULL, NULL,
+          &priv->width, &priv->height);
+        break;
+      case WM_DESTROY:
+        gst_mfx_window_d3d11_destroy(window);
+        PostQuitMessage(0);
+        break;
+      default:
+        break;
     }
   }
   return DefWindowProc(hWnd, message, wParam, lParam);
@@ -254,7 +258,8 @@ gst_mfx_window_d3d11_create_video_processor(GstMfxWindow * window)
 static gboolean
 gst_mfx_window_d3d11_init_swap_chain(GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv =
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv2 =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = { 0 };
   HRESULT hr = S_OK;
@@ -273,19 +278,19 @@ gst_mfx_window_d3d11_init_swap_chain(GstMfxWindow * window)
   swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
   hr = IDXGIFactory2_CreateSwapChainForHwnd(
-          gst_mfx_device_get_factory(priv->device),
-          gst_mfx_device_get_handle(priv->device),
-          priv->hwnd,
+          gst_mfx_device_get_factory(priv2->device),
+          gst_mfx_device_get_handle(priv2->device),
+          priv->handle,
           &swap_chain_desc,
           NULL,
           NULL,
-          &priv->dxgi_swapchain);
+          &priv2->dxgi_swapchain);
   if (FAILED(hr))
     return FALSE;
 
-  IDXGISwapChain1_GetBuffer(priv->dxgi_swapchain, 0, &IID_ID3D11Texture2D,
-    &priv->backbuffer_texture);
-  g_return_val_if_fail(priv->backbuffer_texture != NULL, FALSE);
+  IDXGISwapChain1_GetBuffer(priv2->dxgi_swapchain, 0, &IID_ID3D11Texture2D,
+    &priv2->backbuffer_texture);
+  g_return_val_if_fail(priv2->backbuffer_texture != NULL, FALSE);
 
   return TRUE;
 }
@@ -396,7 +401,8 @@ d3d11_create_threaded_window (GstMfxWindow * window)
 static gboolean
 d3d11_create_window_internal (GstMfxWindow * window)
 {
-  GstMfxWindowD3D11Private *const priv =
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindowD3D11Private *const priv2 =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   int width, height;
   int offx, offy;
@@ -407,15 +413,15 @@ d3d11_create_window_internal (GstMfxWindow * window)
   gchar *wnd_classname =
       g_strdup_printf("GstMfxWindowD3D11_%u", GetCurrentThreadId());
 
-  priv->d3d11_window.lpfnWndProc = (WNDPROC)WindowProc;
-  priv->d3d11_window.hInstance = GetModuleHandle(NULL);
-  priv->d3d11_window.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-  priv->d3d11_window.hCursor = LoadCursor(NULL, IDC_ARROW);
-  priv->d3d11_window.lpszClassName = TEXT(wnd_classname);
+  priv2->d3d11_window.lpfnWndProc = (WNDPROC)WindowProc;
+  priv2->d3d11_window.hInstance = GetModuleHandle(NULL);
+  priv2->d3d11_window.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+  priv2->d3d11_window.hCursor = LoadCursor(NULL, IDC_ARROW);
+  priv2->d3d11_window.lpszClassName = TEXT(wnd_classname);
 
   g_free(wnd_classname);
 
-  if (RegisterClass(&priv->d3d11_window) == 0) {
+  if (RegisterClass(&priv2->d3d11_window) == 0) {
     GST_ERROR("Failed to register window class: %lu", GetLastError());
     return FALSE;
   }
@@ -423,7 +429,7 @@ d3d11_create_window_internal (GstMfxWindow * window)
   width = GetSystemMetrics(SM_CXSCREEN);
   height = GetSystemMetrics(SM_CYSCREEN);
 
-  if (!GST_MFX_WINDOW_GET_PRIVATE(window)->is_fullscreen) {
+  if (!priv->is_fullscreen) {
     SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
     screenwidth = rect.right - rect.left;
     screenheight = rect.bottom - rect.top;
@@ -451,19 +457,19 @@ d3d11_create_window_internal (GstMfxWindow * window)
     style = WS_POPUP;
   }
   exstyle = 0;
-  priv->hwnd = CreateWindowEx(exstyle,
-    priv->d3d11_window.lpszClassName,
+  priv->handle = CreateWindowEx(exstyle,
+    priv2->d3d11_window.lpszClassName,
     TEXT("MFX D3D11 Internal Window"),
     style, offx, offy, width, height,
-    NULL, NULL, priv->d3d11_window.hInstance, NULL);
+    NULL, NULL, priv2->d3d11_window.hInstance, NULL);
 
-  if (!priv->hwnd) {
+  if (!priv->handle) {
     GST_ERROR("Failed to create internal window: %lu",
       GetLastError());
     return FALSE;
   }
 
-  SetWindowLongPtr(priv->hwnd, GWLP_USERDATA, (LONG_PTR)window);
+  SetWindowLongPtr(priv->handle, GWLP_USERDATA, (LONG_PTR)window);
 
   return TRUE;
 }
@@ -472,21 +478,11 @@ static gboolean
 gst_mfx_window_d3d11_create (GstMfxWindow * window,
   guint * width, guint * height)
 {
-  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
-  GstMfxWindowD3D11Private *const priv2 =
-      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
-  RECT rect;
-
-  if (!priv2->hwnd && !d3d11_create_threaded_window(window))
+  if (!d3d11_create_threaded_window(window))
     return FALSE;
 
   if (!d3d11_create_render_context(window))
     return FALSE;
-
-  GetClientRect(priv2->hwnd, &rect);
-
-  priv->width = *width = MAX(1, ABS(rect.right - rect.left));
-  priv->height = *height = MAX(1, ABS(rect.bottom - rect.top));
 
   return TRUE;
 }
@@ -530,17 +526,16 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_d3d11_resize (GstMfxWindow * window, guint width, guint height)
+gst_mfx_window_d3d11_get_geometry (GstMfxWindow * window, guint x, guint y,
+  guint * width, guint * height)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
-  GstMfxWindowD3D11Private *const priv2 =
-    GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
   RECT rect = { 0 };
 
-  GetClientRect(priv2->hwnd, &rect);
+  GetClientRect(priv->handle, &rect);
 
-  priv->width = MAX(1, ABS(rect.right - rect.left));
-  priv->height = MAX(1, ABS(rect.bottom - rect.top));
+  *width = MAX(1, ABS(rect.right - rect.left));
+  *height = MAX(1, ABS(rect.bottom - rect.top));
 
   return TRUE;
 }
@@ -555,7 +550,7 @@ gst_mfx_window_d3d11_class_init (GstMfxWindowD3D11Class * klass)
   window_class->show = gst_mfx_window_d3d11_show;
   window_class->render = gst_mfx_window_d3d11_render;
   window_class->hide = gst_mfx_window_d3d11_hide;
-  window_class->resize = gst_mfx_window_d3d11_resize;
+  window_class->get_geometry = gst_mfx_window_d3d11_get_geometry;
 }
 
 static void
@@ -578,21 +573,4 @@ gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context,
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW(window), context,
     GST_MFX_ID_INVALID, 1, 1);
-}
-
-GstMfxWindow *
-gst_mfx_window_d3d11_new_from_id(GstMfxWindowD3D11 * window, GstMfxContext * context,
-  GstVideoInfo * info, guintptr id, gboolean keep_aspect)
-{
-  g_return_val_if_fail(context != NULL, NULL);
-  g_return_val_if_fail(info != NULL, NULL);
-
-  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->device =
-    gst_mfx_device_ref(gst_mfx_context_get_device(context));
-  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->info = *info;
-  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->keep_aspect = keep_aspect;
-  GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->hwnd = id;
-
-  return gst_mfx_window_new_internal(GST_MFX_WINDOW(window), context,
-    id, 0, 0);
 }

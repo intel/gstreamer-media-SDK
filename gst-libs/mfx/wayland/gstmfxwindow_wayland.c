@@ -455,7 +455,6 @@ gst_mfx_window_wayland_resize (GstMfxWindow * window, guint width, guint height)
 static void
 gst_mfx_window_wayland_class_init (GstMfxWindowWaylandClass * klass)
 {
-  GstObjectClass *const object_class = GST_OBJECT_CLASS (klass);
   GstMfxWindowClass *const window_class = GST_MFX_WINDOW_CLASS (klass);
 
   window_class->create = gst_mfx_window_wayland_create;

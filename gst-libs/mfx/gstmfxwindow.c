@@ -62,8 +62,6 @@ gst_mfx_window_ensure_size (GstMfxWindow * window)
     klass->get_geometry (window, NULL, NULL, &priv->width, &priv->height);
 
   priv->check_geometry = FALSE;
-  priv->is_fullscreen = (priv->width == priv->display_width &&
-      priv->height == priv->display_height);
 
   if (width == priv->width && height == priv->height)
     return;

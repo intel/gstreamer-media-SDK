@@ -177,8 +177,8 @@ void
 gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task)
 {
-  g_return_val_if_fail (aggregator != NULL, FALSE);
-  g_return_val_if_fail (task != NULL, FALSE);
+  g_return_if_fail (aggregator != NULL);
+  g_return_if_fail (task != NULL);
 
   aggregator->current_task = task;
 }

@@ -52,8 +52,6 @@ struct _GstMfxWindowPrivate
   /*< protected >*/
   guint width;
   guint height;
-  guint display_width;
-  guint display_height;
   guint use_foreign_window;
   guint is_fullscreen;
   guint check_geometry;

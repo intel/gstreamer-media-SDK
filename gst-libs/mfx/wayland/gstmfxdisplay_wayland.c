@@ -311,7 +311,6 @@ gst_mfx_display_wayland_init (GstMfxDisplayWayland * display)
 static void
 gst_mfx_display_wayland_class_init (GstMfxDisplayWaylandClass * klass)
 {
-  GstObjectClass *const object_class = GST_OBJECT_CLASS (klass);
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
 
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;

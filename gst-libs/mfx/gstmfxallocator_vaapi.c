@@ -23,6 +23,7 @@
 #include "gstmfxtask_priv.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxcontext.h"
+#include "video-format.h"
 
 #ifdef WITH_LIBVA_BACKEND
 # include "gstmfxdisplay.h"

@@ -184,7 +184,6 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
 void
 gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
 {
-  GstObjectClass *const object_class = GST_OBJECT_CLASS (klass);
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
 
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_X11;

@@ -412,37 +412,11 @@ gst_mfxsink_d3d11_create_window (GstMfxSink * sink, guint width, guint height)
   return TRUE;
 }
 
-static gboolean
-gst_mfxsink_d3d11_create_window_from_handle(GstMfxSink * sink,
-  guintptr handle)
-{
-  if (!sink->window || GST_MFX_WINDOW_ID(sink->window) != handle) {
-    GstVideoInfo *const info = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
-    guint width = 0, height = 0;
-
-    sink->window =
-      gst_mfx_window_d3d11_new_from_id(g_object_new(GST_TYPE_MFX_WINDOW_D3D11, NULL),
-        sink->device_context, info, handle, sink->keep_aspect);
-    if (!sink->window)
-      return FALSE;
-
-    gst_mfx_window_get_size(sink->window, &width, &height);
-
-    if (width != sink->window_width || height != sink->window_height) {
-      sink->window_width = width;
-      sink->window_height = height;
-    }
-  }
-
-  return TRUE;
-}
-
 static const inline GstMfxSinkBackend *
 gst_mfxsink_backend_d3d11 (void)
 {
   static const GstMfxSinkBackend GstMfxSinkBackendD3D11 = {
     .create_window = gst_mfxsink_d3d11_create_window,
-    .create_window_from_handle = gst_mfxsink_d3d11_create_window_from_handle,
   };
   return &GstMfxSinkBackendD3D11;
 }
@@ -486,7 +460,6 @@ gst_mfxsink_video_overlay_expose(GstVideoOverlay * overlay)
 
   gst_mfxsink_reconfigure_window(sink);
 }
-#endif  // WITH_LIBVA_BACKEND
 
 static void
 gst_mfxsink_video_overlay_set_window_handle(GstVideoOverlay * overlay,
@@ -498,12 +471,13 @@ gst_mfxsink_video_overlay_set_window_handle(GstVideoOverlay * overlay,
   if (sink->backend && sink->backend->create_window_from_handle)
     sink->backend->create_window_from_handle(sink, window);
 }
+#endif  // WITH_LIBVA_BACKEND
 
 static void
 gst_mfxsink_video_overlay_iface_init (GstVideoOverlayInterface * iface)
 {
+#if WITH_LIBVA_BACKEND
   iface->set_window_handle = gst_mfxsink_video_overlay_set_window_handle;
-#if 0
   iface->set_render_rectangle =
       gst_mfxsink_video_overlay_set_render_rectangle;
   iface->expose = gst_mfxsink_video_overlay_expose;
