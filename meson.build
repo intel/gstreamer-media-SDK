@@ -25,6 +25,7 @@ libversion = '@0@.@1@.0'.format(soversion, gst_version_minor.to_int() * 100 + gs
 plugins_install_dir = '@0@/gstreamer-1.0'.format(get_option('libdir'))
 
 cc = meson.get_compiler('c')
+cxx = meson.get_compiler('cpp')
 
 if cc.get_id() == 'msvc'
   # Ignore several spurious warnings for things gstreamer does very commonly
@@ -101,18 +102,22 @@ if mfx_dep.found() == false # otherwise look into Media SDK/Media Server Studio 
   if mfx_home != ''
     mfx_libdir = [mfx_home + '/lib/lin_x64', mfx_home + '/lib/x64']
     mfx_incdir = include_directories(mfx_home + '/include')
-    mfx_lib = cc.find_library('mfx', dirs: mfx_libdir)
-    mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: [mfx_lib])
+    mfx_lib = cxx.find_library('mfx', dirs: mfx_libdir)
+    if host_machine.system() == 'windows' # windows Media SDK / Media Server Studio prebuilt lib requires legacy_stdio_definitions
+      legacy_stdio_dep = cc.find_library('legacy_stdio_definitions')
+      mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: [mfx_lib, legacy_stdio_dep])
+    else
+      mfx_dep = declare_dependency(include_directories: mfx_incdir, dependencies: mfx_lib)
+    endif
   endif
 endif
 
 gst_mfx_deps += mfx_dep
 
 if host_machine.system() == 'windows'
-  legacy_stdio_dep = cc.find_library('legacy_stdio_definitions')
-  d3d11_dep = cc.find_library('d3d11')
-  gst_mfx_deps += [legacy_stdio_dep, d3d11_dep]
+  gst_mfx_deps += cc.find_library('d3d11')
   gst_mfx_args += ['-DWITH_D3D11_BACKEND']
+  gst_mfx_deps += cc.find_library('stdc++')
 else
   driver_deps = [dependency ('libva'), dependency ('libdrm'), dependency ('libdrm_intel'),
     dependency ('libva-drm'), dependency('libudev')]
@@ -126,7 +131,7 @@ else
     gst_mfx_args += ['-DHAVE_GST_GL_LIBS']
   endif
   gst_mfx_args += ['-DWITH_LIBVA_BACKEND']
-  gst_mfx_args += ['-std=gnu99']
+  #gst_mfx_args += ['-std=gnu99']
 endif
 
 config_inc = include_directories('.')
