@@ -1,5 +1,5 @@
 project('gst_mfx', 'c', 'cpp',
-  version : '1.5.0',
+  version : '2.0.0',
   meson_version : '>= 0.36.0',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
@@ -46,11 +46,11 @@ endif
 
 core_conf = configuration_data()
 
-core_conf.set('GETTEXT_PACKAGE', 'gstreamer-msdk')
+core_conf.set('GETTEXT_PACKAGE', 'gst-mfx')
 core_conf.set('PACKAGE', 'gst_mfx')
 core_conf.set('VERSION', '@0@'.format(gst_version))
 core_conf.set('PACKAGE_VERSION', '@0@'.format(gst_version))
-core_conf.set('GST_PACKAGE_NAME', 'GStreamer Media SDK')
+core_conf.set('GST_PACKAGE_NAME', 'GStreamer MFX')
 core_conf.set('GST_PACKAGE_ORIGIN', 'Unknown package origin')
 core_conf.set('GST_API_VERSION', '@0@'.format(api_version))
 core_conf.set('GST_INSTALL_PLUGINS_HELPER', '/FIXME')

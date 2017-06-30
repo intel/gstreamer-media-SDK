@@ -37,9 +37,10 @@ Requirements
   * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows  
     Media Server Studio 2017 R2 Community / Professional Edition (Windows / Linux)  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake)
-  * GStreamer 1.6.x (tested up to GStreamer 1.10.x)
-  * gst-plugins-* 1.6.x (tested up to GStreamer 1.10.x)
-  * CMake
+  * GStreamer 1.6.x (tested up to GStreamer 1.12.x)
+  * gst-plugins-* 1.6.x (tested up to GStreamer 1.12.x)
+  * Microsoft Visual Studio 2013 / 2015 (Windows)
+  * Python 3
   * pkg-config
  
   * Renderers:  
@@ -69,7 +70,7 @@ Then open VS x64 native tools command prompt, and add gstreamer pkgconfig path t
 
 Run the Meson command to configure the out-of-source build.
 
-	meson ../gst-mfx-build 
+	meson ../gst-mfx-build
 
 To setup a release build:
 
