@@ -10,22 +10,10 @@ sources = [
 
 if mfx_decoder
   sources += ['gstmfxdec.c']
-  if get_option ('USE_HEVC_DECODER')
-    gst_mfx_args += '-DUSE_HEVC_DECODER'
-  endif
-  if get_option ('USE_VP8_DECODER')
-    gst_mfx_args += '-DUSE_VP8_DECODER'
-  endif
   if get_option ('USE_VP9_DECODER')
     gst_mfx_args += '-DUSE_VP9_DECODER'
   endif
 else
-  if get_option ('USE_HEVC_DECODER')
-    error('USE_HEVC_DECODER required but MFX_DECODER is false')
-  endif
-  if get_option ('USE_VP8_DECODER')
-    error('USE_VP8_DECODER required but MFX_DECODER is false')
-  endif
   if get_option ('USE_VP9_DECODER')
     error('USE_VP9_DECODER required but MFX_DECODER is false')
   endif

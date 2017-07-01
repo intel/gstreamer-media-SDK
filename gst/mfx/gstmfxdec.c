@@ -96,13 +96,11 @@ static const GstMfxCodecMap mfx_codec_map[] = {
        alignment = (string) au, \
        profile = (string) { constrained-baseline, baseline, main, high }, \
        stream-format = (string) byte-stream"},
-#ifdef USE_HEVC_DECODER
-  {"hevc", GST_RANK_PRIMARY + 3,
+  {"hevc", GST_RANK_NONE,
       "video/x-h265, \
        alignment = (string) au, \
        profile = (string) main, \
        stream-format = (string) byte-stream"},
-#endif
   {"mpeg2", GST_RANK_PRIMARY + 3,
       "video/mpeg, \
        mpegversion=2, \
@@ -110,11 +108,9 @@ static const GstMfxCodecMap mfx_codec_map[] = {
   {"vc1", GST_RANK_PRIMARY + 3,
       "video/x-wmv, \
        stream-format = (string) { sequence-layer-frame-layer, bdu }"},
-# ifdef USE_VP8_DECODER
-  {"vp8", GST_RANK_PRIMARY + 3, "video/x-vp8"},
-# endif
+  {"vp8", GST_RANK_NONE, "video/x-vp8"},
 # ifdef USE_VP9_DECODER
-  {"vp9", GST_RANK_PRIMARY + 3, "video/x-vp9"},
+  {"vp9", GST_RANK_NONE, "video/x-vp9"},
 # endif
   {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
   {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
@@ -715,7 +711,7 @@ gst_mfxdec_init (GstMfxDec *mfxdec)
 }
 
 gboolean
-gst_mfxdec_register (GstPlugin * plugin)
+gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
 {
   gboolean ret = FALSE;
   guint i, rank;
@@ -741,6 +737,28 @@ gst_mfxdec_register (GstPlugin * plugin)
     if (name) {
       type_name = g_strdup_printf ("GstMfxDec_%s", name);
       element_name = g_strdup_printf ("mfx%sdec", name);
+
+#if MSDK_CHECK_VERSION(1,19)
+      switch (platform) {
+#if MSDK_CHECK_VERSION(1,22)
+        case MFX_PLATFORM_APOLLOLAKE:
+        case MFX_PLATFORM_KABYLAKE:
+#endif
+        case MFX_PLATFORM_SKYLAKE:
+          if (!g_strcmp0(name, "vp9"))
+            rank = GST_RANK_PRIMARY + 3;
+        case MFX_PLATFORM_CHERRYTRAIL:
+        case MFX_PLATFORM_BROADWELL:
+          if (!g_strcmp0(name, "vp8"))
+            rank = GST_RANK_PRIMARY + 3;
+        case MFX_PLATFORM_HASWELL:
+          if (!g_strcmp0(name, "hevc"))
+            rank = GST_RANK_PRIMARY + 3;
+          break;
+        default:
+          break;
+      }
+#endif
     }
     else {
       type_name = g_strdup_printf ("GstMfxDec");

@@ -295,3 +295,37 @@ gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,
   vip->fps_n = vi.fps_n;
   vip->fps_d = vi.fps_d;
 }
+
+#if MSDK_CHECK_VERSION(1,19)
+mfxU16
+gst_mfx_get_platform(void)
+{
+  mfxStatus sts = MFX_ERR_NONE;
+  mfxPlatform platform;
+  mfxInitParam init_params = { 0 };
+  mfxSession session;
+
+  //init_params.GPUCopy = MFX_GPUCOPY_ON;
+  init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
+#if WITH_D3D11_BACKEND
+  init_params.Implementation |= MFX_IMPL_VIA_D3D11;
+#endif
+  init_params.Version.Major = 1;
+  init_params.Version.Minor = 19;
+
+  sts = MFXInitEx(init_params, &session);
+  if (sts != MFX_ERR_NONE) {
+    GST_ERROR("Error initializing internal MFX session");
+    return MFX_PLATFORM_UNKNOWN;
+  }
+
+  sts = MFXVideoCORE_QueryPlatform(session, &platform);
+  if (sts != MFX_ERR_NONE) {
+    GST_ERROR("Error detecting MFX platform.");
+    return MFX_PLATFORM_UNKNOWN;
+  }
+
+  MFXClose(session);
+  return platform.CodeName;
+}
+#endif

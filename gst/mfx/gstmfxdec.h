@@ -51,7 +51,7 @@ struct _GstMfxDecClass {
   GstMfxPluginBaseClass parent_class;
 };
 
-gboolean gst_mfxdec_register (GstPlugin * plugin);
+gboolean gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform);
 
 
 G_END_DECLS
