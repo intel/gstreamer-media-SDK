@@ -122,16 +122,23 @@ gst_mfx_encoder_load_hevc_plugin (GstMfxEncoder * encoder)
 {
   mfxPluginUID uid;
   mfxStatus sts;
-  guint i, c;
+  guint i = 0, c;
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
 
   gchar *plugin_uids[] = {
     "6fadc791a0c2eb479ab6dcd5ea9da347",     /* HW encoder */
-    //"e5400a06c74d41f5b12d430bbaa23d0b",   /* GPU-accelerated encoder */
+#ifdef WITH_D3D11_BACKEND
+    "e5400a06c74d41f5b12d430bbaa23d0b",     /* GPU-assisted encoder */
+#endif
     "2fca99749fdb49aeb121a5b63ef568f7",     /* SW decoder */
     NULL
   };
-  for (i = 0; plugin_uids[i]; i++) {
+#if MSDK_CHECK_VERSION(1,19)
+  mfxU16 platform = gst_mfx_task_aggregator_get_platform(priv->aggregator);
+  if (platform < MFX_PLATFORM_SKYLAKE)
+    i = 1;
+#endif
+  for (; plugin_uids[i]; i++) {
     for (c = 0; c < sizeof (uid.Data); c++)
       sscanf (plugin_uids[i] + 2 * c, "%2hhx", uid.Data + c);
     sts = MFXVideoUSER_Load (priv->session, &uid, 1);

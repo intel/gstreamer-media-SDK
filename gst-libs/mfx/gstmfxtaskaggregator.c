@@ -38,6 +38,7 @@ struct _GstMfxTaskAggregator
   GList *tasks;
   GstMfxTask *current_task;
   mfxSession parent_session;
+  mfxU16 platform;
 };
 
 G_DEFINE_TYPE(GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_TYPE_OBJECT);
@@ -99,7 +100,7 @@ gst_mfx_task_aggregator_set_device_context (GstMfxTaskAggregator * aggregator)
       gst_mfx_context_new(g_object_new(GST_TYPE_MFX_CONTEXT, NULL),
         aggregator->parent_session);
 #ifdef WITH_LIBVA_BACKEND
-    gst_mfx_display_init_vaapi (gst_mfx_context_get_device(aggregator->context));
+    gst_mfx_display_init_vaapi(gst_mfx_context_get_device(aggregator->context));
 #endif
   }
 }
@@ -108,13 +109,12 @@ mfxSession
 gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
     gboolean * is_joined)
 {
+  mfxInitParam init_params = { 0 };
   mfxIMPL impl;
   mfxVersion version;
   mfxStatus sts;
   mfxSession session;
   const char *desc;
-
-  mfxInitParam init_params = { 0 };
 
   //init_params.GPUCopy = MFX_GPUCOPY_ON;
   init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
@@ -254,6 +254,23 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
     memtype_is_system = !!(params->IOPattern & MFX_IOPATTERN_IN_SYSTEM_MEMORY);
   } while (memtype_is_system);
 }
+
+#if MSDK_CHECK_VERSION(1,19)
+mfxU16
+gst_mfx_task_aggregator_get_platform(GstMfxTaskAggregator * aggregator)
+{
+  g_return_val_if_fail(aggregator != NULL, MFX_PLATFORM_UNKNOWN);
+
+  if (!aggregator->platform) {
+    mfxPlatform platform = { 0 };
+    mfxStatus sts =
+      MFXVideoCORE_QueryPlatform(aggregator->parent_session, &platform);  
+    if (MFX_ERR_NONE == sts)
+      aggregator->platform = platform.CodeName;
+  }
+  return aggregator->platform;
+}
+#endif
 
 static void
 gst_mfx_task_aggregator_class_init(GstMfxTaskAggregatorClass * klass)

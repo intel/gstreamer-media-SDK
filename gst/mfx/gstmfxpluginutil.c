@@ -301,7 +301,7 @@ mfxU16
 gst_mfx_get_platform(void)
 {
   mfxStatus sts = MFX_ERR_NONE;
-  mfxPlatform platform;
+  mfxPlatform platform = { 0 };
   mfxInitParam init_params = { 0 };
   mfxSession session;
 

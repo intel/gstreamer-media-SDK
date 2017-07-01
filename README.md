@@ -34,8 +34,8 @@ Requirements
 
 **Software requirements**
 
-  * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows  
-    Media Server Studio 2017 R2 Community / Professional Edition (Windows / Linux)  
+  * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows or  
+    Media Server Studio 2017 Community / Professional Edition (Windows / Linux)  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake)
   * GStreamer 1.6.x (tested up to GStreamer 1.12.x)
   * gst-plugins-* 1.6.x (tested up to GStreamer 1.12.x)
