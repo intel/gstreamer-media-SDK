@@ -29,6 +29,7 @@
 #include "gstmfxvalue.h"
 #include "gstmfxprofile.h"
 #include <gst/video/gstvideoutils.h>
+#include <mfxplugin.h>
 
 G_BEGIN_DECLS
 
@@ -152,9 +153,9 @@ typedef struct _GstMfxEncoderPrivate          GstMfxEncoderPrivate;
 
 struct _GstMfxEncoderPrivate
 {
-  GstMfxEncoder			 *parent;
+  GstMfxEncoder          *parent;
   GPtrArray              *properties;
-  mfxU16                  profile;
+  GstMfxProfile           profile;
 
   GstMfxTaskAggregator   *aggregator;
   GstMfxTask             *encode;
@@ -168,7 +169,7 @@ struct _GstMfxEncoderPrivate
   mfxVideoParam           params;
   mfxFrameInfo            frame_info;
   mfxBitstream            bs;
-  mfxU32                  codec;
+  mfxPluginUID            uid;
   gchar                  *plugin_uid;
   GstVideoInfo            info;
 

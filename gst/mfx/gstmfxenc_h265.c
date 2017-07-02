@@ -31,16 +31,17 @@
 GST_DEBUG_CATEGORY_STATIC (gst_mfx_h265_enc_debug);
 #define GST_CAT_DEFAULT gst_mfx_h265_enc_debug
 
-#define GST_CODEC_CAPS                              \
-    "video/x-h265, "                                  \
-    "stream-format = (string) { hvc1, byte-stream }, " \
+#define GST_CODEC_CAPS                                  \
+    "video/x-h265, "                                    \
+    "stream-format = (string) { hvc1, byte-stream }, "  \
     "alignment = (string) au"
 
 static const char gst_mfxenc_h265_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
-static const char gst_mfxenc_h265_src_caps_str[] = GST_CODEC_CAPS;
+static const char gst_mfxenc_h265_src_caps_str[] =
+    GST_CODEC_CAPS ", " "profile = (string) { main, main-10 }";
 
 static GstStaticPadTemplate gst_mfxenc_h265_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -97,6 +98,63 @@ gst_mfxenc_h265_get_property (GObject * object,
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
   }
+}
+
+static mfxU16
+get_profile_value(const GValue * value)
+{
+  const gchar *str;
+
+  if (!value || !G_VALUE_HOLDS_STRING(value))
+    return;
+
+  str = g_value_get_string(value);
+  if (!str)
+    return MFX_PROFILE_UNKNOWN;
+  return !g_strcmp0(str, "main-10") ?
+      MFX_PROFILE_HEVC_MAIN10 : MFX_PROFILE_HEVC_MAIN;
+}
+
+static mfxU16
+get_profile(GstCaps * caps)
+{
+  mfxU16 profile;
+  guint i, j, num_structures, num_values;
+
+  num_structures = gst_caps_get_size(caps);
+  for (i = 0; i < num_structures; i++) {
+    GstStructure *const structure = gst_caps_get_structure(caps, i);
+    const GValue *const value = gst_structure_get_value(structure, "profile");
+
+    if (!value)
+      continue;
+    if (G_VALUE_HOLDS_STRING(value))
+      profile = get_profile_value(value);
+    else if (GST_VALUE_HOLDS_LIST(value))
+      profile = get_profile_value(gst_value_list_get_value(value, 0));
+  }
+  return profile;
+}
+
+static gboolean
+gst_mfxenc_h265_set_config(GstMfxEnc * base_encode)
+{
+  GstCaps *allowed_caps;
+  mfxU16 profile;
+
+  /* Check for the largest profile that is supported */
+  allowed_caps =
+    gst_pad_get_allowed_caps(GST_MFX_PLUGIN_BASE_SRC_PAD(base_encode));
+  if (!allowed_caps)
+    return TRUE;
+
+  profile = get_profile(allowed_caps);
+  gst_caps_unref(allowed_caps);
+  if (profile != MFX_PROFILE_UNKNOWN) {
+    if (!gst_mfx_encoder_set_profile(base_encode->encoder, profile))
+      return FALSE;
+  }
+  return TRUE;
 }
 
 static GstCaps *
@@ -287,6 +345,9 @@ gst_mfxenc_h265_class_init (GstMfxEncH265Class * klass)
   object_class->get_property = gst_mfxenc_h265_get_property;
 
   encode_class->get_properties = gst_mfx_encoder_h265_get_default_properties;
+#ifdef WITH_D3D11_BACKEND
+  encode_class->set_config = gst_mfxenc_h265_set_config;
+#endif
   encode_class->get_caps = gst_mfxenc_h265_get_caps;
   encode_class->alloc_encoder = gst_mfxenc_h265_alloc_encoder;
   encode_class->format_buffer = gst_mfxenc_h265_format_buffer;

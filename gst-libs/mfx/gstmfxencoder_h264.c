@@ -117,7 +117,7 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
   GstMfxEncoderH264 *const encoder = GST_MFX_ENCODER_H264_CAST (base_encoder);
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
 
-  if (priv->profile == MFX_PROFILE_AVC_BASELINE)
+  if (priv->profile.profile == MFX_PROFILE_AVC_BASELINE)
 	  priv->gop_refdist = 1;
 
   if (priv->gop_refdist == 1)
@@ -140,7 +140,7 @@ gst_mfx_encoder_h264_init(GstMfxEncoderH264 * base_encoder)
 static gboolean
 gst_mfx_encoder_h264_create(GstMfxEncoder * base_encoder)
 {
-  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_AVC;
+  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->profile.codec = MFX_CODEC_AVC;
   return TRUE;
 }
 
@@ -366,16 +366,6 @@ gst_mfx_encoder_h264_get_default_properties (void)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   return props;
-}
-
-gboolean
-gst_mfx_encoder_h264_set_max_profile (GstMfxEncoder * encoder, mfxU16 profile)
-{
-  g_return_val_if_fail (encoder != NULL, FALSE);
-  g_return_val_if_fail (profile != MFX_PROFILE_UNKNOWN, FALSE);
-
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->profile = profile;
-  return TRUE;
 }
 
 GST_MFX_ENCODER_DEFINE_CLASS_DATA(H264);

@@ -19,7 +19,6 @@
  */
 
 #include "sysdeps.h"
-#include <mfxplugin.h>
 
 #include "common/gstbitwriter.h"
 #include "gst-libs/mfx/sysdeps.h"
@@ -117,20 +116,38 @@ gst_mfx_encoder_h265_reconfigure (GstMfxEncoder * base_encoder)
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
-static mfxStatus
-gst_mfx_encoder_load_hevc_plugin (GstMfxEncoder * encoder)
+static gboolean
+gst_mfx_encoder_detect_hevc_plugin (GstMfxEncoder * encoder)
 {
-  mfxPluginUID uid;
-  mfxStatus sts;
-  guint i = 0, c;
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  mfxStatus sts = MFX_ERR_NONE;
+  mfxInitParam init_params = { 0 };
+  mfxSession session;
+  guint i = 0, c;
+  gboolean success = FALSE;
+
+  /* Initialize a separate MFX session to detect the apppropriate plugin first
+   * before loading later since we do not know yet at this point whether the
+   * encoder task and the session it owns is shared or not */
+  init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
+#if WITH_D3D11_BACKEND
+  init_params.Implementation |= MFX_IMPL_VIA_D3D11;
+#endif
+  init_params.Version.Major = 1;
+  init_params.Version.Minor = 17;
+
+  sts = MFXInitEx(init_params, &session);
+  if (sts != MFX_ERR_NONE) {
+    GST_ERROR("Error initializing internal MFX session");
+    return FALSE;
+  }
 
   gchar *plugin_uids[] = {
     "6fadc791a0c2eb479ab6dcd5ea9da347",     /* HW encoder */
 #ifdef WITH_D3D11_BACKEND
     "e5400a06c74d41f5b12d430bbaa23d0b",     /* GPU-assisted encoder */
 #endif
-    "2fca99749fdb49aeb121a5b63ef568f7",     /* SW decoder */
+    "2fca99749fdb49aeb121a5b63ef568f7",     /* SW encoder */
     NULL
   };
 #if MSDK_CHECK_VERSION(1,19)
@@ -139,16 +156,19 @@ gst_mfx_encoder_load_hevc_plugin (GstMfxEncoder * encoder)
     i = 1;
 #endif
   for (; plugin_uids[i]; i++) {
-    for (c = 0; c < sizeof (uid.Data); c++)
-      sscanf (plugin_uids[i] + 2 * c, "%2hhx", uid.Data + c);
-    sts = MFXVideoUSER_Load (priv->session, &uid, 1);
+    for (c = 0; c < sizeof (priv->uid.Data); c++)
+      sscanf (plugin_uids[i] + 2 * c, "%2hhx", priv->uid.Data + c);
+    sts = MFXVideoUSER_Load (session, &priv->uid, 1);
     if (MFX_ERR_NONE == sts) {
       priv->plugin_uid = g_strdup (plugin_uids[i]);
-      GST_DEBUG ("Loaded HEVC encoder plugin %s", priv->plugin_uid);
-      return TRUE;
+      GST_DEBUG ("Using HEVC encoder plugin %s", priv->plugin_uid);
+      MFXVideoUSER_UnLoad(session, &priv->uid);
+      success = TRUE;
+      break;
     }
   }
-  return FALSE;
+  MFXClose(session);
+  return success;
 }
 
 static void
@@ -159,23 +179,14 @@ gst_mfx_encoder_h265_init(GstMfxEncoderH265 * base_encoder)
 static gboolean
 gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
 {
-  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_HEVC;
+  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->profile.codec = MFX_CODEC_HEVC;
 
-  return gst_mfx_encoder_load_hevc_plugin (base_encoder);
+  return gst_mfx_encoder_detect_hevc_plugin (base_encoder);
 }
 
 static void
 gst_mfx_encoder_h265_finalize (GstMfxEncoder * base_encoder)
 {
-  mfxPluginUID uid;
-  guint c;
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
-
-  for (c = 0; c < sizeof (uid.Data); c++)
-    sscanf (priv->plugin_uid + 2 * c, "%2hhx", uid.Data + c);
-
-  MFXVideoUSER_UnLoad (priv->session, &uid);
-  g_free (priv->plugin_uid);
 }
 
 /* Generate "codec-data" buffer */

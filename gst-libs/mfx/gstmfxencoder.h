@@ -171,6 +171,12 @@ gst_mfx_encoder_set_property (GstMfxEncoder * encoder, gint prop_id,
     const GValue * value);
 
 gboolean
+gst_mfx_encoder_set_async_depth(GstMfxEncoder * encoder, mfxU16 async_depth);
+
+gboolean
+gst_mfx_encoder_set_profile(GstMfxEncoder * encoder, mfxU16 profile);
+
+gboolean
 gst_mfx_encoder_set_gop_refdist (GstMfxEncoder * encoder, gint gop_refdist);
 
 gboolean
@@ -187,9 +193,6 @@ gst_mfx_encoder_set_qpp_offset (GstMfxEncoder * encoder, mfxU16 offset);
 
 gboolean
 gst_mfx_encoder_set_qpb_offset (GstMfxEncoder * encoder, mfxU16 offset);
-
-gboolean
-gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth);
 
 GstMfxEncoderStatus
 gst_mfx_encoder_prepare (GstMfxEncoder * encoder);

@@ -96,7 +96,7 @@ gst_mfx_encoder_mpeg2_init(GstMfxEncoderMpeg2 * encoder)
 static gboolean
 gst_mfx_encoder_mpeg2_create (GstMfxEncoder * base_encoder)
 {
-  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->codec = MFX_CODEC_MPEG2;
+  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->profile.codec = MFX_CODEC_MPEG2;
   return TRUE;
 }
 

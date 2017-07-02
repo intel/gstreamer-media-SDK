@@ -254,8 +254,13 @@ init_params (GstMfxFilter * filter)
   }
   filter->params.vpp.Out = filter->frame_info;
 
-  if (filter->fourcc)
+  if (filter->fourcc) {
     filter->params.vpp.Out.FourCC = filter->fourcc;
+    if (MFX_FOURCC_P010 == filter->fourcc) {
+      filter->params.vpp.Out.BitDepthLuma = 10;
+      filter->params.vpp.Out.BitDepthChroma = 10;
+    }
+  }
 
   if (filter->width) {
     filter->params.vpp.Out.CropW = filter->width;
@@ -513,11 +518,12 @@ gboolean
 gst_mfx_filter_set_format (GstMfxFilter * filter, mfxU32 fourcc)
 {
   g_return_val_if_fail (filter != NULL, FALSE);
-
-  if (MFX_FOURCC_NV12 == fourcc || MFX_FOURCC_RGB4 == fourcc)
-    filter->fourcc = fourcc;
-  else
-    return FALSE;
+  g_return_val_if_fail(MFX_FOURCC_NV12 == fourcc
+    || MFX_FOURCC_RGB4 == fourcc
+    || MFX_FOURCC_P010 == fourcc
+    , FALSE);
+  
+  filter->fourcc = fourcc;
 
   return TRUE;
 }

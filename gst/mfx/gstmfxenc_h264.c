@@ -176,7 +176,7 @@ gst_mfxenc_h264_set_config (GstMfxEnc * base_encode)
   if (profile != MFX_PROFILE_UNKNOWN) {
     GST_INFO ("using %s profile as target decoder constraints",
         gst_mfx_utils_h264_get_profile_string (profile));
-    if (!gst_mfx_encoder_h264_set_max_profile (base_encode->encoder, profile))
+    if (!gst_mfx_encoder_set_profile (base_encode->encoder, profile))
       return FALSE;
   }
   return TRUE;
