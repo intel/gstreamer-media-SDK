@@ -25,7 +25,6 @@
 #include "common/gstbitwriter.h"
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_h264.h"
-#include "gstmfxutils_h264.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -98,7 +97,7 @@ ensure_bitrate (GstMfxEncoderH264 * encoder)
         if (!priv->use_cabac)
           bits_per_mb += (bits_per_mb * 15) / 100;
 
-		priv->bitrate =
+        priv->bitrate =
             mb_width * mb_height * bits_per_mb *
             GST_MFX_ENCODER_FPS_N (priv) /
             GST_MFX_ENCODER_FPS_D (priv) / 1000;

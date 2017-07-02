@@ -25,7 +25,6 @@
 
 #include "gstmfxencoder.h"
 #include "gstmfxencoder_priv.h"
-#include "gstmfxutils_h264.h"
 
 G_BEGIN_DECLS
 

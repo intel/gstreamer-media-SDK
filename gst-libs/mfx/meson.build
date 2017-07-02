@@ -63,7 +63,7 @@ if mfx_encoder
     'common/gstbitwriter.c'
   ]
   encoders = [
-    ['MFX_H264_ENCODER', '-DMFX_H264_ENCODER', ['gstmfxencoder_h264.c', 'gstmfxutils_h264.c']],
+    ['MFX_H264_ENCODER', '-DMFX_H264_ENCODER', ['gstmfxencoder_h264.c']],
     ['MFX_H265_ENCODER', '-DMFX_H265_ENCODER', ['gstmfxencoder_h265.c']],
     ['MFX_MPEG2_ENCODER', '-DMFX_MPEG2_ENCODER', ['gstmfxencoder_mpeg2.c']],
     ['MFX_JPEG_ENCODER', '-DMFX_JPEG_ENCODER', ['gstmfxencoder_jpeg.c']]
