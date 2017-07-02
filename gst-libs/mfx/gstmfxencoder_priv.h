@@ -161,7 +161,8 @@ struct _GstMfxEncoderPrivate
   GstMfxTask             *encode;
   GstMfxFilter           *filter;
   GByteArray             *bitstream;
-  gboolean                memtype_is_system;
+  gboolean                encoder_memtype_is_system;
+  gboolean                input_memtype_is_system;
   gboolean                shared;
   gboolean                inited;
 
@@ -170,6 +171,7 @@ struct _GstMfxEncoderPrivate
   mfxFrameInfo            frame_info;
   mfxBitstream            bs;
   mfxPluginUID            uid;
+  GList                  *plugin_uids;
   gchar                  *plugin_uid;
   GstVideoInfo            info;
 

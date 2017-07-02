@@ -106,7 +106,7 @@ get_profile_value(const GValue * value)
   const gchar *str;
 
   if (!value || !G_VALUE_HOLDS_STRING(value))
-    return;
+    return MFX_PROFILE_UNKNOWN;
 
   str = g_value_get_string(value);
   if (!str)
