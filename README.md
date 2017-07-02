@@ -82,9 +82,9 @@ To setup a VS2015 project:
 		
 Newer platforms such as Skylake and Kabylake have added video codec support such as HEVC decode / encode and VP9 decode,
 but are disabled by default to maximize compatibility with older systems such as Baytrail and Haswell.
-To enable these features such VP9 decode support, from your build dir:
+To enable these features such as HEVC encode support, from your build dir:
 
-	mesonconf -DUSE_VP9_DECODER=true
+	mesonconf -DMFX_H265_ENCODER=true
 
 For a list of more options when configuring the build, refer to the meson_options.txt file inside the source directory or run mesonconf inside the build directory.
 
