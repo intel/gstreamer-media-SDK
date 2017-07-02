@@ -729,6 +729,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
     0,
     (GInstanceInitFunc) gst_mfxdec_init,
   };
+  gboolean should_register;
 
   for (i = 0; i < G_N_ELEMENTS (mfx_codec_map); i++) {
     name = mfx_codec_map[i].name;
@@ -759,10 +760,13 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
           break;
       }
 #endif
+      should_register = (rank != GST_RANK_NONE);
     }
     else {
       type_name = g_strdup_printf ("GstMfxDec");
       element_name = g_strdup_printf ("mfxdecode");
+      /* mfxdecode was only registered for legacy purposes and codec testing */
+      should_register = TRUE;
     }
 
     type = g_type_from_name (type_name);
@@ -775,8 +779,8 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
           (gpointer) & mfx_codec_map[i]);
     }
 
-    /* mfxdecode was only registered for legacy purposes */
-    ret |= gst_element_register (plugin, element_name, rank, type);
+    if (should_register)
+      ret |= gst_element_register (plugin, element_name, rank, type);
 
     g_free (element_name);
     g_free (type_name);
