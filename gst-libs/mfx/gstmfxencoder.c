@@ -558,7 +558,6 @@ gst_mfx_encoder_finalize (GObject * object)
 
   if (priv->plugin_uids) {
     MFXVideoUSER_UnLoad(priv->session, &priv->uid);
-    g_free(priv->plugin_uid);
     g_list_free(priv->plugin_uids);
   }
 
@@ -623,14 +622,13 @@ gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth)
   return TRUE;
 }
 
-gboolean
+void
 gst_mfx_encoder_set_profile(GstMfxEncoder * encoder, mfxU16 profile)
 {
-  g_return_val_if_fail(encoder != NULL, FALSE);
-  g_return_val_if_fail(profile != MFX_PROFILE_UNKNOWN, FALSE);
+  g_return_if_fail(encoder != NULL);
+  g_return_if_fail(profile != MFX_PROFILE_UNKNOWN);
 
   GST_MFX_ENCODER_GET_PRIVATE(encoder)->profile.profile = profile;
-  return TRUE;
 }
 
 gboolean
@@ -906,16 +904,14 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder *encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   mfxStatus sts = MFX_ERR_NONE;
-  const gchar *plugin_uid;
   guint i, c;
 
   for (i = 0; i < g_list_length(priv->plugin_uids); i++) {
-    plugin_uid = g_list_nth_data(priv->plugin_uids, i);
+    priv->plugin_uid = g_list_nth_data(priv->plugin_uids, i);
     for (c = 0; c < sizeof(priv->uid.Data); c++)
-      sscanf(plugin_uid + 2 * c, "%2hhx", priv->uid.Data + c);
+      sscanf(priv->plugin_uid + 2 * c, "%2hhx", priv->uid.Data + c);
     sts = MFXVideoUSER_Load(priv->session, &priv->uid, 1);
     if (MFX_ERR_NONE == sts) {
-      priv->plugin_uid = g_strdup(plugin_uid);
       GST_DEBUG("Using HEVC encoder plugin %s", priv->plugin_uid);
       return TRUE;
     }

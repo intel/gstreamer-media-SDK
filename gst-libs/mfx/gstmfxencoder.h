@@ -173,7 +173,7 @@ gst_mfx_encoder_set_property (GstMfxEncoder * encoder, gint prop_id,
 gboolean
 gst_mfx_encoder_set_async_depth(GstMfxEncoder * encoder, mfxU16 async_depth);
 
-gboolean
+void
 gst_mfx_encoder_set_profile(GstMfxEncoder * encoder, mfxU16 profile);
 
 gboolean

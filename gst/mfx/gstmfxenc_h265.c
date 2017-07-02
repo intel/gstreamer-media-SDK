@@ -150,10 +150,8 @@ gst_mfxenc_h265_set_config(GstMfxEnc * base_encode)
 
   profile = get_profile(allowed_caps);
   gst_caps_unref(allowed_caps);
-  if (profile != MFX_PROFILE_UNKNOWN) {
-    if (!gst_mfx_encoder_set_profile(base_encode->encoder, profile))
-      return FALSE;
-  }
+  
+  gst_mfx_encoder_set_profile(base_encode->encoder, profile);
   return TRUE;
 }
 
