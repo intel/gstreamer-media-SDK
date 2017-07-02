@@ -208,7 +208,7 @@ gst_mfx_decoder_finalize (GObject * object)
   g_queue_clear (&decoder->discarded_frames);
 
   if ((decoder->params.mfx.CodecId == MFX_CODEC_VP8)
-#ifdef USE_VP9_DECODER
+#if MSDK_CHECK_VERSION(1,19)
       || (decoder->params.mfx.CodecId == MFX_CODEC_VP9)
 #endif
       || (decoder->params.mfx.CodecId == MFX_CODEC_HEVC))
@@ -255,7 +255,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
 
       break;
-#ifdef USE_VP9_DECODER
+#if MSDK_CHECK_VERSION(1,19)
     case MFX_CODEC_VP9:
       decoder->plugin_uid = MFX_PLUGINID_VP9D_HW;
       sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);

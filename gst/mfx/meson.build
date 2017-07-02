@@ -10,13 +10,6 @@ sources = [
 
 if mfx_decoder
   sources += ['gstmfxdec.c']
-  if get_option ('USE_VP9_DECODER')
-    gst_mfx_args += '-DUSE_VP9_DECODER'
-  endif
-else
-  if get_option ('USE_VP9_DECODER')
-    error('USE_VP9_DECODER required but MFX_DECODER is false')
-  endif
 endif
 
 if mfx_sink

@@ -1,5 +1,4 @@
 option('MFX_DECODER', type : 'boolean', value : true)
-option('USE_VP9_DECODER', type : 'boolean', value : false)
 
 option('MFX_VC1_PARSER', type : 'boolean', value : true)
 

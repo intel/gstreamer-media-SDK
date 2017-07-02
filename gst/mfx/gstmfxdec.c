@@ -57,7 +57,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
     GST_CAPS_CODEC ("video/x-wmv, \
         stream-format = (string) { sequence-layer-frame-layer, bdu }")
     GST_CAPS_CODEC ("video/x-vp8")
-#ifdef USE_VP9_DECODER
+#if MSDK_CHECK_VERSION(1,19)
     GST_CAPS_CODEC ("video/x-vp9")
 #endif
     GST_CAPS_CODEC ("image/jpeg")
@@ -109,7 +109,7 @@ static const GstMfxCodecMap mfx_codec_map[] = {
       "video/x-wmv, \
        stream-format = (string) { sequence-layer-frame-layer, bdu }"},
   {"vp8", GST_RANK_NONE, "video/x-vp8"},
-# ifdef USE_VP9_DECODER
+#if MSDK_CHECK_VERSION(1,19)
   {"vp9", GST_RANK_NONE, "video/x-vp9"},
 # endif
   {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},

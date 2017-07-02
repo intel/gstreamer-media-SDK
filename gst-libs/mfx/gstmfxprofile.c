@@ -66,7 +66,7 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
       "image/jpeg", NULL},
   {MFX_PROFILE_VP8_0, MFX_CODEC_VP8,
       "video/x-vp8", NULL},
-#ifdef USE_VP9_DECODER
+#if MSDK_CHECK_VERSION(1,19)
   {MFX_PROFILE_VP9_0, MFX_CODEC_VP9,
       "video/x-vp9", NULL},
 #endif

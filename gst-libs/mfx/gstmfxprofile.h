@@ -28,10 +28,6 @@
 #include <mfxjpeg.h>
 #include <mfxvp8.h>
 
-#ifdef USE_VP9_DECODER
-#include <mfxvp9.h>
-#endif
-
 G_BEGIN_DECLS
 
 typedef struct _GstMfxProfile GstMfxProfile;
