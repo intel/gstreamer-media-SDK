@@ -73,12 +73,12 @@ struct _GstMfxDecoder
 
 G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
 
-GstMfxProfile
+GstMfxProfile *
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
 {
-  //g_return_val_if_fail (decoder != NULL, 0);
+  g_return_val_if_fail (decoder != NULL, NULL);
 
-  return decoder->profile;
+  return &decoder->profile;
 }
 
 gboolean
