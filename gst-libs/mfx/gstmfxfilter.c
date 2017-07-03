@@ -254,14 +254,6 @@ init_params (GstMfxFilter * filter)
   }
   filter->params.vpp.Out = filter->frame_info;
 
-  if (filter->fourcc) {
-    filter->params.vpp.Out.FourCC = filter->fourcc;
-    if (MFX_FOURCC_P010 == filter->fourcc) {
-      filter->params.vpp.Out.BitDepthLuma = 10;
-      filter->params.vpp.Out.BitDepthChroma = 10;
-    }
-  }
-
   if (filter->width) {
     filter->params.vpp.Out.CropW = filter->width;
     filter->params.vpp.Out.Width = GST_ROUND_UP_16 (filter->width);
@@ -274,6 +266,15 @@ init_params (GstMfxFilter * filter)
       (filter->fps_n && filter->fps_d)) {
     filter->params.vpp.Out.FrameRateExtN = filter->fps_n;
     filter->params.vpp.Out.FrameRateExtD = filter->fps_d;
+  }
+  if (filter->fourcc) {
+    filter->params.vpp.Out.FourCC = filter->fourcc;
+    if (MFX_FOURCC_P010 == filter->fourcc) {
+      filter->params.vpp.Out.BitDepthLuma = 10;
+      filter->params.vpp.Out.BitDepthChroma = 10;
+
+      //filter->params.vpp.Out.Shift = 1;
+    }
   }
 }
 

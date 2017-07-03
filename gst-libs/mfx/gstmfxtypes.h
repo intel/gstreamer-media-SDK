@@ -101,6 +101,11 @@ struct _GstMfxMemoryId {
 };
 
 typedef enum {
+  MFX_SURFACE_READ = (1 << 0),
+  MFX_SURFACE_WRITE = (1 << 1),
+};
+
+typedef enum {
   GST_MFX_OPTION_AUTO = -1,
   GST_MFX_OPTION_OFF,
   GST_MFX_OPTION_ON,

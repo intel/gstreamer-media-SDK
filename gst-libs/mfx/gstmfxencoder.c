@@ -929,15 +929,15 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
   mfxU32 encoder_format, input_format =
       gst_video_format_to_mfx_fourcc(GST_VIDEO_INFO_FORMAT(&priv->info));
 
-  /* Specify system memory type for encoder input surface with NV12 surfaces */
-  if ((MFX_FOURCC_NV12 == priv->frame_info.FourCC
-        && priv->input_memtype_is_system)
-      || MFX_FOURCC_P010 == priv->frame_info.FourCC) // remove later for native HEVC Main 10 encode
-    priv->encoder_memtype_is_system = TRUE;
-
   gst_mfx_encoder_set_encoding_params (encoder);
 
   encoder_format = priv->params.mfx.FrameInfo.FourCC;
+  /* Specify system memory type for encoder input surface with NV12 surfaces */
+  if ((MFX_FOURCC_NV12 == input_format
+        && priv->input_memtype_is_system)
+      || MFX_FOURCC_P010 == encoder_format) // change later for native HEVC Main 10 encode
+    priv->encoder_memtype_is_system = TRUE;
+
   if (input_format == encoder_format && !priv->input_memtype_is_system) {
     GstMfxTask *task =
       gst_mfx_task_aggregator_get_last_task(priv->aggregator);

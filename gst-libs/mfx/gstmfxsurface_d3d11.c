@@ -47,6 +47,7 @@ gst_mfx_surface_d3d11_from_task(GstMfxSurface * surface,
   if (!d3d_surface->mid)
     return FALSE;
   
+  d3d_surface->mid->info = &priv->surface.Info;
   priv->surface.Data.MemId = d3d_surface->mid;
   priv->surface_id = d3d_surface->mid->mid;
   return TRUE;
@@ -167,6 +168,7 @@ gst_mfx_surface_d3d11_map (GstMfxSurface * surface)
 
   switch (info->FourCC) {
   case MFX_FOURCC_NV12:
+  case MFX_FOURCC_P010:
     priv->pitches[0] = priv->pitches[1] = ptr->Pitch =
         (mfxU16)locked_rect.RowPitch;
     priv->planes[0] = ptr->Y = (mfxU8*)locked_rect.pData;

@@ -239,18 +239,21 @@ gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse * response)
 mfxStatus
 gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
-  GstMfxTask *task =
-    gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+  GstMfxContext *context =
+      gst_mfx_task_aggregator_get_context(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
+  HRESULT hr = S_OK;
+  D3D11_TEXTURE2D_DESC desc = { 0 };
+  D3D11_MAPPED_SUBRESOURCE locked_rect = { 0 };
+  ID3D11Texture2D *texture = (ID3D11Texture2D *)mem_id->mid;
+  ID3D11DeviceContext *d3d11_context =
+      gst_mfx_device_get_d3d11_context(gst_mfx_context_get_device(context));
+  
+  gst_mfx_context_unref(context);
 
-  if (mem_id->info && mem_id->info->FourCC == MFX_FOURCC_P8) {
-    D3D11_MAPPED_SUBRESOURCE locked_rect = { 0 };
-    ID3D11Texture2D *texture = (ID3D11Texture2D *)mem_id->mid;
-    ID3D11DeviceContext *d3d11_context =
-      gst_mfx_device_get_d3d11_context(gst_mfx_context_get_device(priv->context));
-
-    HRESULT hr = ID3D11DeviceContext_Map(d3d11_context,
+  ID3D11Texture2D_GetDesc(texture, &desc);
+  if (desc.Format == DXGI_FORMAT_P8) {
+    hr = ID3D11DeviceContext_Map(d3d11_context,
       texture, 0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
     if (FAILED(hr))
       return MFX_ERR_LOCK_MEMORY;
@@ -261,28 +264,78 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
     ptr->V = 0;
   }
   else {
-    return MFX_ERR_UNSUPPORTED;
-  }
+    ID3D11Texture2D *stage = (ID3D11Texture2D *)mem_id->mid_stage;
 
+    /* copy data only when reading from stored surface */
+    if (mem_id->rw & MFX_SURFACE_READ)
+      ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, stage, 0, 0, 0, 0,
+        texture, 0, NULL);
+
+    do {
+      hr = ID3D11DeviceContext_Map(d3d11_context,
+        stage, 0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
+      if (S_OK != hr && DXGI_ERROR_WAS_STILL_DRAWING != hr)
+        return MFX_ERR_LOCK_MEMORY;
+    } while (DXGI_ERROR_WAS_STILL_DRAWING == hr);
+
+    if (FAILED(hr))
+      return MFX_ERR_LOCK_MEMORY;
+
+    switch (desc.Format) {
+      case DXGI_FORMAT_NV12:
+      case DXGI_FORMAT_P010:
+        ptr->Pitch = (mfxU16)locked_rect.RowPitch;
+        ptr->Y = (mfxU8*)locked_rect.pData;
+        ptr->U = (mfxU8 *)locked_rect.pData
+          + desc.Height * locked_rect.RowPitch;
+        ptr->V = (desc.Format == DXGI_FORMAT_P010) ?
+          ptr->U + 2 : ptr->U + 1;
+        break;
+      case DXGI_FORMAT_B8G8R8A8_UNORM:
+        ptr->Pitch = (mfxU16)locked_rect.RowPitch;
+        ptr->B = (mfxU8*)locked_rect.pData;
+        ptr->G = ptr->B + 1;
+        ptr->R = ptr->B + 2;
+        ptr->A = ptr->B + 3;
+        break;
+      case DXGI_FORMAT_YUY2:
+        ptr->Pitch = (mfxU16)locked_rect.RowPitch;
+        ptr->Y = (mfxU8*)locked_rect.pData;
+        ptr->U = ptr->Y + 1;
+        ptr->V = ptr->Y + 3;
+        break;
+      default:
+        return MFX_ERR_UNSUPPORTED;
+    }
+  }
   return MFX_ERR_NONE;
 }
 
 mfxStatus
 gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
-  GstMfxTask *task =
-    gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+  GstMfxContext *context =
+      gst_mfx_task_aggregator_get_context(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
+  D3D11_TEXTURE2D_DESC desc = { 0 };
+  ID3D11Texture2D *texture = (ID3D11Texture2D *)mem_id->mid;
+  ID3D11DeviceContext *d3d11_context =
+      gst_mfx_device_get_d3d11_context(gst_mfx_context_get_device(context));
 
-  if (mem_id->info->FourCC == MFX_FOURCC_P8) {
-    ID3D11Texture2D *texture = (ID3D11Texture2D *)mem_id->mid;
-    ID3D11DeviceContext *d3d11_context = gst_mfx_device_get_d3d11_context(
-      gst_mfx_context_get_device(priv->context));
+  gst_mfx_context_unref(context);
+
+  ID3D11Texture2D_GetDesc(texture, &desc);
+  if (desc.Format == DXGI_FORMAT_P8) {
     ID3D11DeviceContext_Unmap(d3d11_context, texture, 0);
   }
   else {
-    return MFX_ERR_UNSUPPORTED;
+    ID3D11Texture2D *stage = (ID3D11Texture2D *)mem_id->mid_stage;
+
+    ID3D11DeviceContext_Unmap(d3d11_context, stage, 0);
+    /* copy data only when writing to stored surface */
+    if (mem_id->rw & MFX_SURFACE_WRITE)
+      ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, texture, 0, 0, 0, 0,
+        stage, 0, NULL);
   }
 
   if (ptr) {

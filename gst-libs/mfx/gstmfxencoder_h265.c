@@ -130,13 +130,15 @@ gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
   priv->plugin_uids =
     g_list_prepend(priv->plugin_uids,
       g_strdup("2fca99749fdb49aeb121a5b63ef568f7"));
+  priv->encoder_memtype_is_system = TRUE;
+
 #if WITH_D3D11_BACKEND
   priv->plugin_uids =
     g_list_prepend(priv->plugin_uids,
       g_strdup("e5400a06c74d41f5b12d430bbaa23d0b"));
+  priv->encoder_memtype_is_system = FALSE;
 #endif
-  priv->encoder_memtype_is_system = TRUE;
-
+  
 #if MSDK_CHECK_VERSION(1,19)
   mfxU16 platform = gst_mfx_task_aggregator_get_platform(priv->aggregator);
   if (platform >= MFX_PLATFORM_SKYLAKE) {
