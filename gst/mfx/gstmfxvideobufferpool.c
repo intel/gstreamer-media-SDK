@@ -170,11 +170,10 @@ gst_mfx_video_buffer_pool_alloc_buffer (GstBufferPool * pool,
     goto error_create_meta;
 
   buffer = gst_buffer_new ();
-  if (buffer)
-    gst_buffer_set_mfx_video_meta (buffer, meta);
-
   if (!buffer)
     goto error_create_buffer;
+
+  gst_buffer_set_mfx_video_meta (buffer, meta);
 
   if (priv->use_dmabuf_memory)
     mem = gst_mfx_dmabuf_memory_new (priv->allocator, priv->display,
