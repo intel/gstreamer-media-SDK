@@ -100,47 +100,11 @@ gst_mfxenc_h265_get_property (GObject * object,
   }
 }
 
-static mfxU16
-get_profile_value(const GValue * value)
-{
-  const gchar *str;
-
-  if (!value || !G_VALUE_HOLDS_STRING(value))
-    return MFX_PROFILE_UNKNOWN;
-
-  str = g_value_get_string(value);
-  if (!str)
-    return MFX_PROFILE_UNKNOWN;
-  return !g_strcmp0(str, "main-10") ?
-      MFX_PROFILE_HEVC_MAIN10 : MFX_PROFILE_HEVC_MAIN;
-}
-
-static mfxU16
-get_profile(GstCaps * caps)
-{
-  mfxU16 profile;
-  guint i, j, num_structures, num_values;
-
-  num_structures = gst_caps_get_size(caps);
-  for (i = 0; i < num_structures; i++) {
-    GstStructure *const structure = gst_caps_get_structure(caps, i);
-    const GValue *const value = gst_structure_get_value(structure, "profile");
-
-    if (!value)
-      continue;
-    if (G_VALUE_HOLDS_STRING(value))
-      profile = get_profile_value(value);
-    else if (GST_VALUE_HOLDS_LIST(value))
-      profile = get_profile_value(gst_value_list_get_value(value, 0));
-  }
-  return profile;
-}
-
 static gboolean
 gst_mfxenc_h265_set_config(GstMfxEnc * base_encode)
 {
   GstCaps *allowed_caps;
-  mfxU16 profile;
+  GstMfxProfile profile;
 
   /* Check for the largest profile that is supported */
   allowed_caps =
@@ -148,10 +112,10 @@ gst_mfxenc_h265_set_config(GstMfxEnc * base_encode)
   if (!allowed_caps)
     return TRUE;
 
-  profile = get_profile(allowed_caps);
+  profile = gst_mfx_profile_from_caps(allowed_caps);
   gst_caps_unref(allowed_caps);
   
-  gst_mfx_encoder_set_profile(base_encode->encoder, profile);
+  gst_mfx_encoder_set_profile(base_encode->encoder, profile.profile);
   return TRUE;
 }
 

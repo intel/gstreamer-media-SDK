@@ -70,10 +70,11 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
   {MFX_PROFILE_VP9_0, MFX_CODEC_VP9,
       "video/x-vp9", NULL},
 #endif
+  /* Order reversed so that main profile has a higher score than main-10 */
+  { MFX_PROFILE_HEVC_MAIN10, MFX_CODEC_HEVC,
+      "video/x-h265", "main-10" },
   {MFX_PROFILE_HEVC_MAIN, MFX_CODEC_HEVC,
       "video/x-h265", "main"},
-  {MFX_PROFILE_HEVC_MAIN10, MFX_CODEC_HEVC,
-      "video/x-h265", "main-10"},
   {MFX_PROFILE_UNKNOWN,}
 };
 
