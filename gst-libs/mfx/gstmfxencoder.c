@@ -558,7 +558,7 @@ gst_mfx_encoder_finalize (GObject * object)
 
   if (priv->plugin_uids) {
     MFXVideoUSER_UnLoad(priv->session, &priv->uid);
-    g_list_free(priv->plugin_uids);
+    g_list_free_full(priv->plugin_uids, g_free);
   }
 
   /* Make sure frame allocator points to the right task
@@ -929,11 +929,10 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
   mfxU32 encoder_format, input_format =
       gst_video_format_to_mfx_fourcc(GST_VIDEO_INFO_FORMAT(&priv->info));
 
-  /* Use input system memory with SW / GPU-assisted HEVC encoder or when
-   * linked directly with SW HEVC decoder decoding HEVC main-10 streams */
+  /* Specify system memory type for encoder input surface with NV12 surfaces */
   if ((MFX_FOURCC_NV12 == priv->frame_info.FourCC
         && priv->input_memtype_is_system)
-      || MFX_FOURCC_P010 == priv->frame_info.FourCC)
+      || MFX_FOURCC_P010 == priv->frame_info.FourCC) // remove later for native HEVC Main 10 encode
     priv->encoder_memtype_is_system = TRUE;
 
   gst_mfx_encoder_set_encoding_params (encoder);

@@ -128,10 +128,12 @@ gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
   priv->profile.codec = MFX_CODEC_HEVC;
 
   priv->plugin_uids =
-    g_list_prepend(priv->plugin_uids, "2fca99749fdb49aeb121a5b63ef568f7");
+    g_list_prepend(priv->plugin_uids,
+      g_strdup("2fca99749fdb49aeb121a5b63ef568f7"));
 #if WITH_D3D11_BACKEND
   priv->plugin_uids =
-    g_list_prepend(priv->plugin_uids, "e5400a06c74d41f5b12d430bbaa23d0b");
+    g_list_prepend(priv->plugin_uids,
+      g_strdup("e5400a06c74d41f5b12d430bbaa23d0b"));
 #endif
   priv->encoder_memtype_is_system = TRUE;
 
@@ -139,7 +141,8 @@ gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
   mfxU16 platform = gst_mfx_task_aggregator_get_platform(priv->aggregator);
   if (platform >= MFX_PLATFORM_SKYLAKE) {
     priv->plugin_uids =
-      g_list_prepend(priv->plugin_uids, "6fadc791a0c2eb479ab6dcd5ea9da347");
+      g_list_prepend(priv->plugin_uids,
+        g_strdup("6fadc791a0c2eb479ab6dcd5ea9da347"));
     priv->encoder_memtype_is_system = FALSE;
   }
 #endif
