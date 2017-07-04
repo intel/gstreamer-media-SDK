@@ -382,7 +382,7 @@ gst_mfx_plugin_base_set_pool_config (GstBufferPool * pool, const gchar * option)
     gst_buffer_pool_config_add_option (config, option);
     return gst_buffer_pool_set_config (pool, config);
   }
-  gst_structure_free(config);
+  gst_structure_free (config);
   return TRUE;
 }
 
@@ -408,7 +408,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   guint size, min, max;
   gboolean update_pool = FALSE;
   gboolean has_video_meta = FALSE;
-  GstStructure *params;
+  const GstStructure *params;
   guint idx;
 
   g_return_val_if_fail (plugin->aggregator != NULL, FALSE);
@@ -427,7 +427,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
-      GstObject *gl_context;
+      GstGLContext *gl_context;
 #if GST_CHECK_VERSION(1,11,1)
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_TYPE_GL_CONTEXT,
           &gl_context, NULL) && gl_context) {

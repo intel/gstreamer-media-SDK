@@ -304,13 +304,12 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
 
   frame_info->Width = GST_ROUND_UP_16 (decoder->info.width);
   if (decoder->params.mfx.CodecId == MFX_CODEC_HEVC) {
-    frame_info->Height = GST_ROUND_UP_32(decoder->info.height);
-  }
-  else {
+    frame_info->Height = GST_ROUND_UP_32 (decoder->info.height);
+  } else {
     frame_info->Height =
       (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
-        GST_ROUND_UP_16(decoder->info.height) :
-        GST_ROUND_UP_32(decoder->info.height);
+          GST_ROUND_UP_16 (decoder->info.height) :
+          GST_ROUND_UP_32 (decoder->info.height);
   }
 
   decoder->params.mfx.CodecProfile = decoder->profile.profile;
@@ -599,8 +598,35 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
   if (!init_decoder (decoder))
     goto error;
 
-  memset(&decoder->bs, 0, sizeof(mfxBitstream));
+  //memset(&decoder->bs, 0, sizeof(mfxBitstream));
+  decoder->bs.DataLength += decoder->bs.DataOffset;
+  decoder->bs.DataOffset = 0;
 
+  GstMfxSurface *surface;
+  mfxFrameSurface1 *insurf, *outsurf = NULL;
+  mfxSyncPoint syncp;
+  mfxStatus sts = MFX_ERR_NONE;
+
+  do {
+    surface = gst_mfx_surface_new_from_pool (decoder->pool);
+    if (!surface)
+      return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
+
+    insurf = gst_mfx_surface_get_frame_surface (surface);
+    sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, &decoder->bs,
+	    insurf, &outsurf, &syncp);
+    GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
+
+    if (MFX_WRN_DEVICE_BUSY == sts)
+      g_usleep (100);
+  } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
+
+  if (syncp) {
+    do {
+      sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 100);
+      GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
+    } while (MFX_WRN_IN_EXECUTION == sts);
+  }
   return TRUE;
 
 error:
@@ -892,6 +918,8 @@ update:
     decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
       decoder->bs.DataOffset);
     decoder->bs.DataOffset = 0;
+    decoder->bs.Data = decoder->bitstream->data;
+    decoder->bs.MaxLength = decoder->bitstream->len;
 
     ret = GST_MFX_DECODER_STATUS_SUCCESS;
   }

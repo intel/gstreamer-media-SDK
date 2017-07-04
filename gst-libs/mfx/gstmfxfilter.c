@@ -262,7 +262,10 @@ init_params (GstMfxFilter * filter)
   }
   if (filter->height) {
     filter->params.vpp.Out.CropH = filter->height;
-    filter->params.vpp.Out.Height = GST_ROUND_UP_16 (filter->height);
+    filter->params.vpp.Out.Height =
+        (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
+           GST_ROUND_UP_16 (filter->height) :
+           GST_ROUND_UP_32 (filter->height);
   }
   if (filter->filter_op & GST_MFX_FILTER_FRAMERATE_CONVERSION &&
       (filter->fps_n && filter->fps_d)) {
@@ -291,7 +294,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   sts =
-      MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, &request);
+      MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, request);
   if (sts < 0) {
     GST_ERROR ("Unable to query VPP allocation request %d", sts);
     return FALSE;
@@ -933,6 +936,11 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
     || GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg
     || GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg
     , FALSE);
+      || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
+      || GST_MFX_FRC_FRAME_INTERPOLATION == alg
+      || GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg
+      || GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg
+      , FALSE);
 #else
   g_return_val_if_fail (GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
       || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg

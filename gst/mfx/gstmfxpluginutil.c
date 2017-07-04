@@ -182,7 +182,8 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   const gchar *format = NULL;
 
   templ = gst_pad_get_pad_template_caps (pad);
-  in_caps = gst_pad_peer_query_caps(pad, templ);
+  in_caps = gst_pad_peer_query_caps (pad, templ);
+
   out_caps = gst_caps_intersect_full (in_caps,
       templ, GST_CAPS_INTERSECT_FIRST);
   gst_caps_unref (templ);
@@ -207,7 +208,8 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
 
 cleanup:
   if (in_caps)
-    gst_caps_unref(in_caps);
+    gst_caps_unref (in_caps);
+
   gst_caps_replace (&out_caps, NULL);
   return feature;
 }
