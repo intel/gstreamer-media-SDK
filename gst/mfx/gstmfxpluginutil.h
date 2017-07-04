@@ -74,12 +74,12 @@ gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
     GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
 
-#ifdef WITH_MSS_2016
-#define GST_MFX_SUPPORTED_INPUT_FORMATS \
-    "{ NV12, YV12, I420, YUY2, BGRA, BGRx }"
-#else
+#ifdef WITH_LIBVA_BACKEND
 #define GST_MFX_SUPPORTED_INPUT_FORMATS \
     "{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }"
+#else
+#define GST_MFX_SUPPORTED_INPUT_FORMATS \
+    "{ NV12, YUY2, BGRA, BGRx }"
 #endif
 
 
@@ -92,5 +92,10 @@ gst_mfx_query_peer_has_raw_caps(GstPad * pad);
 void
 gst_video_info_change_format(GstVideoInfo * vip, GstVideoFormat format,
     guint width, guint height);
+
+#if MSDK_CHECK_VERSION(1,19)
+mfxU16
+gst_mfx_get_platform(void);
+#endif
 
 #endif /* GST_MFX_PLUGIN_UTIL_H */

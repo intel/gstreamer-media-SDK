@@ -26,7 +26,6 @@
 #include "gstmfxdisplay.h"
 #include "gstmfxwindow.h"
 #include "gstmfxwindow_priv.h"
-#include "gstmfxminiobject.h"
 
 G_BEGIN_DECLS
 
@@ -34,24 +33,18 @@ G_BEGIN_DECLS
   ((GstMfxDisplay *) (display))
 
 #define GST_MFX_DISPLAY_GET_PRIVATE(display) \
-  (&GST_MFX_DISPLAY_CAST (display)->priv)
+  (GST_MFX_DISPLAY (display)->priv)
 
 #define GST_MFX_DISPLAY_CLASS(klass) \
   ((GstMfxDisplayClass *) (klass))
 
-#define GST_MFX_IS_DISPLAY_CLASS(klass) \
-  ((klass) != NULL)
-
 #define GST_MFX_DISPLAY_GET_CLASS(obj) \
-  GST_MFX_DISPLAY_CLASS (GST_MFX_MINI_OBJECT_GET_CLASS (obj))
+  GST_MFX_DISPLAY_CLASS (GST_OBJECT_GET_CLASS (obj))
 
 typedef struct _GstMfxDisplayPrivate          GstMfxDisplayPrivate;
 typedef struct _GstMfxDisplayClass            GstMfxDisplayClass;
-typedef enum _GstMfxDisplayInitType           GstMfxDisplayInitType;
 
 typedef void(*GstMfxDisplayInitFunc) (GstMfxDisplay * display);
-typedef gboolean(*GstMfxDisplayBindFunc) (GstMfxDisplay * display,
-  gpointer native_dpy);
 typedef gboolean(*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
   const gchar * name);
 typedef void(*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
@@ -59,8 +52,6 @@ typedef void(*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
   guint * pwidth, guint * pheight);
 typedef void(*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
   guint * pwidth, guint * pheight);
-typedef GstMfxWindow *(*GstMfxDisplayCreateWindowFunc) (
-  GstMfxDisplay * display, GstMfxID id, guint width, guint height);
 
 /**
 * GST_MFX_DISPLAY_GET_CLASS_TYPE:
@@ -99,7 +90,6 @@ struct _GstMfxDisplayPrivate
   guint par_n;
   guint par_d;
   gchar *vendor_string;
-  gboolean is_opengl;
 };
 
 /**
@@ -110,9 +100,9 @@ struct _GstMfxDisplayPrivate
 struct _GstMfxDisplay
 {
   /*< private >*/
-  GstMfxMiniObject parent_instance;
+  GstObject parent_instance;
 
-  GstMfxDisplayPrivate priv;
+  GstMfxDisplayPrivate *priv;
 };
 
 /**
@@ -128,44 +118,31 @@ struct _GstMfxDisplay
 struct _GstMfxDisplayClass
 {
   /*< private >*/
-  GstMfxMiniObjectClass parent_class;
+  GstObjectClass parent_class;
 
   /*< protected >*/
   guint display_type;
 
   /*< public >*/
   GstMfxDisplayInitFunc init;
-  GstMfxDisplayBindFunc bind_display;
   GstMfxDisplayOpenFunc open_display;
   GstMfxDisplayCloseFunc close_display;
   GstMfxDisplayGetSizeFunc get_size;
   GstMfxDisplayGetSizeMFunc get_size_mm;
-  GstMfxDisplayCreateWindowFunc create_window;
 };
-
-/* Initialization types */
-enum _GstMfxDisplayInitType
-{
-  GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME = 1,
-  GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY
-};
-
-void
-gst_mfx_display_class_init(GstMfxDisplayClass * klass);
 
 GstMfxDisplay *
-gst_mfx_display_new_internal (const GstMfxDisplayClass * klass,
-    GstMfxDisplayInitType init_type, gpointer init_value);
+gst_mfx_display_new_internal (GstMfxDisplay * display, gpointer init_value);
 
 #define gst_mfx_display_ref_internal(display) \
-  ((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(display)))
+  ((gpointer)gst_object_ref(GST_OBJECT(display)))
 
 #define gst_mfx_display_unref_internal(display) \
-  gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(display))
+  gst_object_unref(GST_OBJECT(display))
 
 #define gst_mfx_display_replace_internal(old_display_ptr, new_display) \
-  gst_mfx_mini_object_replace((GstMfxMiniObject **)(old_display_ptr), \
-  GST_MFX_MINI_OBJECT(new_display))
+  gst_object_replace((GstObject **)(old_display_ptr), \
+  GST_OBJECT(new_display))
 
 #undef  gst_mfx_display_ref
 #define gst_mfx_display_ref(display) \
@@ -178,6 +155,7 @@ gst_mfx_display_new_internal (const GstMfxDisplayClass * klass,
 #undef  gst_mfx_display_replace
 #define gst_mfx_display_replace(old_display_ptr, new_display) \
   gst_mfx_display_replace_internal((old_display_ptr), (new_display))
+
 
 G_END_DECLS
 

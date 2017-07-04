@@ -19,297 +19,21 @@
  */
 
 #include "gstmfxtask.h"
+#include "gstmfxtask_priv.h"
 #include "gstmfxtaskaggregator.h"
-#include "gstmfxutils_vaapi.h"
-#include "video-format.h"
-#include "gstmfxtypes.h"
+#include "gstmfxallocator.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-typedef struct _ResponseData ResponseData;
-struct _ResponseData
-{
-  GstMfxMemoryId *mem_ids;
-  mfxMemId *mids;
-  VASurfaceID *surfaces;
-  VABufferID *coded_buf;
-  mfxU16 num_surfaces;
-  mfxFrameAllocResponse *response;
-  mfxFrameInfo frame_info;
-  guint num_used;
-};
-
-struct _GstMfxTask
-{
-  GstMfxMiniObject parent_instance;
-
-  GstMfxDisplay *display;
-  GstMfxTaskAggregator *aggregator;
-  GList *saved_responses;
-  mfxFrameAllocRequest request;
-  mfxVideoParam params;
-  mfxSession session;
-  guint task_type;
-  gboolean memtype_is_system;
-  gboolean is_joined;
-};
-
-static gint
-find_response (gconstpointer response_data, gconstpointer response)
-{
-  ResponseData *_response_data = (ResponseData *) response_data;
-  mfxFrameAllocResponse *_response = (mfxFrameAllocResponse *) response;
-
-  return _response_data ? _response->mids != _response_data->mids : -1;
-}
-
-mfxStatus
-gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
-    mfxFrameAllocResponse * resp)
-{
-  GstMfxTask *task = pthis;
-  mfxFrameInfo *info;
-  VASurfaceAttrib attrib;
-  VAStatus sts;
-  guint fourcc, i;
-  GstMfxMemoryId *mid;
-  mfxU16 num_surfaces;
-  ResponseData *response_data;
-
-  if (task->saved_responses && task->task_type & GST_MFX_TASK_DECODER) {
-    GList *l = g_list_last (task->saved_responses);
-    if (l) {
-      response_data = l->data;
-      *resp = *response_data->response;
-      return MFX_ERR_NONE;
-    }
-  }
-
-  memset (resp, 0, sizeof (mfxFrameAllocResponse));
-
-  if (!(req->Type
-      & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET
-        | MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
-    GST_ERROR ("Unsupported surface type: %d\n", req->Type);
-    return MFX_ERR_UNSUPPORTED;
-  }
-
-  response_data = g_malloc0 (sizeof (ResponseData));
-  response_data->frame_info = req->Info;
-  info = &response_data->frame_info;
-
-  if (info->FourCC != MFX_FOURCC_P8) {
-    response_data->num_surfaces =
-        task->request.NumFrameSuggested < req->NumFrameSuggested ?
-        req->NumFrameSuggested : task->request.NumFrameSuggested;
-  }
-  else {
-    response_data->num_surfaces = req->NumFrameSuggested;
-  }
-
-  num_surfaces = response_data->num_surfaces;
-
-  response_data->mem_ids =
-      g_slice_alloc (num_surfaces * sizeof (GstMfxMemoryId));
-  response_data->mids = g_slice_alloc (num_surfaces * sizeof (mfxMemId));
-
-  if (!response_data->mem_ids || !response_data->mids)
-    goto error_allocate_memory;
-
-  if (info->FourCC != MFX_FOURCC_P8) {
-    response_data->surfaces =
-        g_slice_alloc0 (num_surfaces * sizeof (VASurfaceID));
-
-    if (!response_data->surfaces)
-      goto error_allocate_memory;
-
-    fourcc = gst_mfx_video_format_to_va_fourcc (info->FourCC);
-    attrib.type = VASurfaceAttribPixelFormat;
-    attrib.flags = VA_SURFACE_ATTRIB_SETTABLE;
-    attrib.value.type = VAGenericValueTypeInteger;
-    attrib.value.value.i = fourcc;
-
-    GST_MFX_DISPLAY_LOCK (task->display);
-    sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
-        gst_mfx_video_format_to_va_format (info->FourCC),
-        req->Info.Width, req->Info.Height,
-        response_data->surfaces, num_surfaces, &attrib, 1);
-    GST_MFX_DISPLAY_UNLOCK (task->display);
-    if (!vaapi_check_status (sts, "vaCreateSurfaces ()")) {
-      GST_ERROR ("Error allocating VA surfaces %d", sts);
-      goto error_allocate_memory;
-    }
-
-    for (i = 0; i < num_surfaces; i++) {
-      mid = &response_data->mem_ids[i];
-      mid->mid = &response_data->surfaces[i];
-      mid->info = &response_data->frame_info;
-
-      response_data->mids[i] = mid;
-    }
-  } else {
-    VAContextID context_id = req->reserved[0];
-    int width32 =  32 * ((req->Info.Width + 31) >> 5);
-    int height32 = 32 * ((req->Info.Height + 31) >> 5);
-    int codedbuf_size = (width32 * height32) * 400LL / (16 * 16);
-
-    response_data->coded_buf =
-        g_slice_alloc (num_surfaces * sizeof (VABufferID));
-
-    for (i = 0; i < num_surfaces; i++) {
-      sts = vaCreateBuffer (GST_MFX_DISPLAY_VADISPLAY (task->display),
-          context_id, VAEncCodedBufferType, codedbuf_size,
-          1, NULL, &response_data->coded_buf[i]);
-      if (!vaapi_check_status (sts, "vaCreateBuffer ()")) {
-        GST_ERROR ("Error allocating VA buffers %d", sts);
-        goto error_allocate_memory;
-      }
-      mid = &response_data->mem_ids[i];
-      mid->mid = &response_data->coded_buf[i];
-      mid->info = &response_data->frame_info;
-
-      response_data->mids[i] = mid;
-    }
-  }
-
-  resp->mids = response_data->mids;
-  resp->NumFrameActual = num_surfaces;
-
-  response_data->response = resp;
-  task->saved_responses = g_list_prepend (task->saved_responses, response_data);
-
-  return MFX_ERR_NONE;
-
-error_allocate_memory:
-  {
-    g_slice_free1 (num_surfaces * sizeof (VABufferID),
-        response_data->coded_buf);
-    g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId),
-        response_data->mem_ids);
-    g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
-    g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
-        response_data->surfaces);
-
-    return MFX_ERR_MEMORY_ALLOC;
-  }
-}
-
-mfxStatus
-gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * resp)
-{
-  GstMfxTask *task = pthis;
-  mfxFrameInfo *info;
-  mfxU16 i, num_surfaces;
-  ResponseData *response_data;
-
-  GList *l = g_list_find_custom (task->saved_responses, resp,
-      find_response);
-  if (!l)
-    return MFX_ERR_NOT_FOUND;
-
-  response_data = l->data;
-  info = &response_data->frame_info;
-
-  num_surfaces = response_data->num_surfaces;
-
-  if (info->FourCC != MFX_FOURCC_P8) {
-    GST_MFX_DISPLAY_LOCK (task->display);
-    vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (task->display),
-        response_data->surfaces, num_surfaces);
-    GST_MFX_DISPLAY_UNLOCK (task->display);
-
-    g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
-        response_data->surfaces);
-  } else {
-    for (i = 0; i < num_surfaces; i++) {
-      GST_MFX_DISPLAY_LOCK (task->display);
-      vaDestroyBuffer (GST_MFX_DISPLAY_VADISPLAY (task->display),
-          response_data->coded_buf[i]);
-      GST_MFX_DISPLAY_UNLOCK (task->display);
-    }
-    g_slice_free1 (num_surfaces * sizeof (VABufferID),
-        response_data->coded_buf);
-  }
-
-  g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId),
-      response_data->mem_ids);
-  g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
-
-  task->saved_responses = g_list_delete_link (task->saved_responses, l);
-  g_free (response_data);
-
-  return MFX_ERR_NONE;
-}
-
-static mfxStatus
-gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
-{
-  GstMfxTask *task = pthis;
-  GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;
-  VAStatus sts;
-
-  if (mem_id->info->FourCC == MFX_FOURCC_P8) {
-    VACodedBufferSegment *coded_buffer_segment;
-
-    GST_MFX_DISPLAY_LOCK (task->display);
-    sts = vaMapBuffer (GST_MFX_DISPLAY_VADISPLAY (task->display),
-        *(VABufferID *) mem_id->mid, (void **) &coded_buffer_segment);
-    GST_MFX_DISPLAY_UNLOCK (task->display);
-    if (!vaapi_check_status (sts, "vaMapBuffer ()")) {
-      GST_ERROR ("Error mapping VA buffers %d", sts);
-      return MFX_ERR_LOCK_MEMORY;
-    }
-    ptr->Y = (mfxU8 *) coded_buffer_segment->buf;
-  } else
-    return MFX_ERR_UNSUPPORTED;
-
-  return MFX_ERR_NONE;
-}
-
-static mfxStatus
-gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
-{
-  GstMfxTask *task = pthis;
-  GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;
-
-  if (mem_id->info->FourCC == MFX_FOURCC_P8) {
-    GST_MFX_DISPLAY_LOCK (task->display);
-    vaUnmapBuffer (GST_MFX_DISPLAY_VADISPLAY (task->display),
-        *(VABufferID *) mem_id->mid);
-    GST_MFX_DISPLAY_UNLOCK (task->display);
-  } else
-    return MFX_ERR_UNSUPPORTED;
-
-  return MFX_ERR_NONE;
-}
-
-static mfxStatus
-gst_mfx_task_frame_get_hdl (mfxHDL pthis, mfxMemId mid, mfxHDL * hdl)
-{
-  GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;
-
-  if (!mem_id || !mem_id->mid || !hdl)
-    return MFX_ERR_INVALID_HANDLE;
-
-  *hdl = mem_id->mid;
-  return MFX_ERR_NONE;
-}
-
-GstMfxDisplay *
-gst_mfx_task_get_display (GstMfxTask * task)
-{
-  g_return_val_if_fail (task != NULL, 0);
-
-  return gst_mfx_display_ref(task->display);
-}
+G_DEFINE_TYPE(GstMfxTask, gst_mfx_task, GST_TYPE_OBJECT);
 
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, 0);
 
-  return task->session;
+  return GST_MFX_TASK_GET_PRIVATE(task)->session;
 }
 
 GstMfxMemoryId *
@@ -320,10 +44,14 @@ gst_mfx_task_get_memory_id (GstMfxTask * task)
 
   g_return_val_if_fail (task != NULL, 0);
 
-  l = g_list_first (task->saved_responses);
+  l = g_list_first (GST_MFX_TASK_GET_PRIVATE(task)->saved_responses);
   response_data = l->data;
 
-  return &response_data->mem_ids[response_data->num_used++];
+  #ifdef WITH_LIBVA_BACKEND
+    return &response_data->mem_ids[response_data->num_used++];
+  #else
+    return response_data->mids[response_data->num_used++];
+  #endif // WITH_LIBVA_BACKEND
 }
 
 guint
@@ -334,7 +62,7 @@ gst_mfx_task_get_num_surfaces (GstMfxTask * task)
 
   g_return_val_if_fail (task != NULL, 0);
 
-  l = g_list_first (task->saved_responses);
+  l = g_list_first (GST_MFX_TASK_GET_PRIVATE(task)->saved_responses);
   response_data = l->data;
 
   return response_data->num_surfaces;
@@ -345,7 +73,7 @@ gst_mfx_task_get_request (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, NULL);
 
-  return &task->request;
+  return &GST_MFX_TASK_GET_PRIVATE(task)->request;
 }
 
 void
@@ -353,7 +81,7 @@ gst_mfx_task_set_request (GstMfxTask * task, mfxFrameAllocRequest * request)
 {
   g_return_if_fail (task != NULL);
 
-  task->request = *request;
+  GST_MFX_TASK_GET_PRIVATE(task)->request = *request;
 }
 
 gboolean
@@ -361,7 +89,7 @@ gst_mfx_task_has_type (GstMfxTask * task, guint flags)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return (task->task_type & flags);
+  return ((GST_MFX_TASK_GET_PRIVATE(task)->task_type & flags) != 0);
 }
 
 void
@@ -369,7 +97,7 @@ gst_mfx_task_set_task_type (GstMfxTask * task, guint flags)
 {
   g_return_if_fail (task != NULL);
 
-  task->task_type = flags;
+  GST_MFX_TASK_GET_PRIVATE(task)->task_type = flags;
 }
 
 guint
@@ -377,7 +105,7 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, GST_MFX_TASK_INVALID);
 
-  return task->task_type;
+  return GST_MFX_TASK_GET_PRIVATE(task)->task_type;
 }
 
 void
@@ -385,14 +113,23 @@ gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task)
 {
   g_return_if_fail (task != NULL);
 
-  task->memtype_is_system = TRUE;
+  GST_MFX_TASK_GET_PRIVATE(task)->memtype_is_system = TRUE;
+}
+
+GstMfxContext *
+gst_mfx_task_get_context (GstMfxTask * task)
+{
+  g_return_val_if_fail(task != NULL, NULL);
+
+  return gst_mfx_context_ref (GST_MFX_TASK_GET_PRIVATE(task)->context);
 }
 
 void
 gst_mfx_task_use_video_memory (GstMfxTask * task)
 {
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   mfxFrameAllocator frame_allocator = {
-    .pthis = task,
+    .pthis = priv->aggregator,
     .Alloc = gst_mfx_task_frame_alloc,
     .Lock = gst_mfx_task_frame_lock,
     .Unlock = gst_mfx_task_frame_unlock,
@@ -400,8 +137,8 @@ gst_mfx_task_use_video_memory (GstMfxTask * task)
     .GetHDL = gst_mfx_task_frame_get_hdl,
   };
 
-  MFXVideoCORE_SetFrameAllocator (task->session, &frame_allocator);
-  task->memtype_is_system = FALSE;
+  MFXVideoCORE_SetFrameAllocator (priv->session, &frame_allocator);
+  priv->memtype_is_system = FALSE;
 }
 
 gboolean
@@ -409,7 +146,7 @@ gst_mfx_task_has_video_memory (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return !task->memtype_is_system;
+  return !GST_MFX_TASK_GET_PRIVATE(task)->memtype_is_system;
 }
 
 void
@@ -417,7 +154,7 @@ gst_mfx_task_set_video_params (GstMfxTask * task, mfxVideoParam * params)
 {
   g_return_if_fail (task != NULL);
 
-  task->params = *params;
+  GST_MFX_TASK_GET_PRIVATE(task)->params = *params;
 }
 
 mfxVideoParam *
@@ -425,88 +162,108 @@ gst_mfx_task_get_video_params (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, NULL);
 
-  return &task->params;
+  return &GST_MFX_TASK_GET_PRIVATE(task)->params;
 }
 
 void
 gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params)
 {
-  params->AsyncDepth = task->params.AsyncDepth;
-  params->IOPattern = task->params.IOPattern;
+  params->AsyncDepth = GST_MFX_TASK_GET_PRIVATE(task)->params.AsyncDepth;
+  params->IOPattern = GST_MFX_TASK_GET_PRIVATE(task)->params.IOPattern;
 }
 
 static void
-gst_mfx_task_finalize (GstMfxTask * task)
+gst_mfx_task_finalize (GObject * object)
 {
-  if (task->is_joined) {
-    MFXDisjoinSession (task->session);
-    MFXClose (task->session);
+  GstMfxTask* task = GST_MFX_TASK(object);
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+  if (priv->is_joined) {
+    MFXDisjoinSession (priv->session);
+    MFXClose (priv->session);
   }
-  gst_mfx_task_aggregator_remove_task (task->aggregator, task);
-  gst_mfx_task_aggregator_unref (task->aggregator);
-  gst_mfx_display_unref (task->display);
-  g_list_free_full (task->saved_responses, g_free);
-}
-
-
-static inline const GstMfxMiniObjectClass *
-gst_mfx_task_class (void)
-{
-  static const GstMfxMiniObjectClass GstMfxTaskClass = {
-    sizeof (GstMfxTask),
-    (GDestroyNotify) gst_mfx_task_finalize
-  };
-  return &GstMfxTaskClass;
+  gst_mfx_task_aggregator_remove_task (priv->aggregator, task);
+  gst_mfx_task_aggregator_unref (priv->aggregator);
+  gst_mfx_context_unref(priv->context);
+  g_list_free_full (priv->saved_responses, g_free);
 }
 
 static void
-gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
+gst_mfx_task_class_init (GstMfxTaskClass * klass)
+{
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_task_finalize;
+}
+
+static void
+gst_mfx_task_init(GstMfxTask * task)
+{
+}
+
+static gboolean
+gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     mfxSession session, guint type_flags, gboolean is_joined)
 {
-  task->is_joined = is_joined;
-  task->task_type |= type_flags;
-  task->display = gst_mfx_task_aggregator_get_display(aggregator);
-  task->session = session;
-  task->aggregator = gst_mfx_task_aggregator_ref (aggregator);
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+  mfxHDL device_handle = 0;
+  mfxStatus sts = MFX_ERR_NONE;
 
+  priv->is_joined = is_joined;
+  priv->task_type |= type_flags;
+  priv->session = session;
+  priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
+  priv->context = gst_mfx_task_aggregator_get_context(aggregator);
+  priv->memtype_is_system = FALSE;
+#ifdef WITH_LIBVA_BACKEND
+  mfxHandleType handle_type = MFX_HANDLE_VA_DISPLAY;
+  device_handle =
+      GST_MFX_DISPLAY_VADISPLAY(gst_mfx_context_get_device(priv->context));
+#else
+  mfxHandleType handle_type = MFX_HANDLE_D3D11_DEVICE;
+  device_handle =
+      gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context));
+#endif
+
+  sts = MFXVideoCORE_GetHandle(priv->session, handle_type, &device_handle);
+  if (MFX_ERR_NONE != sts) {
+    sts = MFXVideoCORE_SetHandle(priv->session, handle_type, device_handle);
+    if (MFX_ERR_NONE != sts)
+      return FALSE;
+  }
   gst_mfx_task_aggregator_add_task (aggregator, task);
-
-  MFXVideoCORE_SetHandle (task->session, MFX_HANDLE_VA_DISPLAY,
-      GST_MFX_DISPLAY_VADISPLAY (task->display));
-
-  task->memtype_is_system = FALSE;
+  return TRUE;
 }
 
 GstMfxTask *
-gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
+gst_mfx_task_new (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
+  guint type_flags)
 {
   mfxSession session;
   gboolean is_joined;
 
+  g_return_val_if_fail (task != NULL, NULL);
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  session = gst_mfx_task_aggregator_create_session (aggregator, &is_joined);
+  session =
+      gst_mfx_task_aggregator_init_session_context (aggregator, &is_joined);
   if (!session)
     return NULL;
 
   return
-    gst_mfx_task_new_with_session (aggregator, session, type_flags, is_joined);
+    gst_mfx_task_new_with_session (task, aggregator, session,
+      type_flags, is_joined);
 }
 
 GstMfxTask *
-gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
-    mfxSession session, guint type_flags, gboolean is_joined)
+gst_mfx_task_new_with_session (GstMfxTask * task,
+  GstMfxTaskAggregator * aggregator, mfxSession session,
+  guint type_flags, gboolean is_joined)
 {
-  GstMfxTask *task;
-
+  g_return_val_if_fail (task != NULL, NULL);
   g_return_val_if_fail (aggregator != NULL, NULL);
   g_return_val_if_fail (session != NULL, NULL);
 
-  task = gst_mfx_mini_object_new0 (gst_mfx_task_class ());
-  if (!task)
+  if (!gst_mfx_task_create(task, aggregator, session, type_flags, is_joined))
     return NULL;
-
-  gst_mfx_task_init (task, aggregator, session, type_flags, is_joined);
 
   return task;
 }
@@ -516,13 +273,13 @@ gst_mfx_task_ref (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (task));
+  return gst_object_ref (GST_OBJECT (task));
 }
 
 void
 gst_mfx_task_unref (GstMfxTask * task)
 {
-  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (task));
+  gst_object_unref (GST_OBJECT(task));
 }
 
 void
@@ -530,8 +287,7 @@ gst_mfx_task_replace (GstMfxTask ** old_task_ptr, GstMfxTask * new_task)
 {
   g_return_if_fail (old_task_ptr != NULL);
 
-  gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_task_ptr,
-      GST_MFX_MINI_OBJECT (new_task));
+  gst_object_replace ((GstObject **) old_task_ptr, GST_OBJECT (new_task));
 }
 
 

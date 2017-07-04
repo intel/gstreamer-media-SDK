@@ -21,28 +21,28 @@
 #ifndef GST_MFX_TASK_AGGREGATOR_H
 #define GST_MFX_TASK_AGGREGATOR_H
 
-#include "gstmfxminiobject.h"
-#include "gstmfxdisplay.h"
 #include "gstmfxtask.h"
+#include "gstmfxcontext.h"
 
 #include <mfxvideo.h>
-#include <va/va.h>
 
 G_BEGIN_DECLS
 
-#define GST_MFX_TASK_AGGREGATOR (obj) \
+#define GST_TYPE_MFX_TASK_AGGREGATOR (gst_mfx_task_aggregator_get_type ())
+G_DECLARE_FINAL_TYPE( GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_MFX, TASK_AGGREGATOR, GstObject)
+
+#define GST_MFX_TASK_AGGREGATOR(obj) \
   ((GstMfxTaskAggregator *) (obj))
-
-
-GstMfxTaskAggregator *
-gst_mfx_task_aggregator_new (void);
 
 GstMfxTask *
 gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator);
 
-gboolean
+void
 gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task);
+
+GstMfxTask *
+gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator);
 
 void
 gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
@@ -58,11 +58,11 @@ void
 gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
     GstMfxTaskAggregator * new_aggregator);
 
-GstMfxDisplay *
-gst_mfx_task_aggregator_get_display (GstMfxTaskAggregator * aggregator);
+GstMfxContext *
+gst_mfx_task_aggregator_get_context (GstMfxTaskAggregator * aggregator);
 
 mfxSession
-gst_mfx_task_aggregator_create_session (GstMfxTaskAggregator * aggregator,
+gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
     gboolean * is_joined);
 
 void
@@ -71,8 +71,12 @@ gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
 
 void
 gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
-    gboolean memtype_is_system);
+    GstMfxTask * task, gboolean memtype_is_system);
 
+#if MSDK_CHECK_VERSION(1,19)
+mfxU16
+gst_mfx_task_aggregator_get_platform(GstMfxTaskAggregator * aggregator);
+#endif
 
 G_END_DECLS
 

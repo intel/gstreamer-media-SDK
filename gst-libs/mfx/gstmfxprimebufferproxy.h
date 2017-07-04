@@ -26,8 +26,10 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_PRIME_BUFFER_PROXY(obj) \
-  ((GstMfxPrimeBufferProxy *)(obj))
+#define GST_TYPE_MFX_PRIME_BUFFER_PROXY (gst_mfx_prime_buffer_proxy_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy, GST_MFX, PRIME_BUFFER_PROXY, GstObject)
+
+#define GST_MFX_PRIME_BUFFER_PROXY(obj) ((GstMfxPrimeBufferProxy *)(obj))
 
 /**
  * GST_MFX_PRIME_BUFFER_PROXY_HANDLE:
@@ -44,7 +46,8 @@ G_BEGIN_DECLS
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface);
+gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxPrimeBufferProxy * proxy,
+  GstMfxSurface * surface);
 
 GstMfxPrimeBufferProxy *
 gst_mfx_prime_buffer_proxy_ref (GstMfxPrimeBufferProxy * proxy);

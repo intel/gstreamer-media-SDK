@@ -25,10 +25,8 @@
 
 #include <gst/video/video.h>
 
-#include <gst-libs/mfx/gstmfxdisplay.h>
 #include <gst-libs/mfx/gstmfxsurface.h>
 #include <gst-libs/mfx/gstmfxsurfacepool.h>
-#include <gst-libs/mfx/gstmfxutils_vaapi.h>
 
 G_BEGIN_DECLS
 

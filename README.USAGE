@@ -1,32 +1,32 @@
 Introduction
 ============
 
-This document serves as a starting guide on effectively using the GStreamer Media SDK plugins
+This document serves as a starting guide on effectively using the GST-MFX plugins
 for your custom GStreamer application, by demonstrating a considerable number of examples for common use cases.
 Also, some useful command-line utilities will be shown facilitating the usage of these plugins.
 
 
-Available GStreamer MSDK plugins
+Available GST-MFX plugins
 ================================
 
 Plugin name        | Description
 ------------------------------------------------------------------------
-mfxdecode          | Generic Media SDK Decoder Plugin
-mfxh264dec         | Media SDK H264 Decoder Plugin
-mfxhevcdec         | Media SDK HEVC Decoder Plugin
-mfxmpeg2dec        | Media SDK MPEG2 Decoder Plugin
-mfxjpegdec         | Media SDK JPEG Decoder Plugin
-mfxvc1dec          | Media SDK VC1 Decoder Plugin
-mfxvp8dec          | Media SDK VP8 Decoder Plugin
-mfxvp9dec          | Media SDK VP9 Decoder Plugin
-mfxvpp             | Media SDK VPP Plugin
-mfxh264enc         | Media SDK H264 Encoder Plugin
-mfxhevcenc         | Media SDK H265 Encoder Plugin (supports HEVC Main Profile only)
-mfxmpeg2enc        | Media SDK MPEG2 Encoder Plugin
-mfxjpegenc         | Media SDK JPEG Encoder Plugin
-mfxsink            | X11 / Wayland / EGL Renderer Plugin (mfxvpp + mfxsinkelement GstBin element)
-mfxsinkelement     | Standalone X11 / EGL / Wayland Renderer Plugin
-mfxvc1parse        | Custom VC1 Parser Plugin for Media SDK VC1 decoding
+mfxdecode          | Generic MFX Decoder Plugin
+mfxh264dec         | MFX H264 Decoder Plugin
+mfxhevcdec         | MFX HEVC Decoder Plugin
+mfxmpeg2dec        | MFX MPEG2 Decoder Plugin
+mfxjpegdec         | MFX JPEG Decoder Plugin
+mfxvc1dec          | MFX VC1 Decoder Plugin
+mfxvp8dec          | MFX VP8 Decoder Plugin
+mfxvp9dec          | MFX VP9 Decoder Plugin
+mfxvpp             | MFX VPP Plugin
+mfxh264enc         | MFX H264 Encoder Plugin
+mfxhevcenc         | MFX H265 Encoder Plugin
+mfxmpeg2enc        | MFX MPEG2 Encoder Plugin
+mfxjpegenc         | MFX JPEG Encoder Plugin
+mfxsink            | X11 / Wayland / D3D11 Renderer Plugin (mfxvpp + mfxsinkelement GstBin element)
+mfxsinkelement     | Standalone X11 / Wayland / D3D11 Renderer Plugin
+mfxvc1parse        | Custom VC1 Parser Plugin for MFX VC1 decoding
 
 
 GStreamer Debugging Tips
@@ -138,7 +138,7 @@ gst-launch-1.0 filesrc location=video.mpg ! mpegpsdemux ! mpegvideoparse ! mfxde
 Optimized Usage with GL Plugins
 ===============================
 
-The GStreamer Media SDK plugins include optimized support for GL plugins by enabling zero-copy
+The GST-MFX plugins include optimized support for GL plugins by enabling zero-copy
 EGL texture transfers using dma-buffer sharing feature. This dma-buffer sharing optimization
 has been introduced since GStreamer version 1.8, and hence only works from this version onwards.
 To enable this feature, run the following command before executing the GStreamer pipeline:

@@ -38,7 +38,7 @@ gst_mfx_ensure_aggregator (GstElement * element)
   if (gst_mfx_video_context_prepare (element, &plugin->aggregator))
     return TRUE;
 
-  aggregator = gst_mfx_task_aggregator_new ();
+  aggregator = g_object_new(GST_TYPE_MFX_TASK_AGGREGATOR, NULL);
   if (!aggregator)
     return FALSE;
 
@@ -176,13 +176,14 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
   guint num_structures;
-  GstCaps *caps = NULL;
-  GstCaps *out_caps, *templ;
+  GstCaps *out_caps, *templ = NULL;
+  GstCaps *in_caps = NULL;
   GstStructure *structure;
-  gchar *format = NULL;
+  const gchar *format = NULL;
 
   templ = gst_pad_get_pad_template_caps (pad);
-  out_caps = gst_caps_intersect_full (gst_pad_peer_query_caps (pad, templ),
+  in_caps = gst_pad_peer_query_caps(pad, templ);
+  out_caps = gst_caps_intersect_full (in_caps,
       templ, GST_CAPS_INTERSECT_FIRST);
   gst_caps_unref (templ);
   if (!out_caps) {
@@ -205,7 +206,8 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   gst_structure_free (structure);
 
 cleanup:
-  gst_caps_replace (&caps, NULL);
+  if (in_caps)
+    gst_caps_unref(in_caps);
   gst_caps_replace (&out_caps, NULL);
   return feature;
 }
@@ -253,26 +255,27 @@ gst_caps_has_mfx_surface (GstCaps * caps)
   return _gst_caps_has_feature (caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 }
 
+
 gboolean
-gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
+gst_mfx_query_peer_has_raw_caps(GstPad * srcpad)
 {
   GstCaps *caps = NULL;
   gboolean has_raw_caps = TRUE;
-
-  caps = gst_pad_peer_query_caps (srcpad, NULL);
+  
+  caps = gst_pad_peer_query_caps(srcpad, NULL);
   if (!caps)
     return has_raw_caps;
-
-  if (gst_caps_has_mfx_surface (caps)
+  
+  if (gst_caps_has_mfx_surface(caps)
 #if GST_CHECK_VERSION(1,8,0)
-      || (!g_strcmp0(getenv("GST_GL_PLATFORM"), "egl")
-          && _gst_caps_has_feature (caps,
-                GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META))
+    || (!g_strcmp0(getenv("GST_GL_PLATFORM"), "egl")
+      && _gst_caps_has_feature(caps,
+        GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META))
 #endif
       )
     has_raw_caps = FALSE;
-
-  gst_caps_unref (caps);
+  
+  gst_caps_unref(caps);
   return has_raw_caps;
 }
 
@@ -292,3 +295,37 @@ gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,
   vip->fps_n = vi.fps_n;
   vip->fps_d = vi.fps_d;
 }
+
+#if MSDK_CHECK_VERSION(1,19)
+mfxU16
+gst_mfx_get_platform(void)
+{
+  mfxStatus sts = MFX_ERR_NONE;
+  mfxPlatform platform = { 0 };
+  mfxInitParam init_params = { 0 };
+  mfxSession session;
+
+  //init_params.GPUCopy = MFX_GPUCOPY_ON;
+  init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
+#if WITH_D3D11_BACKEND
+  init_params.Implementation |= MFX_IMPL_VIA_D3D11;
+#endif
+  init_params.Version.Major = 1;
+  init_params.Version.Minor = 19;
+
+  sts = MFXInitEx(init_params, &session);
+  if (sts != MFX_ERR_NONE) {
+    GST_ERROR("Error initializing internal MFX session");
+    return MFX_PLATFORM_UNKNOWN;
+  }
+
+  sts = MFXVideoCORE_QueryPlatform(session, &platform);
+  if (sts != MFX_ERR_NONE) {
+    GST_ERROR("Error detecting MFX platform.");
+    return MFX_PLATFORM_UNKNOWN;
+  }
+
+  MFXClose(session);
+  return platform.CodeName;
+}
+#endif

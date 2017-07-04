@@ -32,12 +32,15 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-GST_DEBUG_CATEGORY (gst_debug_mfx);
-
 /* Ensure those symbols are actually defined in the resulting libraries */
 #undef gst_mfx_display_ref
 #undef gst_mfx_display_unref
 #undef gst_mfx_display_replace
+
+G_DEFINE_TYPE_WITH_CODE(GstMfxDisplay,
+  gst_mfx_display,
+  GST_TYPE_OBJECT,
+  G_ADD_PRIVATE(GstMfxDisplay));
 
 static int
 get_display_fd (GstMfxDisplay * display)
@@ -115,10 +118,6 @@ gst_mfx_display_get_type (void)
     {GST_MFX_DISPLAY_TYPE_WAYLAND,
         "Wayland display", "wayland"},
 #endif
-#ifdef USE_EGL
-    {GST_MFX_DISPLAY_TYPE_EGL,
-        "EGL X11/Wayland display", "egl"},
-#endif
     {0, NULL, NULL},
   };
 
@@ -186,12 +185,10 @@ gst_mfx_display_destroy (GstMfxDisplay * display)
     vaTerminate (priv->va_display);
     priv->va_display = NULL;
   }
-
   if (priv->display_fd) {
     close (priv->display_fd);
     priv->display_fd = 0;
   }
-
   if (klass->close_display)
     klass->close_display (display);
 
@@ -200,25 +197,13 @@ gst_mfx_display_destroy (GstMfxDisplay * display)
 }
 
 static gboolean
-gst_mfx_display_create (GstMfxDisplay * display,
-    GstMfxDisplayInitType init_type, gpointer init_value)
+gst_mfx_display_create (GstMfxDisplay * display, gpointer init_value)
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
   const GstMfxDisplayClass *const klass = GST_MFX_DISPLAY_GET_CLASS (display);
 
-  switch (init_type) {
-    case GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME:
-      if (klass->open_display && !klass->open_display (display, init_value))
-        return FALSE;
-      break;
-    case GST_MFX_DISPLAY_INIT_FROM_NATIVE_DISPLAY:
-      if (klass->bind_display && !klass->bind_display (display, init_value))
-        return FALSE;
-      break;
-    default:
-      break;
-  }
-
+  if (klass->open_display && !klass->open_display(display, init_value))
+    return FALSE;
   if (klass->get_size)
     klass->get_size (display, &priv->width, &priv->height);
   if (klass->get_size_mm)
@@ -263,24 +248,27 @@ gst_mfx_display_unlock (GstMfxDisplay * display)
 static void
 gst_mfx_display_init (GstMfxDisplay * display)
 {
-  GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
+  GstMfxDisplayPrivate *const priv =
+    gst_mfx_display_get_instance_private(display);
   const GstMfxDisplayClass *const dpy_class =
       GST_MFX_DISPLAY_GET_CLASS (display);
 
   priv->display_type = GST_MFX_DISPLAY_TYPE_ANY;
   priv->par_n = 1;
   priv->par_d = 1;
-  priv->is_opengl = FALSE;
 
   g_rec_mutex_init (&priv->mutex);
+
+  display->priv = priv;
 
   if (dpy_class->init)
     dpy_class->init (display);
 }
 
 static void
-gst_mfx_display_finalize (GstMfxDisplay * display)
+gst_mfx_display_finalize (GObject * object)
 {
+  GstMfxDisplay* display = GST_MFX_DISPLAY(object);
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
 
   gst_mfx_display_destroy (display);
@@ -290,40 +278,17 @@ gst_mfx_display_finalize (GstMfxDisplay * display)
 void
 gst_mfx_display_class_init (GstMfxDisplayClass * klass)
 {
-  GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
 
   GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "MFX helper");
 
-  object_class->size = sizeof (GstMfxDisplay);
   object_class->finalize = (GDestroyNotify) gst_mfx_display_finalize;
 }
 
-static inline const GstMfxDisplayClass *
-gst_mfx_display_class (void)
-{
-  static GstMfxDisplayClass g_class;
-  static gsize g_class_init = FALSE;
-
-  if (g_once_init_enter (&g_class_init)) {
-    gst_mfx_display_class_init (&g_class);
-    g_once_init_leave (&g_class_init, TRUE);
-  }
-  return &g_class;
-}
-
 GstMfxDisplay *
-gst_mfx_display_new_internal (const GstMfxDisplayClass * klass,
-    GstMfxDisplayInitType init_type, gpointer init_value)
+gst_mfx_display_new_internal (GstMfxDisplay *display, gpointer init_value)
 {
-  GstMfxDisplay *display;
-
-  display = (GstMfxDisplay *)
-      gst_mfx_mini_object_new0 (GST_MFX_MINI_OBJECT_CLASS (klass));
-  if (!display)
-    return NULL;
-
-  gst_mfx_display_init (display);
-  if (!gst_mfx_display_create (display, init_type, init_value))
+  if (!gst_mfx_display_create (display, init_value))
     goto error;
   return display;
 
@@ -333,16 +298,8 @@ error:
 }
 
 GstMfxDisplay *
-gst_mfx_display_new (void)
+gst_mfx_display_new (GstMfxDisplay *display)
 {
-  GstMfxDisplay *display;
-
-  display = (GstMfxDisplay *)
-      gst_mfx_mini_object_new0 (gst_mfx_display_class ());
-  if (!display)
-    return NULL;
-  gst_mfx_display_init (display);
-
   GST_DEBUG ("creating dummy display");
 
   return display;
@@ -351,20 +308,25 @@ gst_mfx_display_new (void)
 GstMfxDisplay *
 gst_mfx_display_ref (GstMfxDisplay * display)
 {
-  return gst_mfx_display_ref_internal (display);
+  g_return_val_if_fail(display != NULL, NULL);
+
+  return gst_object_ref(GST_OBJECT(display));
 }
 
 void
 gst_mfx_display_unref (GstMfxDisplay * display)
 {
-  gst_mfx_display_unref_internal (display);
+  gst_object_unref(GST_OBJECT(display));
 }
 
 void
 gst_mfx_display_replace (GstMfxDisplay ** old_display_ptr,
     GstMfxDisplay * new_display)
 {
-  gst_mfx_display_replace_internal (old_display_ptr, new_display);
+  g_return_if_fail(old_display_ptr != NULL);
+
+  gst_object_replace((GstObject **)old_display_ptr,
+    GST_OBJECT(new_display));
 }
 
 /**
@@ -395,7 +357,7 @@ gst_mfx_display_get_display_type (GstMfxDisplay * display)
 VADisplay
 gst_mfx_display_get_vadisplay (GstMfxDisplay * display)
 {
-  g_return_val_if_fail (display != NULL, NULL);
+  g_return_val_if_fail (display != NULL, 0);
 
   return GST_MFX_DISPLAY_GET_PRIVATE (display)->va_display;
 }
@@ -462,7 +424,6 @@ gst_mfx_display_init_vaapi (GstMfxDisplay * display)
   return TRUE;
 }
 
-
 /* Ensures the VA driver vendor string was copied */
 static gboolean
 ensure_vendor_string (GstMfxDisplay * display)
@@ -499,18 +460,4 @@ gst_mfx_display_get_vendor_string (GstMfxDisplay * display)
   if (!ensure_vendor_string (display))
     return NULL;
   return GST_MFX_DISPLAY_GET_PRIVATE (display)->vendor_string;
-}
-
-gboolean
-gst_mfx_display_has_opengl (GstMfxDisplay * display)
-{
-  g_return_val_if_fail (display != NULL, FALSE);
-
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->is_opengl;
-}
-
-void
-gst_mfx_display_use_opengl (GstMfxDisplay * display)
-{
-  GST_MFX_DISPLAY_GET_PRIVATE (display)->is_opengl = TRUE;
 }

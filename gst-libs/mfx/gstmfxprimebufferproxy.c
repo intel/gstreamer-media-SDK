@@ -35,7 +35,8 @@
 struct _GstMfxPrimeBufferProxy
 {
   /*< private > */
-  GstMfxMiniObject parent_instance;
+  GstObject parent_instance;
+
   GstMfxSurface *surface;
   GstMfxDisplay *display;
   VaapiImage *image;
@@ -44,8 +45,12 @@ struct _GstMfxPrimeBufferProxy
   guint data_size;
 };
 
+G_DEFINE_TYPE(GstMfxPrimeBufferProxy,
+  gst_mfx_prime_buffer_proxy,
+  GST_TYPE_OBJECT);
+
 typedef VAStatus (*vaExtGetSurfaceHandle) (VADisplay dpy,
-    VASurfaceID * surface, int *prime_fd);
+  VASurfaceID * surface, int *prime_fd);
 
 static vaExtGetSurfaceHandle g_va_get_surface_handle;
 
@@ -110,13 +115,14 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
   }
 
   proxy->data_size = va_img.data_size;
-
   return TRUE;
 }
 
 static void
-gst_mfx_prime_buffer_proxy_finalize (GstMfxPrimeBufferProxy * proxy)
+gst_mfx_prime_buffer_proxy_finalize (GObject * object)
 {
+  GstMfxPrimeBufferProxy *proxy = GST_MFX_PRIME_BUFFER_PROXY(object);
+
   if (g_va_get_surface_handle) {
     close (proxy->fd);
   }
@@ -135,30 +141,25 @@ gst_mfx_prime_buffer_proxy_finalize (GstMfxPrimeBufferProxy * proxy)
   gst_mfx_display_unref (proxy->display);
 }
 
-static inline const GstMfxMiniObjectClass *
-gst_mfx_prime_buffer_proxy_class (void)
+static void
+gst_mfx_prime_buffer_proxy_class_init(GstMfxPrimeBufferProxyClass * klass)
 {
-  static const GstMfxMiniObjectClass GstMfxPrimeBufferProxyClass = {
-    sizeof (GstMfxPrimeBufferProxy),
-    (GDestroyNotify) gst_mfx_prime_buffer_proxy_finalize
-  };
-  return &GstMfxPrimeBufferProxyClass;
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_prime_buffer_proxy_finalize;
+}
+
+static void
+gst_mfx_prime_buffer_proxy_init(GstMfxPrimeBufferProxy * proxy)
+{
 }
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface)
+gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxPrimeBufferProxy *proxy,
+  GstMfxSurface * surface)
 {
-  GstMfxPrimeBufferProxy *proxy;
-
   g_return_val_if_fail (surface != NULL, NULL);
 
-  proxy = (GstMfxPrimeBufferProxy *)
-      gst_mfx_mini_object_new0 (gst_mfx_prime_buffer_proxy_class ());
-  if (!proxy)
-    return NULL;
-
   proxy->surface = gst_mfx_surface_ref (surface);
-
   if (!gst_mfx_prime_buffer_proxy_acquire_handle (proxy))
     goto error_acquire_handle;
 
@@ -175,13 +176,13 @@ gst_mfx_prime_buffer_proxy_ref (GstMfxPrimeBufferProxy * proxy)
 {
   g_return_val_if_fail (proxy != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (proxy));
+  return gst_object_ref(GST_OBJECT(proxy));
 }
 
 void
 gst_mfx_prime_buffer_proxy_unref (GstMfxPrimeBufferProxy * proxy)
 {
-  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT (proxy));
+  gst_object_unref(GST_OBJECT(proxy));
 }
 
 void
@@ -190,8 +191,7 @@ gst_mfx_prime_buffer_proxy_replace (GstMfxPrimeBufferProxy ** old_proxy_ptr,
 {
   g_return_if_fail (old_proxy_ptr != NULL);
 
-  gst_mfx_mini_object_replace ((GstMfxMiniObject **) old_proxy_ptr,
-      GST_MFX_MINI_OBJECT (new_proxy));
+  gst_object_replace((GstObject **)old_proxy_ptr, GST_OBJECT(new_proxy));
 }
 
 guintptr

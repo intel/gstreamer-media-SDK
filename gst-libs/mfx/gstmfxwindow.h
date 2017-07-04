@@ -24,15 +24,18 @@
 #define GST_MFX_WINDOW_H
 
 #include "gstmfxtypes.h"
-#include "gstmfxdisplay.h"
+#include "gstmfxcontext.h"
 #include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
 
+#define GST_TYPE_MFX_WINDOW (gst_mfx_window_get_type ())
 #define GST_MFX_WINDOW(obj) ((GstMfxWindow *)(obj))
 
-typedef struct _GstMfxWindow GstMfxWindow;
-typedef struct _GstMfxWindowClass GstMfxWindowClass;
+typedef struct _GstMfxWindow  GstMfxWindow;
+
+GType
+gst_mfx_window_get_type (void);
 
 GstMfxWindow *
 gst_mfx_window_ref (GstMfxWindow * window);
@@ -44,8 +47,8 @@ void
 gst_mfx_window_replace (GstMfxWindow ** old_window_ptr,
   GstMfxWindow * new_window);
 
-GstMfxDisplay *
-gst_mfx_window_get_display (GstMfxWindow * window);
+GstMfxContext *
+gst_mfx_window_get_context (GstMfxWindow * window);
 
 void
 gst_mfx_window_show (GstMfxWindow * window);
@@ -88,9 +91,6 @@ gst_mfx_window_put_surface (GstMfxWindow * window,
 
 void
 gst_mfx_window_reconfigure (GstMfxWindow * window);
-
-gboolean
-gst_mfx_window_unblock_cancel (GstMfxWindow * window);
 
 G_END_DECLS
 

@@ -22,8 +22,12 @@
 #include "gstmfxpluginbase.h"
 #include "gstmfxsinkbin.h"
 
+#ifdef WITH_LIBVA_BACKEND
+# include <gst-libs/mfx/gstmfxdisplay.h>
+#endif
+
 #define GST_PLUGIN_NAME "mfxsinkbin"
-#define GST_PLUGIN_DESC "A MediaSDK based bin with a postprocessor and a sink"
+#define GST_PLUGIN_DESC "An MSDK-based bin with postprocessor and a sink"
 
 GST_DEBUG_CATEGORY_STATIC (gst_debug_mfx_sink_bin);
 #define GST_CAT_DEFAULT gst_debug_mfx_sink_bin
@@ -43,23 +47,22 @@ enum
   PROP_RENDER_DELAY,
   PROP_THROTTLE_TIME,
   PROP_MAX_BITRATE,
+#ifdef WITH_LIBVA_BACKEND
   PROP_DISPLAY_TYPE,
+#endif
   PROP_FULLSCREEN,
   PROP_SHOW_PREROLL_FRAME,
-  PROP_NO_FRAME_DROP,
   PROP_FULL_COLOR_RANGE,
   PROP_WIDTH,
   PROP_HEIGHT,
-  PROP_DEINTERLACE_MODE,
+  PROP_DEINTERLACE_METHOD,
   PROP_DENOISE,
   PROP_DETAIL,
   PROP_HUE,
   PROP_SATURATION,
   PROP_BRIGHTNESS,
   PROP_CONTRAST,
-#ifndef WITH_MSS_2016
   PROP_ROTATION,
-#endif
   N_PROPERTIES
 };
 
@@ -68,7 +71,7 @@ static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
 static void
 gst_mfx_sink_bin_color_balance_iface_init (GstColorBalanceInterface * iface);
 
-#define DEFAULT_DEINTERLACE_MODE        GST_MFX_DEINTERLACE_MODE_BOB
+#define DEFAULT_DEINTERLACE_METHOD      GST_MFX_DEINTERLACE_METHOD_ADVANCED
 #define DEFAULT_ROTATION                GST_MFX_ROTATION_0
 #define DEFAULT_SYNC                    TRUE
 #define DEFAULT_QOS                     TRUE
@@ -123,12 +126,14 @@ gst_mfx_sink_bin_set_property (GObject * object,
 
   switch (prop_id) {
     /* Sink */
+#ifdef WITH_LIBVA_BACKEND
     case PROP_DISPLAY_TYPE:
       g_object_set (G_OBJECT (mfxsinkbin->sink),
           pspec->name,
           g_value_get_enum (value),
           NULL);
       break;
+#endif
     case PROP_MAX_LATENESS:
     case PROP_TS_OFFSET:
       g_object_set (G_OBJECT (mfxsinkbin->sink),
@@ -156,7 +161,6 @@ gst_mfx_sink_bin_set_property (GObject * object,
     case PROP_QOS:
     case PROP_FULLSCREEN:
     case PROP_FORCE_ASPECT_RATIO:
-    case PROP_NO_FRAME_DROP:
     case PROP_SHOW_PREROLL_FRAME:
     case PROP_FULL_COLOR_RANGE:
       g_object_set (G_OBJECT (mfxsinkbin->sink),
@@ -175,11 +179,8 @@ gst_mfx_sink_bin_set_property (GObject * object,
           g_value_get_uint (value),
           NULL);
       break;
-
-    case PROP_DEINTERLACE_MODE:
-#ifndef WITH_MSS_2016
+    case PROP_DEINTERLACE_METHOD:
     case PROP_ROTATION:
-#endif
       g_object_set (G_OBJECT (mfxsinkbin->postproc),
           pspec->name,
           g_value_get_enum (value),
@@ -209,7 +210,9 @@ gst_mfx_sink_bin_get_property (GObject * object,
 
   switch (prop_id) {
     /* Sink */
+#ifdef WITH_LIBVA_BACKEND
     case PROP_DISPLAY_TYPE:
+#endif
     case PROP_SYNC:
     case PROP_MAX_LATENESS:
     case PROP_QOS:
@@ -223,7 +226,6 @@ gst_mfx_sink_bin_get_property (GObject * object,
     case PROP_MAX_BITRATE:
     case PROP_FULLSCREEN:
     case PROP_FORCE_ASPECT_RATIO:
-    case PROP_NO_FRAME_DROP:
     case PROP_SHOW_PREROLL_FRAME:
     case PROP_FULL_COLOR_RANGE:
       if (mfxsinkbin->sink) {
@@ -235,16 +237,14 @@ gst_mfx_sink_bin_get_property (GObject * object,
     /* VPP */
     case PROP_WIDTH:
     case PROP_HEIGHT:
-    case PROP_DEINTERLACE_MODE:
+    case PROP_DEINTERLACE_METHOD:
     case PROP_DENOISE:
     case PROP_DETAIL:
     case PROP_HUE:
     case PROP_SATURATION:
     case PROP_BRIGHTNESS:
     case PROP_CONTRAST:
-#ifndef WITH_MSS_2016
     case PROP_ROTATION:
-#endif
       if (mfxsinkbin->postproc) {
         g_object_get_property (G_OBJECT (mfxsinkbin->postproc),
             pspec->name,
@@ -270,188 +270,181 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
   gobject_class->get_property = gst_mfx_sink_bin_get_property;
 
   gst_element_class_set_static_metadata (element_class,
-      "MFX Sink Bin",
-      "Sink/Video",
-      GST_PLUGIN_DESC,
-      "Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>");
+    "MFX Sink Bin",
+    "Sink/Video",
+    GST_PLUGIN_DESC,
+    "Puunithaaraj Gopal <puunithaaraj.gopal@intel.com>");
 
   /* Property */
   g_properties[PROP_FORCE_ASPECT_RATIO] =
-      g_param_spec_boolean ("force-aspect-ratio",
-      "Force aspect ratio",
-      "When enabled, scaling will respect original aspect ratio",
-      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_boolean ("force-aspect-ratio",
+    "Force aspect ratio",
+    "When enabled, scaling will respect original aspect ratio",
+    TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /* base sink */
   g_properties[PROP_SYNC] = g_param_spec_boolean ("sync",
-      "Sync",
-      "Sync on the clock",
-      DEFAULT_SYNC, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    "Sync",
+    "Sync on the clock",
+    DEFAULT_SYNC, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_MAX_LATENESS] =
-      g_param_spec_int64 ("max-lateness",
-      "Max Lateness",
-      "Maximum number of nanoseconds that a buffer can be late before it "
-      "is dropped (-1 unlimited)",
-      -1, G_MAXINT64,
-      DEFAULT_MAX_LATENESS, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_int64 ("max-lateness",
+    "Max Lateness",
+    "Maximum number of nanoseconds that a buffer can be late before it "
+    "is dropped (-1 unlimited)",
+    -1, G_MAXINT64,
+    DEFAULT_MAX_LATENESS, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_QOS] =
-      g_param_spec_boolean ("qos",
-      "Qos",
-      "Generate Quality-of-Service events upstream",
-      DEFAULT_QOS, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_boolean ("qos",
+    "Qos",
+    "Generate Quality-of-Service events upstream",
+    DEFAULT_QOS, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_ASYNC] =
-      g_param_spec_boolean ("async", "Async",
-      "Go asynchronously to PAUSED",
-      DEFAULT_ASYNC, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_boolean ("async", "Async",
+    "Go asynchronously to PAUSED",
+    DEFAULT_ASYNC, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_TS_OFFSET] = g_param_spec_int64 ("ts-offset", "TS Offset",
-      "Timestamp offset in nanoseconds",
-      G_MININT64, G_MAXINT64,
-      DEFAULT_TS_OFFSET, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    "Timestamp offset in nanoseconds",
+    G_MININT64, G_MAXINT64,
+    DEFAULT_TS_OFFSET, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_ENABLE_LAST_SAMPLE] =
   g_param_spec_boolean ("enable-last-sample", "Enable Last Buffer",
-      "Enable the last-sample property",
-      DEFAULT_ENABLE_LAST_SAMPLE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    "Enable the last-sample property",
+    DEFAULT_ENABLE_LAST_SAMPLE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_LAST_SAMPLE] =
-      g_param_spec_boxed ("last-sample", "Last Sample",
-      "The last sample received in the sink",
-      GST_TYPE_SAMPLE, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_boxed ("last-sample", "Last Sample",
+    "The last sample received in the sink",
+    GST_TYPE_SAMPLE, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_BLOCKSIZE] =
-      g_param_spec_uint ("blocksize", "Block size",
-      "Size in bytes to pull per buffer (0 = default)", 0, G_MAXUINT,
-      DEFAULT_BLOCKSIZE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_uint ("blocksize", "Block size",
+    "Size in bytes to pull per buffer (0 = default)", 0, G_MAXUINT,
+    DEFAULT_BLOCKSIZE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_RENDER_DELAY] =
-      g_param_spec_uint64 ("render-delay", "Render Delay",
-      "Additional render delay of the sink in nanoseconds", 0, G_MAXUINT64,
-      DEFAULT_RENDER_DELAY, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_uint64 ("render-delay", "Render Delay",
+    "Additional render delay of the sink in nanoseconds", 0, G_MAXUINT64,
+    DEFAULT_RENDER_DELAY, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_THROTTLE_TIME] =
-      g_param_spec_uint64 ("throttle-time", "Throttle time",
-      "The time to keep between rendered buffers (0 = disabled)", 0,
-      G_MAXUINT64,
-      DEFAULT_THROTTLE_TIME, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_uint64 ("throttle-time", "Throttle time",
+    "The time to keep between rendered buffers (0 = disabled)", 0,
+    G_MAXUINT64,
+    DEFAULT_THROTTLE_TIME, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_MAX_BITRATE] =
-      g_param_spec_uint64 ("max-bitrate", "Max Bitrate",
-      "The maximum bits per second to render (0 = disabled)", 0,
-      G_MAXUINT64,
-      DEFAULT_MAX_BITRATE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_uint64 ("max-bitrate", "Max Bitrate",
+    "The maximum bits per second to render (0 = disabled)", 0,
+    G_MAXUINT64,
+    DEFAULT_MAX_BITRATE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+#ifdef WITH_LIBVA_BACKEND
   g_properties[PROP_DISPLAY_TYPE] =
-      g_param_spec_enum ("display",
-      "display type",
-      "display type to use",
-      GST_MFX_TYPE_DISPLAY_TYPE,
-      GST_MFX_DISPLAY_TYPE_ANY, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_enum ("display",
+    "display type",
+    "display type to use",
+    GST_MFX_TYPE_DISPLAY_TYPE,
+    GST_MFX_DISPLAY_TYPE_ANY, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+#endif
 
   g_properties[PROP_FULLSCREEN] =
-      g_param_spec_boolean ("fullscreen",
-      "Fullscreen",
-      "Requests window in fullscreen state",
-      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_boolean ("fullscreen",
+    "Fullscreen",
+    "Requests window in fullscreen state",
+    FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_FORCE_ASPECT_RATIO] =
-      g_param_spec_boolean ("force-aspect-ratio",
-      "Force aspect ratio",
-      "When enabled, scaling will respect original aspect ratio",
-      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  g_properties[PROP_NO_FRAME_DROP] =
-      g_param_spec_boolean ("no-frame-drop",
-      "No frame drop",
-      "When enabled, no frame will dropped",
-      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_boolean ("force-aspect-ratio",
+    "Force aspect ratio",
+    "When enabled, scaling will respect original aspect ratio",
+    TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_SHOW_PREROLL_FRAME] =
-      g_param_spec_boolean ("show-preroll-frame",
-      "Show preroll frame",
-      "When enabled, show video frames during preroll.",
-      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_boolean ("show-preroll-frame",
+    "Show preroll frame",
+    "When enabled, show video frames during preroll.",
+    FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_FULL_COLOR_RANGE] =
-      g_param_spec_boolean ("full-color-range",
-      "Full color range",
-      "Decoded frames will be in RGB 0-255",
-      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_boolean ("full-color-range",
+    "Full color range",
+    "Decoded frames will be in RGB 0-255",
+    FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
 
   /* mfxvpp properties */
-  g_properties[PROP_DEINTERLACE_MODE] =
-      g_param_spec_enum ("deinterlace-mode",
-          "Deinterlace mode",
-          "Deinterlace mode to use",
-          GST_MFX_TYPE_DEINTERLACE_MODE,
-          GST_MFX_DEINTERLACE_MODE_BOB,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  g_properties[PROP_DEINTERLACE_METHOD] =
+    g_param_spec_enum ("deinterlace-method",
+      "Deinterlace method",
+      "Deinterlace method to use",
+      GST_MFX_TYPE_DEINTERLACE_METHOD,
+      DEFAULT_DEINTERLACE_METHOD,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_WIDTH] =
-      g_param_spec_uint ("width",
-          "Width",
-          "Forced output width",
-          0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_uint ("width",
+      "Width",
+      "Forced output width",
+      0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_HEIGHT] =
-      g_param_spec_uint ("height",
-          "Height",
-          "Forced output height",
-          0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_uint ("height",
+      "Height",
+      "Forced output height",
+      0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_DENOISE] =
-      g_param_spec_uint ("denoise",
-          "Denoising Level",
-          "The level of denoising to apply",
-          0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_uint ("denoise",
+      "Denoising Level",
+      "The level of denoising to apply",
+      0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_DETAIL] =
-      g_param_spec_uint ("detail",
-          "Detail Level",
-          "The level of detail / edge enhancement to apply",
-          0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_uint ("detail",
+      "Detail Level",
+      "The level of detail / edge enhancement to apply",
+      0, 100, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_HUE] =
-      g_param_spec_float ("hue",
-          "Hue",
-          "The color hue value",
-          -180.0, 180.0, 0.0,
-          GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_float ("hue",
+      "Hue",
+      "The color hue value",
+      -180.0, 180.0, 0.0,
+      GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_SATURATION] =
-      g_param_spec_float ("saturation",
-          "Saturation",
-          "The color saturation value",
-          0.0, 10.0, 1.0,
-          GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_float ("saturation",
+      "Saturation",
+      "The color saturation value",
+      0.0, 10.0, 1.0,
+      GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_BRIGHTNESS] =
-      g_param_spec_float ("brightness",
-          "Brightness",
-          "The color brightness value",
-          -100.0, 100.0, 0.0,
-          GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_float ("brightness",
+      "Brightness",
+      "The color brightness value",
+      -100.0, 100.0, 0.0,
+      GST_PARAM_CONTROLLABLE | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_properties[PROP_CONTRAST] =
-      g_param_spec_float ("contrast",
-          "Contrast",
-          "The color contrast value",
-          0.0, 10.0, 1.0,
-          GST_PARAM_CONTROLLABLE |  G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+    g_param_spec_float ("contrast",
+      "Contrast",
+      "The color contrast value",
+      0.0, 10.0, 1.0,
+      GST_PARAM_CONTROLLABLE |  G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-#ifndef WITH_MSS_2016
   g_properties[PROP_ROTATION] =
-      g_param_spec_enum ("rotation",
-          "Rotation",
-          "The rotation angle",
-          GST_MFX_TYPE_ROTATION,
-          DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-#endif
-
+    g_param_spec_enum ("rotation",
+      "Rotation",
+      "The rotation angle",
+      GST_MFX_TYPE_ROTATION,
+      DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (gobject_class, N_PROPERTIES, g_properties);
 

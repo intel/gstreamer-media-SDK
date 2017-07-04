@@ -29,7 +29,9 @@
 
 G_BEGIN_DECLS
 
+#define GST_TYPE_MFX_DISPLAY (gst_mfx_display_get_type ())
 #define GST_MFX_DISPLAY(obj) ((GstMfxDisplay *)(obj))
+
 
 /**
  * GST_MFX_DISPLAY_TYPE:
@@ -74,16 +76,18 @@ typedef enum
   GST_MFX_DISPLAY_TYPE_ANY = 0,
   GST_MFX_DISPLAY_TYPE_X11,
   GST_MFX_DISPLAY_TYPE_WAYLAND,
-  GST_MFX_DISPLAY_TYPE_EGL,
 } GstMfxDisplayType;
 
-#define GST_MFX_TYPE_DISPLAY_TYPE (gst_mfx_display_get_type())
+#define GST_MFX_TYPE_DISPLAY_TYPE (gst_mfx_display_type_get_type())
 
 GType
 gst_mfx_display_get_type(void);
 
+GType
+gst_mfx_display_get_type (void);
+
 GstMfxDisplay *
-gst_mfx_display_new (void);
+gst_mfx_display_new (GstMfxDisplay * display);
 
 GstMfxDisplay *
 gst_mfx_display_ref (GstMfxDisplay * display);
@@ -121,11 +125,6 @@ gst_mfx_display_init_vaapi (GstMfxDisplay * display);
 const gchar *
 gst_mfx_display_get_vendor_string (GstMfxDisplay * display);
 
-gboolean
-gst_mfx_display_has_opengl (GstMfxDisplay * display);
-
-void
-gst_mfx_display_use_opengl (GstMfxDisplay * display);
 
 G_END_DECLS
 

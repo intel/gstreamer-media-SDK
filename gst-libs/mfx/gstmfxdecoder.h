@@ -23,15 +23,20 @@
 #ifndef GST_MFX_DECODER_H
 #define GST_MFX_DECODER_H
 
+#include <mfxplugin.h>
 #include "gstmfxsurface.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxprofile.h"
+#include "gstmfxfilter.h"
 
 G_BEGIN_DECLS
 
-#define GST_MFX_DECODER(obj) ((GstMfxDecoder *)(obj))
+#define GST_TYPE_MFX_DECODER (gst_mfx_decoder_get_type ())
+G_DECLARE_FINAL_TYPE( GstMfxDecoder, gst_mfx_decoder, GST_MFX, DECODER, GstObject)
 
-typedef struct _GstMfxDecoder GstMfxDecoder;
+#define GST_MFX_DECODER(obj) \
+    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_DECODER, GstMfxDecoder))
+
 
 /**
 * GstMfxDecoderStatus:
@@ -67,9 +72,12 @@ typedef enum {
 } GstMfxDecoderStatus;
 
 GstMfxDecoder *
-gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_decoder_new (GstMfxDecoder * decoder, GstMfxTaskAggregator * aggregator,
     GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
     gboolean live_mode);
+
+GType
+gst_mfx_decoder_get_type(void) G_GNUC_CONST;
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder);
@@ -81,7 +89,7 @@ void
 gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
     GstMfxDecoder * new_decoder);
 
-GstMfxProfile
+GstMfxProfile *
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder);
 
 gboolean

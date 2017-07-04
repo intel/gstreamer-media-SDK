@@ -73,7 +73,7 @@ struct _GstMfxEncClass
   gboolean      		(*set_config)     (GstMfxEnc * encode);
   GstCaps *      		(*get_caps)       (GstMfxEnc * encode);
   GstMfxEncoder *		(*alloc_encoder)  (GstMfxEnc * encode);
-  gboolean      		(*format_buffer)  (GstMfxEnc * encode, GstBuffer * in_buffer, GstBuffer ** out_buffer_ptr);
+  GstFlowReturn  		(*format_buffer)  (GstMfxEnc * encode, GstBuffer * in_buffer, GstBuffer ** out_buffer_ptr);
 };
 
 GType

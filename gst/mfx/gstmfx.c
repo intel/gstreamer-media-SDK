@@ -49,13 +49,19 @@
 # include "parsers/gstvc1parse.h"
 #endif
 
+#include "gstmfxpluginutil.h"
+
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
   gboolean ret = FALSE;
 
 #ifdef MFX_DECODER
-  ret |= gst_mfxdec_register (plugin);
+  mfxU16 platform = 0;
+#if MSDK_CHECK_VERSION(1,19)
+  platform = gst_mfx_get_platform();
+#endif
+  ret |= gst_mfxdec_register (plugin, platform);
 #endif
 
 #ifdef MFX_VPP

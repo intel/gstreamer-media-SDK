@@ -30,10 +30,11 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_ENCODER (obj) \
-  ((GstMfxEncoder *)(obj))
+#define GST_TYPE_MFX_ENCODER                  (gst_mfx_encoder_get_type ())
+#define GST_MFX_ENCODER(obj) \
+    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_ENCODER, GstMfxEncoder))
 
-typedef struct _GstMfxEncoder GstMfxEncoder;
+typedef struct _GstMfxEncoder                 GstMfxEncoder;
 
 /**
  * GstMfxEncoderStatus:
@@ -134,6 +135,10 @@ typedef struct {
   GParamSpec *const pspec;
 } GstMfxEncoderPropInfo;
 
+
+GType
+gst_mfx_encoder_get_type(void) G_GNUC_CONST;
+
 GType
 gst_mfx_encoder_preset_get_type (void);
 
@@ -166,6 +171,12 @@ gst_mfx_encoder_set_property (GstMfxEncoder * encoder, gint prop_id,
     const GValue * value);
 
 gboolean
+gst_mfx_encoder_set_async_depth(GstMfxEncoder * encoder, mfxU16 async_depth);
+
+void
+gst_mfx_encoder_set_profile(GstMfxEncoder * encoder, mfxU16 profile);
+
+gboolean
 gst_mfx_encoder_set_gop_refdist (GstMfxEncoder * encoder, gint gop_refdist);
 
 gboolean
@@ -183,11 +194,8 @@ gst_mfx_encoder_set_qpp_offset (GstMfxEncoder * encoder, mfxU16 offset);
 gboolean
 gst_mfx_encoder_set_qpb_offset (GstMfxEncoder * encoder, mfxU16 offset);
 
-gboolean
-gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth);
-
 GstMfxEncoderStatus
-gst_mfx_encoder_start (GstMfxEncoder * encoder);
+gst_mfx_encoder_prepare (GstMfxEncoder * encoder);
 
 GstMfxEncoderStatus
 gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame);

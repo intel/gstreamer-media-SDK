@@ -24,8 +24,6 @@
 #define __GST_MFX_VIDEO_BUFFER_POOL_H__
 
 #include <gst/video/gstvideopool.h>
-
-#include <gst-libs/mfx/gstmfxdisplay.h>
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 
 G_BEGIN_DECLS
@@ -51,10 +49,12 @@ typedef struct _GstMfxVideoBufferPoolPrivate    GstMfxVideoBufferPoolPrivate;
 #define GST_BUFFER_POOL_OPTION_MFX_VIDEO_META \
   "GstBufferPoolOptionMfxVideoMeta"
 
-#ifndef GST_BUFFER_POOL_OPTION_DMABUF_MEMORY
-#define GST_BUFFER_POOL_OPTION_DMABUF_MEMORY \
-  "GstBufferPoolOptionDMABUFMemory"
-#endif
+#ifdef WITH_LIBVA_BACKEND
+# ifndef GST_BUFFER_POOL_OPTION_DMABUF_MEMORY
+# define GST_BUFFER_POOL_OPTION_DMABUF_MEMORY \
+    "GstBufferPoolOptionDMABUFMemory"
+# endif
+#endif // WITH_LIBVA_BACKEND
 
 struct _GstMfxVideoBufferPool
 {
@@ -72,7 +72,7 @@ GType gst_mfx_video_buffer_pool_get_type (void);
 
 GstBufferPool *
 gst_mfx_video_buffer_pool_new (GstMfxTaskAggregator * aggregator,
-    gboolean memtype_is_system);
+  gboolean memtype_is_system);
 
 G_END_DECLS
 

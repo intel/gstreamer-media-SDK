@@ -26,8 +26,12 @@
 #include "gstmfxpluginbase.h"
 #include "gstmfxpluginutil.h"
 
-#include <gst-libs/mfx/gstmfxdisplay.h>
+#ifdef WITH_LIBVA_BACKEND
+# include <gst-libs/mfx/gstmfxdisplay.h>
+#endif // WITH_LIBVA_BACKEND
+
 #include <gst-libs/mfx/gstmfxwindow.h>
+#include <gst-libs/mfx/gstmfxcontext.h>
 #include <gst-libs/mfx/gstmfxcompositefilter.h>
 
 G_BEGIN_DECLS
@@ -59,11 +63,6 @@ typedef gboolean(*GstMfxSinkHandleEventsFunc) (GstMfxSink * sink);
 typedef gboolean(*GstMfxSinkPreStartEventThreadFunc) (GstMfxSink * sink);
 typedef gboolean(*GstMfxSinkPreStopEventThreadFunc) (GstMfxSink * sink);
 
-typedef enum {
-  GST_MFX_GLAPI_OPENGL = 0,
-  GST_MFX_GLAPI_GLES2 = 2,
-} GstMfxGLAPI;
-
 struct _GstMfxSinkBackend
 {
   GstMfxSinkCreateWindowFunc              create_window;
@@ -74,7 +73,6 @@ struct _GstMfxSinkBackend
   GstMfxSinkPreStartEventThreadFunc       pre_start_event_thread;
   GstMfxSinkPreStopEventThreadFunc        pre_stop_event_thread;
 };
-
 struct _GstMfxSink
 {
   /*< private >*/
@@ -93,23 +91,21 @@ struct _GstMfxSink
   GstVideoInfo               video_info;
   GstMfxRectangle            display_rect;
   GThread                   *event_thread;
-  volatile gboolean          event_thread_cancel;
+  volatile                   gboolean event_thread_cancel;
 
   GstMfxCompositeFilter     *composite_filter;
-  GstMfxDisplay             *drm_display;
-
+  GstMfxContext             *device_context;
+#ifdef WITH_LIBVA_BACKEND
   GstMfxDisplay             *display;
   GstMfxDisplayType          display_type;
   GstMfxDisplayType          display_type_req;
   gchar                     *display_name;
-
-  GstMfxGLAPI                gl_api;
+#endif
 
   guint                      handle_events : 1;
   guint                      foreign_window : 1;
   guint                      fullscreen : 1;
   guint                      keep_aspect : 1;
-  guint                      no_frame_drop : 1;
   guint                      full_color_range : 1;
 };
 

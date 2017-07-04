@@ -30,13 +30,14 @@
 
 #include "gstmfxvideometa.h"
 
-#include <gst-libs/mfx/gstmfxdisplay.h>
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 #include <gst-libs/mfx/gstmfxsurface.h>
-#include <gst-libs/mfx/gstmfxsurface_vaapi.h>
-#include <gst-libs/mfx/gstmfxprimebufferproxy.h>
 #include <gst-libs/mfx/gstmfxsurfacepool.h>
-#include <gst-libs/mfx/gstmfxutils_vaapi.h>
+
+#ifdef WITH_LIBVA_BACKEND
+# include <gst-libs/mfx/gstmfxsurface_vaapi.h>
+# include <gst-libs/mfx/gstmfxprimebufferproxy.h>
+#endif
 
 G_BEGIN_DECLS
 
@@ -93,7 +94,6 @@ struct _GstMfxVideoMemory
   /*< private >*/
   GstMfxSurface       *surface;
   const GstVideoInfo  *image_info;
-  VaapiImage          *image;
   GstMfxVideoMeta     *meta;
   guint                map_type;
   guint8              *data;
@@ -160,16 +160,18 @@ GType
 gst_mfx_video_allocator_get_type(void);
 
 GstAllocator *
-gst_mfx_video_allocator_new(GstMfxDisplay * display,
+gst_mfx_video_allocator_new(GstMfxContext * context,
     const GstVideoInfo * vip, gboolean mapped);
 
+#ifdef WITH_LIBVA_BACKEND
 /* ------------------------------------------------------------------------ */
 /* --- GstMfxDmaBufMemory                                               --- */
 /* ------------------------------------------------------------------------ */
 
 GstMemory *
-gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxDisplay * display,
+gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxContext * context,
     const GstVideoInfo *vip, GstMfxVideoMeta * meta);
+#endif
 
 G_END_DECLS
 

@@ -26,7 +26,6 @@
 
 #include <intel_bufmgr.h>
 #include "gstmfxdisplay_wayland.h"
-#include "gstmfxdisplay_priv.h"
 #include "wayland-drm-client-protocol.h"
 #include "scaler-client-protocol.h"
 
@@ -47,7 +46,6 @@ G_BEGIN_DECLS
 #endif
 
 typedef struct _GstMfxDisplayWaylandPrivate   GstMfxDisplayWaylandPrivate;
-typedef struct _GstMfxDisplayWaylandClass     GstMfxDisplayWaylandClass;
 
 struct _GstMfxDisplayWaylandPrivate
 {
@@ -80,17 +78,6 @@ struct _GstMfxDisplayWayland
   GstMfxDisplay parent_instance;
 
   GstMfxDisplayWaylandPrivate priv;
-};
-
-/**
-* GstMfxDisplayWaylandClass:
-*
-* VA/Wayland display wrapper clas.
-*/
-struct _GstMfxDisplayWaylandClass
-{
-  /*< private >*/
-  GstMfxDisplayClass parent_class;
 };
 
 G_END_DECLS

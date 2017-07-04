@@ -27,14 +27,18 @@
 
 G_BEGIN_DECLS
 
-typedef struct _VaapiImage      VaapiImage;
+#define GST_TYPE_VAAPI_IMAGE (vaapi_image_get_type ())
+G_DECLARE_FINAL_TYPE(VaapiImage, vaapi_image, VAAPI_IMAGE, NULL, GstObject)
+
+#define VAAPI_IMAGE(obj) ((VaapiImage *) (obj))
 
 VaapiImage *
-vaapi_image_new (GstMfxDisplay * display, guint width, guint height,
-    GstVideoFormat format);
+vaapi_image_new (VaapiImage * image, GstMfxDisplay * display,
+  guint width, guint height, GstVideoFormat format);
 
 VaapiImage *
-vaapi_image_new_with_image (GstMfxDisplay *display, VAImage *va_image);
+vaapi_image_new_with_image (VaapiImage * image,
+  GstMfxDisplay *display, VAImage *va_image);
 
 VaapiImage *
 vaapi_image_ref (VaapiImage * image);

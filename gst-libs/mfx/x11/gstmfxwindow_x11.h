@@ -30,15 +30,20 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_WINDOW_X11(obj) ((GstMfxWindowX11 *)(obj))
+#define GST_TYPE_MFX_WINDOW_X11 (gst_mfx_window_x11_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxWindowX11, gst_mfx_window_x11, GST_MFX, WINDOW_X11, GstMfxWindow)
 
-typedef struct _GstMfxWindowX11 GstMfxWindowX11;
+#define GST_MFX_WINDOW_X11_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_WINDOW_X11, \
+  GstMfxWindowX11Class))
 
 GstMfxWindow *
-gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height);
+gst_mfx_window_x11_new (GstMfxWindowX11 * window, GstMfxDisplay * display,
+  guint width, guint height);
 
 GstMfxWindow *
-gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid);
+gst_mfx_window_x11_new_with_xid (GstMfxWindowX11 * window,
+  GstMfxDisplay * display, Window xid);
 
 void
 gst_mfx_window_x11_clear (GstMfxWindow * window);

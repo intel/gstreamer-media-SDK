@@ -23,17 +23,21 @@
 #ifndef GST_MFX_DISPLAY_X11_H
 #define GST_MFX_DISPLAY_X11_H
 
-#include <va/va_x11.h>
 #include "gstmfxdisplay.h"
+#include "gstmfxdisplay_priv.h"
+#include <X11/Xlib.h>
 
 G_BEGIN_DECLS
 
-#define GST_MFX_DISPLAY_X11(obj) ((GstMfxDisplayX11 *)(obj))
+#define GST_TYPE_MFX_DISPLAY_X11 (gst_mfx_display_x11_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxDisplayX11, gst_mfx_display_x11, GST_MFX, DISPLAY_X11, GstMfxDisplay)
 
-typedef struct _GstMfxDisplayX11  GstMfxDisplayX11;
+#define GST_MFX_DISPLAY_X11_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_DISPLAY_X11, \
+  GstMfxDisplayX11Class))
 
 GstMfxDisplay *
-gst_mfx_display_x11_new (const gchar * display_name);
+gst_mfx_display_x11_new (GstMfxDisplayX11 * display, const gchar * display_name);
 
 Display *
 gst_mfx_display_x11_get_display (GstMfxDisplay * display);

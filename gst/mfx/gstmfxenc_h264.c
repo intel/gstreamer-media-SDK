@@ -26,7 +26,6 @@
 #include "gstmfxvideomemory.h"
 
 #include <gst-libs/mfx/gstmfxencoder_h264.h>
-#include <gst-libs/mfx/gstmfxutils_h264.h>
 
 #define GST_PLUGIN_NAME "mfxh264enc"
 #define GST_PLUGIN_DESC "An MFX-based H.264 video encoder"
@@ -34,7 +33,7 @@
 GST_DEBUG_CATEGORY_STATIC (gst_mfx_h264_enc_debug);
 #define GST_CAT_DEFAULT gst_mfx_h264_enc_debug
 
-#define GST_CODEC_CAPS                  \
+#define GST_CODEC_CAPS                              \
   "video/x-h264, "                                  \
   "stream-format = (string) { avc, byte-stream }, " \
   "alignment = (string) au"
@@ -103,67 +102,11 @@ gst_mfxenc_h264_get_property (GObject * object,
   }
 }
 
-typedef struct
-{
-  mfxU16 best_profile;
-  guint best_score;
-} FindBestProfileData;
-
-static void
-find_best_profile_value (FindBestProfileData * data, const GValue * value)
-{
-  const gchar *str;
-  mfxU16 profile;
-  guint score;
-
-  if (!value || !G_VALUE_HOLDS_STRING (value))
-    return;
-
-  str = g_value_get_string (value);
-  if (!str)
-    return;
-  profile = gst_mfx_utils_h264_get_profile_from_string (str);
-  if (!profile)
-    return;
-  score = gst_mfx_utils_h264_get_profile_score (profile);
-  if (score < data->best_score)
-    return;
-  data->best_profile = profile;
-  data->best_score = score;
-}
-
-static mfxU16
-find_best_profile (GstCaps * caps)
-{
-  FindBestProfileData data;
-  guint i, j, num_structures, num_values;
-
-  data.best_profile = MFX_PROFILE_UNKNOWN;
-  data.best_score = 0;
-
-  num_structures = gst_caps_get_size (caps);
-  for (i = 0; i < num_structures; i++) {
-    GstStructure *const structure = gst_caps_get_structure (caps, i);
-    const GValue *const value = gst_structure_get_value (structure, "profile");
-
-    if (!value)
-      continue;
-    if (G_VALUE_HOLDS_STRING (value))
-      find_best_profile_value (&data, value);
-    else if (GST_VALUE_HOLDS_LIST (value)) {
-      num_values = gst_value_list_get_size (value);
-      for (j = 0; j < num_values; j++)
-        find_best_profile_value (&data, gst_value_list_get_value (value, j));
-    }
-  }
-  return data.best_profile;
-}
-
 static gboolean
 gst_mfxenc_h264_set_config (GstMfxEnc * base_encode)
 {
   GstCaps *allowed_caps;
-  mfxU16 profile;
+  GstMfxProfile profile;
 
   /* Check for the largest profile that is supported */
   allowed_caps =
@@ -171,14 +114,10 @@ gst_mfxenc_h264_set_config (GstMfxEnc * base_encode)
   if (!allowed_caps)
     return TRUE;
 
-  profile = find_best_profile (allowed_caps);
+  profile = gst_mfx_profile_from_caps(allowed_caps);
   gst_caps_unref (allowed_caps);
-  if (profile != MFX_PROFILE_UNKNOWN) {
-    GST_INFO ("using %s profile as target decoder constraints",
-        gst_mfx_utils_h264_get_profile_string (profile));
-    if (!gst_mfx_encoder_h264_set_max_profile (base_encode->encoder, profile))
-      return FALSE;
-  }
+  
+  gst_mfx_encoder_set_profile(base_encode->encoder, profile.profile);
   return TRUE;
 }
 
@@ -225,7 +164,7 @@ gst_mfxenc_h264_alloc_encoder (GstMfxEnc * base)
   if (base->encoder)
     return base->encoder;
 
-  return gst_mfx_encoder_h264_new (plugin->aggregator, &plugin->sinkpad_info,
+  return gst_mfx_encoder_h264_new (g_object_new(GST_TYPE_MFX_ENCODER_H264, NULL), plugin->aggregator, &plugin->sinkpad_info,
       plugin->sinkpad_caps_is_raw);
 }
 

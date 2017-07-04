@@ -179,9 +179,11 @@ GstFlowReturn
 gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
     GstBuffer * inbuf, GstBuffer ** outbuf_ptr);
 
+#ifdef WITH_LIBVA_BACKEND
 gboolean
 gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
     GstBuffer * outbuf);
+#endif // WITH_LIBVA_BACKEND
 
 
 G_END_DECLS

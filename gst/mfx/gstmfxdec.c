@@ -57,7 +57,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
     GST_CAPS_CODEC ("video/x-wmv, \
         stream-format = (string) { sequence-layer-frame-layer, bdu }")
     GST_CAPS_CODEC ("video/x-vp8")
-#ifdef USE_VP9_DECODER
+#if MSDK_CHECK_VERSION(1,19)
     GST_CAPS_CODEC ("video/x-vp9")
 #endif
     GST_CAPS_CODEC ("image/jpeg")
@@ -96,13 +96,11 @@ static const GstMfxCodecMap mfx_codec_map[] = {
        alignment = (string) au, \
        profile = (string) { constrained-baseline, baseline, main, high }, \
        stream-format = (string) byte-stream"},
-#ifdef USE_HEVC_DECODER
-  {"hevc", GST_RANK_PRIMARY + 3,
+  {"hevc", GST_RANK_NONE,
       "video/x-h265, \
        alignment = (string) au, \
        profile = (string) main, \
        stream-format = (string) byte-stream"},
-#endif
   {"mpeg2", GST_RANK_PRIMARY + 3,
       "video/mpeg, \
        mpegversion=2, \
@@ -110,11 +108,9 @@ static const GstMfxCodecMap mfx_codec_map[] = {
   {"vc1", GST_RANK_PRIMARY + 3,
       "video/x-wmv, \
        stream-format = (string) { sequence-layer-frame-layer, bdu }"},
-# ifdef USE_VP8_DECODER
-  {"vp8", GST_RANK_PRIMARY + 3, "video/x-vp8"},
-# endif
-# ifdef USE_VP9_DECODER
-  {"vp9", GST_RANK_PRIMARY + 3, "video/x-vp9"},
+  {"vp8", GST_RANK_NONE, "video/x-vp8"},
+#if MSDK_CHECK_VERSION(1,19)
+  {"vp9", GST_RANK_NONE, "video/x-vp9"},
 # endif
   {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
   {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
@@ -314,13 +310,13 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   /* Increase async depth considerably when using decodebin to avoid
    * jerky video playback resulting from threading issues */
-  parent = gst_object_get_parent(mfxdec);
+  parent = gst_object_get_parent (GST_OBJECT(mfxdec));
   if (parent && !GST_IS_PIPELINE (GST_ELEMENT(parent)))
     mfxdec->async_depth = 16;
   gst_object_replace (&parent, NULL);
 
-  mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      profile, &info, mfxdec->async_depth, mfxdec->live_mode);
+  mfxdec->decoder = gst_mfx_decoder_new (g_object_new(GST_TYPE_MFX_DECODER, NULL),
+    plugin->aggregator, profile, &info, mfxdec->async_depth, mfxdec->live_mode);
   if (!mfxdec->decoder)
     return FALSE;
 
@@ -347,11 +343,13 @@ static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
   gboolean hard)
 {
-  GstMfxProfile profile;
-
   if (mfxdec->decoder && !hard) {
-    profile = gst_mfx_profile_from_caps (caps);
-    if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder)) {
+    GstMfxProfile *old_profile = gst_mfx_decoder_get_profile(mfxdec->decoder);
+    GstMfxProfile new_profile = gst_mfx_profile_from_caps (caps);
+
+    if (old_profile
+        && new_profile.codec == old_profile->codec
+        && new_profile.profile == old_profile->profile) {
       gst_mfx_decoder_reset (mfxdec->decoder);
       gst_mfxdec_flush_discarded_frames (mfxdec);
       return TRUE;
@@ -396,14 +394,14 @@ static gboolean
 gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
-  GstMfxProfile profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
+  GstMfxProfile *profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
   GstVideoInfo *info = gst_mfx_decoder_get_video_info (mfxdec->decoder);
   gboolean hard = FALSE;
 
   g_return_val_if_fail (info != NULL, FALSE);
 
   if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED
-      && gst_mfx_profile_get_codec(profile) == MFX_CODEC_AVC)
+      && profile->codec == MFX_CODEC_AVC)
     hard = TRUE;
 
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
@@ -458,10 +456,13 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
     }
   }
 
+#ifdef WITH_LIBVA_BACKEND
 #if GST_CHECK_VERSION(1,8,0)
   gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (mfxdec),
       frame->output_buffer);
 #endif
+#endif // WITH_LIBVA_BACKEND
+
   return gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
   /* ERRORS */
 error_create_buffer:
@@ -712,7 +713,7 @@ gst_mfxdec_init (GstMfxDec *mfxdec)
 }
 
 gboolean
-gst_mfxdec_register (GstPlugin * plugin)
+gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
 {
   gboolean ret = FALSE;
   guint i, rank;
@@ -730,6 +731,7 @@ gst_mfxdec_register (GstPlugin * plugin)
     0,
     (GInstanceInitFunc) gst_mfxdec_init,
   };
+  gboolean should_register;
 
   for (i = 0; i < G_N_ELEMENTS (mfx_codec_map); i++) {
     name = mfx_codec_map[i].name;
@@ -738,10 +740,35 @@ gst_mfxdec_register (GstPlugin * plugin)
     if (name) {
       type_name = g_strdup_printf ("GstMfxDec_%s", name);
       element_name = g_strdup_printf ("mfx%sdec", name);
+
+#if MSDK_CHECK_VERSION(1,19)
+      switch (platform) {
+#if MSDK_CHECK_VERSION(1,22)
+        case MFX_PLATFORM_APOLLOLAKE:
+        case MFX_PLATFORM_KABYLAKE:
+#endif
+        case MFX_PLATFORM_SKYLAKE:
+          if (!g_strcmp0(name, "vp9"))
+            rank = GST_RANK_PRIMARY + 3;
+        case MFX_PLATFORM_CHERRYTRAIL:
+        case MFX_PLATFORM_BROADWELL:
+          if (!g_strcmp0(name, "vp8"))
+            rank = GST_RANK_PRIMARY + 3;
+        case MFX_PLATFORM_HASWELL:
+          if (!g_strcmp0(name, "hevc"))
+            rank = GST_RANK_PRIMARY + 3;
+          break;
+        default:
+          break;
+      }
+#endif
+      should_register = (rank != GST_RANK_NONE);
     }
     else {
       type_name = g_strdup_printf ("GstMfxDec");
       element_name = g_strdup_printf ("mfxdecode");
+      /* mfxdecode was only registered for legacy purposes and codec testing */
+      should_register = TRUE;
     }
 
     type = g_type_from_name (type_name);
@@ -754,8 +781,8 @@ gst_mfxdec_register (GstPlugin * plugin)
           (gpointer) & mfx_codec_map[i]);
     }
 
-    /* mfxdecode was only registered for legacy purposes */
-    ret |= gst_element_register (plugin, element_name, rank, type);
+    if (should_register)
+      ret |= gst_element_register (plugin, element_name, rank, type);
 
     g_free (element_name);
     g_free (type_name);

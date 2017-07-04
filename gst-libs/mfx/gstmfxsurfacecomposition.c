@@ -24,7 +24,12 @@
 
 #include "gstmfxsurfacecomposition.h"
 #include "gstmfxsurface.h"
-#include "gstmfxsurface_vaapi.h"
+
+#ifdef WITH_LIBVA_BACKEND
+# include "gstmfxsurface_vaapi.h"
+#else
+# include "gstmfxsurface_d3d11.h"
+#endif
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -32,11 +37,13 @@
 struct _GstMfxSurfaceComposition
 {
   /*< private > */
-  GstMfxMiniObject parent_instance;
+  GstObject parent_instance;
 
   GPtrArray *subpictures;
   GstMfxSurface *base_surface;
 };
+
+G_DEFINE_TYPE(GstMfxSurfaceComposition, gst_mfx_surface_composition, GST_TYPE_OBJECT)
 
 static void
 destroy_subpicture (GstMfxSubpicture * subpicture)
@@ -78,13 +85,21 @@ create_subpicture (GstMfxSurfaceComposition * composition,
   subpicture = g_slice_new0(GstMfxSubpicture);
 
   if (gst_mfx_surface_has_video_memory (composition->base_surface)) {
-    GstMfxDisplay *display =
-        gst_mfx_surface_vaapi_get_display (composition->base_surface);
-    subpicture->surface = gst_mfx_surface_vaapi_new (display, &info);
-    gst_mfx_display_unref (display);
+    GstMfxContext *context =
+        gst_mfx_surface_get_context (composition->base_surface);
+#ifdef WITH_LIBVA_BACKEND
+    subpicture->surface = gst_mfx_surface_vaapi_new (
+      g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL), context, &info);
+#else
+    subpicture->surface = gst_mfx_surface_d3d11_new (
+      g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), context, &info);
+    gst_mfx_surface_d3d11_set_rw_flags(subpicture->surface, MFX_SURFACE_WRITE);
+#endif // WITH_LIBVA_BACKEND
+    gst_mfx_context_unref (context);
   }
   else {
-    subpicture->surface = gst_mfx_surface_new(&info);
+    subpicture->surface =
+        gst_mfx_surface_new(g_object_new(GST_TYPE_MFX_SURFACE, NULL), &info);
   }
   if (!subpicture->surface)
     return FALSE;
@@ -157,54 +172,51 @@ gst_mfx_surface_composition_finalize(GstMfxSurfaceComposition * composition)
   g_ptr_array_free (composition->subpictures, TRUE);
 }
 
-static inline const GstMfxMiniObjectClass *
-gst_mfx_surface_composition_class(void)
+static void
+gst_mfx_surface_composition_init(GstMfxSurfaceComposition * composition)
 {
-  static const GstMfxMiniObjectClass GstMfxSubpictureCompositionClass = {
-    sizeof(GstMfxSurfaceComposition),
-    (GDestroyNotify)gst_mfx_surface_composition_finalize
-  };
-  return &GstMfxSubpictureCompositionClass;
+}
+
+static void
+gst_mfx_surface_composition_class_init(GstMfxSurfaceCompositionClass * klass)
+{
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_surface_composition_finalize;
 }
 
 GstMfxSurfaceComposition *
-gst_mfx_surface_composition_new (GstMfxSurface * base_surface,
-  GstVideoOverlayComposition * overlay)
+gst_mfx_surface_composition_new (GstMfxSurfaceComposition *composition,
+  GstMfxSurface * base_surface, GstVideoOverlayComposition * overlay)
 {
-  GstMfxSurfaceComposition *composition;
-
   g_return_val_if_fail(base_surface != NULL, NULL);
   g_return_val_if_fail(overlay != NULL, NULL);
-
-  composition = gst_mfx_mini_object_new0(gst_mfx_surface_composition_class());
-  if (!composition)
-    return NULL;
 
   composition->base_surface = gst_mfx_surface_ref (base_surface);
   composition->subpictures =
       g_ptr_array_new_with_free_func((GDestroyNotify)destroy_subpicture);
   if (!gst_mfx_create_surfaces_from_composition(composition, overlay))
-    goto error;
+    return NULL;
 
   return composition;
-error:
-  gst_mfx_mini_object_unref(composition);
-  return NULL;
 }
 
 GstMfxSurfaceComposition *
-gst_mfx_surface_composition_ref (GstMfxSurfaceComposition * composition)
+gst_mfx_surface_composition_ref(GstMfxSurfaceComposition * composition)
 {
   g_return_val_if_fail(composition != NULL, NULL);
 
-  return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(composition));
+  return
+    GST_MFX_SURFACE_COMPOSITION(gst_object_ref(GST_OBJECT(composition)));
 }
 
 void
 gst_mfx_surface_composition_unref(GstMfxSurfaceComposition * composition)
 {
-  gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(composition));
+  g_return_if_fail(composition != NULL);
+
+  gst_object_unref(GST_OBJECT(composition));
 }
+
 
 void
 gst_mfx_surface_composition_replace(
@@ -213,8 +225,8 @@ gst_mfx_surface_composition_replace(
 {
   g_return_if_fail(old_composition_ptr != NULL);
 
-  gst_mfx_mini_object_replace((GstMfxMiniObject **)old_composition_ptr,
-    GST_MFX_MINI_OBJECT(new_composition));
+  gst_object_replace((GstObject **)old_composition_ptr,
+    GST_OBJECT(new_composition));
 }
 
 GstMfxSubpicture *

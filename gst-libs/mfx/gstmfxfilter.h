@@ -28,7 +28,10 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GstMfxFilter                    GstMfxFilter;
+#define GST_TYPE_MFX_FILTER (gst_mfx_filter_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxFilter, gst_mfx_filter, GST_MFX, FILTER, GstObject)
+
+#define GST_MFX_FILTER(obj) ((GstMfxFilter *)(obj))
 
 /**
  * GstMfxFilterStatus:
@@ -115,15 +118,14 @@ typedef enum {
 } GstMfxFilterType;
 
 typedef enum {
-  GST_MFX_DEINTERLACE_MODE_NONE = 0,
-  GST_MFX_DEINTERLACE_MODE_BOB = MFX_DEINTERLACING_BOB,
-  GST_MFX_DEINTERLACE_MODE_ADVANCED = MFX_DEINTERLACING_ADVANCED,
-  GST_MFX_DEINTERLACE_MODE_ADVANCED_NOREF = MFX_DEINTERLACING_ADVANCED_NOREF,
+  GST_MFX_DEINTERLACE_METHOD_BOB = MFX_DEINTERLACING_BOB,
+  GST_MFX_DEINTERLACE_METHOD_ADVANCED = MFX_DEINTERLACING_ADVANCED,
+  GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF = MFX_DEINTERLACING_ADVANCED_NOREF,
 #if MSDK_CHECK_VERSION(1,19)
-  GST_MFX_DEINTERLACE_MODE_ADVANCED_SCD = MFX_DEINTERLACING_ADVANCED_SCD,
-  GST_MFX_DEINTERLACE_MODE_FIELD_WEAVING = MFX_DEINTERLACING_FIELD_WEAVING,
+  GST_MFX_DEINTERLACE_METHOD_ADVANCED_SCD = MFX_DEINTERLACING_ADVANCED_SCD,
+  GST_MFX_DEINTERLACE_METHOD_FIELD_WEAVING = MFX_DEINTERLACING_FIELD_WEAVING,
 #endif
-} GstMfxDeinterlaceMode;
+} GstMfxDeinterlaceMethod;
 
 typedef enum {
     GST_MFX_FRC_NONE,
@@ -149,11 +151,11 @@ typedef enum {
 } GstMfxRotation;
 
 GstMfxFilter *
-gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
     gboolean is_system_in, gboolean is_system_out);
 
 GstMfxFilter *
-gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new_with_task (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
     GstMfxTask * task, GstMfxTaskType type,
     gboolean is_system_in, gboolean is_system_out);
 
@@ -179,9 +181,6 @@ gst_mfx_filter_reset (GstMfxFilter * filter);
 
 gboolean
 gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags);
-
-GstMfxSurfacePool *
-gst_mfx_filter_get_pool (GstMfxFilter * filter, guint flags);
 
 void
 gst_mfx_filter_set_request (GstMfxFilter * filter,
@@ -223,8 +222,8 @@ gboolean
 gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle);
 
 gboolean
-gst_mfx_filter_set_deinterlace_mode (GstMfxFilter *filter,
-    GstMfxDeinterlaceMode mode);
+gst_mfx_filter_set_deinterlace_method (GstMfxFilter *filter,
+    GstMfxDeinterlaceMethod method);
 
 gboolean
 gst_mfx_filter_set_framerate (GstMfxFilter *filter,

@@ -34,6 +34,8 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
+G_DEFINE_TYPE(GstMfxDisplayX11, gst_mfx_display_x11, GST_TYPE_MFX_DISPLAY);
+
 static inline const gchar *
 get_default_display_name (void)
 {
@@ -179,43 +181,21 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
     *pheight = height_mm;
 }
 
-static GstMfxWindow *
-gst_mfx_display_x11_create_window (GstMfxDisplay * display,
-    GstMfxID id, guint width, guint height)
-{
-  return id != GST_MFX_ID_INVALID ?
-      gst_mfx_window_x11_new_with_xid (display, id) :
-      gst_mfx_window_x11_new (display, width, height);
-}
-
 void
 gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
 {
-  GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
 
-  gst_mfx_display_class_init (&klass->parent_class);
-
-  object_class->size = sizeof (GstMfxDisplayX11);
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_X11;
   dpy_class->open_display = gst_mfx_display_x11_open_display;
   dpy_class->close_display = gst_mfx_display_x11_close_display;
   dpy_class->get_size = gst_mfx_display_x11_get_size;
   dpy_class->get_size_mm = gst_mfx_display_x11_get_size_mm;
-  dpy_class->create_window = gst_mfx_display_x11_create_window;
 }
 
-static inline const GstMfxDisplayClass *
-gst_mfx_display_x11_class (void)
+static void
+gst_mfx_display_x11_init(GstMfxDisplayX11 * display)
 {
-  static GstMfxDisplayX11Class g_class;
-  static gsize g_class_init = FALSE;
-
-  if (g_once_init_enter (&g_class_init)) {
-    gst_mfx_display_x11_class_init (&g_class);
-    g_once_init_leave (&g_class_init, TRUE);
-  }
-  return GST_MFX_DISPLAY_CLASS (&g_class);
 }
 
 /**
@@ -229,10 +209,10 @@ gst_mfx_display_x11_class (void)
  * Return value: a newly allocated #GstMfxDisplay object
  */
 GstMfxDisplay *
-gst_mfx_display_x11_new (const gchar * display_name)
+gst_mfx_display_x11_new (GstMfxDisplayX11 * display, const gchar * display_name)
 {
-  return gst_mfx_display_new_internal (gst_mfx_display_x11_class (),
-      GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME, (gpointer) display_name);
+  return gst_mfx_display_new_internal (GST_MFX_DISPLAY(display),
+              (gpointer) display_name);
 }
 
 /**

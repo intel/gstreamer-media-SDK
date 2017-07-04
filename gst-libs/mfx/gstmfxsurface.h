@@ -23,13 +23,13 @@
 
 #include "sysdeps.h"
 
-#include <gst/video/video.h>
-#include "gstmfxdisplay.h"
+#include "gstmfxcontext.h"
 #include "gstmfxtask.h"
-#include "video-format.h"
+#include "gstmfxtypes.h"
 
 G_BEGIN_DECLS
 
+#define GST_TYPE_MFX_SURFACE (gst_mfx_surface_get_type ())
 #define GST_MFX_SURFACE(obj) ((GstMfxSurface *) (obj))
 
 #define GST_MFX_SURFACE_FRAME_SURFACE(surface) \
@@ -47,15 +47,17 @@ G_BEGIN_DECLS
 #define GST_MFX_SURFACE_HEIGHT(surface) \
   gst_mfx_surface_get_height (surface)
 
-typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
-typedef struct _GstMfxSurface GstMfxSurface;
-typedef struct _GstMfxSurfaceClass GstMfxSurfaceClass;
+typedef struct _GstMfxSurface       GstMfxSurface;
+typedef struct _GstMfxSurfacePool   GstMfxSurfacePool;
+
+GType
+gst_mfx_surface_get_type (void);
 
 GstMfxSurface *
-gst_mfx_surface_new (const GstVideoInfo * info);
+gst_mfx_surface_new (GstMfxSurface * surface, const GstVideoInfo * info);
 
 GstMfxSurface *
-gst_mfx_surface_new_from_task (GstMfxTask * task);
+gst_mfx_surface_new_from_task (GstMfxSurface * surface, GstMfxTask * task);
 
 GstMfxSurface *
 gst_mfx_surface_new_from_pool(GstMfxSurfacePool * pool);
@@ -98,8 +100,14 @@ gst_mfx_surface_get_plane (GstMfxSurface * surface, guint plane);
 guint16
 gst_mfx_surface_get_pitch (GstMfxSurface * surface, guint plane);
 
+guint
+gst_mfx_surface_get_data_size(GstMfxSurface * surface);
+
 GstMfxRectangle *
 gst_mfx_surface_get_crop_rect(GstMfxSurface * surface);
+
+GstMfxContext *
+gst_mfx_surface_get_context(GstMfxSurface * surface);
 
 gboolean
 gst_mfx_surface_has_video_memory(GstMfxSurface * surface);

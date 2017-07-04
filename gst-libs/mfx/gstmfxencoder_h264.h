@@ -24,14 +24,19 @@
 #define GST_MFX_ENCODER_H264_H
 
 #include "gstmfxencoder.h"
-#include "gstmfxutils_h264.h"
+#include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
 
+#define GST_TYPE_MFX_ENCODER_H264 (gst_mfx_encoder_h264_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxEncoderH264, gst_mfx_encoder_h264, GST_MFX, ENCODER_H264, GstMfxEncoder)
+
+#define GST_MFX_ENCODER_H264_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_H264, \
+  GstMfxEncoderH264Class))
+
 #define GST_MFX_ENCODER_H264 (encoder) \
   ((GstMfxEncoderH264 *) (encoder))
-
-typedef struct _GstMfxEncoderH264 GstMfxEncoderH264;
 
 /**
  * GstMfxEncoderH264Prop:
@@ -52,14 +57,11 @@ typedef enum {
 } GstMfxEncoderH264Prop;
 
 GstMfxEncoder *
-gst_mfx_encoder_h264_new (GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_h264_new (GstMfxEncoderH264 * encoder, GstMfxTaskAggregator * aggregator,
   	const GstVideoInfo * info, gboolean mapped);
 
 GPtrArray *
 gst_mfx_encoder_h264_get_default_properties (void);
-
-gboolean
-gst_mfx_encoder_h264_set_max_profile (GstMfxEncoder * encoder, mfxU16 profile);
 
 G_END_DECLS
 

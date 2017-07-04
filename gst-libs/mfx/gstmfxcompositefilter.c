@@ -27,38 +27,54 @@
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxtask.h"
 #include "gstmfxsurface.h"
-#include "gstmfxsurface_vaapi.h"
+
+#ifdef WITH_LIBVA_BACKEND
+# include "gstmfxsurface_vaapi.h"
+#else
+# include "gstmfxsurface_d3d11.h"
+#endif // WITH_LIBVA_BACKEND
+
 #include "gstmfxsurfacecomposition.h"
+#include "gstmfxsurfacepool.h"
 
 
 struct _GstMfxCompositeFilter
 {
   /*< private > */
-  GstMfxMiniObject parent_instance;
+  GstObject parent_instance;
+
   GstMfxTaskAggregator *aggregator;
   GstMfxTask *vpp;
-  GstMfxSurface *out_surface;
+  GstMfxSurfacePool *out_pool;
   gboolean inited;
 
   mfxSession session;
   mfxFrameInfo frame_info;
   mfxVideoParam params;
+  mfxFrameAllocRequest request[2];
+  mfxFrameAllocResponse response;
 
   mfxExtBuffer *ext_buffer;
   mfxExtVPPComposite composite;
   guint num_rect;
 };
 
+G_DEFINE_TYPE(GstMfxCompositeFilter, gst_mfx_composite_filter, GST_TYPE_OBJECT)
+
 static void
 gst_mfx_composite_filter_finalize (GstMfxCompositeFilter * filter)
 {
   /* Free allocated memory for filters */
   g_slice_free1 ((sizeof (mfxExtBuffer *)), filter->ext_buffer);
-  gst_mfx_surface_replace (&filter->out_surface, NULL);
-  gst_mfx_task_aggregator_unref (filter->aggregator);
+  gst_mfx_surface_pool_replace(&filter->out_pool, NULL);
+
+  /* Make sure frame allocator points to the right task to free surfaces */
+  gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp);
+  gst_mfx_task_frame_free(filter->aggregator, &filter->response);
 
   MFXVideoVPP_Close (filter->session);
 
+  gst_mfx_task_aggregator_unref(filter->aggregator);
   gst_mfx_task_replace(&filter->vpp, NULL);
 }
 
@@ -68,6 +84,7 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
 {
   GstMfxSubpicture *subpicture = NULL;
   guint num_rect = 0;
+  guint i;
 
   g_return_val_if_fail (filter != NULL, FALSE);
   g_return_val_if_fail (composition != NULL, FALSE);
@@ -91,7 +108,7 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
   filter->num_rect = num_rect;
 
   /* Set number of input stream to composed
-   * Input Stream = Number of rectangle + number of base surface*/
+   * Input Stream = Number of rectangle + base surface */
   filter->composite.NumInputStream = num_rect + 1;
 
   if(!filter->composite.InputStream) {
@@ -109,7 +126,7 @@ configure_composite_filter (GstMfxCompositeFilter * filter,
   filter->composite.InputStream[0].DstH = filter->frame_info.CropH;
 
   /* Fill the subpicture info */
-  for (guint i=1; i < filter->composite.NumInputStream; i++) {
+  for (i = 1; i < filter->composite.NumInputStream; i++) {
     subpicture = gst_mfx_surface_composition_get_subpicture (composition, i-1);
     if (!subpicture)
       return FALSE;
@@ -151,7 +168,7 @@ gst_mfx_composite_filter_reset (GstMfxCompositeFilter * filter,
 }
 
 static gboolean
-gst_mfx_composite_filter_init (GstMfxCompositeFilter * filter,
+gst_mfx_composite_filter_create (GstMfxCompositeFilter * filter,
     GstMfxTaskAggregator * aggregator, gboolean memtype_is_system)
 {
   if (memtype_is_system)
@@ -165,7 +182,8 @@ gst_mfx_composite_filter_init (GstMfxCompositeFilter * filter,
   filter->num_rect = 0;
 
   filter->vpp =
-      gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
+      gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL),
+        filter->aggregator, GST_MFX_TASK_VPP_OUT);
   if (!filter->vpp)
     return FALSE;
 
@@ -174,36 +192,28 @@ gst_mfx_composite_filter_init (GstMfxCompositeFilter * filter,
   return TRUE;
 }
 
-static inline const GstMfxMiniObjectClass *
-gst_mfx_composite_filter_class (void)
+static void
+gst_mfx_composite_filter_init(GstMfxCompositeFilter * filter)
 {
-  static const GstMfxMiniObjectClass GstMfxCompositeFilterClass = {
-    sizeof (GstMfxCompositeFilter),
-    (GDestroyNotify) gst_mfx_composite_filter_finalize
-  };
-  return &GstMfxCompositeFilterClass;
+}
+
+static void
+gst_mfx_composite_filter_class_init(GstMfxCompositeFilterClass * klass)
+{
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_composite_filter_finalize;
 }
 
 GstMfxCompositeFilter *
-gst_mfx_composite_filter_new (GstMfxTaskAggregator * aggregator,
-    gboolean memtype_is_system)
+gst_mfx_composite_filter_new (GstMfxCompositeFilter * filter,
+  GstMfxTaskAggregator * aggregator, gboolean memtype_is_system)
 {
-  GstMfxCompositeFilter *filter;
-
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  filter = (GstMfxCompositeFilter *)
-      gst_mfx_mini_object_new0 (gst_mfx_composite_filter_class ());
-  if (!filter)
+  if (!gst_mfx_composite_filter_create (filter, aggregator, memtype_is_system))
     return NULL;
 
-  if (!gst_mfx_composite_filter_init (filter, aggregator, memtype_is_system))
-    goto error;
-
   return filter;
-error:
-  gst_mfx_mini_object_unref(filter);
-  return NULL;
 }
 
 GstMfxCompositeFilter *
@@ -211,14 +221,18 @@ gst_mfx_composite_filter_ref(GstMfxCompositeFilter * filter)
 {
   g_return_val_if_fail(filter != NULL, NULL);
 
-  return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(filter));
+  return
+    GST_MFX_COMPOSITE_FILTER(gst_object_ref(GST_OBJECT(filter)));
 }
 
 void
 gst_mfx_composite_filter_unref(GstMfxCompositeFilter * filter)
 {
-  gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(filter));
+  g_return_if_fail(filter != NULL);
+
+  gst_object_unref(GST_OBJECT(filter));
 }
+
 
 void
 gst_mfx_composite_filter_replace(GstMfxCompositeFilter ** old_filter_ptr,
@@ -226,8 +240,8 @@ gst_mfx_composite_filter_replace(GstMfxCompositeFilter ** old_filter_ptr,
 {
   g_return_if_fail(old_filter_ptr != NULL);
 
-  gst_mfx_mini_object_replace((GstMfxMiniObject **)old_filter_ptr,
-    GST_MFX_MINI_OBJECT(new_filter));
+  gst_object_replace((GstObject **)old_filter_ptr,
+    GST_OBJECT(new_filter));
 }
 
 static gboolean
@@ -251,9 +265,6 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
 {
   GstMfxSurface *base_surface;
   mfxStatus sts = MFX_ERR_NONE;
-  GstVideoInfo info;
-
-  gst_video_info_init(&info);
 
   base_surface = gst_mfx_surface_composition_get_base_surface (composition);
   filter->frame_info = gst_mfx_surface_get_frame_surface (base_surface)->Info;
@@ -263,21 +274,30 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
     return FALSE;
   }
 
-  gst_video_info_set_format(&info, GST_MFX_SURFACE_FORMAT (base_surface),
-    GST_MFX_SURFACE_WIDTH (base_surface), GST_MFX_SURFACE_HEIGHT (base_surface));
-
   /* Allocate output surface for final composition */
   if (filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY) {
-    GstMfxDisplay *display =
-        gst_mfx_surface_vaapi_get_display (base_surface);
-    filter->out_surface = gst_mfx_surface_vaapi_new (display, &info);
-    gst_mfx_display_unref (display);
+    gst_mfx_task_use_video_memory(filter->vpp);
+    MFXVideoVPP_QueryIOSurf(filter->session, &filter->params, filter->request);
 
-    gst_mfx_task_use_video_memory (filter->vpp);
-  } else {
-    filter->out_surface = gst_mfx_surface_new (&info);
+    gst_mfx_task_set_request(filter->vpp, &filter->request[1]);
+    /* Make sure frame allocator points to the right task to allocate surfaces */
+    gst_mfx_task_aggregator_set_current_task(filter->aggregator, filter->vpp);
+
+    mfxStatus sts = gst_mfx_task_frame_alloc(filter->aggregator,
+                      &filter->request[1], &filter->response);
+    if (MFX_ERR_NONE != sts)
+      return FALSE;
   }
-  if (!filter->out_surface)
+  else {
+    gst_mfx_task_ensure_memtype_is_system(filter->vpp);
+    MFXVideoVPP_QueryIOSurf(filter->session, &filter->params, filter->request);
+
+    gst_mfx_task_set_request(filter->vpp, &filter->request[1]);
+  }
+
+  filter->out_pool = gst_mfx_surface_pool_new_with_task(
+    g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), filter->vpp);
+  if (!filter->out_pool)
     return FALSE;
 
   sts = MFXVideoVPP_Init (filter->session, &filter->params);
@@ -318,7 +338,10 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
   insurf = gst_mfx_surface_get_frame_surface (surface);
 
   /* Get output surface */
-  outsurf = gst_mfx_surface_get_frame_surface (filter->out_surface);
+  *out_surface = gst_mfx_surface_new_from_pool(filter->out_pool);
+  if (!*out_surface)
+    return FALSE;
+  outsurf = gst_mfx_surface_get_frame_surface (*out_surface);
   do {
     sts =
         MFXVideoVPP_RunFrameVPPAsync (filter->session,
@@ -357,8 +380,6 @@ gst_mfx_composite_filter_apply_composition (GstMfxCompositeFilter * filter,
   do {
     sts = MFXVideoCORE_SyncOperation (filter->session, syncp, 1000);
   } while (MFX_WRN_IN_EXECUTION == sts);
-
-  *out_surface = filter->out_surface;
 
   return TRUE;
 }

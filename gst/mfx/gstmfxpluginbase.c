@@ -29,12 +29,13 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
 
-#ifdef HAVE_GST_GL_LIBS
-# if GST_CHECK_VERSION(1,11,1)
+
+#if defined(WITH_LIBVA_BACKEND) && defined(HAVE_GST_GL_LIBS)
+#if GST_CHECK_VERSION(1,11,1)
 # include <gst/gl/gstglcontext.h>
-# else
+#else
 # include <gst/gl/egl/gstglcontext_egl.h>
-# endif
+#endif
 #endif
 
 /* Default debug category is from the subclass */
@@ -143,6 +144,7 @@ gst_mfx_plugin_base_ensure_aggregator (GstMfxPluginBase * plugin)
   return gst_mfx_ensure_aggregator (GST_ELEMENT (plugin));
 }
 
+#ifdef WITH_LIBVA_BACKEND
 /* Checks whether the supplied pad peer element supports DMABUF sharing */
 /* XXX: this is a workaround to the absence of any proposer way to
 specify DMABUF memory capsfeatures or bufferpool option to downstream */
@@ -199,6 +201,7 @@ has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
   g_clear_object (&element);
   return is_dmabuf_capable;
 }
+#endif // WITH_LIBVA_BACKEND
 
 /**
  * ensure_sinkpad_buffer_pool:
@@ -219,9 +222,11 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   GstVideoInfo vi;
   gboolean need_pool;
 
+#ifdef WITH_LIBVA_BACKEND
   if (!plugin->sinkpad_buffer_pool)
     plugin->sinkpad_has_dmabuf =
         has_dmabuf_capable_peer (plugin, plugin->sinkpad);
+#endif // WITH_LIBVA_BACKEND
 
   plugin->sinkpad_caps_is_raw = !plugin->sinkpad_has_dmabuf &&
       !gst_caps_has_mfx_surface (caps);
@@ -240,9 +245,8 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
     plugin->sinkpad_buffer_size = 0;
   }
 
-  pool =
-      gst_mfx_video_buffer_pool_new (plugin->aggregator,
-        plugin->sinkpad_caps_is_raw);
+  pool = gst_mfx_video_buffer_pool_new (plugin->aggregator,
+            plugin->sinkpad_caps_is_raw);
   if (!pool)
     goto error_create_pool;
 
@@ -338,7 +342,7 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
       return FALSE;
     gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
         plugin->sinkpad_buffer_size, 0, 0);
-
+#ifdef WITH_LIBVA_BACKEND
     if (plugin->sinkpad_has_dmabuf) {
       GstStructure *const config =
           gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
@@ -348,6 +352,7 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
       if (!gst_buffer_pool_set_config (plugin->sinkpad_buffer_pool, config))
         goto error_pool_config;
     }
+#endif // WITH_LIBVA_BACKEND
   }
 
   gst_query_add_allocation_meta (query, GST_MFX_VIDEO_META_API_TYPE, NULL);
@@ -377,6 +382,7 @@ gst_mfx_plugin_base_set_pool_config (GstBufferPool * pool, const gchar * option)
     gst_buffer_pool_config_add_option (config, option);
     return gst_buffer_pool_set_config (pool, config);
   }
+  gst_structure_free(config);
   return TRUE;
 }
 
@@ -415,14 +421,14 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   has_video_meta = gst_query_find_allocation_meta (query,
       GST_VIDEO_META_API_TYPE, NULL);
 
+#if defined(WITH_LIBVA_BACKEND) && defined(HAVE_GST_GL_LIBS)
 #if GST_CHECK_VERSION(1,8,0)
-#ifdef HAVE_GST_GL_LIBS
   if (gst_query_find_allocation_meta(query,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
       GstObject *gl_context;
-# if GST_CHECK_VERSION(1,11,1)
+#if GST_CHECK_VERSION(1,11,1)
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_TYPE_GL_CONTEXT,
           &gl_context, NULL) && gl_context) {
         plugin->srcpad_has_dmabuf =
@@ -430,7 +436,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
             gst_gl_context_check_feature (gl_context, "EGL_EXT_image_dma_buf_import");
         gst_object_unref (gl_context);
       }
-# else
+#else
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
           &gl_context, NULL) && gl_context) {
         plugin->srcpad_has_dmabuf =
@@ -440,11 +446,11 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
               GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
         gst_object_unref (gl_context);
       }
-# endif
+#endif
     }
   }
 #endif
-#endif
+#endif // WITH_LIBVA_BACKEND
 
   if (!plugin->srcpad_has_dmabuf)
     plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps);
@@ -472,9 +478,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
         "Pool not configured with GstMfxVideoMeta option");
     if (pool)
       gst_object_unref (pool);
-    pool =
-        gst_mfx_video_buffer_pool_new (plugin->aggregator,
-          plugin->srcpad_caps_is_raw);
+    pool = gst_mfx_video_buffer_pool_new (plugin->aggregator,
+                plugin->srcpad_caps_is_raw);
     if (!pool)
       goto error_create_pool;
 
@@ -644,6 +649,7 @@ error_copy_buffer:
   }
 }
 
+#ifdef WITH_LIBVA_BACKEND
 #if GST_CHECK_VERSION(1,8,0)
 gboolean
 gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
@@ -670,7 +676,8 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   if (!surface || !gst_mfx_surface_has_video_memory(surface))
     return FALSE;
 
-  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
+  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (
+    g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL), surface);
   if (!dmabuf_proxy)
     return FALSE;
 
@@ -710,3 +717,4 @@ error_dmabuf_handle:
   }
 }
 #endif
+#endif // WITH_LIBVA_BACKEND

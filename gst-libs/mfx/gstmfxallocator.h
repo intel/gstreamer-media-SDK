@@ -1,8 +1,6 @@
 /*
- *  Copyright (C) 2011-2014 Intel Corporation
- *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
- *  Copyright (C) 2016 Intel Corporation
- *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *  Copyright (C) 2017
+ *    Author: Ishmael Visayana Sameen <ishmael1985@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -20,25 +18,25 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef GST_MFX_UTILS_H264_H
-#define GST_MFX_UTILS_H264_H
+#ifndef GST_MFX_ALLOCATOR_FORMAT_H
+#define GST_MFX_ALLOCATOR_FORMAT_H
 
-#include <gst/gstvalue.h>
+#include <mfxvideo.h>
 
-G_BEGIN_DECLS
+mfxStatus
+gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *request,
+  mfxFrameAllocResponse *response);
 
-/* Returns a relative score for the supplied MFX profile */
-guint
-gst_mfx_utils_h264_get_profile_score (mfxU16 profile);
+mfxStatus
+gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse *response);
 
-/* Returns MFX profile from a string representation */
-mfxU16
-gst_mfx_utils_h264_get_profile_from_string (const gchar * str);
+mfxStatus
+gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 
-/* Returns a string representation for the supplied H.264 profile */
-const gchar *
-gst_mfx_utils_h264_get_profile_string (mfxU16 profile);
+mfxStatus
+gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 
-G_END_DECLS
+mfxStatus
+gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL * hdl);
 
-#endif /* GST_MFX_UTILS_H264_H */
+#endif /* GST_MFX_ALLOCATOR_FORMAT_H */

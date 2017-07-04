@@ -31,16 +31,17 @@
 GST_DEBUG_CATEGORY_STATIC (gst_mfx_h265_enc_debug);
 #define GST_CAT_DEFAULT gst_mfx_h265_enc_debug
 
-#define GST_CODEC_CAPS                              \
-    "video/x-h265, "                                  \
-    "stream-format = (string) { hvc1, byte-stream }, " \
+#define GST_CODEC_CAPS                                  \
+    "video/x-h265, "                                    \
+    "stream-format = (string) { hvc1, byte-stream }, "  \
     "alignment = (string) au"
 
 static const char gst_mfxenc_h265_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
-static const char gst_mfxenc_h265_src_caps_str[] = GST_CODEC_CAPS;
+static const char gst_mfxenc_h265_src_caps_str[] =
+    GST_CODEC_CAPS ", " "profile = (string) { main, main-10 }";
 
 static GstStaticPadTemplate gst_mfxenc_h265_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -99,6 +100,25 @@ gst_mfxenc_h265_get_property (GObject * object,
   }
 }
 
+static gboolean
+gst_mfxenc_h265_set_config(GstMfxEnc * base_encode)
+{
+  GstCaps *allowed_caps;
+  GstMfxProfile profile;
+
+  /* Check for the largest profile that is supported */
+  allowed_caps =
+    gst_pad_get_allowed_caps(GST_MFX_PLUGIN_BASE_SRC_PAD(base_encode));
+  if (!allowed_caps)
+    return TRUE;
+
+  profile = gst_mfx_profile_from_caps(allowed_caps);
+  gst_caps_unref(allowed_caps);
+  
+  gst_mfx_encoder_set_profile(base_encode->encoder, profile.profile);
+  return TRUE;
+}
+
 static GstCaps *
 gst_mfxenc_h265_get_caps (GstMfxEnc * base_encode)
 {
@@ -142,8 +162,8 @@ gst_mfxenc_h265_alloc_encoder (GstMfxEnc * base)
   if (base->encoder)
     return base->encoder;
 
-  return gst_mfx_encoder_h265_new (plugin->aggregator, &plugin->sinkpad_info,
-      plugin->sinkpad_caps_is_raw);
+  return gst_mfx_encoder_h265_new (g_object_new(GST_TYPE_MFX_ENCODER_H265, NULL),
+    plugin->aggregator, &plugin->sinkpad_info, plugin->sinkpad_caps_is_raw);
 }
 
 /* h265 NAL byte stream operations */
@@ -287,6 +307,9 @@ gst_mfxenc_h265_class_init (GstMfxEncH265Class * klass)
   object_class->get_property = gst_mfxenc_h265_get_property;
 
   encode_class->get_properties = gst_mfx_encoder_h265_get_default_properties;
+#ifdef WITH_D3D11_BACKEND
+  encode_class->set_config = gst_mfxenc_h265_set_config;
+#endif
   encode_class->get_caps = gst_mfxenc_h265_get_caps;
   encode_class->alloc_encoder = gst_mfxenc_h265_alloc_encoder;
   encode_class->format_buffer = gst_mfxenc_h265_format_buffer;

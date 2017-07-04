@@ -24,23 +24,26 @@
 #define GST_MFX_WINDOW_X11_PRIV_H
 
 #include "gstmfxwindow_priv.h"
+#include "gstmfxdisplay_x11.h"
 
 G_BEGIN_DECLS
 
-#define GST_MFX_WINDOW_X11_GET_PRIVATE(obj) \
-  (&GST_MFX_WINDOW_X11(obj)->priv)
+#define GST_MFX_IS_WINDOW_X11(window) \
+  ((window) != NULL && \
+  GST_MFX_WINDOW_TYPE (window) == GST_MFX_WINDOW_TYPE_X11)
 
-#define GST_MFX_WINDOW_X11_CLASS(klass) \
-  ((GstMfxWindowX11Class *)(klass))
+#define GST_MFX_WINDOW_X11_CAST(window) \
+  ((GstMfxWindowX11 *)(window))
 
-#define GST_MFX_WINDOW_X11_GET_CLASS(obj) \
-  GST_MFX_WINDOW_X11_CLASS(GST_MFX_WINDOW_GET_CLASS(obj))
+#define GST_MFX_WINDOW_X11_GET_PRIVATE(window) \
+  (&GST_MFX_WINDOW_X11_CAST(window)->priv)
 
 typedef struct _GstMfxWindowX11Private GstMfxWindowX11Private;
-typedef struct _GstMfxWindowX11Class GstMfxWindowX11Class;
 
 struct _GstMfxWindowX11Private
 {
+  GstMfxDisplayX11 *display;
+
   Atom atom_NET_WM_STATE;
   Atom atom_NET_WM_STATE_FULLSCREEN;
 
@@ -65,20 +68,13 @@ struct _GstMfxWindowX11
   GstMfxWindowX11Private priv;
 };
 
-/**
- * GstMfxWindowX11Class:
- *
- * An X11 #Window wrapper class.
- */
+G_DEFINE_TYPE(GstMfxWindowX11, gst_mfx_window_x11, GST_TYPE_MFX_WINDOW);
+
 struct _GstMfxWindowX11Class
 {
   /*< private >*/
   GstMfxWindowClass parent_class;
 };
-
-void
-gst_mfx_window_x11_class_init(GstMfxWindowX11Class * klass);
-
 
 G_END_DECLS
 

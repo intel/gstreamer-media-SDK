@@ -27,8 +27,6 @@
 #include "gstmfxvideomemory.h"
 #include "gstmfxvideobufferpool.h"
 
-#include <gst-libs/mfx/gstmfxdisplay.h>
-
 #define GST_PLUGIN_NAME "mfxencode"
 #define GST_PLUGIN_DESC "A MFX-based video encoder"
 
@@ -369,7 +367,7 @@ gst_mfxenc_set_format (GstVideoEncoder * venc, GstVideoCodecState * state)
   if (!set_codec_state (encode, state))
     return FALSE;
 
-  status = gst_mfx_encoder_start (encode->encoder);
+  status = gst_mfx_encoder_prepare (encode->encoder);
   if (GST_MFX_ENCODER_STATUS_SUCCESS != status)
     return FALSE;
 
@@ -456,7 +454,7 @@ gst_mfxenc_finish (GstVideoEncoder * venc)
   GstMfxEnc *const encode = GST_MFXENC_CAST (venc);
   GstMfxEncoderStatus status;
   GstVideoCodecFrame *frame;
-  GstFlowReturn ret;
+  GstFlowReturn ret = GST_FLOW_OK;
 
   /* Return "not-negotiated" error since this means we did not even reach
    * GstVideoEncoder::set_format () state, where the encoder could have

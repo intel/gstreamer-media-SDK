@@ -24,7 +24,6 @@
 #define GST_MFX_DISPLAY_X11_PRIV_H
 
 #include "gstmfxdisplay_x11.h"
-#include "gstmfxdisplay_priv.h"
 
 G_BEGIN_DECLS
 
@@ -39,7 +38,6 @@ G_BEGIN_DECLS
   (&GST_MFX_DISPLAY_X11_CAST(display)->priv)
 
 typedef struct _GstMfxDisplayX11Private       GstMfxDisplayX11Private;
-typedef struct _GstMfxDisplayX11Class         GstMfxDisplayX11Class;
 
 struct _GstMfxDisplayX11Private
 {
@@ -59,17 +57,6 @@ struct _GstMfxDisplayX11
   GstMfxDisplay parent_instance;
 
   GstMfxDisplayX11Private priv;
-};
-
-/**
- * GstMfxDisplayX11Class:
- *
- * VA/X11 display wrapper clas.
- */
-struct _GstMfxDisplayX11Class
-{
-  /*< private >*/
-  GstMfxDisplayClass parent_class;
 };
 
 

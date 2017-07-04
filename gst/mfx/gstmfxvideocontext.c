@@ -22,17 +22,8 @@
  */
 
 #include "gstmfxvideocontext.h"
-
+#include <gst-libs/mfx/gstmfxtaskaggregator.h>
 GST_DEBUG_CATEGORY_STATIC (GST_CAT_CONTEXT);
-
-#define GST_MFX_TYPE_TASK_AGGREGATOR \
-    gst_mfx_task_aggregator_get_type ()
-
-static GType gst_mfx_task_aggregator_get_type (void);
-
-G_DEFINE_BOXED_TYPE (GstMfxTaskAggregator, gst_mfx_task_aggregator,
-    (GBoxedCopyFunc) gst_mfx_task_aggregator_ref,
-    (GBoxedFreeFunc) gst_mfx_task_aggregator_unref);
 
 static void
 _init_context_debug (void)
@@ -57,7 +48,7 @@ gst_mfx_video_context_set_aggregator (GstContext * context,
 
   structure = gst_context_writable_structure (context);
   gst_structure_set (structure, GST_MFX_AGGREGATOR_CONTEXT_TYPE_NAME,
-      GST_MFX_TYPE_TASK_AGGREGATOR, aggregator, NULL);
+	  GST_TYPE_MFX_TASK_AGGREGATOR, aggregator, NULL);
 }
 
 GstContext *
@@ -83,7 +74,7 @@ gst_mfx_video_context_get_aggregator (GstContext * context,
 
   structure = gst_context_get_structure (context);
   return gst_structure_get (structure, GST_MFX_AGGREGATOR_CONTEXT_TYPE_NAME,
-      GST_MFX_TYPE_TASK_AGGREGATOR, aggregator_ptr, NULL);
+	  GST_TYPE_MFX_TASK_AGGREGATOR, aggregator_ptr, NULL);
 }
 
 static gboolean

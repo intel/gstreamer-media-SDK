@@ -26,11 +26,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-#include <drm.h>
+#ifdef WITH_LIBVA_BACKEND
+# include <unistd.h>
+# include <va/va.h>
+# include <drm.h>
+#else
+# if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
+# undef _WIN32_WINNT
+# define _WIN32_WINNT 0x0600
+# endif
+# define COBJMACROS
+
+# include <initguid.h>
+# include <d3d11.h>
+# include <dxgi1_2.h>
+#endif
 
 #include <gst/gst.h>
+#include <gst/video/video.h>
 #include <mfxvideo.h>
 
 /* Media SDK API version check  */

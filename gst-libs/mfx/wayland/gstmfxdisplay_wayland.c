@@ -35,6 +35,8 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
+G_DEFINE_TYPE(GstMfxDisplayWayland, gst_mfx_display_wayland, GST_TYPE_MFX_DISPLAY);
+
 static inline const gchar *
 get_default_display_name (void)
 {
@@ -52,7 +54,7 @@ set_display_name (GstMfxDisplay * display, const gchar * display_name)
   GstMfxDisplayWaylandPrivate *const priv =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
 
-  g_free (priv->display_name);
+  //g_free (priv->display_name);
 
   if (!display_name) {
     display_name = get_default_display_name ();
@@ -301,52 +303,22 @@ gst_mfx_display_wayland_get_size_mm (GstMfxDisplay * display,
     *pheight = priv->phys_height;
 }
 
-static GstMfxWindow *
-gst_mfx_display_wayland_create_window (GstMfxDisplay * display,
-    GstMfxID id, guint width, guint height)
-{
-  return gst_mfx_window_wayland_new (display, width, height);
-}
-
 static void
-gst_mfx_display_wayland_init (GstMfxDisplay * display)
+gst_mfx_display_wayland_init (GstMfxDisplayWayland * display)
 {
-  GstMfxDisplayWaylandPrivate *const priv =
-      GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
-
-  priv->event_fd = -1;
-  priv->is_auth = FALSE;
 }
 
 static void
 gst_mfx_display_wayland_class_init (GstMfxDisplayWaylandClass * klass)
 {
-  GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS (klass);
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
 
-  gst_mfx_display_class_init (&klass->parent_class);
-
-  object_class->size = sizeof (GstMfxDisplayWayland);
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
-  dpy_class->init = gst_mfx_display_wayland_init;
+
   dpy_class->open_display = gst_mfx_display_wayland_open_display;
   dpy_class->close_display = gst_mfx_display_wayland_close_display;
   dpy_class->get_size = gst_mfx_display_wayland_get_size;
   dpy_class->get_size_mm = gst_mfx_display_wayland_get_size_mm;
-  dpy_class->create_window = gst_mfx_display_wayland_create_window;
-}
-
-static inline const GstMfxDisplayClass *
-gst_mfx_display_wayland_class (void)
-{
-  static GstMfxDisplayWaylandClass g_class;
-  static gsize g_class_init = FALSE;
-
-  if (g_once_init_enter (&g_class_init)) {
-    gst_mfx_display_wayland_class_init (&g_class);
-    g_once_init_leave (&g_class_init, TRUE);
-  }
-  return GST_MFX_DISPLAY_CLASS (&g_class);
 }
 
 /**
@@ -360,8 +332,12 @@ gst_mfx_display_wayland_class (void)
  * Return value: a newly allocated #GstMfxDisplay object
  */
 GstMfxDisplay *
-gst_mfx_display_wayland_new (const gchar * display_name)
+gst_mfx_display_wayland_new (GstMfxDisplayWayland * display,
+    const gchar * display_name)
 {
-  return gst_mfx_display_new_internal (gst_mfx_display_wayland_class (),
-      GST_MFX_DISPLAY_INIT_FROM_DISPLAY_NAME, (gpointer) display_name);
+  GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display)->event_fd = -1;
+  GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display)->is_auth = FALSE;
+
+  return gst_mfx_display_new_internal (GST_MFX_DISPLAY(display),
+            (gpointer) display_name);
 }

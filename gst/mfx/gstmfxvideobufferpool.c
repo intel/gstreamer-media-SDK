@@ -23,8 +23,6 @@
 #include "gstmfxvideobufferpool.h"
 #include "gstmfxvideomemory.h"
 
-#include <gst-libs/mfx/gstmfxdisplay.h>
-
 GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxvideopool);
 #define GST_CAT_DEFAULT gst_debug_mfxvideopool
 
@@ -37,9 +35,9 @@ struct _GstMfxVideoBufferPoolPrivate
   guint video_info_index;
   GstAllocator *allocator;
   GstVideoInfo alloc_info;
-  GstMfxDisplay *display;
+  GstMfxTaskAggregator *aggregator;
   guint has_video_meta:1;
-  guint use_dmabuf_memory:1;
+  gboolean use_dmabuf_memory;
   gboolean memtype_is_system;
 };
 
@@ -53,7 +51,7 @@ gst_mfx_video_buffer_pool_finalize (GObject * object)
   GstMfxVideoBufferPoolPrivate *const priv =
       GST_MFX_VIDEO_BUFFER_POOL (object)->priv;
 
-  gst_mfx_display_unref (priv->display);
+  gst_mfx_task_aggregator_unref (priv->aggregator);
   g_clear_object (&priv->allocator);
 
   G_OBJECT_CLASS (gst_mfx_video_buffer_pool_parent_class)->finalize (object);
@@ -82,31 +80,38 @@ gst_mfx_video_buffer_pool_set_config (GstBufferPool * pool,
   GstVideoInfo *const cur_vip = &priv->video_info[priv->video_info_index];
   GstVideoInfo *const new_vip = &priv->video_info[!priv->video_info_index];
   GstAllocator *allocator;
-  gboolean changed_caps, use_dmabuf_memory;
+  gboolean changed_caps;
 
   if (!gst_buffer_pool_config_get_params (config, &caps, NULL, NULL, NULL))
     goto error_invalid_config;
   if (!caps || !gst_video_info_from_caps (new_vip, caps))
     goto error_no_caps;
-
-  use_dmabuf_memory = gst_buffer_pool_config_has_option (config,
-      GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
+#if WITH_LIBVA_BACKEND
+  gboolean use_dmabuf_memory = gst_buffer_pool_config_has_option (config,
+    GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
   if (priv->use_dmabuf_memory != use_dmabuf_memory) {
     priv->use_dmabuf_memory = use_dmabuf_memory;
     g_clear_object (&priv->allocator);
   }
-
+#endif // WITH_LIBVA_BACKEND
   changed_caps = !priv->allocator ||
       GST_VIDEO_INFO_FORMAT (cur_vip) != GST_VIDEO_INFO_FORMAT (new_vip) ||
       GST_VIDEO_INFO_WIDTH (cur_vip) != GST_VIDEO_INFO_WIDTH (new_vip) ||
       GST_VIDEO_INFO_HEIGHT (cur_vip) != GST_VIDEO_INFO_HEIGHT (new_vip);
 
   if (changed_caps) {
-    if (use_dmabuf_memory)
+#ifdef WITH_LIBVA_BACKEND
+    if (use_dmabuf_memory) {
       allocator = gst_dmabuf_allocator_new ();
+    }
     else
-      allocator = gst_mfx_video_allocator_new (priv->display, new_vip,
+#endif // WITH_LIBVA_BACKEND
+    {
+      GstMfxContext *context = gst_mfx_task_aggregator_get_context(priv->aggregator);
+      allocator = gst_mfx_video_allocator_new (context, new_vip,
           priv->memtype_is_system);
+      gst_mfx_context_unref(context);
+    }
 
     if (!allocator)
       goto error_create_allocator;
@@ -176,10 +181,16 @@ gst_mfx_video_buffer_pool_alloc_buffer (GstBufferPool * pool,
   if (!buffer)
     goto error_create_buffer;
 
-  if (priv->use_dmabuf_memory)
-    mem = gst_mfx_dmabuf_memory_new (priv->allocator, priv->display,
+#ifdef WITH_LIBVA_BACKEND
+  if (priv->use_dmabuf_memory) {
+    GstMfxContext *context =
+        gst_mfx_task_aggregator_get_context(priv->aggregator);
+    mem = gst_mfx_dmabuf_memory_new (priv->allocator, context,
         &priv->alloc_info, meta);
+    gst_mfx_context_unref(context);
+  }
   else
+#endif // WITH_LIBVA_BACKEND
     mem = gst_mfx_video_memory_new (priv->allocator, meta);
 
   if (!mem)
@@ -281,14 +292,14 @@ gst_mfx_video_buffer_pool_init (GstMfxVideoBufferPool * pool)
 
 GstBufferPool *
 gst_mfx_video_buffer_pool_new (GstMfxTaskAggregator * aggregator,
-    gboolean memtype_is_system)
+  gboolean memtype_is_system)
 {
   GstMfxVideoBufferPool *pool =
       g_object_new (GST_MFX_TYPE_VIDEO_BUFFER_POOL, NULL);
   GstMfxVideoBufferPoolPrivate *const priv =
       GST_MFX_VIDEO_BUFFER_POOL (pool)->priv;
 
-  priv->display = gst_mfx_task_aggregator_get_display (aggregator);
+  priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   priv->memtype_is_system = memtype_is_system;
 
   return GST_BUFFER_POOL_CAST (pool);

@@ -30,14 +30,14 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_COMPOSITE_FILTER(obj) \
-    ((GstMfxCompositeFilter *)(obj))
+#define GST_TYPE_MFX_COMPOSITE_FILTER (gst_mfx_composite_filter_get_type ())
+G_DECLARE_FINAL_TYPE(GstMfxCompositeFilter, gst_mfx_composite_filter, GST_MFX, COMPOSITE_FILTER, GstObject)
 
-typedef struct _GstMfxCompositeFilter GstMfxCompositeFilter;
+#define GST_MFX_COMPOSITE_FILTER(obj) ((GstMfxCompositeFilter *)(obj))
 
 GstMfxCompositeFilter *
-gst_mfx_composite_filter_new(GstMfxTaskAggregator * aggregator,
-  gboolean memtype_is_system);
+gst_mfx_composite_filter_new(GstMfxCompositeFilter * filter,
+  GstMfxTaskAggregator * aggregator, gboolean memtype_is_system);
 
 GstMfxCompositeFilter *
 gst_mfx_composite_filter_ref(GstMfxCompositeFilter * filter);
