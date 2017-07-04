@@ -36,8 +36,8 @@ G_DECLARE_FINAL_TYPE(GstMfxCompositeFilter, gst_mfx_composite_filter, GST_MFX, C
 #define GST_MFX_COMPOSITE_FILTER(obj) ((GstMfxCompositeFilter *)(obj))
 
 GstMfxCompositeFilter *
-gst_mfx_composite_filter_new(GstMfxCompositeFilter * filter,
-  GstMfxTaskAggregator * aggregator, gboolean memtype_is_system);
+gst_mfx_composite_filter_new(GstMfxTaskAggregator * aggregator,
+  gboolean memtype_is_system);
 
 GstMfxCompositeFilter *
 gst_mfx_composite_filter_ref(GstMfxCompositeFilter * filter);

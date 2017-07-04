@@ -467,10 +467,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!plugin->sinkpad_caps_is_raw
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
     mfxFrameAllocRequest *request = gst_mfx_task_get_request(task);
-    vpp->filter =
-        gst_mfx_filter_new_with_task(g_object_new(GST_TYPE_MFX_FILTER, NULL),
-          plugin->aggregator, task, GST_MFX_TASK_VPP_IN,
-          plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
+    vpp->filter = gst_mfx_filter_new_with_task(plugin->aggregator, task,
+        GST_MFX_TASK_VPP_IN, plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
     if (!vpp->filter) {
       goto done;
       success = FALSE;
@@ -486,9 +484,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
   }
   else {
-    vpp->filter =
-        gst_mfx_filter_new(g_object_new(GST_TYPE_MFX_FILTER, NULL),
-          plugin->aggregator, plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
+    vpp->filter = gst_mfx_filter_new(plugin->aggregator,
+        plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
     if (!vpp->filter) {
       goto done;
       success = FALSE;

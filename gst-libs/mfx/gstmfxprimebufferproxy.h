@@ -46,8 +46,7 @@ G_DECLARE_FINAL_TYPE(GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy, GST_MFX
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxPrimeBufferProxy * proxy,
-  GstMfxSurface * surface);
+gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface);
 
 GstMfxPrimeBufferProxy *
 gst_mfx_prime_buffer_proxy_ref (GstMfxPrimeBufferProxy * proxy);

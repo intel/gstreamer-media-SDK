@@ -456,9 +456,8 @@ gst_mfx_video_allocator_new (GstMfxContext * context,
 
   allocator->image_info = *vip;
 
-  allocator->surface_pool = gst_mfx_surface_pool_new (
-	    g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL),
-      context, &allocator->image_info, mapped);
+  allocator->surface_pool = gst_mfx_surface_pool_new (context,
+    &allocator->image_info, mapped);
   if (!allocator->surface_pool)
     goto error_create_surface_pool;
 
@@ -502,13 +501,11 @@ gst_mfx_dmabuf_memory_new (GstAllocator * allocator, GstMfxContext * context,
   g_return_val_if_fail (allocator != NULL, NULL);
   g_return_val_if_fail (meta != NULL, NULL);
 
-  surface = gst_mfx_surface_vaapi_new (
-    g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL), context, vip);
+  surface = gst_mfx_surface_vaapi_new (context, vip);
   if (!surface)
     goto error_create_surface;
 
-  dmabuf_surface = gst_mfx_prime_buffer_proxy_new_from_surface (
-    g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL), surface);
+  dmabuf_surface = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!dmabuf_surface)
     goto error_create_dmabuf_surface;
 

@@ -61,9 +61,8 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
 
   if (!gst_mfx_surface_has_video_memory(surface)) {
     if (!priv2->mapped_surface) {
-      priv2->mapped_surface = gst_mfx_surface_d3d11_new(
-        g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL),
-        priv->context, &priv2->info);
+      priv2->mapped_surface =
+          gst_mfx_surface_d3d11_new(priv->context, &priv2->info);
       if (!priv2->mapped_surface)
         return FALSE;
       gst_mfx_surface_d3d11_set_rw_flags(priv2->mapped_surface,
@@ -559,11 +558,17 @@ gst_mfx_window_d3d11_init(GstMfxWindowD3D11 * window)
 }
 
 GstMfxWindow *
-gst_mfx_window_d3d11_new (GstMfxWindowD3D11 * window, GstMfxContext * context,
-  GstVideoInfo * info, gboolean keep_aspect, gboolean fullscreen)
+gst_mfx_window_d3d11_new (GstMfxContext * context, GstVideoInfo * info,
+  gboolean keep_aspect, gboolean fullscreen)
 {
+  GstMfxWindowD3D11 * window;
+
   g_return_val_if_fail(context != NULL, NULL);
   g_return_val_if_fail(info != NULL, NULL);
+
+  window = g_object_new(GST_TYPE_MFX_WINDOW_D3D11, NULL);
+  if (!window)
+    return NULL;
 
   GST_MFX_WINDOW_D3D11_GET_PRIVATE(window)->device =
       gst_mfx_device_ref(gst_mfx_context_get_device(context));

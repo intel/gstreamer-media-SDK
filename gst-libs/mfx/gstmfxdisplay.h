@@ -87,7 +87,7 @@ GType
 gst_mfx_display_get_type (void);
 
 GstMfxDisplay *
-gst_mfx_display_new (GstMfxDisplay * display);
+gst_mfx_display_new (void);
 
 GstMfxDisplay *
 gst_mfx_display_ref (GstMfxDisplay * display);

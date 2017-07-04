@@ -33,7 +33,7 @@ G_DECLARE_FINAL_TYPE(GstMfxDevice, gst_mfx_device, GST_MFX, DEVICE, GstObject)
 typedef struct _GstMfxDevice GstMfxDevice;
 
 GstMfxDevice *
-gst_mfx_device_new (GstMfxDevice * device, mfxSession session);
+gst_mfx_device_new (mfxSession session);
 
 GstMfxDevice *
 gst_mfx_device_ref(GstMfxDevice * device);

@@ -234,38 +234,52 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 }
 
 GstMfxTask *
-gst_mfx_task_new (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
-  guint type_flags)
+gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
 {
+  GstMfxTask * task;
   mfxSession session;
   gboolean is_joined;
 
-  g_return_val_if_fail (task != NULL, NULL);
   g_return_val_if_fail (aggregator != NULL, NULL);
+
+  task = g_object_new(GST_TYPE_MFX_TASK, NULL);
+  if (!task)
+    return NULL;
 
   session =
       gst_mfx_task_aggregator_init_session_context (aggregator, &is_joined);
   if (!session)
-    return NULL;
+    goto error;
+  if (!gst_mfx_task_create(task, aggregator, session, type_flags, is_joined))
+    goto error;
 
-  return
-    gst_mfx_task_new_with_session (task, aggregator, session,
-      type_flags, is_joined);
+  return task;
+
+error:
+  gst_mfx_task_unref(task);
+  return NULL;
 }
 
 GstMfxTask *
-gst_mfx_task_new_with_session (GstMfxTask * task,
-  GstMfxTaskAggregator * aggregator, mfxSession session,
-  guint type_flags, gboolean is_joined)
+gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
+  mfxSession session, guint type_flags, gboolean is_joined)
 {
-  g_return_val_if_fail (task != NULL, NULL);
-  g_return_val_if_fail (aggregator != NULL, NULL);
-  g_return_val_if_fail (session != NULL, NULL);
+  GstMfxTask * task;
 
-  if (!gst_mfx_task_create(task, aggregator, session, type_flags, is_joined))
+  g_return_val_if_fail (aggregator != NULL, NULL);
+  g_return_val_if_fail (session != 0, NULL);
+
+  task = g_object_new(GST_TYPE_MFX_TASK, NULL);
+  if (!task)
     return NULL;
 
+  if (!gst_mfx_task_create(task, aggregator, session, type_flags, is_joined))
+    goto error;
   return task;
+
+error:
+  gst_mfx_task_unref(task);
+  return NULL;
 }
 
 GstMfxTask *

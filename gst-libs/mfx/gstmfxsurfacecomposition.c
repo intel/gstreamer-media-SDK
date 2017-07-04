@@ -88,11 +88,9 @@ create_subpicture (GstMfxSurfaceComposition * composition,
     GstMfxContext *context =
         gst_mfx_surface_get_context (composition->base_surface);
 #ifdef WITH_LIBVA_BACKEND
-    subpicture->surface = gst_mfx_surface_vaapi_new (
-      g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL), context, &info);
+    subpicture->surface = gst_mfx_surface_vaapi_new (context, &info);
 #else
-    subpicture->surface = gst_mfx_surface_d3d11_new (
-      g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL), context, &info);
+    subpicture->surface = gst_mfx_surface_d3d11_new (context, &info);
     gst_mfx_surface_d3d11_set_rw_flags(subpicture->surface, MFX_SURFACE_WRITE);
 #endif // WITH_LIBVA_BACKEND
     gst_mfx_context_unref (context);
@@ -185,19 +183,28 @@ gst_mfx_surface_composition_class_init(GstMfxSurfaceCompositionClass * klass)
 }
 
 GstMfxSurfaceComposition *
-gst_mfx_surface_composition_new (GstMfxSurfaceComposition *composition,
-  GstMfxSurface * base_surface, GstVideoOverlayComposition * overlay)
+gst_mfx_surface_composition_new (GstMfxSurface * base_surface,
+  GstVideoOverlayComposition * overlay)
 {
+  GstMfxSurfaceComposition *composition;
+
   g_return_val_if_fail(base_surface != NULL, NULL);
   g_return_val_if_fail(overlay != NULL, NULL);
+
+  composition = g_object_new(GST_TYPE_MFX_SURFACE_COMPOSITION, NULL);
+  if (!composition)
+    return NULL;
 
   composition->base_surface = gst_mfx_surface_ref (base_surface);
   composition->subpictures =
       g_ptr_array_new_with_free_func((GDestroyNotify)destroy_subpicture);
   if (!gst_mfx_create_surfaces_from_composition(composition, overlay))
-    return NULL;
-
+    goto error;
   return composition;
+
+error:
+  gst_mfx_surface_composition_unref(composition);
+  return NULL;
 }
 
 GstMfxSurfaceComposition *
@@ -205,15 +212,12 @@ gst_mfx_surface_composition_ref(GstMfxSurfaceComposition * composition)
 {
   g_return_val_if_fail(composition != NULL, NULL);
 
-  return
-    GST_MFX_SURFACE_COMPOSITION(gst_object_ref(GST_OBJECT(composition)));
+  return gst_object_ref(GST_OBJECT(composition));
 }
 
 void
 gst_mfx_surface_composition_unref(GstMfxSurfaceComposition * composition)
 {
-  g_return_if_fail(composition != NULL);
-
   gst_object_unref(GST_OBJECT(composition));
 }
 

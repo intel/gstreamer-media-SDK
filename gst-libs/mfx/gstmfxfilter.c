@@ -386,16 +386,14 @@ gst_mfx_filter_create (GstMfxFilter * filter,
   if (!filter->vpp[1]) {
     if (!filter->session) {
       filter->vpp[1] =
-          gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL),
-			  filter->aggregator, GST_MFX_TASK_VPP_OUT);
+          gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
       filter->session = gst_mfx_task_get_session (filter->vpp[1]);
     }
     else {
       /* is_joined is FALSE since parent task will take care of
        * disjoining / closing the session when it is destroyed */
-      filter->vpp[1] = gst_mfx_task_new_with_session (
-        g_object_new(GST_TYPE_MFX_TASK, NULL),
-        filter->aggregator, filter->session, GST_MFX_TASK_VPP_OUT, FALSE);
+      filter->vpp[1] = gst_mfx_task_new_with_session (filter->aggregator,
+          filter->session, GST_MFX_TASK_VPP_OUT, FALSE);
     }
     if (!filter->vpp[1])
       return FALSE;
@@ -456,11 +454,16 @@ gst_mfx_filter_class_init(GstMfxFilterClass * klass)
 }
 
 GstMfxFilter *
-gst_mfx_filter_new (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
   gboolean is_system_in, gboolean is_system_out)
 {
-  g_return_val_if_fail(filter != NULL, NULL);
+  GstMfxFilter * filter;
+
   g_return_val_if_fail (aggregator != NULL, NULL);
+
+  filter = g_object_new(GST_TYPE_MFX_FILTER, NULL);
+  if (!filter)
+    return NULL;
 
   if (!gst_mfx_filter_create (filter, aggregator, is_system_in, is_system_out))
     goto error;
@@ -473,13 +476,18 @@ error:
 }
 
 GstMfxFilter *
-gst_mfx_filter_new_with_task (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task, GstMfxTaskType type,
     gboolean is_system_in, gboolean is_system_out)
 {
-	g_return_val_if_fail(filter != NULL, NULL);
-	g_return_val_if_fail(aggregator != NULL, NULL);
-	g_return_val_if_fail (task != NULL, NULL);
+  GstMfxFilter * filter;
+  
+  g_return_val_if_fail(aggregator != NULL, NULL);
+  g_return_val_if_fail (task != NULL, NULL);
+
+  filter = g_object_new(GST_TYPE_MFX_FILTER, NULL);
+  if (!filter)
+    return NULL;
 
   filter->session = gst_mfx_task_get_session (task);
   filter->vpp[!!(type & GST_MFX_TASK_VPP_OUT)] = gst_mfx_task_ref (task);
@@ -1043,8 +1051,7 @@ gst_mfx_filter_start (GstMfxFilter * filter)
 	  gst_mfx_task_ensure_memtype_is_system(filter->vpp[1]);
   }
 
-  filter->out_pool = gst_mfx_surface_pool_new_with_task (
-	  g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), filter->vpp[1]);
+  filter->out_pool = gst_mfx_surface_pool_new_with_task (filter->vpp[1]);
   if (!filter->out_pool)
     return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 

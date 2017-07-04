@@ -419,8 +419,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GST_MFX_DISPLAY_UNLOCK (priv->display);
   }
 
-  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (
-    g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL), surface);
+  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!buffer_proxy)
     return FALSE;
 
@@ -557,10 +556,17 @@ gst_mfx_window_x11_init(GstMfxWindowX11 * window)
  * Return value: the newly allocated #GstMfxWindow object
  */
 GstMfxWindow *
-gst_mfx_window_x11_new (GstMfxWindowX11 * window, GstMfxDisplay * display,
-  guint width, guint height)
+gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height)
 {
+  GstMfxWindowX11 * window;
+
+  g_return_val_if_fail (display != NULL, NULL);
+
   GST_DEBUG ("new window, size %ux%u", width, height);
+
+  window = g_object_new(GST_TYPE_MFX_WINDOW_X11, NULL);
+  if (!window)
+    return NULL;
 
   GST_MFX_WINDOW_X11_GET_PRIVATE(window)->display =
       gst_mfx_display_ref(display);
@@ -583,11 +589,18 @@ gst_mfx_window_x11_new (GstMfxWindowX11 * window, GstMfxDisplay * display,
  * Return value: the newly allocated #GstMfxWindow object
  */
 GstMfxWindow *
-gst_mfx_window_x11_new_with_xid (GstMfxWindowX11 * window, GstMfxDisplay * display, Window xid)
+gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid)
 {
+  GstMfxWindowX11 * window;
+
+  g_return_val_if_fail (display != NULL, NULL);
+  g_return_val_if_fail (xid != None, NULL);
+
   GST_DEBUG ("new window from xid 0x%08x", (guint) xid);
 
-  g_return_val_if_fail (xid != None, NULL);
+  window = g_object_new(GST_TYPE_MFX_WINDOW_X11, NULL);
+  if (!window)
+    return NULL;
 
   GST_MFX_WINDOW_X11_GET_PRIVATE(window)->display =
       gst_mfx_display_ref(display);

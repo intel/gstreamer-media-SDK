@@ -178,6 +178,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
         goto error;
 
       response_data->mids[i]->mid = texture;
+      response_data->mids[i]->info = &response_data->frame_info;
     }
 
     desc.ArraySize = 1;

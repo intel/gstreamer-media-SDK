@@ -676,8 +676,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
   if (!surface || !gst_mfx_surface_has_video_memory(surface))
     return FALSE;
 
-  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (
-    g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL), surface);
+  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!dmabuf_proxy)
     return FALSE;
 

@@ -307,8 +307,7 @@ static gboolean
 gst_mfxsink_x11_create_window (GstMfxSink * sink, guint width, guint height)
 {
   g_return_val_if_fail (sink->window == NULL, FALSE);
-  sink->window = gst_mfx_window_x11_new (
-    g_object_new(GST_TYPE_MFX_WINDOW_X11, NULL), sink->display, width, height);
+  sink->window = gst_mfx_window_x11_new (sink->display, width, height);
   if (!sink->window)
     return FALSE;
   return TRUE;
@@ -339,8 +338,7 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
 
   if (!sink->window || (Window)(GST_MFX_WINDOW_ID (sink->window)) != xid) {
     gst_mfx_window_replace (&sink->window, NULL);
-    sink->window = gst_mfx_window_x11_new_with_xid (
-      g_object_new(GST_TYPE_MFX_WINDOW_X11, NULL), sink->display, xid);
+    sink->window = gst_mfx_window_x11_new_with_xid (sink->display, xid);
     if (!sink->window)
       return FALSE;
   }
@@ -375,8 +373,7 @@ static gboolean
 gst_mfxsink_wayland_create_window (GstMfxSink * sink, guint width, guint height)
 {
   g_return_val_if_fail (sink->window == NULL, FALSE);
-  sink->window = gst_mfx_window_wayland_new (
-    g_object_new(GST_TYPE_MFX_WINDOW_WAYLAND, NULL), sink->display, width, height);
+  sink->window = gst_mfx_window_wayland_new (sink->display, width, height);
   if (!sink->window)
     return FALSE;
   return TRUE;
@@ -404,9 +401,8 @@ gst_mfxsink_d3d11_create_window (GstMfxSink * sink, guint width, guint height)
   GstVideoInfo *const info = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
 
   g_return_val_if_fail (sink->window == NULL, FALSE);
-  sink->window =
-      gst_mfx_window_d3d11_new (g_object_new(GST_TYPE_MFX_WINDOW_D3D11, NULL),
-        sink->device_context, info, sink->keep_aspect, sink->fullscreen);
+  sink->window = gst_mfx_window_d3d11_new (sink->device_context, info,
+    sink->keep_aspect, sink->fullscreen);
   if (!sink->window)
     return FALSE;
   return TRUE;
@@ -653,8 +649,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
 #ifdef USE_WAYLAND
     case GST_MFX_DISPLAY_TYPE_WAYLAND:
       if (!sink->display) {
-        display = gst_mfx_display_wayland_new (
-            g_object_new(GST_TYPE_MFX_DISPLAY_WAYLAND, NULL), sink->display_name);
+        display = gst_mfx_display_wayland_new (sink->display_name);
         if (!display)
           goto display_unsupported;
       }
@@ -832,8 +827,7 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
 #ifdef WITH_LIBVA_BACKEND
   if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
 #ifdef USE_WAYLAND
-    GstMfxDisplay *display = gst_mfx_display_wayland_new (
-        g_object_new(GST_TYPE_MFX_DISPLAY_WAYLAND, NULL), sink->display_name);
+    GstMfxDisplay *display = gst_mfx_display_wayland_new (sink->display_name);
     if (display) {
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_WAYLAND;
       gst_mfx_display_replace (&sink->display, display);
@@ -961,12 +955,10 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
     overlay = cmeta->overlay;
 
     if (!sink->composite_filter)
-      sink->composite_filter = gst_mfx_composite_filter_new (
-        g_object_new(GST_TYPE_MFX_COMPOSITE_FILTER, NULL), plugin->aggregator,
-        !gst_mfx_surface_has_video_memory (surface));
+      sink->composite_filter = gst_mfx_composite_filter_new(plugin->aggregator,
+          !gst_mfx_surface_has_video_memory (surface));
 
-    composition = gst_mfx_surface_composition_new (
-      g_object_new(GST_TYPE_MFX_SURFACE_COMPOSITION, NULL), surface, overlay);
+    composition = gst_mfx_surface_composition_new (surface, overlay);
     if (!composition) {
       GST_ERROR("Failed to create new surface composition");
       goto error;

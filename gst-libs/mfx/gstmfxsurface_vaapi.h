@@ -37,12 +37,10 @@ G_DECLARE_FINAL_TYPE(GstMfxSurfaceVaapi, gst_mfx_surface_vaapi, GST_MFX, SURFACE
   GstMfxSurfaceVaapiClass))
 
 GstMfxSurface *
-gst_mfx_surface_vaapi_new (GstMfxSurfaceVaapi * surface,
-  GstMfxContext * context, const GstVideoInfo * info);
+gst_mfx_surface_vaapi_new (GstMfxContext * context, const GstVideoInfo * info);
 
 GstMfxSurface *
-gst_mfx_surface_vaapi_new_from_task(GstMfxSurfaceVaapi * surface,
-  GstMfxTask * task);
+gst_mfx_surface_vaapi_new_from_task(GstMfxTask * task);
 
 VaapiImage *
 gst_mfx_surface_vaapi_derive_image(GstMfxSurface * surface);

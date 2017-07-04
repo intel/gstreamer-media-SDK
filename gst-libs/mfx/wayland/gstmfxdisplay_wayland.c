@@ -332,9 +332,14 @@ gst_mfx_display_wayland_class_init (GstMfxDisplayWaylandClass * klass)
  * Return value: a newly allocated #GstMfxDisplay object
  */
 GstMfxDisplay *
-gst_mfx_display_wayland_new (GstMfxDisplayWayland * display,
-    const gchar * display_name)
+gst_mfx_display_wayland_new (const gchar * display_name)
 {
+  GstMfxDisplayWayland * display;
+
+  display = g_object_new(GST_TYPE_MFX_DISPLAY_WAYLAND, NULL);
+  if (!display)
+    return NULL;
+
   GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display)->event_fd = -1;
   GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display)->is_auth = FALSE;
 

@@ -298,11 +298,10 @@ error:
 }
 
 GstMfxDisplay *
-gst_mfx_display_new (GstMfxDisplay *display)
+gst_mfx_display_new (void)
 {
   GST_DEBUG ("creating dummy display");
-
-  return display;
+  return g_object_new(GST_TYPE_MFX_DISPLAY, NULL);
 }
 
 GstMfxDisplay *

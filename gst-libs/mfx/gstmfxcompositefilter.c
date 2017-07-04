@@ -36,6 +36,7 @@
 
 #include "gstmfxsurfacecomposition.h"
 #include "gstmfxsurfacepool.h"
+#include "gstmfxallocator.h"
 
 
 struct _GstMfxCompositeFilter
@@ -181,9 +182,7 @@ gst_mfx_composite_filter_create (GstMfxCompositeFilter * filter,
   filter->inited = FALSE;
   filter->num_rect = 0;
 
-  filter->vpp =
-      gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL),
-        filter->aggregator, GST_MFX_TASK_VPP_OUT);
+  filter->vpp = gst_mfx_task_new (filter->aggregator, GST_MFX_TASK_VPP_OUT);
   if (!filter->vpp)
     return FALSE;
 
@@ -205,15 +204,25 @@ gst_mfx_composite_filter_class_init(GstMfxCompositeFilterClass * klass)
 }
 
 GstMfxCompositeFilter *
-gst_mfx_composite_filter_new (GstMfxCompositeFilter * filter,
-  GstMfxTaskAggregator * aggregator, gboolean memtype_is_system)
+gst_mfx_composite_filter_new (GstMfxTaskAggregator * aggregator,
+  gboolean memtype_is_system)
 {
+  GstMfxCompositeFilter * filter;
+
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  if (!gst_mfx_composite_filter_create (filter, aggregator, memtype_is_system))
+  filter = g_object_new(GST_TYPE_MFX_COMPOSITE_FILTER, NULL);
+  if (!filter)
     return NULL;
 
+  if (!gst_mfx_composite_filter_create (filter, aggregator, memtype_is_system))
+    goto error;
+
   return filter;
+
+error:
+  gst_mfx_composite_filter_unref(filter);
+  return NULL;
 }
 
 GstMfxCompositeFilter *
@@ -295,8 +304,7 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
     gst_mfx_task_set_request(filter->vpp, &filter->request[1]);
   }
 
-  filter->out_pool = gst_mfx_surface_pool_new_with_task(
-    g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), filter->vpp);
+  filter->out_pool = gst_mfx_surface_pool_new_with_task(filter->vpp);
   if (!filter->out_pool)
     return FALSE;
 

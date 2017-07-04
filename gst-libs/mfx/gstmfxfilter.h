@@ -151,11 +151,11 @@ typedef enum {
 } GstMfxRotation;
 
 GstMfxFilter *
-gst_mfx_filter_new (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
     gboolean is_system_in, gboolean is_system_out);
 
 GstMfxFilter *
-gst_mfx_filter_new_with_task (GstMfxFilter * filter, GstMfxTaskAggregator * aggregator,
+gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task, GstMfxTaskType type,
     gboolean is_system_in, gboolean is_system_out);
 

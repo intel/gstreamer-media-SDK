@@ -169,9 +169,7 @@ init_decoder (GstMfxDecoder * decoder)
     return FALSE;
   }
 
-  decoder->pool =
-      gst_mfx_surface_pool_new_with_task (
-		    g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL), decoder->decode);
+  decoder->pool = gst_mfx_surface_pool_new_with_task (decoder->decode);
   if (!decoder->pool)
     return FALSE;
 
@@ -322,8 +320,8 @@ task_init (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
   mfxU32 output_fourcc, decoded_fourcc;
 
-  decoder->decode = gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL),
-	  decoder->aggregator, GST_MFX_TASK_DECODER);
+  decoder->decode =
+      gst_mfx_task_new (decoder->aggregator, GST_MFX_TASK_DECODER);
   if (!decoder->decode)
     return FALSE;
 
@@ -426,15 +424,21 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder)
 }
 
 GstMfxDecoder *
-gst_mfx_decoder_new (GstMfxDecoder * decoder, GstMfxTaskAggregator * aggregator,
+gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
     gboolean live_mode)
 {
-  g_return_val_if_fail (decoder != NULL, NULL);
+  GstMfxDecoder * decoder;
+
   g_return_val_if_fail (aggregator != NULL, NULL);
+  g_return_val_if_fail (info != NULL, NULL);
+
+  decoder = g_object_new(GST_TYPE_MFX_DECODER, NULL);
+  if (!decoder)
+    return NULL;
 
   if (!gst_mfx_decoder_create (decoder, aggregator, profile, info,
-	  async_depth, live_mode))
+	    async_depth, live_mode))
 	  goto error;
 
   return decoder;
@@ -541,9 +545,8 @@ init_filter (GstMfxDecoder * decoder)
   mfxU32 output_fourcc =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
 
-  decoder->filter = gst_mfx_filter_new_with_task (
-    g_object_new(GST_TYPE_MFX_FILTER, NULL),
-    decoder->aggregator, decoder->decode, GST_MFX_TASK_VPP_IN,
+  decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
+    decoder->decode, GST_MFX_TASK_VPP_IN,
     decoder->memtype_is_system, decoder->memtype_is_system);
   if (!decoder->filter) {
     GST_ERROR ("Unable to initialize filter.");

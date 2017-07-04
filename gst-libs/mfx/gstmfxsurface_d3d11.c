@@ -47,7 +47,6 @@ gst_mfx_surface_d3d11_from_task(GstMfxSurface * surface,
   if (!d3d_surface->mid)
     return FALSE;
   
-  d3d_surface->mid->info = &priv->surface.Info;
   priv->surface.Data.MemId = d3d_surface->mid;
   priv->surface_id = d3d_surface->mid->mid;
   return TRUE;
@@ -237,21 +236,33 @@ gst_mfx_surface_d3d11_init(GstMfxSurfaceD3D11 * surface)
 }
 
 GstMfxSurface *
-gst_mfx_surface_d3d11_new(GstMfxSurfaceD3D11 * surface,
-  GstMfxContext * context, const GstVideoInfo * info)
+gst_mfx_surface_d3d11_new(GstMfxContext * context, const GstVideoInfo * info)
 {
+  GstMfxSurfaceD3D11 * surface;
+
+  g_return_val_if_fail (context != NULL, NULL);
+  g_return_val_if_fail (info != NULL, NULL);
+
+  surface = g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL);
+  if (!surface)
+    return NULL;
+
   return
     gst_mfx_surface_new_internal(GST_MFX_SURFACE(surface),
       context, info, NULL);
 }
 
 GstMfxSurface *
-gst_mfx_surface_d3d11_new_from_task(GstMfxSurfaceD3D11 * surface,
-  GstMfxTask * task)
+gst_mfx_surface_d3d11_new_from_task(GstMfxTask * task)
 {
+  GstMfxSurfaceD3D11 * surface;
   GstMfxContext *context;
 
   g_return_val_if_fail(task != NULL, NULL);
+
+  surface = g_object_new(GST_TYPE_MFX_SURFACE_D3D11, NULL);
+  if (!surface)
+    return NULL;
 
   context = gst_mfx_task_get_context(task);
   surface->device = gst_mfx_context_get_device(context);

@@ -119,12 +119,18 @@ vaapi_image_init(VaapiImage * image)
  * Return value: the newly allocated #VaapiImage object
  */
 VaapiImage *
-vaapi_image_new (VaapiImage * image, GstMfxDisplay * display,
+vaapi_image_new (GstMfxDisplay * display,
   guint width, guint height, GstVideoFormat format)
 {
+  VaapiImage * image;
+
   g_return_val_if_fail (width > 0, NULL);
   g_return_val_if_fail (height > 0, NULL);
   g_return_val_if_fail (display != NULL, NULL);
+
+  image = g_object_new(GST_TYPE_VAAPI_IMAGE, NULL);
+  if (!image)
+    return NULL;
 
   image->display = gst_mfx_display_ref (display);
   image->image.image_id = VA_INVALID_ID;
@@ -151,12 +157,17 @@ error:
  * Return value: the newly allocated #VaapiImage object
  */
 VaapiImage *
-vaapi_image_new_with_image (VaapiImage * image,
-  GstMfxDisplay * display, VAImage * va_image)
+vaapi_image_new_with_image (GstMfxDisplay * display, VAImage * va_image)
 {
+  VaapiImage * image;
+
   g_return_val_if_fail (va_image, NULL);
   g_return_val_if_fail (va_image->image_id != VA_INVALID_ID, NULL);
   g_return_val_if_fail (va_image->buf != VA_INVALID_ID, NULL);
+
+  image = g_object_new(GST_TYPE_VAAPI_IMAGE, NULL);
+  if (!image)
+    return NULL;
 
   image->display = gst_mfx_display_ref (display);
   _vaapi_image_set_image (image, va_image);

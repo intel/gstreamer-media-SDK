@@ -39,7 +39,7 @@ G_DECLARE_FINAL_TYPE (GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_MFX, ENCODE
   GstMfxEncoderMpeg2Class))
 
 GstMfxEncoder *
-gst_mfx_encoder_mpeg2_new (GstMfxEncoderMpeg2 *, GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_mpeg2_new (GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped);
 
 GPtrArray *

@@ -85,10 +85,18 @@ gst_mfx_encoder_jpeg_set_property (GstMfxEncoder * base_encoder,
 }
 
 GstMfxEncoder *
-gst_mfx_encoder_jpeg_new (GstMfxEncoderJpeg * encoder,
-  GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_jpeg_new (GstMfxTaskAggregator * aggregator,
   const GstVideoInfo * info, gboolean mapped)
 {
+  GstMfxEncoderJpeg * encoder;
+
+  g_return_val_if_fail (aggregator != NULL, NULL);
+  g_return_val_if_fail (info != NULL, NULL);
+
+  encoder = g_object_new(GST_TYPE_MFX_ENCODER_JPEG, NULL);
+  if (!encoder)
+    return NULL;
+
   return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder),
             aggregator, info, mapped);
 }
