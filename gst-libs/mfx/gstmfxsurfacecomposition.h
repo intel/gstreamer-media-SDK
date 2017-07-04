@@ -43,8 +43,8 @@ struct _GstMfxSubpicture
 };
 
 GstMfxSurfaceComposition *
-gst_mfx_surface_composition_new (GstMfxSurfaceComposition * composition,
-  GstMfxSurface * base_surface, GstVideoOverlayComposition * overlay);
+gst_mfx_surface_composition_new (GstMfxSurface * base_surface,
+  GstVideoOverlayComposition * overlay);
 
 GstMfxSurfaceComposition *
 gst_mfx_surface_composition_ref (GstMfxSurfaceComposition * composition);

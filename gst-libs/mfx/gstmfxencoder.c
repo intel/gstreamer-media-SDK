@@ -462,8 +462,7 @@ init_encoder_task (GstMfxEncoder * encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   
-  priv->encode = gst_mfx_task_new (g_object_new(GST_TYPE_MFX_TASK, NULL),
-                    priv->aggregator, GST_MFX_TASK_ENCODER);
+  priv->encode = gst_mfx_task_new (priv->aggregator, GST_MFX_TASK_ENCODER);
   priv->session = gst_mfx_task_get_session (priv->encode);
 }
 
@@ -1061,8 +1060,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
   }
 
   if (encoder_format != priv->frame_info.FourCC) {
-    priv->filter = gst_mfx_filter_new_with_task (
-      g_object_new(GST_TYPE_MFX_FILTER, NULL), priv->aggregator,
+    priv->filter = gst_mfx_filter_new_with_task (priv->aggregator,
       priv->encode, GST_MFX_TASK_VPP_OUT,
       priv->input_memtype_is_system, priv->encoder_memtype_is_system);
 

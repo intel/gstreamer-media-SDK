@@ -154,15 +154,19 @@ gst_mfx_prime_buffer_proxy_init(GstMfxPrimeBufferProxy * proxy)
 }
 
 GstMfxPrimeBufferProxy *
-gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxPrimeBufferProxy *proxy,
-  GstMfxSurface * surface)
+gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface)
 {
+  GstMfxPrimeBufferProxy *proxy;
+
   g_return_val_if_fail (surface != NULL, NULL);
+
+  proxy = g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL);
+  if (!proxy)
+    return NULL;
 
   proxy->surface = gst_mfx_surface_ref (surface);
   if (!gst_mfx_prime_buffer_proxy_acquire_handle (proxy))
     goto error_acquire_handle;
-
   return proxy;
   /* ERRORS */
 error_acquire_handle:

@@ -197,8 +197,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   gint offsets[3] = { 0 }, pitches[3] = { 0 }, num_planes = 0, i = 0;
   VaapiImage *vaapi_image;
 
-  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (
-      g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL), surface);
+  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
   if (!buffer_proxy)
     return FALSE;
 
@@ -484,12 +483,17 @@ gst_mfx_window_wayland_init(GstMfxWindowWayland * window)
  * Return value: the newly allocated #GstMfxWindow object
  */
 GstMfxWindow *
-gst_mfx_window_wayland_new (GstMfxWindowWayland * window,
-  GstMfxDisplay * display, guint width, guint height)
+gst_mfx_window_wayland_new (GstMfxDisplay * display, guint width, guint height)
 {
+  GstMfxWindowWayland * window;
+
   GST_DEBUG ("new window, size %ux%u", width, height);
 
   g_return_val_if_fail (GST_MFX_IS_DISPLAY_WAYLAND (display), NULL);
+
+  window = g_object_new(GST_TYPE_MFX_WINDOW_WAYLAND, NULL);
+  if (!window)
+    return NULL;
 
   GST_MFX_WINDOW_WAYLAND_GET_PRIVATE(window)->display =
       gst_mfx_display_ref(display);

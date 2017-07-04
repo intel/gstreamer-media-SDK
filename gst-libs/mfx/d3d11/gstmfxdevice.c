@@ -158,14 +158,23 @@ gst_mfx_device_create(GstMfxDevice * device, mfxSession session)
 }
 
 GstMfxDevice *
-gst_mfx_device_new(GstMfxDevice * device, mfxSession session)
+gst_mfx_device_new(mfxSession session)
 {
-  g_return_val_if_fail(device != NULL, NULL);
+  GstMfxDevice *device;
 
-  if (!gst_mfx_device_create(device, session))
+  g_return_val_if_fail(session != NULL, NULL);
+
+  device = g_object_new(GST_TYPE_MFX_DEVICE, NULL);
+  if (!device)
     return NULL;
 
+  if (!gst_mfx_device_create(device, session))
+    goto error;
   return device;
+
+error:
+  gst_mfx_device_unref(device);
+  return NULL;
 }
 
 GstMfxDevice *

@@ -178,18 +178,34 @@ gst_mfx_surface_vaapi_init(GstMfxSurfaceVaapi * surface)
 }
 
 GstMfxSurface *
-gst_mfx_surface_vaapi_new(GstMfxSurfaceVaapi * surface,
-  GstMfxContext * context, const GstVideoInfo * info)
+gst_mfx_surface_vaapi_new (GstMfxContext * context, const GstVideoInfo * info)
 {
+  GstMfxSurfaceVaapi * surface;
+
+  g_return_val_if_fail (context != NULL, NULL);
+  g_return_val_if_fail (info != NULL, NULL);
+
+  surface = g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL);
+  if (!surface)
+    return NULL;
+
   return
     gst_mfx_surface_new_internal(GST_MFX_SURFACE(surface),
         context, info, NULL);
 }
 
 GstMfxSurface *
-gst_mfx_surface_vaapi_new_from_task(GstMfxSurfaceVaapi * surface,
-  GstMfxTask * task)
+gst_mfx_surface_vaapi_new_from_task(GstMfxTask * task)
 {
+
+  GstMfxSurfaceVaapi * surface;
+
+  g_return_val_if_fail (task != NULL, NULL);
+
+  surface = g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL);
+  if (!surface)
+    return NULL;
+
   return
     gst_mfx_surface_new_internal(GST_MFX_SURFACE(surface),
       NULL, NULL, task);
@@ -218,8 +234,7 @@ gst_mfx_surface_vaapi_derive_image(GstMfxSurface * surface)
   if (va_image.image_id == VA_INVALID_ID || va_image.buf == VA_INVALID_ID)
     return NULL;
 
-  return vaapi_image_new_with_image(g_object_new(GST_TYPE_VAAPI_IMAGE, NULL),
-            vaapi_surface->display, &va_image);
+  return vaapi_image_new_with_image(vaapi_surface->display, &va_image);
 }
 
 GstMfxDisplay *

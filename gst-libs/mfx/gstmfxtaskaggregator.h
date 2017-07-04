@@ -49,6 +49,9 @@ gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task);
 
 GstMfxTaskAggregator *
+gst_mfx_task_aggregator_new (void);
+
+GstMfxTaskAggregator *
 gst_mfx_task_aggregator_ref (GstMfxTaskAggregator * aggregator);
 
 void

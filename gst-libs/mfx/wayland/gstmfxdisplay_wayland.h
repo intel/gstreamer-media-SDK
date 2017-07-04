@@ -36,7 +36,7 @@ G_DECLARE_FINAL_TYPE(GstMfxDisplayWayland, gst_mfx_display_wayland, GST_MFX, DIS
   GstMfxDisplayWaylandClass))
 
 GstMfxDisplay *
-gst_mfx_display_wayland_new (GstMfxDisplayWayland * display, const gchar * display_name);
+gst_mfx_display_wayland_new (const gchar * display_name);
 
 G_END_DECLS
 

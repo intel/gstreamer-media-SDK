@@ -65,17 +65,24 @@ gst_mfx_context_init(GstMfxContext * context)
 }
 
 GstMfxContext *
-gst_mfx_context_new(GstMfxContext * context, mfxSession session)
+gst_mfx_context_new(mfxSession session)
 {
-#ifdef WITH_LIBVA_BACKEND
-  context->device =
-      gst_mfx_display_new(g_object_new(GST_TYPE_MFX_DISPLAY, NULL));
-#else
-  context->device =
-      gst_mfx_device_new(g_object_new(GST_TYPE_MFX_DEVICE, NULL), session);
-#endif
+  GstMfxContext * context = g_object_new(GST_TYPE_MFX_CONTEXT, NULL);
+  if (!context)
+    return NULL;
 
+#ifdef WITH_LIBVA_BACKEND
+  context->device = gst_mfx_display_new();
+#else
+  context->device = gst_mfx_device_new(session);
+#endif
+  if (!context->device)
+    goto error;
   return context;
+
+error:
+  gst_mfx_context_unref(context);
+  return NULL;
 }
 
 GstMfxContext *

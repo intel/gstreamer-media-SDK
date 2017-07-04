@@ -38,12 +38,10 @@ G_DECLARE_FINAL_TYPE(GstMfxWindowX11, gst_mfx_window_x11, GST_MFX, WINDOW_X11, G
   GstMfxWindowX11Class))
 
 GstMfxWindow *
-gst_mfx_window_x11_new (GstMfxWindowX11 * window, GstMfxDisplay * display,
-  guint width, guint height);
+gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height);
 
 GstMfxWindow *
-gst_mfx_window_x11_new_with_xid (GstMfxWindowX11 * window,
-  GstMfxDisplay * display, Window xid);
+gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid);
 
 void
 gst_mfx_window_x11_clear (GstMfxWindow * window);

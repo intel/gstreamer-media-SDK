@@ -268,11 +268,9 @@ struct _GstMfxEncoderClass
   void                    (*finalize) (GstMfxEncoder * encoder);
   GstMfxEncoderStatus     (*reconfigure) (GstMfxEncoder * encoder);
   GPtrArray *             (*get_default_properties) (void);
-  GstMfxEncoderStatus     (*set_property) (GstMfxEncoder * encoder,
-								gint prop_id, const GValue * value);
+  GstMfxEncoderStatus     (*set_property) (GstMfxEncoder * encoder, gint prop_id, const GValue * value);
   /* get_codec_data can be NULL */
-  GstMfxEncoderStatus     (*get_codec_data) (GstMfxEncoder * encoder,
-									GstBuffer ** codec_data);
+  GstMfxEncoderStatus     (*get_codec_data) (GstMfxEncoder * encoder, GstBuffer ** codec_data);
 };
 
 

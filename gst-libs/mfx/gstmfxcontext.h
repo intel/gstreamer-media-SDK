@@ -35,7 +35,7 @@ G_DECLARE_FINAL_TYPE(GstMfxContext, gst_mfx_context, GST_MFX, CONTEXT, GstObject
 #define GST_MFX_CONTEXT(obj) ((GstMfxContext *) (obj))
 
 GstMfxContext *
-gst_mfx_context_new (GstMfxContext * context, mfxSession session);
+gst_mfx_context_new (mfxSession session);
 
 GstMfxContext *
 gst_mfx_context_ref (GstMfxContext * context);

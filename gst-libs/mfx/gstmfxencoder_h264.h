@@ -57,7 +57,7 @@ typedef enum {
 } GstMfxEncoderH264Prop;
 
 GstMfxEncoder *
-gst_mfx_encoder_h264_new (GstMfxEncoderH264 * encoder, GstMfxTaskAggregator * aggregator,
+gst_mfx_encoder_h264_new (GstMfxTaskAggregator * aggregator,
   	const GstVideoInfo * info, gboolean mapped);
 
 GPtrArray *

@@ -61,6 +61,12 @@ gst_mfx_task_aggregator_init(GstMfxTaskAggregator * aggregator)
 }
 
 GstMfxTaskAggregator *
+gst_mfx_task_aggregator_new (void)
+{
+  return g_object_new(GST_TYPE_MFX_TASK_AGGREGATOR, NULL);
+}
+
+GstMfxTaskAggregator *
 gst_mfx_task_aggregator_ref (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, NULL);
@@ -96,9 +102,7 @@ static inline void
 gst_mfx_task_aggregator_set_device_context (GstMfxTaskAggregator * aggregator)
 {
   if (!aggregator->context) {
-    aggregator->context =
-      gst_mfx_context_new(g_object_new(GST_TYPE_MFX_CONTEXT, NULL),
-        aggregator->parent_session);
+    aggregator->context = gst_mfx_context_new(aggregator->parent_session);
 #ifdef WITH_LIBVA_BACKEND
     gst_mfx_display_init_vaapi(gst_mfx_context_get_device(aggregator->context));
 #endif
