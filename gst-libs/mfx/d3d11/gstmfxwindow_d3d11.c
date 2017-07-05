@@ -23,7 +23,6 @@
 #include "gstmfxwindow_d3d11.h"
 #include "gstmfxwindow_d3d11_priv.h"
 #include "gstmfxwindow_priv.h"
-#include "gstmfxsurface.h"
 #include "gstmfxsurface_d3d11.h"
 
 #define DEBUG 1
@@ -65,7 +64,9 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
           gst_mfx_surface_d3d11_new(priv->context, &priv2->info);
       if (!priv2->mapped_surface)
         return FALSE;
-      gst_mfx_surface_d3d11_set_rw_flags(priv2->mapped_surface,
+
+      gst_mfx_surface_d3d11_set_rw_flags(
+        GST_MFX_SURFACE_D3D11(priv2->mapped_surface),
         MFX_SURFACE_WRITE);
     }
 
@@ -81,7 +82,7 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
 
   hr = ID3D11VideoDevice_CreateVideoProcessorInputView(
           (ID3D11VideoDevice*)priv2->d3d11_video_device,
-          (ID3D11Texture2D*)gst_mfx_surface_get_id(priv2->mapped_surface ?
+          (ID3D11Resource*)gst_mfx_surface_get_id(priv2->mapped_surface ?
             priv2->mapped_surface : surface),
           priv2->processor_enum,
           &input_view_desc,
@@ -157,13 +158,15 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
   return ret;
 }
 
-static void
+static gboolean
 gst_mfx_window_d3d11_show(GstMfxWindow * window)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
 
   ShowWindow((HWND)priv->handle, SW_SHOWDEFAULT);
   UpdateWindow((HWND)priv->handle);
+
+  return TRUE;
 }
 
 static gboolean
@@ -240,7 +243,7 @@ WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           &priv->width, &priv->height);
         break;
       case WM_DESTROY:
-        gst_mfx_window_d3d11_destroy(window);
+        gst_mfx_window_d3d11_destroy (G_OBJECT (window));
         PostQuitMessage(0);
         break;
       default:
@@ -251,7 +254,7 @@ WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 static gboolean
-gst_mfx_window_d3d11_create_output_view(GstMfxWindow * window)
+gst_mfx_window_d3d11_create_output_view (GstMfxWindowD3D11 * window)
 {
   GstMfxWindowD3D11Private *const priv =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
@@ -262,7 +265,7 @@ gst_mfx_window_d3d11_create_output_view(GstMfxWindow * window)
 
   HRESULT hr = ID3D11VideoDevice_CreateVideoProcessorOutputView(
                   (ID3D11VideoDevice*)priv->d3d11_video_device,
-                  priv->backbuffer_texture,
+                  (ID3D11Resource*)priv->backbuffer_texture,
                   priv->processor_enum,
                   &output_view_desc,
                   (ID3D11VideoProcessorOutputView**)&priv->output_view);
@@ -273,7 +276,7 @@ gst_mfx_window_d3d11_create_output_view(GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_d3d11_create_video_processor(GstMfxWindow * window)
+gst_mfx_window_d3d11_create_video_processor (GstMfxWindowD3D11 * window)
 {
   GstMfxWindowD3D11Private *const priv =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
@@ -308,7 +311,7 @@ gst_mfx_window_d3d11_create_video_processor(GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_d3d11_init_swap_chain(GstMfxWindow * window)
+gst_mfx_window_d3d11_init_swap_chain (GstMfxWindowD3D11 * window)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
   GstMfxWindowD3D11Private *const priv2 =
@@ -348,7 +351,7 @@ gst_mfx_window_d3d11_init_swap_chain(GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_d3d11_init_video_context(GstMfxWindow * window)
+gst_mfx_window_d3d11_init_video_context (GstMfxWindowD3D11 * window)
 {
   GstMfxWindowD3D11Private *const priv =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
@@ -370,7 +373,7 @@ gst_mfx_window_d3d11_init_video_context(GstMfxWindow * window)
 }
 
 static gboolean
-d3d11_create_render_context(GstMfxWindow * window)
+d3d11_create_render_context (GstMfxWindowD3D11 * window)
 {
   if (!gst_mfx_window_d3d11_init_video_context(window))
     goto error;
@@ -383,12 +386,12 @@ d3d11_create_render_context(GstMfxWindow * window)
   return TRUE;
 
 error:
-  gst_mfx_window_d3d11_destroy(window);
+  gst_mfx_window_d3d11_destroy (G_OBJECT (window));
   return FALSE;
 }
 
 static gboolean
-d3d11_create_window_internal (GstMfxWindow * window)
+d3d11_create_window_internal (GstMfxWindowD3D11 * window)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
   GstMfxWindowD3D11Private *const priv2 =
@@ -500,7 +503,7 @@ d3d11_window_thread (D3D11WindowThreadData * data)
 }
 
 static gboolean
-d3d11_create_threaded_window (GstMfxWindow * window)
+d3d11_create_threaded_window (GstMfxWindowD3D11 * window)
 {
   GThread *thread;
   D3D11WindowThreadData thread_data;
@@ -530,10 +533,12 @@ static gboolean
 gst_mfx_window_d3d11_create (GstMfxWindow * window,
   guint * width, guint * height)
 {
-  if (!d3d11_create_threaded_window(window))
+  GstMfxWindowD3D11 * mfx_d3d11_window = GST_MFX_WINDOW_D3D11 (window);
+
+  if (!d3d11_create_threaded_window (mfx_d3d11_window))
     return FALSE;
 
-  if (!d3d11_create_render_context(window))
+  if (!d3d11_create_render_context (mfx_d3d11_window))
     return FALSE;
 
   return TRUE;
@@ -553,7 +558,7 @@ gst_mfx_window_d3d11_class_init (GstMfxWindowD3D11Class * klass)
 }
 
 static void
-gst_mfx_window_d3d11_init(GstMfxWindowD3D11 * window)
+gst_mfx_window_d3d11_init (GstMfxWindowD3D11 * window)
 {
 }
 

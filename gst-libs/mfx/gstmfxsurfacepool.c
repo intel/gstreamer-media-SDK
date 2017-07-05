@@ -87,7 +87,8 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
 
     if (gst_mfx_task_has_type(pool->task,
         GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
-      gst_mfx_surface_d3d11_set_rw_flags(surface, MFX_SURFACE_READ);
+      gst_mfx_surface_d3d11_set_rw_flags (
+        GST_MFX_SURFACE_D3D11 (surface), MFX_SURFACE_READ);
 #endif // WITH_LIBVA_BACKEND
     if (!surface)
       return FALSE;

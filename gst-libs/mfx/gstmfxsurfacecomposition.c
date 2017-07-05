@@ -91,7 +91,8 @@ create_subpicture (GstMfxSurfaceComposition * composition,
     subpicture->surface = gst_mfx_surface_vaapi_new (context, &info);
 #else
     subpicture->surface = gst_mfx_surface_d3d11_new (context, &info);
-    gst_mfx_surface_d3d11_set_rw_flags(subpicture->surface, MFX_SURFACE_WRITE);
+    gst_mfx_surface_d3d11_set_rw_flags(
+      GST_MFX_SURFACE_D3D11 (subpicture->surface), MFX_SURFACE_WRITE);
 #endif // WITH_LIBVA_BACKEND
     gst_mfx_context_unref (context);
   }

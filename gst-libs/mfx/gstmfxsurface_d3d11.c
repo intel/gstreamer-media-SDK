@@ -48,7 +48,7 @@ gst_mfx_surface_d3d11_from_task(GstMfxSurface * surface,
     return FALSE;
   
   priv->surface.Data.MemId = d3d_surface->mid;
-  priv->surface_id = d3d_surface->mid->mid;
+  priv->surface_id = GST_MFX_ID (d3d_surface->mid->mid);
   return TRUE;
 }
 
@@ -73,7 +73,8 @@ gst_mfx_surface_d3d11_allocate(GstMfxSurface * surface, GstMfxTask * task)
     HRESULT hr = S_OK;
 
     d3d_surface->device = gst_mfx_context_get_device(priv->context);
-    d3d11_device = gst_mfx_d3d11_device_get_handle(d3d_surface->device);
+    d3d11_device = (ID3D11Device*) 
+      gst_mfx_d3d11_device_get_handle (d3d_surface->device);
 
     format = gst_mfx_fourcc_to_dxgi_format(frame_info->FourCC);
     if (DXGI_FORMAT_UNKNOWN == format)
@@ -114,13 +115,13 @@ gst_mfx_surface_d3d11_allocate(GstMfxSurface * surface, GstMfxTask * task)
     priv->mem_id.mid_stage = texture;
 
     d3d_surface->mid = priv->surface.Data.MemId = &priv->mem_id;
-    priv->surface_id = priv->mem_id.mid;
+    priv->surface_id = GST_MFX_ID (priv->mem_id.mid);
   }
   return TRUE;
 }
 
 static void
-gst_mfx_surface_d3d11_release(GstMfxSurface * surface)
+gst_mfx_surface_d3d11_release(GObject * surface)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
 
@@ -152,12 +153,12 @@ gst_mfx_surface_d3d11_map (GstMfxSurface * surface)
 
   /* copy data only in case of user wants to read from stored surface */
   if (d3d_surface->mid->rw & MFX_SURFACE_READ)
-    ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, stage, 0, 0, 0, 0,
-      texture, 0, NULL);
+    ID3D11DeviceContext_CopyResource(d3d11_context, 
+    (ID3D11Resource*) stage, (ID3D11Resource*) texture);
 
   do {
-    hr = ID3D11DeviceContext_Map(d3d11_context,
-      stage, 0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
+    hr = ID3D11DeviceContext_Map(d3d11_context, (ID3D11Resource*) stage,
+      0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
     if (S_OK != hr && DXGI_ERROR_WAS_STILL_DRAWING != hr)
       return FALSE;
   } while (DXGI_ERROR_WAS_STILL_DRAWING == hr);
@@ -206,11 +207,11 @@ gst_mfx_surface_d3d11_unmap(GstMfxSurface * surface)
   ID3D11DeviceContext *d3d11_context =
     gst_mfx_d3d11_device_get_d3d11_context(d3d_surface->device);
 
-  ID3D11DeviceContext_Unmap(d3d11_context, stage, 0);
+  ID3D11DeviceContext_Unmap(d3d11_context, (ID3D11Resource*)stage, 0);
   /* copy data only in case user wants to write to stored surface */
   if (d3d_surface->mid->rw & MFX_SURFACE_WRITE)
-    ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, texture, 0, 0, 0, 0,
-      stage, 0, NULL);
+    ID3D11DeviceContext_CopyResource(d3d11_context, 
+    (ID3D11Resource*)texture, (ID3D11Resource*)stage);
 
   if (ptr) {
     ptr->Pitch = 0;

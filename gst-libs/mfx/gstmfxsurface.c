@@ -378,7 +378,7 @@ gst_mfx_surface_get_frame_surface(GstMfxSurface * surface)
 }
 
 GstMfxID
-gst_mfx_surface_get_id(GstMfxSurface * surface)
+gst_mfx_surface_get_id (GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, GST_MFX_ID_INVALID);
 

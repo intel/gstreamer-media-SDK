@@ -95,7 +95,7 @@ gst_mfx_window_finalize (GObject * object)
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
 
   if (klass->destroy)
-    klass->destroy (window);
+    klass->destroy (object);
 
   gst_mfx_context_replace (&priv->context, NULL);
 }
