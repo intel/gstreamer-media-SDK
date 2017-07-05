@@ -276,6 +276,20 @@ init_params (GstMfxFilter * filter)
       //filter->params.vpp.Out.Shift = 1;
     }
   }
+  if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
+    gdouble frame_rate;
+    /* Set up special double frame rate deinterlace mode */
+    gst_util_fraction_to_double(filter->params.vpp.In.FrameRateExtN,
+      filter->params.vpp.In.FrameRateExtD, &frame_rate);
+    if ((filter->frame_info.PicStruct != MFX_PICSTRUCT_PROGRESSIVE)
+        && (int)(frame_rate + 0.5) == 60)
+      filter->params.vpp.In.FrameRateExtN /= 2;
+
+    filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+    filter->params.vpp.Out.Height =
+        GST_ROUND_UP_16(filter->params.vpp.Out.CropH);
+  }
+  configure_filters(filter);
 }
 
 gboolean
@@ -986,34 +1000,12 @@ gst_mfx_filter_reset (GstMfxFilter * filter)
   return GST_MFX_FILTER_STATUS_SUCCESS;
 }
 
-static void
-update_params (GstMfxFilter * filter)
-{
-  if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
-    gdouble frame_rate;
-    /* Setup special double frame rate deinterlace mode */
-    gst_util_fraction_to_double (filter->params.vpp.In.FrameRateExtN,
-      filter->params.vpp.In.FrameRateExtD, &frame_rate);
-    if ((filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_TFF ||
-          filter->frame_info.PicStruct == MFX_PICSTRUCT_FIELD_BFF) &&
-        (int)(frame_rate + 0.5) == 60)
-    filter->params.vpp.In.FrameRateExtN /= 2;
-
-    filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
-    filter->params.vpp.Out.Height =
-        GST_ROUND_UP_16 (filter->params.vpp.Out.CropH);
-  }
-  configure_filters (filter);
-}
-
 static GstMfxFilterStatus
 gst_mfx_filter_start (GstMfxFilter * filter)
 {
   mfxFrameAllocRequest *request;
   mfxStatus sts = MFX_ERR_NONE;
   gboolean memtype_is_system;
-
-  update_params (filter);
 
   /* Get updated video params if modified by peer MFX element*/
   gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
@@ -1084,9 +1076,8 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface * surface,
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
 
     outsurf = gst_mfx_surface_get_frame_surface (*out_surface);
-    sts =
-        MFXVideoVPP_RunFrameVPPAsync (filter->session, insurf, outsurf, NULL,
-        &syncp);
+    sts = MFXVideoVPP_RunFrameVPPAsync (filter->session, insurf, outsurf,
+            NULL, &syncp);
 
     if (MFX_WRN_INCOMPATIBLE_VIDEO_PARAM == sts)
       sts = MFX_ERR_NONE;
