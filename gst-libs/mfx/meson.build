@@ -20,7 +20,7 @@ if host_machine.system() == 'windows'
   sources += [
     'gstmfxallocator_d3d11.c',
     'gstmfxsurface_d3d11.c',
-    'd3d11/gstmfxdevice.c',
+    'gstmfxd3d11device.c',
   ]
 else
   sources += [

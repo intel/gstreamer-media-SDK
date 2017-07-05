@@ -35,7 +35,7 @@ struct _GstMfxContext
 #ifdef WITH_LIBVA_BACKEND
   GstMfxDisplay * device;
 #else
-  GstMfxDevice * device;
+  GstMfxD3D11Device * device;
 #endif
 };
 
@@ -48,7 +48,7 @@ gst_mfx_context_finalize (GObject * object)
 #ifdef WITH_LIBVA_BACKEND
   gst_mfx_display_replace(&context->device, NULL);
 #else
-  gst_mfx_device_replace(&context->device, NULL);
+  gst_mfx_d3d11_device_replace(&context->device, NULL);
 #endif
 }
 
@@ -74,7 +74,7 @@ gst_mfx_context_new(mfxSession session)
 #ifdef WITH_LIBVA_BACKEND
   context->device = gst_mfx_display_new();
 #else
-  context->device = gst_mfx_device_new(session);
+  context->device = gst_mfx_d3d11_device_new(session);
 #endif
   if (!context->device)
     goto error;
@@ -112,7 +112,7 @@ gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
 #ifdef WITH_LIBVA_BACKEND
 GstMfxDisplay *
 #else
-GstMfxDevice *
+GstMfxD3D11Device *
 #endif // WITH_LIBVA_BACKEND
 gst_mfx_context_get_device(GstMfxContext * context)
 {

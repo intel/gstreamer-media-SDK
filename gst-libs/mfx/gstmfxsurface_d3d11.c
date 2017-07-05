@@ -19,7 +19,7 @@
 */
 
 #include "gstmfxsurface_d3d11.h"
-#include "d3d11/gstmfxdevice.h"
+#include "gstmfxd3d11device.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -31,7 +31,7 @@ struct _GstMfxSurfaceD3D11
     /*< private > */
     GstMfxSurface parent_instance;
     GstMfxMemoryId *mid;
-    GstMfxDevice *device;
+    GstMfxD3D11Device *device;
 };
 
 G_DEFINE_TYPE(GstMfxSurfaceD3D11, gst_mfx_surface_d3d11, GST_TYPE_MFX_SURFACE);
@@ -73,7 +73,7 @@ gst_mfx_surface_d3d11_allocate(GstMfxSurface * surface, GstMfxTask * task)
     HRESULT hr = S_OK;
 
     d3d_surface->device = gst_mfx_context_get_device(priv->context);
-    d3d11_device = gst_mfx_device_get_handle(d3d_surface->device);
+    d3d11_device = gst_mfx_d3d11_device_get_handle(d3d_surface->device);
 
     format = gst_mfx_fourcc_to_dxgi_format(frame_info->FourCC);
     if (DXGI_FORMAT_UNKNOWN == format)
@@ -148,7 +148,7 @@ gst_mfx_surface_d3d11_map (GstMfxSurface * surface)
   ID3D11Texture2D *texture = (ID3D11Texture2D *)d3d_surface->mid->mid;
   ID3D11Texture2D *stage = (ID3D11Texture2D *)d3d_surface->mid->mid_stage;
   ID3D11DeviceContext *d3d11_context =
-      gst_mfx_device_get_d3d11_context(d3d_surface->device);
+      gst_mfx_d3d11_device_get_d3d11_context(d3d_surface->device);
 
   /* copy data only in case of user wants to read from stored surface */
   if (d3d_surface->mid->rw & MFX_SURFACE_READ)
@@ -204,7 +204,7 @@ gst_mfx_surface_d3d11_unmap(GstMfxSurface * surface)
   ID3D11Texture2D *texture = (ID3D11Texture2D *)d3d_surface->mid->mid;
   ID3D11Texture2D *stage = (ID3D11Texture2D *)d3d_surface->mid->mid_stage;
   ID3D11DeviceContext *d3d11_context =
-    gst_mfx_device_get_d3d11_context(d3d_surface->device);
+    gst_mfx_d3d11_device_get_d3d11_context(d3d_surface->device);
 
   ID3D11DeviceContext_Unmap(d3d11_context, stage, 0);
   /* copy data only in case user wants to write to stored surface */

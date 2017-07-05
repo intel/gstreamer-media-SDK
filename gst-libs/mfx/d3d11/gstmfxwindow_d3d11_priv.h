@@ -21,7 +21,7 @@
 #ifndef GST_MFX_WINDOW_D3D11_PRIV_H
 #define GST_MFX_WINDOW_D3D11_PRIV_H
 
-#include "gstmfxdevice.h"
+#include "gstmfxd3d11device.h"
 #include "gstmfxwindow_d3d11.h"
 #include "gstmfxwindow_priv.h"
 
@@ -42,7 +42,7 @@ typedef struct _GstMfxWindowD3D11Private   GstMfxWindowD3D11Private;
 
 struct _GstMfxWindowD3D11Private
 {
-  GstMfxDevice *device;
+  GstMfxD3D11Device *device;
   GstMfxSurface *mapped_surface;
 
   IDXGISwapChain1 * dxgi_swapchain;

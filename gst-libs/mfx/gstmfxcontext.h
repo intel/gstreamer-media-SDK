@@ -24,7 +24,7 @@
 #ifdef WITH_LIBVA_BACKEND
 # include "gstmfxdisplay.h"
 #else
-# include "d3d11/gstmfxdevice.h"
+# include "gstmfxd3d11device.h"
 #endif
 
 G_BEGIN_DECLS
@@ -50,7 +50,7 @@ gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
 #ifdef WITH_LIBVA_BACKEND
 GstMfxDisplay *
 #else
-GstMfxDevice *
+GstMfxD3D11Device *
 #endif // WITH_LIBVA_BACKEND
 gst_mfx_context_get_device(GstMfxContext * context);
 

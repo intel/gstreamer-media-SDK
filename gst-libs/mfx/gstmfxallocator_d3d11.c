@@ -68,7 +68,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
   ID3D11Device *d3d11_device = (ID3D11Device *)
-    gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context));
+    gst_mfx_d3d11_device_get_handle(gst_mfx_context_get_device(priv->context));
   HRESULT hr = S_OK;
   ResponseData *response_data;
   guint i;
@@ -248,7 +248,7 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
   D3D11_MAPPED_SUBRESOURCE locked_rect = { 0 };
   ID3D11Texture2D *texture = (ID3D11Texture2D *)mem_id->mid;
   ID3D11DeviceContext *d3d11_context =
-      gst_mfx_device_get_d3d11_context(gst_mfx_context_get_device(context));
+      gst_mfx_d3d11_device_get_d3d11_context(gst_mfx_context_get_device(context));
   
   gst_mfx_context_unref(context);
 
@@ -322,7 +322,7 @@ gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
   D3D11_TEXTURE2D_DESC desc = { 0 };
   ID3D11Texture2D *texture = (ID3D11Texture2D *)mem_id->mid;
   ID3D11DeviceContext *d3d11_context =
-      gst_mfx_device_get_d3d11_context(gst_mfx_context_get_device(context));
+      gst_mfx_d3d11_device_get_d3d11_context(gst_mfx_context_get_device(context));
 
   gst_mfx_context_unref(context);
 

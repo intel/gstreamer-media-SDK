@@ -220,7 +220,7 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 #else
   mfxHandleType handle_type = MFX_HANDLE_D3D11_DEVICE;
   device_handle =
-      gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context));
+      gst_mfx_d3d11_device_get_handle(gst_mfx_context_get_device(priv->context));
 #endif
 
   sts = MFXVideoCORE_GetHandle(priv->session, handle_type, &device_handle);
