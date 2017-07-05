@@ -361,7 +361,15 @@ task_init (GstMfxDecoder * decoder)
 
   if (output_fourcc != decoded_fourcc)
     decoder->enable_csc = TRUE;
+  if (GST_VIDEO_INFO_IS_INTERLACED(&decoder->info)) {
+    gdouble frame_rate;
 
+    gst_util_fraction_to_double(decoder->info.fps_n,
+      decoder->info.fps_d, &frame_rate);
+    if ((int)(frame_rate + 0.5) == 60)
+      decoder->can_double_deinterlace = TRUE;
+    decoder->enable_deinterlace = TRUE;
+  }
   return TRUE;
 
 error_load_plugin:
@@ -377,45 +385,44 @@ gst_mfx_decoder_create(GstMfxDecoder * decoder,
 	GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
 	const GstVideoInfo * info, mfxU16 async_depth, gboolean live_mode)
 {
-	decoder->profile = profile;
-	decoder->info = *info;
-	if (!decoder->info.fps_n)
-		decoder->info.fps_n = 30;
-	decoder->duration =
-		(decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
+  decoder->profile = profile;
+  decoder->info = *info;
+  if (!decoder->info.fps_n)
+    decoder->info.fps_n = 30;
+  decoder->duration =
+      (decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
 
-	decoder->params.mfx.CodecId = profile.codec;
-	decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
-	if (live_mode) {
-		decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
-		/* This is a special fix for Android Auto / Apple Carplay issues */
-		if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
-			decoder->params.mfx.DecodedOrder = 1;
-	}
-	decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-	decoder->inited = FALSE;
-	decoder->bs.MaxLength = 1024 * 16;
-	decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
-	if (!decoder->bitstream)
-		return FALSE;
+  decoder->params.mfx.CodecId = profile.codec;
+  decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
+  if (live_mode) {
+    decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
+    /* This is a special fix for Android Auto / Apple Carplay issues */
+    if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
+      decoder->params.mfx.DecodedOrder = 1;
+  }
+  decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+  decoder->inited = FALSE;
+  decoder->bs.MaxLength = 1024 * 16;
+  decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
+  if (!decoder->bitstream)
+    return FALSE;
 
-	decoder->pts_offset = GST_CLOCK_TIME_NONE;
+  decoder->pts_offset = GST_CLOCK_TIME_NONE;
 
-	g_queue_init (&decoder->decoded_frames);
-	g_queue_init (&decoder->pending_frames);
-	g_queue_init (&decoder->discarded_frames);
-
-	decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
-	if (!task_init(decoder))
-		goto error_init_task;
-
-	return TRUE;
+  g_queue_init (&decoder->decoded_frames);
+  g_queue_init (&decoder->pending_frames);
+  g_queue_init (&decoder->discarded_frames);
+  
+  decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
+  if (!task_init(decoder))
+    goto error_init_task;
+  return TRUE;
 
 error_init_task:
-	{
-		g_byte_array_unref (decoder->bitstream);
-		return FALSE;
-	}
+  {
+    g_byte_array_unref (decoder->bitstream);
+    return FALSE;
+  }
 }
 
 static void
@@ -530,6 +537,18 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     gst_mfx_task_use_video_memory (decoder->decode);
   }
 
+  if (!decoder->filter_inited
+      && (decoder->enable_csc || decoder->enable_deinterlace)) {
+    if (gst_mfx_task_get_task_type(decoder->decode) == GST_MFX_TASK_DECODER) {
+      if (!init_filter(decoder))
+        return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
+    }
+    else if (gst_mfx_task_has_type(decoder->decode, GST_MFX_TASK_VPP_IN)) {
+      decoder->can_double_deinterlace = FALSE;
+    }
+    decoder->filter_inited = TRUE;
+  }
+
   if (!init_decoder(decoder))
     return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 
@@ -579,62 +598,10 @@ init_filter (GstMfxDecoder * decoder)
     GST_ERROR ("Unable to set up postprocessing filter.");
     goto error;
   }
-
   return TRUE;
 
 error:
   gst_mfx_filter_unref (decoder->filter);
-  return FALSE;
-}
-
-static gboolean
-gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
-{
-  close_decoder(decoder);
-
-  if (info)
-    decoder->params.mfx.FrameInfo = *info;
-
-  if (!init_filter (decoder))
-    return FALSE;
-
-  if (!init_decoder (decoder))
-    goto error;
-
-  //memset(&decoder->bs, 0, sizeof(mfxBitstream));
-  decoder->bs.DataLength += decoder->bs.DataOffset;
-  decoder->bs.DataOffset = 0;
-
-  GstMfxSurface *surface;
-  mfxFrameSurface1 *insurf, *outsurf = NULL;
-  mfxSyncPoint syncp;
-  mfxStatus sts = MFX_ERR_NONE;
-
-  do {
-    surface = gst_mfx_surface_new_from_pool (decoder->pool);
-    if (!surface)
-      return GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED;
-
-    insurf = gst_mfx_surface_get_frame_surface (surface);
-    sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, &decoder->bs,
-	    insurf, &outsurf, &syncp);
-    GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
-
-    if (MFX_WRN_DEVICE_BUSY == sts)
-      g_usleep (100);
-  } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
-
-  if (syncp) {
-    do {
-      sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 100);
-      GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
-    } while (MFX_WRN_IN_EXECUTION == sts);
-  }
-  return TRUE;
-
-error:
-  gst_mfx_surface_pool_replace (&decoder->pool, NULL);
-  gst_mfx_filter_replace (&decoder->filter, NULL);
   return FALSE;
 }
 
@@ -691,7 +658,7 @@ queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface)
     out_frame = new_frame (decoder);
 
   gst_video_codec_frame_set_user_data(out_frame,
-      gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
+    gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
   g_queue_push_head(&decoder->decoded_frames, out_frame);
 
   GST_LOG ("decoded frame : %ld",
@@ -839,66 +806,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       } while (MFX_WRN_IN_EXECUTION == sts);
 
     surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
-
-    /* Update stream properties if they have interlaced frames. An interlaced H264
-     * can only be detected after decoding the first frame, hence the delayed VPP
-     * initialization */
-    switch (outsurf->Info.PicStruct) {
-      case MFX_PICSTRUCT_PROGRESSIVE:
-        if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
-          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
-        break;
-      case MFX_PICSTRUCT_FIELD_TFF:
-        GST_VIDEO_INFO_FLAG_SET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
-        goto update;
-      case MFX_PICSTRUCT_FIELD_BFF:{
-        GST_VIDEO_INFO_FLAG_UNSET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
-update:
-        /* Check if stream has progressive frames first.
-         * If it does then it should be a mixed interlaced stream */
-        if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE
-            && decoder->has_ready_frames)
-          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
-        else {
-          if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
-            decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
-        }
-        if (!decoder->filter_inited) {
-          gdouble frame_rate;
-
-          gst_util_fraction_to_double(decoder->info.fps_n,
-            decoder->info.fps_d, &frame_rate);
-          if ((int)(frame_rate + 0.5) == 60)
-            decoder->can_double_deinterlace = TRUE;
-          decoder->enable_deinterlace = TRUE;
-        }
-
-        break;
-      }
-      default:
-        break;
-    }
-
-    /* Re-initialize shared decoder / VPP task with shared surface pool and
-     * MFX session. This re-initialization can only occur if no other peer
-     * MFX task from a downstream element marked the decoder task with
-     * another task type at this point. */
-    if (!decoder->filter_inited
-        && (decoder->enable_csc || decoder->enable_deinterlace)) {
-      if (gst_mfx_task_get_task_type(decoder->decode) == GST_MFX_TASK_DECODER) {
-        if (!gst_mfx_decoder_reinit(decoder, &outsurf->Info))
-          ret = GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
-        else
-          ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
-      }
-      else if (gst_mfx_task_has_type(decoder->decode, GST_MFX_TASK_VPP_IN)) {
-        decoder->params.mfx.FrameInfo = outsurf->Info;
-        gst_mfx_task_set_video_params(decoder->decode, &decoder->params);
-        decoder->can_double_deinterlace = FALSE;
-      }
-      decoder->filter_inited = TRUE;
-      goto end;
-    }
 
     if (decoder->filter) {
       do {

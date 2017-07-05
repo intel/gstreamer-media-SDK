@@ -476,12 +476,25 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
     vpp->async_depth = gst_mfx_task_get_video_params(task)->AsyncDepth;
     request->Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
+#ifdef WITH_LIBVA_BACKEND
+    request->Type |= MFX_MEMTYPE_EXPORT_FRAME;
+#endif // WITH_LIBVA_BACKEND
     request->NumFrameSuggested += (1 - vpp->async_depth);
 
     gst_mfx_filter_set_request(vpp->filter, request, GST_MFX_TASK_VPP_IN);
     gst_mfx_filter_set_frame_info(vpp->filter, &request->Info);
     if (request->Info.FourCC != gst_video_format_to_mfx_fourcc(vpp->format))
       vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
+    if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING) {
+      gdouble frame_rate;
+
+      gst_util_fraction_to_double(request->Info.FrameRateExtN,
+        request->Info.FrameRateExtD, &frame_rate);
+      if ((int)(frame_rate + 0.5) == 60) {
+        vpp->deinterlace_method = GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF;
+        vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+      }
+    }
   }
   else {
     vpp->filter = gst_mfx_filter_new(plugin->aggregator,
@@ -592,32 +605,6 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
     GstBuffer * buf)
 {
   GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
-  GstMfxVideoMeta *inbuf_meta;
-  GstMfxSurface *surface = NULL;
-
-  inbuf_meta = gst_buffer_get_mfx_video_meta(buf);
-  if (inbuf_meta)
-    surface = gst_mfx_video_meta_get_surface(inbuf_meta);
-
-  if (surface
-      && (vpp->deinterlace_mode != GST_MFX_DEINTERLACE_MODE_DISABLED)
-      && !(vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)) {
-    mfxFrameInfo *info = &GST_MFX_SURFACE_FRAME_SURFACE(surface)->Info;
-
-    if (info->PicStruct != MFX_PICSTRUCT_PROGRESSIVE) {
-      GstMfxDeinterlaceMethod di_method = vpp->deinterlace_method;
-      gdouble frame_rate;
-
-      gst_util_fraction_to_double(info->FrameRateExtN,
-        info->FrameRateExtD, &frame_rate);
-      if ((int)(frame_rate + 0.5) == 60) {
-        vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
-        di_method = GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF;
-      }
-      gst_mfx_filter_set_deinterlace_method(vpp->filter, di_method);
-      vpp->flags |= GST_MFX_POSTPROC_FLAG_DEINTERLACING;
-    }
-  }
 
   if (!vpp->flags &&
       (vpp->hue == DEFAULT_HUE ||
@@ -967,7 +954,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
     gst_mfx_filter_set_deinterlace_method (vpp->filter,
       vpp->deinterlace_method);
 
-  if (vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
+  if (vpp->fps_n && vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
     gst_mfx_filter_set_frc_algorithm (vpp->filter, vpp->alg);
     gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d);
   }
