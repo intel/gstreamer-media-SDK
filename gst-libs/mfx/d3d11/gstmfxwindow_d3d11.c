@@ -141,7 +141,7 @@ gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
       priv2->d3d11_video_context, priv2->processor, 0, TRUE, &dest_rect);
   }
 
-  ID3D11VideoContext_VideoProcessorGetStreamFrameFormat(
+  ID3D11VideoContext_VideoProcessorSetStreamFrameFormat(
     priv2->d3d11_video_context, priv2->processor,
     0, D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE);
 
