@@ -430,7 +430,7 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
 
     if (!g_strcmp0 (priv->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
       priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (priv->info.width);
-		  priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
+      priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
     }
     else {
       priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_16 (priv->info.width);
@@ -911,7 +911,7 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder *encoder)
       sscanf(priv->plugin_uid + 2 * c, "%2hhx", priv->uid.Data + c);
     sts = MFXVideoUSER_Load(priv->session, &priv->uid, 1);
     if (MFX_ERR_NONE == sts) {
-      GST_DEBUG("Using HEVC encoder plugin %s", priv->plugin_uid);
+      GST_DEBUG("Using encoder plugin %s", priv->plugin_uid);
       return TRUE;
     }
   }

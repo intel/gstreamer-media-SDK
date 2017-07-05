@@ -336,8 +336,10 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
   gst_query_parse_allocation (query, &caps, &need_pool);
 
   if (need_pool) {
-    if (!caps)
-      goto error_no_caps;
+    if (!caps) {
+      GST_INFO_OBJECT(plugin, "no caps specified");
+      return FALSE;
+    }
     if (!ensure_sinkpad_buffer_pool (plugin, caps))
       return FALSE;
     gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
@@ -349,8 +351,10 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
 
       gst_buffer_pool_config_add_option (config,
           GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
-      if (!gst_buffer_pool_set_config (plugin->sinkpad_buffer_pool, config))
-        goto error_pool_config;
+      if (!gst_buffer_pool_set_config(plugin->sinkpad_buffer_pool, config)) {
+        GST_ERROR_OBJECT(plugin, "failed to reset buffer pool config");
+        return FALSE;
+      }
     }
 #endif // WITH_LIBVA_BACKEND
   }
@@ -359,17 +363,6 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
   gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL);
 
   return TRUE;
-/* ERRORS */
-error_no_caps:
-  {
-    GST_INFO_OBJECT (plugin, "no caps specified");
-    return FALSE;
-  }
-error_pool_config:
-  {
-    GST_ERROR_OBJECT (plugin, "failed to reset buffer pool config");
-    return FALSE;
-  }
 }
 
 static inline gboolean
@@ -408,7 +401,6 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   guint size, min, max;
   gboolean update_pool = FALSE;
   gboolean has_video_meta = FALSE;
-  const GstStructure *params;
   guint idx;
 
   g_return_val_if_fail (plugin->aggregator != NULL, FALSE);
@@ -422,9 +414,10 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       GST_VIDEO_META_API_TYPE, NULL);
 
 #if defined(WITH_LIBVA_BACKEND) && defined(HAVE_GST_GL_LIBS)
-#if GST_CHECK_VERSION(1,8,0)
   if (gst_query_find_allocation_meta(query,
       GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
+    GstStructure *params;
+
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
       GstGLContext *gl_context;
@@ -449,7 +442,6 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 #endif
     }
   }
-#endif
 #endif // WITH_LIBVA_BACKEND
 
   if (!plugin->srcpad_has_dmabuf)
@@ -650,7 +642,6 @@ error_copy_buffer:
 }
 
 #ifdef WITH_LIBVA_BACKEND
-#if GST_CHECK_VERSION(1,8,0)
 gboolean
 gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
     GstBuffer * outbuf)
@@ -715,5 +706,4 @@ error_dmabuf_handle:
     return FALSE;
   }
 }
-#endif
 #endif // WITH_LIBVA_BACKEND

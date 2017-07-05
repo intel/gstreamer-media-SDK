@@ -729,9 +729,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
            && GST_FLOW_OK == ret);
 
 #ifdef WITH_LIBVA_BACKEND
-#if GST_CHECK_VERSION(1,8,0)
   gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp), outbuf);
-#endif
 #endif
 
   gst_buffer_unref (buf);
