@@ -67,7 +67,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   GstMfxTask *task =
     gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
-  ID3D11Device *d3d11_device =
+  ID3D11Device *d3d11_device = (ID3D11Device *)
     gst_mfx_device_get_handle(gst_mfx_context_get_device(priv->context));
   HRESULT hr = S_OK;
   ResponseData *response_data;
@@ -254,8 +254,8 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 
   ID3D11Texture2D_GetDesc(texture, &desc);
   if (desc.Format == DXGI_FORMAT_P8) {
-    hr = ID3D11DeviceContext_Map(d3d11_context,
-      texture, 0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
+    hr = ID3D11DeviceContext_Map(d3d11_context, (ID3D11Resource *)texture, 0,
+      D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
     if (FAILED(hr))
       return MFX_ERR_LOCK_MEMORY;
 
@@ -269,12 +269,13 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 
     /* copy data only when reading from stored surface */
     if (mem_id->rw & MFX_SURFACE_READ)
-      ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, stage, 0, 0, 0, 0,
-        texture, 0, NULL);
+      ID3D11DeviceContext_CopyResource(d3d11_context, 
+      (ID3D11Resource *)stage, (ID3D11Resource *)texture);
+      /*ID3D11Resource is a parent of ID3D11Texture2D, casting is safe*/
 
     do {
-      hr = ID3D11DeviceContext_Map(d3d11_context,
-        stage, 0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
+      hr = ID3D11DeviceContext_Map(d3d11_context, (ID3D11Resource *)stage, 
+        0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
       if (S_OK != hr && DXGI_ERROR_WAS_STILL_DRAWING != hr)
         return MFX_ERR_LOCK_MEMORY;
     } while (DXGI_ERROR_WAS_STILL_DRAWING == hr);
@@ -327,16 +328,16 @@ gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 
   ID3D11Texture2D_GetDesc(texture, &desc);
   if (desc.Format == DXGI_FORMAT_P8) {
-    ID3D11DeviceContext_Unmap(d3d11_context, texture, 0);
+    ID3D11DeviceContext_Unmap(d3d11_context, (ID3D11Resource *)texture, 0);
   }
   else {
     ID3D11Texture2D *stage = (ID3D11Texture2D *)mem_id->mid_stage;
 
-    ID3D11DeviceContext_Unmap(d3d11_context, stage, 0);
+    ID3D11DeviceContext_Unmap(d3d11_context, (ID3D11Resource *)stage, 0);
     /* copy data only when writing to stored surface */
     if (mem_id->rw & MFX_SURFACE_WRITE)
-      ID3D11DeviceContext_CopySubresourceRegion(d3d11_context, texture, 0, 0, 0, 0,
-        stage, 0, NULL);
+      ID3D11DeviceContext_CopyResource(d3d11_context, 
+        (ID3D11Resource *)texture, (ID3D11Resource *)stage);
   }
 
   if (ptr) {
