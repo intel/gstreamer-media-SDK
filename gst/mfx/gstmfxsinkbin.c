@@ -21,6 +21,7 @@
 #include "gstmfxpluginutil.h"
 #include "gstmfxpluginbase.h"
 #include "gstmfxsinkbin.h"
+#include <gst/pbutils/missing-plugins.h>
 
 #ifdef WITH_LIBVA_BACKEND
 # include <gst-libs/mfx/gstmfxdisplay.h>
@@ -103,7 +104,7 @@ G_DEFINE_TYPE_WITH_CODE (GstMfxSinkBin, gst_mfx_sink_bin,
 
 static void
 post_missing_element_message (GstMfxSinkBin * mfxsinkbin,
-    const char * missing_factory)
+    const gchar * missing_factory)
 {
   GstMessage *msg;
 
