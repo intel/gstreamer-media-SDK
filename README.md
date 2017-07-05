@@ -37,20 +37,20 @@ Requirements
   * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows or  
     Media Server Studio 2017 Community / Professional Edition (Windows / Linux) or  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake) or greater
-  * GStreamer 1.6.x (tested up to GStreamer 1.12.x)
-  * gst-plugins-* 1.6.x (tested up to GStreamer 1.12.x)
-  * Microsoft Visual Studio 2013 / 2015 (Windows)
+  * GStreamer 1.10.x (GStreamer 1.12.x for correct deinterlacing support)
+  * gst-plugins-* 1.10.x (tested up to GStreamer 1.12.x)
+  * Microsoft Visual Studio 2013 / 2015 / 2017 (Windows)
   * Python 3
   * pkg-config
  
   * Renderers:  
     Wayland (>=1.7)  
     X11 (DRI 3)  
-    Direct3D 11 (Windows 8 / 8.1 / 10)
+    DirectX 11 (Windows 8 / 8.1 / 10)
 
 **Hardware requirements**
 
-  * Intel IvyBridge / Haswell / Broadwell / Skylake / Kabylake with Intel HD / Iris Pro graphics
+  * Intel IvyBridge / Haswell / Broadwell / Skylake / Kabylake with Intel HD / Iris / Iris Pro / Iris Plus graphics
   * Intel Baytrail / Cherrytrail / Apollo Lake
 
 
