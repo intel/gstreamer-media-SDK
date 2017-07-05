@@ -426,8 +426,8 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder)
 
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
-    GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
-    gboolean live_mode)
+  GstMfxProfile profile, const GstVideoInfo * info,
+  mfxU16 async_depth, gboolean live_mode)
 {
   GstMfxDecoder * decoder;
 
@@ -441,8 +441,8 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
   if (!gst_mfx_decoder_create (decoder, aggregator, profile, info,
 	    async_depth, live_mode))
 	  goto error;
-
   return decoder;
+
 error:
   gst_mfx_decoder_unref (decoder);
   return NULL;

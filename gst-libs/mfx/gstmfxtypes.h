@@ -100,7 +100,7 @@ struct _GstMfxMemoryId {
   mfxFrameInfo           *info;
 };
 
-typedef enum {
+enum {
   MFX_SURFACE_READ = (1 << 0),
   MFX_SURFACE_WRITE = (1 << 1),
 };

@@ -21,6 +21,7 @@
 #include "gstmfxsurface.h"
 #include "gstmfxsurface_priv.h"
 #include "gstmfxsurfacepool.h"
+#include "video-format.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"

@@ -289,7 +289,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   sts =
-      MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, &request);
+      MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, request);
   if (sts < 0) {
     GST_ERROR ("Unable to query VPP allocation request %d", sts);
     return FALSE;

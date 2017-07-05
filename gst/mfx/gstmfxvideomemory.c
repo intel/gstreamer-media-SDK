@@ -118,15 +118,10 @@ gboolean
 gst_video_meta_map_mfx_surface (GstVideoMeta * meta, guint plane,
     GstMapInfo * info, gpointer * data, gint * stride, GstMapFlags flags)
 {
-#if GST_CHECK_VERSION(1,8,0)
   GstParentBufferMeta * parent_meta = gst_buffer_get_parent_buffer_meta (meta->buffer);
   GstBuffer *buf = parent_meta ? parent_meta->buffer : meta->buffer;
   GstMfxVideoMemory *const mem =
       GST_MFX_VIDEO_MEMORY_CAST (gst_buffer_peek_memory (buf, 0));
-#else
-  GstMfxVideoMemory *const mem =
-      GST_MFX_VIDEO_MEMORY_CAST (gst_buffer_peek_memory (meta->buffer, 0));
-#endif
 
   g_return_val_if_fail (mem, FALSE);
   g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->
@@ -164,15 +159,10 @@ gboolean
 gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
     GstMapInfo * info)
 {
-#if GST_CHECK_VERSION(1,8,0)
   GstParentBufferMeta * parent_meta = gst_buffer_get_parent_buffer_meta (meta->buffer);
   GstBuffer *buf = parent_meta ? parent_meta->buffer : meta->buffer;
   GstMfxVideoMemory *const mem =
       GST_MFX_VIDEO_MEMORY_CAST (gst_buffer_peek_memory (buf, 0));
-#else
-  GstMfxVideoMemory *const mem =
-      GST_MFX_VIDEO_MEMORY_CAST (gst_buffer_peek_memory (meta->buffer, 0));
-#endif
 
   g_return_val_if_fail (mem, FALSE);
   g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->

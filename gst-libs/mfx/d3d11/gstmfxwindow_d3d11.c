@@ -212,7 +212,7 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_d3d11_get_geometry (GstMfxWindow * window, guint x, guint y,
+gst_mfx_window_d3d11_get_geometry (GstMfxWindow * window, gint * x, gint * y,
   guint * width, guint * height)
 {
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
