@@ -63,8 +63,10 @@ struct _GstMfxCompositeFilter
 G_DEFINE_TYPE(GstMfxCompositeFilter, gst_mfx_composite_filter, GST_TYPE_OBJECT)
 
 static void
-gst_mfx_composite_filter_finalize (GstMfxCompositeFilter * filter)
+gst_mfx_composite_filter_finalize (GObject * object)
 {
+  GstMfxCompositeFilter* filter = GST_MFX_COMPOSITE_FILTER(object);
+
   /* Free allocated memory for filters */
   g_slice_free1 ((sizeof (mfxExtBuffer *)), filter->ext_buffer);
   gst_mfx_surface_pool_replace(&filter->out_pool, NULL);

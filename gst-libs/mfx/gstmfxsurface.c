@@ -141,7 +141,7 @@ error:
 }
 
 static void
-gst_mfx_surface_release_default (GstMfxSurface * surface)
+gst_mfx_surface_release_default (GObject * surface)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
   mfxFrameData *ptr = &priv->surface.Data;

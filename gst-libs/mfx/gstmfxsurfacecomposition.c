@@ -164,8 +164,11 @@ gst_mfx_create_surfaces_from_composition(
 }
 
 void
-gst_mfx_surface_composition_finalize(GstMfxSurfaceComposition * composition)
+gst_mfx_surface_composition_finalize(GObject * object)
 {
+  GstMfxSurfaceComposition * composition = 
+    GST_MFX_SURFACE_COMPOSITION (object);
+
   gst_mfx_surface_unref (composition->base_surface);
   g_ptr_array_free (composition->subpictures, TRUE);
 }

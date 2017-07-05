@@ -137,7 +137,7 @@ static const struct map gst_mfx_vc1_level_map[] = {
 };
 
 static mfxU16
-map_lookup_value(const struct map *m, gchar * level_str)
+map_lookup_value(const struct map *m, const gchar * level_str)
 {
   for (; m && m->level; m++)
     if (strcmp (level_str, m->level_str) == 0)
@@ -146,7 +146,7 @@ map_lookup_value(const struct map *m, gchar * level_str)
 }
 
 static mfxU16
-gst_mfx_profile_get_level(mfxU32 codec, gchar * level_str)
+gst_mfx_profile_get_level(mfxU32 codec, const gchar * level_str)
 {
   const struct map *m = NULL;
   switch (codec) {
