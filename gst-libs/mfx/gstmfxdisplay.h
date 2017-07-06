@@ -119,9 +119,6 @@ void
 gst_mfx_display_get_pixel_aspect_ratio (GstMfxDisplay * display,
     guint * par_n, guint * par_d);
 
-gboolean
-gst_mfx_display_init_vaapi (GstMfxDisplay * display);
-
 const gchar *
 gst_mfx_display_get_vendor_string (GstMfxDisplay * display);
 

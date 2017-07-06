@@ -213,6 +213,26 @@ gst_mfx_display_create (GstMfxDisplay * display, gpointer init_value)
   return TRUE;
 }
 
+static gboolean
+gst_mfx_display_init_vaapi (GstMfxDisplay * display)
+{
+  GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
+  gint major_version, minor_version;
+  VAStatus status;
+
+  priv->va_display = vaGetDisplayDRM (get_display_fd (display));
+  if (!priv->va_display)
+    return FALSE;
+
+  status = vaInitialize (priv->va_display, &major_version, &minor_version);
+  if (!vaapi_check_status (status, "vaInitialize()"))
+    return FALSE;
+
+  GST_DEBUG ("VA-API version %d.%d", major_version, minor_version);
+
+  return TRUE;
+}
+
 /**
  * gst_mfx_display_lock:
  * @display: a #GstMfxDisplay
@@ -300,8 +320,21 @@ error:
 GstMfxDisplay *
 gst_mfx_display_new (void)
 {
-  GST_DEBUG ("creating dummy display");
-  return g_object_new(GST_TYPE_MFX_DISPLAY, NULL);
+  GstMfxDisplay *display;
+
+  GST_DEBUG ("creating VAAPI display");
+
+  display = g_object_new(GST_TYPE_MFX_DISPLAY, NULL);
+  if (!display)
+    return NULL;
+
+  if (!gst_mfx_display_init_vaapi(display))
+    goto error;
+  return display;
+
+error:
+  gst_mfx_display_unref (display);
+  return NULL;
 }
 
 GstMfxDisplay *
@@ -401,26 +434,6 @@ gst_mfx_display_get_pixel_aspect_ratio (GstMfxDisplay * display,
 
   if (par_d)
     *par_d = GST_MFX_DISPLAY_GET_PRIVATE (display)->par_d;
-}
-
-gboolean
-gst_mfx_display_init_vaapi (GstMfxDisplay * display)
-{
-  GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
-  gint major_version, minor_version;
-  VAStatus status;
-
-  priv->va_display = vaGetDisplayDRM (get_display_fd (display));
-  if (!priv->va_display)
-    return FALSE;
-
-  status = vaInitialize (priv->va_display, &major_version, &minor_version);
-  if (!vaapi_check_status (status, "vaInitialize()"))
-    return FALSE;
-
-  GST_DEBUG ("VA-API version %d.%d", major_version, minor_version);
-
-  return TRUE;
 }
 
 /* Ensures the VA driver vendor string was copied */
