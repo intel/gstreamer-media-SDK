@@ -62,6 +62,7 @@ struct _GstMfxDecoder
   gboolean enable_csc;
   gboolean enable_deinterlace;
   gboolean skip_corrupted_frames;
+  gboolean is_autoplugged;
   gboolean can_double_deinterlace;
   guint num_partial_frames;
 
@@ -312,7 +313,10 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   }
 
   decoder->params.mfx.CodecProfile = decoder->profile.profile;
-  //decoder->params.mfx.CodecLevel = decoder->profile.level;
+  /* We need to check if we may need to overallocate surfaces
+   * when used with decodebin */
+  if (!decoder->is_autoplugged)
+    decoder->params.mfx.CodecLevel = decoder->profile.level;
 }
 
 static gboolean
@@ -384,8 +388,10 @@ error_query_request:
 static gboolean
 gst_mfx_decoder_create(GstMfxDecoder * decoder,
 	GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-	const GstVideoInfo * info, mfxU16 async_depth, gboolean live_mode)
+	const GstVideoInfo * info, mfxU16 async_depth,
+  gboolean live_mode, gboolean is_autoplugged)
 {
+  decoder->is_autoplugged = is_autoplugged;
   decoder->profile = profile;
   decoder->info = *info;
   if (!decoder->info.fps_n)
@@ -394,8 +400,9 @@ gst_mfx_decoder_create(GstMfxDecoder * decoder,
       (decoder->info.fps_d / (gdouble)decoder->info.fps_n) * 1000000000;
 
   decoder->params.mfx.CodecId = profile.codec;
-  decoder->params.AsyncDepth = live_mode ? 1 : async_depth;
+  decoder->params.AsyncDepth = is_autoplugged ? 16 : async_depth;
   if (live_mode) {
+    decoder->params.AsyncDepth = 1;
     decoder->bs.DataFlag = MFX_BITSTREAM_COMPLETE_FRAME;
     /* This is a special fix for Android Auto / Apple Carplay issues */
     if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
@@ -433,8 +440,8 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder)
 
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
-  GstMfxProfile profile, const GstVideoInfo * info,
-  mfxU16 async_depth, gboolean live_mode)
+  GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
+  gboolean live_mode, gboolean is_autoplugged)
 {
   GstMfxDecoder * decoder;
 
@@ -446,7 +453,7 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     return NULL;
 
   if (!gst_mfx_decoder_create (decoder, aggregator, profile, info,
-	    async_depth, live_mode))
+	    async_depth, live_mode, is_autoplugged))
 	  goto error;
   return decoder;
 
@@ -608,6 +615,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 void
 gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 {
+  /* TODO: Remove when decoder re-initialization is implemented correctly */
   if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED
       && decoder->params.mfx.CodecId == MFX_CODEC_AVC)
     return;
