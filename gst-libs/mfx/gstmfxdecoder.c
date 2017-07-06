@@ -577,11 +577,9 @@ init_filter (GstMfxDecoder * decoder)
   decoder->request.Type |= MFX_MEMTYPE_EXPORT_FRAME;
 #endif // WITH_LIBVA_BACKEND
   decoder->request.Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
-
   decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
 
-  gst_mfx_filter_set_request (decoder->filter, &decoder->request,
-      GST_MFX_TASK_VPP_IN);
+  gst_mfx_task_set_request(decoder->decode, &decoder->request);
 
   gst_mfx_filter_set_frame_info (decoder->filter,
      &decoder->params.mfx.FrameInfo);

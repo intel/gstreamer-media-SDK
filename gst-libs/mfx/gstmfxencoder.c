@@ -949,11 +949,8 @@ check_preprocessing(GstMfxEncoder *encoder)
       request->Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
       request->NumFrameSuggested += (1 - params->AsyncDepth);
 
-      gst_mfx_filter_set_request(priv->filter, request, GST_MFX_TASK_VPP_IN);
       gst_mfx_filter_set_frame_info(priv->filter, &params->mfx.FrameInfo);
-
       gst_mfx_filter_set_async_depth(priv->filter, params->AsyncDepth);
-        
       if (request->Info.PicStruct != MFX_PICSTRUCT_PROGRESSIVE)
         gst_mfx_filter_set_deinterlace_method(priv->filter,
           GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF);
@@ -1094,8 +1091,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
 
     request->NumFrameSuggested += (1 - priv->params.AsyncDepth);
 
-    gst_mfx_filter_set_request(priv->filter, request,
-      GST_MFX_TASK_VPP_OUT);
+    gst_mfx_task_set_request(priv->encode, request);
 
     gst_mfx_filter_set_frame_info(priv->filter, &priv->frame_info);
     gst_mfx_filter_set_async_depth(priv->filter, priv->async_depth);

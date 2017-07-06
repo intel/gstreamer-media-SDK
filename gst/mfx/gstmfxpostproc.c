@@ -481,7 +481,6 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 #endif // WITH_LIBVA_BACKEND
     request->NumFrameSuggested += (1 - vpp->async_depth);
 
-    gst_mfx_filter_set_request(vpp->filter, request, GST_MFX_TASK_VPP_IN);
     gst_mfx_filter_set_frame_info(vpp->filter, &request->Info);
     if (request->Info.FourCC != gst_video_format_to_mfx_fourcc(vpp->format))
       vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
