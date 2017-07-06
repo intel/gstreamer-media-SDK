@@ -566,9 +566,9 @@ gst_mfx_encoder_finalize (GObject * object)
   /* calls gst_mfx_task_frame_free() when configured with video memory */
   MFXVideoENCODE_Close (priv->session);
 
-  gst_mfx_task_aggregator_unref (priv->aggregator);
   gst_mfx_filter_replace (&priv->filter, NULL);
-  gst_mfx_task_replace (&priv->encode, NULL);
+  gst_mfx_task_unref(priv->encode);
+  gst_mfx_task_aggregator_unref (priv->aggregator);
 }
 
 GstMfxEncoder *
@@ -1010,7 +1010,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
 
     if (task) {
       priv->shared = TRUE;
-      priv->encode = task;
+      priv->encode = gst_mfx_task_ref(task);
       priv->session = gst_mfx_task_get_session(priv->encode);
 
       gst_mfx_task_set_task_type(task,

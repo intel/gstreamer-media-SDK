@@ -59,7 +59,7 @@ struct _GstMfxFilter
   mfxSession session;
   mfxVideoParam params;
   mfxFrameInfo frame_info;
-  mfxFrameAllocResponse response[2];
+  mfxFrameAllocResponse response;
 
   /* VPP output parameters */
   mfxU32 fourcc;
@@ -401,13 +401,10 @@ gst_mfx_filter_finalize (GObject * object)
   /* Make sure frame allocator points to the right task to free surfaces */
   gst_mfx_task_aggregator_set_current_task(filter->aggregator,
     filter->vpp[1]);
-  gst_mfx_task_frame_free(filter->aggregator, &filter->response[1]);
+  gst_mfx_task_frame_free(filter->aggregator, &filter->response);
 
-  for (i = 0; i < 2; i++) {
-    if (!filter->vpp[i])
-      continue;
+  for (i = 0; i < 2; i++)
     gst_mfx_task_replace (&filter->vpp[i], NULL);
-  }
 
   /* Free allocated memory for filters */
   g_slice_free1 ((sizeof (mfxU32) * filter->vpp_use.NumAlg),
@@ -992,7 +989,7 @@ gst_mfx_filter_start (GstMfxFilter * filter)
     gst_mfx_task_aggregator_set_current_task(filter->aggregator,
       filter->vpp[1]);
     sts = gst_mfx_task_frame_alloc(filter->aggregator,
-            request, &filter->response[1]);
+            request, &filter->response);
     if (MFX_ERR_NONE != sts)
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
   }

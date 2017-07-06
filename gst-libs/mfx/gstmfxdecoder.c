@@ -387,8 +387,8 @@ error_query_request:
 
 static gboolean
 gst_mfx_decoder_create(GstMfxDecoder * decoder,
-	GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-	const GstVideoInfo * info, mfxU16 async_depth,
+  GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
+  const GstVideoInfo * info, mfxU16 async_depth,
   gboolean live_mode, gboolean is_autoplugged)
 {
   decoder->is_autoplugged = is_autoplugged;
@@ -566,7 +566,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       params.ExtParam = ext_buffers;
       params.NumExtParam = 1;
 
-      sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs, &params);
+      sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs,
+              &params);
       if (MFX_ERR_MORE_DATA == sts) {
         return GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
       }
