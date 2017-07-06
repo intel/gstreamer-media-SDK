@@ -1016,7 +1016,7 @@ gst_mfxpostproc_set_property (GObject * object,
       }
       break;
     case PROP_SATURATION:
-      if (vpp->hue != g_value_get_float (value)) {
+      if (vpp->saturation != g_value_get_float (value)) {
         vpp->saturation = g_value_get_float (value);
         vpp->flags |= GST_MFX_POSTPROC_FLAG_SATURATION;
         vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_SATURATION;
