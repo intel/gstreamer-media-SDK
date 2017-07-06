@@ -59,7 +59,6 @@ struct _GstMfxFilter
   mfxSession session;
   mfxVideoParam params;
   mfxFrameInfo frame_info;
-  mfxFrameAllocRequest *shared_request[2];
   mfxFrameAllocResponse response[2];
 
   /* VPP output parameters */
@@ -97,19 +96,6 @@ static const GstMfxFilterMap filter_map[] = {
   {GST_MFX_FILTER_ROTATION, MFX_EXTBUFF_VPP_ROTATION, "Rotation filter"},
   {0,}
 };
-
-void
-gst_mfx_filter_set_request (GstMfxFilter * filter,
-    mfxFrameAllocRequest * request, guint flags)
-{
-  filter->shared_request[!!(flags & GST_MFX_TASK_VPP_OUT)] =
-      g_slice_dup (mfxFrameAllocRequest, request);
-
-  if (flags & GST_MFX_TASK_VPP_IN)
-    filter->shared_request[0]->Type |= MFX_MEMTYPE_FROM_VPPIN;
-  else
-    filter->shared_request[1]->Type |= MFX_MEMTYPE_FROM_VPPOUT;
-}
 
 void
 gst_mfx_filter_set_frame_info (GstMfxFilter * filter, mfxFrameInfo * info)
@@ -247,7 +233,7 @@ init_params (GstMfxFilter * filter)
   /* Aligned frame dimensions may differ between input and output surfaces
    * so we sanitize the input frame dimensions, since output frame dimensions
    * could have certain alignment requirements used in HEVC HW encoding */
-  if (filter->shared_request[1]) {
+  if (gst_mfx_task_get_task_type(filter->vpp[1]) != GST_MFX_TASK_VPP_OUT) { // shared task
     filter->params.vpp.In.Width = GST_ROUND_UP_16 (filter->frame_info.CropW);
     filter->params.vpp.In.Height =
         (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
@@ -317,38 +303,21 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
         MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
-  if (filter->shared_request[1]) {
-    filter->shared_request[1]->NumFrameSuggested += request[1].NumFrameSuggested;
-    filter->shared_request[1]->NumFrameMin =
-        filter->shared_request[1]->NumFrameSuggested;
+  if (filter->vpp[0]) {
+    mfxFrameAllocRequest *req0 = gst_mfx_task_get_request(filter->vpp[0]);
+    req0->NumFrameSuggested += request[0].NumFrameSuggested;
+    req0->NumFrameMin = req0->NumFrameSuggested;
+    req0->Type |= MFX_MEMTYPE_FROM_VPPIN;
+  }
+
+  if (gst_mfx_task_get_task_type(filter->vpp[1]) == GST_MFX_TASK_VPP_OUT) {
+    gst_mfx_task_set_request(filter->vpp[1], &request[1]);
   }
   else {
-    filter->shared_request[1] = g_slice_dup (mfxFrameAllocRequest, &request[1]);
-  }
-
-  gst_mfx_task_set_request (filter->vpp[1], filter->shared_request[1]);
-
-  /* Initialize input VPP surface pool for shared VPP-decode task */
-  if (filter->vpp[0]) {
-    gboolean memtype_is_system =
-      !(filter->params.IOPattern & MFX_IOPATTERN_IN_VIDEO_MEMORY);
-
-    filter->shared_request[0]->NumFrameSuggested += request[0].NumFrameSuggested;
-    filter->shared_request[0]->NumFrameMin =
-      filter->shared_request[0]->NumFrameSuggested;
-
-    if (!memtype_is_system) {
-      gst_mfx_task_use_video_memory(filter->vpp[0]);
-      gst_mfx_task_set_request(filter->vpp[0], filter->shared_request[0]);
-
-      /* Make sure frame allocator points to the right task to allocate surfaces */
-      gst_mfx_task_aggregator_set_current_task(filter->aggregator,
-        filter->vpp[0]);
-      sts = gst_mfx_task_frame_alloc(filter->aggregator,
-              filter->shared_request[0], &filter->response[0]);
-      if (MFX_ERR_NONE != sts)
-        return FALSE;
-    }
+    mfxFrameAllocRequest *req1 = gst_mfx_task_get_request(filter->vpp[1]);
+    req1->NumFrameSuggested += request[1].NumFrameSuggested;
+    req1->NumFrameMin = req1->NumFrameSuggested;
+    req1->Type |= MFX_MEMTYPE_FROM_VPPOUT;
   }
 
   return TRUE;
@@ -442,7 +411,6 @@ gst_mfx_filter_finalize (GObject * object)
   for (i = 0; i < 2; i++) {
     if (!filter->vpp[i])
       continue;
-    g_slice_free (mfxFrameAllocRequest, filter->shared_request[i]);
     gst_mfx_task_replace (&filter->vpp[i], NULL);
   }
 
@@ -1025,7 +993,6 @@ gst_mfx_filter_start (GstMfxFilter * filter)
     GST_ERROR ("Unable to retrieve task parameters from VPP allocation request.");
     return GST_MFX_FILTER_STATUS_ERROR_INVALID_PARAMETER;
   }
-  memcpy (filter->shared_request[1], request, sizeof(mfxFrameAllocRequest));
 
   memtype_is_system = !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
   if (!memtype_is_system) {
@@ -1034,8 +1001,8 @@ gst_mfx_filter_start (GstMfxFilter * filter)
     /* Make sure frame allocator points to the right task to allocate surfaces */
     gst_mfx_task_aggregator_set_current_task(filter->aggregator,
       filter->vpp[1]);
-    sts = gst_mfx_task_frame_alloc (filter->aggregator,
-            filter->shared_request[1], &filter->response[1]);
+    sts = gst_mfx_task_frame_alloc(filter->aggregator,
+            request, &filter->response[1]);
     if (MFX_ERR_NONE != sts)
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
   }

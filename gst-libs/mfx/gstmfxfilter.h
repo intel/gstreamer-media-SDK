@@ -182,10 +182,6 @@ gst_mfx_filter_reset (GstMfxFilter * filter);
 gboolean
 gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags);
 
-void
-gst_mfx_filter_set_request (GstMfxFilter * filter,
-    mfxFrameAllocRequest * request, guint flags);
-
 /* Setters */
 void
 gst_mfx_filter_set_frame_info (GstMfxFilter * filter, mfxFrameInfo * info);
