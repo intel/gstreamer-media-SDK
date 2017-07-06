@@ -98,17 +98,6 @@ gst_mfx_task_aggregator_get_context (GstMfxTaskAggregator * aggregator)
   return aggregator->context ? gst_mfx_context_ref (aggregator->context) : NULL;
 }
 
-static inline void
-gst_mfx_task_aggregator_set_device_context (GstMfxTaskAggregator * aggregator)
-{
-  if (!aggregator->context) {
-    aggregator->context = gst_mfx_context_new(aggregator->parent_session);
-#ifdef WITH_LIBVA_BACKEND
-    gst_mfx_display_init_vaapi(gst_mfx_context_get_device(aggregator->context));
-#endif
-  }
-}
-
 mfxSession
 gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
     gboolean * is_joined)
@@ -165,7 +154,9 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
     *is_joined = TRUE;
   }
 
-  gst_mfx_task_aggregator_set_device_context (aggregator);
+  if (!aggregator->context)
+    aggregator->context = gst_mfx_context_new(aggregator->parent_session);
+
   return session;
 }
 
@@ -268,7 +259,7 @@ gst_mfx_task_aggregator_get_platform(GstMfxTaskAggregator * aggregator)
   if (!aggregator->platform) {
     mfxPlatform platform = { 0 };
     mfxStatus sts =
-      MFXVideoCORE_QueryPlatform(aggregator->parent_session, &platform);  
+      MFXVideoCORE_QueryPlatform(aggregator->parent_session, &platform);
     if (MFX_ERR_NONE == sts)
       aggregator->platform = platform.CodeName;
   }
