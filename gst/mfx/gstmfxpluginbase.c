@@ -403,8 +403,6 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   gboolean has_video_meta = FALSE;
   guint idx;
 
-  g_return_val_if_fail (plugin->aggregator != NULL, FALSE);
-
   gst_query_parse_allocation (query, &caps, NULL);
 
   if (!caps)
