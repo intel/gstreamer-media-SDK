@@ -74,7 +74,7 @@ typedef enum {
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
-    gboolean live_mode);
+    gboolean live_mode, gboolean is_autoplugged);
 
 GType
 gst_mfx_decoder_get_type(void) G_GNUC_CONST;

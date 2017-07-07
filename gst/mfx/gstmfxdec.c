@@ -301,6 +301,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   GstMfxProfile profile = gst_mfx_profile_from_caps (caps);
   GstVideoInfo info;
   GstObject *parent;
+  gboolean is_autoplugged = FALSE;
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
     return FALSE;
@@ -312,11 +313,11 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
    * jerky video playback resulting from threading issues */
   parent = gst_object_get_parent (GST_OBJECT(mfxdec));
   if (parent && !GST_IS_PIPELINE (GST_ELEMENT(parent)))
-    mfxdec->async_depth = 16;
+    is_autoplugged = TRUE;
   gst_object_replace (&parent, NULL);
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,
-    mfxdec->async_depth, mfxdec->live_mode);
+    mfxdec->async_depth, mfxdec->live_mode, is_autoplugged);
   if (!mfxdec->decoder)
     return FALSE;
 
@@ -402,6 +403,7 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
 
   g_return_val_if_fail (info != NULL, FALSE);
 
+  /* TODO: Remove when decoder re-initialization is implemented correctly */
   if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED
       && profile->codec == MFX_CODEC_AVC)
     hard = TRUE;
