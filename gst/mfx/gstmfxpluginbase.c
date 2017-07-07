@@ -29,6 +29,8 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxvideobufferpool.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
 
 #if defined(WITH_LIBVA_BACKEND) && defined(HAVE_GST_GL_LIBS)
 #if GST_CHECK_VERSION(1,11,1)
@@ -37,9 +39,6 @@
 # include <gst/gl/egl/gstglcontext_egl.h>
 #endif
 #endif
-
-/* Default debug category is from the subclass */
-#define GST_CAT_DEFAULT (plugin->debug_category)
 
 static gpointer plugin_parent_class = NULL;
 
@@ -73,6 +72,9 @@ default_has_interface (GstMfxPluginBase * plugin, GType type)
 void
 gst_mfx_plugin_base_class_init (GstMfxPluginBaseClass * klass)
 {
+  GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
+    "mfxtaskaggregator", 0, "MFX Context");
+
   klass->has_interface = default_has_interface;
 
   plugin_parent_class = g_type_class_peek_parent (klass);
@@ -86,6 +88,9 @@ gst_mfx_plugin_base_init (GstMfxPluginBase * plugin,
     GstDebugCategory * debug_category)
 {
   plugin->debug_category = debug_category;
+
+  GST_DEBUG_CATEGORY_INIT (debug_category,
+    "mfxpluginbase", 0, "MFX Context");
 
   /* sink pad */
   plugin->sinkpad = gst_element_get_static_pad (GST_ELEMENT (plugin), "sink");

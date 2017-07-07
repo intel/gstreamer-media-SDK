@@ -271,5 +271,7 @@ static void
 gst_mfx_task_aggregator_class_init(GstMfxTaskAggregatorClass * klass)
 {
   GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
+    "mfxtaskaggregator", 0, "MFX Context");
   object_class->finalize = gst_mfx_task_aggregator_finalize;
 }
