@@ -271,6 +271,7 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
     frame_info->FourCC = MFX_FOURCC_P010;
     frame_info->BitDepthChroma = 10;
     frame_info->BitDepthLuma = 10;
+    frame_info->Shift = 1;
   }
   else {
     frame_info->FourCC = MFX_FOURCC_NV12;

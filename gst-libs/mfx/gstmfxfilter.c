@@ -263,8 +263,7 @@ init_params (GstMfxFilter * filter)
     if (MFX_FOURCC_P010 == filter->fourcc) {
       filter->params.vpp.Out.BitDepthLuma = 10;
       filter->params.vpp.Out.BitDepthChroma = 10;
-
-      //filter->params.vpp.Out.Shift = 1;
+      filter->params.vpp.Out.Shift = 1;
     }
   }
   if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
