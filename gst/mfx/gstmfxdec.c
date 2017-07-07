@@ -186,15 +186,14 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
-      &format);
+        &format);
 
   if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
     return FALSE;
 
-  if (GST_MFX_CAPS_FEATURE_MFX_SURFACE == feature) {
+  if (GST_MFX_CAPS_FEATURE_MFX_SURFACE == feature)
     features =
         gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
-  }
 
   state = gst_video_decoder_set_output_state (vdec, format,
       ref_state->info.width, ref_state->info.height, ref_state);
@@ -222,12 +221,8 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!mfxdec->do_renego)
     return TRUE;
 
-  GST_DEBUG_OBJECT (mfxdec, "Input codec state changed, doing renegotiation");
+  GST_DEBUG_OBJECT (mfxdec, "Input codec state changed, renegotiating");
 
-  if (!gst_mfx_plugin_base_set_caps (plugin, mfxdec->sinkpad_caps, NULL))
-    return FALSE;
-  if (!gst_mfxdec_update_src_caps (mfxdec))
-    return FALSE;
   if (!gst_video_decoder_negotiate (vdec))
     return FALSE;
   if (!gst_mfx_plugin_base_set_caps (plugin, NULL, mfxdec->srcpad_caps))
@@ -288,13 +283,6 @@ gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
 }
 
 static gboolean
-gst_mfxdec_decide_allocation (GstVideoDecoder * vdec, GstQuery * query)
-{
-  return gst_mfx_plugin_base_decide_allocation (GST_MFX_PLUGIN_BASE (vdec),
-            query);
-}
-
-static gboolean
 gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
@@ -305,7 +293,6 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
     return FALSE;
-
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
 
@@ -329,6 +316,75 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   return TRUE;
 }
 
+static GstFlowReturn
+gst_mfxdec_push_decoded_frame(GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
+{
+  GstMfxVideoMeta *meta;
+  const GstMfxRectangle *crop_rect;
+  GstMfxSurface *surface;
+
+  surface = gst_video_codec_frame_get_user_data(frame);
+
+  frame->output_buffer =
+    gst_video_decoder_allocate_output_buffer(GST_VIDEO_DECODER(mfxdec));
+  if (!frame->output_buffer)
+    goto error_create_buffer;
+
+  meta = gst_buffer_get_mfx_video_meta(frame->output_buffer);
+  if (!meta)
+    goto error_get_meta;
+  gst_mfx_video_meta_set_surface(meta, surface);
+  crop_rect = gst_mfx_surface_get_crop_rect(surface);
+  if (crop_rect) {
+    GstVideoCropMeta *const crop_meta =
+      gst_buffer_add_video_crop_meta(frame->output_buffer);
+    if (crop_meta) {
+      crop_meta->x = crop_rect->x;
+      crop_meta->y = crop_rect->y;
+      crop_meta->width = crop_rect->width;
+      crop_meta->height = crop_rect->height;
+    }
+  }
+
+#ifdef WITH_LIBVA_BACKEND
+  gst_mfx_plugin_base_export_dma_buffer(GST_MFX_PLUGIN_BASE(mfxdec),
+    frame->output_buffer);
+#endif // WITH_LIBVA_BACKEND
+
+  return gst_video_decoder_finish_frame(GST_VIDEO_DECODER(mfxdec), frame);
+  /* ERRORS */
+error_create_buffer:
+  {
+    gst_video_decoder_drop_frame(GST_VIDEO_DECODER(mfxdec), frame);
+    gst_video_codec_frame_unref(frame);
+    return GST_FLOW_ERROR;
+  }
+error_get_meta:
+  {
+    gst_video_decoder_drop_frame(GST_VIDEO_DECODER(mfxdec), frame);
+    gst_video_codec_frame_unref(frame);
+    return GST_FLOW_ERROR;
+  }
+}
+
+static GstFlowReturn
+gst_mfxdec_drain (GstMfxDec * mfxdec)
+{
+  GstMfxDecoderStatus sts = GST_MFX_DECODER_STATUS_SUCCESS;
+  GstVideoCodecFrame *out_frame = NULL;
+  GstFlowReturn ret = GST_FLOW_OK;
+
+  do {
+    sts = gst_mfx_decoder_flush(mfxdec->decoder);
+    if (GST_MFX_DECODER_STATUS_FLUSHED == sts)
+      break;
+    while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame))
+      ret = gst_mfxdec_push_decoded_frame(mfxdec, out_frame);
+  } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
+
+  return ret;
+}
+
 static void
 gst_mfxdec_flush_discarded_frames (GstMfxDec * mfxdec)
 {
@@ -341,23 +397,24 @@ gst_mfxdec_flush_discarded_frames (GstMfxDec * mfxdec)
 }
 
 static gboolean
-gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
-  gboolean hard)
+gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
 {
-  if (mfxdec->decoder && !hard) {
+  if (mfxdec->decoder) {
     GstMfxProfile *old_profile = gst_mfx_decoder_get_profile(mfxdec->decoder);
     GstMfxProfile new_profile = gst_mfx_profile_from_caps (caps);
 
     if (old_profile
         && new_profile.codec == old_profile->codec
         && new_profile.profile == old_profile->profile) {
-      gst_mfx_decoder_reset (mfxdec->decoder);
+      gst_mfxdec_drain (mfxdec);
+      if (!gst_mfx_decoder_reset(mfxdec->decoder)) {
+        GST_ERROR_OBJECT(mfxdec, "Failed to reset decoder");
+        return FALSE;
+      }
       gst_mfxdec_flush_discarded_frames (mfxdec);
       return TRUE;
     }
   }
-  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
-
   return gst_mfxdec_create (mfxdec, caps);
 }
 
@@ -395,18 +452,8 @@ static gboolean
 gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
-  GstMfxProfile *profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
-  GstVideoInfo *info = gst_mfx_decoder_get_video_info (mfxdec->decoder);
-  gboolean hard = FALSE;
 
-  g_return_val_if_fail (info != NULL, FALSE);
-
-  /* TODO: Remove when decoder re-initialization is implemented correctly */
-  if (info->interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED
-      && profile->codec == MFX_CODEC_AVC)
-    hard = TRUE;
-
-  return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
+  return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps);
 }
 
 static gboolean
@@ -421,62 +468,17 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
     return FALSE;
   if (!gst_mfx_plugin_base_set_caps (plugin, mfxdec->sinkpad_caps, NULL))
     return FALSE;
-  if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, FALSE))
+  if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps))
     return FALSE;
 
   return TRUE;
 }
 
-
-static GstFlowReturn
-gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
+static gboolean
+gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
 {
-  GstMfxVideoMeta *meta;
-  const GstMfxRectangle *crop_rect;
-  GstMfxSurface *surface;
-
-  surface = gst_video_codec_frame_get_user_data(frame);
-
-  frame->output_buffer =
-      gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
-  if (!frame->output_buffer)
-    goto error_create_buffer;
-
-  meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
-  if (!meta)
-    goto error_get_meta;
-  gst_mfx_video_meta_set_surface (meta, surface);
-  crop_rect = gst_mfx_surface_get_crop_rect (surface);
-  if (crop_rect) {
-    GstVideoCropMeta *const crop_meta =
-      gst_buffer_add_video_crop_meta (frame->output_buffer);
-    if (crop_meta) {
-      crop_meta->x = crop_rect->x;
-      crop_meta->y = crop_rect->y;
-      crop_meta->width = crop_rect->width;
-      crop_meta->height = crop_rect->height;
-    }
-  }
-
-#ifdef WITH_LIBVA_BACKEND
-  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (mfxdec),
-    frame->output_buffer);
-#endif // WITH_LIBVA_BACKEND
-
-  return gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
-  /* ERRORS */
-error_create_buffer:
-  {
-    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
-    gst_video_codec_frame_unref (frame);
-    return GST_FLOW_ERROR;
-  }
-error_get_meta:
-  {
-    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
-    gst_video_codec_frame_unref (frame);
-    return GST_FLOW_ERROR;
-  }
+  return gst_mfx_plugin_base_decide_allocation(GST_MFX_PLUGIN_BASE(vdec),
+    query);
 }
 
 static GstFlowReturn
@@ -540,21 +542,9 @@ static GstFlowReturn
 gst_mfxdec_finish (GstVideoDecoder *vdec)
 {
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
-  GstMfxDecoderStatus sts;
-  GstVideoCodecFrame *out_frame;
-  GstFlowReturn ret = GST_FLOW_OK;
+  GstFlowReturn ret;
 
-  do {
-    sts = gst_mfx_decoder_flush (mfxdec->decoder);
-    if (GST_MFX_DECODER_STATUS_FLUSHED == sts)
-      break;
-    while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
-      ret = gst_mfxdec_push_decoded_frame (mfxdec, out_frame);
-      if (ret != GST_FLOW_OK)
-        break;
-    }
-  } while (GST_MFX_DECODER_STATUS_SUCCESS == sts);
-
+  ret = gst_mfxdec_drain (mfxdec);
   gst_mfxdec_flush_discarded_frames (mfxdec);
 
   return ret;

@@ -100,14 +100,6 @@ gst_mfx_decoder_get_discarded_frame (GstMfxDecoder * decoder)
   return g_queue_pop_tail (&decoder->discarded_frames);
 }
 
-GstVideoInfo *
-gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder)
-{
-  g_return_val_if_fail (decoder != NULL, NULL);
-
-  return &decoder->info;
-}
-
 void
 gst_mfx_decoder_skip_corrupted_frames(GstMfxDecoder * decoder)
 {
@@ -613,13 +605,10 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   return ret;
 }
 
-void
+gboolean
 gst_mfx_decoder_reset (GstMfxDecoder * decoder)
 {
-  /* TODO: Remove when decoder re-initialization is implemented correctly */
-  if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_MIXED
-      && decoder->params.mfx.CodecId == MFX_CODEC_AVC)
-    return;
+  mfxStatus sts = MFX_ERR_NONE;
 
   /* Flush pending frames */
   while (!g_queue_is_empty(&decoder->pending_frames))
@@ -638,7 +627,9 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   decoder->has_ready_frames = FALSE;
   decoder->num_partial_frames = 0;
 
-  MFXVideoDECODE_Reset (decoder->session, &decoder->params);
+  sts = MFXVideoDECODE_Reset (decoder->session, &decoder->params);
+
+  return (MFX_ERR_NONE == sts);
 }
 
 static GstVideoCodecFrame *

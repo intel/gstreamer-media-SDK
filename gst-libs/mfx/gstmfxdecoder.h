@@ -109,7 +109,7 @@ void
 gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
     gboolean memtype_is_video);
 
-void
+gboolean
 gst_mfx_decoder_reset (GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus

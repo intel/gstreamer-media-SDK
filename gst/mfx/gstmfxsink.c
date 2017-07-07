@@ -744,20 +744,20 @@ gst_mfxsink_ensure_window (GstMfxSink * sink, guint width, guint height)
   return sink->window || sink->backend->create_window (sink, width, height);
 }
 
-#ifdef WITH_LIBVA_BACKEND
 static void
 gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
     guint * height_ptr)
 {
-  GstVideoRectangle src_rect, dst_rect, out_rect;
-  guint num, den, display_width, display_height, display_par_n, display_par_d;
-  gboolean success, scale;
-
   if (sink->foreign_window) {
     *width_ptr = sink->window_width;
     *height_ptr = sink->window_height;
     return;
   }
+
+#ifdef WITH_LIBVA_BACKEND
+  GstVideoRectangle src_rect, dst_rect, out_rect;
+  guint num, den, display_width, display_height, display_par_n, display_par_d;
+  gboolean success, scale;
 
   gst_mfx_display_get_size (sink->display, &display_width, &display_height);
   if (sink->fullscreen) {
@@ -789,8 +789,12 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
   gst_video_sink_center_rect (src_rect, dst_rect, &out_rect, scale);
   *width_ptr = out_rect.w;
   *height_ptr = out_rect.h;
-}
+#else
+  if (sink->window)
+    gst_mfx_window_get_size (sink->window, width_ptr, height_ptr);
 #endif  // WITH_LIBVA_BACKEND
+}
+
 
 static gboolean
 gst_mfxsink_start (GstBaseSink * base_sink)
@@ -893,9 +897,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
       sink->video_par_n, sink->video_par_d);
 
   gst_caps_replace (&sink->caps, caps);
-#ifdef WITH_LIBVA_BACKEND
   gst_mfxsink_ensure_window_size (sink, &win_width, &win_height);
-#endif
   if (sink->window) {
     if (!sink->foreign_window || sink->fullscreen)
       gst_mfx_window_set_size (sink->window, win_width, win_height);
