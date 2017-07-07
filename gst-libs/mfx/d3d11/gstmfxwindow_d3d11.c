@@ -180,7 +180,7 @@ static gboolean
 gst_mfx_window_d3d11_destroy (GObject * window)
 {
   GstMfxWindowD3D11Private *const priv =
-    GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
+      GST_MFX_WINDOW_D3D11_GET_PRIVATE(window);
 
   if (priv->output_view) {
     ID3D11VideoProcessorOutputView_Release(priv->output_view);
@@ -208,6 +208,8 @@ gst_mfx_window_d3d11_destroy (GObject * window)
       priv->d3d11_window.hInstance);
     memset(&priv->d3d11_window, 0, sizeof(WNDCLASS));
   }
+
+  PostMessage(GST_MFX_WINDOW_GET_PRIVATE(window)->handle, WM_QUIT, 0, 0);
 
   gst_mfx_surface_replace (&priv->mapped_surface, NULL);
   gst_mfx_d3d11_device_replace (&priv->device, NULL);

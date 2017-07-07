@@ -417,6 +417,7 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
       return TRUE;
     }
   }
+  gst_mfx_decoder_replace(&mfxdec->decoder, NULL);
   return gst_mfxdec_create (mfxdec, caps);
 }
 
