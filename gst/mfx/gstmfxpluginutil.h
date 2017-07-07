@@ -72,7 +72,7 @@ gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
 
 #define GST_MFX_MAKE_SURFACE_CAPS               \
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
+    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE }")
 
 #ifdef WITH_LIBVA_BACKEND
 #define GST_MFX_SUPPORTED_INPUT_FORMATS \

@@ -65,7 +65,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_SURFACE_CAPS ";"
-  GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
+  GST_VIDEO_CAPS_MAKE ("{ NV12, P010_10LE, BGRA }");
 
 enum
 {
@@ -99,7 +99,7 @@ static const GstMfxCodecMap mfx_codec_map[] = {
   {"hevc", GST_RANK_NONE,
       "video/x-h265, \
        alignment = (string) au, \
-       profile = (string) main, \
+       profile = (string) { main, main-10 }, \
        stream-format = (string) byte-stream"},
   {"mpeg2", GST_RANK_PRIMARY + 3,
       "video/mpeg, \
