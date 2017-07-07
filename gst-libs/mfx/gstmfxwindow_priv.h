@@ -120,9 +120,6 @@ struct _GstMfxWindowClass
   GstMfxWindowRenderFunc render;
 };
 
-void
-gst_mfx_window_class_init(GstMfxWindowClass * klass);
-
 GstMfxWindow *
 gst_mfx_window_new_internal(GstMfxWindow * window, GstMfxContext* context,
   GstMfxID id, guint width, guint height);
