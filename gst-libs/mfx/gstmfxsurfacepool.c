@@ -240,8 +240,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
   if (!surface) {
     g_mutex_unlock (&pool->mutex);
     if (pool->task) {
-      surface = gst_mfx_surface_new_from_task (
-        g_object_new(GST_TYPE_MFX_SURFACE, NULL), pool->task);
+      surface = gst_mfx_surface_new_from_task (pool->task);
     }
     else {
       if (!pool->memtype_is_system)
@@ -251,9 +250,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
         surface = gst_mfx_surface_d3d11_new (pool->context, &pool->info);
 #endif
       else
-        surface =
-            gst_mfx_surface_new(g_object_new(GST_TYPE_MFX_SURFACE, NULL),
-              &pool->info);
+        surface = gst_mfx_surface_new (&pool->info);
     }
 
     g_mutex_lock (&pool->mutex);

@@ -96,8 +96,7 @@ create_subpicture (GstMfxSurfaceComposition * composition,
     gst_mfx_context_unref (context);
   }
   else {
-    subpicture->surface =
-        gst_mfx_surface_new(g_object_new(GST_TYPE_MFX_SURFACE, NULL), &info);
+    subpicture->surface = gst_mfx_surface_new(&info);
   }
   if (!subpicture->surface)
     return FALSE;
