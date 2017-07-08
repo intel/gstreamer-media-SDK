@@ -90,17 +90,13 @@ struct _GstMfxCodecMap
   const gchar *caps_str;
 };
 
-static const GstMfxCodecMap mfx_codec_map[] = {
+static GstMfxCodecMap mfx_codec_map[] = {
   {"h264", GST_RANK_PRIMARY + 3,
       "video/x-h264, \
        alignment = (string) au, \
        profile = (string) { constrained-baseline, baseline, main, high }, \
        stream-format = (string) byte-stream"},
-  {"hevc", GST_RANK_NONE,
-      "video/x-h265, \
-       alignment = (string) au, \
-       profile = (string) { main, main-10 }, \
-       stream-format = (string) byte-stream"},
+  {"hevc", GST_RANK_NONE, NULL},  // Determine caps later based on platform support
   {"mpeg2", GST_RANK_PRIMARY + 3,
       "video/mpeg, \
        mpegversion=2, \
@@ -743,13 +739,27 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
         case MFX_PLATFORM_SKYLAKE:
           if (!g_strcmp0(name, "vp9"))
             rank = GST_RANK_PRIMARY + 3;
+          /* fall-through */
         case MFX_PLATFORM_CHERRYTRAIL:
         case MFX_PLATFORM_BROADWELL:
           if (!g_strcmp0(name, "vp8"))
             rank = GST_RANK_PRIMARY + 3;
-        case MFX_PLATFORM_HASWELL:
-          if (!g_strcmp0(name, "hevc"))
+          if (!g_strcmp0(name, "hevc")) {
+            mfx_codec_map[i].caps_str = "video/x-h265, "
+              "alignment = (string) au, "
+              "profile = (string) { main, main-10 }, "
+              "stream-format = (string) byte-stream";
             rank = GST_RANK_PRIMARY + 3;
+          }
+          break;
+        case MFX_PLATFORM_HASWELL:
+          if (!g_strcmp0(name, "hevc")) {
+            mfx_codec_map[i].caps_str = "video/x-h265, "
+              "alignment = (string) au, "
+              "profile = (string) main, "
+              "stream-format = (string) byte-stream";
+            rank = GST_RANK_PRIMARY + 3;
+          }
           break;
         default:
           break;
