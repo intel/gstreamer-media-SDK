@@ -44,8 +44,8 @@ static const char gst_mfxpostproc_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
         GST_CAPS_FEATURE_MEMORY_MFX_SURFACE ","
-            GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
-        "{ NV12, BGRA }") ";"
+        GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
+        "{ NV12, BGRA, P010_10LE }") ";"
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
         GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
         GST_MFX_SUPPORTED_INPUT_FORMATS) ";"
@@ -467,7 +467,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!plugin->sinkpad_caps_is_raw
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
     mfxFrameAllocRequest *request = gst_mfx_task_get_request(task);
-    vpp->filter = gst_mfx_filter_new_with_task(plugin->aggregator, task,
+    vpp->filter = gst_mfx_filter_new_with_task (plugin->aggregator, task,
         GST_MFX_TASK_VPP_IN, plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
     if (!vpp->filter) {
       goto done;
@@ -476,9 +476,6 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
     vpp->async_depth = gst_mfx_task_get_video_params(task)->AsyncDepth;
     request->Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
-#ifdef WITH_LIBVA_BACKEND
-    request->Type |= MFX_MEMTYPE_EXPORT_FRAME;
-#endif // WITH_LIBVA_BACKEND
     request->NumFrameSuggested += (1 - vpp->async_depth);
 
     gst_mfx_filter_set_frame_info(vpp->filter, &request->Info);

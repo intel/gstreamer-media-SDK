@@ -145,14 +145,15 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
 
     if ((MFX_MEMTYPE_FROM_VPPIN & request->Type)
         && (DXGI_FORMAT_YUY2 == desc.Format)
-        || (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format)) {
+        || (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format)
+        || (DXGI_FORMAT_R10G10B10A2_UNORM == desc.Format)) {
       desc.BindFlags = D3D11_BIND_RENDER_TARGET;
       if (desc.ArraySize > 2)
         goto error;
     }
 
     if ((MFX_MEMTYPE_FROM_VPPOUT & request->Type)
-      || (MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET & request->Type)) {
+        || (MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET & request->Type)) {
       desc.BindFlags = D3D11_BIND_RENDER_TARGET;
       if (desc.ArraySize > 2)
         goto error;
