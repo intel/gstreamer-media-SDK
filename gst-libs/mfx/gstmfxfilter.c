@@ -226,8 +226,6 @@ configure_filters (GstMfxFilter * filter)
 static void
 init_params (GstMfxFilter * filter)
 {
-  gdouble frame_rate;
-
   filter->params.vpp.In = filter->frame_info;
 
   /* Aligned frame dimensions may differ between input and output surfaces
@@ -258,14 +256,6 @@ init_params (GstMfxFilter * filter)
     filter->params.vpp.Out.FrameRateExtN = filter->fps_n;
     filter->params.vpp.Out.FrameRateExtD = filter->fps_d;
   }
-  if (filter->fourcc) {
-    filter->params.vpp.Out.FourCC = filter->fourcc;
-    if (MFX_FOURCC_P010 == filter->fourcc) {
-      filter->params.vpp.Out.BitDepthLuma = 10;
-      filter->params.vpp.Out.BitDepthChroma = 10;
-      filter->params.vpp.Out.Shift = 1;
-    }
-  }
   if (filter->filter_op & GST_MFX_FILTER_DEINTERLACING) {
     gdouble frame_rate;
     /* Set up special double frame rate deinterlace mode */
@@ -276,8 +266,19 @@ init_params (GstMfxFilter * filter)
       filter->params.vpp.In.FrameRateExtN /= 2;
 
     filter->params.vpp.Out.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
-    filter->params.vpp.Out.Height =
-        GST_ROUND_UP_16(filter->params.vpp.Out.CropH);
+  }
+  if (filter->fourcc) {
+    filter->params.vpp.Out.FourCC = filter->fourcc;
+    if (MFX_FOURCC_P010 == filter->fourcc) {
+      filter->params.vpp.Out.BitDepthLuma = 10;
+      filter->params.vpp.Out.BitDepthChroma = 10;
+      filter->params.vpp.Out.Shift = 1;
+
+      mfxStatus sts = MFXVideoVPP_Query(filter->session, &filter->params,
+        &filter->params);
+      if (MFX_ERR_NONE != sts)
+        filter->params.vpp.Out.Shift = 0;
+    }
   }
   configure_filters(filter);
 }
@@ -289,8 +290,6 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   mfxStatus sts = MFX_ERR_NONE;
 
   init_params (filter);
-
-  gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   sts =
       MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, request);
@@ -318,6 +317,8 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     req1->NumFrameMin = req1->NumFrameSuggested;
     req1->Type |= MFX_MEMTYPE_FROM_VPPOUT;
   }
+
+  gst_mfx_task_set_video_params(filter->vpp[1], &filter->params);
 
   return TRUE;
 }
@@ -474,7 +475,6 @@ gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
 
   if (!gst_mfx_filter_create (filter, aggregator, is_system_in, is_system_out))
     goto error;
-
   return filter;
 
 error:
@@ -495,7 +495,6 @@ gst_mfx_filter_unref (GstMfxFilter * filter)
 {
   gst_object_unref (GST_OBJECT(filter));
 }
-
 
 void
 gst_mfx_filter_replace (GstMfxFilter ** old_filter_ptr,
@@ -922,11 +921,6 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
     || GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg
     || GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg
     , FALSE);
-      || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
-      || GST_MFX_FRC_FRAME_INTERPOLATION == alg
-      || GST_MFX_FRC_FI_PRESERVE_TIMESTAMP == alg
-      || GST_MFX_FRC_FI_DISTRIBUTED_TIMESTAMP == alg
-      , FALSE);
 #else
   g_return_val_if_fail (GST_MFX_FRC_PRESERVE_TIMESTAMP == alg
       || GST_MFX_FRC_DISTRIBUTED_TIMESTAMP == alg
