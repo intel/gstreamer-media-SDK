@@ -244,7 +244,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
         surface = gst_mfx_surface_d3d11_new (pool->context, &pool->info);
 #endif
       else
-        surface = gst_mfx_surface_new(&pool->info);
+        surface = gst_mfx_surface_new (&pool->info);
     }
 
     g_mutex_lock (&pool->mutex);

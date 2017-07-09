@@ -54,6 +54,12 @@ GstMfxDevice *
 #endif // WITH_LIBVA_BACKEND
 gst_mfx_context_get_device(GstMfxContext * context);
 
+void
+gst_mfx_context_lock(GstMfxContext * context);
+
+void
+gst_mfx_context_unlock(GstMfxContext * context);
+
 G_END_DECLS
 
 #endif /* GST_MFX_CONTEXT_H */

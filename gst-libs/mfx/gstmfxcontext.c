@@ -37,6 +37,7 @@ struct _GstMfxContext
 #else
   GstMfxDevice * device;
 #endif
+  GRecMutex mutex;
 };
 
 G_DEFINE_TYPE(GstMfxContext, gst_mfx_context, GST_TYPE_OBJECT);
@@ -50,6 +51,7 @@ gst_mfx_context_finalize (GObject * object)
 #else
   gst_mfx_device_replace(&context->device, NULL);
 #endif
+  g_rec_mutex_clear(&context->mutex);
 }
 
 static void
@@ -62,6 +64,7 @@ gst_mfx_context_class_init(GstMfxContextClass * klass)
 static void
 gst_mfx_context_init(GstMfxContext * context)
 {
+  g_rec_mutex_init(&context->mutex);
 }
 
 GstMfxContext *
@@ -119,3 +122,18 @@ gst_mfx_context_get_device(GstMfxContext * context)
   g_return_val_if_fail (context != NULL, NULL);
   return context->device;
 }
+
+void
+gst_mfx_context_lock(GstMfxContext * context)
+{
+  g_return_if_fail(context != NULL);
+  g_rec_mutex_lock(&context->mutex);
+}
+
+void
+gst_mfx_context_unlock(GstMfxContext * context)
+{
+  g_return_if_fail(context != NULL);
+  g_rec_mutex_unlock(&context->mutex);
+}
+

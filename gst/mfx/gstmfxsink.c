@@ -969,13 +969,14 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
     gst_mfx_composite_filter_apply_composition (sink->composite_filter,
         composition, &composite_surface);
   }
-
+  gst_mfx_context_lock (sink->device_context);
   if (!gst_mfxsink_render_surface (sink,
         composite_surface ? composite_surface : surface, surface_rect))
     goto error;
 
   ret = GST_FLOW_OK;
 done:
+  gst_mfx_context_unlock (sink->device_context);
   gst_mfx_surface_composition_replace (&composition, NULL);
   return ret;
 

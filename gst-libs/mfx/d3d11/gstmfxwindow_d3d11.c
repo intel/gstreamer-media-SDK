@@ -210,6 +210,7 @@ gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
 
   gst_mfx_surface_replace(&priv->mapped_surface, NULL);
   gst_mfx_device_unref(priv->device);
+
   return TRUE;
 }
 
@@ -242,7 +243,9 @@ WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           &priv->width, &priv->height);
         break;
       case WM_DESTROY:
+        gst_mfx_context_lock(GST_MFX_WINDOW_GET_PRIVATE(window)->context);
         gst_mfx_window_d3d11_destroy(window);
+        gst_mfx_context_unlock(GST_MFX_WINDOW_GET_PRIVATE(window)->context);
         PostQuitMessage(0);
         break;
       default:
