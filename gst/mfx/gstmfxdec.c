@@ -87,7 +87,7 @@ struct _GstMfxCodecMap
 {
   const gchar *name;
   guint rank;
-  const gchar *caps_str;
+  gchar *caps_str;
 };
 
 static GstMfxCodecMap mfx_codec_map[] = {
@@ -96,7 +96,11 @@ static GstMfxCodecMap mfx_codec_map[] = {
        alignment = (string) au, \
        profile = (string) { constrained-baseline, baseline, main, high }, \
        stream-format = (string) byte-stream"},
-  {"hevc", GST_RANK_NONE, NULL},  // Determine caps later based on platform support
+  {"hevc", GST_RANK_NONE,
+      "video/x-h265, \
+       alignment = (string) au, \
+       profile = (string) main, \
+       stream-format = (string) byte-stream" },
   {"mpeg2", GST_RANK_PRIMARY + 3,
       "video/mpeg, \
        mpegversion=2, \
@@ -399,10 +403,11 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
     GstMfxProfile *old_profile = gst_mfx_decoder_get_profile(mfxdec->decoder);
     GstMfxProfile new_profile = gst_mfx_profile_from_caps (caps);
 
+    gst_mfxdec_drain(mfxdec);
+
     if (old_profile
         && new_profile.codec == old_profile->codec
         && new_profile.profile == old_profile->profile) {
-      gst_mfxdec_drain (mfxdec);
       if (!gst_mfx_decoder_reset(mfxdec->decoder)) {
         GST_ERROR_OBJECT(mfxdec, "Failed to reset decoder");
         return FALSE;
@@ -742,6 +747,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
         case MFX_PLATFORM_BROADWELL:
           if (!g_strcmp0(name, "vp8"))
             rank = GST_RANK_PRIMARY + 3;
+#ifdef WITH_D3D11_BACKEND
           if (!g_strcmp0(name, "hevc")) {
             mfx_codec_map[i].caps_str = "video/x-h265, "
               "alignment = (string) au, "
@@ -750,14 +756,10 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
             rank = GST_RANK_PRIMARY + 3;
           }
           break;
+#endif
         case MFX_PLATFORM_HASWELL:
-          if (!g_strcmp0(name, "hevc")) {
-            mfx_codec_map[i].caps_str = "video/x-h265, "
-              "alignment = (string) au, "
-              "profile = (string) main, "
-              "stream-format = (string) byte-stream";
+          if (!g_strcmp0(name, "hevc"))
             rank = GST_RANK_PRIMARY + 3;
-          }
           break;
         default:
           break;

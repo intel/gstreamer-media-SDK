@@ -16,7 +16,7 @@ plugins and their usage.
 
 Features
 --------
- - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC, VP8 and VP9 videos
+ - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 videos
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
  - Support for zero-copy rendering with glimagesink using EGL
@@ -26,7 +26,7 @@ Features
  - Support VPP acceleration of dynamic procamp control during video playback
  - Support for subtitles (text overlay) via MFX VPP surface composition
  - Support all Media SDK postprocessing capabilities as exposed by the MSDK API
- - Encode / transcode video into H.264, HEVC, MPEG-2 and JPEG formats
+ - Encode / transcode video into H.264, HEVC (Main and Main 10), MPEG-2 and JPEG formats
 
 
 Requirements
@@ -38,7 +38,7 @@ Requirements
     Media Server Studio 2017 Community / Professional Edition (Windows / Linux) or  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake) or greater
   * GStreamer 1.6.x (tested up to GStreamer 1.12.x)
-  * gst-plugins-* 1.6.x (tested up to GStreamer 1.12.x)
+  * gst-plugins-* 1.10.x (tested up to GStreamer 1.12.x)
   * Microsoft Visual Studio 2013 / 2015 (Windows)
   * Python 3
   * pkg-config
@@ -107,6 +107,11 @@ Usage
 -----
 Please refer to README.USAGE for examples on how to accomplish various
 video-related tasks with the GST-MFX plugins.
+
+
+TODO
+----
+ - Direct3D 11 - OpenGL interop support
 
 
 License
