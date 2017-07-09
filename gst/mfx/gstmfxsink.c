@@ -795,7 +795,6 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
 #endif  // WITH_LIBVA_BACKEND
 }
 
-
 static gboolean
 gst_mfxsink_start (GstBaseSink * base_sink)
 {

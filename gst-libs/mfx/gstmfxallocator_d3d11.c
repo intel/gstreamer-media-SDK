@@ -293,6 +293,12 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
         ptr->V = (desc.Format == DXGI_FORMAT_P010) ?
           ptr->U + 2 : ptr->U + 1;
         break;
+      case DXGI_FORMAT_420_OPAQUE:
+        ptr->Pitch = (mfxU16)locked_rect.RowPitch;
+        ptr->Y = (mfxU8 *)locked_rect.pData;
+        ptr->V = ptr->Y + desc.Height * locked_rect.RowPitch;
+        ptr->U = ptr->V + (desc.Height * locked_rect.RowPitch) / 4;
+        break;
       case DXGI_FORMAT_B8G8R8A8_UNORM:
         ptr->Pitch = (mfxU16)locked_rect.RowPitch;
         ptr->B = (mfxU8*)locked_rect.pData;

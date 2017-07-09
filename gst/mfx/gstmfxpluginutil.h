@@ -79,7 +79,7 @@ gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
     "{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }"
 #else
 #define GST_MFX_SUPPORTED_INPUT_FORMATS \
-    "{ NV12, YUY2, BGRA, BGRx }"
+    "{ NV12, YV12, I420, YUY2, BGRA, BGRx }"
 #endif
 
 
