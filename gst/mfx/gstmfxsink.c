@@ -45,7 +45,10 @@ GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxsink);
 #define GST_CAT_DEFAULT gst_debug_mfxsink
 
 /* Default template */
-static const char gst_mfxsink_sink_caps_str[] = GST_MFX_MAKE_SURFACE_CAPS ";";
+static const char gst_mfxsink_sink_caps_str[] = 
+GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
+  GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ BGRA, ENCODED, P010_10LE, NV12 }"
+) ";";
 
 static GstStaticPadTemplate gst_mfxsink_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",

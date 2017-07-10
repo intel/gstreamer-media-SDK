@@ -52,8 +52,10 @@ static const char gst_mfxpostproc_sink_caps_str[] =
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxpostproc_src_caps_str[] =
-    GST_MFX_MAKE_SURFACE_CAPS "; "
-    GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
+  GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
+    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, BGRA, NV12, P010_10LE }"
+  ) "; "
+  GST_VIDEO_CAPS_MAKE ("{ BGRA, P010_10LE, NV12 }");
 
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
