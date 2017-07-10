@@ -165,4 +165,16 @@ gst_mfx_fourcc_to_dxgi_format(mfxU32 fourcc)
   }
   return DXGI_FORMAT_UNKNOWN;
 }
+
+DXGI_FORMAT
+gst_video_format_to_dxgi_format(GstVideoFormat format)
+{
+  GstMfxFormatMap *m;
+
+  for (m = format_map; m->format; m++) {
+    if (format == m->format)
+      return m->dxgi_format;
+  }
+  return 0;
+}
 #endif
