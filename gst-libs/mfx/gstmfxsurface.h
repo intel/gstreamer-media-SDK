@@ -54,10 +54,10 @@ GType
 gst_mfx_surface_get_type (void);
 
 GstMfxSurface *
-gst_mfx_surface_new (GstMfxSurface * surface, const GstVideoInfo * info);
+gst_mfx_surface_new (const GstVideoInfo * info);
 
 GstMfxSurface *
-gst_mfx_surface_new_from_task (GstMfxSurface * surface, GstMfxTask * task);
+gst_mfx_surface_new_from_task (GstMfxTask * task);
 
 GstMfxSurface *
 gst_mfx_surface_new_from_pool(GstMfxSurfacePool * pool);

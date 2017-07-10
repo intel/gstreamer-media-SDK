@@ -288,14 +288,28 @@ gst_mfx_surface_class_init(GstMfxSurfaceClass * klass)
 }
 
 GstMfxSurface *
-gst_mfx_surface_new (GstMfxSurface * surface, const GstVideoInfo * info)
+gst_mfx_surface_new (const GstVideoInfo * info)
 {
+  GstMfxSurface * surface;
+
+  g_return_val_if_fail(info != NULL, NULL);
+
+  surface = g_object_new(GST_TYPE_MFX_SURFACE, NULL);
+  if (!surface)
+    return NULL;
   return gst_mfx_surface_new_internal(surface, NULL, info, NULL);
 }
 
 GstMfxSurface *
-gst_mfx_surface_new_from_task (GstMfxSurface * surface, GstMfxTask * task)
+gst_mfx_surface_new_from_task (GstMfxTask * task)
 {
+  GstMfxSurface * surface;
+
+  g_return_val_if_fail(task != NULL, NULL);
+
+  surface = g_object_new(GST_TYPE_MFX_SURFACE, NULL);
+  if (!surface)
+    return NULL;
   return gst_mfx_surface_new_internal(surface, NULL, NULL, task);
 }
 

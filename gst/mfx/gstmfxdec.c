@@ -87,7 +87,7 @@ struct _GstMfxCodecMap
 {
   const gchar *name;
   guint rank;
-  const gchar *caps_str;
+  gchar *caps_str;
 };
 
 static GstMfxCodecMap mfx_codec_map[] = {
@@ -401,10 +401,11 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
     GstMfxProfile *old_profile = gst_mfx_decoder_get_profile(mfxdec->decoder);
     GstMfxProfile new_profile = gst_mfx_profile_from_caps (caps);
 
+    gst_mfxdec_drain(mfxdec);
+
     if (old_profile
         && new_profile.codec == old_profile->codec
         && new_profile.profile == old_profile->profile) {
-      gst_mfxdec_drain (mfxdec);
       if (!gst_mfx_decoder_reset(mfxdec->decoder)) {
         GST_ERROR_OBJECT(mfxdec, "Failed to reset decoder");
         return FALSE;

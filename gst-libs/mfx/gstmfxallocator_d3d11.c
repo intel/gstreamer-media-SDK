@@ -145,8 +145,8 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
 
     if ((MFX_MEMTYPE_FROM_VPPIN & request->Type)
         && (DXGI_FORMAT_YUY2 == desc.Format)
-      || (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format)
-      || (DXGI_FORMAT_R10G10B10A2_UNORM == desc.Format)) {
+        || (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format)
+        || (DXGI_FORMAT_R10G10B10A2_UNORM == desc.Format)) {
       desc.BindFlags = D3D11_BIND_RENDER_TARGET;
       if (desc.ArraySize > 2)
         goto error;
@@ -293,6 +293,12 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
           + desc.Height * locked_rect.RowPitch;
         ptr->V = (desc.Format == DXGI_FORMAT_P010) ?
           ptr->U + 2 : ptr->U + 1;
+        break;
+      case DXGI_FORMAT_420_OPAQUE:
+        ptr->Pitch = (mfxU16)locked_rect.RowPitch;
+        ptr->Y = (mfxU8 *)locked_rect.pData;
+        ptr->V = ptr->Y + desc.Height * locked_rect.RowPitch;
+        ptr->U = ptr->V + (desc.Height * locked_rect.RowPitch) / 4;
         break;
       case DXGI_FORMAT_B8G8R8A8_UNORM:
         ptr->Pitch = (mfxU16)locked_rect.RowPitch;

@@ -16,7 +16,7 @@ plugins and their usage.
 
 Features
 --------
- - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC, VP8 and VP9 videos
+ - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 videos
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
  - Support for zero-copy rendering with glimagesink using EGL
@@ -26,7 +26,7 @@ Features
  - Support VPP acceleration of dynamic procamp control during video playback
  - Support for subtitles (text overlay) via MFX VPP surface composition
  - Support all Media SDK postprocessing capabilities as exposed by the MSDK API
- - Encode / transcode video into H.264, HEVC, MPEG-2 and JPEG formats
+ - Encode / transcode video into H.264, HEVC (Main and Main 10), MPEG-2 and JPEG formats
 
 
 Requirements
@@ -107,6 +107,11 @@ Usage
 -----
 Please refer to README.USAGE for examples on how to accomplish various
 video-related tasks with the GST-MFX plugins.
+
+
+TODO
+----
+ - Direct3D 11 - OpenGL interop support
 
 
 License

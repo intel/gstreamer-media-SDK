@@ -101,12 +101,6 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
 static gboolean
 gst_mfx_surface_pool_create (GstMfxSurfacePool * pool)
 {
-  pool->used_surfaces = NULL;
-  pool->used_count = 0;
-
-  g_queue_init (&pool->free_surfaces);
-  g_mutex_init (&pool->mutex);
-
   if (pool->task && gst_mfx_task_has_video_memory(pool->task))
     if (!gst_mfx_surface_pool_add_surfaces(pool))
       return FALSE;
@@ -241,8 +235,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
   if (!surface) {
     g_mutex_unlock (&pool->mutex);
     if (pool->task) {
-      surface = gst_mfx_surface_new_from_task (
-        g_object_new(GST_TYPE_MFX_SURFACE, NULL), pool->task);
+      surface = gst_mfx_surface_new_from_task (pool->task);
     }
     else {
       if (!pool->memtype_is_system)
@@ -252,9 +245,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
         surface = gst_mfx_surface_d3d11_new (pool->context, &pool->info);
 #endif
       else
-        surface =
-            gst_mfx_surface_new(g_object_new(GST_TYPE_MFX_SURFACE, NULL),
-              &pool->info);
+        surface = gst_mfx_surface_new (&pool->info);
     }
 
     g_mutex_lock (&pool->mutex);
@@ -299,6 +290,11 @@ gst_mfx_surface_pool_find_surface (GstMfxSurfacePool * pool,
 static void
 gst_mfx_surface_pool_init(GstMfxSurfacePool * pool)
 {
+  pool->used_surfaces = NULL;
+  pool->used_count = 0;
+
+  g_queue_init(&pool->free_surfaces);
+  g_mutex_init(&pool->mutex);
 }
 
 static void
