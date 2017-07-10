@@ -217,24 +217,21 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 
   switch (decoder->params.mfx.CodecId) {
     case MFX_CODEC_HEVC: {
-      guint i = 0, c;
-      gchar *uids[] = {
-        "33a61c0b4c27454ca8d85dde757c6f8e", /* HW decoder */
-        "15dd936825ad475ea34e35f3f54217a6", /* SW decoder */
-        NULL
+      guint i, c;
+      mfxPluginUID uids[] = {
+        MFX_PLUGINID_HEVCD_HW,
+        MFX_PLUGINID_HEVCD_SW,
       };
 
-      if (decoder->profile.codec == MFX_CODEC_HEVC
-          && decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10)
-        i = !decoder->params.mfx.FrameInfo.Shift;
-
-      for (; uids[i]; i++) {
-        for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
-          sscanf (uids[i] + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+      for (i = 0; i < sizeof(uids) / sizeof(uids[0]); i++) {
+        decoder->plugin_uid = uids[i];
         sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
         if (MFX_ERR_NONE == sts) {
-          if (!g_strcmp0 (uids[i], "15dd936825ad475ea34e35f3f54217a6"))
+          if (&uids[i] == &MFX_PLUGINID_HEVCD_SW) {
             decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+            if (decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10)
+              decoder->params.mfx.FrameInfo.Shift = 0;
+          }
           break;
         }
       }
@@ -302,11 +299,6 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
     frame_info->BitDepthChroma = 10;
     frame_info->BitDepthLuma = 10;
     frame_info->Shift = 1;
-
-    mfxStatus sts = MFXVideoDECODE_Query(decoder->session, &decoder->params,
-      &decoder->params);
-    if (MFX_ERR_NONE != sts)
-      frame_info->Shift = 0;
   }
   else {
     frame_info->FourCC = MFX_FOURCC_NV12;
