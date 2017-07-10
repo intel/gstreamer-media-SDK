@@ -863,7 +863,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     peer_caps = gst_caps_fixate (peer_caps);
 
   gst_video_info_from_caps (&peer_vi, peer_caps);
-  out_format = GST_VIDEO_INFO_FPS_N (&peer_vi);
+  out_format = GST_VIDEO_INFO_FORMAT (&peer_vi);
   fps_n = GST_VIDEO_INFO_FPS_N (&peer_vi);
   fps_d = GST_VIDEO_INFO_FPS_D (&peer_vi);
 
