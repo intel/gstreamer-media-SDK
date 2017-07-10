@@ -324,7 +324,10 @@ gst_mfx_window_d3d11_init_swap_chain (GstMfxWindowD3D11 * window)
   swap_chain_desc.Width = 0;
   swap_chain_desc.Height = 0;
 
-  swap_chain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; //TODO: handle 10bpc with DXGI_FORMAT_R10G10B10A2_UNORM
+  swap_chain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+  if (GST_VIDEO_FORMAT_INFO_BITS (priv2->info.finfo) > 8)
+    swap_chain_desc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
+
   swap_chain_desc.SampleDesc.Count = 1;
   swap_chain_desc.SampleDesc.Quality = 0;
   swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
