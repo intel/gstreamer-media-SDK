@@ -112,6 +112,7 @@ video-related tasks with the GST-MFX plugins.
 TODO
 ----
  - Direct3D 11 - OpenGL interop support
+ - HEVC 10-bit encode support on compatible devices
 
 
 License
