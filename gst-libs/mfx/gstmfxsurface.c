@@ -210,7 +210,7 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   priv->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
   priv->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
   priv->siginfo.TransferMatrix = MFX_TRANSFERMATRIX_UNKNOWN;
-  priv->siginfo.NominalRange = MFX_NOMINALRANGE_0_255;
+  priv->siginfo.NominalRange = MFX_NOMINALRANGE_UNKNOWN;
 
   if (NULL == priv->ext_buf) {
     priv->ext_buf = g_slice_alloc (sizeof (mfxExtBuffer *));
