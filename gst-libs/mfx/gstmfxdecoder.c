@@ -224,12 +224,15 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
       };
 
       for (i = 0; i < sizeof(uids) / sizeof(uids[0]); i++) {
+
+#if MSDK_CHECK_VERSION(1,19)
         /* skip hw decoder on broadwell and earlier for hevc main-10 content */
         if (decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10
           && gst_mfx_task_aggregator_get_platform (
             decoder->aggregator) < MFX_PLATFORM_SKYLAKE
           && &uids[i] == &MFX_PLUGINID_HEVCD_HW)
           continue;
+#endif
 
         decoder->plugin_uid = uids[i];
         sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
