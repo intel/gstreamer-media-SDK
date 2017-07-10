@@ -46,6 +46,7 @@
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxutils_x11.h"
 #include "gstmfxprimebufferproxy.h"
+#include "gstmfxsurface_vaapi.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -282,6 +283,7 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
     GST_MFX_WINDOW_ID (window) = None;
   }
   gst_mfx_display_replace(&priv2->display, NULL);
+  gst_mfx_surface_replace(&priv2->mapped_surface, NULL);
 }
 
 static gboolean
@@ -419,7 +421,30 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GST_MFX_DISPLAY_UNLOCK (priv->display);
   }
 
-  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
+  if (!gst_mfx_surface_has_video_memory(surface)) {
+    if (!priv->mapped_surface) {
+      GstVideoInfo info;
+
+      gst_video_info_init(&info);
+      gst_video_info_set_format(&info, GST_MFX_SURFACE_FORMAT (surface),
+        GST_MFX_SURFACE_WIDTH (surface), GST_MFX_SURFACE_HEIGHT(surface));
+
+      priv->mapped_surface = gst_mfx_surface_vaapi_new (
+        GST_MFX_WINDOW_GET_PRIVATE (window)->context, &info);
+    }
+
+    if (!gst_mfx_surface_map (priv->mapped_surface))
+      return FALSE;
+
+    memcpy(gst_mfx_surface_get_plane (priv->mapped_surface, 0),
+      gst_mfx_surface_get_plane (surface, 0),
+      gst_mfx_surface_get_data_size (surface));
+
+    gst_mfx_surface_unmap (priv->mapped_surface);
+  }
+
+  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (
+    priv->mapped_surface ? priv->mapped_surface : surface);
   if (!buffer_proxy)
     return FALSE;
 
@@ -556,11 +581,13 @@ gst_mfx_window_x11_init(GstMfxWindowX11 * window)
  * Return value: the newly allocated #GstMfxWindow object
  */
 GstMfxWindow *
-gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height)
+gst_mfx_window_x11_new (GstMfxDisplay * display, GstMfxContext * context,
+  guint width, guint height)
 {
   GstMfxWindowX11 * window;
 
   g_return_val_if_fail (display != NULL, NULL);
+  g_return_val_if_fail (context != NULL, NULL);
 
   GST_DEBUG ("new window, size %ux%u", width, height);
 
@@ -573,7 +600,7 @@ gst_mfx_window_x11_new (GstMfxDisplay * display, guint width, guint height)
 
   return
       gst_mfx_window_new_internal (GST_MFX_WINDOW(window),
-          NULL, GST_MFX_ID_INVALID, width, height);
+          context, GST_MFX_ID_INVALID, width, height);
 }
 
 /**

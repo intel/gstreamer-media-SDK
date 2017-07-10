@@ -43,6 +43,7 @@ typedef struct _GstMfxWindowX11Private GstMfxWindowX11Private;
 struct _GstMfxWindowX11Private
 {
   GstMfxDisplayX11 *display;
+  GstMfxSurface *mapped_surface;
 
   Atom atom_NET_WM_STATE;
   Atom atom_NET_WM_STATE_FULLSCREEN;

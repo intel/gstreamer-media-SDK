@@ -307,7 +307,8 @@ static gboolean
 gst_mfxsink_x11_create_window (GstMfxSink * sink, guint width, guint height)
 {
   g_return_val_if_fail (sink->window == NULL, FALSE);
-  sink->window = gst_mfx_window_x11_new (sink->display, width, height);
+  sink->window = gst_mfx_window_x11_new (sink->display, sink->device_context,
+                    width, height);
   if (!sink->window)
     return FALSE;
   return TRUE;
