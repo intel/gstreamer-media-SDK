@@ -481,6 +481,8 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   priv->bs.Data = priv->bitstream->data;
   priv->async_depth = DEFAULT_ASYNC_DEPTH;
   priv->input_memtype_is_system = memtype_is_system;
+  /* Assume encoder memtype is in video memory first */
+  priv->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
 
   priv->info = *info;
   if (!priv->info.fps_n)
@@ -816,6 +818,7 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
     priv->params.mfx.FrameInfo.FourCC = MFX_FOURCC_P010;
     priv->params.mfx.FrameInfo.BitDepthChroma = 10;
     priv->params.mfx.FrameInfo.BitDepthLuma = 10;
+    priv->params.mfx.FrameInfo.Shift = 1;
   }
   else {
     priv->params.mfx.FrameInfo.FourCC = MFX_FOURCC_NV12;
@@ -919,7 +922,7 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder *encoder)
 }
 
 static gboolean
-check_preprocessing(GstMfxEncoder *encoder)
+configure_encoder_sharing (GstMfxEncoder *encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   GstMfxTask *task = gst_mfx_task_aggregator_get_last_task(priv->aggregator);
@@ -930,11 +933,14 @@ check_preprocessing(GstMfxEncoder *encoder)
     mfxU32 encoder_format = priv->params.mfx.FrameInfo.FourCC;
     mfxU32 decoder_format = request->Info.FourCC;
 
+    /* Update if upstream MFX task outputs MFX surfaces in system memory */
+    priv->input_memtype_is_system = !gst_mfx_task_has_video_memory(task);
+
     if (gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)
         && (encoder_format != decoder_format
           || request->Info.PicStruct != MFX_PICSTRUCT_PROGRESSIVE)) {
       priv->filter = gst_mfx_filter_new_with_task(priv->aggregator,
-        task, GST_MFX_TASK_VPP_IN, !gst_mfx_task_has_video_memory(task),
+        task, GST_MFX_TASK_VPP_IN, priv->input_memtype_is_system,
         priv->encoder_memtype_is_system);
       if (!priv->filter) {
         GST_ERROR("Unable to initialize filter.");
@@ -943,9 +949,6 @@ check_preprocessing(GstMfxEncoder *encoder)
 
       params->AsyncDepth = priv->params.AsyncDepth;
 
-#ifdef WITH_LIBVA_BACKEND
-      request->Type |= MFX_MEMTYPE_EXPORT_FRAME;
-#endif // WITH_LIBVA_BACKEND
       request->Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
       request->NumFrameSuggested += (1 - params->AsyncDepth);
 
@@ -967,9 +970,27 @@ check_preprocessing(GstMfxEncoder *encoder)
     }
     /* Get updated output mfxFrameInfo */
     request = gst_mfx_task_get_request(task);
-    priv->frame_info = request->Info;
+    
+    /* Share upstream decoder / VPP session with encoder */
+    if (encoder_format == request->Info.FourCC) {
+      priv->shared = TRUE;
+      priv->encode = gst_mfx_task_ref(task);
+      priv->session = gst_mfx_task_get_session(priv->encode);
+      gst_mfx_task_set_task_type(task,
+        gst_mfx_task_get_task_type(task) | GST_MFX_TASK_ENCODER);
+
+      priv->frame_info = request->Info;
+    }
+    else {
+      init_encoder_task(encoder);
+    }
 
     gst_mfx_task_unref(task);
+  }
+  else {
+    /* If this is not an upstream task, then it's most likely a
+     * video memory surface from a streaming live source using dmabuf */
+    init_encoder_task(encoder);
   }
   return TRUE;
 
@@ -984,6 +1005,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   mfxStatus sts = MFX_ERR_NONE;
   mfxFrameAllocRequest *request;
+  mfxVideoParam *params;
   mfxFrameAllocRequest enc_request = { 0 };
   mfxU32 encoder_format, input_format =
       gst_video_format_to_mfx_fourcc(GST_VIDEO_INFO_FORMAT(&priv->info));
@@ -992,38 +1014,22 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
 
   encoder_format = priv->params.mfx.FrameInfo.FourCC;
 
-  /* Specify system memory type for encoder input surface with NV12 surfaces */
-  if ((MFX_FOURCC_NV12 == input_format && priv->input_memtype_is_system)
-      || MFX_FOURCC_P010 == encoder_format) // change later for native HEVC Main 10 encode
-    priv->encoder_memtype_is_system = TRUE;
-
   /* Check for an upstream decoder and ensure its output is valid as encoder input */
-  if (!priv->input_memtype_is_system)
-    if (check_preprocessing(encoder))
+  if (!priv->input_memtype_is_system) {
+    if (configure_encoder_sharing (encoder))
       input_format = priv->frame_info.FourCC;
     else
       return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
-
-  if (input_format == encoder_format && !priv->input_memtype_is_system) {
-    GstMfxTask *task =
-      gst_mfx_task_aggregator_get_last_task(priv->aggregator);
-
-    if (task) {
-      priv->shared = TRUE;
-      priv->encode = gst_mfx_task_ref(task);
-      priv->session = gst_mfx_task_get_session(priv->encode);
-
-      gst_mfx_task_set_task_type(task,
-        gst_mfx_task_get_task_type(task) | GST_MFX_TASK_ENCODER);
-
-      gst_mfx_task_unref(task);
-    }
   }
   else {
     init_encoder_task(encoder);
   }
   if (!priv->encode)
     return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
+
+  /* Specify system memory type for encoder input with NV12 or P010 surfaces */
+  if (encoder_format == input_format && priv->input_memtype_is_system)
+    priv->encoder_memtype_is_system = TRUE;
 
   gst_mfx_encoder_set_frame_info(encoder);
 
@@ -1041,15 +1047,6 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
     GST_WARNING ("Incompatible video params detected %d", sts);
   }
 
-  if (priv->encoder_memtype_is_system) {
-    priv->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
-    gst_mfx_task_ensure_memtype_is_system (priv->encode);
-  }
-  else {
-    priv->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
-    gst_mfx_task_use_video_memory (priv->encode);
-  }
-
   sts = MFXVideoENCODE_QueryIOSurf (priv->session, &priv->params,
           &enc_request);
   if (sts < 0) {
@@ -1058,7 +1055,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
   }
 
   if (priv->shared) {
-    mfxVideoParam *params = gst_mfx_task_get_video_params (priv->encode);
+    params = gst_mfx_task_get_video_params (priv->encode);
     request = gst_mfx_task_get_request(priv->encode);
 
     /* Re-calculate suggested number of allocated frames for shared task if
@@ -1103,6 +1100,23 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
 
     if (!gst_mfx_filter_prepare(priv->filter))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+
+    priv->shared = TRUE;
+  }
+
+  if (priv->shared) {
+    params = gst_mfx_task_get_video_params(priv->encode);
+    priv->encoder_memtype_is_system =
+      !!(params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+  }
+
+  if (priv->encoder_memtype_is_system) {
+    priv->params.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
+    gst_mfx_task_ensure_memtype_is_system(priv->encode);
+  }
+  else {
+    priv->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
+    gst_mfx_task_use_video_memory(priv->encode);
   }
 
   gst_mfx_task_aggregator_update_peer_memtypes(priv->aggregator,

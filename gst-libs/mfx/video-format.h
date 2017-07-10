@@ -53,6 +53,9 @@ gst_mfx_video_format_to_va_format(mfxU32 fourcc);
 #else
 DXGI_FORMAT
 gst_mfx_fourcc_to_dxgi_format(mfxU32 fourcc);
+
+DXGI_FORMAT
+gst_video_format_to_dxgi_format(GstVideoFormat format);
 #endif
 
 G_END_DECLS

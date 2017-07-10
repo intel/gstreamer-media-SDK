@@ -24,6 +24,7 @@
 #include "gstmfxwindow_d3d11_priv.h"
 #include "gstmfxwindow_priv.h"
 #include "gstmfxsurface_d3d11.h"
+#include "video-format.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -324,7 +325,16 @@ gst_mfx_window_d3d11_init_swap_chain (GstMfxWindowD3D11 * window)
   swap_chain_desc.Width = 0;
   swap_chain_desc.Height = 0;
 
-  swap_chain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; //TODO: handle 10bpc with DXGI_FORMAT_R10G10B10A2_UNORM
+  swap_chain_desc.Format = gst_video_format_to_dxgi_format (
+      GST_VIDEO_INFO_FORMAT(&priv2->info)
+  );
+
+  /* if chosen format isn't a possible render target */
+  if (swap_chain_desc.Format == DXGI_FORMAT_P010)
+    swap_chain_desc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
+  else
+    swap_chain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+
   swap_chain_desc.SampleDesc.Count = 1;
   swap_chain_desc.SampleDesc.Quality = 0;
   swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;

@@ -44,7 +44,7 @@ static const char gst_mfxpostproc_sink_caps_str[] =
     GST_MFX_MAKE_SURFACE_CAPS "; "
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
         GST_CAPS_FEATURE_MEMORY_MFX_SURFACE ","
-            GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
+        GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
         "{ NV12, BGRA }") ";"
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
         GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
@@ -52,8 +52,10 @@ static const char gst_mfxpostproc_sink_caps_str[] =
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxpostproc_src_caps_str[] =
-    GST_MFX_MAKE_SURFACE_CAPS "; "
-    GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA }");
+  GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
+    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, BGRA, NV12, P010_10LE }"
+  ) "; "
+  GST_VIDEO_CAPS_MAKE ("{ BGRA, P010_10LE, NV12 }");
 
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -467,7 +469,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!plugin->sinkpad_caps_is_raw
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
     mfxFrameAllocRequest *request = gst_mfx_task_get_request(task);
-    vpp->filter = gst_mfx_filter_new_with_task(plugin->aggregator, task,
+    vpp->filter = gst_mfx_filter_new_with_task (plugin->aggregator, task,
         GST_MFX_TASK_VPP_IN, plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
     if (!vpp->filter) {
       goto done;
@@ -476,9 +478,6 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
     vpp->async_depth = gst_mfx_task_get_video_params(task)->AsyncDepth;
     request->Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
-#ifdef WITH_LIBVA_BACKEND
-    request->Type |= MFX_MEMTYPE_EXPORT_FRAME;
-#endif // WITH_LIBVA_BACKEND
     request->NumFrameSuggested += (1 - vpp->async_depth);
 
     gst_mfx_filter_set_frame_info(vpp->filter, &request->Info);
@@ -555,7 +554,26 @@ gst_mfxpostproc_update_src_caps (GstMfxPostproc * vpp, GstCaps * caps,
 {
   GST_INFO_OBJECT (vpp, "new src caps = %" GST_PTR_FORMAT, caps);
 
-  return video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr);
+  if (!video_info_update (caps, &vpp->srcpad_info, caps_changed_ptr))
+    return FALSE;
+
+  if (GST_VIDEO_INFO_FORMAT (&vpp->sinkpad_info) !=
+      GST_VIDEO_INFO_FORMAT (&vpp->srcpad_info))
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_FORMAT;
+
+  if ((vpp->width || vpp->height) &&
+      vpp->width != GST_VIDEO_INFO_WIDTH (&vpp->sinkpad_info) &&
+      vpp->height != GST_VIDEO_INFO_HEIGHT (&vpp->sinkpad_info))
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_SIZE;
+
+  if (vpp->fps_n && gst_util_fraction_compare(
+        GST_VIDEO_INFO_FPS_N (&vpp->srcpad_info),
+        GST_VIDEO_INFO_FPS_D (&vpp->srcpad_info),
+        GST_VIDEO_INFO_FPS_N (&vpp->sinkpad_info),
+        GST_VIDEO_INFO_FPS_D (&vpp->sinkpad_info)))
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_FRC;
+
+  return TRUE;
 }
 
 static gboolean
@@ -785,7 +803,7 @@ ensure_allowed_srcpad_caps (GstMfxPostproc * vpp)
 
   /* Create initial caps from pad template */
   vpp->allowed_srcpad_caps =
-      gst_static_pad_template_get_caps (&gst_mfxpostproc_src_factory);
+      gst_caps_from_string (gst_mfxpostproc_src_caps_str);
   if (!vpp->allowed_srcpad_caps) {
     GST_ERROR_OBJECT (vpp, "failed to create MFX src caps");
     return FALSE;
@@ -847,7 +865,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     peer_caps = gst_caps_fixate (peer_caps);
 
   gst_video_info_from_caps (&peer_vi, peer_caps);
-  out_format = GST_VIDEO_INFO_FPS_N (&peer_vi);
+  out_format = GST_VIDEO_INFO_FORMAT (&peer_vi);
   fps_n = GST_VIDEO_INFO_FPS_N (&peer_vi);
   fps_d = GST_VIDEO_INFO_FPS_D (&peer_vi);
 

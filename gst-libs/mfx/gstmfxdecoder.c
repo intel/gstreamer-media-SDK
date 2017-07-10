@@ -217,25 +217,21 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 
   switch (decoder->params.mfx.CodecId) {
     case MFX_CODEC_HEVC: {
-      guint i = 0, c;
-      gchar *uids[] = {
-        "33a61c0b4c27454ca8d85dde757c6f8e", /* HW decoder */
-        "15dd936825ad475ea34e35f3f54217a6", /* SW decoder */
-        NULL
+      guint i, c;
+      mfxPluginUID uids[] = {
+        MFX_PLUGINID_HEVCD_HW,
+        MFX_PLUGINID_HEVCD_SW,
       };
-#ifdef WITH_LIBVA_BACKEND
-      /* HEVC main10 profiles can only be decoded through SW decoder */
-      if (decoder->profile.codec == MFX_CODEC_HEVC
-          && decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10)
-        i = 1;
-#endif  //  WITH_LIBVA_BACKEND
-      for (; uids[i]; i++) {
-        for (c = 0; c < sizeof (decoder->plugin_uid.Data); c++)
-          sscanf (uids[i] + 2 * c, "%2hhx", decoder->plugin_uid.Data + c);
+
+      for (i = 0; i < sizeof(uids) / sizeof(uids[0]); i++) {
+        decoder->plugin_uid = uids[i];
         sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
         if (MFX_ERR_NONE == sts) {
-          if (!g_strcmp0 (uids[i], "15dd936825ad475ea34e35f3f54217a6"))
+          if (&uids[i] == &MFX_PLUGINID_HEVCD_SW) {
             decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+            if (decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10)
+              decoder->params.mfx.FrameInfo.Shift = 0;
+          }
           break;
         }
       }
@@ -264,19 +260,6 @@ static void
 gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
 {
   mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
-
-  frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-  if (decoder->profile.codec == MFX_CODEC_HEVC
-      && decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10) {
-    frame_info->FourCC = MFX_FOURCC_P010;
-    frame_info->BitDepthChroma = 10;
-    frame_info->BitDepthLuma = 10;
-  }
-  else {
-    frame_info->FourCC = MFX_FOURCC_NV12;
-    frame_info->BitDepthChroma = 8;
-    frame_info->BitDepthLuma = 8;
-  }
 
   frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ?
       (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
@@ -308,6 +291,20 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
    * when used with decodebin */
   if (!decoder->is_autoplugged)
     decoder->params.mfx.CodecLevel = decoder->profile.level;
+
+  frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+  if (decoder->profile.codec == MFX_CODEC_HEVC
+      && decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10) {
+    frame_info->FourCC = MFX_FOURCC_P010;
+    frame_info->BitDepthChroma = 10;
+    frame_info->BitDepthLuma = 10;
+    frame_info->Shift = 1;
+  }
+  else {
+    frame_info->FourCC = MFX_FOURCC_NV12;
+    frame_info->BitDepthChroma = 8;
+    frame_info->BitDepthLuma = 8;
+  }
 }
 
 static gboolean
@@ -487,9 +484,6 @@ init_filter (GstMfxDecoder * decoder)
     return FALSE;
   }
 
-#ifdef WITH_LIBVA_BACKEND
-  decoder->request.Type |= MFX_MEMTYPE_EXPORT_FRAME;
-#endif // WITH_LIBVA_BACKEND
   decoder->request.Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
   decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
 
