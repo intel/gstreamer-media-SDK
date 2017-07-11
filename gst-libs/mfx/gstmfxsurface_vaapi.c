@@ -47,8 +47,8 @@ gst_mfx_surface_vaapi_from_task(GstMfxSurface * surface,
   if (!mid)
     return FALSE;
 
-  surface->surface.Data.MemId = mid;
-  surface->surface_id = (GstMfxID) (*((VASurfaceID *) mid->mid));
+  priv->surface.Data.MemId = mid;
+  priv->surface_id = (GstMfxID) (*((VASurfaceID *) mid->mid));
   return TRUE;
 }
 

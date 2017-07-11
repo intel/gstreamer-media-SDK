@@ -103,7 +103,7 @@ end:
 
 /* GstMfxDisplayType enumerations */
 GType
-gst_mfx_display_get_type (void)
+gst_mfx_display_type_get_type (void)
 {
   static GType g_type = 0;
 
