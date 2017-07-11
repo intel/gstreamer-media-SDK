@@ -802,7 +802,11 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     if (!gst_mfx_task_has_type (decoder->decode, GST_MFX_TASK_ENCODER))
       do {
         sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
-        GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
+        if (MFX_ERR_NONE != sts && sts < 0) {
+          GST_ERROR("MFXVideoCORE_SyncOperation() error status: %d", sts);
+          ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+          goto end;
+        }
       } while (MFX_WRN_IN_EXECUTION == sts);
 
     surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);
@@ -860,15 +864,18 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
     insurf = gst_mfx_surface_get_frame_surface (surface);
     sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, NULL,
         insurf, &outsurf, &syncp);
-    GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
+    GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync() status: %d", sts);
     if (sts == MFX_WRN_DEVICE_BUSY)
       g_usleep (100);
   } while (MFX_WRN_DEVICE_BUSY == sts);
 
   if (syncp) {
     do {
-      sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
-      GST_DEBUG ("MFXVideoCORE_SyncOperation status: %d", sts);
+      sts = MFXVideoCORE_SyncOperation(decoder->session, syncp, 1000);
+      if (MFX_ERR_NONE != sts && sts < 0) {
+        GST_ERROR("MFXVideoCORE_SyncOperation() error status: %d", sts);
+        return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
+      }
     } while (MFX_WRN_IN_EXECUTION == sts);
 
     surface = gst_mfx_surface_pool_find_surface (decoder->pool, outsurf);

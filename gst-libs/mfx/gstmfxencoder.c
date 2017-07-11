@@ -1231,6 +1231,10 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
   if (syncp) {
     do {
       sts = MFXVideoCORE_SyncOperation (priv->session, syncp, 1000);
+      if (MFX_ERR_NONE != sts && sts < 0) {
+        GST_ERROR("MFXVideoCORE_SyncOperation() error status: %d", sts);
+        return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+      }
     } while (MFX_WRN_IN_EXECUTION == sts);
 
     frame->output_buffer =
