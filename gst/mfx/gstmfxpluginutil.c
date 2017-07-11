@@ -172,7 +172,7 @@ gst_mfx_video_format_new_template_caps_with_features (GstVideoFormat format,
 
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature (GstPad * pad,
-    GstVideoFormat * out_format_ptr)
+  GstVideoFormat in_format, GstVideoFormat * out_format_ptr)
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
   guint num_structures;
@@ -182,7 +182,13 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   const gchar *format = NULL;
 
   templ = gst_pad_get_pad_template_caps (pad);
+
   in_caps = gst_pad_peer_query_caps (pad, templ);
+
+  /* Change to preferred format */
+  if (in_format != GST_VIDEO_FORMAT_UNKNOWN)
+    gst_caps_set_simple(in_caps, "format", G_TYPE_STRING,
+      gst_video_format_to_string(in_format), NULL);
 
   out_caps = gst_caps_intersect_full (in_caps,
       templ, GST_CAPS_INTERSECT_FIRST);

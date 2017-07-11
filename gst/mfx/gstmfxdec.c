@@ -171,18 +171,26 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   GstVideoDecoder *const vdec = GST_VIDEO_DECODER (mfxdec);
   GstVideoCodecState *state, *ref_state;
   GstVideoInfo *vi;
-  GstVideoFormat format;
+  GstVideoFormat native_format, output_format;
   GstCapsFeatures *features = NULL;
   GstMfxCapsFeature feature;
+  const GstMfxProfile *profile;
 
   if (!mfxdec->input_state)
     return FALSE;
+
+  profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
+  if (profile->codec == MFX_CODEC_HEVC
+      && profile->profile == MFX_PROFILE_HEVC_MAIN10)
+    native_format = GST_VIDEO_FORMAT_P010_10LE;
+  else
+    native_format = GST_VIDEO_FORMAT_UNKNOWN;
 
   ref_state = mfxdec->input_state;
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
-        &format);
+        native_format, &output_format);
 
   if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
     return FALSE;
@@ -191,7 +199,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
     features =
         gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
 
-  state = gst_video_decoder_set_output_state (vdec, format,
+  state = gst_video_decoder_set_output_state (vdec, output_format,
       ref_state->info.width, ref_state->info.height, ref_state);
   if (!state || state->info.width == 0 || state->info.height == 0)
     return FALSE;
@@ -219,9 +227,11 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
 
   GST_DEBUG_OBJECT (mfxdec, "Input codec state changed, renegotiating");
 
-  if (!gst_video_decoder_negotiate (vdec))
+  if (!gst_mfxdec_update_src_caps (mfxdec))
     return FALSE;
   if (!gst_mfx_plugin_base_set_caps (plugin, NULL, mfxdec->srcpad_caps))
+    return FALSE;
+  if (!gst_video_decoder_negotiate (vdec))
     return FALSE;
 
   /* Final check to determine if system or video memory should be used for
@@ -287,9 +297,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   GstObject *parent;
   gboolean is_autoplugged = FALSE;
 
-  if (!gst_mfxdec_update_src_caps (mfxdec))
-    return FALSE;
-  if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
+  if (!gst_video_info_from_caps (&info, caps))
     return FALSE;
 
   /* Increase async depth considerably when using decodebin to avoid
@@ -398,7 +406,8 @@ static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
 {
   if (mfxdec->decoder) {
-    GstMfxProfile *old_profile = gst_mfx_decoder_get_profile(mfxdec->decoder);
+    const GstMfxProfile *old_profile =
+        gst_mfx_decoder_get_profile(mfxdec->decoder);
     GstMfxProfile new_profile = gst_mfx_profile_from_caps (caps);
 
     gst_mfxdec_drain(mfxdec);

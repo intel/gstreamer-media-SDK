@@ -74,7 +74,7 @@ struct _GstMfxDecoder
 
 G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
 
-GstMfxProfile *
+const GstMfxProfile *
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
 {
   g_return_val_if_fail (decoder != NULL, NULL);
