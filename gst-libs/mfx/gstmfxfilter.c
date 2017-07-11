@@ -128,8 +128,8 @@ gst_mfx_filter_set_frame_info_from_gst_video_info (GstMfxFilter * filter,
   filter->frame_info.FrameRateExtD = info->fps_d;
   filter->frame_info.AspectRatioW = info->par_n;
   filter->frame_info.AspectRatioH = info->par_d;
-  filter->frame_info.BitDepthChroma = 8;
-  filter->frame_info.BitDepthLuma = 8;
+  filter->frame_info.BitDepthChroma = filter->frame_info.BitDepthLuma =
+    (MFX_FOURCC_P010 == filter->frame_info.FourCC) ? 10 : 8;
 
   filter->frame_info.Width = GST_ROUND_UP_16 (info->width);
   filter->frame_info.Height =
