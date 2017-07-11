@@ -51,7 +51,7 @@ struct _GstMfxDecoder
   mfxVideoParam params;
   mfxFrameAllocRequest request;
   mfxBitstream bs;
-  mfxPluginUID plugin_uid;
+  mfxPluginUID *plugin_uid;
 
   GstVideoInfo info;
   gboolean inited;
@@ -198,12 +198,8 @@ gst_mfx_decoder_finalize (GObject * object)
   g_queue_clear (&decoder->decoded_frames);
   g_queue_clear (&decoder->discarded_frames);
 
-  if ((decoder->params.mfx.CodecId == MFX_CODEC_VP8)
-#if MSDK_CHECK_VERSION(1,19)
-      || (decoder->params.mfx.CodecId == MFX_CODEC_VP9)
-#endif
-      || (decoder->params.mfx.CodecId == MFX_CODEC_HEVC))
-    MFXVideoUSER_UnLoad(decoder->session, &decoder->plugin_uid);
+  if (decoder->plugin_uid)
+    MFXVideoUSER_UnLoad(decoder->session, decoder->plugin_uid);
 
   close_decoder (decoder);
   gst_mfx_task_aggregator_unref (decoder->aggregator);
@@ -218,9 +214,9 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
   switch (decoder->params.mfx.CodecId) {
     case MFX_CODEC_HEVC: {
       guint i, c;
-      mfxPluginUID uids[] = {
-        MFX_PLUGINID_HEVCD_HW,
-        MFX_PLUGINID_HEVCD_SW,
+      mfxPluginUID *uids[] = {
+        &MFX_PLUGINID_HEVCD_HW,
+        &MFX_PLUGINID_HEVCD_SW,
       };
 
       for (i = 0; i < sizeof(uids) / sizeof(uids[0]); i++) {
@@ -228,16 +224,16 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 #if MSDK_CHECK_VERSION(1,19)
         /* skip hw decoder on platforms before broadwell for hevc main-10 content */
         if (decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10
-          && gst_mfx_task_aggregator_get_platform (
-            decoder->aggregator) < MFX_PLATFORM_BROADWELL
-          && &uids[i] == &MFX_PLUGINID_HEVCD_HW)
+            && gst_mfx_task_aggregator_get_platform (
+              decoder->aggregator) < MFX_PLATFORM_BROADWELL
+            && uids[i] == &MFX_PLUGINID_HEVCD_HW)
           continue;
 #endif
 
         decoder->plugin_uid = uids[i];
-        sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
+        sts = MFXVideoUSER_Load (decoder->session, decoder->plugin_uid, 1);
         if (MFX_ERR_NONE == sts) {
-          if (&uids[i] == &MFX_PLUGINID_HEVCD_SW) {
+          if (uids[i] == &MFX_PLUGINID_HEVCD_SW) {
             decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
             if (decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10)
               decoder->params.mfx.FrameInfo.Shift = 0;
@@ -249,14 +245,14 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
       break;
     }
     case MFX_CODEC_VP8:
-      decoder->plugin_uid = MFX_PLUGINID_VP8D_HW;
-      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
+      decoder->plugin_uid = &MFX_PLUGINID_VP8D_HW;
+      sts = MFXVideoUSER_Load (decoder->session, decoder->plugin_uid, 1);
 
       break;
 #if MSDK_CHECK_VERSION(1,19)
     case MFX_CODEC_VP9:
-      decoder->plugin_uid = MFX_PLUGINID_VP9D_HW;
-      sts = MFXVideoUSER_Load (decoder->session, &decoder->plugin_uid, 1);
+      decoder->plugin_uid = &MFX_PLUGINID_VP9D_HW;
+      sts = MFXVideoUSER_Load (decoder->session, decoder->plugin_uid, 1);
 
       break;
 #endif
