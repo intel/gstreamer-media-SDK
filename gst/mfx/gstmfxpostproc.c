@@ -891,7 +891,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-        DEFAULT_FORMAT, &out_format);
+        GST_VIDEO_FORMAT_UNKNOWN, &out_format);
   gst_video_info_change_format (&vi, out_format, width, height);
 
   out_caps = gst_video_info_to_caps (&vi);

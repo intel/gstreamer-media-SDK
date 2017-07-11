@@ -74,11 +74,17 @@ struct _GstMfxDecoder
 
 G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
 
+void
+gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info)
+{
+  g_return_val_if_fail (decoder != NULL, NULL);
+  decoder->info = *info;
+}
+
 const GstMfxProfile *
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
 {
   g_return_val_if_fail (decoder != NULL, NULL);
-
   return &decoder->profile;
 }
 

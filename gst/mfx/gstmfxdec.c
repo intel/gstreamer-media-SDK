@@ -213,6 +213,8 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   gst_caps_replace (&mfxdec->srcpad_caps, state->caps);
   gst_video_codec_state_unref (state);
 
+  gst_mfx_decoder_set_video_info (mfxdec->decoder, vi);
+
   return TRUE;
 }
 
