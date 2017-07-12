@@ -428,7 +428,7 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     priv->params.mfx.FrameInfo.AspectRatioW = priv->info.par_n;
     priv->params.mfx.FrameInfo.AspectRatioH = priv->info.par_d;
 
-    if (!g_strcmp0 (priv->plugin_uid, "6fadc791a0c2eb479ab6dcd5ea9da347")) {
+    if (priv->plugin_uid == &MFX_PLUGINID_HEVCE_HW) {
       priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (priv->info.width);
       priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
     }
@@ -558,8 +558,8 @@ gst_mfx_encoder_finalize (GObject * object)
   }
 
   if (priv->plugin_uids) {
-    MFXVideoUSER_UnLoad(priv->session, &priv->uid);
-    g_list_free_full(priv->plugin_uids, g_free);
+    MFXVideoUSER_UnLoad(priv->session, priv->plugin_uid);
+    g_list_free(priv->plugin_uids);
   }
 
   /* Make sure frame allocator points to the right task
@@ -906,15 +906,13 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder *encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   mfxStatus sts = MFX_ERR_NONE;
-  guint i, c;
+  guint i;
 
   for (i = 0; i < g_list_length(priv->plugin_uids); i++) {
     priv->plugin_uid = g_list_nth_data(priv->plugin_uids, i);
-    for (c = 0; c < sizeof(priv->uid.Data); c++)
-      sscanf(priv->plugin_uid + 2 * c, "%2hhx", priv->uid.Data + c);
-    sts = MFXVideoUSER_Load(priv->session, &priv->uid, 1);
+    sts = MFXVideoUSER_Load(priv->session, priv->plugin_uid, 1);
     if (MFX_ERR_NONE == sts) {
-      GST_DEBUG("Using encoder plugin %s", priv->plugin_uid);
+      //GST_DEBUG("Using encoder plugin %s", priv->plugin_uid);
       return TRUE;
     }
   }

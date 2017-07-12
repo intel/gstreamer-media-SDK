@@ -171,7 +171,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   GstVideoDecoder *const vdec = GST_VIDEO_DECODER (mfxdec);
   GstVideoCodecState *state, *ref_state;
   GstVideoInfo *vi;
-  GstVideoFormat native_format, output_format;
+  GstVideoFormat output_format;
   GstCapsFeatures *features = NULL;
   GstMfxCapsFeature feature;
   const GstMfxProfile *profile;
@@ -317,7 +317,6 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
     gst_mfx_decoder_skip_corrupted_frames (mfxdec->decoder);
 
   mfxdec->do_renego = TRUE;
-
   return TRUE;
 }
 
@@ -410,7 +409,7 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
     const GstMfxProfile *old_profile =
         gst_mfx_decoder_get_profile(mfxdec->decoder);
     GstMfxProfile new_profile = gst_mfx_profile_from_caps (caps);
-
+    
     gst_mfxdec_drain(mfxdec);
 
     if (old_profile
