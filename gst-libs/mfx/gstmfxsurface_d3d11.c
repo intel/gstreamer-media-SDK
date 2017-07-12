@@ -20,6 +20,7 @@
 
 #include "gstmfxsurface_d3d11.h"
 #include "gstmfxd3d11device.h"
+#include "video-format.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
