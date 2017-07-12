@@ -53,15 +53,12 @@ GstCaps *
 gst_mfx_video_format_new_template_caps(GstVideoFormat format);
 
 GstCaps *
-gst_mfx_video_format_new_template_caps_from_list(GArray * formats);
-
-GstCaps *
 gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
   const gchar * features_string);
 
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature(GstPad * pad,
-    GstVideoFormat * out_format_ptr);
+  gboolean use_10bpc, GstVideoFormat * out_format_ptr);
 
 const gchar *
 gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);

@@ -89,7 +89,7 @@ void
 gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
     GstMfxDecoder * new_decoder);
 
-GstMfxProfile *
+const GstMfxProfile *
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder);
 
 gboolean
@@ -99,8 +99,8 @@ gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
 GstVideoCodecFrame *
 gst_mfx_decoder_get_discarded_frame (GstMfxDecoder * decoder);
 
-GstVideoInfo *
-gst_mfx_decoder_get_video_info (GstMfxDecoder * decoder);
+void
+gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info);
 
 void
 gst_mfx_decoder_skip_corrupted_frames (GstMfxDecoder * decoder);
