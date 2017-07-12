@@ -180,6 +180,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   GstCaps *in_caps = NULL;
   GstStructure *structure;
   const gchar *format = NULL;
+  guint i;
 
   /* Prefer 10-bit color format when requested */
   if (use_10bpc) {
@@ -206,15 +207,25 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
 
   num_structures = gst_caps_get_size (out_caps);
-  structure =
-      gst_structure_copy (gst_caps_get_structure (out_caps, 0));
-  if (!structure)
+  for (i = num_structures - 1; i >= 0; i--) {
+    GstCapsFeatures *const features = gst_caps_get_features(out_caps, i);
+
+    if (!gst_caps_features_contains(features,
+          gst_mfx_caps_feature_to_string(feature)))
+      continue;
+
+    structure =
+      gst_structure_copy(gst_caps_get_structure(out_caps, i));
+    if (!structure)
       goto cleanup;
-  if (gst_structure_has_field (structure, "format"))
-    gst_structure_fixate_field (structure, "format");
-  format = gst_structure_get_string (structure, "format");
-  *out_format_ptr = gst_video_format_from_string (format);
-  gst_structure_free (structure);
+    if (gst_structure_has_field(structure, "format"))
+      gst_structure_fixate_field(structure, "format");
+    format = gst_structure_get_string(structure, "format");
+    *out_format_ptr = gst_video_format_from_string(format);
+    gst_structure_free(structure);
+
+    break;
+  }
 
 cleanup:
   if (in_caps)
