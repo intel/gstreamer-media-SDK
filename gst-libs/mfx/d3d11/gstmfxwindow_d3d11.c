@@ -332,9 +332,7 @@ gst_mfx_window_d3d11_init_swap_chain (GstMfxWindowD3D11 * window)
   );
 
   /* if chosen format isn't a possible render target */
-  if (swap_chain_desc.Format == DXGI_FORMAT_P010)
-    swap_chain_desc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
-  else
+  if (swap_chain_desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM)
     swap_chain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
   swap_chain_desc.SampleDesc.Count = 1;

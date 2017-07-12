@@ -175,6 +175,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   GstCapsFeatures *features = NULL;
   GstMfxCapsFeature feature;
   const GstMfxProfile *profile;
+  gboolean use_10bpc = FALSE;
 
   if (!mfxdec->input_state)
     return FALSE;
@@ -182,15 +183,13 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
   if (profile->codec == MFX_CODEC_HEVC
       && profile->profile == MFX_PROFILE_HEVC_MAIN10)
-    native_format = GST_VIDEO_FORMAT_P010_10LE;
-  else
-    native_format = GST_VIDEO_FORMAT_UNKNOWN;
+    use_10bpc = TRUE;
 
   ref_state = mfxdec->input_state;
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
-        native_format, &output_format);
+        use_10bpc, &output_format);
 
   if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
     return FALSE;

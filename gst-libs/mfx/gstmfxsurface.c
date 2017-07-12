@@ -106,6 +106,7 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 
     break;
   case MFX_FOURCC_RGB4:
+  case MFX_FOURCC_A2RGB10:
     priv->data_size = frame_size * 4;
     priv->data = g_slice_alloc(priv->data_size);
     if (!priv->data)

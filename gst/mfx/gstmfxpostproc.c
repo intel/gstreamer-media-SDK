@@ -53,9 +53,9 @@ static const char gst_mfxpostproc_sink_caps_str[] =
 
 static const char gst_mfxpostproc_src_caps_str[] =
   GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, BGRA, NV12, P010_10LE }"
+    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE, ENCODED }"
   ) "; "
-  GST_VIDEO_CAPS_MAKE ("{ BGRA, P010_10LE, NV12 }");
+  GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA, P010_10LE }");
 
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -446,31 +446,18 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
   task = gst_mfx_task_aggregator_get_last_task(plugin->aggregator);
 
-  if (!plugin->sinkpad_has_dmabuf) {
-    if (task) {
-      if (sinkpad_has_raw_caps || srcpad_has_raw_caps)
-        plugin->sinkpad_caps_is_raw = TRUE;
-      else
-        plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
-    }
-  }
-
-  /* If sinkpad caps indicate video memory input, srcpad caps should also
-   * indicate video memory output for correct vid-in / vid-out configuration */
-  if (!plugin->sinkpad_caps_is_raw && srcpad_has_raw_caps)
-    srcpad_has_raw_caps = FALSE;
-
-  /* Prevent pass-through mode if input / output memory types don't match */
-  if (plugin->sinkpad_caps_is_raw != srcpad_has_raw_caps)
-    vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
-
-  plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
+  plugin->srcpad_caps_is_raw =
+      gst_mfx_query_peer_has_raw_caps(GST_MFX_PLUGIN_BASE_SRC_PAD(vpp));
 
   if (!plugin->sinkpad_caps_is_raw
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
     mfxFrameAllocRequest *request = gst_mfx_task_get_request(task);
-    vpp->filter = gst_mfx_filter_new_with_task (plugin->aggregator, task,
-        GST_MFX_TASK_VPP_IN, plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
+
+    plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory(task);
+
+    vpp->filter = gst_mfx_filter_new_with_task (plugin->aggregator,
+      task, GST_MFX_TASK_VPP_IN,
+      plugin->sinkpad_caps_is_raw, plugin->srcpad_caps_is_raw);
     if (!vpp->filter) {
       goto done;
       success = FALSE;
@@ -496,7 +483,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   }
   else {
     vpp->filter = gst_mfx_filter_new(plugin->aggregator,
-        plugin->sinkpad_caps_is_raw, srcpad_has_raw_caps);
+        plugin->sinkpad_caps_is_raw, plugin->srcpad_caps_is_raw);
     if (!vpp->filter) {
       goto done;
       success = FALSE;
@@ -506,12 +493,15 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       &vpp->sinkpad_info);
   }
 
+  /* Prevent pass-through mode if input / output memory types don't match (sys-in / vid-out) */
+  if (!plugin->srcpad_caps_is_raw && plugin->sinkpad_caps_is_raw)
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
+
   if (plugin->srcpad_caps_is_raw) {
-    GstMfxTask *vpp_task =
-        gst_mfx_task_aggregator_get_last_task(plugin->aggregator);
-    gst_mfx_task_aggregator_update_peer_memtypes(plugin->aggregator,
-      vpp_task, TRUE);
-    gst_mfx_task_unref(vpp_task);
+    gst_mfx_task_replace(&task, NULL);
+    task = gst_mfx_task_aggregator_get_last_task (plugin->aggregator);
+    gst_mfx_task_aggregator_update_peer_memtypes (plugin->aggregator,
+      task, TRUE);
   }
 
 done:
@@ -891,7 +881,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-        GST_VIDEO_FORMAT_UNKNOWN, &out_format);
+        FALSE, &out_format);
   gst_video_info_change_format (&vi, out_format, width, height);
 
   out_caps = gst_video_info_to_caps (&vi);
