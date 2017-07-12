@@ -171,7 +171,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   GstVideoDecoder *const vdec = GST_VIDEO_DECODER (mfxdec);
   GstVideoCodecState *state, *ref_state;
   GstVideoInfo *vi;
-  GstVideoFormat native_format, output_format;
+  GstVideoFormat output_format;
   GstCapsFeatures *features = NULL;
   GstMfxCapsFeature feature;
   const GstMfxProfile *profile;
