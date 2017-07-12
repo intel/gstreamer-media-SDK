@@ -128,8 +128,8 @@ gst_mfx_filter_set_frame_info_from_gst_video_info (GstMfxFilter * filter,
   filter->frame_info.FrameRateExtD = info->fps_d;
   filter->frame_info.AspectRatioW = info->par_n;
   filter->frame_info.AspectRatioH = info->par_d;
-  filter->frame_info.BitDepthChroma = 8;
-  filter->frame_info.BitDepthLuma = 8;
+  filter->frame_info.BitDepthChroma = filter->frame_info.BitDepthLuma =
+    (MFX_FOURCC_P010 == filter->frame_info.FourCC) ? 10 : 8;
 
   filter->frame_info.Width = GST_ROUND_UP_16 (info->width);
   filter->frame_info.Height =
@@ -1079,7 +1079,7 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface * surface,
   }
 
   if (MFX_ERR_NONE != sts) {
-    GST_ERROR ("Error during MFX filter process.");
+    GST_ERROR ("MFXVideoVPP_RunFrameVPPAsync() error status: %d", sts);
     return GST_MFX_FILTER_STATUS_ERROR_OPERATION_FAILED;
   }
 
@@ -1087,6 +1087,10 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface * surface,
     if (!gst_mfx_task_has_type (filter->vpp[1], GST_MFX_TASK_ENCODER))
       do {
         sts = MFXVideoCORE_SyncOperation (filter->session, syncp, 1000);
+        if (MFX_ERR_NONE != sts && sts < 0) {
+          GST_ERROR("MFXVideoCORE_SyncOperation() error status: %d", sts);
+          return GST_MFX_FILTER_STATUS_ERROR_OPERATION_FAILED;
+        }
       } while (MFX_WRN_IN_EXECUTION == sts);
 
     *out_surface =

@@ -172,7 +172,7 @@ gst_mfx_video_format_new_template_caps_with_features (GstVideoFormat format,
 
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature (GstPad * pad,
-    GstVideoFormat * out_format_ptr)
+  gboolean use_10bpc, GstVideoFormat * out_format_ptr)
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
   guint num_structures;
@@ -180,12 +180,23 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   GstCaps *in_caps = NULL;
   GstStructure *structure;
   const gchar *format = NULL;
+  guint i;
 
-  templ = gst_pad_get_pad_template_caps (pad);
+  /* Prefer 10-bit color format when requested */
+  if (use_10bpc) {
+    const char caps_str[] = GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
+      GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, P010_10LE, NV12, BGRA }"
+      ) "; "
+      GST_VIDEO_CAPS_MAKE("{ P010_10LE, NV12, BGRA }");
+    templ = gst_caps_from_string (caps_str);
+  }
+  else {
+    templ = gst_pad_get_pad_template_caps(pad);
+  }
   in_caps = gst_pad_peer_query_caps (pad, templ);
 
-  out_caps = gst_caps_intersect_full (in_caps,
-      templ, GST_CAPS_INTERSECT_FIRST);
+  out_caps = gst_caps_intersect_full (templ,
+      in_caps, GST_CAPS_INTERSECT_FIRST);
   gst_caps_unref (templ);
   if (!out_caps) {
     feature = GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED;
@@ -196,15 +207,25 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
 
   num_structures = gst_caps_get_size (out_caps);
-  structure =
-      gst_structure_copy (gst_caps_get_structure (out_caps, num_structures - 1));
-  if (!structure)
+  for (i = num_structures - 1; i >= 0; i--) {
+    GstCapsFeatures *const features = gst_caps_get_features(out_caps, i);
+
+    if (!gst_caps_features_contains(features,
+          gst_mfx_caps_feature_to_string(feature)))
+      continue;
+
+    structure =
+      gst_structure_copy(gst_caps_get_structure(out_caps, i));
+    if (!structure)
       goto cleanup;
-  if (gst_structure_has_field (structure, "format"))
-    gst_structure_fixate_field (structure, "format");
-  format = gst_structure_get_string (structure, "format");
-  *out_format_ptr = gst_video_format_from_string (format);
-  gst_structure_free (structure);
+    if (gst_structure_has_field(structure, "format"))
+      gst_structure_fixate_field(structure, "format");
+    format = gst_structure_get_string(structure, "format");
+    *out_format_ptr = gst_video_format_from_string(format);
+    gst_structure_free(structure);
+
+    break;
+  }
 
 cleanup:
   if (in_caps)

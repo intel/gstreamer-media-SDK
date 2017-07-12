@@ -213,18 +213,21 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   priv->context = gst_mfx_task_aggregator_get_context(aggregator);
   priv->memtype_is_system = FALSE;
+  mfxHandleType handle_type;
+
 #ifdef WITH_LIBVA_BACKEND
-  mfxHandleType handle_type = MFX_HANDLE_VA_DISPLAY;
+  handle_type = MFX_HANDLE_VA_DISPLAY;
   device_handle =
       GST_MFX_DISPLAY_VADISPLAY(gst_mfx_context_get_device(priv->context));
 #else
+  handle_type = MFX_HANDLE_D3D11_DEVICE;
   device_handle = (ID3D11Device*)
       gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device(priv->context));
 #endif
 
-  sts = MFXVideoCORE_GetHandle(priv->session, MFX_HANDLE_D3D11_DEVICE, &device_handle);
+  sts = MFXVideoCORE_GetHandle(priv->session, handle_type, &device_handle);
   if (MFX_ERR_NONE != sts) {
-    sts = MFXVideoCORE_SetHandle(priv->session, MFX_HANDLE_D3D11_DEVICE, device_handle);
+    sts = MFXVideoCORE_SetHandle(priv->session, handle_type, device_handle);
     if (MFX_ERR_NONE != sts)
       return FALSE;
   }
