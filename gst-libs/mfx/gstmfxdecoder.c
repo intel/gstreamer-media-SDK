@@ -55,7 +55,6 @@ struct _GstMfxDecoder
 
   GstVideoInfo info;
   gboolean inited;
-  gboolean filter_inited;
   gboolean was_reset;
   gboolean has_ready_frames;
   gboolean memtype_is_system;
@@ -432,8 +431,8 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     return NULL;
 
   if (!gst_mfx_decoder_create (decoder, aggregator, profile, info,
-	    async_depth, live_mode, is_autoplugged))
-	  goto error;
+          async_depth, live_mode, is_autoplugged))
+    goto error;
   return decoder;
 
 error:
@@ -511,7 +510,6 @@ configure_filter (GstMfxDecoder * decoder)
       GST_ERROR("Unable to set up postprocessing filter.");
       goto error;
     }
-    decoder->filter_inited = TRUE;
   }
   return TRUE;
 
@@ -585,7 +583,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     gst_mfx_task_use_video_memory (decoder->decode);
   }
 
-  if (!decoder->filter_inited
+  if (!decoder->filter
       && gst_mfx_task_get_task_type(decoder->decode) == GST_MFX_TASK_DECODER) {
     if (!configure_filter(decoder))
       return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
