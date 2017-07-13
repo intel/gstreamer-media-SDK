@@ -431,10 +431,6 @@ static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
-  gboolean sinkpad_has_raw_caps =
-      !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
-  gboolean srcpad_has_raw_caps =
-      gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
   gboolean success = TRUE;
   GstMfxTask *task;
 
@@ -446,8 +442,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
   task = gst_mfx_task_aggregator_get_last_task(plugin->aggregator);
 
-  plugin->srcpad_caps_is_raw =
-      gst_mfx_query_peer_has_raw_caps(GST_MFX_PLUGIN_BASE_SRC_PAD(vpp));
+  plugin->srcpad_caps_is_raw = plugin->sinkpad_caps_is_raw;
 
   if (!plugin->sinkpad_caps_is_raw
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
@@ -493,12 +488,15 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       &vpp->sinkpad_info);
   }
 
+  plugin->srcpad_caps_is_raw =
+      gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
+
   /* Prevent pass-through mode if input / output memory types don't match (sys-in / vid-out) */
   if (!plugin->srcpad_caps_is_raw && plugin->sinkpad_caps_is_raw)
     vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
 
-  if (plugin->srcpad_caps_is_raw) {
-    gst_mfx_task_replace(&task, NULL);
+  if (task && plugin->srcpad_caps_is_raw) {
+    gst_mfx_task_unref (task);
     task = gst_mfx_task_aggregator_get_last_task (plugin->aggregator);
     gst_mfx_task_aggregator_update_peer_memtypes (plugin->aggregator,
       task, TRUE);

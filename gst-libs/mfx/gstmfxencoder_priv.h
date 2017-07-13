@@ -170,9 +170,8 @@ struct _GstMfxEncoderPrivate
   mfxVideoParam           params;
   mfxFrameInfo            frame_info;
   mfxBitstream            bs;
-  mfxPluginUID            uid;
   GList                  *plugin_uids;
-  gchar                  *plugin_uid;
+  mfxPluginUID           *plugin_uid;
   GstVideoInfo            info;
 
   GstClockTime            current_pts;

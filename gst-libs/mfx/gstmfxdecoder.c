@@ -55,12 +55,9 @@ struct _GstMfxDecoder
 
   GstVideoInfo info;
   gboolean inited;
-  gboolean filter_inited;
   gboolean was_reset;
   gboolean has_ready_frames;
   gboolean memtype_is_system;
-  gboolean enable_csc;
-  gboolean enable_deinterlace;
   gboolean skip_corrupted_frames;
   gboolean is_autoplugged;
   gboolean can_double_deinterlace;
@@ -77,7 +74,7 @@ G_DEFINE_TYPE(GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
 void
 gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info)
 {
-  g_return_val_if_fail (decoder != NULL, NULL);
+  g_return_if_fail (decoder != NULL);
   decoder->info = *info;
 }
 
@@ -102,7 +99,6 @@ GstVideoCodecFrame *
 gst_mfx_decoder_get_discarded_frame (GstMfxDecoder * decoder)
 {
   g_return_val_if_fail (decoder != NULL, NULL);
-
   return g_queue_pop_tail (&decoder->discarded_frames);
 }
 
@@ -110,7 +106,6 @@ void
 gst_mfx_decoder_skip_corrupted_frames (GstMfxDecoder * decoder)
 {
   g_return_if_fail (decoder != NULL);
-
   decoder->skip_corrupted_frames = TRUE;
 }
 
@@ -219,7 +214,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 
   switch (decoder->params.mfx.CodecId) {
     case MFX_CODEC_HEVC: {
-      guint i, c;
+      guint i;
       mfxPluginUID *uids[] = {
         &MFX_PLUGINID_HEVCD_HW,
         &MFX_PLUGINID_HEVCD_SW,
@@ -265,7 +260,6 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
     default:
       sts = MFX_ERR_NONE;
   }
-
   return sts;
 }
 
@@ -324,7 +318,6 @@ static gboolean
 task_init (GstMfxDecoder * decoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
-  mfxU32 output_fourcc, decoded_fourcc;
 
   decoder->decode =
       gst_mfx_task_new (decoder->aggregator, GST_MFX_TASK_DECODER);
@@ -361,21 +354,6 @@ task_init (GstMfxDecoder * decoder)
   gst_mfx_task_set_request (decoder->decode, &decoder->request);
   gst_mfx_task_set_video_params (decoder->decode, &decoder->params);
 
-  output_fourcc =
-      gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
-  decoded_fourcc = decoder->params.mfx.FrameInfo.FourCC;
-
-  if (output_fourcc != decoded_fourcc)
-    decoder->enable_csc = TRUE;
-  if (GST_VIDEO_INFO_IS_INTERLACED(&decoder->info)) {
-    gdouble frame_rate;
-
-    gst_util_fraction_to_double(decoder->info.fps_n,
-      decoder->info.fps_d, &frame_rate);
-    if ((int)(frame_rate + 0.5) == 60)
-      decoder->can_double_deinterlace = TRUE;
-    decoder->enable_deinterlace = TRUE;
-  }
   return TRUE;
 
 error_load_plugin:
@@ -410,17 +388,10 @@ gst_mfx_decoder_create(GstMfxDecoder * decoder,
       decoder->params.mfx.DecodedOrder = 1;
   }
   decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-  decoder->inited = FALSE;
   decoder->bs.MaxLength = 1024 * 16;
   decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
   if (!decoder->bitstream)
     return FALSE;
-
-  decoder->pts_offset = GST_CLOCK_TIME_NONE;
-
-  g_queue_init (&decoder->decoded_frames);
-  g_queue_init (&decoder->pending_frames);
-  g_queue_init (&decoder->discarded_frames);
 
   decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   if (!task_init(decoder))
@@ -437,6 +408,12 @@ error_init_task:
 static void
 gst_mfx_decoder_init (GstMfxDecoder * decoder)
 {
+  decoder->inited = FALSE;
+  decoder->pts_offset = GST_CLOCK_TIME_NONE;
+
+  g_queue_init(&decoder->decoded_frames);
+  g_queue_init(&decoder->pending_frames);
+  g_queue_init(&decoder->discarded_frames);
 }
 
 GstMfxDecoder *
@@ -454,8 +431,8 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     return NULL;
 
   if (!gst_mfx_decoder_create (decoder, aggregator, profile, info,
-	    async_depth, live_mode, is_autoplugged))
-	  goto error;
+          async_depth, live_mode, is_autoplugged))
+    goto error;
   return decoder;
 
 error:
@@ -484,39 +461,55 @@ gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
 
 
 static gboolean
-init_filter (GstMfxDecoder * decoder)
+configure_filter (GstMfxDecoder * decoder)
 {
-  mfxU32 output_fourcc =
-      gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
+  mfxU32 output_format =
+    gst_video_format_to_mfx_fourcc(GST_VIDEO_INFO_FORMAT(&decoder->info));
+  mfxU32 decode_format = decoder->params.mfx.FrameInfo.FourCC;
+  gboolean enable_csc = FALSE, enable_deinterlace = FALSE;
 
-  decoder->filter = gst_mfx_filter_new_with_task (decoder->aggregator,
-    decoder->decode, GST_MFX_TASK_VPP_IN,
-    decoder->memtype_is_system, decoder->memtype_is_system);
-  if (!decoder->filter) {
-    GST_ERROR ("Unable to initialize filter.");
-    return FALSE;
+  if (output_format != decode_format)
+    enable_csc = TRUE;
+  if (GST_VIDEO_INFO_IS_INTERLACED(&decoder->info)) {
+    gdouble frame_rate;
+
+    gst_util_fraction_to_double(decoder->info.fps_n,
+      decoder->info.fps_d, &frame_rate);
+    if ((int)(frame_rate + 0.5) == 60)
+      decoder->can_double_deinterlace = TRUE;
+    enable_deinterlace = TRUE;
   }
 
-  decoder->request.Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
-  decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
+  if (enable_csc || enable_deinterlace) {
+    decoder->filter = gst_mfx_filter_new_with_task(decoder->aggregator,
+      decoder->decode, GST_MFX_TASK_VPP_IN,
+      decoder->memtype_is_system, decoder->memtype_is_system);
+    if (!decoder->filter) {
+      GST_ERROR("Unable to initialize filter.");
+      return FALSE;
+    }
 
-  gst_mfx_task_set_request(decoder->decode, &decoder->request);
+    decoder->request.Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
+    decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
 
-  gst_mfx_filter_set_frame_info (decoder->filter,
-     &decoder->params.mfx.FrameInfo);
-  if (decoder->enable_csc)
-    gst_mfx_filter_set_format (decoder->filter, output_fourcc);
-  if (decoder->enable_deinterlace) {
-    GstMfxDeinterlaceMethod di_method = decoder->can_double_deinterlace ?
-      GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF
+    gst_mfx_task_set_request(decoder->decode, &decoder->request);
+
+    gst_mfx_filter_set_frame_info(decoder->filter,
+      &decoder->params.mfx.FrameInfo);
+    if (enable_csc)
+      gst_mfx_filter_set_format(decoder->filter, output_format);
+    if (enable_deinterlace) {
+      GstMfxDeinterlaceMethod di_method = decoder->can_double_deinterlace ?
+        GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF
         : GST_MFX_DEINTERLACE_METHOD_ADVANCED;
-    gst_mfx_filter_set_deinterlace_method (decoder->filter, di_method);
-  }
-  gst_mfx_filter_set_async_depth (decoder->filter, decoder->params.AsyncDepth);
+      gst_mfx_filter_set_deinterlace_method(decoder->filter, di_method);
+    }
+    gst_mfx_filter_set_async_depth(decoder->filter, decoder->params.AsyncDepth);
 
-  if (!gst_mfx_filter_prepare (decoder->filter)) {
-    GST_ERROR ("Unable to set up postprocessing filter.");
-    goto error;
+    if (!gst_mfx_filter_prepare(decoder->filter)) {
+      GST_ERROR("Unable to set up postprocessing filter.");
+      goto error;
+    }
   }
   return TRUE;
 
@@ -590,16 +583,10 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     gst_mfx_task_use_video_memory (decoder->decode);
   }
 
-  if (!decoder->filter_inited
-      && (decoder->enable_csc || decoder->enable_deinterlace)) {
-    if (gst_mfx_task_get_task_type(decoder->decode) == GST_MFX_TASK_DECODER) {
-      if (!init_filter(decoder))
-        return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
-    }
-    else if (gst_mfx_task_has_type(decoder->decode, GST_MFX_TASK_VPP_IN)) {
-      decoder->can_double_deinterlace = FALSE;
-    }
-    decoder->filter_inited = TRUE;
+  if (!decoder->filter
+      && gst_mfx_task_get_task_type(decoder->decode) == GST_MFX_TASK_DECODER) {
+    if (!configure_filter(decoder))
+      return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
   }
 
   if (!init_decoder(decoder))
