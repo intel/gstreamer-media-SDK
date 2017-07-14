@@ -116,6 +116,10 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * req,
   if (task->soft_reinit && (response_data->num_surfaces != task->backup_num_surfaces)
       && (info->FourCC != MFX_FOURCC_P8))
     response_data->num_surfaces = task->backup_num_surfaces;
+  else if ((task->task_type & GST_MFX_TASK_DECODER) &&
+           info->Width < 1281 && info->Height < 721 &&
+           info->FrameRateExtN > 50)
+    response_data->num_surfaces += 5;
 
   num_surfaces = response_data->num_surfaces;
 
