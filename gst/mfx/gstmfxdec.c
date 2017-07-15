@@ -741,11 +741,11 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
       element_name = g_strdup_printf ("mfx%sdec", name);
 
 #if MSDK_CHECK_VERSION(1,19)
+      /* Assume any platform newer than SKL have the same SKL codec support */
+      if (platform > MFX_PLATFORM_SKYLAKE)
+        platform = MFX_PLATFORM_SKYLAKE;
+
       switch (platform) {
-#if MSDK_CHECK_VERSION(1,22)
-        case MFX_PLATFORM_APOLLOLAKE:
-        case MFX_PLATFORM_KABYLAKE:
-#endif
         case MFX_PLATFORM_SKYLAKE:
           if (!g_strcmp0(name, "vp9"))
             rank = GST_RANK_PRIMARY + 3;
