@@ -733,7 +733,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       ret = gst_mfx_decoder_prepare (decoder);
     else
       ret = gst_mfx_decoder_start (decoder);
-    
+
     if (GST_MFX_DECODER_STATUS_SUCCESS == ret)
       decoder->inited = TRUE;
     else
@@ -824,8 +824,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
       decoder->bs.DataOffset);
     decoder->bs.DataOffset = 0;
-    decoder->bs.Data = decoder->bitstream->data;
-    decoder->bs.MaxLength = decoder->bitstream->len;
 
     ret = GST_MFX_DECODER_STATUS_SUCCESS;
   }
