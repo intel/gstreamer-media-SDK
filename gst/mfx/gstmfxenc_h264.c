@@ -39,7 +39,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_mfx_h264_enc_debug);
   "alignment = (string) au"
 
 static const char gst_mfxenc_h264_sink_caps_str[] =
-    GST_MFX_MAKE_SURFACE_CAPS "; "
+    GST_MFX_MAKE_INPUT_SURFACE_CAPS "; "
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxenc_h264_src_caps_str[] =
@@ -116,7 +116,7 @@ gst_mfxenc_h264_set_config (GstMfxEnc * base_encode)
 
   profile = gst_mfx_profile_from_caps(allowed_caps);
   gst_caps_unref (allowed_caps);
-  
+
   gst_mfx_encoder_set_profile(base_encode->encoder, profile.profile);
   return TRUE;
 }
