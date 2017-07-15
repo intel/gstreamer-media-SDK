@@ -440,7 +440,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
   task = gst_mfx_task_aggregator_get_last_task(plugin->aggregator);
 
-  plugin->srcpad_caps_is_raw = plugin->sinkpad_caps_is_raw;
+  plugin->srcpad_caps_is_raw = FALSE;
 
   if (!plugin->sinkpad_caps_is_raw
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
