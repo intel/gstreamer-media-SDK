@@ -191,7 +191,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
       GST_VIDEO_CAPS_MAKE("{ P010_10LE, NV12, BGRA }");
 #else
     const char caps_str[] =
-      GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
+      GST_MFX_MAKE_SURFACE_CAPS ";"
       GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 #endif
     templ = gst_caps_from_string (caps_str);
