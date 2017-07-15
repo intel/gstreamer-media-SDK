@@ -34,12 +34,6 @@ struct _GstMfxProfileMap
   const gchar *profile_str;
 };
 
-struct map
-{
-  mfxU16 level;
-  const gchar *level_str;
-};
-
 /* Profiles */
 static const GstMfxProfileMap gst_mfx_profiles[] = {
   {MFX_PROFILE_MPEG2_SIMPLE, MFX_CODEC_MPEG2,
@@ -77,96 +71,6 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
       "video/x-h265", "main"},
   {MFX_PROFILE_UNKNOWN,}
 };
-
-static const struct map gst_mfx_h264_level_map[] = {
-  { MFX_LEVEL_AVC_1,    "1"    },
-  { MFX_LEVEL_AVC_1b,   "1b"   },
-  { MFX_LEVEL_AVC_11,  "1.1"   },
-  { MFX_LEVEL_AVC_12,  "1.2"   },
-  { MFX_LEVEL_AVC_13,  "1.3"   },
-  { MFX_LEVEL_AVC_2,    "2"    },
-  { MFX_LEVEL_AVC_21,  "2.1"   },
-  { MFX_LEVEL_AVC_22,  "2.2"   },
-  { MFX_LEVEL_AVC_3,    "3"    },
-  { MFX_LEVEL_AVC_31,  "3.1"   },
-  { MFX_LEVEL_AVC_32,  "3.2"   },
-  { MFX_LEVEL_AVC_4,    "4"    },
-  { MFX_LEVEL_AVC_41,  "4.1"   },
-  { MFX_LEVEL_AVC_42,  "4.2"   },
-  { MFX_LEVEL_AVC_5,    "5"    },
-  { MFX_LEVEL_AVC_51,  "5.1"   },
-  { MFX_LEVEL_AVC_52,  "5.2"   },
-  { 0, NULL }
-};
-
-static const struct map gst_mfx_hevc_level_map[] = {
-  { MFX_LEVEL_HEVC_1,    "1"    },
-  { MFX_LEVEL_HEVC_2,    "2"    },
-  { MFX_LEVEL_HEVC_21,  "2.1"   },
-  { MFX_LEVEL_HEVC_3,    "3"    },
-  { MFX_LEVEL_HEVC_31,  "3.1"   },
-  { MFX_LEVEL_HEVC_4,    "4"    },
-  { MFX_LEVEL_HEVC_41,  "4.1"   },
-  { MFX_LEVEL_HEVC_5,    "5"    },
-  { MFX_LEVEL_HEVC_51,  "5.1"   },
-  { MFX_LEVEL_HEVC_52,  "5.2"   },
-  { MFX_LEVEL_HEVC_6,    "6"    },
-  { MFX_LEVEL_HEVC_61,  "6.1"   },
-  { MFX_LEVEL_HEVC_62,  "6.2"   },
-  { 0, NULL }
-};
-
-static const struct map gst_mfx_mpeg2_level_map[] = {
-  { MFX_LEVEL_MPEG2_LOW,          "low"           },
-  { MFX_LEVEL_MPEG2_MAIN,         "main"          },
-  { MFX_LEVEL_MPEG2_HIGH,         "high-1440"     },
-  { MFX_LEVEL_MPEG2_HIGH1440,     "high"          },
-  { 0, NULL }
-};
-
-static const struct map gst_mfx_vc1_level_map[] = {
-  { MFX_LEVEL_VC1_LOW,      "low"     },
-  { MFX_LEVEL_VC1_MEDIAN,   "medium"  },
-  { MFX_LEVEL_VC1_HIGH,     "high"    },
-  { MFX_LEVEL_VC1_0,        "0"       },
-  { MFX_LEVEL_VC1_1,        "1"       },
-  { MFX_LEVEL_VC1_2,        "2"       },
-  { MFX_LEVEL_VC1_3,        "3"       },
-  { MFX_LEVEL_VC1_4,        "4"       },
-  { 0, NULL }
-};
-
-static mfxU16
-map_lookup_value(const struct map *m, const gchar * level_str)
-{
-  for (; m && m->level; m++)
-    if (strcmp (level_str, m->level_str) == 0)
-      return m->level;
-  return MFX_LEVEL_UNKNOWN;
-}
-
-static mfxU16
-gst_mfx_profile_get_level(mfxU32 codec, const gchar * level_str)
-{
-  const struct map *m = NULL;
-  switch (codec) {
-    case MFX_CODEC_AVC:
-      m = gst_mfx_h264_level_map;
-      break;
-    case MFX_CODEC_HEVC:
-      m = gst_mfx_hevc_level_map;
-      break;
-    case MFX_CODEC_MPEG2:
-      m = gst_mfx_mpeg2_level_map;
-      break;
-    case MFX_CODEC_VC1:
-      m = gst_mfx_vc1_level_map;
-      break;
-    default:
-      break;
-  }
-  return map_lookup_value(m, level_str);
-}
 
 static const GstMfxProfileMap *
 get_profiles_map (GstMfxProfile profile)
@@ -304,7 +208,7 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
   const GstMfxProfileMap *m;
   GstCaps *caps_test;
   GstStructure *structure;
-  const gchar *profile_str, *level_str;
+  const gchar *profile_str;
   GstMfxProfile profile = { 0 }, best_profile = { 0 };
   GstBuffer *codec_data = NULL;
   const gchar *name;
@@ -348,10 +252,6 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
 
   if (!profile.profile)
     profile = best_profile;
-  level_str = gst_structure_get_string (structure, "level");
-  if (level_str)
-    profile.level = gst_mfx_profile_get_level(profile.codec, level_str);
-
   return profile;
 }
 
