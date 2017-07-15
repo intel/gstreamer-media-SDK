@@ -53,7 +53,6 @@ enum
 #endif
   PROP_FULLSCREEN,
   PROP_SHOW_PREROLL_FRAME,
-  PROP_FULL_COLOR_RANGE,
   PROP_WIDTH,
   PROP_HEIGHT,
   PROP_DEINTERLACE_METHOD,
@@ -170,7 +169,6 @@ gst_mfx_sink_bin_set_property (GObject * object,
     case PROP_FULLSCREEN:
     case PROP_FORCE_ASPECT_RATIO:
     case PROP_SHOW_PREROLL_FRAME:
-    case PROP_FULL_COLOR_RANGE:
       g_object_set (G_OBJECT (mfxsinkbin->sink),
           pspec->name,
           g_value_get_boolean (value),
@@ -235,7 +233,6 @@ gst_mfx_sink_bin_get_property (GObject * object,
     case PROP_FULLSCREEN:
     case PROP_FORCE_ASPECT_RATIO:
     case PROP_SHOW_PREROLL_FRAME:
-    case PROP_FULL_COLOR_RANGE:
       if (mfxsinkbin->sink) {
         g_object_get_property (G_OBJECT (mfxsinkbin->sink),
             pspec->name,
@@ -377,12 +374,6 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
     g_param_spec_boolean ("show-preroll-frame",
     "Show preroll frame",
     "When enabled, show video frames during preroll.",
-    FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  g_properties[PROP_FULL_COLOR_RANGE] =
-    g_param_spec_boolean ("full-color-range",
-    "Full color range",
-    "Decoded frames will be in RGB 0-255",
     FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
 
