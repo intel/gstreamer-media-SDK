@@ -41,7 +41,7 @@ gst_mfxpostproc_color_balance_iface_init (GstColorBalanceInterface * iface);
 
 /* Default templates */
 static const char gst_mfxpostproc_sink_caps_str[] =
-    GST_MFX_MAKE_SURFACE_CAPS "; "
+    GST_MFX_MAKE_INPUT_SURFACE_CAPS "; "
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
         GST_CAPS_FEATURE_MEMORY_MFX_SURFACE ","
         GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
@@ -52,10 +52,8 @@ static const char gst_mfxpostproc_sink_caps_str[] =
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxpostproc_src_caps_str[] =
-  GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE, ENCODED }"
-  ) "; "
-  GST_VIDEO_CAPS_MAKE ("{ NV12, BGRA, P010_10LE }");
+  GST_MFX_MAKE_OUTPUT_SURFACE_CAPS "; "
+  GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -442,7 +440,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 
   task = gst_mfx_task_aggregator_get_last_task(plugin->aggregator);
 
-  plugin->srcpad_caps_is_raw = plugin->sinkpad_caps_is_raw;
+  plugin->srcpad_caps_is_raw = FALSE;
 
   if (!plugin->sinkpad_caps_is_raw
       && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)) {
@@ -878,8 +876,13 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     gst_caps_unref (peer_caps);
 
   feature =
+#if GST_CHECK_VERSION(1,9,1)
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
         GST_VIDEO_INFO_FORMAT(&vi) == GST_VIDEO_FORMAT_P010_10LE, &out_format);
+#else
+      gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
+        FALSE, &out_format);
+#endif
   gst_video_info_change_format (&vi, out_format, width, height);
 
   out_caps = gst_video_info_to_caps (&vi);

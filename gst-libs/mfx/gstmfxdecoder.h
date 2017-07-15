@@ -37,27 +37,9 @@ G_DECLARE_FINAL_TYPE( GstMfxDecoder, gst_mfx_decoder, GST_MFX, DECODER, GstObjec
 #define GST_MFX_DECODER(obj) \
     (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_DECODER, GstMfxDecoder))
 
-
-/**
-* GstMfxDecoderStatus:
-* @GST_MFX_DECODER_STATUS_SUCCESS: Success.
-* @GST_MFX_DECODER_STATUS_FLUSHED: Decoder is flushed.
-* @GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED: No memory left.
-* @GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED: Decoder initialization failure.
-* @GST_MFX_DECODER_STATUS_ERROR_UNSUPPORTED_CODEC: Unsupported codec.
-* @GST_MFX_DECODER_STATUS_ERROR_MORE_DATA: Not enough input data to decode.
-* @GST_MFX_DECODER_STATUS_ERROR_MORE_SURFACE: No surface left to hold the decoded picture.
-* @GST_MFX_DECODER_STATUS_ERROR_INVALID_SURFACE: Invalid surface.
-* @GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER: Invalid or unsupported bitstream data.
-* @GST_MFX_DECODER_STATUS_ERROR_UNSUPPORTED_PROFILE: Unsupported codec profile.
-* @GST_MFX_DECODER_STATUS_ERROR_UNSUPPORTED_CHROMA_FORMAT: Unsupported chroma format.
-* @GST_MFX_DECODER_STATUS_ERROR_INVALID_PARAMETER: Unsupported parameter.
-* @GST_MFX_DECODER_STATUS_ERROR_UNKNOWN: Unknown error.
-*
-* Decoder status for gst_mfx_decoder_get_surface().
-*/
 typedef enum {
   GST_MFX_DECODER_STATUS_SUCCESS = 0,
+  GST_MFX_DECODER_STATUS_CONFIGURED,
   GST_MFX_DECODER_STATUS_FLUSHED,
   GST_MFX_DECODER_STATUS_ERROR_ALLOCATION_FAILED,
   GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED,
@@ -91,6 +73,9 @@ gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
 
 const GstMfxProfile *
 gst_mfx_decoder_get_profile (GstMfxDecoder * decoder);
+
+const mfxFrameAllocRequest *
+gst_mfx_decoder_get_request (GstMfxDecoder * decoder);
 
 gboolean
 gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
