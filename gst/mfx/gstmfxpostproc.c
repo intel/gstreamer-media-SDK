@@ -876,8 +876,13 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     gst_caps_unref (peer_caps);
 
   feature =
+#if GST_CHECK_VERSION(1,9,1)
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
         GST_VIDEO_INFO_FORMAT(&vi) == GST_VIDEO_FORMAT_P010_10LE, &out_format);
+#else
+      gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
+        FALSE, &out_format);
+#endif
   gst_video_info_change_format (&vi, out_format, width, height);
 
   out_caps = gst_video_info_to_caps (&vi);
