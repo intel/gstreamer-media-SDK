@@ -64,7 +64,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
   ;
 
 static const char gst_mfxdecode_src_caps_str[] =
-  GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
+  GST_MFX_MAKE_SURFACE_CAPS ";"
   GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
 enum

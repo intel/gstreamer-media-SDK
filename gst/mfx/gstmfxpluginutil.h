@@ -70,11 +70,7 @@ gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
 
 
 #ifdef WITH_LIBVA_BACKEND
-# define GST_MFX_MAKE_INPUT_SURFACE_CAPS        \
-    GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
-
-# define GST_MFX_MAKE_OUTPUT_SURFACE_CAPS       \
+# define GST_MFX_MAKE_SURFACE_CAPS        \
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
     GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
 
@@ -84,13 +80,9 @@ gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
 # define GST_MFX_SUPPORTED_OUTPUT_FORMATS \
     "{ NV12, BGRA }"
 #else
-# define GST_MFX_MAKE_INPUT_SURFACE_CAPS        \
+# define GST_MFX_MAKE_SURFACE_CAPS        \
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
     GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE }")
-
-# define GST_MFX_MAKE_OUTPUT_SURFACE_CAPS       \
-    GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE, ENCODED }")
 
 # define GST_MFX_SUPPORTED_INPUT_FORMATS \
     "{ NV12, YV12, I420, YUY2, P010_10LE, BGRA, BGRx }"
