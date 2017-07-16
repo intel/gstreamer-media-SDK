@@ -64,7 +64,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
   ;
 
 static const char gst_mfxdecode_src_caps_str[] =
-  GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
+  GST_MFX_MAKE_SURFACE_CAPS ";"
   GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
 enum
@@ -405,24 +405,16 @@ static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
 {
   if (mfxdec->decoder) {
-    const GstMfxProfile *old_profile =
-        gst_mfx_decoder_get_profile(mfxdec->decoder);
-    GstMfxProfile new_profile = gst_mfx_profile_from_caps (caps);
+    gst_mfxdec_drain (mfxdec);
 
-    gst_mfxdec_drain(mfxdec);
-
-    if (old_profile
-        && new_profile.codec == old_profile->codec
-        && new_profile.profile == old_profile->profile) {
-      if (!gst_mfx_decoder_reset(mfxdec->decoder)) {
-        GST_ERROR_OBJECT(mfxdec, "Failed to reset decoder");
-        return FALSE;
-      }
-      gst_mfxdec_flush_discarded_frames (mfxdec);
-      return TRUE;
+    if (!gst_mfx_decoder_reset (mfxdec->decoder)) {
+      GST_ERROR_OBJECT(mfxdec, "Failed to reset decoder");
+      return FALSE;
     }
+    gst_mfxdec_flush_discarded_frames (mfxdec);
+    return TRUE;
   }
-  gst_mfx_decoder_replace(&mfxdec->decoder, NULL);
+  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
   return gst_mfxdec_create (mfxdec, caps);
 }
 

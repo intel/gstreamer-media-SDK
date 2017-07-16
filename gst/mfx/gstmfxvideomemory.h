@@ -161,7 +161,7 @@ gst_mfx_video_allocator_get_type(void);
 
 GstAllocator *
 gst_mfx_video_allocator_new(GstMfxContext * context,
-    const GstVideoInfo * vip, gboolean mapped);
+    const GstVideoInfo * vip, gboolean memtype_is_system);
 
 #ifdef WITH_LIBVA_BACKEND
 /* ------------------------------------------------------------------------ */

@@ -79,13 +79,6 @@ gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info)
   decoder->info = *info;
 }
 
-const GstMfxProfile *
-gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
-{
-  g_return_val_if_fail (decoder != NULL, NULL);
-  return &decoder->profile;
-}
-
 const mfxFrameAllocRequest *
 gst_mfx_decoder_get_request (GstMfxDecoder * decoder)
 {
@@ -291,7 +284,9 @@ gst_mfx_decoder_reconfigure_params (GstMfxDecoder * decoder)
   frame_info->FrameRateExtN = decoder->info.fps_n;
   frame_info->FrameRateExtD = decoder->info.fps_d;
 
-  /* We may need to overallocate surfaces when used with decodebin */
+  /* We may need to overallocate surfaces when used with decodebin
+   * TODO: Figure out why jerky playback issues occur with decodebin
+   * and remove this hack */
   if (decoder->is_autoplugged) {
     decoder->params.mfx.CodecLevel = 0;
     decoder->params.mfx.MaxDecFrameBuffering = 0;
@@ -518,7 +513,6 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 static GstMfxDecoderStatus
 gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
 {
-  GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
   mfxStatus sts = MFX_ERR_NONE;
 
   /* Retrieve sequence header for MPEG2 */
@@ -768,6 +762,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
+    /* TODO: Implement a more robust mechanism to deal with streams that
+     * change properties in the middle of playback */
     if (decoder->num_partial_frames) {
       GstVideoCodecFrame *cur_frame;
       guint n = g_queue_get_length(&decoder->pending_frames) - 1;

@@ -21,6 +21,7 @@
 #include "gstmfxsurface_vaapi.h"
 #include "gstmfxdisplay.h"
 #include "gstmfxutils_vaapi.h"
+#include "video-format.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -118,7 +119,7 @@ gst_mfx_surface_vaapi_map(GstMfxSurface * surface)
   guint i, num_planes;
   gboolean success = TRUE;
 
-  vaapi_surface->image = gst_mfx_surface_vaapi_derive_image(vaapi_surface);
+  vaapi_surface->image = gst_mfx_surface_vaapi_derive_image(surface);
   if (!vaapi_surface->image)
     return FALSE;
 

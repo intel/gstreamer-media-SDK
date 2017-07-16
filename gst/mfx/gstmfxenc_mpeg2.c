@@ -38,7 +38,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_mfx_mpeg2_encode_debug);
     "systemstream = (boolean) false"
 
 static const char gst_mfxenc_mpeg2_sink_caps_str[] =
-    GST_MFX_MAKE_INPUT_SURFACE_CAPS "; "
+    GST_MFX_MAKE_SURFACE_CAPS "; "
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxenc_mpeg2_src_caps_str[] = GST_CODEC_CAPS;
