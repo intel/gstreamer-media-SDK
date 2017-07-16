@@ -284,7 +284,9 @@ gst_mfx_decoder_reconfigure_params (GstMfxDecoder * decoder)
   frame_info->FrameRateExtN = decoder->info.fps_n;
   frame_info->FrameRateExtD = decoder->info.fps_d;
 
-  /* We may need to overallocate surfaces when used with decodebin */
+  /* We may need to overallocate surfaces when used with decodebin
+   * TODO: Figure out why jerky playback issues occur with decodebin
+   * and remove this hack */
   if (decoder->is_autoplugged) {
     decoder->params.mfx.CodecLevel = 0;
     decoder->params.mfx.MaxDecFrameBuffering = 0;
@@ -761,6 +763,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
+    /* TODO: Implement a more robust mechanism to deal with streams that
+     * change properties in the middle of playback */
     if (decoder->num_partial_frames) {
       GstVideoCodecFrame *cur_frame;
       guint n = g_queue_get_length(&decoder->pending_frames) - 1;

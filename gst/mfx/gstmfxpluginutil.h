@@ -26,48 +26,14 @@
 #include "gstmfxvideomemory.h"
 
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
-#include <gst-libs/mfx/gstmfxsurface.h>
 
-gboolean
-gst_mfx_ensure_aggregator(GstElement * element);
-
-gboolean
-gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * context);
-
-gboolean
-gst_mfx_append_surface_caps(GstCaps * out_caps, GstCaps * in_caps);
-
-/* Helpers for GValue construction for video formats */
-gboolean
-gst_mfx_value_set_format(GValue * value, GstVideoFormat format);
-
-/* Helpers to build video caps */
+ /* Helpers to build video caps */
 typedef enum
 {
   GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED,
   GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY,
   GST_MFX_CAPS_FEATURE_MFX_SURFACE,
 } GstMfxCapsFeature;
-
-GstCaps *
-gst_mfx_video_format_new_template_caps(GstVideoFormat format);
-
-GstCaps *
-gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
-  const gchar * features_string);
-
-GstMfxCapsFeature
-gst_mfx_find_preferred_caps_feature(GstPad * pad,
-  gboolean use_10bpc, GstVideoFormat * out_format_ptr);
-
-const gchar *
-gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
-
-/* Helpers to handle interlaced contents */
-#define GST_CAPS_INTERLACED_MODES \
-    "interlace-mode = (string){ progressive, interleaved, mixed }"
-
-
 
 #ifdef WITH_LIBVA_BACKEND
 # define GST_MFX_MAKE_SURFACE_CAPS        \
@@ -91,6 +57,22 @@ gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
     "{ NV12, BGRA, P010_10LE }"
 #endif
 
+/* Helpers to handle interlaced contents */
+#define GST_CAPS_INTERLACED_MODES \
+    "interlace-mode = (string){ progressive, interleaved, mixed }"
+
+gboolean
+gst_mfx_ensure_aggregator(GstElement * element);
+
+gboolean
+gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * context);
+
+GstMfxCapsFeature
+gst_mfx_find_preferred_caps_feature(GstPad * pad,
+  gboolean use_10bpc, GstVideoFormat * out_format_ptr);
+
+const gchar *
+gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
 
 gboolean
 gst_caps_has_mfx_surface(GstCaps * caps);
