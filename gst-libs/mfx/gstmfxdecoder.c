@@ -513,7 +513,6 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 static GstMfxDecoderStatus
 gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
 {
-  GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
   mfxStatus sts = MFX_ERR_NONE;
 
   /* Retrieve sequence header for MPEG2 */

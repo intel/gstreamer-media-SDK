@@ -63,7 +63,6 @@ gst_mfx_video_buffer_pool_get_options (GstBufferPool * pool)
   static const gchar *g_options[] = {
     GST_BUFFER_POOL_OPTION_VIDEO_META,
     GST_BUFFER_POOL_OPTION_MFX_VIDEO_META,
-    GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT,
     NULL,
   };
 
@@ -177,7 +176,7 @@ gst_mfx_video_buffer_pool_alloc_buffer (GstBufferPool * pool,
   buffer = gst_buffer_new ();
   if (!buffer)
     goto error_create_buffer;
-  
+
   gst_buffer_set_mfx_video_meta(buffer, meta);
 
 #ifdef WITH_LIBVA_BACKEND

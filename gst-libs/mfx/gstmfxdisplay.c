@@ -28,6 +28,7 @@
 #include <va/va_drm.h>
 #include "gstmfxdisplay.h"
 #include "gstmfxdisplay_priv.h"
+#include "gstmfxutils_vaapi.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -302,7 +303,7 @@ gst_mfx_display_class_init (GstMfxDisplayClass * klass)
 
   GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "MFX helper");
 
-  object_class->finalize = (GDestroyNotify) gst_mfx_display_finalize;
+  object_class->finalize = gst_mfx_display_finalize;
 }
 
 GstMfxDisplay *
