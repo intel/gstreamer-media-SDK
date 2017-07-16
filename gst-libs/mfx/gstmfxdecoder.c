@@ -79,13 +79,6 @@ gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info)
   decoder->info = *info;
 }
 
-const GstMfxProfile *
-gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
-{
-  g_return_val_if_fail (decoder != NULL, NULL);
-  return &decoder->profile;
-}
-
 const mfxFrameAllocRequest *
 gst_mfx_decoder_get_request (GstMfxDecoder * decoder)
 {
