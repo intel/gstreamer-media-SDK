@@ -248,8 +248,6 @@ gst_mfx_surface_finalize (GObject * surface)
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
   GstMfxSurfaceClass *klass = GST_MFX_SURFACE_GET_CLASS(surface);
 
-  if (priv->ext_buf)
-    g_slice_free (mfxExtBuffer *, priv->ext_buf);
   if (klass->release)
     klass->release (surface);
   gst_mfx_task_replace (&priv->task, NULL);
