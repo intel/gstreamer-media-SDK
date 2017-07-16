@@ -67,6 +67,13 @@ gst_mfx_ensure_aggregator(GstElement * element);
 gboolean
 gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * context);
 
+GstCaps *
+gst_mfx_video_format_new_template_caps(GstVideoFormat format);
+
+GstCaps *
+gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
+  const gchar * features_string);
+
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature(GstPad * pad,
   gboolean use_10bpc, GstVideoFormat * out_format_ptr);
