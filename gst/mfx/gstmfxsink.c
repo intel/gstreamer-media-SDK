@@ -45,13 +45,11 @@ GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxsink);
 #define GST_CAT_DEFAULT gst_debug_mfxsink
 
 /* Default template */
-static const char gst_mfxsink_sink_caps_str[] = GST_MFX_MAKE_SURFACE_CAPS ";";
-
 static GstStaticPadTemplate gst_mfxsink_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS (gst_mfxsink_sink_caps_str));
+    GST_STATIC_CAPS (GST_MFX_MAKE_OUTPUT_SURFACE_CAPS));
 
 static void
 gst_mfxsink_video_overlay_iface_init (GstVideoOverlayInterface * iface);
