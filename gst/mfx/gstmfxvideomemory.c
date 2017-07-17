@@ -320,7 +320,7 @@ gst_mfx_video_memory_copy (GstMfxVideoMemory * mem, gssize offset, gssize size)
   g_return_val_if_fail (mem, NULL);
   g_return_val_if_fail (mem->meta, NULL);
 
-  /* XXX: this implements a soft-copy, i.e. underlying VA surfaces
+  /* XXX: this implements a soft-copy, i.e. underlying surfaces
      are not copied */
   (void) gst_memory_get_sizes (GST_MEMORY_CAST (mem), NULL, &maxsize);
   if (offset != 0 || (size != -1 && (gsize) size != maxsize))
@@ -434,7 +434,7 @@ gst_mfx_video_allocator_init (GstMfxVideoAllocator * allocator)
 
 GstAllocator *
 gst_mfx_video_allocator_new (GstMfxContext * context,
-    const GstVideoInfo * vip, gboolean mapped)
+    const GstVideoInfo * vip, gboolean memtype_is_system)
 {
   GstMfxVideoAllocator *allocator;
 
@@ -447,7 +447,7 @@ gst_mfx_video_allocator_new (GstMfxContext * context,
   allocator->image_info = *vip;
 
   allocator->surface_pool = gst_mfx_surface_pool_new (context,
-    &allocator->image_info, mapped);
+    &allocator->image_info, memtype_is_system);
   if (!allocator->surface_pool)
     goto error_create_surface_pool;
 

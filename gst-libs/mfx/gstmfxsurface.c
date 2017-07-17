@@ -196,7 +196,6 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
 
   mfxFrameInfo *info = &priv->surface.Info;
-  mfxFrameData *ptr = &priv->surface.Data;
 
   priv->width = info->Width;
   priv->height = info->Height;
@@ -205,23 +204,6 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
   priv->crop_rect.y = info->CropY;
   priv->crop_rect.width = info->CropW;
   priv->crop_rect.height = info->CropH;
-
-#if MSDK_CHECK_VERSION(1,19)
-  /* Full color range */
-  priv->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
-  priv->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
-  priv->siginfo.TransferMatrix = MFX_TRANSFERMATRIX_UNKNOWN;
-  priv->siginfo.NominalRange = MFX_NOMINALRANGE_UNKNOWN;
-
-  if (NULL == priv->ext_buf) {
-    priv->ext_buf = g_slice_alloc (sizeof (mfxExtBuffer *));
-    if (NULL != priv->ext_buf) {
-      priv->ext_buf[0] = (mfxExtBuffer *) &priv->siginfo;
-      ptr->NumExtParam = 1;
-      ptr->ExtParam = &priv->ext_buf[0];
-    }
-  }
-#endif
 }
 
 static void

@@ -62,7 +62,11 @@ gst_mfx_deps = []
 glib_deps = [dependency('glib-2.0'), dependency('gobject-2.0'), dependency('gio-2.0'), dependency('gmodule-2.0')]
 gst_mfx_deps += glib_deps
 
-gst_req = '>= 1.10.0'
+if host_machine.system() == 'linux'
+  gst_req = '>= 1.8.0'
+else
+  gst_req = '>= 1.10.0'
+endif
 
 gst_dep = dependency('gstreamer-1.0', version: gst_req,
   fallback : ['gstreamer', 'gst_dep'])

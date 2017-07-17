@@ -65,7 +65,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_SURFACE_CAPS ";"
-  GST_VIDEO_CAPS_MAKE ("{ NV12, P010_10LE, BGRA }");
+  GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
 enum
 {
@@ -174,15 +174,14 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   GstVideoFormat output_format;
   GstCapsFeatures *features = NULL;
   GstMfxCapsFeature feature;
-  const GstMfxProfile *profile;
+  const mfxFrameAllocRequest *request;
   gboolean use_10bpc = FALSE;
 
   if (!mfxdec->input_state)
     return FALSE;
 
-  profile = gst_mfx_decoder_get_profile (mfxdec->decoder);
-  if (profile->codec == MFX_CODEC_HEVC
-      && profile->profile == MFX_PROFILE_HEVC_MAIN10)
+  request = gst_mfx_decoder_get_request (mfxdec->decoder);
+  if (MFX_FOURCC_P010 == request->Info.FourCC)
     use_10bpc = TRUE;
 
   ref_state = mfxdec->input_state;
@@ -406,24 +405,16 @@ static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
 {
   if (mfxdec->decoder) {
-    const GstMfxProfile *old_profile =
-        gst_mfx_decoder_get_profile(mfxdec->decoder);
-    GstMfxProfile new_profile = gst_mfx_profile_from_caps (caps);
-    
-    gst_mfxdec_drain(mfxdec);
+    gst_mfxdec_drain (mfxdec);
 
-    if (old_profile
-        && new_profile.codec == old_profile->codec
-        && new_profile.profile == old_profile->profile) {
-      if (!gst_mfx_decoder_reset(mfxdec->decoder)) {
-        GST_ERROR_OBJECT(mfxdec, "Failed to reset decoder");
-        return FALSE;
-      }
-      gst_mfxdec_flush_discarded_frames (mfxdec);
-      return TRUE;
+    if (!gst_mfx_decoder_reset (mfxdec->decoder)) {
+      GST_ERROR_OBJECT(mfxdec, "Failed to reset decoder");
+      return FALSE;
     }
+    gst_mfxdec_flush_discarded_frames (mfxdec);
+    return TRUE;
   }
-  gst_mfx_decoder_replace(&mfxdec->decoder, NULL);
+  gst_mfx_decoder_replace (&mfxdec->decoder, NULL);
   return gst_mfxdec_create (mfxdec, caps);
 }
 
@@ -498,9 +489,6 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   GstFlowReturn ret = GST_FLOW_OK;
   GstVideoCodecFrame *out_frame = NULL;
 
-  if (!gst_mfxdec_negotiate (mfxdec))
-      goto not_negotiated;
-
   GST_LOG_OBJECT (mfxdec, "Received new data of size %" G_GSIZE_FORMAT
       ", dts %" GST_TIME_FORMAT
       ", pts:%" GST_TIME_FORMAT
@@ -515,6 +503,9 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   gst_mfxdec_flush_discarded_frames (mfxdec);
 
   switch (sts) {
+    case GST_MFX_DECODER_STATUS_CONFIGURED:
+      if (!gst_mfxdec_negotiate(mfxdec))
+        goto not_negotiated;
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
       ret = GST_FLOW_OK;
       break;

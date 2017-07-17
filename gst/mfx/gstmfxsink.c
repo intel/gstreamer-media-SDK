@@ -45,10 +45,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxsink);
 #define GST_CAT_DEFAULT gst_debug_mfxsink
 
 /* Default template */
-static const char gst_mfxsink_sink_caps_str[] = 
-GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
-  GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE, ENCODED }"
-) ";";
+static const char gst_mfxsink_sink_caps_str[] = GST_MFX_MAKE_SURFACE_CAPS ";";
 
 static GstStaticPadTemplate gst_mfxsink_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -85,7 +82,6 @@ enum
 #endif
   PROP_FULLSCREEN,
   PROP_FORCE_ASPECT_RATIO,
-  PROP_FULL_COLOR_RANGE,
   N_PROPERTIES
 };
 
@@ -846,16 +842,12 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_X11;
 #endif // USE_DRI3
   }
-#endif  // WITH_LIBVA_BACKEND
-  if (sink->full_color_range
-#ifdef WITH_LIBVA_BACKEND
-      || sink->display_type_req == GST_MFX_DISPLAY_TYPE_X11
-#endif  // WITH_LIBVA_BACKEND
-      )
-    out_caps =
-        gst_mfx_video_format_new_template_caps_with_features
-        (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
+
+  if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_X11)
+    out_caps = gst_mfx_video_format_new_template_caps_with_features(
+      GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
   else
+#endif  // WITH_LIBVA_BACKEND
     out_caps =
         gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
 
@@ -1058,9 +1050,6 @@ gst_mfxsink_set_property (GObject * object,
     case PROP_FORCE_ASPECT_RATIO:
       sink->keep_aspect = g_value_get_boolean (value);
       break;
-    case PROP_FULL_COLOR_RANGE:
-      sink->full_color_range = g_value_get_boolean (value);
-      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1087,9 +1076,6 @@ gst_mfxsink_get_property (GObject * object,
       break;
     case PROP_FORCE_ASPECT_RATIO:
       g_value_set_boolean (value, sink->keep_aspect);
-      break;
-    case PROP_FULL_COLOR_RANGE:
-      g_value_set_boolean (value, sink->full_color_range);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1178,17 +1164,6 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
       "When enabled, scaling will respect original aspect ratio",
       TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * GstMfxSink:full-color-range:
-   *
-   * When enabled, all decoded frames will be in RGB 0-255.
-   */
-  g_properties[PROP_FULL_COLOR_RANGE] =
-      g_param_spec_boolean ("full-color-range",
-      "Full color range",
-      "Decoded frames will be in RGB 0-255",
-      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
   g_object_class_install_properties (object_class, N_PROPERTIES, g_properties);
 }
 
@@ -1202,7 +1177,6 @@ gst_mfxsink_init (GstMfxSink * sink)
   sink->video_par_n = 1;
   sink->video_par_d = 1;
   sink->keep_aspect = TRUE;
-  sink->full_color_range = FALSE;
   sink->handle_events = TRUE;
   gst_video_info_init (&sink->video_info);
 }

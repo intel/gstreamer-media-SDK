@@ -39,7 +39,6 @@ struct _GstMfxProfile
 {
   mfxU32  codec;
   mfxU16  profile;
-  mfxU16  level;
 };
 
 GstMfxProfile

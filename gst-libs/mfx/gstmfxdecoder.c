@@ -55,6 +55,7 @@ struct _GstMfxDecoder
 
   GstVideoInfo info;
   gboolean inited;
+  gboolean configured;
   gboolean was_reset;
   gboolean has_ready_frames;
   gboolean memtype_is_system;
@@ -78,11 +79,11 @@ gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info)
   decoder->info = *info;
 }
 
-const GstMfxProfile *
-gst_mfx_decoder_get_profile (GstMfxDecoder * decoder)
+const mfxFrameAllocRequest *
+gst_mfx_decoder_get_request (GstMfxDecoder * decoder)
 {
-  g_return_val_if_fail (decoder != NULL, NULL);
-  return &decoder->profile;
+  g_return_val_if_fail(decoder != NULL, NULL);
+  return &decoder->request;
 }
 
 gboolean
@@ -234,14 +235,10 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
         decoder->plugin_uid = uids[i];
         sts = MFXVideoUSER_Load (decoder->session, decoder->plugin_uid, 1);
         if (MFX_ERR_NONE == sts) {
-          if (uids[i] == &MFX_PLUGINID_HEVCD_SW) {
+          if (uids[i] == &MFX_PLUGINID_HEVCD_SW)
             decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-            if (decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10)
-              decoder->params.mfx.FrameInfo.Shift = 0;
-          }
           break;
         }
-
       }
       break;
     }
@@ -264,7 +261,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 }
 
 static void
-gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
+gst_mfx_decoder_reconfigure_params (GstMfxDecoder * decoder)
 {
   mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
 
@@ -274,43 +271,34 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
           MFX_PICSTRUCT_FIELD_BFF)
       : MFX_PICSTRUCT_PROGRESSIVE;
 
-  frame_info->CropX = 0;
-  frame_info->CropY = 0;
-  frame_info->CropW = decoder->info.width;
-  frame_info->CropH = decoder->info.height;
-  frame_info->FrameRateExtN = decoder->info.fps_n;
-  frame_info->FrameRateExtD = decoder->info.fps_d;
-  frame_info->AspectRatioW = decoder->info.par_n;
-  frame_info->AspectRatioH = decoder->info.par_d;
-
-  frame_info->Width = GST_ROUND_UP_16 (decoder->info.width);
+  frame_info->Width = GST_ROUND_UP_16(decoder->info.width);
   if (decoder->params.mfx.CodecId == MFX_CODEC_HEVC) {
-    frame_info->Height = GST_ROUND_UP_32 (decoder->info.height);
-  } else {
-    frame_info->Height =
-      (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
-          GST_ROUND_UP_16 (decoder->info.height) :
-          GST_ROUND_UP_32 (decoder->info.height);
-  }
-
-  decoder->params.mfx.CodecProfile = decoder->profile.profile;
-  /* We need to check if we may need to overallocate surfaces
-   * when used with decodebin */
-  if (!decoder->is_autoplugged)
-    decoder->params.mfx.CodecLevel = decoder->profile.level;
-
-  frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-  if (decoder->profile.codec == MFX_CODEC_HEVC
-      && decoder->profile.profile == MFX_PROFILE_HEVC_MAIN10) {
-    frame_info->FourCC = MFX_FOURCC_P010;
-    frame_info->BitDepthChroma = 10;
-    frame_info->BitDepthLuma = 10;
-    frame_info->Shift = 1;
+    frame_info->Height = GST_ROUND_UP_32(decoder->info.height);
   }
   else {
-    frame_info->FourCC = MFX_FOURCC_NV12;
-    frame_info->BitDepthChroma = 8;
-    frame_info->BitDepthLuma = 8;
+    frame_info->Height =
+      (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
+        GST_ROUND_UP_16(decoder->info.height) :
+        GST_ROUND_UP_32(decoder->info.height);
+  }
+  frame_info->FrameRateExtN = decoder->info.fps_n;
+  frame_info->FrameRateExtD = decoder->info.fps_d;
+
+  /* We may need to overallocate surfaces when used with decodebin
+   * TODO: Figure out why jerky playback issues occur with decodebin
+   * and remove this hack */
+  if (decoder->is_autoplugged) {
+    decoder->params.mfx.CodecLevel = 0;
+    decoder->params.mfx.MaxDecFrameBuffering = 0;
+  }
+
+  if (frame_info->FourCC == MFX_FOURCC_P010
+      && (decoder->plugin_uid == &MFX_PLUGINID_HEVCD_HW
+#if MSDK_CHECK_VERSION(1,19)
+        || decoder->plugin_uid == &MFX_PLUGINID_VP9D_HW
+#endif
+    )) {
+    frame_info->Shift = 1;
   }
 }
 
@@ -326,38 +314,15 @@ task_init (GstMfxDecoder * decoder)
 
   decoder->session = gst_mfx_task_get_session (decoder->decode);
 
-  gst_mfx_decoder_set_video_properties (decoder);
-
   sts = gst_mfx_decoder_configure_plugins (decoder);
   if (sts < 0) {
     GST_ERROR ("Unable to load plugin %d", sts);
     goto error_load_plugin;
   }
 
-  sts = MFXVideoDECODE_QueryIOSurf (decoder->session, &decoder->params,
-          &decoder->request);
-  if (sts < 0) {
-    GST_ERROR ("Unable to query decode allocation request %d", sts);
-    goto error_query_request;
-  } else if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
-    decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-  }
-
-  decoder->memtype_is_system =
-      !!(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
-  decoder->request.Type = decoder->memtype_is_system ?
-      MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
-
-  if (decoder->memtype_is_system)
-    gst_mfx_task_ensure_memtype_is_system(decoder->decode);
-
-  gst_mfx_task_set_request (decoder->decode, &decoder->request);
-  gst_mfx_task_set_video_params (decoder->decode, &decoder->params);
-
   return TRUE;
 
 error_load_plugin:
-error_query_request:
   {
     gst_mfx_task_unref (decoder->decode);
     return FALSE;
@@ -394,7 +359,7 @@ gst_mfx_decoder_create(GstMfxDecoder * decoder,
     return FALSE;
 
   decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
-  if (!task_init(decoder))
+  if (!task_init (decoder))
     goto error_init_task;
   return TRUE;
 
@@ -408,6 +373,7 @@ error_init_task:
 static void
 gst_mfx_decoder_init (GstMfxDecoder * decoder)
 {
+  decoder->configured = FALSE;
   decoder->inited = FALSE;
   decoder->pts_offset = GST_CLOCK_TIME_NONE;
 
@@ -521,66 +487,12 @@ error:
 static GstMfxDecoderStatus
 gst_mfx_decoder_start (GstMfxDecoder * decoder)
 {
-  GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
-  mfxStatus sts = MFX_ERR_NONE;
-
-  /* Retrieve JPEG video properties or sequence header / layer data
-   * for MPEG2 and VC1 */
-  if (decoder->params.mfx.CodecId == MFX_CODEC_VC1
-      || decoder->params.mfx.CodecId == MFX_CODEC_MPEG2
-      || decoder->params.mfx.CodecId == MFX_CODEC_JPEG) {
-    if (decoder->params.mfx.CodecId == MFX_CODEC_JPEG) {
-      sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs,
-              &decoder->params);
-      if (MFX_ERR_MORE_DATA == sts) {
-        return GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
-      }
-      else if (sts < 0) {
-        GST_ERROR("Decode header error %d\n", sts);
-        return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
-      }
-    }
-    else {
-      mfxVideoParam params = decoder->params;
-      guint8 sps_data[128];
-
-      mfxExtCodingOptionSPSPPS extradata = {
-        .Header.BufferId = MFX_EXTBUFF_CODING_OPTION_SPSPPS,
-        .Header.BufferSz = sizeof(extradata),
-        .SPSBuffer = sps_data,.SPSBufSize = sizeof(sps_data)
-      };
-
-      mfxExtBuffer *ext_buffers[] = {
-        (mfxExtBuffer *)& extradata,
-      };
-
-      params.ExtParam = ext_buffers;
-      params.NumExtParam = 1;
-
-      sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs,
-              &params);
-      if (MFX_ERR_MORE_DATA == sts) {
-        return GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
-      }
-      else if (sts < 0) {
-        GST_ERROR("Decode header error %d\n", sts);
-        return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
-      }
-
-      if (extradata.SPSBufSize) {
-        decoder->codec_data = g_byte_array_sized_new(extradata.SPSBufSize);
-        decoder->codec_data = g_byte_array_append(decoder->codec_data,
-          sps_data, extradata.SPSBufSize);
-      }
-    }
-  }
-
   /* Get updated video params if modified by peer MFX element*/
-  gst_mfx_task_update_video_params (decoder->decode, &decoder->params);
+  gst_mfx_task_update_video_params(decoder->decode, &decoder->params);
 
   if (decoder->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY) {
     decoder->memtype_is_system = FALSE;
-    gst_mfx_task_use_video_memory (decoder->decode);
+    gst_mfx_task_use_video_memory(decoder->decode);
   }
 
   if (!decoder->filter
@@ -592,10 +504,87 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   if (!init_decoder(decoder))
     return GST_MFX_DECODER_STATUS_ERROR_INIT_FAILED;
 
-  GST_INFO ("Initialized MFX decoder task using %s memory",
+  GST_INFO("Initialized MFX decoder task using %s memory",
     decoder->memtype_is_system ? "system" : "video");
 
-  return ret;
+  return GST_MFX_DECODER_STATUS_SUCCESS;
+}
+
+static GstMfxDecoderStatus
+gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
+{
+  mfxStatus sts = MFX_ERR_NONE;
+
+  /* Retrieve sequence header for MPEG2 */
+  if (decoder->params.mfx.CodecId == MFX_CODEC_MPEG2) {
+    mfxVideoParam params = decoder->params;
+    guint8 sps_data[128];
+
+    mfxExtCodingOptionSPSPPS extradata = {
+      .Header.BufferId = MFX_EXTBUFF_CODING_OPTION_SPSPPS,
+      .Header.BufferSz = sizeof(extradata),
+      .SPSBuffer = sps_data,.SPSBufSize = sizeof(sps_data)
+    };
+
+    mfxExtBuffer *ext_buffers[] = {
+      (mfxExtBuffer *)& extradata,
+    };
+
+    params.ExtParam = ext_buffers;
+    params.NumExtParam = 1;
+
+    sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs,
+      &params);
+    if (MFX_ERR_MORE_DATA == sts) {
+      return GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
+    }
+    else if (sts < 0) {
+      GST_ERROR("Decode header error %d\n", sts);
+      return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
+    }
+
+    if (extradata.SPSBufSize) {
+      decoder->codec_data = g_byte_array_sized_new(extradata.SPSBufSize);
+      decoder->codec_data = g_byte_array_append(decoder->codec_data,
+        sps_data, extradata.SPSBufSize);
+    }
+  }
+
+  sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs,
+    &decoder->params);
+  if (MFX_ERR_MORE_DATA == sts) {
+    return GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
+  }
+  else if (sts < 0) {
+    GST_ERROR("Decode header error %d\n", sts);
+    return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
+  }
+
+  gst_mfx_decoder_reconfigure_params (decoder);
+
+  sts = MFXVideoDECODE_QueryIOSurf(decoder->session, &decoder->params,
+          &decoder->request);
+  if (sts < 0) {
+    GST_ERROR("Unable to query decode allocation request %d", sts);
+    return GST_MFX_DECODER_STATUS_ERROR_INVALID_PARAMETER;
+  }
+  else if (sts == MFX_WRN_PARTIAL_ACCELERATION) {
+    decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+  }
+
+  decoder->memtype_is_system =
+      !!(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+  decoder->request.Type = decoder->memtype_is_system ?
+    MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+
+  if (decoder->memtype_is_system)
+    gst_mfx_task_ensure_memtype_is_system(decoder->decode);
+
+  gst_mfx_task_set_request(decoder->decode, &decoder->request);
+  gst_mfx_task_set_video_params(decoder->decode, &decoder->params);
+  decoder->configured = TRUE;
+
+  return GST_MFX_DECODER_STATUS_CONFIGURED;
 }
 
 gboolean
@@ -734,7 +723,11 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (G_UNLIKELY (!decoder->inited)) {
-    ret = gst_mfx_decoder_start (decoder);
+    if (!decoder->configured)
+      ret = gst_mfx_decoder_prepare (decoder);
+    else
+      ret = gst_mfx_decoder_start (decoder);
+
     if (GST_MFX_DECODER_STATUS_SUCCESS == ret)
       decoder->inited = TRUE;
     else
@@ -769,6 +762,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
+    /* TODO: Implement a more robust mechanism to deal with streams that
+     * change properties in the middle of playback */
     if (decoder->num_partial_frames) {
       GstVideoCodecFrame *cur_frame;
       guint n = g_queue_get_length(&decoder->pending_frames) - 1;
@@ -825,8 +820,6 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     decoder->bitstream = g_byte_array_remove_range (decoder->bitstream, 0,
       decoder->bs.DataOffset);
     decoder->bs.DataOffset = 0;
-    decoder->bs.Data = decoder->bitstream->data;
-    decoder->bs.MaxLength = decoder->bitstream->len;
 
     ret = GST_MFX_DECODER_STATUS_SUCCESS;
   }

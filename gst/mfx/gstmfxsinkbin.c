@@ -53,7 +53,6 @@ enum
 #endif
   PROP_FULLSCREEN,
   PROP_SHOW_PREROLL_FRAME,
-  PROP_FULL_COLOR_RANGE,
   PROP_WIDTH,
   PROP_HEIGHT,
   PROP_DEINTERLACE_METHOD,
@@ -87,15 +86,8 @@ gst_mfx_sink_bin_color_balance_iface_init (GstColorBalanceInterface * iface);
 
 /* Default templates */
 static const char gst_mfx_sink_bin_sink_caps_str[] =
-#ifdef WITH_LIBVA_BACKEND  
-  GST_MFX_MAKE_SURFACE_CAPS 
-#else
-  GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, BGRA, NV12, P010_10LE }"
-  )
-#endif
-  "; "
-  GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
+    GST_MFX_MAKE_SURFACE_CAPS "; "
+    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static GstStaticPadTemplate gst_mfx_sink_bin_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -170,7 +162,6 @@ gst_mfx_sink_bin_set_property (GObject * object,
     case PROP_FULLSCREEN:
     case PROP_FORCE_ASPECT_RATIO:
     case PROP_SHOW_PREROLL_FRAME:
-    case PROP_FULL_COLOR_RANGE:
       g_object_set (G_OBJECT (mfxsinkbin->sink),
           pspec->name,
           g_value_get_boolean (value),
@@ -235,7 +226,6 @@ gst_mfx_sink_bin_get_property (GObject * object,
     case PROP_FULLSCREEN:
     case PROP_FORCE_ASPECT_RATIO:
     case PROP_SHOW_PREROLL_FRAME:
-    case PROP_FULL_COLOR_RANGE:
       if (mfxsinkbin->sink) {
         g_object_get_property (G_OBJECT (mfxsinkbin->sink),
             pspec->name,
@@ -377,12 +367,6 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
     g_param_spec_boolean ("show-preroll-frame",
     "Show preroll frame",
     "When enabled, show video frames during preroll.",
-    FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  g_properties[PROP_FULL_COLOR_RANGE] =
-    g_param_spec_boolean ("full-color-range",
-    "Full color range",
-    "Decoded frames will be in RGB 0-255",
     FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
 

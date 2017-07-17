@@ -106,7 +106,6 @@ struct _GstMfxSink
   guint                      foreign_window : 1;
   guint                      fullscreen : 1;
   guint                      keep_aspect : 1;
-  guint                      full_color_range : 1;
 };
 
 struct _GstMfxSinkClass

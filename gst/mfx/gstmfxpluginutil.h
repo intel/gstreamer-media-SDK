@@ -26,28 +26,46 @@
 #include "gstmfxvideomemory.h"
 
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
-#include <gst-libs/mfx/gstmfxsurface.h>
 
-gboolean
-gst_mfx_ensure_aggregator(GstElement * element);
-
-gboolean
-gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * context);
-
-gboolean
-gst_mfx_append_surface_caps(GstCaps * out_caps, GstCaps * in_caps);
-
-/* Helpers for GValue construction for video formats */
-gboolean
-gst_mfx_value_set_format(GValue * value, GstVideoFormat format);
-
-/* Helpers to build video caps */
+ /* Helpers to build video caps */
 typedef enum
 {
   GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED,
   GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY,
   GST_MFX_CAPS_FEATURE_MFX_SURFACE,
 } GstMfxCapsFeature;
+
+#ifdef WITH_LIBVA_BACKEND
+# define GST_MFX_MAKE_SURFACE_CAPS        \
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
+    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
+
+# define GST_MFX_SUPPORTED_INPUT_FORMATS \
+    "{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }"
+
+# define GST_MFX_SUPPORTED_OUTPUT_FORMATS \
+    "{ NV12, BGRA }"
+#else
+# define GST_MFX_MAKE_SURFACE_CAPS        \
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
+    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE }")
+
+# define GST_MFX_SUPPORTED_INPUT_FORMATS \
+    "{ NV12, YV12, I420, YUY2, P010_10LE, BGRA, BGRx }"
+
+# define GST_MFX_SUPPORTED_OUTPUT_FORMATS \
+    "{ NV12, BGRA, P010_10LE }"
+#endif
+
+/* Helpers to handle interlaced contents */
+#define GST_CAPS_INTERLACED_MODES \
+    "interlace-mode = (string){ progressive, interleaved, mixed }"
+
+gboolean
+gst_mfx_ensure_aggregator(GstElement * element);
+
+gboolean
+gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * context);
 
 GstCaps *
 gst_mfx_video_format_new_template_caps(GstVideoFormat format);
@@ -62,23 +80,6 @@ gst_mfx_find_preferred_caps_feature(GstPad * pad,
 
 const gchar *
 gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
-
-/* Helpers to handle interlaced contents */
-#define GST_CAPS_INTERLACED_MODES \
-    "interlace-mode = (string){ progressive, interleaved, mixed }"
-
-#define GST_MFX_MAKE_SURFACE_CAPS               \
-    GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE }")
-
-#ifdef WITH_LIBVA_BACKEND
-#define GST_MFX_SUPPORTED_INPUT_FORMATS \
-    "{ NV12, YV12, I420, UYVY, YUY2, BGRA, BGRx }"
-#else
-#define GST_MFX_SUPPORTED_INPUT_FORMATS \
-    "{ NV12, YV12, I420, YUY2, BGRA, BGRx }"
-#endif
-
 
 gboolean
 gst_caps_has_mfx_surface(GstCaps * caps);

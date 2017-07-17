@@ -116,7 +116,7 @@ gst_mfxenc_h264_set_config (GstMfxEnc * base_encode)
 
   profile = gst_mfx_profile_from_caps(allowed_caps);
   gst_caps_unref (allowed_caps);
-  
+
   gst_mfx_encoder_set_profile(base_encode->encoder, profile.profile);
   return TRUE;
 }

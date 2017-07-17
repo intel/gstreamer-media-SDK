@@ -78,49 +78,7 @@ gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * task)
   return TRUE;
 }
 
-gboolean
-gst_mfx_append_surface_caps (GstCaps * out_caps, GstCaps * in_caps)
-{
-  GstStructure *structure;
-  const GValue *v_width, *v_height, *v_framerate, *v_par;
-  guint i, n_structures;
-
-  structure = gst_caps_get_structure (in_caps, 0);
-  v_width = gst_structure_get_value (structure, "width");
-  v_height = gst_structure_get_value (structure, "height");
-  v_framerate = gst_structure_get_value (structure, "framerate");
-  v_par = gst_structure_get_value (structure, "pixel-aspect-ratio");
-  if (!v_width || !v_height)
-    return FALSE;
-
-  n_structures = gst_caps_get_size (out_caps);
-  for (i = 0; i < n_structures; i++) {
-    structure = gst_caps_get_structure (out_caps, i);
-    gst_structure_set_value (structure, "width", v_width);
-    gst_structure_set_value (structure, "height", v_height);
-    if (v_framerate)
-      gst_structure_set_value (structure, "framerate", v_framerate);
-    if (v_par)
-      gst_structure_set_value (structure, "pixel-aspect-ratio", v_par);
-  }
-  return TRUE;
-}
-
-gboolean
-gst_mfx_value_set_format (GValue * value, GstVideoFormat format)
-{
-  const gchar *str;
-
-  str = gst_video_format_to_string (format);
-  if (!str)
-    return FALSE;
-
-  g_value_init (value, G_TYPE_STRING);
-  g_value_set_string (value, str);
-  return TRUE;
-}
-
-void
+static void
 set_video_template_caps (GstCaps * caps)
 {
   GstStructure *const structure = gst_caps_get_structure (caps, 0);
@@ -184,10 +142,16 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
 
   /* Prefer 10-bit color format when requested */
   if (use_10bpc) {
+#if GST_CHECK_VERSION(1,9,1)
     const char caps_str[] = GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
-      GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, P010_10LE, NV12, BGRA }"
+      GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ P010_10LE, NV12, BGRA }"
       ) "; "
       GST_VIDEO_CAPS_MAKE("{ P010_10LE, NV12, BGRA }");
+#else
+    const char caps_str[] =
+      GST_MFX_MAKE_SURFACE_CAPS ";"
+      GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
+#endif
     templ = gst_caps_from_string (caps_str);
   }
   else {
@@ -284,11 +248,11 @@ gst_mfx_query_peer_has_raw_caps(GstPad * srcpad)
 {
   GstCaps *caps = NULL;
   gboolean has_raw_caps = TRUE;
-  
+
   caps = gst_pad_peer_query_caps(srcpad, NULL);
   if (!caps)
     return has_raw_caps;
-  
+
   if (gst_caps_has_mfx_surface(caps)
 #if GST_CHECK_VERSION(1,8,0)
     || (!g_strcmp0(getenv("GST_GL_PLATFORM"), "egl")
@@ -297,7 +261,7 @@ gst_mfx_query_peer_has_raw_caps(GstPad * srcpad)
 #endif
       )
     has_raw_caps = FALSE;
-  
+
   gst_caps_unref(caps);
   return has_raw_caps;
 }

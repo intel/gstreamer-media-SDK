@@ -16,11 +16,11 @@ plugins and their usage.
 
 Features
 --------
- - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 videos
+ - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 (including Profile 2 10-bit) videos
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
  - Support for zero-copy rendering with glimagesink using EGL
- - Support Direct3D 11 zero-copy rendering on Windows
+ - Support for Direct3D 11 on Windows with zero-copy and deep color rendering for 10-bit video formats
  - Support rendering using Wayland renderer
  - Support rendering using X11 renderer with DRI3 backend
  - Support VPP acceleration of dynamic procamp control during video playback
@@ -37,8 +37,8 @@ Requirements
   * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows or  
     Media Server Studio 2017 Community / Professional Edition (Windows / Linux) or  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake) or greater
-  * GStreamer 1.10.x (GStreamer 1.12.x for correct deinterlacing support)
-  * gst-plugins-* 1.10.x (tested up to GStreamer 1.12.x)
+  * GStreamer 1.8.x (1.10.x minimum for Windows, 1.12.x for correct deinterlacing support)
+  * gst-plugins-* 1.8.x (tested up to GStreamer 1.12.x, 1.10.x minimum for Windows)
   * Microsoft Visual Studio 2013 / 2015 / 2017 (Windows)
   * Python 3
   * pkg-config
