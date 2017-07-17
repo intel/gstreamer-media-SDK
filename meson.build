@@ -119,20 +119,28 @@ if host_machine.system() == 'windows'
   gst_mfx_deps += cc.find_library('d3d11')
   gst_mfx_deps += cc.find_library('gdi32')
   gst_mfx_args += ['-DWITH_D3D11_BACKEND']
-  gst_mfx_deps += cc.find_library('stdc++', required: false)
+  if cc.get_id() != 'msvc'
+    gst_mfx_deps += cc.find_library('stdc++', required: false)
+  endif
 else
   driver_deps = [dependency ('libva'), dependency ('libdrm'), dependency ('libdrm_intel'),
     dependency ('libva-drm'), dependency('libudev')]
   gst_mfx_deps += driver_deps
   gst_mfx_deps += cc.find_library('stdc++')
   gst_mfx_deps += cc.find_library('dl')
-  gstgl_dep = dependency('gstreamer-gl-1.0', version: gst_req,
-    fallback : ['gst-plugins-bad', 'gstgl_dep'], required: false)
-  if gstgl_dep.found()
+  gst_mfx_args += ['-DWITH_LIBVA_BACKEND']
+endif
+
+gstgl_dep = dependency('gstreamer-gl-1.0', version: gst_req,
+  fallback : ['gst-plugins-bad', 'gstgl_dep'], required: false)
+if gstgl_dep.found()
+  if host_machine.system() == 'windows' and cc.has_header('GL/glext.h')
+    gst_mfx_deps += [gstgl_dep, cc.find_library('opengl32', required: false)]
+    gst_mfx_args += ['-DHAVE_GST_GL_LIBS']
+  elif host_machine.system() != 'windows'
     gst_mfx_deps += [gstgl_dep]
     gst_mfx_args += ['-DHAVE_GST_GL_LIBS']
   endif
-  gst_mfx_args += ['-DWITH_LIBVA_BACKEND']
 endif
 
 config_inc = include_directories('.')
