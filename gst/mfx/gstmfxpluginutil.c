@@ -254,11 +254,9 @@ gst_mfx_query_peer_has_raw_caps(GstPad * srcpad)
     return has_raw_caps;
 
   if (gst_caps_has_mfx_surface(caps)
-#if GST_CHECK_VERSION(1,8,0)
     || (!g_strcmp0(getenv("GST_GL_PLATFORM"), "egl")
       && _gst_caps_has_feature(caps,
         GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META))
-#endif
       )
     has_raw_caps = FALSE;
 

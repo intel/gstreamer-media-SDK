@@ -47,7 +47,7 @@
 
 
 struct _GstMfxEncoderMpeg2 {
-	GstMfxEncoder parent_instance;
+  GstMfxEncoder parent_instance;
 };
 
 G_DEFINE_TYPE(GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_TYPE_MFX_ENCODER);
