@@ -21,7 +21,6 @@
 #include "sysdeps.h"
 
 #include "common/gstbitwriter.h"
-#include "gst-libs/mfx/sysdeps.h"
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_h265.h"
 #include <mfxplugin.h>

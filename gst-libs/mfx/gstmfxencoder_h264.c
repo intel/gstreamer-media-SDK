@@ -61,7 +61,7 @@
 
 
 struct _GstMfxEncoderH264 {
-	GstMfxEncoder parent_instance;
+  GstMfxEncoder parent_instance;
 };
 
 G_DEFINE_TYPE(GstMfxEncoderH264, gst_mfx_encoder_h264, GST_TYPE_MFX_ENCODER);
@@ -105,7 +105,7 @@ ensure_bitrate (GstMfxEncoderH264 * encoder)
       }
       break;
     default:
-		priv->bitrate = 0;
+      priv->bitrate = 0;
       break;
   }
 }
@@ -117,10 +117,10 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
 
   if (priv->profile.profile == MFX_PROFILE_AVC_BASELINE)
-	  priv->gop_refdist = 1;
+    priv->gop_refdist = 1;
 
   if (priv->gop_refdist == 1)
-	  priv->b_strategy = GST_MFX_OPTION_OFF;
+    priv->b_strategy = GST_MFX_OPTION_OFF;
 
   /* Ensure bitrate if not set */
   ensure_bitrate (encoder);
