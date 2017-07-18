@@ -16,7 +16,7 @@ plugins and their usage.
 
 Features
 --------
- - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 (including Profile 2 10-bit) videos
+ - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 videos
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
  - Support for zero-copy rendering with glimagesink using EGL

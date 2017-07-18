@@ -5,8 +5,9 @@ Version 2.0.0
 * Removed EGL renderer in mfxsink since zero-copy dmabuf compatibility with GL plugins makes it redundant.
 * Decoder autodetection for codecs such as HEVC, VP8 and VP9 in newer supported Intel platforms.
 * Moved all GST-MFX modules to use GstObject for better GStreamer integration, removing custom GstMfxMiniObject.
-* Added support for HEVC Main 10 and VP9 Profile 2 codec formats.
+* Added support for HEVC Main 10 codec format.
 * HEVC Main10 encode support in Windows using GPU-assisted and Software HEVC encoder plugins.
+* Preliminary VP9 Profile 2 codec format support.
 
 Version 1.3.0
 * Split mfxdecode into separate MFX decoder plugins.
