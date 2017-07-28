@@ -83,6 +83,7 @@ static gboolean
 get_intel_device_adapter (GstMfxD3D11Device * device, mfxSession session)
 {
   mfxU32  adapter_idx = 0;
+  mfxU8 i; 
   mfxIMPL impl;
   HRESULT hr = S_OK;
 
@@ -92,7 +93,7 @@ get_intel_device_adapter (GstMfxD3D11Device * device, mfxSession session)
   mfxIMPL base_impl = MFX_IMPL_BASETYPE(impl);
 
   /* get corresponding adapter number */
-  for (mfxU8 i = 0; i < sizeof(impl_types) / sizeof(impl_types[0]); i++) {
+  for (i = 0; i < sizeof(impl_types) / sizeof(impl_types[0]); i++) {
     if (impl_types[i].impl == base_impl) {
       adapter_idx = impl_types[i].adapter_id;
       break;
