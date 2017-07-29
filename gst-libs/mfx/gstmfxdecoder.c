@@ -677,6 +677,9 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
       }
       else if (MFX_CODEC_VC1 == decoder->profile.codec
                &&  MFX_PROFILE_VC1_ADVANCED == decoder->profile.profile) {
+        decoder->bitstream = g_byte_array_append(decoder->bitstream,
+          decoder->codec_data->data, decoder->codec_data->len);
+        decoder->bs.DataLength += decoder->codec_data->len;
         /* Don't ask me why for VC1 this is required after seeking */
         decoder->bs.DataOffset = 1;
       }
@@ -691,7 +694,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   if (minfo.size) {
     decoder->bs.DataLength += minfo.size;
     if (MFX_CODEC_VC1 == decoder->profile.codec
-        &&  MFX_PROFILE_VC1_ADVANCED == decoder->profile.profile) {
+        &&  MFX_PROFILE_VC1_ADVANCED == decoder->profile.profile
+        && !decoder->configured) {
       decoder->bitstream = g_byte_array_append(decoder->bitstream,
         decoder->codec_data->data, decoder->codec_data->len);
       decoder->bs.DataLength += decoder->codec_data->len;
