@@ -213,7 +213,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 {
   mfxStatus sts;
 
-  switch (decoder->params.mfx.CodecId) {
+  switch (decoder->profile.codec) {
     case MFX_CODEC_HEVC: {
       guint i;
       mfxPluginUID *uids[] = {
@@ -660,7 +660,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   if (decoder->was_reset) {
     if (GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)) {
       /* Sequence header check for I-frames after MPEG2 video seeking */
-      if (MFX_CODEC_MPEG2 == decoder->params.mfx.CodecId) {
+      if (MFX_CODEC_MPEG2 == decoder->profile.codec) {
         decoder->bs.MaxLength = decoder->bs.DataLength = minfo.size;
         decoder->bs.Data = minfo.data;
 
@@ -675,6 +675,11 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
           decoder->bs.Data = decoder->bitstream->data;
         }
       }
+      else if (MFX_CODEC_VC1 == decoder->profile.codec
+               &&  MFX_PROFILE_VC1_ADVANCED == decoder->profile.profile) {
+        /* Don't ask me why for VC1 this is required after seeking */
+        decoder->bs.DataOffset = 1;
+      }
       decoder->was_reset = FALSE;
     }
     else {
@@ -685,8 +690,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
   if (minfo.size) {
     decoder->bs.DataLength += minfo.size;
-    if (decoder->profile.codec == MFX_CODEC_VC1
-        && decoder->profile.profile == MFX_PROFILE_VC1_ADVANCED) {
+    if (MFX_CODEC_VC1 == decoder->profile.codec
+        &&  MFX_PROFILE_VC1_ADVANCED == decoder->profile.profile) {
       decoder->bitstream = g_byte_array_append(decoder->bitstream,
         decoder->codec_data->data, decoder->codec_data->len);
       decoder->bs.DataLength += decoder->codec_data->len;
