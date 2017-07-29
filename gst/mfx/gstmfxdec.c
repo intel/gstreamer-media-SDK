@@ -54,8 +54,14 @@ static const char gst_mfxdecode_sink_caps_str[] =
         stream-format = (string) byte-stream")
     GST_CAPS_CODEC ("video/mpeg, \
         mpegversion = 2")
-    GST_CAPS_CODEC ("video/x-wmv, \
-        stream-format = (string) { sequence-layer-frame-layer, bdu }")
+    GST_CAPS_CODEC("video/x-wmv, \
+        format = (string) WMV3, \
+        header-format = (string) none, \
+        stream-format = (string) sequence-layer-frame-layer")
+    GST_CAPS_CODEC("video/x-wmv, \
+        format = (string) WVC1, \
+        header-format = (string) asf, \
+        stream-format = (string) bdu")
     GST_CAPS_CODEC ("video/x-vp8")
 #if MSDK_CHECK_VERSION(1,19)
     GST_CAPS_CODEC ("video/x-vp9")
@@ -101,9 +107,16 @@ static GstMfxCodecMap mfx_codec_map[] = {
       "video/mpeg, \
        mpegversion=2, \
        systemstream=(boolean) false"},
+  {"wmv", GST_RANK_PRIMARY + 3,
+      "video/x-wmv, \
+       format = (string) WMV3, \
+       header-format = (string) none, \
+       stream-format = (string) sequence-layer-frame-layer" },
   {"vc1", GST_RANK_PRIMARY + 3,
       "video/x-wmv, \
-       stream-format = (string) { sequence-layer-frame-layer, bdu }"},
+       format = (string) WVC1, \
+       header-format = (string) asf, \
+       stream-format = (string) bdu"},
   {"vp8", GST_RANK_NONE, "video/x-vp8"},
 #if MSDK_CHECK_VERSION(1,19)
   {"vp9", GST_RANK_NONE, "video/x-vp9"},
@@ -296,6 +309,20 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   GstVideoInfo info;
   GstObject *parent;
   gboolean is_autoplugged = FALSE;
+  GByteArray *extradata = NULL;
+
+  GstStructure *structure = gst_caps_get_structure (caps, 0);
+  if (structure) {
+    const GValue *v_codec_data;
+    GstMapInfo minfo;
+    v_codec_data = gst_structure_get_value (structure, "codec_data");
+    if (v_codec_data) {
+      GstBuffer *codec_data = gst_value_get_buffer (v_codec_data);
+      gst_buffer_map (codec_data, &minfo, GST_MAP_READ);
+      extradata = g_byte_array_new_take (minfo.data, minfo.size);
+      gst_buffer_unmap (codec_data, &minfo);
+    }
+  }
 
   if (!gst_video_info_from_caps (&info, caps))
     return FALSE;
@@ -308,7 +335,10 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   gst_object_replace (&parent, NULL);
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,
-    mfxdec->async_depth, mfxdec->live_mode, is_autoplugged);
+    extradata, mfxdec->async_depth, mfxdec->live_mode, is_autoplugged);
+  
+  g_byte_array_free (extradata, FALSE);
+
   if (!mfxdec->decoder)
     return FALSE;
 

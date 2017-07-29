@@ -45,16 +45,19 @@
 # include "gstmfxenc_jpeg.h"
 #endif
 
-#ifdef MFX_VC1_PARSER
-# include "parsers/gstvc1parse.h"
-#endif
-
 #include "gstmfxpluginutil.h"
 
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
   gboolean ret = FALSE;
+  GstRegistry *reg = gst_registry_get();
+  GstPluginFeature *vc1parse = gst_registry_lookup_feature (reg, "vc1parse");
+
+  if (vc1parse) {
+    gst_plugin_feature_set_rank (vc1parse, GST_RANK_MARGINAL);
+    gst_object_unref(vc1parse);
+  }
 
 #ifdef MFX_DECODER
   mfxU16 platform = 0;
@@ -97,11 +100,6 @@ plugin_init (GstPlugin * plugin)
 #ifdef MFX_JPEG_ENCODER
   ret |= gst_element_register (plugin, "mfxjpegenc",
       GST_RANK_NONE, GST_TYPE_MFXENC_JPEG);
-#endif
-
-#ifdef MFX_VC1_PARSER
-  ret |= gst_element_register (plugin, "mfxvc1parse",
-      GST_RANK_MARGINAL, GST_MFX_TYPE_VC1_PARSE);
 #endif
 
   return ret;

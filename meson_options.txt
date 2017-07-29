@@ -1,7 +1,5 @@
 option('MFX_DECODER', type : 'boolean', value : true)
 
-option('MFX_VC1_PARSER', type : 'boolean', value : true)
-
 option('MFX_ENCODER', type : 'boolean', value : true)
 option('MFX_H264_ENCODER', type : 'boolean', value : true)
 option('MFX_H265_ENCODER', type : 'boolean', value : false)

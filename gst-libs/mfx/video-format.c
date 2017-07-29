@@ -175,6 +175,6 @@ gst_video_format_to_dxgi_format(GstVideoFormat format)
     if (format == m->format)
       return m->dxgi_format;
   }
-  return 0;
+  return DXGI_FORMAT_UNKNOWN;
 }
 #endif
