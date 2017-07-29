@@ -23,16 +23,13 @@
 #ifndef GST_MFX_DECODER_H
 #define GST_MFX_DECODER_H
 
-#include <mfxplugin.h>
-#include "gstmfxsurface.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxprofile.h"
-#include "gstmfxfilter.h"
 
 G_BEGIN_DECLS
 
 #define GST_TYPE_MFX_DECODER (gst_mfx_decoder_get_type ())
-G_DECLARE_FINAL_TYPE( GstMfxDecoder, gst_mfx_decoder, GST_MFX, DECODER, GstObject)
+G_DECLARE_FINAL_TYPE(GstMfxDecoder, gst_mfx_decoder, GST_MFX, DECODER, GstObject)
 
 #define GST_MFX_DECODER(obj) \
     (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_DECODER, GstMfxDecoder))
@@ -57,9 +54,6 @@ GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
   GstMfxProfile profile, const GstVideoInfo * info, GByteArray * codec_data,
   mfxU16 async_depth, gboolean live_mode, gboolean is_autoplugged);
-
-GType
-gst_mfx_decoder_get_type(void) G_GNUC_CONST;
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder);
@@ -95,8 +89,7 @@ gboolean
 gst_mfx_decoder_reset (GstMfxDecoder * decoder);
 
 GstMfxDecoderStatus
-gst_mfx_decoder_decode (GstMfxDecoder * decoder,
-    GstVideoCodecFrame * frame);
+gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame);
 
 GstMfxDecoderStatus
 gst_mfx_decoder_flush (GstMfxDecoder * decoder);
