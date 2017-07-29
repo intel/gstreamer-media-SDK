@@ -135,10 +135,6 @@ typedef struct {
   GParamSpec *const pspec;
 } GstMfxEncoderPropInfo;
 
-
-GType
-gst_mfx_encoder_get_type(void) G_GNUC_CONST;
-
 GType
 gst_mfx_encoder_preset_get_type (void);
 
