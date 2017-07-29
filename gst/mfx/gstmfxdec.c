@@ -724,6 +724,8 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
 static void
 gst_mfxdec_init (GstMfxDec *mfxdec)
 {
+  gst_mfx_plugin_base_init (GST_MFX_PLUGIN_BASE (mfxdec), GST_CAT_DEFAULT);
+
   mfxdec->async_depth = DEFAULT_ASYNC_DEPTH;
   mfxdec->live_mode = FALSE;
   mfxdec->skip_corrupted_frames = FALSE;

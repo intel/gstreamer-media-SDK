@@ -76,16 +76,10 @@ gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req,
   fallback : ['gst-plugins-base', 'gstvideo_dep'])
 gstallocators_dep = dependency('gstreamer-allocators-1.0', version: gst_req,
   fallback : ['gst-plugins-base', 'gstallocators_dep'])
-gstcodecparsers_dep = dependency('gstreamer-codecparsers-1.0', version: gst_req,
-  fallback : ['gst-plugins-bad', 'gstcodecparsers_dep'], required: false)
 gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version: gst_req,
   fallback : ['gst-plugins-base', 'gstpbutils_dep'], required: false)
   
 gst_mfx_deps += [gst_dep, gstvideo_dep, gstallocators_dep]
-
-if gstcodecparsers_dep.found()
-  gst_mfx_deps += [gstcodecparsers_dep]
-endif
 
 with_pbutils = false
 if gstpbutils_dep.found()

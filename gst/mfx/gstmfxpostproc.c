@@ -1122,7 +1122,6 @@ gst_mfxpostproc_set_property (GObject * object,
   }
 }
 
-
 static void
 gst_mfxpostproc_get_property (GObject * object,
     guint prop_id, GValue * value, GParamSpec * pspec)
