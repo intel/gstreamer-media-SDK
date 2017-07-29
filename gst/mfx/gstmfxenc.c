@@ -503,7 +503,7 @@ gst_mfxenc_init (GstMfxEnc * encode)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (encode);
 
-  gst_mfx_plugin_base_init (GST_MFX_PLUGIN_BASE (encode), GST_CAT_DEFAULT);
+  gst_mfx_plugin_base_init (plugin, GST_CAT_DEFAULT);
 
   gst_pad_use_fixed_caps (plugin->srcpad);
 }

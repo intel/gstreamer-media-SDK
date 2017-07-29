@@ -63,19 +63,11 @@ gst_mfx_plugin_base_init_interfaces (GType g_define_type_id)
 {
 }
 
-static gboolean
-default_has_interface (GstMfxPluginBase * plugin, GType type)
-{
-  return FALSE;
-}
-
 void
 gst_mfx_plugin_base_class_init (GstMfxPluginBaseClass * klass)
 {
   GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
     "mfxtaskaggregator", 0, "MFX Context");
-
-  klass->has_interface = default_has_interface;
 
   plugin_parent_class = g_type_class_peek_parent (klass);
 

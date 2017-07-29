@@ -83,40 +83,6 @@ get_profiles_map (GstMfxProfile profile)
   return NULL;
 }
 
-/**
- * gst_mfx_profile_get_name:
- * @profile: a #GstMfxProfile
- *
- * Returns a string representation for the supplied @profile.
- *
- * Return value: the statically allocated string representation of @profile
- */
-const gchar *
-gst_mfx_profile_get_name (GstMfxProfile profile)
-{
-  const GstMfxProfileMap *const m = get_profiles_map (profile);
-
-  return m ? m->profile_str : NULL;
-}
-
-/**
- * gst_mfx_profile_get_media_type_name:
- * @profile: a #GstMfxProfile
- *
- * Returns a string representation for the media type of the supplied
- * @profile.
- *
- * Return value: the statically allocated string representation of
- *   @profile media type
- */
-const gchar *
-gst_mfx_profile_get_media_type_name (GstMfxProfile profile)
-{
-  const GstMfxProfileMap *const m = get_profiles_map (profile);
-
-  return m ? m->media_str : NULL;
-}
-
 static mfxU16
 gst_mfx_profile_from_codec_data_h264 (GstBuffer * buffer)
 {
@@ -253,35 +219,4 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
   if (!profile.profile)
     profile = best_profile;
   return profile;
-}
-
-/**
- * gst_mfx_profile_get_caps:
- * @profile: a #GstMfxProfile
- *
- * Converts a #GstMfxProfile into the corresponding #GstCaps. If no
- * matching caps were found, %NULL is returned.
- *
- * Return value: the newly allocated #GstCaps, or %NULL if none was found
- */
-GstCaps *
-gst_mfx_profile_get_caps (GstMfxProfile profile)
-{
-  const GstMfxProfileMap *m;
-  GstCaps *out_caps, *caps;
-
-  out_caps = gst_caps_new_empty ();
-  if (!out_caps)
-    return NULL;
-
-  for (m = gst_mfx_profiles; m->profile; m++) {
-    if ((m->profile != profile.profile) || (m->codec != profile.codec))
-      continue;
-    caps = gst_caps_from_string (m->media_str);
-    if (!caps)
-      continue;
-    gst_caps_set_simple (caps, "profile", G_TYPE_STRING, m->profile_str, NULL);
-    out_caps = gst_caps_merge (out_caps, caps);
-  }
-  return out_caps;
 }

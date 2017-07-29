@@ -1,6 +1,4 @@
 /*
- *  Copyright (C) 2012-2013 Intel Corporation
- *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
  *  Copyright (C) 2016 Intel Corporation
  *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
  *
@@ -23,14 +21,8 @@
 #ifndef GST_MFX_PROFILE_H
 #define GST_MFX_PROFILE_H
 
-#include <gst/gstvalue.h>
-#include <mfxvideo.h>
 #include <mfxjpeg.h>
 #include <mfxvp8.h>
-
-#ifdef USE_VP9_DECODER
-#include <mfxvp9.h>
-#endif
 
 G_BEGIN_DECLS
 
@@ -43,16 +35,6 @@ struct _GstMfxProfile
 
 GstMfxProfile
 gst_mfx_profile_from_caps (const GstCaps *caps);
-
-const gchar *
-gst_mfx_profile_get_name (GstMfxProfile profile);
-
-const gchar *
-gst_mfx_profile_get_media_type_name (GstMfxProfile profile);
-
-GstCaps *
-gst_mfx_profile_get_caps (GstMfxProfile profile);
-
 
 G_END_DECLS
 
