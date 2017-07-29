@@ -83,10 +83,8 @@ gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version: gst_req,
   
 gst_mfx_deps += [gst_dep, gstvideo_dep, gstallocators_dep]
 
-with_codecparsers = false
 if gstcodecparsers_dep.found()
   gst_mfx_deps += [gstcodecparsers_dep]
-  with_codecparsers = true
 endif
 
 with_pbutils = false
@@ -218,5 +216,4 @@ configure_file(input : 'version.h.in',
                configuration : core_conf)
 
 subdir('gst-libs')
-subdir('parsers')
 subdir('gst')

@@ -16,6 +16,7 @@ mfxh264dec         | MFX H264 Decoder Plugin
 mfxhevcdec         | MFX HEVC Decoder Plugin
 mfxmpeg2dec        | MFX MPEG2 Decoder Plugin
 mfxjpegdec         | MFX JPEG Decoder Plugin
+mfxwmvdec          | MFX WMV3 Decoder Plugin
 mfxvc1dec          | MFX VC1 Decoder Plugin
 mfxvp8dec          | MFX VP8 Decoder Plugin
 mfxvp9dec          | MFX VP9 Decoder Plugin
@@ -26,7 +27,6 @@ mfxmpeg2enc        | MFX MPEG2 Encoder Plugin
 mfxjpegenc         | MFX JPEG Encoder Plugin
 mfxsink            | X11 / Wayland / D3D11 Renderer Plugin (mfxvpp + mfxsinkelement GstBin element)
 mfxsinkelement     | Standalone X11 / Wayland / D3D11 Renderer Plugin
-mfxvc1parse        | Custom VC1 Parser Plugin for MFX VC1 decoding
 
 
 GStreamer Debugging Tips
@@ -84,7 +84,7 @@ gst-launch-1.0 filesrc location=input.mkv ! matroskademux ! h265parse ! mfxhevcd
 gst-launch-1.0 filesrc location=input.avi ! avidemux ! mfxjpegdec ! mfxsinkelement
 
 # Basic VC1 decode with custom VC1 parser
-gst-launch-1.0 filesrc location=input.wmv ! asfdemux ! mfxvc1parse ! mfxvc1dec ! mfxsinkelement
+gst-launch-1.0 filesrc location=input.wmv ! asfdemux ! vc1parse ! mfxdecode ! mfxsinkelement
 
 # Basic VP8 / VP9 decode
 gst-launch-1.0 filesrc location=input.webm ! matroskademux ! mfxdecode ! mfxsinkelement

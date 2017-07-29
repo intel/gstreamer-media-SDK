@@ -332,7 +332,7 @@ error_load_plugin:
 static gboolean
 gst_mfx_decoder_create(GstMfxDecoder * decoder,
   GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-  const GstVideoInfo * info, mfxU16 async_depth,
+  const GstVideoInfo * info, GByteArray * codec_data, mfxU16 async_depth,
   gboolean live_mode, gboolean is_autoplugged)
 {
   decoder->is_autoplugged = is_autoplugged;
@@ -357,6 +357,12 @@ gst_mfx_decoder_create(GstMfxDecoder * decoder,
   decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
   if (!decoder->bitstream)
     return FALSE;
+
+  if (codec_data) {
+    decoder->codec_data = g_byte_array_sized_new (codec_data->len);
+    decoder->codec_data = g_byte_array_append (decoder->codec_data,
+      codec_data->data, codec_data->len);
+  }
 
   decoder->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   if (!task_init (decoder))
@@ -384,8 +390,8 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder)
 
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
-  GstMfxProfile profile, const GstVideoInfo * info, mfxU16 async_depth,
-  gboolean live_mode, gboolean is_autoplugged)
+  GstMfxProfile profile, const GstVideoInfo * info, GByteArray * codec_data,
+  mfxU16 async_depth, gboolean live_mode, gboolean is_autoplugged)
 {
   GstMfxDecoder * decoder;
 
@@ -397,7 +403,7 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     return NULL;
 
   if (!gst_mfx_decoder_create (decoder, aggregator, profile, info,
-          async_depth, live_mode, is_autoplugged))
+          codec_data, async_depth, live_mode, is_autoplugged))
     goto error;
   return decoder;
 
@@ -514,41 +520,6 @@ static GstMfxDecoderStatus
 gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
 {
   mfxStatus sts = MFX_ERR_NONE;
-
-  /* Retrieve sequence header for MPEG2 */
-  if (decoder->params.mfx.CodecId == MFX_CODEC_MPEG2) {
-    mfxVideoParam params = decoder->params;
-    guint8 sps_data[128];
-
-    mfxExtCodingOptionSPSPPS extradata = {
-      .Header.BufferId = MFX_EXTBUFF_CODING_OPTION_SPSPPS,
-      .Header.BufferSz = sizeof(extradata),
-      .SPSBuffer = sps_data,.SPSBufSize = sizeof(sps_data)
-    };
-
-    mfxExtBuffer *ext_buffers[] = {
-      (mfxExtBuffer *)& extradata,
-    };
-
-    params.ExtParam = ext_buffers;
-    params.NumExtParam = 1;
-
-    sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs,
-      &params);
-    if (MFX_ERR_MORE_DATA == sts) {
-      return GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
-    }
-    else if (sts < 0) {
-      GST_ERROR("Decode header error %d\n", sts);
-      return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
-    }
-
-    if (extradata.SPSBufSize) {
-      decoder->codec_data = g_byte_array_sized_new(extradata.SPSBufSize);
-      decoder->codec_data = g_byte_array_append(decoder->codec_data,
-        sps_data, extradata.SPSBufSize);
-    }
-  }
 
   sts = MFXVideoDECODE_DecodeHeader(decoder->session, &decoder->bs,
     &decoder->params);
@@ -714,6 +685,12 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
   if (minfo.size) {
     decoder->bs.DataLength += minfo.size;
+    if (decoder->profile.codec == MFX_CODEC_VC1
+        && decoder->profile.profile == MFX_PROFILE_VC1_ADVANCED) {
+      decoder->bitstream = g_byte_array_append(decoder->bitstream,
+        decoder->codec_data->data, decoder->codec_data->len);
+      decoder->bs.DataLength += decoder->codec_data->len;
+    }
     if (decoder->bs.MaxLength <
         decoder->bs.DataLength + decoder->bitstream->len)
       decoder->bs.MaxLength = decoder->bs.DataLength + decoder->bitstream->len;
