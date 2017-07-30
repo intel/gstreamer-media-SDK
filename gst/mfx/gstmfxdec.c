@@ -537,7 +537,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       if (!gst_mfxdec_negotiate(mfxdec))
         goto not_negotiated;
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
-      ret = GST_FLOW_OK;
+      ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
       break;
     case GST_MFX_DECODER_STATUS_SUCCESS:
       while (gst_mfx_decoder_get_decoded_frames(mfxdec->decoder, &out_frame)) {
