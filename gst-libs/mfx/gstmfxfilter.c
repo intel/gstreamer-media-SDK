@@ -339,8 +339,8 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
 static GstMfxFilterOpData *
 find_filter_op_data (GstMfxFilter * filter, GstMfxFilterType type)
 {
-  guint i;
   GstMfxFilterOpData *op;
+  guint i;
 
   for (i = 0; i < filter->filter_op_data->len; i++) {
     op = (GstMfxFilterOpData *) g_ptr_array_index (filter->filter_op_data, i);
@@ -359,18 +359,10 @@ free_filter_op_data (gpointer data)
   g_slice_free (GstMfxFilterOpData, op);
 }
 
-gboolean
-gst_mfx_filter_has_filter (GstMfxFilter * filter, guint flags)
-{
-  g_return_val_if_fail (filter != NULL, FALSE);
-
-  return (filter->supported_filters & flags) != 0;
-}
-
 static gboolean
 gst_mfx_filter_create (GstMfxFilter * filter,
-    GstMfxTaskAggregator * aggregator,
-    gboolean is_system_in, gboolean is_system_out)
+  GstMfxTaskAggregator * aggregator,
+  gboolean is_system_in, gboolean is_system_out)
 {
   filter->params.IOPattern |= is_system_in ?
       MFX_IOPATTERN_IN_SYSTEM_MEMORY : MFX_IOPATTERN_IN_VIDEO_MEMORY;
@@ -459,7 +451,6 @@ gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
 
   if (!gst_mfx_filter_create (filter, aggregator, is_system_in, is_system_out))
     goto error;
-
   return filter;
 
 error:
@@ -631,7 +622,6 @@ init_frc_default ()
   ext_frc->Algorithm = 0;
 
   return ext_frc;
-
 }
 
 gboolean

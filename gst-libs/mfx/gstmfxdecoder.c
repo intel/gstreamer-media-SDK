@@ -82,7 +82,7 @@ gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info)
 const mfxFrameAllocRequest *
 gst_mfx_decoder_get_request (GstMfxDecoder * decoder)
 {
-  g_return_val_if_fail(decoder != NULL, NULL);
+  g_return_val_if_fail (decoder != NULL, NULL);
   return &decoder->request;
 }
 
@@ -155,7 +155,7 @@ init_decoder (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
 
   /* Make sure frame allocator points to the right task to allocate surfaces */
-  gst_mfx_task_aggregator_set_current_task(decoder->aggregator,
+  gst_mfx_task_aggregator_set_current_task (decoder->aggregator,
     decoder->decode);
   /* calls gst_mfx_task_frame_alloc() when configured with video memory */
   sts = MFXVideoDECODE_Init (decoder->session, &decoder->params);
@@ -271,15 +271,15 @@ gst_mfx_decoder_reconfigure_params (GstMfxDecoder * decoder)
           MFX_PICSTRUCT_FIELD_BFF)
       : MFX_PICSTRUCT_PROGRESSIVE;
 
-  frame_info->Width = GST_ROUND_UP_16(decoder->info.width);
+  frame_info->Width = GST_ROUND_UP_16 (decoder->info.width);
   if (decoder->params.mfx.CodecId == MFX_CODEC_HEVC) {
-    frame_info->Height = GST_ROUND_UP_32(decoder->info.height);
+    frame_info->Height = GST_ROUND_UP_32 (decoder->info.height);
   }
   else {
     frame_info->Height =
       (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
-        GST_ROUND_UP_16(decoder->info.height) :
-        GST_ROUND_UP_32(decoder->info.height);
+        GST_ROUND_UP_16 (decoder->info.height) :
+        GST_ROUND_UP_32 (decoder->info.height);
   }
   frame_info->FrameRateExtN = decoder->info.fps_n;
   frame_info->FrameRateExtD = decoder->info.fps_d;
@@ -388,6 +388,13 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder)
   g_queue_init(&decoder->discarded_frames);
 }
 
+static void
+gst_mfx_decoder_class_init(GstMfxDecoderClass * klass)
+{
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_decoder_finalize;
+}
+
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
   GstMfxProfile profile, const GstVideoInfo * info, GByteArray * codec_data,
@@ -430,7 +437,6 @@ gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
 {
   gst_object_replace((GstObject **) old_decoder_ptr, GST_OBJECT (new_decoder));
 }
-
 
 static gboolean
 configure_filter (GstMfxDecoder * decoder)
@@ -522,7 +528,7 @@ gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
 
   if (MFX_CODEC_VC1 == decoder->profile.codec
-    &&  MFX_PROFILE_VC1_ADVANCED == decoder->profile.profile) {
+      &&  MFX_PROFILE_VC1_ADVANCED == decoder->profile.profile) {
     decoder->bitstream = g_byte_array_prepend(decoder->bitstream,
       decoder->codec_data->data, decoder->codec_data->len);
     decoder->bs.DataLength += decoder->codec_data->len;
@@ -643,7 +649,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
   GstMfxFilterStatus filter_sts;
   GstMfxSurface *surface, *filter_surface;
-  mfxFrameSurface1 *insurf, *outsurf = NULL;
+  mfxFrameSurface1 *insurf = NULL, *outsurf = NULL;
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
@@ -654,10 +660,10 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
   if (!decoder->can_double_deinterlace) {
     /* Save frames for later synchronization with decoded MFX surfaces */
-    g_queue_insert_sorted(&decoder->pending_frames, frame, sort_pts, NULL);
+    g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
   }
   else {
-    g_queue_push_head(&decoder->discarded_frames, frame);
+    g_queue_push_head (&decoder->discarded_frames, frame);
   }
 
   if (!gst_buffer_map (frame->input_buffer, &minfo, GST_MAP_READ)) {
@@ -726,8 +732,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
     insurf = gst_mfx_surface_get_frame_surface (surface);
     sts = MFXVideoDECODE_DecodeFrameAsync (decoder->session, &decoder->bs,
-        insurf, &outsurf, &syncp);
-    GST_DEBUG ("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
+      insurf, &outsurf, &syncp);
+    GST_DEBUG("MFXVideoDECODE_DecodeFrameAsync status: %d", sts);
 
     if (MFX_WRN_DEVICE_BUSY == sts)
       g_usleep (100);
@@ -751,14 +757,14 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
      * change properties in the middle of playback */
     if (decoder->num_partial_frames) {
       GstVideoCodecFrame *cur_frame;
-      guint n = g_queue_get_length(&decoder->pending_frames) - 1;
+      guint n = g_queue_get_length (&decoder->pending_frames) - 1;
 
       /* Discard partial frames */
       while (decoder->num_partial_frames
           && (cur_frame = g_queue_peek_nth(&decoder->pending_frames, n))) {
         if ((cur_frame->pts - decoder->pts_offset) % decoder->duration) {
-          g_queue_push_head(&decoder->discarded_frames,
-            g_queue_pop_nth(&decoder->pending_frames, n));
+          g_queue_push_head (&decoder->discarded_frames,
+            g_queue_pop_nth (&decoder->pending_frames, n));
           decoder->num_partial_frames--;
         }
         n--;
@@ -825,7 +831,7 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
   mfxSyncPoint syncp;
   mfxStatus sts;
 
-  g_return_val_if_fail(decoder != NULL, GST_MFX_DECODER_STATUS_FLUSHED);
+  g_return_val_if_fail (decoder != NULL, GST_MFX_DECODER_STATUS_FLUSHED);
 
   do {
     surface = gst_mfx_surface_new_from_pool (decoder->pool);
@@ -842,7 +848,7 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
 
   if (syncp) {
     do {
-      sts = MFXVideoCORE_SyncOperation(decoder->session, syncp, 1000);
+      sts = MFXVideoCORE_SyncOperation (decoder->session, syncp, 1000);
       if (MFX_ERR_NONE != sts && sts < 0) {
         GST_ERROR("MFXVideoCORE_SyncOperation() error status: %d", sts);
         return GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
@@ -867,11 +873,4 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
     ret = GST_MFX_DECODER_STATUS_FLUSHED;
   }
   return ret;
-}
-
-static void
-gst_mfx_decoder_class_init(GstMfxDecoderClass * klass)
-{
-  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
-  object_class->finalize = gst_mfx_decoder_finalize;
 }
