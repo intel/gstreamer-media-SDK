@@ -97,10 +97,6 @@ typedef gboolean(*GstMfxWindowRenderFunc) (GstMfxWindow * window,
  * @set_fullscreen: virtual function to change window fullscreen state
  * @resize: virtual function to resize a window
  * @render: virtual function to render a #GstMfxSurface into a window
- * @get_visual_id: virtual function to get the desired visual id used to
- *   create the window
- * @get_colormap: virtual function to get the desired colormap used to
- *   create the window, or the currently allocated one
  *
  * Base class for system-dependent windows.
  */
@@ -123,28 +119,6 @@ struct _GstMfxWindowClass
 GstMfxWindow *
 gst_mfx_window_new_internal(GstMfxWindow * window, GstMfxContext* context,
   GstMfxID id, guint width, guint height);
-
-#define gst_mfx_window_ref_internal(window) \
-  ((gpointer)gst_object_ref(GST_OBJECT(window)))
-
-#define gst_mfx_window_unref_internal(window) \
-  gst_object_unref(GST_OBJECT(window))
-
-#define gst_mfx_window_replace_internal(old_window_ptr, new_window) \
-  gst_object_replace((GstObject **)(old_window_ptr), \
-  GST_OBJECT(new_window))
-
-#undef  gst_mfx_window_ref
-#define gst_mfx_window_ref(window) \
-  gst_mfx_window_ref_internal((window))
-
-#undef  gst_mfx_window_unref
-#define gst_mfx_window_unref(window) \
-  gst_mfx_window_unref_internal((window))
-
-#undef  gst_mfx_window_replace
-#define gst_mfx_window_replace(old_window_ptr, new_window) \
-  gst_mfx_window_replace_internal((old_window_ptr), (new_window))
 
 G_END_DECLS
 
