@@ -24,8 +24,6 @@
 #define GST_MFX_ENCODER_H
 
 #include <gst/video/gstvideoutils.h>
-#include <mfxvideo.h>
-
 #include "gstmfxtaskaggregator.h"
 
 G_BEGIN_DECLS

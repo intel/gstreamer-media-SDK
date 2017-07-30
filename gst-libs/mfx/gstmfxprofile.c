@@ -21,7 +21,6 @@
  */
 
 #include "sysdeps.h"
-
 #include "gstmfxprofile.h"
 
 typedef struct _GstMfxProfileMap GstMfxProfileMap;
