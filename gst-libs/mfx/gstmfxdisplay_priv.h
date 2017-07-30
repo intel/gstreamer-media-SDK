@@ -89,7 +89,6 @@ struct _GstMfxDisplayPrivate
   guint height_mm;
   guint par_n;
   guint par_d;
-  gchar *vendor_string;
 };
 
 /**
@@ -133,29 +132,6 @@ struct _GstMfxDisplayClass
 
 GstMfxDisplay *
 gst_mfx_display_new_internal (GstMfxDisplay * display, gpointer init_value);
-
-#define gst_mfx_display_ref_internal(display) \
-  ((gpointer)gst_object_ref(GST_OBJECT(display)))
-
-#define gst_mfx_display_unref_internal(display) \
-  gst_object_unref(GST_OBJECT(display))
-
-#define gst_mfx_display_replace_internal(old_display_ptr, new_display) \
-  gst_object_replace((GstObject **)(old_display_ptr), \
-  GST_OBJECT(new_display))
-
-#undef  gst_mfx_display_ref
-#define gst_mfx_display_ref(display) \
-  gst_mfx_display_ref_internal((display))
-
-#undef  gst_mfx_display_unref
-#define gst_mfx_display_unref(display) \
-  gst_mfx_display_unref_internal((display))
-
-#undef  gst_mfx_display_replace
-#define gst_mfx_display_replace(old_display_ptr, new_display) \
-  gst_mfx_display_replace_internal((old_display_ptr), (new_display))
-
 
 G_END_DECLS
 

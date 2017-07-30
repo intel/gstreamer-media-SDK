@@ -81,9 +81,6 @@ typedef enum
 #define GST_MFX_TYPE_DISPLAY_TYPE (gst_mfx_display_type_get_type())
 
 GType
-gst_mfx_display_get_type(void);
-
-GType
 gst_mfx_display_get_type (void);
 
 GstMfxDisplay *
@@ -118,10 +115,6 @@ gst_mfx_display_get_size (GstMfxDisplay * display, guint * pwidth,
 void
 gst_mfx_display_get_pixel_aspect_ratio (GstMfxDisplay * display,
     guint * par_n, guint * par_d);
-
-const gchar *
-gst_mfx_display_get_vendor_string (GstMfxDisplay * display);
-
 
 G_END_DECLS
 
