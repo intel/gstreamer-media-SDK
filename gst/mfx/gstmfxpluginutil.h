@@ -65,10 +65,6 @@ typedef enum
     "{ NV12, BGRA, P010_10LE }"
 #endif
 
-/* Helpers to handle interlaced contents */
-#define GST_CAPS_INTERLACED_MODES \
-    "interlace-mode = (string){ progressive, interleaved, mixed }"
-
 gboolean
 gst_mfx_ensure_aggregator(GstElement * element);
 

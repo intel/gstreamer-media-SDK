@@ -290,7 +290,6 @@ gst_mfx_get_platform(void)
   mfxInitParam init_params = { 0 };
   mfxSession session;
 
-  //init_params.GPUCopy = MFX_GPUCOPY_ON;
   init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
 #if WITH_D3D11_BACKEND
   init_params.Implementation |= MFX_IMPL_VIA_D3D11;

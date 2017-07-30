@@ -282,8 +282,8 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
     }
     GST_MFX_WINDOW_ID (window) = None;
   }
-  gst_mfx_display_replace(&priv2->display, NULL);
-  gst_mfx_surface_replace(&priv2->mapped_surface, NULL);
+  gst_mfx_display_replace (&priv2->display, NULL);
+  gst_mfx_surface_replace (&priv2->mapped_surface, NULL);
 }
 
 static gboolean
@@ -397,8 +397,8 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
 
 static gboolean
 gst_mfx_window_x11_render (GstMfxWindow * window,
-    GstMfxSurface * surface,
-    const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
+  GstMfxSurface * surface,
+  const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
 #if defined(USE_DRI3) && defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT) && defined(HAVE_XRENDER)
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
@@ -591,12 +591,12 @@ gst_mfx_window_x11_new (GstMfxDisplay * display, GstMfxContext * context,
 
   GST_DEBUG ("new window, size %ux%u", width, height);
 
-  window = g_object_new(GST_TYPE_MFX_WINDOW_X11, NULL);
+  window = g_object_new (GST_TYPE_MFX_WINDOW_X11, NULL);
   if (!window)
     return NULL;
 
-  GST_MFX_WINDOW_X11_GET_PRIVATE(window)->display =
-      gst_mfx_display_ref(display);
+  GST_MFX_WINDOW_X11_GET_PRIVATE (window)->display =
+      gst_mfx_display_ref (display);
 
   return
       gst_mfx_window_new_internal (GST_MFX_WINDOW(window),
@@ -625,12 +625,12 @@ gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid)
 
   GST_DEBUG ("new window from xid 0x%08x", (guint) xid);
 
-  window = g_object_new(GST_TYPE_MFX_WINDOW_X11, NULL);
+  window = g_object_new (GST_TYPE_MFX_WINDOW_X11, NULL);
   if (!window)
     return NULL;
 
   GST_MFX_WINDOW_X11_GET_PRIVATE(window)->display =
-      gst_mfx_display_ref(display);
+      gst_mfx_display_ref (display);
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW(window), NULL, xid, 0, 0);
 }

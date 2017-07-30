@@ -464,7 +464,7 @@ static void
 init_encoder_task (GstMfxEncoder * encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
-  
+
   priv->encode = gst_mfx_task_new (priv->aggregator, GST_MFX_TASK_ENCODER);
   priv->session = gst_mfx_task_get_session (priv->encode);
 }
@@ -958,9 +958,9 @@ configure_encoder_sharing (GstMfxEncoder *encoder)
       if (request->Info.PicStruct != MFX_PICSTRUCT_PROGRESSIVE)
         gst_mfx_filter_set_deinterlace_method(priv->filter,
           GST_MFX_DEINTERLACE_METHOD_ADVANCED_NOREF);
-      
+
       gst_mfx_filter_set_format(priv->filter, encoder_format);
-       
+
       if (!gst_mfx_filter_prepare(priv->filter)) {
         GST_ERROR("Unable to set up preprocessing filter.");
         goto error;
@@ -971,7 +971,7 @@ configure_encoder_sharing (GstMfxEncoder *encoder)
     }
     /* Get updated output mfxFrameInfo */
     request = gst_mfx_task_get_request(task);
-    
+
     /* Share upstream decoder / VPP session with encoder */
     if (encoder_format == request->Info.FourCC) {
       priv->shared = TRUE;
