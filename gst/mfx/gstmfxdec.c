@@ -337,7 +337,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,
     extradata, mfxdec->async_depth, mfxdec->live_mode, is_autoplugged);
   
-  g_byte_array_free (extradata, FALSE);
+  if (extradata)
+    g_byte_array_free (extradata, FALSE);
 
   if (!mfxdec->decoder)
     return FALSE;
