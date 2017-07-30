@@ -88,28 +88,6 @@ GstMfxSurface *
 gst_mfx_surface_new_internal (GstMfxSurface * surface, GstMfxContext * context,
   const GstVideoInfo * info, GstMfxTask * task);
 
-#define gst_mfx_surface_ref_internal(surface) \
-  ((gpointer)gst_object_ref(GST_OBJECT(surface)))
-
-#define gst_mfx_surface_unref_internal(surface) \
-  gst_object_unref(GST_OBJECT(surface))
-
-#define gst_mfx_surface_replace_internal(old_surface_ptr, new_surface) \
-  gst_object_replace((GstObject **)(old_surface_ptr), \
-  GST_OBJECT(new_surface))
-
-#undef  gst_mfx_surface_ref
-#define gst_mfx_surface_ref(surface) \
-  gst_mfx_surface_ref_internal((surface))
-
-#undef  gst_mfx_surface_unref
-#define gst_mfx_surface_unref(surface) \
-  gst_mfx_surface_unref_internal((surface))
-
-#undef  gst_mfx_surface_replace
-#define gst_mfx_surface_replace(old_surface_ptr, new_surface) \
-  gst_mfx_surface_replace_internal((old_surface_ptr), (new_surface))
-
 G_END_DECLS
 
 #endif /* GST_MFX_SURFACE_PRIV_H */

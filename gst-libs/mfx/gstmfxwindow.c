@@ -29,11 +29,6 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-/* Ensure those symbols are actually defined in the resulting libraries */
-#undef gst_mfx_window_ref
-#undef gst_mfx_window_unref
-#undef gst_mfx_window_replace
-
 G_DEFINE_TYPE_WITH_CODE(GstMfxWindow,
   gst_mfx_window,
   GST_TYPE_OBJECT,
@@ -132,7 +127,7 @@ gst_mfx_window_new_internal (GstMfxWindow *window, GstMfxContext * context,
   return window;
 
 error:
-  gst_mfx_window_unref_internal (window);
+  gst_mfx_window_unref (window);
   return NULL;
 }
 
@@ -147,7 +142,9 @@ error:
 GstMfxWindow *
 gst_mfx_window_ref (GstMfxWindow * window)
 {
-  return gst_mfx_window_ref_internal (window);
+  g_return_val_if_fail (window != NULL, NULL);
+
+  return gst_object_ref (GST_OBJECT(window));
 }
 
 /**
@@ -160,7 +157,7 @@ gst_mfx_window_ref (GstMfxWindow * window)
 void
 gst_mfx_window_unref (GstMfxWindow * window)
 {
-  gst_mfx_window_unref_internal (window);
+  gst_object_unref (GST_OBJECT(window));
 }
 
 /**
@@ -176,7 +173,10 @@ void
 gst_mfx_window_replace (GstMfxWindow ** old_window_ptr,
     GstMfxWindow * new_window)
 {
-  gst_mfx_window_replace_internal (old_window_ptr, new_window);
+  g_return_if_fail(old_window_ptr != NULL);
+
+  gst_object_replace((GstObject **)old_window_ptr,
+    GST_OBJECT(new_window));
 }
 
 GstMfxContext *

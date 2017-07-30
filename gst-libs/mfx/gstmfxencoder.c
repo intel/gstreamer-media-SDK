@@ -33,7 +33,10 @@
 #define DEFAULT_QUANTIZER           21
 #define DEFAULT_ASYNC_DEPTH         4
 
-G_DEFINE_TYPE_WITH_CODE (GstMfxEncoder, gst_mfx_encoder, GST_TYPE_OBJECT, G_ADD_PRIVATE(GstMfxEncoder));
+G_DEFINE_TYPE_WITH_CODE (GstMfxEncoder,
+  gst_mfx_encoder,
+  GST_TYPE_OBJECT,
+  G_ADD_PRIVATE(GstMfxEncoder));
 
 /* Helper function to create a new encoder property object */
 static GstMfxEncoderPropData *
