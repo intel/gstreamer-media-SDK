@@ -33,11 +33,6 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-/* Ensure those symbols are actually defined in the resulting libraries */
-#undef gst_mfx_display_ref
-#undef gst_mfx_display_unref
-#undef gst_mfx_display_replace
-
 G_DEFINE_TYPE_WITH_CODE(GstMfxDisplay,
   gst_mfx_display,
   GST_TYPE_OBJECT,
@@ -192,9 +187,6 @@ gst_mfx_display_destroy (GstMfxDisplay * display)
   }
   if (klass->close_display)
     klass->close_display (display);
-
-  g_free (priv->vendor_string);
-  priv->vendor_string = NULL;
 }
 
 static gboolean
@@ -314,7 +306,7 @@ gst_mfx_display_new_internal (GstMfxDisplay *display, gpointer init_value)
   return display;
 
 error:
-  gst_mfx_display_unref_internal (display);
+  gst_mfx_display_unref (display);
   return NULL;
 }
 
@@ -343,13 +335,13 @@ gst_mfx_display_ref (GstMfxDisplay * display)
 {
   g_return_val_if_fail(display != NULL, NULL);
 
-  return gst_object_ref(GST_OBJECT(display));
+  return gst_object_ref (GST_OBJECT(display));
 }
 
 void
 gst_mfx_display_unref (GstMfxDisplay * display)
 {
-  gst_object_unref(GST_OBJECT(display));
+  gst_object_unref (GST_OBJECT(display));
 }
 
 void
@@ -358,7 +350,7 @@ gst_mfx_display_replace (GstMfxDisplay ** old_display_ptr,
 {
   g_return_if_fail(old_display_ptr != NULL);
 
-  gst_object_replace((GstObject **)old_display_ptr,
+  gst_object_replace ((GstObject **)old_display_ptr,
     GST_OBJECT(new_display));
 }
 
@@ -435,42 +427,4 @@ gst_mfx_display_get_pixel_aspect_ratio (GstMfxDisplay * display,
 
   if (par_d)
     *par_d = GST_MFX_DISPLAY_GET_PRIVATE (display)->par_d;
-}
-
-/* Ensures the VA driver vendor string was copied */
-static gboolean
-ensure_vendor_string (GstMfxDisplay * display)
-{
-  GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
-  const gchar *vendor_string;
-
-  GST_MFX_DISPLAY_LOCK (display);
-  if (!priv->vendor_string) {
-    vendor_string = vaQueryVendorString (priv->va_display);
-    if (vendor_string)
-      priv->vendor_string = g_strdup (vendor_string);
-  }
-  GST_MFX_DISPLAY_UNLOCK (display);
-  return priv->vendor_string != NULL;
-}
-
-/**
- * gst_mfx_display_get_vendor_string:
- * @display: a #GstMfxDisplay
- *
- * Returns the VA driver vendor string attached to the supplied VA @display.
- * The @display owns the vendor string, do *not* de-allocate it.
- *
- * This function is thread safe.
- *
- * Return value: the current #GstMfxRotation value
- */
-const gchar *
-gst_mfx_display_get_vendor_string (GstMfxDisplay * display)
-{
-  g_return_val_if_fail (display != NULL, NULL);
-
-  if (!ensure_vendor_string (display))
-    return NULL;
-  return GST_MFX_DISPLAY_GET_PRIVATE (display)->vendor_string;
 }
