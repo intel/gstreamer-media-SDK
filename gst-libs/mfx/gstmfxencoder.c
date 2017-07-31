@@ -476,8 +476,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
 
   priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
-  priv->bs.MaxLength = info->width * info->height * 4;
-  priv->bitstream = g_byte_array_sized_new (priv->bs.MaxLength);
+  priv->bitstream = g_byte_array_new ();
   if (!priv->bitstream)
     return FALSE;
   priv->bs.Data = priv->bitstream->data;
@@ -494,15 +493,6 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   priv->current_pts = GST_CLOCK_TIME_NONE;
 
   return TRUE;
-}
-
-static void
-gst_mfx_encoder_init (GstMfxEncoder * encoder)
-{
-	GstMfxEncoderPrivate *const priv =
-		gst_mfx_encoder_get_instance_private(encoder);
-
-	encoder->priv = priv;
 }
 
 /* Base encoder initialization (internal) */
@@ -575,17 +565,32 @@ gst_mfx_encoder_finalize (GObject * object)
   gst_mfx_task_aggregator_unref (priv->aggregator);
 }
 
+static void
+gst_mfx_encoder_init(GstMfxEncoder * encoder)
+{
+  GstMfxEncoderPrivate *const priv =
+    gst_mfx_encoder_get_instance_private(encoder);
+
+  encoder->priv = priv;
+}
+
+static void
+gst_mfx_encoder_class_init(GstMfxEncoderClass * klass)
+{
+  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  object_class->finalize = gst_mfx_encoder_finalize;
+}
+
 GstMfxEncoder *
 gst_mfx_encoder_new (GstMfxEncoder * encoder,
-    GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
-    gboolean memtype_is_system)
+  GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
+  gboolean memtype_is_system)
 {
-  g_return_val_if_fail(encoder != NULL, NULL);
-  g_return_val_if_fail(aggregator != NULL, NULL);
+  g_return_val_if_fail (encoder != NULL, NULL);
+  g_return_val_if_fail (aggregator != NULL, NULL);
 
   if (!gst_mfx_encoder_create (encoder, aggregator, info, memtype_is_system))
     goto error;
-
   return encoder;
 
 error:
@@ -913,10 +918,8 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder *encoder)
   for (i = 0; i < g_list_length(priv->plugin_uids); i++) {
     priv->plugin_uid = g_list_nth_data(priv->plugin_uids, i);
     sts = MFXVideoUSER_Load(priv->session, priv->plugin_uid, 1);
-    if (MFX_ERR_NONE == sts) {
-      //GST_DEBUG("Using encoder plugin %s", priv->plugin_uid);
+    if (MFX_ERR_NONE == sts)
       return TRUE;
-    }
   }
   return FALSE;
 }
@@ -1167,7 +1170,7 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
   GstMfxSurface *surface, *filter_surface;
   GstMfxFilterStatus filter_sts;
-  mfxFrameSurface1 *insurf;
+  mfxFrameSurface1 *insurf = NULL;
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
@@ -1209,7 +1212,7 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
     if (MFX_WRN_DEVICE_BUSY == sts)
       g_usleep (500);
     else if (MFX_ERR_NOT_ENOUGH_BUFFER == sts) {
-      priv->bs.MaxLength += 1024 * 16;
+      priv->bs.MaxLength += 4096 * 1024;
       priv->bitstream = g_byte_array_set_size (priv->bitstream,
           priv->bs.MaxLength);
       priv->bs.Data = priv->bitstream->data;
@@ -1221,10 +1224,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
   else if (MFX_ERR_MORE_DATA == sts)
     return GST_MFX_ENCODER_STATUS_MORE_DATA;
 
-  if (sts != MFX_ERR_NONE
-      && sts != MFX_ERR_MORE_BITSTREAM
-      && sts != MFX_WRN_VIDEO_PARAM_CHANGED) {
-    GST_ERROR ("Error during MFX encoding.");
+  if (MFX_ERR_NONE != sts) {
+    GST_ERROR("Status %d : Error during MFX encoding", sts);
     return GST_MFX_ENCODER_STATUS_ERROR_UNKNOWN;
   }
 
@@ -1613,11 +1614,4 @@ gst_mfx_encoder_lookahead_ds_get_type (void)
     g_once_init_leave (&g_type, type);
   }
   return g_type;
-}
-
-static void
-gst_mfx_encoder_class_init(GstMfxEncoderClass * klass)
-{
-  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
-  object_class->finalize = gst_mfx_encoder_finalize;
 }
