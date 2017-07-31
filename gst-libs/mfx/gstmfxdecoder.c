@@ -746,7 +746,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
     goto end;
   }
 
-  if (MFX_ERR_NONE != sts && MFX_ERR_MORE_DATA != sts) {
+  if (MFX_ERR_NONE != sts) {
     GST_ERROR ("Status %d : Error during MFX decoding", sts);
     ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
     goto end;
