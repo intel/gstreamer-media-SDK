@@ -470,13 +470,14 @@ init_encoder_task (GstMfxEncoder * encoder)
 
 static gboolean
 gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
-    GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
-    gboolean memtype_is_system)
+  GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
+  gboolean memtype_is_system)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
 
   priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
-  priv->bitstream = g_byte_array_new ();
+  priv->bs.MaxLength = info->width * info->height * 4;
+  priv->bitstream = g_byte_array_sized_new (priv->bs.MaxLength);
   if (!priv->bitstream)
     return FALSE;
   priv->bs.Data = priv->bitstream->data;
@@ -498,8 +499,8 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
 /* Base encoder initialization (internal) */
 static gboolean
 gst_mfx_encoder_create (GstMfxEncoder * encoder,
-    GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
-    gboolean memtype_is_system)
+  GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
+  gboolean memtype_is_system)
 {
   GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
 
@@ -1212,7 +1213,7 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
     if (MFX_WRN_DEVICE_BUSY == sts)
       g_usleep (500);
     else if (MFX_ERR_NOT_ENOUGH_BUFFER == sts) {
-      priv->bs.MaxLength += 4096 * 1024;
+      priv->bs.MaxLength += 1024 * 16;
       priv->bitstream = g_byte_array_set_size (priv->bitstream,
           priv->bs.MaxLength);
       priv->bs.Data = priv->bitstream->data;
