@@ -78,7 +78,7 @@ gst_mfx_video_buffer_pool_set_config (GstBufferPool * pool,
   GstCaps *caps = NULL;
   GstVideoInfo *const cur_vip = &priv->video_info[priv->video_info_index];
   GstVideoInfo *const new_vip = &priv->video_info[!priv->video_info_index];
-  GstAllocator *allocator;
+  GstAllocator *allocator = NULL;
   gboolean changed_caps;
 
   if (!gst_buffer_pool_config_get_params (config, &caps, NULL, NULL, NULL))
@@ -109,7 +109,8 @@ gst_mfx_video_buffer_pool_set_config (GstBufferPool * pool,
       GstMfxContext *context = gst_mfx_task_aggregator_get_context(priv->aggregator);
       allocator = gst_mfx_video_allocator_new (context, new_vip,
           priv->memtype_is_system);
-      gst_mfx_context_unref(context);
+      if(context)
+        gst_mfx_context_unref(context);
     }
 
     if (!allocator)
