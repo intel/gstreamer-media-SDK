@@ -51,7 +51,7 @@ struct _GstMfxDecoder
   mfxVideoParam params;
   mfxFrameAllocRequest request;
   mfxBitstream bs;
-  mfxPluginUID *plugin_uid;
+  const mfxPluginUID *plugin_uid;
 
   GstVideoInfo info;
   gboolean inited;
@@ -216,7 +216,7 @@ gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
   switch (decoder->profile.codec) {
     case MFX_CODEC_HEVC: {
       guint i;
-      mfxPluginUID *uids[] = {
+      const mfxPluginUID *uids[] = {
         &MFX_PLUGINID_HEVCD_HW,
         &MFX_PLUGINID_HEVCD_SW,
       };
