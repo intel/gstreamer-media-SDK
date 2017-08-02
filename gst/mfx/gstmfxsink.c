@@ -85,13 +85,6 @@ enum
 
 static GParamSpec *g_properties[N_PROPERTIES] = { NULL, };
 
-static void gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay);
-
-static gboolean gst_mfxsink_reconfigure_window (GstMfxSink * sink);
-
-static void
-gst_mfxsink_set_event_handling (GstMfxSink * sink, gboolean handle_events);
-
 static GstFlowReturn
 gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * buffer);
 
@@ -114,6 +107,15 @@ gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
 #ifdef HAVE_XKBLIB
 # include <X11/XKBlib.h>
 #endif
+
+static void
+gst_mfxsink_set_event_handling (GstMfxSink * sink, gboolean handle_events);
+
+static void
+gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay);
+
+static gboolean 
+gst_mfxsink_reconfigure_window (GstMfxSink * sink);
 
 static inline KeySym
 x11_keycode_to_keysym (Display * dpy, unsigned int kc)
@@ -823,9 +825,9 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
 static GstCaps *
 gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
 {
-  GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
   GstCaps *out_caps;
 #ifdef WITH_LIBVA_BACKEND
+  GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
   if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
 #ifdef USE_WAYLAND
     GstMfxDisplay *display = gst_mfx_display_wayland_new (sink->display_name);
