@@ -93,7 +93,7 @@ struct _GstMfxCodecMap
 {
   const gchar *name;
   guint rank;
-  gchar *caps_str;
+  const gchar *caps_str;
 };
 
 static GstMfxCodecMap mfx_codec_map[] = {
