@@ -71,17 +71,6 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
   {MFX_PROFILE_UNKNOWN,}
 };
 
-static const GstMfxProfileMap *
-get_profiles_map (GstMfxProfile profile)
-{
-  const GstMfxProfileMap *m;
-
-  for (m = gst_mfx_profiles; m->profile; m++)
-    if ((m->profile == profile.profile) && (m->codec == profile.codec))
-      return m;
-  return NULL;
-}
-
 static mfxU16
 gst_mfx_profile_from_codec_data_h264 (GstBuffer * buffer)
 {

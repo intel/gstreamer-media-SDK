@@ -211,7 +211,7 @@ gst_mfx_decoder_finalize (GObject * object)
 static mfxStatus
 gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 {
-  mfxStatus sts;
+  mfxStatus sts = MFX_ERR_NONE;
 
   switch (decoder->profile.codec) {
     case MFX_CODEC_HEVC: {
@@ -625,10 +625,10 @@ queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface)
     out_frame = new_frame (decoder);
 
   gst_video_codec_frame_set_user_data (out_frame,
-    gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
+    gst_mfx_surface_ref (surface), (GDestroyNotify)gst_mfx_surface_unref);
   g_queue_push_head (&decoder->decoded_frames, out_frame);
 
-  GST_LOG ("decoded frame : %ld",
+  GST_LOG ("decoded frame : %u",
     GST_MFX_SURFACE_FRAME_SURFACE (surface)->Data.FrameOrder);
 }
 

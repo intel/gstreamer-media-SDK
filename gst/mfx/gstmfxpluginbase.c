@@ -398,7 +398,9 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   guint size, min, max;
   gboolean update_pool = FALSE;
   gboolean has_video_meta = FALSE;
+#if defined(WITH_LIBVA_BACKEND) && defined(HAVE_GST_GL_LIBS)
   guint idx;
+#endif
 
   gst_query_parse_allocation (query, &caps, NULL);
 

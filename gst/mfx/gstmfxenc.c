@@ -406,7 +406,7 @@ gst_mfxenc_handle_frame (GstVideoEncoder * venc, GstVideoCodecFrame * frame)
     goto error_buffer_no_surface;
 
   gst_video_codec_frame_set_user_data (frame,
-      gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
+      gst_mfx_surface_ref (surface), (GDestroyNotify)gst_mfx_surface_unref);
 
   status = gst_mfx_encoder_encode (encode->encoder, frame);
   if (status < GST_MFX_ENCODER_STATUS_SUCCESS)

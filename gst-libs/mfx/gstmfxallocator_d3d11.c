@@ -31,7 +31,7 @@ find_response(gconstpointer response_data, gconstpointer response)
   ResponseData *_response_data = (ResponseData *)response_data;
   mfxFrameAllocResponse *_response = (mfxFrameAllocResponse *)response;
 
-  return _response_data ? _response->mids != _response_data->mids : -1;
+  return _response_data ? (GstMfxMemoryId**)_response->mids != _response_data->mids : -1;
 }
 
 static void
@@ -143,8 +143,8 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     desc.MiscFlags = 0;
     //desc.MiscFlags            = D3D11_RESOURCE_MISC_SHARED;
 
-    if ((MFX_MEMTYPE_FROM_VPPIN & request->Type)
-        && (DXGI_FORMAT_YUY2 == desc.Format)
+    if (((MFX_MEMTYPE_FROM_VPPIN & request->Type)
+        && (DXGI_FORMAT_YUY2 == desc.Format))
         || (DXGI_FORMAT_B8G8R8A8_UNORM == desc.Format)
         || (DXGI_FORMAT_R10G10B10A2_UNORM == desc.Format)) {
       desc.BindFlags = D3D11_BIND_RENDER_TARGET;
@@ -358,7 +358,6 @@ gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 mfxStatus
 gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL * hdl)
 {
-  pthis;
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
 
   if (!mem_id || !mem_id->mid || !hdl)

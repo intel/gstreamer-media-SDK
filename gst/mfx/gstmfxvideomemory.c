@@ -461,6 +461,8 @@ error_create_surface_pool:
   }
 }
 
+#ifdef WITH_LIBVA_BACKEND
+
 /* ------------------------------------------------------------------------ */
 /* --- GstMfxDmaBufMemory                                             --- */
 /* ------------------------------------------------------------------------ */
@@ -478,7 +480,6 @@ gst_mfx_prime_buffer_proxy_quark_get (void)
   return g_quark;
 }
 
-#ifdef WITH_LIBVA_BACKEND
 GstMemory *
 gst_mfx_dmabuf_memory_new (GstAllocator * allocator, GstMfxContext * context,
     const GstVideoInfo * vip, GstMfxVideoMeta * meta)

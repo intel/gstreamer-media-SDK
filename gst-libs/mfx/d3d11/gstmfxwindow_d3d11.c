@@ -29,9 +29,6 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-#define GST_MFX_WINDOW_D3D11_CAST(obj) \
-	((GstMfxWindowD3D11 *)(obj))
-
 static gboolean
 gst_mfx_window_d3d11_render (GstMfxWindow * window, GstMfxSurface * surface,
   const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
@@ -177,7 +174,7 @@ gst_mfx_window_d3d11_hide (GstMfxWindow * window)
   return TRUE;
 }
 
-static gboolean
+static void
 gst_mfx_window_d3d11_destroy (GObject * window)
 {
   GstMfxWindowD3D11Private *const priv =
@@ -214,7 +211,6 @@ gst_mfx_window_d3d11_destroy (GObject * window)
 
   gst_mfx_surface_replace (&priv->mapped_surface, NULL);
   gst_mfx_d3d11_device_replace (&priv->device, NULL);
-  return TRUE;
 }
 
 static gboolean
@@ -359,7 +355,7 @@ gst_mfx_window_d3d11_init_swap_chain (GstMfxWindowD3D11 * window)
     return FALSE;
 
   IDXGISwapChain1_GetBuffer(priv2->dxgi_swapchain, 0, &IID_ID3D11Texture2D,
-    &priv2->backbuffer_texture);
+    (void**)&priv2->backbuffer_texture);
   g_return_val_if_fail(priv2->backbuffer_texture != NULL, FALSE);
 
   return TRUE;
@@ -418,7 +414,7 @@ d3d11_create_window_internal (GstMfxWindowD3D11 * window)
   int screenwidth;
   int screenheight;
   gchar *wnd_classname =
-    g_strdup_printf("GstMfxWindowD3D11_%u", GetCurrentThreadId());
+    g_strdup_printf("GstMfxWindowD3D11_%lu", GetCurrentThreadId());
 
   priv2->d3d11_window.lpfnWndProc = (WNDPROC)WindowProc;
   priv2->d3d11_window.hInstance = GetModuleHandle(NULL);

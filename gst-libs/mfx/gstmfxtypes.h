@@ -64,7 +64,7 @@ typedef gsize GstMfxID;
  * </programlisting>
  * </informalexample>
  */
-#define GST_MFX_ID_FORMAT "p"
+#define GST_MFX_ID_FORMAT "llu"
 
 /**
  * GST_MFX_ID_ARGS:

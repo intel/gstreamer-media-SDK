@@ -807,7 +807,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   GstCaps *out_caps, *peer_caps;
   GstMfxCapsFeature feature;
   const gchar *feature_str;
-  guint width, height, fps_n, fps_d;
+  guint width, height;
 
   /* Generate the sink pad caps, that could be fixated afterwards */
   if (direction == GST_PAD_SRC) {
@@ -852,8 +852,6 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
 
   gst_video_info_from_caps (&peer_vi, peer_caps);
   out_format = GST_VIDEO_INFO_FORMAT (&peer_vi);
-  fps_n = GST_VIDEO_INFO_FPS_N (&peer_vi);
-  fps_d = GST_VIDEO_INFO_FPS_D (&peer_vi);
 
   /* Update width and height from the caps */
   if (GST_VIDEO_INFO_HEIGHT (&peer_vi) != 1 &&
