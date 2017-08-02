@@ -210,7 +210,7 @@ gst_mfx_window_d3d11_destroy (GObject * window)
     memset(&priv->d3d11_window, 0, sizeof(WNDCLASS));
   }
 
-  PostMessage(GST_MFX_WINDOW_GET_PRIVATE(window)->handle, WM_QUIT, 0, 0);
+  PostMessage((HWND)GST_MFX_WINDOW_GET_PRIVATE(window)->handle, WM_QUIT, 0, 0);
 
   gst_mfx_surface_replace (&priv->mapped_surface, NULL);
   gst_mfx_d3d11_device_replace (&priv->device, NULL);
