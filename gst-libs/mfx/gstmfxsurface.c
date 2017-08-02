@@ -28,10 +28,9 @@
 
 GST_DEBUG_CATEGORY(gst_debug_mfx);
 
-G_DEFINE_TYPE_WITH_CODE (GstMfxSurface,
+G_DEFINE_TYPE_WITH_PRIVATE (GstMfxSurface,
   gst_mfx_surface,
-  GST_TYPE_OBJECT,
-  G_ADD_PRIVATE(GstMfxSurface));
+  GST_TYPE_OBJECT);
 
 static gboolean
 gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)

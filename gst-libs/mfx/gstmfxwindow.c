@@ -29,10 +29,9 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-G_DEFINE_TYPE_WITH_CODE(GstMfxWindow,
+G_DEFINE_TYPE_WITH_PRIVATE(GstMfxWindow,
   gst_mfx_window,
-  GST_TYPE_OBJECT,
-  G_ADD_PRIVATE(GstMfxWindow));
+  GST_TYPE_OBJECT);
 
 static void
 gst_mfx_window_init(GstMfxWindow * window)
