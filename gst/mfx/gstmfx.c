@@ -47,23 +47,36 @@
 
 #include "gstmfxpluginutil.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
   gboolean ret = FALSE;
-  GstRegistry *reg = gst_registry_get();
-  GstPluginFeature *vc1parse = gst_registry_lookup_feature (reg, "vc1parse");
+  GstPluginFeature *vc1parse = NULL;
+  mfxU16 platform = 0;
 
-  if (vc1parse) {
-    gst_plugin_feature_set_rank (vc1parse, GST_RANK_MARGINAL);
-    gst_object_unref(vc1parse);
+  GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
+    "mfx", 0, "MFX Plugins loader");
+
+  if (!gst_mfx_is_mfx_supported()) {
+    GST_DEBUG ("No Intel MFX platform detected - skipping registration");
+    return TRUE;
   }
 
-#ifdef MFX_DECODER
-  mfxU16 platform = 0;
 #if MSDK_CHECK_VERSION(1,19)
   platform = gst_mfx_get_platform();
 #endif
+
+  vc1parse = gst_registry_lookup_feature (gst_registry_get(), "vc1parse");
+  if (vc1parse) {
+    gst_plugin_feature_set_rank (vc1parse, GST_RANK_MARGINAL);
+    gst_object_unref (vc1parse);
+    vc1parse = NULL;
+  }
+
+#ifdef MFX_DECODER
   ret |= gst_mfxdec_register (plugin, platform);
 #endif
 
