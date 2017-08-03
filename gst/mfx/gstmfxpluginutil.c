@@ -304,6 +304,9 @@ gst_mfx_is_mfx_supported (mfxU16* platform_code)
   }
 
 #if MSDK_CHECK_VERSION(1,19)
+  if (platform_code == NULL)
+    goto cleanup;
+
   sts = MFXQueryVersion (session, &ver);
   if (sts != MFX_ERR_NONE) {
     GST_DEBUG ("Error querying MFX version.");
