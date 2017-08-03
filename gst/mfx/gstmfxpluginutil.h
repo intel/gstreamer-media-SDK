@@ -95,12 +95,7 @@ void
 gst_video_info_change_format(GstVideoInfo * vip, GstVideoFormat format,
     guint width, guint height);
 
-#if MSDK_CHECK_VERSION(1,19)
-mfxU16
-gst_mfx_get_platform (void);
-#endif
-
 gboolean
-gst_mfx_is_mfx_supported (void);
+gst_mfx_is_mfx_supported (mfxU16* platform_code);
 
 #endif /* GST_MFX_PLUGIN_UTIL_H */

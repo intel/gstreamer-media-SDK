@@ -60,14 +60,10 @@ plugin_init (GstPlugin * plugin)
   GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
     "mfx", 0, "MFX Plugins loader");
 
-  if (!gst_mfx_is_mfx_supported()) {
+  if (!gst_mfx_is_mfx_supported (&platform)) {
     GST_DEBUG ("No Intel MFX platform detected - skipping registration");
     return TRUE;
   }
-
-#if MSDK_CHECK_VERSION(1,19)
-  platform = gst_mfx_get_platform();
-#endif
 
   vc1parse = gst_registry_lookup_feature (gst_registry_get(), "vc1parse");
   if (vc1parse) {

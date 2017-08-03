@@ -281,47 +281,18 @@ gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,
   vip->fps_d = vi.fps_d;
 }
 
-#if MSDK_CHECK_VERSION(1,19)
-mfxU16
-gst_mfx_get_platform (void)
-{
-  mfxStatus sts = MFX_ERR_NONE;
-  mfxPlatform platform = { 0 };
-  mfxInitParam init_params = { 0 };
-  mfxSession session;
-
-  init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
-#if WITH_D3D11_BACKEND
-  init_params.Implementation |= MFX_IMPL_VIA_D3D11;
-#endif
-  init_params.Version.Major = 1;
-  init_params.Version.Minor = 19;
-
-  sts = MFXInitEx(init_params, &session);
-  if (sts != MFX_ERR_NONE) {
-    GST_DEBUG("Error initializing internal MFX session with API 1.19");
-    return MFX_PLATFORM_UNKNOWN;
-  }
-
-  sts = MFXVideoCORE_QueryPlatform(session, &platform);
-  if (sts != MFX_ERR_NONE) {
-    GST_ERROR("Error detecting MFX platform.");
-    return MFX_PLATFORM_UNKNOWN;
-  }
-
-  MFXClose(session);
-  return platform.CodeName;
-}
-#endif
-
 gboolean
-gst_mfx_is_mfx_supported (void)
+gst_mfx_is_mfx_supported (mfxU16* platform_code)
 {
   mfxStatus sts = MFX_ERR_NONE;
   mfxSession session = NULL;
   mfxIMPL impl = MFX_IMPL_HARDWARE_ANY;
   mfxVersion ver = { { GST_MFX_MIN_MSDK_VERSION_MINOR,
     GST_MFX_MIN_MSDK_VERSION_MAJOR } };
+
+#if MSDK_CHECK_VERSION(1,19)
+  mfxPlatform platform = { 0 };
+#endif
 
 #if WITH_D3D11_BACKEND
   impl |= MFX_IMPL_VIA_D3D11;
@@ -331,8 +302,23 @@ gst_mfx_is_mfx_supported (void)
   if (sts != MFX_ERR_NONE) {
     return FALSE;
   }
-  else {
-    MFXClose(session);
-    return TRUE;
+
+#if MSDK_CHECK_VERSION(1,19)
+  sts = MFXQueryVersion (session, &ver);
+  if (sts != MFX_ERR_NONE) {
+    GST_DEBUG ("Error querying MFX version.");
+    goto cleanup;
   }
+
+  if ((ver.Major == 1 && ver.Minor >= 19) || ver.Major > 1) {
+    sts = MFXVideoCORE_QueryPlatform(session, &platform);
+    if (sts == MFX_ERR_NONE) {
+      *platform_code = platform.CodeName;
+    }
+  }
+#endif
+
+cleanup:
+  MFXClose(session);
+  return TRUE;
 }
