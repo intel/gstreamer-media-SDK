@@ -283,7 +283,7 @@ gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,
 
 #if MSDK_CHECK_VERSION(1,19)
 mfxU16
-gst_mfx_get_platform(void)
+gst_mfx_get_platform (void)
 {
   mfxStatus sts = MFX_ERR_NONE;
   mfxPlatform platform = { 0 };
@@ -299,7 +299,7 @@ gst_mfx_get_platform(void)
 
   sts = MFXInitEx(init_params, &session);
   if (sts != MFX_ERR_NONE) {
-    GST_ERROR("Error initializing internal MFX session");
+    GST_DEBUG("Error initializing internal MFX session with API 1.19");
     return MFX_PLATFORM_UNKNOWN;
   }
 
@@ -313,3 +313,26 @@ gst_mfx_get_platform(void)
   return platform.CodeName;
 }
 #endif
+
+gboolean
+gst_mfx_is_mfx_supported (void)
+{
+  mfxStatus sts = MFX_ERR_NONE;
+  mfxSession session = NULL;
+  mfxIMPL impl = MFX_IMPL_HARDWARE_ANY;
+  mfxVersion ver = { { GST_MFX_MIN_MSDK_VERSION_MINOR,
+    GST_MFX_MIN_MSDK_VERSION_MAJOR } };
+
+#if WITH_D3D11_BACKEND
+  impl |= MFX_IMPL_VIA_D3D11;
+#endif
+
+  sts = MFXInit(impl, &ver, &session);
+  if (sts != MFX_ERR_NONE) {
+    return FALSE;
+  }
+  else {
+    MFXClose(session);
+    return TRUE;
+  }
+}

@@ -97,7 +97,10 @@ gst_video_info_change_format(GstVideoInfo * vip, GstVideoFormat format,
 
 #if MSDK_CHECK_VERSION(1,19)
 mfxU16
-gst_mfx_get_platform(void);
+gst_mfx_get_platform (void);
 #endif
+
+gboolean
+gst_mfx_is_mfx_supported (void);
 
 #endif /* GST_MFX_PLUGIN_UTIL_H */

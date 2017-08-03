@@ -106,16 +106,15 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
   mfxIMPL impl;
   mfxVersion version;
   mfxStatus sts;
-  mfxSession session;
+  mfxSession session = NULL;
   const char *desc;
 
-  //init_params.GPUCopy = MFX_GPUCOPY_ON;
   init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
 #if WITH_D3D11_BACKEND
   init_params.Implementation |= MFX_IMPL_VIA_D3D11;
 #endif
-  init_params.Version.Major = 1;
-  init_params.Version.Minor = 17;
+  init_params.Version.Major = GST_MFX_MIN_MSDK_VERSION_MAJOR;
+  init_params.Version.Minor = GST_MFX_MIN_MSDK_VERSION_MINOR;
 
   sts = MFXInitEx (init_params, &session);
   if (sts < 0) {
