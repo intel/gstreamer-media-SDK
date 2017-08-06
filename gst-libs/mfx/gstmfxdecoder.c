@@ -63,6 +63,8 @@ struct _GstMfxDecoder
   gboolean is_autoplugged;
   gboolean can_double_deinterlace;
   guint num_partial_frames;
+  guint initial_frame_latency;
+  guint num_frame_latency;
 
   /* For special double frame rate deinterlacing case */
   GstClockTime current_pts;
@@ -593,6 +595,7 @@ gst_mfx_decoder_reset (GstMfxDecoder * decoder)
   decoder->was_reset = TRUE;
   decoder->has_ready_frames = FALSE;
   decoder->num_partial_frames = 0;
+  decoder->num_frame_latency = 0;
 
   sts = MFXVideoDECODE_Reset (decoder->session, &decoder->params);
 
@@ -740,8 +743,18 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   } while (sts > 0 || MFX_ERR_MORE_SURFACE == sts);
 
   if (MFX_ERR_MORE_DATA == sts) {
-    if (decoder->has_ready_frames && !decoder->can_double_deinterlace)
+    if (decoder->has_ready_frames && !decoder->can_double_deinterlace) {
       decoder->num_partial_frames++;
+    }
+    else {
+      if (!GST_VIDEO_INFO_IS_INTERLACED (&decoder->info)) {
+        decoder->num_frame_latency++;
+        if (decoder->initial_frame_latency
+            && decoder->num_frame_latency > decoder->initial_frame_latency)
+          decoder->num_partial_frames =
+              decoder->num_frame_latency - decoder->initial_frame_latency;
+      }
+    }
     ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     goto end;
   }
@@ -753,15 +766,45 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (syncp) {
-    /* TODO: Implement a more robust mechanism to deal with streams that
-     * change properties in the middle of playback */
-    if (decoder->num_partial_frames) {
+    if (!decoder->initial_frame_latency)
+      decoder->initial_frame_latency = decoder->num_frame_latency;
+
+    /* Update stream properties if they have interlaced frames. An interlaced H264
+     * can only be detected after decoding the first frame, hence the delayed VPP
+     * initialization */
+    switch (outsurf->Info.PicStruct) {
+      case MFX_PICSTRUCT_PROGRESSIVE:
+        if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
+          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+        break;
+      case MFX_PICSTRUCT_FIELD_TFF:
+        GST_VIDEO_INFO_FLAG_SET(&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+        goto update;
+      case MFX_PICSTRUCT_FIELD_BFF: {
+        GST_VIDEO_INFO_FLAG_UNSET(&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
+update:
+      /* Check if stream has progressive frames first.
+       * If it does then it should be a mixed interlaced stream */
+      if (decoder->info.interlace_mode == GST_VIDEO_INTERLACE_MODE_PROGRESSIVE
+          && decoder->has_ready_frames)
+        decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
+      else {
+        if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
+          decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
+      }
+      break;
+    }
+    default:
+      break;
+    }
+
+    if (!decoder->can_double_deinterlace && decoder->num_partial_frames) {
       GstVideoCodecFrame *cur_frame;
       guint n = g_queue_get_length (&decoder->pending_frames) - 1;
 
       /* Discard partial frames */
       while (decoder->num_partial_frames
-          && (cur_frame = g_queue_peek_nth(&decoder->pending_frames, n))) {
+          && (cur_frame = g_queue_peek_nth (&decoder->pending_frames, n))) {
         if ((cur_frame->pts - decoder->pts_offset) % decoder->duration) {
           g_queue_push_head (&decoder->discarded_frames,
             g_queue_pop_nth (&decoder->pending_frames, n));
