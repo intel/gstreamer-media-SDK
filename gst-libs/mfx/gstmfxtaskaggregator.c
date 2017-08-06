@@ -251,14 +251,14 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
 
 #if MSDK_CHECK_VERSION(1,19)
 mfxU16
-gst_mfx_task_aggregator_get_platform(GstMfxTaskAggregator * aggregator)
+gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator)
 {
-  g_return_val_if_fail(aggregator != NULL, MFX_PLATFORM_UNKNOWN);
+  g_return_val_if_fail (aggregator != NULL, MFX_PLATFORM_UNKNOWN);
 
   if (!aggregator->platform) {
     mfxPlatform platform = { 0 };
     mfxStatus sts =
-      MFXVideoCORE_QueryPlatform(aggregator->parent_session, &platform);
+      MFXVideoCORE_QueryPlatform (aggregator->parent_session, &platform);
     if (MFX_ERR_NONE == sts)
       aggregator->platform = platform.CodeName;
   }

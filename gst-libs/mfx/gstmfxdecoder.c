@@ -767,7 +767,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
   if (syncp) {
     if (!decoder->initial_frame_latency)
-      decoder->initial_frame_latency = decoder->num_frame_latency;
+      decoder->initial_frame_latency = decoder->num_frame_latency + 1;
 
     /* Update stream properties if they have interlaced frames. An interlaced H264
      * can only be detected after decoding the first frame, hence the delayed VPP

@@ -38,7 +38,7 @@ gst_mfx_ensure_aggregator (GstElement * element)
   if (gst_mfx_video_context_prepare (element, &plugin->aggregator))
     return TRUE;
 
-  aggregator = gst_mfx_task_aggregator_new();
+  aggregator = gst_mfx_task_aggregator_new ();
   if (!aggregator)
     return FALSE;
 
@@ -172,21 +172,21 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
 
   num_structures = gst_caps_get_size (out_caps);
   for (i = num_structures - 1; i >= 0; i--) {
-    GstCapsFeatures *const features = gst_caps_get_features(out_caps, i);
+    GstCapsFeatures *const features = gst_caps_get_features (out_caps, i);
 
-    if (!gst_caps_features_contains(features,
-          gst_mfx_caps_feature_to_string(feature)))
+    if (!gst_caps_features_contains (features,
+          gst_mfx_caps_feature_to_string (feature)))
       continue;
 
     structure =
-      gst_structure_copy(gst_caps_get_structure(out_caps, i));
+      gst_structure_copy (gst_caps_get_structure (out_caps, i));
     if (!structure)
       goto cleanup;
-    if (gst_structure_has_field(structure, "format"))
-      gst_structure_fixate_field(structure, "format");
-    format = gst_structure_get_string(structure, "format");
-    *out_format_ptr = gst_video_format_from_string(format);
-    gst_structure_free(structure);
+    if (gst_structure_has_field (structure, "format"))
+      gst_structure_fixate_field (structure, "format");
+    format = gst_structure_get_string (structure, "format");
+    *out_format_ptr = gst_video_format_from_string (format);
+    gst_structure_free (structure);
 
     break;
   }
@@ -244,23 +244,23 @@ gst_caps_has_mfx_surface (GstCaps * caps)
 
 
 gboolean
-gst_mfx_query_peer_has_raw_caps(GstPad * srcpad)
+gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
 {
   GstCaps *caps = NULL;
   gboolean has_raw_caps = TRUE;
 
-  caps = gst_pad_peer_query_caps(srcpad, NULL);
+  caps = gst_pad_peer_query_caps (srcpad, NULL);
   if (!caps)
     return has_raw_caps;
 
-  if (gst_caps_has_mfx_surface(caps)
-    || (!g_strcmp0(getenv("GST_GL_PLATFORM"), "egl")
+  if (gst_caps_has_mfx_surface (caps)
+    || (!g_strcmp0 (getenv ("GST_GL_PLATFORM"), "egl")
       && _gst_caps_has_feature(caps,
         GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META))
       )
     has_raw_caps = FALSE;
 
-  gst_caps_unref(caps);
+  gst_caps_unref (caps);
   return has_raw_caps;
 }
 
@@ -282,7 +282,7 @@ gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,
 }
 
 gboolean
-gst_mfx_is_mfx_supported (mfxU16* platform_code)
+gst_mfx_is_mfx_supported (mfxU16 * platform_code)
 {
   mfxStatus sts = MFX_ERR_NONE;
   mfxSession session = NULL;
@@ -298,7 +298,7 @@ gst_mfx_is_mfx_supported (mfxU16* platform_code)
   impl |= MFX_IMPL_VIA_D3D11;
 #endif
 
-  sts = MFXInit(impl, &ver, &session);
+  sts = MFXInit (impl, &ver, &session);
   if (sts != MFX_ERR_NONE) {
     return FALSE;
   }
@@ -314,7 +314,7 @@ gst_mfx_is_mfx_supported (mfxU16* platform_code)
   }
 
   if ((ver.Major == 1 && ver.Minor >= 19) || ver.Major > 1) {
-    sts = MFXVideoCORE_QueryPlatform(session, &platform);
+    sts = MFXVideoCORE_QueryPlatform (session, &platform);
     if (sts == MFX_ERR_NONE) {
       *platform_code = platform.CodeName;
     }
@@ -322,6 +322,6 @@ gst_mfx_is_mfx_supported (mfxU16* platform_code)
 #endif
 
 cleanup:
-  MFXClose(session);
+  MFXClose (session);
   return TRUE;
 }

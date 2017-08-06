@@ -78,7 +78,7 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
 
 #if MSDK_CHECK_VERSION(1,19)
 mfxU16
-gst_mfx_task_aggregator_get_platform(GstMfxTaskAggregator * aggregator);
+gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator);
 #endif
 
 G_END_DECLS
