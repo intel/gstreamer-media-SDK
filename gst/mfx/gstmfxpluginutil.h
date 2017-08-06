@@ -66,36 +66,36 @@ typedef enum
 #endif
 
 gboolean
-gst_mfx_ensure_aggregator(GstElement * element);
+gst_mfx_ensure_aggregator (GstElement * element);
 
 gboolean
 gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * context);
 
 GstCaps *
-gst_mfx_video_format_new_template_caps(GstVideoFormat format);
+gst_mfx_video_format_new_template_caps (GstVideoFormat format);
 
 GstCaps *
-gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
+gst_mfx_video_format_new_template_caps_with_features (GstVideoFormat format,
   const gchar * features_string);
 
 GstMfxCapsFeature
-gst_mfx_find_preferred_caps_feature(GstPad * pad,
+gst_mfx_find_preferred_caps_feature (GstPad * pad,
   gboolean use_10bpc, GstVideoFormat * out_format_ptr);
 
 const gchar *
-gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);
+gst_mfx_caps_feature_to_string (GstMfxCapsFeature feature);
 
 gboolean
-gst_caps_has_mfx_surface(GstCaps * caps);
+gst_caps_has_mfx_surface (GstCaps * caps);
 
 gboolean
-gst_mfx_query_peer_has_raw_caps(GstPad * pad);
+gst_mfx_query_peer_has_raw_caps (GstPad * pad);
 
 void
-gst_video_info_change_format(GstVideoInfo * vip, GstVideoFormat format,
+gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,
     guint width, guint height);
 
 gboolean
-gst_mfx_is_mfx_supported (mfxU16* platform_code);
+gst_mfx_is_mfx_supported (mfxU16 * platform_code);
 
 #endif /* GST_MFX_PLUGIN_UTIL_H */
