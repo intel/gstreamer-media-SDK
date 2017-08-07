@@ -101,8 +101,8 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
 static gboolean
 gst_mfx_surface_pool_create (GstMfxSurfacePool * pool)
 {
-  if (pool->task && gst_mfx_task_has_video_memory(pool->task))
-    if (!gst_mfx_surface_pool_add_surfaces(pool))
+  if (pool->task && gst_mfx_task_has_video_memory (pool->task))
+    if (!gst_mfx_surface_pool_add_surfaces (pool))
       return FALSE;
   return TRUE;
 }
@@ -110,12 +110,12 @@ gst_mfx_surface_pool_create (GstMfxSurfacePool * pool)
 static void
 gst_mfx_surface_pool_finalize (GObject * object)
 {
-  GstMfxSurfacePool *pool = GST_MFX_SURFACE_POOL(object);
+  GstMfxSurfacePool *pool = GST_MFX_SURFACE_POOL (object);
   GstMfxSurface *surface;
 
-  while (g_list_length(pool->used_surfaces)) {
+  while (g_list_length (pool->used_surfaces)) {
     surface = g_list_nth_data (pool->used_surfaces, 0);
-    gst_mfx_surface_pool_put_surface(pool, surface);
+    gst_mfx_surface_pool_put_surface (pool, surface);
   }
 
   g_list_free (pool->used_surfaces);

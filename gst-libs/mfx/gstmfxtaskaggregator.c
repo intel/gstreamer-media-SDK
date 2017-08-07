@@ -48,22 +48,22 @@ gst_mfx_task_aggregator_finalize (GObject * object)
 {
   GstMfxTaskAggregator* aggregator = GST_MFX_TASK_AGGREGATOR(object);
 
-  gst_mfx_context_replace(&aggregator->context, NULL);
+  gst_mfx_context_replace (&aggregator->context, NULL);
   MFXClose (aggregator->parent_session);
-  g_list_free(aggregator->tasks);
+  g_list_free (aggregator->tasks);
 }
 
 static void
-gst_mfx_task_aggregator_init(GstMfxTaskAggregator * aggregator)
+gst_mfx_task_aggregator_init (GstMfxTaskAggregator * aggregator)
 {
-	aggregator->tasks = NULL;
+  aggregator->tasks = NULL;
   aggregator->context = NULL;
 }
 
 GstMfxTaskAggregator *
 gst_mfx_task_aggregator_new (void)
 {
-  return g_object_new(GST_TYPE_MFX_TASK_AGGREGATOR, NULL);
+  return g_object_new (GST_TYPE_MFX_TASK_AGGREGATOR, NULL);
 }
 
 GstMfxTaskAggregator *
@@ -87,7 +87,7 @@ gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
   g_return_if_fail (old_aggregator_ptr != NULL);
 
   gst_object_replace ((GstObject **) old_aggregator_ptr,
-	  GST_OBJECT(new_aggregator));
+	  GST_OBJECT (new_aggregator));
 }
 
 GstMfxContext *
@@ -154,7 +154,7 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
   }
 
   if (!aggregator->context)
-    aggregator->context = gst_mfx_context_new(aggregator->parent_session);
+    aggregator->context = gst_mfx_context_new (aggregator->parent_session);
 
   return session;
 }
@@ -183,7 +183,7 @@ gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator)
   g_return_val_if_fail (aggregator != NULL, NULL);
 
   GList *l = g_list_first (aggregator->tasks);
-  return l ? gst_mfx_task_ref(GST_MFX_TASK(l->data)) : NULL;
+  return l ? gst_mfx_task_ref (GST_MFX_TASK(l->data)) : NULL;
 }
 
 void

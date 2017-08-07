@@ -315,23 +315,23 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   }
 
   if (filter->vpp[0]) {
-    mfxFrameAllocRequest *req0 = gst_mfx_task_get_request(filter->vpp[0]);
+    mfxFrameAllocRequest *req0 = gst_mfx_task_get_request (filter->vpp[0]);
     req0->NumFrameSuggested += request[0].NumFrameSuggested;
     req0->NumFrameMin = req0->NumFrameSuggested;
     req0->Type |= MFX_MEMTYPE_FROM_VPPIN;
   }
 
   if (gst_mfx_task_get_task_type(filter->vpp[1]) == GST_MFX_TASK_VPP_OUT) {
-    gst_mfx_task_set_request(filter->vpp[1], &request[1]);
+    gst_mfx_task_set_request (filter->vpp[1], &request[1]);
   }
   else {
-    mfxFrameAllocRequest *req1 = gst_mfx_task_get_request(filter->vpp[1]);
+    mfxFrameAllocRequest *req1 = gst_mfx_task_get_request (filter->vpp[1]);
     req1->NumFrameSuggested += request[1].NumFrameSuggested;
     req1->NumFrameMin = req1->NumFrameSuggested;
     req1->Type |= MFX_MEMTYPE_FROM_VPPOUT;
   }
 
-  gst_mfx_task_set_video_params(filter->vpp[1], &filter->params);
+  gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   return TRUE;
 }
@@ -405,13 +405,13 @@ gst_mfx_filter_finalize (GObject * object)
   GstMfxFilter * filter = GST_MFX_FILTER (object);
   guint i;
 
-  MFXVideoVPP_Close(filter->session);
+  MFXVideoVPP_Close (filter->session);
 
-  gst_mfx_surface_pool_replace(&filter->out_pool, NULL);
+  gst_mfx_surface_pool_replace (&filter->out_pool, NULL);
   /* Make sure frame allocator points to the right task to free surfaces */
-  gst_mfx_task_aggregator_set_current_task(filter->aggregator,
+  gst_mfx_task_aggregator_set_current_task (filter->aggregator,
     filter->vpp[1]);
-  gst_mfx_task_frame_free(filter->aggregator, &filter->response);
+  gst_mfx_task_frame_free (filter->aggregator, &filter->response);
 
   for (i = 0; i < 2; i++)
     gst_mfx_task_replace (&filter->vpp[i], NULL);
