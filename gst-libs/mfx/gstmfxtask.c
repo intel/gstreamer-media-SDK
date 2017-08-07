@@ -183,7 +183,7 @@ gst_mfx_task_finalize (GObject * object)
   }
   gst_mfx_task_aggregator_remove_task (priv->aggregator, task);
   gst_mfx_task_aggregator_unref (priv->aggregator);
-  gst_mfx_context_unref(priv->context);
+  gst_mfx_context_unref (priv->context);
   g_list_free_full (priv->saved_responses, g_free);
 }
 
@@ -211,23 +211,23 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   priv->task_type |= type_flags;
   priv->session = session;
   priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
-  priv->context = gst_mfx_task_aggregator_get_context(aggregator);
+  priv->context = gst_mfx_task_aggregator_get_context (aggregator);
   priv->memtype_is_system = FALSE;
   mfxHandleType handle_type;
 
 #ifdef WITH_LIBVA_BACKEND
   handle_type = MFX_HANDLE_VA_DISPLAY;
   device_handle =
-      GST_MFX_DISPLAY_VADISPLAY(gst_mfx_context_get_device(priv->context));
+      GST_MFX_DISPLAY_VADISPLAY (gst_mfx_context_get_device (priv->context));
 #else
   handle_type = MFX_HANDLE_D3D11_DEVICE;
   device_handle = (ID3D11Device*)
       gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device(priv->context));
 #endif
 
-  sts = MFXVideoCORE_GetHandle(priv->session, handle_type, &device_handle);
+  sts = MFXVideoCORE_GetHandle (priv->session, handle_type, &device_handle);
   if (MFX_ERR_NONE != sts) {
-    sts = MFXVideoCORE_SetHandle(priv->session, handle_type, device_handle);
+    sts = MFXVideoCORE_SetHandle (priv->session, handle_type, device_handle);
     if (MFX_ERR_NONE != sts)
       return FALSE;
   }
@@ -244,7 +244,7 @@ gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
 
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  task = g_object_new(GST_TYPE_MFX_TASK, NULL);
+  task = g_object_new (GST_TYPE_MFX_TASK, NULL);
   if (!task)
     return NULL;
 
@@ -252,7 +252,7 @@ gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
       gst_mfx_task_aggregator_init_session_context (aggregator, &is_joined);
   if (!session)
     goto error;
-  if (!gst_mfx_task_create(task, aggregator, session, type_flags, is_joined))
+  if (!gst_mfx_task_create (task, aggregator, session, type_flags, is_joined))
     goto error;
 
   return task;
@@ -271,11 +271,11 @@ gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
   g_return_val_if_fail (aggregator != NULL, NULL);
   g_return_val_if_fail (session != 0, NULL);
 
-  task = g_object_new(GST_TYPE_MFX_TASK, NULL);
+  task = g_object_new (GST_TYPE_MFX_TASK, NULL);
   if (!task)
     return NULL;
 
-  if (!gst_mfx_task_create(task, aggregator, session, type_flags, is_joined))
+  if (!gst_mfx_task_create (task, aggregator, session, type_flags, is_joined))
     goto error;
   return task;
 

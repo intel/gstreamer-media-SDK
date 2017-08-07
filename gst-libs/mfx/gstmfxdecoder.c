@@ -423,20 +423,24 @@ error:
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder)
 {
-  return gst_object_ref (GST_OBJECT(decoder));
+  g_return_val_if_fail (decoder != NULL, NULL);
+
+  return gst_object_ref (GST_OBJECT (decoder));
 }
 
 void
 gst_mfx_decoder_unref (GstMfxDecoder * decoder)
 {
-  gst_object_unref (GST_OBJECT(decoder));
+  gst_object_unref (GST_OBJECT (decoder));
 }
 
 void
 gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
     GstMfxDecoder * new_decoder)
 {
-  gst_object_replace((GstObject **) old_decoder_ptr, GST_OBJECT (new_decoder));
+  g_return_if_fail (old_decoder_ptr != NULL);
+  
+  gst_object_replace ((GstObject **)old_decoder_ptr, GST_OBJECT (new_decoder));
 }
 
 static gboolean

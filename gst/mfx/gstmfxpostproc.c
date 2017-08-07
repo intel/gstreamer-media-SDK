@@ -1038,7 +1038,6 @@ gst_mfxpostproc_finalize (GObject * object)
   G_OBJECT_CLASS (gst_mfxpostproc_parent_class)->finalize (object);
 }
 
-
 static void
 gst_mfxpostproc_set_property (GObject * object,
     guint prop_id, const GValue * value, GParamSpec * pspec)
@@ -1181,7 +1180,6 @@ gst_mfxpostproc_get_property (GObject * object,
       break;
   }
 }
-
 
 static void
 gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
