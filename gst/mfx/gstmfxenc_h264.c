@@ -114,10 +114,10 @@ gst_mfxenc_h264_set_config (GstMfxEnc * base_encode)
   if (!allowed_caps)
     return TRUE;
 
-  profile = gst_mfx_profile_from_caps(allowed_caps);
+  profile = gst_mfx_profile_from_caps (allowed_caps);
   gst_caps_unref (allowed_caps);
 
-  gst_mfx_encoder_set_profile(base_encode->encoder, profile.profile);
+  gst_mfx_encoder_set_profile (base_encode->encoder, profile.profile);
   return TRUE;
 }
 
@@ -224,7 +224,7 @@ _h264_convert_byte_stream_to_avc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
   guint8 *nal_start_code, *nal_body;
   guint8 *avc_data = NULL;
   guint8 *frame_end;
-  GByteArray *avc_bytes = g_byte_array_new();
+  GByteArray *avc_bytes = g_byte_array_new ();
 
   if (!avc_bytes)
     return FALSE;
