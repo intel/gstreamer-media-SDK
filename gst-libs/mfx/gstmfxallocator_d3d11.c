@@ -142,7 +142,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
     desc.Usage = D3D11_USAGE_DEFAULT;
     desc.BindFlags = D3D11_BIND_DECODER;
     desc.MiscFlags = 0;
-    //desc.MiscFlags            = D3D11_RESOURCE_MISC_SHARED;
+    desc.MiscFlags            = D3D11_RESOURCE_MISC_SHARED; // required by dxgl interop. TODO: use only when needed.
 
     if (((MFX_MEMTYPE_FROM_VPPIN & request->Type)
         && (DXGI_FORMAT_YUY2 == desc.Format))

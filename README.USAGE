@@ -135,7 +135,7 @@ gst-launch-1.0 filesrc location=video.mpg ! mpegpsdemux ! mpegvideoparse ! mfxde
   mfxvpp <options> ! mfxh264enc ! qtmux ! filesink location=/path/to/output.mp4 sync=false
 
 
-Optimized Usage with GL Plugins
+Optimized Usage with GL Plugins (Linux)
 ===============================
 
 The GST-MFX plugins include optimized support for GL plugins by enabling zero-copy
@@ -147,7 +147,7 @@ To enable this feature, run the following command before executing the GStreamer
 
 To demonstrate optimized zero-copy rendering with glimagesink,
 
-  gst-launch-1.0 filesrc location=input.mp4 ! qtdemux ! h264parse ! mfxh264dec ! \
+  gst-launch-1.0 filesrc location=input.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
     fpsdisplaysink video-sink=glimagesink
 
 For a more useful real-world example of video playback with glimagesink,
@@ -167,4 +167,14 @@ while ensuring all frames are processed in video memory for full performance.
     filesrc location=video2.mpg ! tsdemux ! mpegvideoparse ! mfxdecode ! m.sink_2 \
     filesrc location=video3.mkv ! matroskademux ! h265parse ! mfxdecode ! mfxvpp contrast=3 ! m.sink_3
   
+  
+Optimized Usage with GL Plugins (Windows)
+===============================
+
+The GST-MFX plugins include optimized support for GL plugins by enabling zero-copy
+GL texture sharing using DirectX 11 / OpenGL interoperability. This is enabled by default in MinGW builds when using gstreamer 1.11+.
+
+To demonstrate optimized zero-copy rendering with glimagesink,
+
+  gst-launch-1.0 filesrc location=input.mp4 ! qtdemux ! h264parse ! mfxdecode ! glimagesink
   

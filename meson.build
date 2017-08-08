@@ -128,10 +128,10 @@ gstgl_dep = dependency('gstreamer-gl-1.0', version: gst_req,
 if gstgl_dep.found()
   if host_machine.system() == 'windows' and cc.has_header('GL/glext.h')
     gst_mfx_deps += [gstgl_dep, cc.find_library('opengl32', required: false)]
-    gst_mfx_args += ['-DHAVE_GST_GL_LIBS']
+    gst_mfx_args += ['-DHAVE_GST_GL_LIBS', '-DGST_USE_UNSTABLE_API']
   elif host_machine.system() != 'windows'
     gst_mfx_deps += [gstgl_dep]
-    gst_mfx_args += ['-DHAVE_GST_GL_LIBS']
+    gst_mfx_args += ['-DHAVE_GST_GL_LIBS', '-DGST_USE_UNSTABLE_API']
   endif
 endif
 

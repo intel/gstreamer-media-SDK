@@ -71,6 +71,10 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
+#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+  GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
+      GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "{ RGBA }") ";"
+#endif
   GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
 enum
@@ -209,6 +213,11 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   if (GST_MFX_CAPS_FEATURE_MFX_SURFACE == feature)
     features =
         gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
+#ifdef HAVE_GST_GL_LIBS
+  else if (GST_MFX_CAPS_FEATURE_GL_SURFACE == feature)
+    features =
+        gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_GL_MEMORY, NULL);
+#endif
 
   state = gst_video_decoder_set_output_state (vdec, output_format,
       ref_state->info.width, ref_state->info.height, ref_state);
@@ -364,6 +373,15 @@ gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
 
   surface = gst_video_codec_frame_get_user_data (frame);
 
+#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+  if (GST_MFX_PLUGIN_BASE (mfxdec)->srcpad_has_dxgl_interop
+    && gst_caps_has_gl_memory (mfxdec->srcpad_caps)) {
+    gst_mfx_plugin_base_export_dxgl_interop_buffer (
+      GST_MFX_PLUGIN_BASE (mfxdec),
+      surface, frame->output_buffer);
+  }
+  else {
+#endif
   meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
   if (!meta)
     goto error_get_meta;
@@ -379,6 +397,9 @@ gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
       crop_meta->height = crop_rect->height;
     }
   }
+#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+  }
+#endif //HAVE_GST_GL_LIBS
 
 #ifdef WITH_LIBVA_BACKEND
   gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (mfxdec),

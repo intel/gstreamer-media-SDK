@@ -24,7 +24,6 @@
 #define GST_MFX_PLUGIN_UTIL_H
 
 #include "gstmfxvideomemory.h"
-
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 
  /* Helpers to build video caps */
@@ -33,6 +32,7 @@ typedef enum
   GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED,
   GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY,
   GST_MFX_CAPS_FEATURE_MFX_SURFACE,
+  GST_MFX_CAPS_FEATURE_GL_SURFACE,
 } GstMfxCapsFeature;
 
 #ifdef WITH_LIBVA_BACKEND
@@ -56,7 +56,8 @@ typedef enum
 
 # define GST_MFX_MAKE_OUTPUT_SURFACE_CAPS       \
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA, P010_10LE, ENCODED }")
+    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE,        \
+      "{ NV12, BGRA, P010_10LE, ENCODED }")
 
 # define GST_MFX_SUPPORTED_INPUT_FORMATS \
     "{ NV12, YV12, I420, YUY2, P010_10LE, BGRA, BGRx }"
@@ -87,6 +88,9 @@ gst_mfx_caps_feature_to_string (GstMfxCapsFeature feature);
 
 gboolean
 gst_caps_has_mfx_surface (GstCaps * caps);
+
+gboolean
+gst_caps_has_gl_memory (GstCaps * caps);
 
 gboolean
 gst_mfx_query_peer_has_raw_caps (GstPad * pad);

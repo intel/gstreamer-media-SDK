@@ -138,7 +138,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   GstCaps *in_caps = NULL;
   GstStructure *structure;
   const gchar *format = NULL;
-  guint i;
+  int i;
 
   /* Prefer 10-bit color format when requested */
   if (use_10bpc) {
@@ -147,7 +147,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
       GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, P010_10LE, NV12, BGRA }"
       ) "; "
       GST_VIDEO_CAPS_MAKE("{ P010_10LE, NV12, BGRA }");
-#else
+#elif
     const char caps_str[] =
       GST_MFX_MAKE_SURFACE_CAPS ";"
       GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
@@ -169,6 +169,10 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
 
   if (gst_caps_has_mfx_surface (out_caps))
     feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
+#ifdef HAVE_GST_GL_LIBS
+  else if (gst_caps_has_gl_memory (out_caps))
+    feature = GST_MFX_CAPS_FEATURE_GL_SURFACE;
+#endif
 
   num_structures = gst_caps_get_size (out_caps);
   for (i = num_structures - 1; i >= 0; i--) {
@@ -211,6 +215,11 @@ gst_mfx_caps_feature_to_string (GstMfxCapsFeature feature)
     case GST_MFX_CAPS_FEATURE_MFX_SURFACE:
       str = GST_CAPS_FEATURE_MEMORY_MFX_SURFACE;
       break;
+#ifdef HAVE_GST_GL_LIBS
+    case GST_MFX_CAPS_FEATURE_GL_SURFACE:
+      str = GST_CAPS_FEATURE_MEMORY_GL_MEMORY;
+      break;
+#endif
     default:
       str = NULL;
       break;
@@ -242,6 +251,17 @@ gst_caps_has_mfx_surface (GstCaps * caps)
   return _gst_caps_has_feature (caps, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
 }
 
+/* Checks whether the supplied caps contain GL surfaces */
+gboolean
+gst_caps_has_gl_memory (GstCaps * caps)
+{
+  g_return_val_if_fail (caps != NULL, FALSE);
+#ifdef HAVE_GST_GL_LIBS
+  return _gst_caps_has_feature (caps, GST_CAPS_FEATURE_MEMORY_GL_MEMORY);
+#else
+  return FALSE;
+#endif
+}
 
 gboolean
 gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
@@ -254,6 +274,7 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
     return has_raw_caps;
 
   if (gst_caps_has_mfx_surface (caps)
+    || gst_caps_has_gl_memory (caps)
     || (!g_strcmp0 (getenv ("GST_GL_PLATFORM"), "egl")
       && _gst_caps_has_feature(caps,
         GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META))

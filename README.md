@@ -19,7 +19,8 @@ Features
  - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 videos
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
- - Support for zero-copy rendering with glimagesink using EGL
+ - Support for zero-copy rendering with glimagesink using EGL on Linux
+ - Support for zero-copy rendering with glimagesink using DirectX 11 / OpenGL interop on Windows
  - Support for Direct3D 11 on Windows with zero-copy and deep color rendering for 10-bit video formats
  - Support rendering using Wayland renderer
  - Support rendering using X11 renderer with DRI3 backend
@@ -37,7 +38,7 @@ Requirements
   * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows or  
     Media Server Studio 2017 Community / Professional Edition (Windows / Linux) or  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake) or greater
-  * GStreamer 1.8.x (1.10.x minimum for Windows, 1.12.x for correct deinterlacing support)
+  * GStreamer 1.8.x (1.10.x minimum for Windows, 1.12.x for correct deinterlacing support, 1.12.2+ for correct glimagesink support on Windows)
   * gst-plugins-* 1.8.x (tested up to GStreamer 1.12.x, 1.10.x minimum for Windows)
   * Microsoft Visual Studio 2013 / 2015 / 2017 (Windows)
   * Python 3
@@ -78,7 +79,7 @@ To setup a release build:
 	
 To setup a VS2015 project:
 
-	meson ../gst-mfx-build_msvc --backend=vs2015
+	meson ..\gst-mfx-build_msvc --backend=vs2015
 		
 Newer platforms such as Skylake and Kabylake have added video codec support such as HEVC decode / encode and VP9 decode,
 but are disabled by default to maximize compatibility with older systems such as Baytrail and Haswell.
@@ -98,10 +99,7 @@ To uninstall the plugins:
 
 	sudo ninja uninstall
 
-If you intend to rebuild the plugins after making changes to the source code or you would
-want to change some of the build options after uninstalling the plugins, it is highly recommended to
-simply delete the build folder that you have created and repeat the build process as above.
-
+DirectX-OpenGL interoperability is supported when building with minGW. To build it with MSVC, add GL/glext.h and GL/wglext.h to the build, add `#if GST_GL_HAVE_PLATFORM_EGL ... #endif` to gstreamer-1.0\gst\gl\glprototypes\eglimage.h and comment out `and cc.has_header('GL/glext.h')` in meson.build.
 
 Usage
 -----
@@ -111,7 +109,6 @@ video-related tasks with the GST-MFX plugins.
 
 TODO
 ----
- - Direct3D 11 - OpenGL interop support
  - HEVC 10-bit encode support on compatible devices
 
 
