@@ -53,6 +53,10 @@ static const char gst_mfxpostproc_sink_caps_str[] =
 
 static const char gst_mfxpostproc_src_caps_str[] =
   GST_MFX_MAKE_OUTPUT_SURFACE_CAPS "; "
+#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+  GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
+      GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "{ RGBA }") ";"
+#endif
   GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
@@ -633,6 +637,37 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans,
   }
 }
 
+static gboolean
+ensure_allowed_sinkpad_caps (GstMfxPostproc * vpp)
+{
+  if (vpp->allowed_sinkpad_caps)
+    return TRUE;
+
+  vpp->allowed_sinkpad_caps =
+    gst_static_pad_template_get_caps (&gst_mfxpostproc_sink_factory);
+  if (!vpp->allowed_sinkpad_caps) {
+    GST_ERROR_OBJECT (vpp, "failed to create MFX sink caps");
+    return FALSE;
+  }
+  return TRUE;
+}
+
+static gboolean
+ensure_allowed_srcpad_caps (GstMfxPostproc * vpp)
+{
+  if (vpp->allowed_srcpad_caps)
+    return TRUE;
+
+  /* Create initial caps from pad template */
+  vpp->allowed_srcpad_caps =
+    gst_caps_from_string (gst_mfxpostproc_src_caps_str);
+  if (!vpp->allowed_srcpad_caps) {
+    GST_ERROR_OBJECT (vpp, "failed to create MFX src caps");
+    return FALSE;
+  }
+  return TRUE;
+}
+
 static GstFlowReturn
 gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     GstBuffer * outbuf)
@@ -673,15 +708,26 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
         && GST_MFX_FILTER_STATUS_ERROR_MORE_DATA != status)
       goto error_process_vpp;
 
-    if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status)
-      outbuf_meta = gst_buffer_get_mfx_video_meta (buf);
-    else
-      outbuf_meta = gst_buffer_get_mfx_video_meta (outbuf);
+#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+    if (GST_MFX_PLUGIN_BASE (vpp)->srcpad_has_dxgl_interop
+      && gst_caps_has_gl_memory (GST_MFX_PLUGIN_BASE (vpp)->srcpad_caps)) {
+      gst_mfx_plugin_base_export_dxgl_interop_buffer (
+        GST_MFX_PLUGIN_BASE (vpp), out_surface, outbuf);
+    }
+    else {
+#endif
+      if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status)
+        outbuf_meta = gst_buffer_get_mfx_video_meta (buf);
+      else
+        outbuf_meta = gst_buffer_get_mfx_video_meta (outbuf);
 
-    if (!outbuf_meta)
-      goto error_create_meta;
+      if (!outbuf_meta)
+        goto error_create_meta;
 
-    gst_mfx_video_meta_set_surface (outbuf_meta, out_surface);
+      gst_mfx_video_meta_set_surface (outbuf_meta, out_surface);
+#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+    }
+#endif
     crop_rect = gst_mfx_surface_get_crop_rect (out_surface);
     if (crop_rect) {
       GstVideoCropMeta *const crop_meta =
@@ -718,8 +764,9 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
            && GST_FLOW_OK == ret);
 
 #ifdef WITH_LIBVA_BACKEND
-  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (vpp), outbuf);
-#endif
+  gst_mfx_plugin_base_export_dma_buffer(GST_MFX_PLUGIN_BASE (vpp),
+    outbuf);
+#endif // WITH_LIBVA_BACKEND
 
   gst_buffer_unref (buf);
   return ret;
@@ -763,37 +810,6 @@ gst_mfxpostproc_decide_allocation (GstBaseTransform * trans, GstQuery * query)
 {
   return gst_mfx_plugin_base_decide_allocation (GST_MFX_PLUGIN_BASE (trans),
       query);
-}
-
-static gboolean
-ensure_allowed_sinkpad_caps (GstMfxPostproc * vpp)
-{
-  if (vpp->allowed_sinkpad_caps)
-    return TRUE;
-
-  vpp->allowed_sinkpad_caps =
-      gst_static_pad_template_get_caps (&gst_mfxpostproc_sink_factory);
-  if (!vpp->allowed_sinkpad_caps) {
-    GST_ERROR_OBJECT (vpp, "failed to create MFX sink caps");
-    return FALSE;
-  }
-  return TRUE;
-}
-
-static gboolean
-ensure_allowed_srcpad_caps (GstMfxPostproc * vpp)
-{
-  if (vpp->allowed_srcpad_caps)
-    return TRUE;
-
-  /* Create initial caps from pad template */
-  vpp->allowed_srcpad_caps =
-      gst_caps_from_string (gst_mfxpostproc_src_caps_str);
-  if (!vpp->allowed_srcpad_caps) {
-    GST_ERROR_OBJECT (vpp, "failed to create MFX src caps");
-    return FALSE;
-  }
-  return TRUE;
 }
 
 static GstCaps *

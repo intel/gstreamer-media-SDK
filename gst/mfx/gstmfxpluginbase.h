@@ -28,7 +28,16 @@
 #include <gst/video/gstvideoencoder.h>
 #include <gst/video/gstvideosink.h>
 
+#ifdef HAVE_GST_GL_LIBS
+#if GST_CHECK_VERSION(1,11,1)
+# include <gst/gl/gstglcontext.h>
+#else
+# include <gst/gl/egl/gstglcontext_egl.h>
+#endif
+#endif
+
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
+#include <gst-libs/mfx/gstmfxsurface.h>
 
 G_BEGIN_DECLS
 
@@ -119,6 +128,13 @@ struct _GstMfxPluginBase
   gboolean              srcpad_has_dmabuf;
   GstAllocator         *dmabuf_allocator;
 
+#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+  gboolean              srcpad_has_dxgl_interop;
+  gboolean              sinkpad_has_dxgl_interop;//TODO
+  GstGLContext         *gl_context;
+  HANDLE                gl_context_dxgl_handle;
+#endif
+
   GstMfxTaskAggregator *aggregator;
 };
 
@@ -176,6 +192,10 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
 gboolean
 gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
     GstBuffer * outbuf);
+#else
+gboolean
+gst_mfx_plugin_base_export_dxgl_interop_buffer (GstMfxPluginBase * plugin,
+    GstMfxSurface * surface, GstBuffer * outbuf);
 #endif // WITH_LIBVA_BACKEND
 
 
