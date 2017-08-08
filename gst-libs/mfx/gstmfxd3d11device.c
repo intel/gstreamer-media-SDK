@@ -46,7 +46,7 @@ struct {
 static void
 gst_mfx_d3d11_device_finalize (GObject * object)
 {
-  GstMfxD3D11Device *device = GST_MFX_D3D11_DEVICE(object);
+  GstMfxD3D11Device *device = GST_MFX_D3D11_DEVICE (object);
 
   if (device->dxgi_adapter) {
     IDXGIAdapter_Release (device->dxgi_adapter);
@@ -138,7 +138,7 @@ gst_mfx_d3d11_device_create (GstMfxD3D11Device * device, mfxSession session)
     NULL,
     dx_flags,
     feature_levels,
-    (sizeof(feature_levels) / sizeof(feature_levels[0])),
+    (sizeof (feature_levels) / sizeof (feature_levels[0])),
     D3D11_SDK_VERSION,
     &device->d3d11_device,
     &feature_level_out,

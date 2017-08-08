@@ -106,7 +106,8 @@ gst_mfx_video_buffer_pool_set_config (GstBufferPool * pool,
     else
 #endif // WITH_LIBVA_BACKEND
     {
-      GstMfxContext *context = gst_mfx_task_aggregator_get_context(priv->aggregator);
+      GstMfxContext *context =
+          gst_mfx_task_aggregator_get_context (priv->aggregator);
       allocator = gst_mfx_video_allocator_new (context, new_vip,
           priv->memtype_is_system);
       if(context)
@@ -178,12 +179,12 @@ gst_mfx_video_buffer_pool_alloc_buffer (GstBufferPool * pool,
   if (!buffer)
     goto error_create_buffer;
 
-  gst_buffer_set_mfx_video_meta(buffer, meta);
+  gst_buffer_set_mfx_video_meta (buffer, meta);
 
 #ifdef WITH_LIBVA_BACKEND
   if (priv->use_dmabuf_memory) {
     GstMfxContext *context =
-        gst_mfx_task_aggregator_get_context(priv->aggregator);
+        gst_mfx_task_aggregator_get_context (priv->aggregator);
     mem = gst_mfx_dmabuf_memory_new (priv->allocator, context,
         &priv->alloc_info, meta);
     gst_mfx_context_unref(context);

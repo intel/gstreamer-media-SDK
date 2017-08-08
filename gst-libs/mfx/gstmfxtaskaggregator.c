@@ -46,7 +46,7 @@ G_DEFINE_TYPE(GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_TYPE_OBJECT);
 static void
 gst_mfx_task_aggregator_finalize (GObject * object)
 {
-  GstMfxTaskAggregator* aggregator = GST_MFX_TASK_AGGREGATOR(object);
+  GstMfxTaskAggregator* aggregator = GST_MFX_TASK_AGGREGATOR (object);
 
   gst_mfx_context_replace (&aggregator->context, NULL);
   MFXClose (aggregator->parent_session);
@@ -183,7 +183,7 @@ gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator)
   g_return_val_if_fail (aggregator != NULL, NULL);
 
   GList *l = g_list_first (aggregator->tasks);
-  return l ? gst_mfx_task_ref (GST_MFX_TASK(l->data)) : NULL;
+  return l ? gst_mfx_task_ref (GST_MFX_TASK (l->data)) : NULL;
 }
 
 void
@@ -267,9 +267,9 @@ gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator)
 #endif
 
 static void
-gst_mfx_task_aggregator_class_init(GstMfxTaskAggregatorClass * klass)
+gst_mfx_task_aggregator_class_init (GstMfxTaskAggregatorClass * klass)
 {
-  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
   GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
     "mfxtaskaggregator", 0, "MFX Context");
   object_class->finalize = gst_mfx_task_aggregator_finalize;

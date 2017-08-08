@@ -73,7 +73,7 @@ prop_free (GstMfxEncoderPropData * prop)
 static GParamSpec *
 prop_find_pspec (GstMfxEncoder * encoder, gint prop_id)
 {
-  GPtrArray *const props = GST_MFX_ENCODER_GET_PRIVATE(encoder)->properties;
+  GPtrArray *const props = GST_MFX_ENCODER_GET_PRIVATE (encoder)->properties;
   guint i;
 
   if (props) {
@@ -473,7 +473,7 @@ gst_mfx_encoder_init_properties (GstMfxEncoder * encoder,
   GstMfxTaskAggregator * aggregator, const GstVideoInfo * info,
   gboolean memtype_is_system)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
 
   priv->aggregator = gst_mfx_task_aggregator_ref (aggregator);
   priv->bs.MaxLength = info->width * info->height * 4;
@@ -626,7 +626,7 @@ gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth)
 {
   g_return_val_if_fail (async_depth <= 20, FALSE);
 
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->async_depth = async_depth;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->async_depth = async_depth;
   return TRUE;
 }
 
@@ -636,7 +636,7 @@ gst_mfx_encoder_set_profile(GstMfxEncoder * encoder, mfxU16 profile)
   g_return_if_fail (encoder != NULL);
   g_return_if_fail (profile != MFX_PROFILE_UNKNOWN);
 
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->profile.profile = profile;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.profile = profile;
 }
 
 gboolean
@@ -644,7 +644,7 @@ gst_mfx_encoder_set_gop_refdist (GstMfxEncoder * encoder, gint gop_refdist)
 {
   g_return_val_if_fail (gop_refdist <= 32, FALSE);
 
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->gop_refdist = gop_refdist;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->gop_refdist = gop_refdist;
   return TRUE;
 }
 
@@ -653,7 +653,7 @@ gst_mfx_encoder_set_num_references (GstMfxEncoder * encoder, mfxU16 num_refs)
 {
   g_return_val_if_fail (num_refs <= 16, FALSE);
 
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->num_refs = num_refs;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->num_refs = num_refs;
   return TRUE;
 }
 
@@ -662,7 +662,7 @@ gst_mfx_encoder_set_quantizer (GstMfxEncoder * encoder, guint quantizer)
 {
   g_return_val_if_fail (quantizer <= 51, FALSE);
 
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->global_quality = quantizer;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->global_quality = quantizer;
   return TRUE;
 }
 
@@ -671,7 +671,7 @@ gst_mfx_encoder_set_qpi_offset (GstMfxEncoder * encoder, mfxU16 offset)
 {
   g_return_val_if_fail (offset <= 51, FALSE);
 
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->qpi_offset = offset;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->qpi_offset = offset;
   return TRUE;
 }
 
@@ -680,7 +680,7 @@ gst_mfx_encoder_set_qpp_offset (GstMfxEncoder * encoder, mfxU16 offset)
 {
   g_return_val_if_fail (offset <= 51, FALSE);
 
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->qpp_offset = offset;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->qpp_offset = offset;
   return TRUE;
 }
 
@@ -689,7 +689,7 @@ gst_mfx_encoder_set_qpb_offset (GstMfxEncoder * encoder, mfxU16 offset)
 {
   g_return_val_if_fail (offset <= 51, FALSE);
 
-  GST_MFX_ENCODER_GET_PRIVATE(encoder)->qpb_offset = offset;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->qpb_offset = offset;
   return TRUE;
 }
 
@@ -697,7 +697,7 @@ gst_mfx_encoder_set_qpb_offset (GstMfxEncoder * encoder, mfxU16 offset)
 static void
 set_default_option_values (GstMfxEncoder * encoder)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
 
   /* Extended coding options, introduced in API 1.0 */
   priv->extco.MECostType = 0;        // reserved, must be 0
@@ -743,7 +743,7 @@ set_default_option_values (GstMfxEncoder * encoder)
 static void
 set_extended_coding_options (GstMfxEncoder * encoder)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
 
   priv->extco.Header.BufferId = MFX_EXTBUFF_CODING_OPTION;
   priv->extco.Header.BufferSz = sizeof (priv->extco);
@@ -814,7 +814,7 @@ set_extended_coding_options (GstMfxEncoder * encoder)
 static void
 gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
 
   priv->params.mfx.CodecId = priv->profile.codec;
   priv->params.mfx.CodecProfile = priv->profile.profile;
@@ -911,7 +911,7 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
 static gboolean
 gst_mfx_encoder_load_plugin (GstMfxEncoder *encoder)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
   mfxStatus sts = MFX_ERR_NONE;
   guint i;
 
@@ -968,7 +968,7 @@ configure_encoder_sharing (GstMfxEncoder *encoder)
         goto error;
       }
       /* Get new VPP output task */
-      gst_mfx_task_unref(task);
+      gst_mfx_task_unref (task);
       task = gst_mfx_task_aggregator_get_last_task (priv->aggregator);
     }
     /* Get updated output mfxFrameInfo */
@@ -1134,12 +1134,12 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
 static GstMfxEncoderStatus
 gst_mfx_encoder_start (GstMfxEncoder * encoder)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
   mfxStatus sts = MFX_ERR_NONE;
 
   /* Make sure frame allocator points to the right task
    * to allocate any internal surfaces */
-  gst_mfx_task_aggregator_set_current_task(priv->aggregator, priv->encode);
+  gst_mfx_task_aggregator_set_current_task (priv->aggregator, priv->encode);
   /* calls gst_mfx_task_frame_alloc() when configured with video memory */
   sts = MFXVideoENCODE_Init (priv->session, &priv->params);
   if (sts < 0) {
@@ -1167,7 +1167,7 @@ calculate_new_pts_and_dts (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 GstMfxEncoderStatus
 gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
   GstMfxSurface *surface, *filter_surface;
   GstMfxFilterStatus filter_sts;
   mfxFrameSurface1 *insurf = NULL;
@@ -1195,7 +1195,7 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 
   insurf = gst_mfx_surface_get_frame_surface (surface);
 
-  if (!GST_CLOCK_TIME_IS_VALID(priv->current_pts))
+  if (!GST_CLOCK_TIME_IS_VALID (priv->current_pts))
     priv->current_pts = priv->duration * priv->params.mfx.NumRefFrame;
   if (GST_CLOCK_TIME_IS_VALID (frame->pts)
       && (frame->pts > priv->current_pts))
@@ -1260,7 +1260,7 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
 GstMfxEncoderStatus
 gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
@@ -1325,7 +1325,7 @@ gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame)
 static GstMfxEncoderStatus
 set_property (GstMfxEncoder * encoder, gint prop_id, const GValue * value)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
   GstMfxEncoderStatus status = GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
   gboolean success = TRUE;
   g_assert (value != NULL);
