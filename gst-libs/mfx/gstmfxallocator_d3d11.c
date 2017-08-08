@@ -26,16 +26,17 @@
 #include "video-format.h"
 
 static gint
-find_response(gconstpointer response_data, gconstpointer response)
+find_response (gconstpointer response_data, gconstpointer response)
 {
   ResponseData *_response_data = (ResponseData *)response_data;
   mfxFrameAllocResponse *_response = (mfxFrameAllocResponse *)response;
 
-  return _response_data ? (GstMfxMemoryId**)_response->mids != _response_data->mids : -1;
+  return _response_data ?
+    (GstMfxMemoryId**)_response->mids != _response_data->mids : -1;
 }
 
 static void
-free_memory_ids(ResponseData *response_data)
+free_memory_ids (ResponseData *response_data)
 {
   guint i;
 
@@ -43,30 +44,30 @@ free_memory_ids(ResponseData *response_data)
     for (i = 0; i < response_data->num_surfaces; i++) {
       if (response_data->mids[i]) {
         GstMfxMemoryId *mem_id = (GstMfxMemoryId *)response_data->mids[i];
-        ID3D11Texture2D *surface = (ID3D11Texture2D*)mem_id->mid;
-        ID3D11Texture2D *stage = (ID3D11Texture2D*)mem_id->mid_stage;
+        ID3D11Texture2D *surface = (ID3D11Texture2D *)mem_id->mid;
+        ID3D11Texture2D *stage = (ID3D11Texture2D *)mem_id->mid_stage;
 
         if (surface)
-          ID3D11Texture2D_Release(surface);
+          ID3D11Texture2D_Release (surface);
         if (stage)
-          ID3D11Texture2D_Release(stage);
+          ID3D11Texture2D_Release (stage);
 
         g_slice_free(GstMfxMemoryId, mem_id);
       }
     }
-    g_slice_free1(response_data->num_surfaces * sizeof(GstMfxMemoryId*),
+    g_slice_free1 (response_data->num_surfaces * sizeof (GstMfxMemoryId*),
       response_data->mids);
     response_data->mids = NULL;
   }
 }
 
 mfxStatus
-gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
+gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
   mfxFrameAllocResponse * response)
 {
   GstMfxTask *task =
-    gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+    gst_mfx_task_aggregator_get_current_task (GST_MFX_TASK_AGGREGATOR (pthis));
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
   ID3D11Device *d3d11_device = (ID3D11Device *)
     gst_mfx_d3d11_device_get_handle(gst_mfx_context_get_device(priv->context));
   HRESULT hr = S_OK;
@@ -74,9 +75,9 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   guint i;
 
   if (priv->saved_responses
-      && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)
+      && gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)
       && (request->Type & MFX_MEMTYPE_INTERNAL_FRAME) == 0) {
-    GList *l = g_list_last(priv->saved_responses);
+    GList *l = g_list_last (priv->saved_responses);
     if (l) {
       response_data = l->data;
       *response = response_data->response;
@@ -84,7 +85,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     }
   }
 
-  response_data = g_malloc0(sizeof(ResponseData));
+  response_data = g_malloc0 (sizeof (ResponseData));
   response_data->frame_info = request->Info;
 
   if (request->Type & MFX_MEMTYPE_INTERNAL_FRAME)
@@ -95,12 +96,12 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   /* Allocate custom container to keep texture and stage buffers for each surface.
    * Container also stores the intended read and/or write operation. */
   response_data->mids =
-    g_slice_alloc0(response_data->num_surfaces * sizeof(GstMfxMemoryId *));
+    g_slice_alloc0 (response_data->num_surfaces * sizeof (GstMfxMemoryId *));
   if (!response_data->mids)
     return MFX_ERR_MEMORY_ALLOC;
 
   for (i = 0; i < response_data->num_surfaces; i++) {
-    response_data->mids[i] = g_slice_new0(GstMfxMemoryId);
+    response_data->mids[i] = g_slice_new0 (GstMfxMemoryId);
     if (!response_data->mids[i])
       goto error;
   }
@@ -128,7 +129,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     DXGI_FORMAT format;
     D3D11_TEXTURE2D_DESC desc = { 0 };
 
-    format = gst_mfx_fourcc_to_dxgi_format(request->Info.FourCC);
+    format = gst_mfx_fourcc_to_dxgi_format (request->Info.FourCC);
     if (DXGI_FORMAT_UNKNOWN == format)
       goto error;
 
@@ -173,7 +174,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     /* Create surface textures */
     for (i = 0; i < response_data->num_surfaces / desc.ArraySize; i++) {
       hr =
-        ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
+        ID3D11Device_CreateTexture2D ((ID3D11Device*)d3d11_device, &desc,
           NULL, &texture);
       if (FAILED(hr))
         goto error;
@@ -192,7 +193,7 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
     /* Create surface staging textures */
     for (i = 0; i < response_data->num_surfaces; i++) {
       hr =
-        ID3D11Device_CreateTexture2D((ID3D11Device*)d3d11_device, &desc,
+        ID3D11Device_CreateTexture2D ((ID3D11Device*)d3d11_device, &desc,
           NULL, &texture);
       if (FAILED(hr))
         goto error;
@@ -210,8 +211,8 @@ gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest * request,
   return MFX_ERR_NONE;
 
 error:
-  free_memory_ids(response_data);
-  g_free(response_data);
+  free_memory_ids (response_data);
+  g_free (response_data);
   return MFX_ERR_MEMORY_ALLOC;
 }
 
@@ -219,30 +220,30 @@ mfxStatus
 gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse * response)
 {
   GstMfxTask *task =
-    gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+    gst_mfx_task_aggregator_get_current_task (GST_MFX_TASK_AGGREGATOR(pthis));
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
   ResponseData *response_data;
 
-  GList *l = g_list_find_custom(priv->saved_responses, response,
+  GList *l = g_list_find_custom (priv->saved_responses, response,
     find_response);
   if (!l)
     return MFX_ERR_NOT_FOUND;
 
   response_data = l->data;
 
-  free_memory_ids(response_data);
+  free_memory_ids (response_data);
 
-  priv->saved_responses = g_list_delete_link(priv->saved_responses, l);
-  g_free(response_data);
+  priv->saved_responses = g_list_delete_link (priv->saved_responses, l);
+  g_free (response_data);
 
   return MFX_ERR_NONE;
 }
 
 mfxStatus
-gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
+gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
   GstMfxContext *context =
-      gst_mfx_task_aggregator_get_context(GST_MFX_TASK_AGGREGATOR(pthis));
+      gst_mfx_task_aggregator_get_context (GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
   HRESULT hr = S_OK;
   D3D11_TEXTURE2D_DESC desc = { 0 };
@@ -251,11 +252,11 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
   ID3D11DeviceContext *d3d11_context =
       gst_mfx_d3d11_device_get_d3d11_context(gst_mfx_context_get_device(context));
   
-  gst_mfx_context_unref(context);
+  gst_mfx_context_unref (context);
 
-  ID3D11Texture2D_GetDesc(texture, &desc);
+  ID3D11Texture2D_GetDesc (texture, &desc);
   if (desc.Format == DXGI_FORMAT_P8) {
-    hr = ID3D11DeviceContext_Map(d3d11_context, (ID3D11Resource *)texture, 0,
+    hr = ID3D11DeviceContext_Map (d3d11_context, (ID3D11Resource *)texture, 0,
       D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
     if (FAILED(hr))
       return MFX_ERR_LOCK_MEMORY;
@@ -275,7 +276,7 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
       /*ID3D11Resource is a parent of ID3D11Texture2D, casting is safe*/
 
     do {
-      hr = ID3D11DeviceContext_Map(d3d11_context, (ID3D11Resource *)stage, 
+      hr = ID3D11DeviceContext_Map (d3d11_context, (ID3D11Resource *)stage, 
         0, D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
       if (S_OK != hr && DXGI_ERROR_WAS_STILL_DRAWING != hr)
         return MFX_ERR_LOCK_MEMORY;
@@ -321,29 +322,29 @@ gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 }
 
 mfxStatus
-gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
+gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
   GstMfxContext *context =
-      gst_mfx_task_aggregator_get_context(GST_MFX_TASK_AGGREGATOR(pthis));
+      gst_mfx_task_aggregator_get_context (GST_MFX_TASK_AGGREGATOR(pthis));
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
   D3D11_TEXTURE2D_DESC desc = { 0 };
   ID3D11Texture2D *texture = (ID3D11Texture2D *)mem_id->mid;
   ID3D11DeviceContext *d3d11_context =
       gst_mfx_d3d11_device_get_d3d11_context(gst_mfx_context_get_device(context));
 
-  gst_mfx_context_unref(context);
+  gst_mfx_context_unref (context);
 
-  ID3D11Texture2D_GetDesc(texture, &desc);
+  ID3D11Texture2D_GetDesc (texture, &desc);
   if (desc.Format == DXGI_FORMAT_P8) {
-    ID3D11DeviceContext_Unmap(d3d11_context, (ID3D11Resource *)texture, 0);
+    ID3D11DeviceContext_Unmap (d3d11_context, (ID3D11Resource *)texture, 0);
   }
   else {
     ID3D11Texture2D *stage = (ID3D11Texture2D *)mem_id->mid_stage;
 
-    ID3D11DeviceContext_Unmap(d3d11_context, (ID3D11Resource *)stage, 0);
+    ID3D11DeviceContext_Unmap (d3d11_context, (ID3D11Resource *)stage, 0);
     /* copy data only when writing to stored surface */
     if (mem_id->rw & MFX_SURFACE_WRITE)
-      ID3D11DeviceContext_CopyResource(d3d11_context, 
+      ID3D11DeviceContext_CopyResource (d3d11_context, 
         (ID3D11Resource *)texture, (ID3D11Resource *)stage);
   }
 
@@ -356,7 +357,7 @@ gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 }
 
 mfxStatus
-gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL * hdl)
+gst_mfx_task_frame_get_hdl (mfxHDL pthis, mfxMemId mid, mfxHDL * hdl)
 {
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *)mid;
 

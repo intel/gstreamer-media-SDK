@@ -170,7 +170,7 @@ gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
   g_return_val_if_fail (mem->meta, FALSE);
   g_return_val_if_fail (mem->surface, FALSE);
 
-  gst_mfx_surface_unmap(mem->surface);
+  gst_mfx_surface_unmap (mem->surface);
 
   return TRUE;
 }
@@ -294,8 +294,8 @@ gst_mfx_video_memory_unmap (GstMfxVideoMemory * mem)
       break;
     case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
       if (mem->data && mem->new_copy)
-        g_slice_free1(GST_VIDEO_INFO_SIZE(mem->image_info), mem->data);
-      gst_mfx_surface_unmap(mem->surface);
+        g_slice_free1 (GST_VIDEO_INFO_SIZE(mem->image_info), mem->data);
+      gst_mfx_surface_unmap (mem->surface);
       mem->data = NULL;
       break;
     default:

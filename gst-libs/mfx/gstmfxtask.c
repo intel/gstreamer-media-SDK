@@ -33,7 +33,7 @@ gst_mfx_task_get_session (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, 0);
 
-  return GST_MFX_TASK_GET_PRIVATE(task)->session;
+  return GST_MFX_TASK_GET_PRIVATE (task)->session;
 }
 
 GstMfxMemoryId *
@@ -44,7 +44,7 @@ gst_mfx_task_get_memory_id (GstMfxTask * task)
 
   g_return_val_if_fail (task != NULL, 0);
 
-  l = g_list_first (GST_MFX_TASK_GET_PRIVATE(task)->saved_responses);
+  l = g_list_first (GST_MFX_TASK_GET_PRIVATE (task)->saved_responses);
   response_data = l->data;
 
   #ifdef WITH_LIBVA_BACKEND
@@ -62,7 +62,7 @@ gst_mfx_task_get_num_surfaces (GstMfxTask * task)
 
   g_return_val_if_fail (task != NULL, 0);
 
-  l = g_list_first (GST_MFX_TASK_GET_PRIVATE(task)->saved_responses);
+  l = g_list_first (GST_MFX_TASK_GET_PRIVATE (task)->saved_responses);
   response_data = l->data;
 
   return response_data->num_surfaces;
@@ -73,7 +73,7 @@ gst_mfx_task_get_request (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, NULL);
 
-  return &GST_MFX_TASK_GET_PRIVATE(task)->request;
+  return &GST_MFX_TASK_GET_PRIVATE (task)->request;
 }
 
 void
@@ -81,7 +81,7 @@ gst_mfx_task_set_request (GstMfxTask * task, mfxFrameAllocRequest * request)
 {
   g_return_if_fail (task != NULL);
 
-  GST_MFX_TASK_GET_PRIVATE(task)->request = *request;
+  GST_MFX_TASK_GET_PRIVATE (task)->request = *request;
 }
 
 gboolean
@@ -89,7 +89,7 @@ gst_mfx_task_has_type (GstMfxTask * task, guint flags)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return ((GST_MFX_TASK_GET_PRIVATE(task)->task_type & flags) != 0);
+  return ((GST_MFX_TASK_GET_PRIVATE (task)->task_type & flags) != 0);
 }
 
 void
@@ -97,7 +97,7 @@ gst_mfx_task_set_task_type (GstMfxTask * task, guint flags)
 {
   g_return_if_fail (task != NULL);
 
-  GST_MFX_TASK_GET_PRIVATE(task)->task_type = flags;
+  GST_MFX_TASK_GET_PRIVATE (task)->task_type = flags;
 }
 
 guint
@@ -105,7 +105,7 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, GST_MFX_TASK_INVALID);
 
-  return GST_MFX_TASK_GET_PRIVATE(task)->task_type;
+  return GST_MFX_TASK_GET_PRIVATE (task)->task_type;
 }
 
 void
@@ -113,7 +113,7 @@ gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task)
 {
   g_return_if_fail (task != NULL);
 
-  GST_MFX_TASK_GET_PRIVATE(task)->memtype_is_system = TRUE;
+  GST_MFX_TASK_GET_PRIVATE (task)->memtype_is_system = TRUE;
 }
 
 GstMfxContext *
@@ -121,7 +121,7 @@ gst_mfx_task_get_context (GstMfxTask * task)
 {
   g_return_val_if_fail(task != NULL, NULL);
 
-  return gst_mfx_context_ref (GST_MFX_TASK_GET_PRIVATE(task)->context);
+  return gst_mfx_context_ref (GST_MFX_TASK_GET_PRIVATE (task)->context);
 }
 
 void
@@ -146,7 +146,7 @@ gst_mfx_task_has_video_memory (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, FALSE);
 
-  return !GST_MFX_TASK_GET_PRIVATE(task)->memtype_is_system;
+  return !GST_MFX_TASK_GET_PRIVATE (task)->memtype_is_system;
 }
 
 void
@@ -154,7 +154,7 @@ gst_mfx_task_set_video_params (GstMfxTask * task, mfxVideoParam * params)
 {
   g_return_if_fail (task != NULL);
 
-  GST_MFX_TASK_GET_PRIVATE(task)->params = *params;
+  GST_MFX_TASK_GET_PRIVATE (task)->params = *params;
 }
 
 mfxVideoParam *
@@ -162,21 +162,21 @@ gst_mfx_task_get_video_params (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, NULL);
 
-  return &GST_MFX_TASK_GET_PRIVATE(task)->params;
+  return &GST_MFX_TASK_GET_PRIVATE (task)->params;
 }
 
 void
 gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params)
 {
-  params->AsyncDepth = GST_MFX_TASK_GET_PRIVATE(task)->params.AsyncDepth;
-  params->IOPattern = GST_MFX_TASK_GET_PRIVATE(task)->params.IOPattern;
+  params->AsyncDepth = GST_MFX_TASK_GET_PRIVATE (task)->params.AsyncDepth;
+  params->IOPattern = GST_MFX_TASK_GET_PRIVATE (task)->params.IOPattern;
 }
 
 static void
 gst_mfx_task_finalize (GObject * object)
 {
   GstMfxTask* task = GST_MFX_TASK(object);
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
   if (priv->is_joined) {
     MFXDisjoinSession (priv->session);
     MFXClose (priv->session);
@@ -190,7 +190,7 @@ gst_mfx_task_finalize (GObject * object)
 static void
 gst_mfx_task_class_init (GstMfxTaskClass * klass)
 {
-  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
   object_class->finalize = gst_mfx_task_finalize;
 }
 
@@ -203,7 +203,7 @@ static gboolean
 gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     mfxSession session, guint type_flags, gboolean is_joined)
 {
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
   mfxHDL device_handle = 0;
   mfxStatus sts = MFX_ERR_NONE;
 

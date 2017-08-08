@@ -24,19 +24,19 @@
 #include <mfxvideo.h>
 
 mfxStatus
-gst_mfx_task_frame_alloc(mfxHDL pthis, mfxFrameAllocRequest *request,
+gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest *request,
   mfxFrameAllocResponse *response);
 
 mfxStatus
-gst_mfx_task_frame_free(mfxHDL pthis, mfxFrameAllocResponse *response);
+gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse *response);
 
 mfxStatus
-gst_mfx_task_frame_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
+gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 
 mfxStatus
-gst_mfx_task_frame_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
+gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 
 mfxStatus
-gst_mfx_task_frame_get_hdl(mfxHDL pthis, mfxMemId mid, mfxHDL * hdl);
+gst_mfx_task_frame_get_hdl (mfxHDL pthis, mfxMemId mid, mfxHDL * hdl);
 
 #endif /* GST_MFX_ALLOCATOR_FORMAT_H */
