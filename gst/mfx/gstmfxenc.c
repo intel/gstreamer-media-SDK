@@ -412,6 +412,7 @@ gst_mfxenc_handle_frame (GstVideoEncoder * venc, GstVideoCodecFrame * frame)
   if (status < GST_MFX_ENCODER_STATUS_SUCCESS)
     goto error_encode_frame;
   else if (status > 0) {
+    gst_video_codec_frame_unref (frame);
     ret = GST_FLOW_OK;
     goto done;
   }

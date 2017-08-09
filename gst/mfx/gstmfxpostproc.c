@@ -646,9 +646,9 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstBuffer *buf = NULL;
   GstMfxRectangle *crop_rect = NULL;
   GstClockTime timestamp;
-
+  
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
-
+  
   ret = gst_mfx_plugin_base_get_input_buffer (GST_MFX_PLUGIN_BASE (vpp),
           inbuf, &buf);
   if (GST_FLOW_OK != ret)
