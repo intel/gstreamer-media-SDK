@@ -567,8 +567,21 @@ gst_mfxpostproc_update_sink_caps (GstMfxPostproc * vpp, GstCaps * caps,
     gboolean * caps_changed_ptr)
 {
   GST_INFO_OBJECT (vpp, "new sink caps = %" GST_PTR_FORMAT, caps);
+  GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
+  gboolean res = video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr);
 
-  return video_info_update (caps, &vpp->sinkpad_info, caps_changed_ptr);
+
+  if (res && plugin && plugin->sinkpad_caps) {
+    gboolean sinkpad_has_raw_caps =
+        !gst_caps_has_mfx_surface (plugin->sinkpad_caps);
+    gboolean new_sinkpad_has_raw_caps =
+        !gst_caps_has_mfx_surface (caps);
+
+    if (sinkpad_has_raw_caps != new_sinkpad_has_raw_caps)
+      *caps_changed_ptr = TRUE;
+  }
+
+  return res;
 }
 
 static GstBuffer *
