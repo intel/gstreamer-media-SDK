@@ -115,9 +115,6 @@ struct _GstMfxPluginBase
   GstVideoInfo          srcpad_info;
   GstBufferPool        *srcpad_buffer_pool;
 
-  GstPadQueryFunction   srcpad_query;
-  GstPadQueryFunction   sinkpad_query;
-
   gboolean              sinkpad_has_dmabuf;
   gboolean              srcpad_has_dmabuf;
   GstAllocator         *dmabuf_allocator;
