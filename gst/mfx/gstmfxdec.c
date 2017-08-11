@@ -336,7 +336,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,
     extradata, mfxdec->async_depth, mfxdec->live_mode, is_autoplugged);
-  
+
   if (extradata)
     g_byte_array_free (extradata, FALSE);
 
@@ -433,9 +433,12 @@ gst_mfxdec_flush_discarded_frames (GstMfxDec * mfxdec)
 }
 
 static gboolean
-gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps)
+gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps, gboolean reset)
 {
   if (mfxdec->decoder) {
+    if (!reset)
+      return TRUE;
+
     gst_mfxdec_drain (mfxdec);
 
     if (!gst_mfx_decoder_reset (mfxdec->decoder)) {
@@ -484,7 +487,7 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
 {
   GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
 
-  return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps);
+  return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE);
 }
 
 static gboolean
@@ -499,7 +502,7 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
     return FALSE;
   if (!gst_mfx_plugin_base_set_caps (plugin, mfxdec->sinkpad_caps, NULL))
     return FALSE;
-  if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps))
+  if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, FALSE))
     return FALSE;
 
   return TRUE;
