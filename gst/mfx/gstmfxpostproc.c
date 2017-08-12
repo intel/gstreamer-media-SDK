@@ -56,13 +56,13 @@ static const char gst_mfxpostproc_src_caps_str[] =
   GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
 static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
-GST_STATIC_PAD_TEMPLATE ("sink",
+  GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS (gst_mfxpostproc_sink_caps_str));
 
 static GstStaticPadTemplate gst_mfxpostproc_src_factory =
-GST_STATIC_PAD_TEMPLATE ("src",
+  GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS (gst_mfxpostproc_src_caps_str));
@@ -106,7 +106,6 @@ enum
 #define DEFAULT_SATURATION              1.0
 #define DEFAULT_HUE                     0.0
 #define DEFAULT_CONTRAST                1.0
-
 
 #define GST_MFX_TYPE_DEINTERLACE_MODE \
     gst_mfx_deinterlace_mode_get_type()
@@ -522,10 +521,10 @@ video_info_update (GstCaps * caps, GstVideoInfo * info,
   gboolean * caps_changed_ptr)
 {
   GstVideoInfo vi;
-  
+
   if (!gst_video_info_from_caps (&vi, caps))
     return FALSE;
-  
+
   *caps_changed_ptr = FALSE;
   if (video_info_changed (info, &vi)) {
     *caps_changed_ptr = TRUE;
@@ -646,9 +645,9 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   GstBuffer *buf = NULL;
   GstMfxRectangle *crop_rect = NULL;
   GstClockTime timestamp;
-  
+
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
-  
+
   ret = gst_mfx_plugin_base_get_input_buffer (GST_MFX_PLUGIN_BASE (vpp),
           inbuf, &buf);
   if (GST_FLOW_OK != ret)
