@@ -69,11 +69,8 @@ const mfxFrameAllocRequest *
 gst_mfx_decoder_get_request (GstMfxDecoder * decoder);
 
 gboolean
-gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
-    GstVideoCodecFrame ** out_frame);
-
-GstVideoCodecFrame *
-gst_mfx_decoder_get_discarded_frame (GstMfxDecoder * decoder);
+gst_mfx_decoder_get_frame (GstMfxDecoder * decoder,
+  GstVideoCodecFrame ** out_frame, gboolean discarded);
 
 void
 gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info);

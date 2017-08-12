@@ -421,13 +421,13 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GST_MFX_DISPLAY_UNLOCK (priv->display);
   }
 
-  if (!gst_mfx_surface_has_video_memory(surface)) {
+  if (!gst_mfx_surface_has_video_memory (surface)) {
     if (!priv->mapped_surface) {
       GstVideoInfo info;
 
       gst_video_info_init(&info);
       gst_video_info_set_format(&info, GST_MFX_SURFACE_FORMAT (surface),
-        GST_MFX_SURFACE_WIDTH (surface), GST_MFX_SURFACE_HEIGHT(surface));
+        GST_MFX_SURFACE_WIDTH (surface), GST_MFX_SURFACE_HEIGHT (surface));
 
       priv->mapped_surface = gst_mfx_surface_vaapi_new (
         GST_MFX_WINDOW_GET_PRIVATE (window)->context, &info);

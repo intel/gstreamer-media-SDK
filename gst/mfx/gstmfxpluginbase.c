@@ -377,8 +377,6 @@ gst_mfx_plugin_base_set_pool_config (GstBufferPool * pool, const gchar * option)
  * gst_mfx_plugin_base_decide_allocation:
  * @plugin: a #GstMfxPluginBase
  * @query: the allocation query to parse
- * @feature: the desired #GstMfxCapsFeature, or zero to find the
- *   preferred one
  *
  * Decides allocation parameters for the downstream elements.
  *
@@ -678,7 +676,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
       g_quark_from_static_string ("GstMfxPrimeBufferProxy"), dmabuf_proxy,
       (GDestroyNotify) gst_mfx_prime_buffer_proxy_unref);
 
-  buf = gst_buffer_copy(outbuf);
+  buf = gst_buffer_copy (outbuf);
   gst_buffer_prepend_memory (buf, gst_buffer_get_memory (outbuf, 0));
   gst_buffer_add_parent_buffer_meta (outbuf, buf);
   gst_buffer_replace_memory (outbuf, 0, mem);
@@ -691,7 +689,7 @@ gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
     meta->stride[i] = vaapi_image_get_pitch (image, i);
   }
 
-  vaapi_image_unref(image);
+  vaapi_image_unref (image);
   return TRUE;
   /* ERRORS */
 error_dmabuf_handle:

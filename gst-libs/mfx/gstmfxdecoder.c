@@ -89,20 +89,16 @@ gst_mfx_decoder_get_request (GstMfxDecoder * decoder)
 }
 
 gboolean
-gst_mfx_decoder_get_decoded_frames (GstMfxDecoder * decoder,
-    GstVideoCodecFrame ** out_frame)
+gst_mfx_decoder_get_frame (GstMfxDecoder * decoder,
+  GstVideoCodecFrame ** out_frame, gboolean discarded)
 {
   g_return_val_if_fail (decoder != NULL, FALSE);
 
-  *out_frame = g_queue_pop_tail (&decoder->decoded_frames);
+  if (!discarded)
+    *out_frame = g_queue_pop_tail (&decoder->decoded_frames);
+  else
+    *out_frame = g_queue_pop_tail (&decoder->discarded_frames);
   return *out_frame != NULL;
-}
-
-GstVideoCodecFrame *
-gst_mfx_decoder_get_discarded_frame (GstMfxDecoder * decoder)
-{
-  g_return_val_if_fail (decoder != NULL, NULL);
-  return g_queue_pop_tail (&decoder->discarded_frames);
 }
 
 void
@@ -439,7 +435,7 @@ gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
     GstMfxDecoder * new_decoder)
 {
   g_return_if_fail (old_decoder_ptr != NULL);
-  
+
   gst_object_replace ((GstObject **)old_decoder_ptr, GST_OBJECT (new_decoder));
 }
 
