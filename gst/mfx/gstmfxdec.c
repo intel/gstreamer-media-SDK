@@ -353,16 +353,16 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 static GstFlowReturn
 gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
 {
+  GstVideoDecoder *const vdec = GST_VIDEO_DECODER (mfxdec);
   GstMfxVideoMeta *meta;
   const GstMfxRectangle *crop_rect;
-  GstMfxSurface *surface;
+  GstMfxSurface *surface = NULL;
+  
+  GstFlowReturn ret = gst_video_decoder_allocate_output_frame (vdec, frame);
+  if (GST_FLOW_OK != ret)
+    goto error_create_buffer;
 
   surface = gst_video_codec_frame_get_user_data (frame);
-
-  frame->output_buffer =
-    gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
-  if (!frame->output_buffer)
-    goto error_create_buffer;
 
   meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
   if (!meta)
@@ -385,17 +385,17 @@ gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
     frame->output_buffer);
 #endif // WITH_LIBVA_BACKEND
 
-  return gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
+  return gst_video_decoder_finish_frame (vdec, frame);
   /* ERRORS */
 error_create_buffer:
   {
-    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
+    gst_video_decoder_drop_frame (vdec, frame);
     gst_video_codec_frame_unref (frame);
-    return GST_FLOW_ERROR;
+    return ret;
   }
 error_get_meta:
   {
-    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (mfxdec), frame);
+    gst_video_decoder_drop_frame (vdec, frame);
     gst_video_codec_frame_unref (frame);
     return GST_FLOW_ERROR;
   }
