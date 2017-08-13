@@ -503,6 +503,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
             gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device(context));
           args[1] = &(plugin->gl_context_dxgl_handle);
 
+          gst_mfx_context_unref (context);
+
           gst_gl_context_thread_add (gl_context,
             (GstGLContextThreadFunc) ensure_dxgl_interop, args);
         }
