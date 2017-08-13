@@ -710,7 +710,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
 #if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
     if (GST_MFX_PLUGIN_BASE (vpp)->srcpad_has_dxgl_interop
-      && gst_caps_has_gl_memory (GST_MFX_PLUGIN_BASE (vpp)->srcpad_caps)) {
+        && gst_caps_has_gl_memory (GST_MFX_PLUGIN_BASE (vpp)->srcpad_caps)) {
       gst_mfx_plugin_base_export_dxgl_interop_buffer (
         GST_MFX_PLUGIN_BASE (vpp), out_surface, outbuf);
     }
