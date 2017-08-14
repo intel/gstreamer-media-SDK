@@ -141,8 +141,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
     desc.SampleDesc.Count = 1;
     desc.Usage = D3D11_USAGE_DEFAULT;
     desc.BindFlags = D3D11_BIND_DECODER;
-    desc.MiscFlags = 0;
-    desc.MiscFlags            = D3D11_RESOURCE_MISC_SHARED; // required by dxgl interop. TODO: use only when needed.
+    desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED; // required by dxgl interop. TODO: use only when needed.
 
     if (((MFX_MEMTYPE_FROM_VPPIN & request->Type)
         && (DXGI_FORMAT_YUY2 == desc.Format))
@@ -159,14 +158,6 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
       if (desc.ArraySize > 2)
         goto error;
     }
-
-#if MSDK_CHECK_VERSION(1,19)
-    if (request->Type & MFX_MEMTYPE_SHARED_RESOURCE)
-    {
-      desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
-      desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
-    }
-#endif
 
     if (DXGI_FORMAT_P8 == desc.Format)
       desc.BindFlags = 0;
@@ -188,7 +179,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;// | D3D11_CPU_ACCESS_WRITE;
     desc.BindFlags = 0;
     desc.MiscFlags = 0;
-    //desc.MiscFlags        = D3D11_RESOURCE_MISC_SHARED;
+    //desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 
     /* Create surface staging textures */
     for (i = 0; i < response_data->num_surfaces; i++) {

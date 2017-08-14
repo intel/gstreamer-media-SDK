@@ -52,13 +52,13 @@ GstMfxDisplay *
 #else
 GstMfxD3D11Device *
 #endif // WITH_LIBVA_BACKEND
-gst_mfx_context_get_device(GstMfxContext * context);
+gst_mfx_context_get_device (GstMfxContext * context);
 
 void
-gst_mfx_context_lock(GstMfxContext * context);
+gst_mfx_context_lock (GstMfxContext * context);
 
 void
-gst_mfx_context_unlock(GstMfxContext * context);
+gst_mfx_context_unlock (GstMfxContext * context);
 
 G_END_DECLS
 

@@ -32,16 +32,8 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-#ifdef HAVE_GST_GL_LIBS
-
-#if !GST_CHECK_VERSION(1,11,1) && defined(WITH_LIBVA_BACKEND)
-# include <gst/gl/egl/gstglcontext_egl.h>
-#else
-# include <gst/gl/gstglcontext.h>
-#endif
-
-#if GST_CHECK_VERSION(1,11,1) && defined(WITH_D3D11_BACKEND)
-#include <GL/wglext.h>
+#if GST_CHECK_VERSION(1,11,1) && defined(HAVE_GST_GL_LIBS) && defined(WITH_D3D11_BACKEND)
+# include <GL/wglext.h>
 PFNWGLDXOPENDEVICENVPROC wglDXOpenDeviceNV = NULL;
 PFNWGLDXCLOSEDEVICENVPROC wglDXCloseDeviceNV = NULL;
 PFNWGLDXSETRESOURCESHAREHANDLENVPROC wglDXSetResourceShareHandleNV = NULL;
@@ -51,10 +43,7 @@ PFNWGLDXLOCKOBJECTSNVPROC wglDXLockObjectsNV = NULL;
 PFNWGLDXUNLOCKOBJECTSNVPROC wglDXUnlockObjectsNV = NULL;
 #endif
 
-#endif // HAVE_GST_GL_LIBS
-
 static gpointer plugin_parent_class = NULL;
-
 
 #ifdef WITH_LIBVA_BACKEND
 /* Checks whether the supplied pad peer element supports DMABUF sharing */
@@ -130,13 +119,20 @@ ensure_dxgl_interop (GstGLContext * context, gpointer * args)
   ID3D11Device* d3d11_device = args[0];
   HANDLE* dxgl_device_out = args[1];
 
-  wglDXOpenDeviceNV = (PFNWGLDXOPENDEVICENVPROC)wglGetProcAddress("wglDXOpenDeviceNV");
-  wglDXCloseDeviceNV = (PFNWGLDXCLOSEDEVICENVPROC)wglGetProcAddress("wglDXCloseDeviceNV");
-  wglDXRegisterObjectNV = (PFNWGLDXREGISTEROBJECTNVPROC)wglGetProcAddress("wglDXRegisterObjectNV");
-  wglDXUnregisterObjectNV = (PFNWGLDXUNREGISTEROBJECTNVPROC)wglGetProcAddress("wglDXUnregisterObjectNV");
-  wglDXSetResourceShareHandleNV = (PFNWGLDXSETRESOURCESHAREHANDLENVPROC)wglGetProcAddress("wglDXSetResourceShareHandleNV");
-  wglDXLockObjectsNV = (PFNWGLDXLOCKOBJECTSNVPROC)wglGetProcAddress("wglDXLockObjectsNV");
-  wglDXUnlockObjectsNV = (PFNWGLDXUNLOCKOBJECTSNVPROC)wglGetProcAddress("wglDXUnlockObjectsNV");
+  wglDXOpenDeviceNV = (PFNWGLDXOPENDEVICENVPROC)
+    wglGetProcAddress("wglDXOpenDeviceNV");
+  wglDXCloseDeviceNV = (PFNWGLDXCLOSEDEVICENVPROC)
+    wglGetProcAddress("wglDXCloseDeviceNV");
+  wglDXRegisterObjectNV = (PFNWGLDXREGISTEROBJECTNVPROC)
+    wglGetProcAddress("wglDXRegisterObjectNV");
+  wglDXUnregisterObjectNV = (PFNWGLDXUNREGISTEROBJECTNVPROC)
+    wglGetProcAddress("wglDXUnregisterObjectNV");
+  wglDXSetResourceShareHandleNV = (PFNWGLDXSETRESOURCESHAREHANDLENVPROC)
+    wglGetProcAddress("wglDXSetResourceShareHandleNV");
+  wglDXLockObjectsNV = (PFNWGLDXLOCKOBJECTSNVPROC)
+    wglGetProcAddress("wglDXLockObjectsNV");
+  wglDXUnlockObjectsNV = (PFNWGLDXUNLOCKOBJECTSNVPROC)
+    wglGetProcAddress("wglDXUnlockObjectsNV");
 
   *dxgl_device_out = wglDXOpenDeviceNV (d3d11_device);
 }
@@ -666,15 +662,15 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
 
   outbuf = NULL;
   if (gst_buffer_pool_acquire_buffer (plugin->sinkpad_buffer_pool,
-    &outbuf, NULL) != GST_FLOW_OK)
+          &outbuf, NULL) != GST_FLOW_OK)
     goto error_create_buffer;
 
   if (!gst_video_frame_map (&src_frame, &plugin->sinkpad_info, inbuf,
-    GST_MAP_READ))
+          GST_MAP_READ))
     goto error_map_src_buffer;
 
   if (!gst_video_frame_map (&out_frame, &plugin->sinkpad_info, outbuf,
-    GST_MAP_WRITE))
+          GST_MAP_WRITE))
     goto error_map_dst_buffer;
 
   /* Hack for incoming video frames with changed GstVideoInfo dimensions */
