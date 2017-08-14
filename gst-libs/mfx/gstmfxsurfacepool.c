@@ -81,9 +81,9 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
 
   for (i = 0; i < num_surfaces; i++) {
 #ifdef WITH_LIBVA_BACKEND
-    surface = gst_mfx_surface_vaapi_new_from_task(pool->task);
+    surface = gst_mfx_surface_vaapi_new_from_task (pool->task);
 #else
-    surface = gst_mfx_surface_d3d11_new_from_task(pool->task);
+    surface = gst_mfx_surface_d3d11_new_from_task (pool->task);
 
     if (gst_mfx_task_has_type(pool->task,
         GST_MFX_TASK_VPP_OUT | GST_MFX_TASK_DECODER))
@@ -93,7 +93,7 @@ gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
     if (!surface)
       return FALSE;
 
-    g_queue_push_tail(&pool->free_surfaces, surface);
+    g_queue_push_tail (&pool->free_surfaces, surface);
   }
   return TRUE;
 }
@@ -140,15 +140,15 @@ gst_mfx_surface_pool_new (GstMfxContext * context,
   if (!pool)
     return NULL;
 
-  pool->context = context ? gst_mfx_context_ref(context) : NULL;
+  pool->context = context ? gst_mfx_context_ref (context) : NULL;
   pool->memtype_is_system = memtype_is_system;
   pool->info = *info;
-  if (!gst_mfx_surface_pool_create(pool))
+  if (!gst_mfx_surface_pool_create (pool))
     goto error;
   return pool;
 
 error:
-  gst_mfx_surface_pool_unref(pool);
+  gst_mfx_surface_pool_unref (pool);
   return NULL;
 }
 
@@ -159,18 +159,18 @@ gst_mfx_surface_pool_new_with_task (GstMfxTask * task)
 
   g_return_val_if_fail(task != NULL, NULL);
 
-  pool = g_object_new(GST_TYPE_MFX_SURFACE_POOL, NULL);
+  pool = g_object_new (GST_TYPE_MFX_SURFACE_POOL, NULL);
   if (!pool)
     return NULL;
 
   pool->task = gst_mfx_task_ref (task);
   pool->memtype_is_system = !gst_mfx_task_has_video_memory (task);
-  if (!gst_mfx_surface_pool_create(pool))
+  if (!gst_mfx_surface_pool_create (pool))
     goto error;
   return pool;
 
 error:
-  gst_mfx_surface_pool_unref(pool);
+  gst_mfx_surface_pool_unref (pool);
   return NULL;
 }
 
