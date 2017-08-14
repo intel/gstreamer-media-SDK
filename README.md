@@ -38,8 +38,8 @@ Requirements
   * Intel&reg; Media SDK 2016 R2 / 2017 R1 for Windows or  
     Media Server Studio 2017 Community / Professional Edition (Windows / Linux) or  
     Media SDK 2017 for Yocto Embedded Edition (Apollo Lake) or greater
-  * GStreamer 1.8.x (1.10.x minimum for Windows, 1.12.x for correct deinterlacing support, 1.12.2+ for correct glimagesink support on Windows)
-  * gst-plugins-* 1.8.x (tested up to GStreamer 1.12.x, 1.10.x minimum for Windows)
+  * GStreamer 1.8.x (1.10.x minimum for Windows, 1.12.2+ recommended)
+  * gst-plugins-* 1.8.x (1.10.x minimum for Windows, 1.12.2+ recommended)
   * Microsoft Visual Studio 2013 / 2015 / 2017 (Windows)
   * Python 3
   * pkg-config
@@ -99,19 +99,31 @@ To uninstall the plugins:
 
 	sudo ninja uninstall
 
-DirectX-OpenGL interoperability is supported when building with minGW. To build it with MSVC, add GL/glext.h and GL/wglext.h to the build, add `#if GST_GL_HAVE_PLATFORM_EGL ... #endif` to gstreamer-1.0\gst\gl\glprototypes\eglimage.h and comment out `and cc.has_header('GL/glext.h')` in meson.build.
+DirectX-OpenGL interoperability is supported when building with minGW. To build it with MSVC,
+add GL/glext.h and GL/wglext.h to the build, add `#if GST_GL_HAVE_PLATFORM_EGL ... #endif` to gstreamer-1.0\gst\gl\glprototypes\eglimage.h and
+comment out `and cc.has_header('GL/glext.h')` in meson.build. A more system-specific workaround would be to put the headers to
+`C:\Program Files (x86)\Windows Kits\8.1\Include\um\gl` to avoid having to modify meson.build.
+
 
 Usage
 -----
 Please refer to README.USAGE for examples on how to accomplish various
 video-related tasks with the GST-MFX plugins.
 
+Known Issues
+------------
+ - Resizing the glimagesink window while rendering a video using the DX11 - OpenGL interop feature causes the video to freeze,
+ but playback continues normally. This is a GstGL bug that has been resolved since GStreamer version 1.12.2.
+ - Auto-deinterlacing of H264 mixed interlaced videos during decoding does not work correctly prior to version 1.11.90.
+ Since then, h264parse has been fixed to autodetect such videos before initializing the decoder.
+
 
 TODO
 ----
  - HEVC 10-bit encode support on compatible devices
+ - GstGL API usage for zero-copy with glimagesink in Linux
 
-
+ 
 License
 -------
 GST-MFX libraries and plugins are available under the
