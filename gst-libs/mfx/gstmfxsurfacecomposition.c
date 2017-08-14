@@ -64,25 +64,25 @@ create_subpicture (GstMfxSurfaceComposition * composition,
   GstMapInfo map_info;
   GstVideoInfo info;
 
-  gst_video_info_init(&info);
+  gst_video_info_init (&info);
 
   buffer = gst_video_overlay_rectangle_get_pixels_unscaled_argb (rect,
-    gst_video_overlay_rectangle_get_flags(rect));
+    gst_video_overlay_rectangle_get_flags (rect));
   if (!buffer)
     return FALSE;
 
-  vmeta = gst_buffer_get_video_meta(buffer);
+  vmeta = gst_buffer_get_video_meta (buffer);
   if (!vmeta)
     return FALSE;
 
-  gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA,
+  gst_video_info_set_format (&info, GST_VIDEO_FORMAT_BGRA,
     vmeta->width, vmeta->height);
 
   if (!gst_video_meta_map(vmeta, 0, &map_info, (gpointer *)& data,
       (gint *)& stride, GST_MAP_READ))
     return FALSE;
 
-  subpicture = g_slice_new0(GstMfxSubpicture);
+  subpicture = g_slice_new0 (GstMfxSubpicture);
 
   if (gst_mfx_surface_has_video_memory (composition->base_surface)) {
     GstMfxContext *context =

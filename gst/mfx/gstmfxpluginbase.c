@@ -34,6 +34,7 @@
 
 #if GST_CHECK_VERSION(1,11,1) && defined(HAVE_GST_GL_LIBS) && defined(WITH_D3D11_BACKEND)
 # include <GL/wglext.h>
+
 PFNWGLDXOPENDEVICENVPROC wglDXOpenDeviceNV = NULL;
 PFNWGLDXCLOSEDEVICENVPROC wglDXCloseDeviceNV = NULL;
 PFNWGLDXSETRESOURCESHAREHANDLENVPROC wglDXSetResourceShareHandleNV = NULL;
@@ -805,6 +806,7 @@ error_dmabuf_handle:
 
 typedef struct _GstMfxDXGLInteropInfo
 {
+  GstMfxSurface *surface;
   GstGLContext *gl_context;
   ID3D11Texture2D *d3d_texture;
   HANDLE *dxgl_handle;
@@ -816,12 +818,13 @@ typedef struct _GstMfxDXGLInteropInfo
 static void
 lock_dxgl_interop (GstGLContext * context, gpointer * args)
 {
-  GstMfxDXGLInteropInfo *interop_info = (GstMfxDXGLInteropInfo*)args[0];
-  GstMemory *mem = GST_MEMORY_CAST (args[1]);
-  GstMapInfo map_info = GST_MAP_INFO_INIT;
+  GstMfxDXGLInteropInfo *interop_info = (GstMfxDXGLInteropInfo*) args[0];
+  GstGLMemory *gl_mem = GST_GL_MEMORY_CAST (args[1]);
 
-  if (gst_memory_map (mem, &map_info, GST_MAP_READ | GST_MAP_GL)) {
-    interop_info->gl_texture_id = *(GLuint *) map_info.data;
+  if (gst_mfx_surface_has_video_memory (interop_info->surface)) {
+    interop_info->d3d_texture =
+      (ID3D11Texture2D*) gst_mfx_surface_get_id (interop_info->surface);
+    interop_info->gl_texture_id = gst_gl_memory_get_texture_id (gl_mem);
 
     interop_info->gl_texture_handle = wglDXRegisterObjectNV (
       interop_info->dxgl_handle,
@@ -831,26 +834,20 @@ lock_dxgl_interop (GstGLContext * context, gpointer * args)
       WGL_ACCESS_READ_ONLY_NV);
 
     if (!interop_info->gl_texture_handle) {
-      GST_WARNING ("couldn't get GL texture handle from DX texture %p",
+      GST_WARNING("couldn't get GL texture handle from DX texture %p",
         interop_info->d3d_texture);
-      goto done;
     }
 
     if (!wglDXLockObjectsNV (interop_info->dxgl_handle,
-        1, &(interop_info->gl_texture_handle))) {
-      GST_WARNING ("couldn't lock GL texture %p",
+            1, &(interop_info->gl_texture_handle))) {
+      GST_WARNING("couldn't lock GL texture %p",
         interop_info->gl_texture_handle);
-      goto done;
     }
   }
   else {
-    GST_WARNING ("couldn't map GstMemory to read GL texture ID %u",
-      interop_info->gl_texture_id);
-    return;
+    gst_gl_memory_read_pixels (gl_mem,
+      (gpointer) gst_mfx_surface_get_plane (interop_info->surface, 0));
   }
-
-done:
-  gst_memory_unmap (mem, &map_info);
 }
 
 /* call from GL thread */
@@ -860,7 +857,6 @@ unlock_dxgl_interop (GstGLContext * context,
 {
   if (wglDXUnlockObjectsNV (args[0], 1, &(args[1])))
     GST_DEBUG ("unlocked texture %u", args[2]);
-
   wglDXUnregisterObjectNV (args[0], args[1]);
 }
 
@@ -872,13 +868,16 @@ dxgl_interop_info_unref (GstMfxDXGLInteropInfo * interop_info)
   args[1] = interop_info->gl_texture_handle;
   args[2] = interop_info->gl_texture_id;
 
-  gst_gl_context_thread_add (interop_info->gl_context,
-    (GstGLContextThreadFunc) unlock_dxgl_interop, args);
+  if (gst_mfx_surface_has_video_memory (interop_info->surface))
+    gst_gl_context_thread_add (interop_info->gl_context,
+      (GstGLContextThreadFunc) unlock_dxgl_interop, args);
 
   if (interop_info->gl_context) {
     gst_object_unref (interop_info->gl_context);
     interop_info->gl_context = NULL;
   }
+  
+  gst_mfx_surface_unref (interop_info->surface);
 
   g_slice_free (GstMfxDXGLInteropInfo, interop_info);
 }
@@ -904,9 +903,8 @@ gst_mfx_plugin_base_export_dxgl_interop_buffer (GstMfxPluginBase * plugin,
   
   dxgl_interop_info->gl_context =
       gst_object_ref (GST_OBJECT (plugin->gl_context));
-  dxgl_interop_info->d3d_texture =
-      (ID3D11Texture2D*) gst_mfx_surface_get_id (surface);
   dxgl_interop_info->dxgl_handle = plugin->gl_context_dxgl_handle;
+  dxgl_interop_info->surface = gst_mfx_surface_ref (surface);
 
   args[0] = dxgl_interop_info;
   args[1] = mem;
