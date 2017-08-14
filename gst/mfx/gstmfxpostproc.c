@@ -431,7 +431,7 @@ gst_mfxpostproc_destroy (GstMfxPostproc * vpp)
 static gboolean
 gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
-  GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (vpp);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vpp);
   gboolean success = TRUE;
   GstMfxTask *task;
 
@@ -673,6 +673,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     GstBuffer * outbuf)
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vpp);
   GstMfxVideoMeta *inbuf_meta, *outbuf_meta;
   GstMfxSurface *surface, *out_surface;
   GstMfxFilterStatus status = GST_MFX_FILTER_STATUS_SUCCESS;
@@ -683,8 +684,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
   timestamp = GST_BUFFER_TIMESTAMP (inbuf);
 
-  ret = gst_mfx_plugin_base_get_input_buffer (GST_MFX_PLUGIN_BASE (vpp),
-          inbuf, &buf);
+  ret = gst_mfx_plugin_base_get_input_buffer (plugin, inbuf, &buf);
   if (GST_FLOW_OK != ret)
     return ret;
 
@@ -710,9 +710,15 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
 #if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
     if (GST_MFX_PLUGIN_BASE (vpp)->srcpad_has_dxgl_interop
-        && gst_caps_has_gl_memory (GST_MFX_PLUGIN_BASE (vpp)->srcpad_caps)) {
-      gst_mfx_plugin_base_export_dxgl_interop_buffer (
-        GST_MFX_PLUGIN_BASE (vpp), out_surface, outbuf);
+        && gst_caps_has_gl_memory (plugin->srcpad_caps)) {
+      if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status) {
+        gst_mfx_plugin_base_export_dxgl_interop_buffer (plugin,
+          out_surface, buf);
+      }
+      else {
+        gst_mfx_plugin_base_export_dxgl_interop_buffer(plugin,
+          out_surface, outbuf);
+      }
     }
     else {
 #endif
@@ -764,8 +770,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
            && GST_FLOW_OK == ret);
 
 #ifdef WITH_LIBVA_BACKEND
-  gst_mfx_plugin_base_export_dma_buffer(GST_MFX_PLUGIN_BASE (vpp),
-    outbuf);
+  gst_mfx_plugin_base_export_dma_buffer (plugin, outbuf);
 #endif // WITH_LIBVA_BACKEND
 
   gst_buffer_unref (buf);
