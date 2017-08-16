@@ -147,9 +147,9 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
       GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, P010_10LE, NV12, BGRA }"
       ) "; "
       GST_VIDEO_CAPS_MAKE("{ P010_10LE, NV12, BGRA }");
-#elif
+#else
     const char caps_str[] =
-      GST_MFX_MAKE_SURFACE_CAPS ";"
+      GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
       GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 #endif
     templ = gst_caps_from_string (caps_str);
@@ -273,12 +273,7 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
   if (!caps)
     return has_raw_caps;
 
-  if (gst_caps_has_mfx_surface (caps)
-    || gst_caps_has_gl_memory (caps)
-    || (!g_strcmp0 (getenv ("GST_GL_PLATFORM"), "egl")
-      && _gst_caps_has_feature(caps,
-        GST_CAPS_FEATURE_META_GST_VIDEO_GL_TEXTURE_UPLOAD_META))
-      )
+  if (gst_caps_has_mfx_surface (caps) || gst_caps_has_gl_memory (caps))
     has_raw_caps = FALSE;
 
   gst_caps_unref (caps);

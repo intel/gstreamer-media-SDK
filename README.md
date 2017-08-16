@@ -19,11 +19,10 @@ Features
  - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 videos
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
- - Support for zero-copy rendering with glimagesink using EGL on Linux
- - Support for zero-copy rendering with glimagesink using DirectX 11 / OpenGL interop on Windows
+ - Support for zero-copy rendering with glimagesink using EGL (Linux) or DirectX 11 / OpenGL interop (Windows)
  - Support for Direct3D 11 on Windows with zero-copy and deep color rendering for 10-bit video formats
- - Support rendering using Wayland renderer
- - Support rendering using X11 renderer with DRI3 backend
+ - Support native Wayland rendering using Wayland backend
+ - Support X11 rendering using DRI3 backend
  - Support VPP acceleration of dynamic procamp control during video playback
  - Support for subtitles (text overlay) via MFX VPP surface composition
  - Support all Media SDK postprocessing capabilities as exposed by the MSDK API
@@ -121,7 +120,6 @@ Known Issues
 TODO
 ----
  - HEVC 10-bit encode support on compatible devices
- - GstGL API usage for zero-copy with glimagesink in Linux
 
  
 License

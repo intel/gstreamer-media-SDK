@@ -32,7 +32,25 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-#if GST_CHECK_VERSION(1,11,1) && defined(HAVE_GST_GL_LIBS) && defined(WITH_D3D11_BACKEND)
+#ifdef HAVE_GST_GL_LIBS
+
+#ifdef WITH_LIBVA_BACKEND
+# include <EGL/egl.h>
+# include <EGL/eglext.h>
+# include <drm/drm_fourcc.h>
+
+# include <gst/gl/egl/gstgldisplay_egl.h>
+
+typedef void *GLeglImageOES;
+typedef void(*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)(GLenum target,
+    GLeglImageOES image);
+
+PFNEGLCREATEIMAGEKHRPROC egl_create_image_khr;
+PFNEGLDESTROYIMAGEKHRPROC egl_destroy_image_khr;
+PFNGLEGLIMAGETARGETTEXTURE2DOESPROC gl_egl_image_target_texture2d_oes;
+
+# else
+# ifdef WITH_D3D11_BACKEND
 # include <GL/wglext.h>
 
 PFNWGLDXOPENDEVICENVPROC wglDXOpenDeviceNV = NULL;
@@ -42,7 +60,10 @@ PFNWGLDXREGISTEROBJECTNVPROC wglDXRegisterObjectNV = NULL;
 PFNWGLDXUNREGISTEROBJECTNVPROC wglDXUnregisterObjectNV = NULL;
 PFNWGLDXLOCKOBJECTSNVPROC wglDXLockObjectsNV = NULL;
 PFNWGLDXUNLOCKOBJECTSNVPROC wglDXUnlockObjectsNV = NULL;
-#endif
+
+# endif
+# endif // WITH_LIBVA_BACKEND
+#endif // HAVE_GST_GL_LIBS
 
 static gpointer plugin_parent_class = NULL;
 
@@ -105,7 +126,10 @@ has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
   g_clear_object (&element);
   return is_dmabuf_capable;
 }
-#elif defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+#endif // WITH_LIBVA_BACKEND
+
+#ifdef HAVE_GST_GL_LIBS
+#ifdef WITH_D3D11_BACKEND
 /* call from GL thread */
 static void
 clean_dxgl_interop (GstGLContext * context, HANDLE dxgl_handle)
@@ -137,6 +161,18 @@ ensure_dxgl_interop (GstGLContext * context, gpointer * args)
 
   *dxgl_device_out = wglDXOpenDeviceNV (d3d11_device);
 }
+#else
+static void
+ensure_egl_dmabuf (GstGLContext * context, gpointer * args)
+{
+  gl_egl_image_target_texture2d_oes =
+    (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
+  egl_create_image_khr =
+    (PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
+  egl_destroy_image_khr =
+    (PFNEGLDESTROYIMAGEKHRPROC)eglGetProcAddress("eglDestroyImageKHR");
+}
+#endif // WITH_D3D11_BACKEND
 #endif // HAVE_GST_GL_LIBS
 
 static void
@@ -211,18 +247,22 @@ gst_mfx_plugin_base_finalize (GstMfxPluginBase * plugin)
 void
 gst_mfx_plugin_base_close (GstMfxPluginBase * plugin)
 {
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+#ifdef HAVE_GST_GL_LIBS
   if (plugin->gl_context) {
-    gst_gl_context_thread_add (plugin->gl_context,
-      (GstGLContextThreadFunc) clean_dxgl_interop,
-      plugin->gl_context_dxgl_handle);
+#ifdef WITH_D3D11_BACKEND
+    if (plugin->gl_context_dxgl_handle) {
+      gst_gl_context_thread_add (plugin->gl_context,
+        (GstGLContextThreadFunc) clean_dxgl_interop,
+        plugin->gl_context_dxgl_handle);
 
-    plugin->gl_context_dxgl_handle = NULL;
+      plugin->gl_context_dxgl_handle = NULL;
+    }
+#endif // WITH_D3D11_BACKEND
 
     gst_object_unref (plugin->gl_context);
     plugin->gl_context = NULL;
   }
-#endif
+#endif // HAVE_GST_GL_LIBS
 
   gst_mfx_task_aggregator_replace (&plugin->aggregator, NULL);
 
@@ -270,7 +310,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
 #ifdef WITH_LIBVA_BACKEND
   if (!plugin->sinkpad_buffer_pool)
     plugin->sinkpad_has_dmabuf =
-    has_dmabuf_capable_peer (plugin, plugin->sinkpad);
+        has_dmabuf_capable_peer (plugin, plugin->sinkpad);
 #endif // WITH_LIBVA_BACKEND
 
   plugin->sinkpad_caps_is_raw = !plugin->sinkpad_has_dmabuf &&
@@ -459,42 +499,37 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     GST_VIDEO_META_API_TYPE, NULL);
 
 #ifdef HAVE_GST_GL_LIBS
-  if (gst_query_find_allocation_meta(query,
-    GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
+  if (gst_query_find_allocation_meta (query,
+        GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
 
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
-
-#if !GST_CHECK_VERSION(1,11,1) && defined(WITH_LIBVA_BACKEND)
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
-        &gl_context, NULL) && gl_context) {
-        plugin->srcpad_has_dmabuf =
-          (GST_IS_GL_CONTEXT_EGL (gl_context) &&
+            &gl_context, NULL) && gl_context) {
+        if (!plugin->gl_context && plugin->aggregator) {
+#ifdef WITH_LIBVA_BACKEND
+#if !GST_CHECK_VERSION(1,11,1)
+          plugin->can_export_gl_textures =
+            (GST_IS_GL_CONTEXT_EGL (gl_context) &&
+              !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
+              gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
+                GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
+#else
+          plugin->can_export_gl_textures =
             !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
-            gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
-              GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
-        gst_object_unref (gl_context);
-      }
-#else
-      if (gst_structure_get (params, "gst.gl.GstGLContext", GST_TYPE_GL_CONTEXT,
-        &gl_context, NULL) && gl_context) {
-#if defined(WITH_LIBVA_BACKEND)
-        plugin->srcpad_has_dmabuf =
-          !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
-          gst_gl_context_check_feature (gl_context, "EGL_EXT_image_dma_buf_import");
-        gst_object_unref (gl_context);
-#else
-        plugin->srcpad_has_dxgl_interop = gst_gl_context_check_feature (
-          gl_context, "GL_INTEL_map_texture");
+            gst_gl_context_check_feature (gl_context, "EGL_EXT_image_dma_buf_import");
 
-        if (!plugin->gl_context && plugin->srcpad_has_dxgl_interop
-            && plugin->aggregator) {
+#endif //GST_CHECK_VERSION
+          gst_gl_context_thread_add (gl_context,
+            (GstGLContextThreadFunc) ensure_egl_dmabuf, NULL);
+#else
+          GstMfxContext *context =
+              gst_mfx_task_aggregator_get_context (plugin->aggregator);
           gpointer args[2];
 
-          GstMfxContext *context =
-            gst_mfx_task_aggregator_get_context (plugin->aggregator);
-          gst_object_replace (&plugin->gl_context, gl_context);
-          gst_object_unref (gl_context);
+          /* We can assume that all Intel HD graphics supported by MSDK from 3rd
+           * generation onwards will have the WGL_NV_DX_interop2 extension */
+          plugin->can_export_gl_textures = TRUE;
 
           args[0] = (ID3D11Device*)
             gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device(context));
@@ -504,25 +539,17 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 
           gst_gl_context_thread_add (gl_context,
             (GstGLContextThreadFunc) ensure_dxgl_interop, args);
-        }
-
-        /*
-         * TODO: should ideally check for "WGL_NV_DX_interop2")
-         * and that gl and dx are on the same device... but while WGL_NV_DX_interop2
-         * is reported as available in debug, a check for it still returns 0
-         * so instead we check for GL_INTEL_map_texture which is available
-         * on all intel graphics since Sandy Bridge era.
-        */
 #endif // WITH_LIBVA_BACKEND
+          plugin->can_export_gl_textures &= gst_caps_has_gl_memory (caps);
+          gst_object_replace (&plugin->gl_context, gl_context);
+        }
+        gst_object_unref (gl_context);
       }
-#endif // WITH_LIBVA_BACKEND && !GST_CHECK_VERSION(1,11,1)
     }
   }
 #endif // HAVE_GST_GL_LIBS
-  if (!plugin->srcpad_has_dmabuf) {
-    plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps)
-      && !gst_caps_has_gl_memory (caps);
-  }
+  if (!plugin->can_export_gl_textures)
+    plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     goto error_ensure_aggregator;
@@ -541,8 +568,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     min = max = 0;
   }
 
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
-  if (plugin->srcpad_has_dxgl_interop && gst_caps_has_gl_memory (caps)) {
+#ifdef HAVE_GST_GL_LIBS
+  if (plugin->can_export_gl_textures) {
     if (pool)
       gst_object_unref (pool);
     pool = gst_gl_buffer_pool_new (gl_context);
@@ -738,69 +765,146 @@ error_copy_buffer:
 
 #ifdef HAVE_GST_GL_LIBS
 #ifdef WITH_LIBVA_BACKEND
-gboolean
-gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
-  GstBuffer * outbuf)
+
+typedef struct _GstMfxEglDmaBufInfo
 {
-  GstMfxVideoMeta *vmeta;
-  GstVideoMeta *meta = gst_buffer_get_video_meta (outbuf);
   GstMfxSurface *surface;
-  GstMfxPrimeBufferProxy *dmabuf_proxy;
-  GstMemory *mem;
-  VaapiImage *image;
-  GstBuffer *buf;
-  guint i;
+  GstGLContext *gl_context;
+  EGLDisplay egl_display;
+  EGLImageKHR egl_image;
+  GLuint gl_texture_id;
+} GstMfxEglDmaBufInfo;
 
-  g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf), FALSE);
+/* call from GL thread */
+static void
+create_egl_objects (GstGLContext * context, gpointer * args)
+{
+  GstMfxEglDmaBufInfo *egl_info = (GstMfxEglDmaBufInfo *) args[0];
+  GstGLMemory *gl_mem = GST_GL_MEMORY_CAST (args[1]);
 
-  if (!plugin->srcpad_has_dmabuf)
+  if (gst_mfx_surface_has_video_memory (egl_info->surface)) {
+    GLint attribs[23], *attrib;
+    const GstMfxRectangle *crop_rect;
+    GstMfxPrimeBufferProxy *buffer_proxy;
+    VaapiImage *image;
+
+    buffer_proxy =
+        gst_mfx_prime_buffer_proxy_new_from_surface (egl_info->surface);
+    if (!buffer_proxy)
+      return;
+
+    image = gst_mfx_prime_buffer_proxy_get_vaapi_image (buffer_proxy);
+
+    crop_rect = gst_mfx_surface_get_crop_rect (egl_info->surface);
+
+    attrib = attribs;
+    *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
+    *attrib++ = DRM_FORMAT_ARGB8888;
+    *attrib++ = EGL_WIDTH;
+    *attrib++ = crop_rect->width;
+    *attrib++ = EGL_HEIGHT;
+    *attrib++ = crop_rect->height;
+    *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
+    *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy);
+    *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
+    *attrib++ = vaapi_image_get_offset (image, 0);
+    *attrib++ = EGL_DMA_BUF_PLANE0_PITCH_EXT;
+    *attrib++ = vaapi_image_get_pitch (image, 0);
+    *attrib++ = EGL_NONE;
+
+#if GST_CHECK_VERSION(1,11,1)
+    GstGLDisplay *display = gst_gl_context_get_display (egl_info->gl_context);
+    egl_info->egl_display = gst_gl_display_egl_get_from_native (
+      gst_gl_display_get_handle_type (display),
+      gst_gl_display_get_handle (display));
+    gst_object_unref (display);
+#else
+    egl_info->egl_display =
+        GST_GL_CONTEXT_EGL (egl_info->gl_context)->egl_display;
+#endif
+
+    egl_info->egl_image =
+        egl_create_image_khr (egl_info->egl_display, EGL_NO_CONTEXT,
+          EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer) NULL, attribs);
+    if (!egl_info->egl_image) {
+      GST_WARNING ("failed to import dmabuf (RGBA) into EGL image");
+      goto done;
+    }
+
+    egl_info->gl_texture_id = gst_gl_memory_get_texture_id (gl_mem);
+
+    glBindTexture (GL_TEXTURE_2D, egl_info->gl_texture_id);
+    gl_egl_image_target_texture2d_oes (GL_TEXTURE_2D, egl_info->egl_image);
+    glBindTexture (GL_TEXTURE_2D, 0);
+
+done:
+    vaapi_image_unref (image);
+    gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
+  }
+  else {
+    gst_gl_memory_read_pixels (gl_mem,
+      (gpointer) gst_mfx_surface_get_plane (egl_info->surface, 0));
+  }
+}
+
+/* call from GL thread */
+static void
+destroy_egl_objects (GstGLContext * context,
+  gpointer * args)
+{
+  egl_destroy_image_khr (args[0], args[1]);
+}
+
+static void
+egl_dmabuf_info_unref (GstMfxEglDmaBufInfo * egl_info)
+{
+  gpointer args[2];
+  args[0] = egl_info->egl_display;
+  args[1] = egl_info->egl_image;
+
+  if (gst_mfx_surface_has_video_memory (egl_info->surface))
+    gst_gl_context_thread_add (egl_info->gl_context,
+      (GstGLContextThreadFunc) destroy_egl_objects, args);
+
+  gst_object_unref (egl_info->gl_context);
+  gst_mfx_surface_unref (egl_info->surface);
+  g_slice_free (GstMfxEglDmaBufInfo, egl_info);
+}
+
+gboolean
+gst_mfx_plugin_base_export_surface_to_gl (GstMfxPluginBase * plugin,
+  GstMfxSurface * surface, GstBuffer * outbuf)
+{
+  GstMfxEglDmaBufInfo *egl_dmabuf_info = NULL;
+  GstMemory *mem = gst_buffer_peek_memory (outbuf, 0);
+  gpointer args[2];
+
+  g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf)
+    && plugin->can_export_gl_textures
+    && plugin->gl_context
+    && gst_is_gl_base_memory (mem), FALSE);
+
+  egl_dmabuf_info= g_slice_new (GstMfxEglDmaBufInfo);
+  if (!egl_dmabuf_info) {
+    GST_WARNING ("Failed to allocate GstMfxDXGLInteropInfo");
     return FALSE;
-
-  vmeta = gst_buffer_get_mfx_video_meta (outbuf);
-  if (!vmeta)
-    return FALSE;
-  surface = gst_mfx_video_meta_get_surface (vmeta);
-  if (!surface || !gst_mfx_surface_has_video_memory (surface))
-    return FALSE;
-
-  dmabuf_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
-  if (!dmabuf_proxy)
-    return FALSE;
-
-  if (!plugin->dmabuf_allocator)
-    plugin->dmabuf_allocator = gst_dmabuf_allocator_new ();
-
-  mem = gst_dmabuf_allocator_alloc (plugin->dmabuf_allocator,
-    gst_mfx_prime_buffer_proxy_get_handle (dmabuf_proxy),
-    gst_mfx_prime_buffer_proxy_get_size (dmabuf_proxy));
-  if (!mem)
-    goto error_dmabuf_handle;
-
-  gst_mini_object_set_qdata (GST_MINI_OBJECT_CAST (mem),
-    g_quark_from_static_string ("GstMfxPrimeBufferProxy"), dmabuf_proxy,
-    (GDestroyNotify)gst_mfx_prime_buffer_proxy_unref);
-
-  buf = gst_buffer_copy (outbuf);
-  gst_buffer_prepend_memory (buf, gst_buffer_get_memory (outbuf, 0));
-  gst_buffer_add_parent_buffer_meta (outbuf, buf);
-  gst_buffer_replace_memory (outbuf, 0, mem);
-
-  gst_buffer_unref (buf);
-
-  image = gst_mfx_prime_buffer_proxy_get_vaapi_image (dmabuf_proxy);
-  for (i = 0; i < vaapi_image_get_plane_count (image); i++) {
-    meta->offset[i] = vaapi_image_get_offset (image, i);
-    meta->stride[i] = vaapi_image_get_pitch (image, i);
   }
 
-  vaapi_image_unref (image);
+  egl_dmabuf_info->gl_context =
+      gst_object_ref (GST_OBJECT (plugin->gl_context));
+  egl_dmabuf_info->surface = gst_mfx_surface_ref (surface);
+
+  args[0] = egl_dmabuf_info;
+  args[1] = mem;
+
+  gst_gl_context_thread_add (egl_dmabuf_info->gl_context,
+    (GstGLContextThreadFunc) create_egl_objects, args);
+
+  gst_mini_object_set_qdata (GST_MINI_OBJECT (mem),
+    g_quark_from_static_string ("GstMfxEglDmaBufInfo"), egl_dmabuf_info,
+    (GDestroyNotify) egl_dmabuf_info_unref);
+
   return TRUE;
-  /* ERRORS */
-error_dmabuf_handle:
-  {
-    gst_mfx_prime_buffer_proxy_unref (dmabuf_proxy);
-    return FALSE;
-  }
 }
 #else
 
@@ -872,18 +976,13 @@ dxgl_interop_info_unref (GstMfxDXGLInteropInfo * interop_info)
     gst_gl_context_thread_add (interop_info->gl_context,
       (GstGLContextThreadFunc) unlock_dxgl_interop, args);
 
-  if (interop_info->gl_context) {
-    gst_object_unref (interop_info->gl_context);
-    interop_info->gl_context = NULL;
-  }
-  
+  gst_object_unref (interop_info->gl_context);
   gst_mfx_surface_unref (interop_info->surface);
-
   g_slice_free (GstMfxDXGLInteropInfo, interop_info);
 }
 
 gboolean
-gst_mfx_plugin_base_export_dxgl_interop_buffer (GstMfxPluginBase * plugin,
+gst_mfx_plugin_base_export_surface_to_gl (GstMfxPluginBase * plugin,
   GstMfxSurface * surface, GstBuffer * outbuf)
 {
   GstMfxDXGLInteropInfo *dxgl_interop_info = NULL;
@@ -891,7 +990,7 @@ gst_mfx_plugin_base_export_dxgl_interop_buffer (GstMfxPluginBase * plugin,
   gpointer args[2];
 
   g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf)
-    && plugin->srcpad_has_dxgl_interop
+    && plugin->can_export_gl_textures
     && plugin->gl_context
     && gst_is_gl_base_memory (mem), FALSE);
 
@@ -900,7 +999,7 @@ gst_mfx_plugin_base_export_dxgl_interop_buffer (GstMfxPluginBase * plugin,
     GST_WARNING ("Failed to allocate GstMfxDXGLInteropInfo");
     return FALSE;
   }
-  
+
   dxgl_interop_info->gl_context =
       gst_object_ref (GST_OBJECT (plugin->gl_context));
   dxgl_interop_info->dxgl_handle = plugin->gl_context_dxgl_handle;

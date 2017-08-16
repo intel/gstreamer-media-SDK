@@ -71,7 +71,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
 
 static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+#ifdef HAVE_GST_GL_LIBS
   GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
       GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "RGBA") ";"
 #endif
@@ -366,18 +366,16 @@ gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
   GstMfxVideoMeta *meta;
   const GstMfxRectangle *crop_rect;
   GstMfxSurface *surface = NULL;
-  
+
   GstFlowReturn ret = gst_video_decoder_allocate_output_frame (vdec, frame);
   if (GST_FLOW_OK != ret)
     goto error_create_buffer;
 
   surface = gst_video_codec_frame_get_user_data (frame);
 
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
-  if (GST_MFX_PLUGIN_BASE (mfxdec)->srcpad_has_dxgl_interop
-    && gst_caps_has_gl_memory (mfxdec->srcpad_caps)) {
-    gst_mfx_plugin_base_export_dxgl_interop_buffer (
-      GST_MFX_PLUGIN_BASE (mfxdec),
+#ifdef HAVE_GST_GL_LIBS
+  if (GST_MFX_PLUGIN_BASE (mfxdec)->can_export_gl_textures) {
+    gst_mfx_plugin_base_export_surface_to_gl (GST_MFX_PLUGIN_BASE (mfxdec),
       surface, frame->output_buffer);
   }
   else {
@@ -386,6 +384,10 @@ gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
   if (!meta)
     goto error_get_meta;
   gst_mfx_video_meta_set_surface (meta, surface);
+#ifdef HAVE_GST_GL_LIBS
+  }
+#endif //HAVE_GST_GL_LIBS
+
   crop_rect = gst_mfx_surface_get_crop_rect (surface);
   if (crop_rect) {
     GstVideoCropMeta *const crop_meta =
@@ -397,14 +399,6 @@ gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
       crop_meta->height = crop_rect->height;
     }
   }
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
-  }
-#endif //HAVE_GST_GL_LIBS
-
-#ifdef WITH_LIBVA_BACKEND
-  gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (mfxdec),
-    frame->output_buffer);
-#endif // WITH_LIBVA_BACKEND
 
   return gst_video_decoder_finish_frame (vdec, frame);
   /* ERRORS */
