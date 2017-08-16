@@ -31,8 +31,14 @@
 #ifdef HAVE_GST_GL_LIBS
 #if GST_CHECK_VERSION(1,11,1)
 # include <gst/gl/gstglcontext.h>
+
+# ifndef GST_GL_TYPE_CONTEXT
+# define GST_GL_TYPE_CONTEXT GST_TYPE_GL_CONTEXT
+# endif // GST_GL_TYPE_CONTEXT
+
 #else
 # include <gst/gl/egl/gstglcontext_egl.h>
+
 #endif
 #endif
 
@@ -125,14 +131,14 @@ struct _GstMfxPluginBase
   GstBufferPool        *srcpad_buffer_pool;
 
   gboolean              sinkpad_has_dmabuf;
-  gboolean              srcpad_has_dmabuf;
-  GstAllocator         *dmabuf_allocator;
 
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
-  gboolean              srcpad_has_dxgl_interop;
-  gboolean              sinkpad_has_dxgl_interop;//TODO
+#ifdef HAVE_GST_GL_LIBS
   GstGLContext         *gl_context;
+  gboolean              can_export_gl_textures;
+#ifdef WITH_D3D11_BACKEND
+  gboolean              sinkpad_has_dxgl_interop;//TODO
   HANDLE                gl_context_dxgl_handle;
+#endif // WITH_D3D11_BACKEND
 #endif
 
   GstMfxTaskAggregator *aggregator;
@@ -188,15 +194,9 @@ GstFlowReturn
 gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
     GstBuffer * inbuf, GstBuffer ** outbuf_ptr);
 
-#ifdef WITH_LIBVA_BACKEND
 gboolean
-gst_mfx_plugin_base_export_dma_buffer (GstMfxPluginBase * plugin,
-    GstBuffer * outbuf);
-#else
-gboolean
-gst_mfx_plugin_base_export_dxgl_interop_buffer (GstMfxPluginBase * plugin,
+gst_mfx_plugin_base_export_surface_to_gl (GstMfxPluginBase * plugin,
     GstMfxSurface * surface, GstBuffer * outbuf);
-#endif // WITH_LIBVA_BACKEND
 
 
 G_END_DECLS

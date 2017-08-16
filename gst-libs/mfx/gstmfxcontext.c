@@ -68,7 +68,7 @@ gst_mfx_context_init (GstMfxContext * context)
 }
 
 GstMfxContext *
-gst_mfx_context_new(mfxSession session)
+gst_mfx_context_new (mfxSession session)
 {
   GstMfxContext * context = g_object_new (GST_TYPE_MFX_CONTEXT, NULL);
   if (!context)

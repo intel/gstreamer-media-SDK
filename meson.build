@@ -130,8 +130,12 @@ if gstgl_dep.found()
     gst_mfx_deps += [gstgl_dep, cc.find_library('opengl32', required: false)]
     gst_mfx_args += ['-DHAVE_GST_GL_LIBS', '-DGST_USE_UNSTABLE_API']
   elif host_machine.system() != 'windows'
-    gst_mfx_deps += [gstgl_dep]
-    gst_mfx_args += ['-DHAVE_GST_GL_LIBS', '-DGST_USE_UNSTABLE_API']
+    gl_lib = dependency('gl', required: false)
+    egl_lib = dependency('egl', required: false)
+    if gl_lib.found() and egl_lib.found()
+      gst_mfx_deps += [gstgl_dep, gl_lib, egl_lib]
+      gst_mfx_args += ['-DHAVE_GST_GL_LIBS', '-DGST_USE_UNSTABLE_API']
+    endif
   endif
 endif
 

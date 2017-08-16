@@ -53,7 +53,7 @@ static const char gst_mfxpostproc_sink_caps_str[] =
 
 static const char gst_mfxpostproc_src_caps_str[] =
 GST_MFX_MAKE_OUTPUT_SURFACE_CAPS "; "
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+#ifdef HAVE_GST_GL_LIBS
 GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
   GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "RGBA") ";"
 #endif
@@ -708,15 +708,14 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
         && GST_MFX_FILTER_STATUS_ERROR_MORE_DATA != status)
       goto error_process_vpp;
 
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
-    if (GST_MFX_PLUGIN_BASE (vpp)->srcpad_has_dxgl_interop
-        && gst_caps_has_gl_memory (plugin->srcpad_caps)) {
+#ifdef HAVE_GST_GL_LIBS
+    if (plugin->can_export_gl_textures) {
       if (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status) {
-        gst_mfx_plugin_base_export_dxgl_interop_buffer (plugin,
+        gst_mfx_plugin_base_export_surface_to_gl (plugin,
           out_surface, buf);
       }
       else {
-        gst_mfx_plugin_base_export_dxgl_interop_buffer(plugin,
+        gst_mfx_plugin_base_export_surface_to_gl (plugin,
           out_surface, outbuf);
       }
     }
@@ -731,7 +730,7 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
         goto error_create_meta;
 
       gst_mfx_video_meta_set_surface (outbuf_meta, out_surface);
-#if defined(WITH_D3D11_BACKEND) && defined(HAVE_GST_GL_LIBS)
+#ifdef HAVE_GST_GL_LIBS
     }
 #endif
     crop_rect = gst_mfx_surface_get_crop_rect (out_surface);
@@ -768,10 +767,6 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
     }
   } while (GST_MFX_FILTER_STATUS_ERROR_MORE_SURFACE == status
            && GST_FLOW_OK == ret);
-
-#ifdef WITH_LIBVA_BACKEND
-  gst_mfx_plugin_base_export_dma_buffer (plugin, outbuf);
-#endif // WITH_LIBVA_BACKEND
 
   gst_buffer_unref (buf);
   return ret;
