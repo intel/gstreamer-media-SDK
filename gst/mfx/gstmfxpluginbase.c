@@ -548,11 +548,6 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     }
   }
 #endif // HAVE_GST_GL_LIBS
-  if (!plugin->can_export_gl_textures)
-    plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps);
-
-  if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
-    goto error_ensure_aggregator;
 
   gst_video_info_init (&vi);
   gst_video_info_from_caps (&vi, caps);
@@ -783,7 +778,7 @@ create_egl_objects (GstGLContext * context, gpointer * args)
   GstGLMemory *gl_mem = GST_GL_MEMORY_CAST (args[1]);
 
   if (gst_mfx_surface_has_video_memory (egl_info->surface)) {
-    GLint attribs[23], *attrib;
+    GLint attribs[13], *attrib;
     const GstMfxRectangle *crop_rect;
     GstMfxPrimeBufferProxy *buffer_proxy;
     VaapiImage *image;

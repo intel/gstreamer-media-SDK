@@ -273,7 +273,11 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
   if (!caps)
     return has_raw_caps;
 
-  if (gst_caps_has_mfx_surface (caps) || gst_caps_has_gl_memory (caps))
+  if (gst_caps_has_mfx_surface (caps)
+#ifdef HAVE_GST_GL_LIBS
+      || gst_caps_has_gl_memory (caps)
+#endif
+    )
     has_raw_caps = FALSE;
 
   gst_caps_unref (caps);
