@@ -55,6 +55,6 @@
 
 /* Session APIs used required 1.1, MFXInitEx requires 1.14 */
 #define GST_MFX_MIN_MSDK_VERSION_MAJOR 1
-#define GST_MFX_MIN_MSDK_VERSION_MINOR 14
+#define GST_MFX_MIN_MSDK_VERSION_MINOR 8
 
 #endif /* SYSDEPS_H */
