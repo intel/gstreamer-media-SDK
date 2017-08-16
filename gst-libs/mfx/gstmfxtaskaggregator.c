@@ -38,6 +38,7 @@ struct _GstMfxTaskAggregator
   GList *tasks;
   GstMfxTask *current_task;
   mfxSession parent_session;
+  mfxVersion version;
   mfxU16 platform;
 };
 
@@ -58,6 +59,8 @@ gst_mfx_task_aggregator_init (GstMfxTaskAggregator * aggregator)
 {
   aggregator->tasks = NULL;
   aggregator->context = NULL;
+  aggregator->version.Major = GST_MFX_MIN_MSDK_VERSION_MAJOR;
+  aggregator->version.Minor = GST_MFX_MIN_MSDK_VERSION_MINOR;
 }
 
 GstMfxTaskAggregator *
@@ -104,27 +107,25 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
 {
   mfxInitParam init_params = { 0 };
   mfxIMPL impl;
-  mfxVersion version;
   mfxStatus sts;
   mfxSession session = NULL;
   const char *desc;
 
-  init_params.Implementation = MFX_IMPL_HARDWARE_ANY;
+  impl = MFX_IMPL_HARDWARE_ANY;
 #if WITH_D3D11_BACKEND
-  init_params.Implementation |= MFX_IMPL_VIA_D3D11;
+  impl |= MFX_IMPL_VIA_D3D11;
 #endif
-  init_params.Version.Major = GST_MFX_MIN_MSDK_VERSION_MAJOR;
-  init_params.Version.Minor = GST_MFX_MIN_MSDK_VERSION_MINOR;
 
-  sts = MFXInitEx (init_params, &session);
+  sts = MFXInit (impl, &aggregator->version, &session);
   if (sts < 0) {
     GST_ERROR ("Error initializing internal MFX session");
     return NULL;
   }
 
-  MFXQueryVersion (session, &version);
+  MFXQueryVersion (session, &aggregator->version);
 
-  GST_INFO ("Using Media SDK API version %d.%d", version.Major, version.Minor);
+  GST_INFO ("Using Media SDK API version %d.%d",
+    aggregator->version.Major, aggregator->version.Minor);
 
   MFXQueryIMPL (session, &impl);
 
@@ -255,12 +256,15 @@ gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, MFX_PLATFORM_UNKNOWN);
 
-  if (!aggregator->platform) {
-    mfxPlatform platform = { 0 };
-    mfxStatus sts =
-      MFXVideoCORE_QueryPlatform (aggregator->parent_session, &platform);
-    if (MFX_ERR_NONE == sts)
-      aggregator->platform = platform.CodeName;
+  if ((aggregator->version.Major == 1 && aggregator->version.Minor >= 19)
+      || aggregator->version.Major > 1) {
+    if (!aggregator->platform) {
+      mfxPlatform platform = { 0 };
+      mfxStatus sts =
+        MFXVideoCORE_QueryPlatform (aggregator->parent_session, &platform);
+      if (MFX_ERR_NONE == sts)
+        aggregator->platform = platform.CodeName;
+    }
   }
   return aggregator->platform;
 }
