@@ -256,11 +256,6 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!gst_video_decoder_negotiate (vdec))
     return FALSE;
 
-  /* Final check to determine if system or video memory should be used for
-   * the output of the decoder */
-  gst_mfx_decoder_should_use_video_memory (mfxdec->decoder,
-    !plugin->srcpad_caps_is_raw);
-
   mfxdec->do_renego = FALSE;
 
   return TRUE;
@@ -338,13 +333,17 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   /* Increase async depth considerably when using decodebin to avoid
    * jerky video playback resulting from threading issues */
-  parent = gst_object_get_parent (GST_OBJECT(mfxdec));
-  if (parent && !GST_IS_PIPELINE (GST_ELEMENT(parent)))
+  parent = gst_object_get_parent (GST_OBJECT (mfxdec));
+  if (parent && !GST_IS_PIPELINE (GST_ELEMENT (parent)))
     is_autoplugged = TRUE;
   gst_object_replace (&parent, NULL);
 
+  plugin->srcpad_caps_is_raw =
+      gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (plugin));
+
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,
-    extradata, mfxdec->async_depth, mfxdec->live_mode, is_autoplugged);
+    extradata, mfxdec->async_depth, plugin->srcpad_caps_is_raw,
+    mfxdec->live_mode, is_autoplugged);
 
   if (extradata)
     g_byte_array_free (extradata, FALSE);

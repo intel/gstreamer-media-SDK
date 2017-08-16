@@ -53,7 +53,8 @@ typedef enum {
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
   GstMfxProfile profile, const GstVideoInfo * info, GByteArray * codec_data,
-  mfxU16 async_depth, gboolean live_mode, gboolean is_autoplugged);
+  mfxU16 async_depth, gboolean memtype_is_system,
+  gboolean live_mode, gboolean is_autoplugged);
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder);
@@ -77,10 +78,6 @@ gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info);
 
 void
 gst_mfx_decoder_skip_corrupted_frames (GstMfxDecoder * decoder);
-
-void
-gst_mfx_decoder_should_use_video_memory (GstMfxDecoder * decoder,
-    gboolean memtype_is_video);
 
 gboolean
 gst_mfx_decoder_reset (GstMfxDecoder * decoder);
