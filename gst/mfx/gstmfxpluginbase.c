@@ -790,15 +790,13 @@ create_egl_objects (GstGLContext * context, gpointer * args)
 
     image = gst_mfx_prime_buffer_proxy_get_vaapi_image (buffer_proxy);
 
-    crop_rect = gst_mfx_surface_get_crop_rect (egl_info->surface);
-
     attrib = attribs;
     *attrib++ = EGL_LINUX_DRM_FOURCC_EXT;
     *attrib++ = DRM_FORMAT_ARGB8888;
     *attrib++ = EGL_WIDTH;
-    *attrib++ = crop_rect->width;
+    *attrib++ = gst_gl_memory_get_texture_width (gl_mem);
     *attrib++ = EGL_HEIGHT;
-    *attrib++ = crop_rect->height;
+    *attrib++ = gst_gl_memory_get_texture_height (gl_mem);
     *attrib++ = EGL_DMA_BUF_PLANE0_FD_EXT;
     *attrib++ = GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy);
     *attrib++ = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
