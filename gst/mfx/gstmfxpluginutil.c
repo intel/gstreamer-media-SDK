@@ -25,6 +25,7 @@
 #include "gst-libs/mfx/sysdeps.h"
 #include "gstmfxvideocontext.h"
 #include "gstmfxpluginutil.h"
+#include "gstmfxpluginbase.h"
 
 gboolean
 gst_mfx_ensure_aggregator (GstElement * element)
@@ -221,7 +222,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     templ = gst_caps_from_string (caps_str);
   }
   else {
-    templ = gst_pad_get_pad_template_caps(pad);
+    templ = gst_pad_get_pad_template_caps (pad);
   }
   in_caps = gst_pad_peer_query_caps (pad, templ);
 

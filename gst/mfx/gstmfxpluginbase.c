@@ -33,6 +33,15 @@
 #include "gstmfxdebug.h"
 
 #ifdef HAVE_GST_GL_LIBS
+#if GST_CHECK_VERSION(1,11,1)
+# ifndef GST_GL_TYPE_CONTEXT
+# define GST_GL_TYPE_CONTEXT GST_TYPE_GL_CONTEXT
+# endif // GST_GL_TYPE_CONTEXT
+#else
+# ifdef WITH_LIBVA_BACKEND
+# include <gst/gl/egl/gstglcontext_egl.h>
+# endif // WITH_LIBVA_BACKEND
+#endif // GST_CHECK_VERSION
 
 #ifdef WITH_LIBVA_BACKEND
 # include <EGL/egl.h>
