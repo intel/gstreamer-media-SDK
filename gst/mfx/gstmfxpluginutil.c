@@ -25,7 +25,6 @@
 #include "gst-libs/mfx/sysdeps.h"
 #include "gstmfxvideocontext.h"
 #include "gstmfxpluginutil.h"
-#include "gstmfxpluginbase.h"
 
 gboolean
 gst_mfx_ensure_aggregator (GstElement * element)
@@ -128,9 +127,76 @@ gst_mfx_video_format_new_template_caps_with_features (GstVideoFormat format,
   return caps;
 }
 
+#ifdef HAVE_GST_GL_LIBS
+gboolean
+gst_mfx_check_gl_texture_sharing (GstElement * element,
+  GstPad * pad, GstGLContext ** gl_context_ptr)
+{
+#if GST_CHECK_VERSION(1,11,2)
+  GstCaps *out_caps, *templ = NULL;
+  GstCaps *in_caps = NULL;
+  gboolean has_gl_texture_sharing = FALSE;
+  gboolean found_context = FALSE;
+  const char caps_str[] =
+    GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
+      GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "{ RGBA, BGRA }") ";";
+
+  g_return_val_if_fail (GST_IS_ELEMENT (element), FALSE);
+  g_return_val_if_fail (gl_context_ptr != NULL, FALSE);
+
+  if (*gl_context_ptr)
+    return TRUE;
+
+  templ = gst_caps_from_string (caps_str);
+  in_caps = gst_pad_peer_query_caps (pad, templ);
+
+  out_caps = gst_caps_intersect_full (templ,
+    in_caps, GST_CAPS_INTERSECT_FIRST);
+  gst_caps_unref (templ);
+
+  /* if peer caps can negotiate MFX surfaces, don't use GL sharing */
+  if (!out_caps || gst_caps_has_mfx_surface (out_caps))
+    goto done;
+
+  found_context =
+    gst_gl_query_local_gl_context (element, GST_PAD_SRC, gl_context_ptr);
+
+  if (found_context) {
+#ifdef WITH_LIBVA_BACKEND
+    has_gl_texture_sharing =
+      !(gst_gl_context_get_gl_api (*gl_context_ptr) & GST_GL_API_GLES1)
+      && gst_gl_context_check_feature (*gl_context_ptr,
+          "EGL_EXT_image_dma_buf_import");
+#else
+    /*
+     * TODO: should ideally check for "WGL_NV_DX_interop2")
+     * and that gl and dx are on the same device... but while WGL_NV_DX_interop2
+     * is reported as available in debug, a check for it still returns 0
+     * so instead we check for GL_INTEL_map_texture which is available
+     * on all intel graphics since Sandy Bridge era.
+     */
+    has_gl_texture_sharing =
+      gst_gl_context_check_feature (*gl_context_ptr, "GL_INTEL_map_texture");
+#endif
+  }
+
+done:
+  gst_caps_replace (&in_caps, NULL);
+  gst_caps_replace (&out_caps, NULL);
+  return has_gl_texture_sharing;
+#else
+  /* Assume that GL texture sharing is supported for versions < 1.11.2.
+   * This support is to be validated later on in gst_mfx_base_decide_allocation() */
+  return TRUE;
+#endif //GST_CHECK_VERSION
+}
+#endif
+
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature (GstPad * pad,
-  gboolean use_10bpc, GstVideoFormat * out_format_ptr)
+  gboolean use_10bpc, gboolean has_gl_texture_sharing,
+  GstVideoFormat * out_format_ptr)
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
   guint num_structures;
@@ -143,7 +209,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   /* Prefer 10-bit color format when requested */
   if (use_10bpc) {
 #if GST_CHECK_VERSION(1,9,1)
-    const char caps_str[] = GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
+    const char caps_str[] = GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
       GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ ENCODED, P010_10LE, NV12, BGRA }"
       ) "; "
       GST_VIDEO_CAPS_MAKE("{ P010_10LE, NV12, BGRA }");
@@ -167,11 +233,18 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     goto cleanup;
   }
 
-  if (gst_caps_has_mfx_surface (out_caps))
+  if (gst_caps_has_mfx_surface (out_caps)) {
     feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
+  }
 #ifdef HAVE_GST_GL_LIBS
-  else if (gst_caps_has_gl_memory (out_caps))
-    feature = GST_MFX_CAPS_FEATURE_GL_SURFACE;
+  else if (gst_caps_has_gl_memory (out_caps)) {
+    feature = GST_MFX_CAPS_FEATURE_GL_MEMORY;
+    if (has_gl_texture_sharing)
+      *out_format_ptr = GST_VIDEO_FORMAT_RGBA;
+    else
+      *out_format_ptr = GST_VIDEO_FORMAT_BGRA;
+    goto cleanup;
+  }
 #endif
 
   num_structures = gst_caps_get_size (out_caps);
@@ -196,9 +269,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
   }
 
 cleanup:
-  if (in_caps)
-    gst_caps_unref (in_caps);
-
+  gst_caps_replace (&in_caps, NULL);
   gst_caps_replace (&out_caps, NULL);
   return feature;
 }
@@ -216,7 +287,7 @@ gst_mfx_caps_feature_to_string (GstMfxCapsFeature feature)
       str = GST_CAPS_FEATURE_MEMORY_MFX_SURFACE;
       break;
 #ifdef HAVE_GST_GL_LIBS
-    case GST_MFX_CAPS_FEATURE_GL_SURFACE:
+    case GST_MFX_CAPS_FEATURE_GL_MEMORY:
       str = GST_CAPS_FEATURE_MEMORY_GL_MEMORY;
       break;
 #endif

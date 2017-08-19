@@ -331,6 +331,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     req1->Type |= MFX_MEMTYPE_FROM_VPPOUT;
   }
 
+  gst_mfx_task_update_video_params(filter->vpp[1], &filter->params);
   gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   return TRUE;
@@ -396,6 +397,8 @@ gst_mfx_filter_create (GstMfxFilter * filter,
   /* Initialize the filter flag */
   filter->filter_op = GST_MFX_FILTER_NONE;
 
+  gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
+
   return TRUE;
 }
 
@@ -445,7 +448,7 @@ gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
 
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  filter = g_object_new(GST_TYPE_MFX_FILTER, NULL);
+  filter = g_object_new (GST_TYPE_MFX_FILTER, NULL);
   if (!filter)
     return NULL;
 
@@ -468,7 +471,7 @@ gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
   g_return_val_if_fail(aggregator != NULL, NULL);
   g_return_val_if_fail (task != NULL, NULL);
 
-  filter = g_object_new(GST_TYPE_MFX_FILTER, NULL);
+  filter = g_object_new (GST_TYPE_MFX_FILTER, NULL);
   if (!filter)
     return NULL;
 

@@ -73,7 +73,7 @@ static const char gst_mfxdecode_src_caps_str[] =
   GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
 #ifdef HAVE_GST_GL_LIBS
   GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
-      GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "RGBA") ";"
+      GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "{ RGBA, BGRA }") ";"
 #endif
   GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
@@ -185,6 +185,7 @@ gst_mfxdec_update_sink_caps (GstMfxDec * mfxdec, GstCaps * caps)
 static gboolean
 gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
 {
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
   GstVideoDecoder *const vdec = GST_VIDEO_DECODER (mfxdec);
   GstVideoCodecState *state, *ref_state;
   GstVideoInfo *vi;
@@ -193,6 +194,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   GstMfxCapsFeature feature;
   const mfxFrameAllocRequest *request;
   gboolean use_10bpc = FALSE;
+  gboolean has_gl_texture_sharing;
 
   if (!mfxdec->input_state)
     return FALSE;
@@ -203,9 +205,20 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
 
   ref_state = mfxdec->input_state;
 
+#ifdef HAVE_GST_GL_LIBS
+  has_gl_texture_sharing =
+    gst_mfx_check_gl_texture_sharing (GST_ELEMENT (mfxdec),
+      GST_VIDEO_DECODER_SRC_PAD (vdec), &plugin->gl_context);
+#endif
+
+  /* No need to defer GL export decison to gst_mfx_plugin_base_decide_allocation()
+   * if we already have a GL context */
+  if (plugin->gl_context)
+    plugin->can_export_gl_textures = has_gl_texture_sharing;
+
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
-        use_10bpc, &output_format);
+        use_10bpc, has_gl_texture_sharing, &output_format);
 
   if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
     return FALSE;
@@ -214,7 +227,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
     features =
         gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
 #ifdef HAVE_GST_GL_LIBS
-  else if (GST_MFX_CAPS_FEATURE_GL_SURFACE == feature)
+  else if (GST_MFX_CAPS_FEATURE_GL_MEMORY == feature)
     features =
         gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_GL_MEMORY, NULL);
 #endif
@@ -600,8 +613,7 @@ static gboolean
 gst_mfxdec_sink_query (GstVideoDecoder * vdec, GstQuery * query)
 {
   gboolean ret = TRUE;
-  GstMfxDec *mfxdec = GST_MFXDEC (vdec);
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
 
   switch (GST_QUERY_TYPE (query)) {
     case GST_QUERY_CONTEXT:{
@@ -620,8 +632,7 @@ static gboolean
 gst_mfxdec_src_query (GstVideoDecoder * vdec, GstQuery * query)
 {
   gboolean ret = TRUE;
-  GstMfxDec *mfxdec = GST_MFXDEC (vdec);
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (mfxdec);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
 
   switch (GST_QUERY_TYPE (query)) {
     case GST_QUERY_CAPS:{

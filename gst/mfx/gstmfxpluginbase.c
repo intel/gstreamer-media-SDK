@@ -98,7 +98,7 @@ has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
       break;
 
     if (strstr (element_name, "v4l2src")
-      || strstr (element_name, "camerasrc")) {
+        || strstr (element_name, "camerasrc")) {
       g_object_get (element, "io-mode", &v, NULL);
       if (strncmp (element_name, "camerasrc", 9) == 0)
         is_dmabuf_capable = v == 3;
@@ -145,19 +145,19 @@ ensure_dxgl_interop (GstGLContext * context, gpointer * args)
   HANDLE* dxgl_device_out = args[1];
 
   wglDXOpenDeviceNV = (PFNWGLDXOPENDEVICENVPROC)
-    wglGetProcAddress("wglDXOpenDeviceNV");
+    gst_gl_context_get_proc_address(context, "wglDXOpenDeviceNV");
   wglDXCloseDeviceNV = (PFNWGLDXCLOSEDEVICENVPROC)
-    wglGetProcAddress("wglDXCloseDeviceNV");
+    gst_gl_context_get_proc_address(context, "wglDXCloseDeviceNV");
   wglDXRegisterObjectNV = (PFNWGLDXREGISTEROBJECTNVPROC)
-    wglGetProcAddress("wglDXRegisterObjectNV");
+    gst_gl_context_get_proc_address(context, "wglDXRegisterObjectNV");
   wglDXUnregisterObjectNV = (PFNWGLDXUNREGISTEROBJECTNVPROC)
-    wglGetProcAddress("wglDXUnregisterObjectNV");
+    gst_gl_context_get_proc_address(context, "wglDXUnregisterObjectNV");
   wglDXSetResourceShareHandleNV = (PFNWGLDXSETRESOURCESHAREHANDLENVPROC)
-    wglGetProcAddress("wglDXSetResourceShareHandleNV");
+    gst_gl_context_get_proc_address(context, "wglDXSetResourceShareHandleNV");
   wglDXLockObjectsNV = (PFNWGLDXLOCKOBJECTSNVPROC)
-    wglGetProcAddress("wglDXLockObjectsNV");
+    gst_gl_context_get_proc_address(context, "wglDXLockObjectsNV");
   wglDXUnlockObjectsNV = (PFNWGLDXUNLOCKOBJECTSNVPROC)
-    wglGetProcAddress("wglDXUnlockObjectsNV");
+    gst_gl_context_get_proc_address(context, "wglDXUnlockObjectsNV");
 
   *dxgl_device_out = wglDXOpenDeviceNV (d3d11_device);
 }
@@ -165,12 +165,13 @@ ensure_dxgl_interop (GstGLContext * context, gpointer * args)
 static void
 ensure_egl_dmabuf (GstGLContext * context, gpointer * args)
 {
-  gl_egl_image_target_texture2d_oes =
-    (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
-  egl_create_image_khr =
-    (PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
-  egl_destroy_image_khr =
-    (PFNEGLDESTROYIMAGEKHRPROC)eglGetProcAddress("eglDestroyImageKHR");
+
+  gl_egl_image_target_texture2d_oes = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)
+    gst_gl_context_get_proc_address (context, "glEGLImageTargetTexture2DOES");
+  egl_create_image_khr = (PFNEGLCREATEIMAGEKHRPROC)
+    gst_gl_context_get_proc_address (context, "eglCreateImageKHR");
+  egl_destroy_image_khr = (PFNEGLDESTROYIMAGEKHRPROC)
+    gst_gl_context_get_proc_address (context, "eglDestroyImageKHR");
 }
 #endif // WITH_D3D11_BACKEND
 #endif // HAVE_GST_GL_LIBS
@@ -257,12 +258,10 @@ gst_mfx_plugin_base_close (GstMfxPluginBase * plugin)
 
       plugin->gl_context_dxgl_handle = NULL;
     }
-#endif // WITH_D3D11_BACKEND
-
-    gst_object_unref (plugin->gl_context);
-    plugin->gl_context = NULL;
+#endif
+    gst_object_replace ((GstObject **) &plugin->gl_context, NULL);
   }
-#endif // HAVE_GST_GL_LIBS
+#endif
 
   gst_mfx_task_aggregator_replace (&plugin->aggregator, NULL);
 
@@ -498,56 +497,43 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   has_video_meta = gst_query_find_allocation_meta (query,
     GST_VIDEO_META_API_TYPE, NULL);
 
+  /* Kept in case the GL context could not be retrieved via
+   * gst_gl_query_local_gl_context() which was only introduced since 1.11.2 */
+#if !GST_CHECK_VERSION(1,11,2)
 #ifdef HAVE_GST_GL_LIBS
-  if (gst_query_find_allocation_meta (query,
+  if (!plugin->gl_context && gst_query_find_allocation_meta (query,
         GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
-
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
             &gl_context, NULL) && gl_context) {
-        if (!plugin->gl_context && plugin->aggregator) {
 #ifdef WITH_LIBVA_BACKEND
 #if !GST_CHECK_VERSION(1,11,1)
-          plugin->can_export_gl_textures =
-            (GST_IS_GL_CONTEXT_EGL (gl_context) &&
-              !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
-              gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
+        plugin->can_export_gl_textures =
+          (GST_IS_GL_CONTEXT_EGL (gl_context) &&
+            !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1)
+            && gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
                 GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
 #else
-          plugin->can_export_gl_textures =
-            !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1) &&
-            gst_gl_context_check_feature (gl_context, "EGL_EXT_image_dma_buf_import");
-
+        plugin->can_export_gl_textures =
+          !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1)
+          && gst_gl_context_check_feature (gl_context,
+              "EGL_EXT_image_dma_buf_import");
 #endif //GST_CHECK_VERSION
-          gst_gl_context_thread_add (gl_context,
-            (GstGLContextThreadFunc) ensure_egl_dmabuf, NULL);
 #else
-          GstMfxContext *context =
-              gst_mfx_task_aggregator_get_context (plugin->aggregator);
-          gpointer args[2];
-
-          /* We can assume that all Intel HD graphics supported by MSDK from 3rd
-           * generation onwards will have the WGL_NV_DX_interop2 extension */
-          plugin->can_export_gl_textures = TRUE;
-
-          args[0] = (ID3D11Device*)
-            gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device(context));
-          args[1] = &(plugin->gl_context_dxgl_handle);
-
-          gst_mfx_context_unref (context);
-
-          gst_gl_context_thread_add (gl_context,
-            (GstGLContextThreadFunc) ensure_dxgl_interop, args);
+        plugin->can_export_gl_textures =
+          gst_gl_context_check_feature (gl_context, "GL_INTEL_map_texture");
 #endif // WITH_LIBVA_BACKEND
-          plugin->can_export_gl_textures &= gst_caps_has_gl_memory (caps);
-          gst_object_replace (&plugin->gl_context, gl_context);
-        }
+        plugin->can_export_gl_textures &= gst_caps_has_gl_memory (caps);
+
+        gst_object_replace ((GstObject **) &plugin->gl_context,
+          GST_OBJECT (gl_context));
         gst_object_unref (gl_context);
       }
     }
   }
 #endif // HAVE_GST_GL_LIBS
+#endif //GST_CHECK_VERSION
 
   gst_video_info_init (&vi);
   gst_video_info_from_caps (&vi, caps);
@@ -565,9 +551,26 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 
 #ifdef HAVE_GST_GL_LIBS
   if (plugin->can_export_gl_textures) {
+#ifdef WITH_LIBVA_BACKEND
+    gst_gl_context_thread_add (plugin->gl_context,
+      (GstGLContextThreadFunc) ensure_egl_dmabuf, NULL);
+#else
+    GstMfxContext *context =
+      gst_mfx_task_aggregator_get_context (plugin->aggregator);
+    gpointer args[2];
+
+    args[0] = (ID3D11Device*)
+      gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device (context));
+    args[1] = &(plugin->gl_context_dxgl_handle);
+
+    gst_mfx_context_unref (context);
+
+    gst_gl_context_thread_add (plugin->gl_context,
+      (GstGLContextThreadFunc) ensure_dxgl_interop, args);
+#endif //WITH_LIBVA_BACKEND
     if (pool)
       gst_object_unref (pool);
-    pool = gst_gl_buffer_pool_new (gl_context);
+    pool = gst_gl_buffer_pool_new (plugin->gl_context);
     if (!pool)
       goto error_create_pool;
 
