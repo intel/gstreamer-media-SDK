@@ -112,7 +112,7 @@ video-related tasks with the GST-MFX plugins.
 Known Issues
 ------------
  - Resizing the glimagesink window while rendering a video using the DX11 - OpenGL interop feature causes the video to freeze,
- but playback continues normally. This is a GstGL bug that has been resolved since GStreamer version 1.12.2.
+ but playback continues normally. This is a GstGL bug that is not observed in GStreamer versions 1.10.5 and 1.12.2.
  - Auto-deinterlacing of H264 mixed interlaced videos during decoding does not work correctly prior to version 1.11.90.
  Since then, h264parse has been fixed to autodetect such videos before initializing the decoder.
 
