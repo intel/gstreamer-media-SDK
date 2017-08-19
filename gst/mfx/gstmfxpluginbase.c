@@ -535,6 +535,9 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 #endif // HAVE_GST_GL_LIBS
 #endif //GST_CHECK_VERSION
 
+  if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
+    goto error_ensure_aggregator;
+
   gst_video_info_init (&vi);
   gst_video_info_from_caps (&vi, caps);
 
