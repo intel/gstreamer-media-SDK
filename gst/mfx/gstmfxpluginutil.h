@@ -24,8 +24,11 @@
 #define GST_MFX_PLUGIN_UTIL_H
 
 #include "gstmfxvideomemory.h"
-#include "gstmfxpluginbase.h"
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
+
+#ifdef HAVE_GST_GL_LIBS
+# include <gst/gl/gstglcontext.h>
+#endif // HAVE_GST_GL_LIBS
 
  /* Helpers to build video caps */
 typedef enum
