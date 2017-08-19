@@ -221,8 +221,8 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
   guint task_index;
   mfxVideoParam *params;
 
-  g_return_if_fail(aggregator != NULL);
-  g_return_if_fail(task != NULL);
+  g_return_if_fail (aggregator != NULL);
+  g_return_if_fail (task != NULL);
 
   task_index = g_list_index (aggregator->tasks, task);
 

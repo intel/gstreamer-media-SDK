@@ -55,7 +55,7 @@ static const char gst_mfxpostproc_src_caps_str[] =
 GST_MFX_MAKE_OUTPUT_SURFACE_CAPS "; "
 #ifdef HAVE_GST_GL_LIBS
 GST_VIDEO_CAPS_MAKE_WITH_FEATURES(
-  GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "RGBA") ";"
+  GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "{ RGBA, BGRA }") ";"
 #endif
   GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
@@ -814,13 +814,15 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     GstPadDirection direction, GstCaps * caps)
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vpp);
   GstVideoInfo vi, peer_vi;
   GstVideoFormat out_format;
   GstCaps *out_caps, *peer_caps;
   GstMfxCapsFeature feature;
   const gchar *feature_str;
   guint width, height;
-
+  gboolean has_gl_texture_sharing;
+  
   /* Generate the sink pad caps, that could be fixated afterwards */
   if (direction == GST_PAD_SRC) {
     if (!ensure_allowed_sinkpad_caps (vpp))
@@ -885,13 +887,25 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   if (peer_caps)
     gst_caps_unref (peer_caps);
 
+#ifdef HAVE_GST_GL_LIBS
+  has_gl_texture_sharing =
+    gst_mfx_check_gl_texture_sharing (GST_ELEMENT (vpp),
+      GST_BASE_TRANSFORM_SRC_PAD (trans), &plugin->gl_context);
+#endif
+
+  /* No need to defer GL export decison to gst_mfx_plugin_base_decide_allocation()
+  * if we already have a GL context */
+  if (plugin->gl_context)
+    plugin->can_export_gl_textures = has_gl_texture_sharing;
+
   feature =
 #if GST_CHECK_VERSION(1,9,1)
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-        GST_VIDEO_INFO_FORMAT(&vi) == GST_VIDEO_FORMAT_P010_10LE, &out_format);
+        GST_VIDEO_INFO_FORMAT (&vi) == GST_VIDEO_FORMAT_P010_10LE,
+        has_gl_texture_sharing, &out_format);
 #else
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-        FALSE, &out_format);
+        FALSE, has_gl_texture_sharing, &out_format);
 #endif
   gst_video_info_change_format (&vi, out_format, width, height);
 

@@ -24,6 +24,7 @@
 #define GST_MFX_PLUGIN_UTIL_H
 
 #include "gstmfxvideomemory.h"
+#include "gstmfxpluginbase.h"
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 
  /* Helpers to build video caps */
@@ -32,7 +33,7 @@ typedef enum
   GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED,
   GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY,
   GST_MFX_CAPS_FEATURE_MFX_SURFACE,
-  GST_MFX_CAPS_FEATURE_GL_SURFACE,
+  GST_MFX_CAPS_FEATURE_GL_MEMORY,
 } GstMfxCapsFeature;
 
 #ifdef WITH_LIBVA_BACKEND
@@ -79,9 +80,16 @@ GstCaps *
 gst_mfx_video_format_new_template_caps_with_features (GstVideoFormat format,
   const gchar * features_string);
 
+#ifdef HAVE_GST_GL_LIBS
+gboolean
+gst_mfx_check_gl_texture_sharing (GstElement * element,
+  GstPad * pad, GstGLContext ** gl_context_ptr);
+#endif
+
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature (GstPad * pad,
-  gboolean use_10bpc, GstVideoFormat * out_format_ptr);
+  gboolean use_10bpc, gboolean has_gl_texture_sharing,
+  GstVideoFormat * out_format_ptr);
 
 const gchar *
 gst_mfx_caps_feature_to_string (GstMfxCapsFeature feature);

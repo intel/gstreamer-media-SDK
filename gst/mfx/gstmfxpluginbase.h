@@ -131,10 +131,10 @@ struct _GstMfxPluginBase
   GstBufferPool        *srcpad_buffer_pool;
 
   gboolean              sinkpad_has_dmabuf;
+  gboolean              can_export_gl_textures;
 
 #ifdef HAVE_GST_GL_LIBS
   GstGLContext         *gl_context;
-  gboolean              can_export_gl_textures;
 #ifdef WITH_D3D11_BACKEND
   gboolean              sinkpad_has_dxgl_interop;//TODO
   HANDLE                gl_context_dxgl_handle;
