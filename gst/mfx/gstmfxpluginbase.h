@@ -29,18 +29,18 @@
 #include <gst/video/gstvideosink.h>
 
 #ifdef HAVE_GST_GL_LIBS
-#if GST_CHECK_VERSION(1,11,1)
 # include <gst/gl/gstglcontext.h>
 
+#if GST_CHECK_VERSION(1,11,1)
 # ifndef GST_GL_TYPE_CONTEXT
 # define GST_GL_TYPE_CONTEXT GST_TYPE_GL_CONTEXT
 # endif // GST_GL_TYPE_CONTEXT
-
 #else
+# ifdef WITH_LIBVA_BACKEND
 # include <gst/gl/egl/gstglcontext_egl.h>
-
-#endif
-#endif
+# endif // WITH_LIBVA_BACKEND
+#endif // GST_CHECK_VERSION
+#endif // HAVE_GST_GL_LIBS
 
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 #include <gst-libs/mfx/gstmfxsurface.h>
