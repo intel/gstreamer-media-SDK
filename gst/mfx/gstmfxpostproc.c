@@ -821,8 +821,8 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   GstMfxCapsFeature feature;
   const gchar *feature_str;
   guint width, height;
-  gboolean has_gl_texture_sharing;
-  
+  gboolean has_gl_texture_sharing = FALSE;
+
   /* Generate the sink pad caps, that could be fixated afterwards */
   if (direction == GST_PAD_SRC) {
     if (!ensure_allowed_sinkpad_caps (vpp))
@@ -891,12 +891,12 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   has_gl_texture_sharing =
     gst_mfx_check_gl_texture_sharing (GST_ELEMENT (vpp),
       GST_BASE_TRANSFORM_SRC_PAD (trans), &plugin->gl_context);
-#endif
 
   /* No need to defer GL export decison to gst_mfx_plugin_base_decide_allocation()
   * if we already have a GL context */
   if (plugin->gl_context)
     plugin->can_export_gl_textures = has_gl_texture_sharing;
+#endif
 
   feature =
 #if GST_CHECK_VERSION(1,9,1)
