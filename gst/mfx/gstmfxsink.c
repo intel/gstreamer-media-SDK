@@ -91,6 +91,15 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * buffer);
 static gboolean
 gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height);
 
+static void
+gst_mfxsink_set_event_handling (GstMfxSink * sink, gboolean handle_events);
+
+static void
+gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay);
+
+static gboolean
+gst_mfxsink_reconfigure_window (GstMfxSink * sink);
+
 static inline gboolean
 gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
     const GstMfxRectangle * surface_rect)
@@ -107,15 +116,6 @@ gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
 #ifdef HAVE_XKBLIB
 # include <X11/XKBlib.h>
 #endif
-
-static void
-gst_mfxsink_set_event_handling (GstMfxSink * sink, gboolean handle_events);
-
-static void
-gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay);
-
-static gboolean 
-gst_mfxsink_reconfigure_window (GstMfxSink * sink);
 
 static inline KeySym
 x11_keycode_to_keysym (Display * dpy, unsigned int kc)
@@ -836,11 +836,14 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
       gst_mfx_display_replace (&sink->display, display);
       gst_mfx_display_unref (display);
     }
-    else
+    else {
 #endif  // USE_WAYLAND
 #ifdef USE_DRI3
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_X11;
 #endif // USE_DRI3
+#ifdef USE_WAYLAND
+    }
+#endif // USE_WAYLAND
   }
 
   if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_X11)

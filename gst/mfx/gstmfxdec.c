@@ -194,7 +194,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   GstMfxCapsFeature feature;
   const mfxFrameAllocRequest *request;
   gboolean use_10bpc = FALSE;
-  gboolean has_gl_texture_sharing;
+  gboolean has_gl_texture_sharing = FALSE;
 
   if (!mfxdec->input_state)
     return FALSE;
@@ -209,12 +209,12 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   has_gl_texture_sharing =
     gst_mfx_check_gl_texture_sharing (GST_ELEMENT (mfxdec),
       GST_VIDEO_DECODER_SRC_PAD (vdec), &plugin->gl_context);
-#endif
 
   /* No need to defer GL export decison to gst_mfx_plugin_base_decide_allocation()
    * if we already have a GL context */
   if (plugin->gl_context)
     plugin->can_export_gl_textures = has_gl_texture_sharing;
+#endif
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
