@@ -72,9 +72,12 @@ Run the Meson command to configure the out-of-source build.
 
 	meson ../gst-mfx-build
 
-To setup a release build:
+To setup a release build and install to the GStreamer system installation directory:
 
-	meson ../gst-mfx-build_release --buildtype=release
+	meson ../gst-mfx-build_release --libdir=/path/to/system/libs --buildtype=release
+
+Typically, the system path is /usr/lib64 (Fedora and related derivatives), /usr/lib/x86_64-linux-gnu (Ubuntu and related derivatives),
+or C:/gstreamer/1.0/x86_64/lib/gstreamer-1.0 (Windows).
 	
 To setup a VS2015 project:
 
