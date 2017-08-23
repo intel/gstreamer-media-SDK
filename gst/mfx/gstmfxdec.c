@@ -804,6 +804,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
         case MFX_PLATFORM_BROADWELL:
           if (!g_strcmp0 (name, "vp8"))
             rank = GST_RANK_PRIMARY + 3;
+#ifdef WITH_D3D11_BACKEND
           if (!g_strcmp0 (name, "hevc")) {
             mfx_codec_map[i].caps_str = "video/x-h265, "
               "alignment = (string) au, "
@@ -811,6 +812,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
               "stream-format = (string) byte-stream";
             rank = GST_RANK_PRIMARY + 3;
           }
+#endif // WITH_D3D11_BACKEND
           break;
         case MFX_PLATFORM_HASWELL:
           if (!g_strcmp0 (name, "hevc")) {
