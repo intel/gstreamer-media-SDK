@@ -50,15 +50,10 @@
 
 # include <gst/gl/egl/gstgldisplay_egl.h>
 
-typedef void *GLeglImageOES;
-typedef void(*PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)(GLenum target,
-    GLeglImageOES image);
-
 PFNEGLCREATEIMAGEKHRPROC egl_create_image_khr;
 PFNEGLDESTROYIMAGEKHRPROC egl_destroy_image_khr;
-PFNGLEGLIMAGETARGETTEXTURE2DOESPROC gl_egl_image_target_texture2d_oes;
 
-# else
+#else
 # include <GL/wglext.h>
 
 PFNWGLDXOPENDEVICENVPROC wglDXOpenDeviceNV = NULL;
@@ -172,9 +167,6 @@ ensure_dxgl_interop (GstGLContext * context, gpointer * args)
 static void
 ensure_egl_dmabuf (GstGLContext * context, gpointer * args)
 {
-
-  gl_egl_image_target_texture2d_oes = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)
-    gst_gl_context_get_proc_address (context, "glEGLImageTargetTexture2DOES");
   egl_create_image_khr = (PFNEGLCREATEIMAGEKHRPROC)
     gst_gl_context_get_proc_address (context, "eglCreateImageKHR");
   egl_destroy_image_khr = (PFNEGLDESTROYIMAGEKHRPROC)
@@ -792,6 +784,7 @@ create_egl_objects (GstGLContext * context, gpointer * args)
 
   if (gst_mfx_surface_has_video_memory (egl_info->surface)) {
     GLint attribs[13], *attrib;
+    GstGLFuncs *gl = context->gl_vtable;
     const GstMfxRectangle *crop_rect;
     GstMfxPrimeBufferProxy *buffer_proxy;
     VaapiImage *image;
@@ -839,9 +832,9 @@ create_egl_objects (GstGLContext * context, gpointer * args)
 
     egl_info->gl_texture_id = gst_gl_memory_get_texture_id (gl_mem);
 
-    glBindTexture (GL_TEXTURE_2D, egl_info->gl_texture_id);
-    gl_egl_image_target_texture2d_oes (GL_TEXTURE_2D, egl_info->egl_image);
-    glBindTexture (GL_TEXTURE_2D, 0);
+    gl->BindTexture (GL_TEXTURE_2D, egl_info->gl_texture_id);
+    gl->EGLImageTargetTexture2D (GL_TEXTURE_2D, egl_info->egl_image);
+    gl->BindTexture (GL_TEXTURE_2D, 0);
 
 done:
     vaapi_image_unref (image);
