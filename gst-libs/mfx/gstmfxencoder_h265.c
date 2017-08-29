@@ -128,20 +128,21 @@ gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
   priv->profile.codec = MFX_CODEC_HEVC;
 
   priv->plugin_uids =
-    g_list_prepend(priv->plugin_uids, &MFX_PLUGINID_HEVCE_SW);
+    g_list_prepend (priv->plugin_uids, (gpointer)&MFX_PLUGINID_HEVCE_SW);
   priv->encoder_memtype_is_system = TRUE;
 
-#if WITH_D3D11_BACKEND
+#ifdef WITH_D3D11_BACKEND
   priv->plugin_uids =
-    g_list_prepend(priv->plugin_uids, &MFX_PLUGINID_HEVCE_GACC);
+    g_list_prepend (priv->plugin_uids, (gpointer)&MFX_PLUGINID_HEVCE_GACC);
   priv->encoder_memtype_is_system = FALSE;
 #endif
   
 #if MSDK_CHECK_VERSION(1,19)
-  mfxU16 platform = gst_mfx_task_aggregator_get_platform(priv->aggregator);
-  if (platform >= MFX_PLATFORM_SKYLAKE) {
+  mfxU16 platform = gst_mfx_task_aggregator_get_platform (priv->aggregator);
+  /* platform may be unkown if there is no MFX Session running yet. */
+  if (platform == MFX_PLATFORM_UNKNOWN || platform >= MFX_PLATFORM_SKYLAKE) {
     priv->plugin_uids =
-      g_list_prepend(priv->plugin_uids, &MFX_PLUGINID_HEVCE_HW);
+      g_list_prepend (priv->plugin_uids, (gpointer)&MFX_PLUGINID_HEVCE_HW);
     priv->encoder_memtype_is_system = FALSE;
   }
 #endif
