@@ -256,16 +256,18 @@ gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, MFX_PLATFORM_UNKNOWN);
 
-  if ((aggregator->version.Major == 1 && aggregator->version.Minor >= 19)
-      || aggregator->version.Major > 1) {
-    if (!aggregator->platform) {
-      mfxPlatform platform = { 0 };
-      mfxStatus sts =
-        MFXVideoCORE_QueryPlatform (aggregator->parent_session, &platform);
-      if (MFX_ERR_NONE == sts)
-        aggregator->platform = platform.CodeName;
-    }
+  if (!aggregator->platform) {
+    mfxPlatform platform = { 0 };
+    mfxStatus sts =
+      MFXVideoCORE_QueryPlatform (aggregator->parent_session, &platform);
+    if (MFX_ERR_NONE == sts)
+      aggregator->platform = platform.CodeName;
+    else if (MFX_ERR_INVALID_HANDLE == sts)
+      GST_DEBUG ("Couldn't detect platform without any MFX Session.");
+    else if (MFX_ERR_UNSUPPORTED == sts)
+      GST_DEBUG ("Querying MFX platform isn't supported by current runtime.");
   }
+
   return aggregator->platform;
 }
 #endif
