@@ -31,16 +31,18 @@ struct _GstMfxD3D11Device
   IDXGIAdapter2 *dxgi_adapter;
 };
 
-G_DEFINE_TYPE(GstMfxD3D11Device, gst_mfx_d3d11_device, GST_TYPE_OBJECT);
+G_DEFINE_TYPE (GstMfxD3D11Device, gst_mfx_d3d11_device, GST_TYPE_OBJECT);
 
-struct {
-  mfxIMPL impl;       // actual implementation
-  mfxU32  adapter_id;  // device adapter number
+struct
+{
+  mfxIMPL impl;                 // actual implementation
+  mfxU32 adapter_id;            // device adapter number
 } impl_types[] = {
-  { MFX_IMPL_HARDWARE, 0 },
-  { MFX_IMPL_HARDWARE2, 1 },
-  { MFX_IMPL_HARDWARE3, 2 },
-  { MFX_IMPL_HARDWARE4, 3 }
+  {
+  MFX_IMPL_HARDWARE, 0}, {
+  MFX_IMPL_HARDWARE2, 1}, {
+  MFX_IMPL_HARDWARE3, 2}, {
+  MFX_IMPL_HARDWARE4, 3}
 };
 
 static void
@@ -74,7 +76,7 @@ gst_mfx_d3d11_device_class_init (GstMfxD3D11DeviceClass * klass)
 }
 
 static void
-gst_mfx_d3d11_device_init(GstMfxD3D11Device * device)
+gst_mfx_d3d11_device_init (GstMfxD3D11Device * device)
 {
   device->d3d11_device = NULL;
 }
@@ -82,33 +84,34 @@ gst_mfx_d3d11_device_init(GstMfxD3D11Device * device)
 static gboolean
 get_intel_device_adapter (GstMfxD3D11Device * device, mfxSession session)
 {
-  mfxU32  adapter_idx = 0;
-  mfxU8 i; 
+  mfxU32 adapter_idx = 0;
+  mfxU8 i;
   mfxIMPL impl;
   HRESULT hr = S_OK;
 
-  MFXQueryIMPL(session, &impl);
+  MFXQueryIMPL (session, &impl);
 
   /* Extract Media SDK base implementation type */
   mfxIMPL base_impl = MFX_IMPL_BASETYPE (impl);
 
   /* get corresponding adapter number */
-  for (i = 0; i < sizeof(impl_types) / sizeof(impl_types[0]); i++) {
+  for (i = 0; i < sizeof (impl_types) / sizeof (impl_types[0]); i++) {
     if (impl_types[i].impl == base_impl) {
       adapter_idx = impl_types[i].adapter_id;
       break;
     }
   }
 
-  hr = CreateDXGIFactory (&IID_IDXGIFactory2, (void**)(&device->dxgi_factory));
-  if (FAILED(hr))
+  hr = CreateDXGIFactory (&IID_IDXGIFactory2,
+      (void **) (&device->dxgi_factory));
+  if (FAILED (hr))
     return FALSE;
 
   hr = IDXGIFactory2_EnumAdapters (device->dxgi_factory, adapter_idx,
-    (IDXGIAdapter**)&device->dxgi_adapter);
-  if (FAILED(hr))
+      (IDXGIAdapter **) & device->dxgi_adapter);
+  if (FAILED (hr))
     return FALSE;
-  
+
   return TRUE;
 }
 
@@ -130,29 +133,26 @@ gst_mfx_d3d11_device_create (GstMfxD3D11Device * device, mfxSession session)
   UINT dx_flags = 0;
 #endif
 
-  if (!get_intel_device_adapter(device, session))
+  if (!get_intel_device_adapter (device, session))
     return FALSE;
 
-  hr = D3D11CreateDevice ((IDXGIAdapter*) device->dxgi_adapter,
-    D3D_DRIVER_TYPE_UNKNOWN,
-    NULL,
-    dx_flags,
-    feature_levels,
-    (sizeof (feature_levels) / sizeof (feature_levels[0])),
-    D3D11_SDK_VERSION,
-    &device->d3d11_device,
-    &feature_level_out,
-    &device->d3d11_context);
-  if (FAILED(hr))
+  hr = D3D11CreateDevice ((IDXGIAdapter *) device->dxgi_adapter,
+      D3D_DRIVER_TYPE_UNKNOWN,
+      NULL,
+      dx_flags,
+      feature_levels,
+      (sizeof (feature_levels) / sizeof (feature_levels[0])),
+      D3D11_SDK_VERSION,
+      &device->d3d11_device, &feature_level_out, &device->d3d11_context);
+  if (FAILED (hr))
     return FALSE;
 
   hr = ID3D11Device_QueryInterface (device->d3d11_device,
-        &IID_ID3D10Multithread, (void **)&multithread_ptr);
-  if (SUCCEEDED(hr)) {
+      &IID_ID3D10Multithread, (void **) &multithread_ptr);
+  if (SUCCEEDED (hr)) {
     ID3D10Multithread_SetMultithreadProtected (multithread_ptr, TRUE);
     ID3D10Multithread_Release (multithread_ptr);
-  }
-  else {
+  } else {
     return FALSE;
   }
 
@@ -184,29 +184,28 @@ gst_mfx_d3d11_device_ref (GstMfxD3D11Device * device)
 {
   g_return_val_if_fail (device != NULL, NULL);
 
-  return gst_object_ref (GST_OBJECT(device));
+  return gst_object_ref (GST_OBJECT (device));
 }
 
 void
 gst_mfx_d3d11_device_unref (GstMfxD3D11Device * device)
 {
-  gst_object_unref (GST_OBJECT(device));
+  gst_object_unref (GST_OBJECT (device));
 }
 
 void
 gst_mfx_d3d11_device_replace (GstMfxD3D11Device ** old_device_ptr,
-  GstMfxD3D11Device * new_device)
+    GstMfxD3D11Device * new_device)
 {
   g_return_if_fail (old_device_ptr != NULL);
 
-  gst_object_replace ((GstObject **)old_device_ptr,
-    GST_OBJECT (new_device));
+  gst_object_replace ((GstObject **) old_device_ptr, GST_OBJECT (new_device));
 }
 
 guintptr
 gst_mfx_d3d11_device_get_handle (GstMfxD3D11Device * device)
 {
-  g_return_val_if_fail (device != NULL, (guintptr)NULL);
+  g_return_val_if_fail (device != NULL, (guintptr) NULL);
 
   return (guintptr) device->d3d11_device;
 }

@@ -26,24 +26,20 @@
 #include "gstmfxdisplay_x11.h"
 
 G_BEGIN_DECLS
-
 #define GST_MFX_IS_DISPLAY_X11(display) \
   ((display) != NULL && \
   GST_MFX_DISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_X11)
-
 #define GST_MFX_DISPLAY_X11_CAST(display) \
   ((GstMfxDisplayX11 *)(display))
-
 #define GST_MFX_DISPLAY_X11_PRIVATE(display) \
   (&GST_MFX_DISPLAY_X11_CAST(display)->priv)
 
-typedef struct _GstMfxDisplayX11Private       GstMfxDisplayX11Private;
-
+typedef struct _GstMfxDisplayX11Private GstMfxDisplayX11Private;
 struct _GstMfxDisplayX11Private
 {
-  gchar   *display_name;
-  int      x11_screen;
-  guint    use_xrandr : 1;
+  gchar *display_name;
+  int x11_screen;
+  guint use_xrandr:1;
 };
 
 /**
@@ -53,7 +49,7 @@ struct _GstMfxDisplayX11Private
  */
 struct _GstMfxDisplayX11
 {
-  /*< private >*/
+  /*< private > */
   GstMfxDisplay parent_instance;
 
   GstMfxDisplayX11Private priv;
@@ -61,5 +57,4 @@ struct _GstMfxDisplayX11
 
 
 G_END_DECLS
-
 #endif /* GST_MFX_DISPLAY_X11_PRIV_H */

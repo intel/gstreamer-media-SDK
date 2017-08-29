@@ -24,7 +24,7 @@
 #include <gst/gstinfo.h>
 
 #ifdef DEBUG
-GST_DEBUG_CATEGORY_EXTERN(gst_debug_mfx);
+GST_DEBUG_CATEGORY_EXTERN (gst_debug_mfx);
 #define GST_CAT_DEFAULT gst_debug_mfx
 #endif
 

@@ -27,10 +27,9 @@
 #include "gstmfxdisplay_priv.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_DISPLAY_WAYLAND (gst_mfx_display_wayland_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxDisplayWayland, gst_mfx_display_wayland, GST_MFX, DISPLAY_WAYLAND, GstMfxDisplay)
-
+G_DECLARE_FINAL_TYPE (GstMfxDisplayWayland, gst_mfx_display_wayland, GST_MFX,
+    DISPLAY_WAYLAND, GstMfxDisplay)
 #define GST_MFX_DISPLAY_WAYLAND_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_DISPLAY_WAYLAND, \
   GstMfxDisplayWaylandClass))
@@ -39,5 +38,4 @@ GstMfxDisplay *
 gst_mfx_display_wayland_new (const gchar * display_name);
 
 G_END_DECLS
-
 #endif /* GST_MFX_DISPLAY_WAYLAND_H */

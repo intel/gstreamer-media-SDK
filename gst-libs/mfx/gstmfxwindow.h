@@ -28,11 +28,10 @@
 #include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_WINDOW (gst_mfx_window_get_type ())
 #define GST_MFX_WINDOW(obj) ((GstMfxWindow *)(obj))
 
-typedef struct _GstMfxWindow  GstMfxWindow;
+typedef struct _GstMfxWindow GstMfxWindow;
 
 GType
 gst_mfx_window_get_type (void);
@@ -45,7 +44,7 @@ gst_mfx_window_unref (GstMfxWindow * window);
 
 void
 gst_mfx_window_replace (GstMfxWindow ** old_window_ptr,
-  GstMfxWindow * new_window);
+    GstMfxWindow * new_window);
 
 GstMfxContext *
 gst_mfx_window_get_context (GstMfxWindow * window);
@@ -65,15 +64,13 @@ gst_mfx_window_get_fullscreen (GstMfxWindow * window);
 void
 gst_mfx_window_set_fullscreen (GstMfxWindow * window, gboolean fullscreen);
 
-guint
-gst_mfx_window_get_width (GstMfxWindow * window);
+guint gst_mfx_window_get_width (GstMfxWindow * window);
 
-guint
-gst_mfx_window_get_height (GstMfxWindow * window);
+guint gst_mfx_window_get_height (GstMfxWindow * window);
 
 void
 gst_mfx_window_get_size (GstMfxWindow * window, guint * width_ptr,
-  guint * height_ptr);
+    guint * height_ptr);
 
 void
 gst_mfx_window_set_width (GstMfxWindow * window, guint width);
@@ -86,12 +83,11 @@ gst_mfx_window_set_size (GstMfxWindow * window, guint width, guint height);
 
 gboolean
 gst_mfx_window_put_surface (GstMfxWindow * window,
-  GstMfxSurface * surface, const GstMfxRectangle * src_rect,
-  const GstMfxRectangle * dst_rect);
+    GstMfxSurface * surface, const GstMfxRectangle * src_rect,
+    const GstMfxRectangle * dst_rect);
 
 void
 gst_mfx_window_reconfigure (GstMfxWindow * window);
 
 G_END_DECLS
-
 #endif /* GST_MFX_WINDOW_H */

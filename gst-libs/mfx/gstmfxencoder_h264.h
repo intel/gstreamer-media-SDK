@@ -27,17 +27,14 @@
 #include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_ENCODER_H264 (gst_mfx_encoder_h264_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxEncoderH264, gst_mfx_encoder_h264, GST_MFX, ENCODER_H264, GstMfxEncoder)
-
+G_DECLARE_FINAL_TYPE (GstMfxEncoderH264, gst_mfx_encoder_h264, GST_MFX,
+    ENCODER_H264, GstMfxEncoder)
 #define GST_MFX_ENCODER_H264_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_H264, \
   GstMfxEncoderH264Class))
-
 #define GST_MFX_ENCODER_H264 (encoder) \
   ((GstMfxEncoderH264 *) (encoder))
-
 /**
  * GstMfxEncoderH264Prop:
  * @GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE:
@@ -48,7 +45,8 @@ G_DECLARE_FINAL_TYPE(GstMfxEncoderH264, gst_mfx_encoder_h264, GST_MFX, ENCODER_H
  *
  * The set of H.264 encoder specific configurable properties.
  */
-typedef enum {
+typedef enum
+{
   GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE = -1,
   GST_MFX_ENCODER_H264_PROP_LA_DEPTH = -2,
   GST_MFX_ENCODER_H264_PROP_CABAC = -3,
@@ -58,11 +56,10 @@ typedef enum {
 
 GstMfxEncoder *
 gst_mfx_encoder_h264_new (GstMfxTaskAggregator * aggregator,
-  	const GstVideoInfo * info, gboolean mapped);
+    const GstVideoInfo * info, gboolean mapped);
 
 GPtrArray *
 gst_mfx_encoder_h264_get_default_properties (void);
 
 G_END_DECLS
-
 #endif /*GST_MFX_ENCODER_H264_H */

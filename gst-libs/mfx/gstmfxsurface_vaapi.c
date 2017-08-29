@@ -37,38 +37,37 @@ struct _GstMfxSurfaceVaapi
   VaapiImage *image;
 };
 
-G_DEFINE_TYPE(GstMfxSurfaceVaapi, gst_mfx_surface_vaapi, GST_TYPE_MFX_SURFACE);
+G_DEFINE_TYPE (GstMfxSurfaceVaapi, gst_mfx_surface_vaapi, GST_TYPE_MFX_SURFACE);
 
 static gboolean
-gst_mfx_surface_vaapi_from_task(GstMfxSurface * surface,
-    GstMfxTask * task)
+gst_mfx_surface_vaapi_from_task (GstMfxSurface * surface, GstMfxTask * task)
 {
-  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
-  GstMfxMemoryId *mid = gst_mfx_task_get_memory_id(task);
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  GstMfxMemoryId *mid = gst_mfx_task_get_memory_id (task);
   if (!mid)
     return FALSE;
 
   priv->surface.Data.MemId = mid;
-  priv->surface_id = *(GstMfxID *)mid->mid;
+  priv->surface_id = *(GstMfxID *) mid->mid;
   return TRUE;
 }
 
 static gboolean
-gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
+gst_mfx_surface_vaapi_allocate (GstMfxSurface * surface, GstMfxTask * task)
 {
-  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
-  GstMfxSurfaceVaapi *const vaapi_surface = GST_MFX_SURFACE_VAAPI_CAST(surface);
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  GstMfxSurfaceVaapi *const vaapi_surface =
+      GST_MFX_SURFACE_VAAPI_CAST (surface);
 
   priv->has_video_memory = TRUE;
 
   if (task) {
     priv->context = gst_mfx_task_get_context (task);
-    vaapi_surface->display = gst_mfx_context_get_device(priv->context);
-    return gst_mfx_surface_vaapi_from_task(surface, task);
-  }
-  else {
+    vaapi_surface->display = gst_mfx_context_get_device (priv->context);
+    return gst_mfx_surface_vaapi_from_task (surface, task);
+  } else {
     mfxFrameInfo *frame_info = &priv->surface.Info;
-    guint fourcc = gst_mfx_video_format_to_va_fourcc(frame_info->FourCC);
+    guint fourcc = gst_mfx_video_format_to_va_fourcc (frame_info->FourCC);
     VASurfaceAttrib attrib;
     VAStatus sts;
 
@@ -77,15 +76,15 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
     attrib.value.type = VAGenericValueTypeInteger;
     attrib.value.value.i = fourcc;
 
-    vaapi_surface->display = gst_mfx_context_get_device(priv->context);
+    vaapi_surface->display = gst_mfx_context_get_device (priv->context);
 
-    GST_MFX_DISPLAY_LOCK(vaapi_surface->display);
-    sts = vaCreateSurfaces(GST_MFX_DISPLAY_VADISPLAY(vaapi_surface->display),
-      gst_mfx_video_format_to_va_format(frame_info->FourCC),
-      frame_info->Width, frame_info->Height,
-      &priv->surface_id, 1, &attrib, 1);
-    GST_MFX_DISPLAY_UNLOCK(vaapi_surface->display);
-    if (!vaapi_check_status(sts, "vaCreateSurfaces ()"))
+    GST_MFX_DISPLAY_LOCK (vaapi_surface->display);
+    sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (vaapi_surface->display),
+        gst_mfx_video_format_to_va_format (frame_info->FourCC),
+        frame_info->Width, frame_info->Height,
+        &priv->surface_id, 1, &attrib, 1);
+    GST_MFX_DISPLAY_UNLOCK (vaapi_surface->display);
+    if (!vaapi_check_status (sts, "vaCreateSurfaces ()"))
       return FALSE;
 
     priv->mem_id.mid = &priv->surface_id;
@@ -97,49 +96,51 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
 }
 
 static void
-gst_mfx_surface_vaapi_release(GstMfxSurface * surface)
+gst_mfx_surface_vaapi_release (GstMfxSurface * surface)
 {
-  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
-  GstMfxSurfaceVaapi *const vaapi_surface = GST_MFX_SURFACE_VAAPI_CAST(surface);
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  GstMfxSurfaceVaapi *const vaapi_surface =
+      GST_MFX_SURFACE_VAAPI_CAST (surface);
 
-  /* Don't destroy the underlying VASurface if originally from the task allocator*/
+  /* Don't destroy the underlying VASurface if originally from the task allocator */
   if (!priv->task) {
-    GST_MFX_DISPLAY_LOCK(vaapi_surface->display);
-    vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(vaapi_surface->display),
+    GST_MFX_DISPLAY_LOCK (vaapi_surface->display);
+    vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (vaapi_surface->display),
         &priv->surface_id, 1);
-    GST_MFX_DISPLAY_UNLOCK(vaapi_surface->display);
+    GST_MFX_DISPLAY_UNLOCK (vaapi_surface->display);
   }
 }
 
 static gboolean
-gst_mfx_surface_vaapi_map(GstMfxSurface * surface)
+gst_mfx_surface_vaapi_map (GstMfxSurface * surface)
 {
-  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
-  GstMfxSurfaceVaapi *const vaapi_surface = GST_MFX_SURFACE_VAAPI_CAST(surface);
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  GstMfxSurfaceVaapi *const vaapi_surface =
+      GST_MFX_SURFACE_VAAPI_CAST (surface);
   guint i, num_planes;
   gboolean success = TRUE;
 
-  vaapi_surface->image = gst_mfx_surface_vaapi_derive_image(surface);
+  vaapi_surface->image = gst_mfx_surface_vaapi_derive_image (surface);
   if (!vaapi_surface->image)
     return FALSE;
 
-  if (!vaapi_image_map(vaapi_surface->image)) {
+  if (!vaapi_image_map (vaapi_surface->image)) {
     GST_ERROR ("Failed to map VA surface.");
     success = FALSE;
     goto done;
   }
 
-  num_planes = vaapi_image_get_plane_count(vaapi_surface->image);
+  num_planes = vaapi_image_get_plane_count (vaapi_surface->image);
   for (i = 0; i < num_planes; i++) {
-    priv->planes[i] = vaapi_image_get_plane(vaapi_surface->image, i);
-    priv->pitches[i] = vaapi_image_get_pitch(vaapi_surface->image, i);
+    priv->planes[i] = vaapi_image_get_plane (vaapi_surface->image, i);
+    priv->pitches[i] = vaapi_image_get_pitch (vaapi_surface->image, i);
   }
   if (num_planes == 1)
-    vaapi_image_get_size(vaapi_surface->image, &priv->width, &priv->height);
+    vaapi_image_get_size (vaapi_surface->image, &priv->width, &priv->height);
   else {
     priv->width = priv->pitches[0];
     priv->height =
-        vaapi_image_get_offset(vaapi_surface->image, 1) / priv->width;
+        vaapi_image_get_offset (vaapi_surface->image, 1) / priv->width;
   }
 
 done:
@@ -148,24 +149,25 @@ done:
 }
 
 static void
-gst_mfx_surface_vaapi_unmap(GstMfxSurface * surface)
+gst_mfx_surface_vaapi_unmap (GstMfxSurface * surface)
 {
-  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
-  GstMfxSurfaceVaapi *const vaapi_surface = GST_MFX_SURFACE_VAAPI_CAST(surface);
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  GstMfxSurfaceVaapi *const vaapi_surface =
+      GST_MFX_SURFACE_VAAPI_CAST (surface);
   guint i, num_planes;
 
-  num_planes = vaapi_image_get_plane_count(vaapi_surface->image);
+  num_planes = vaapi_image_get_plane_count (vaapi_surface->image);
   for (i = 0; i < num_planes; i++) {
     priv->planes[i] = NULL;
     priv->pitches[i] = 0;
   }
-  vaapi_image_unmap(vaapi_surface->image);
+  vaapi_image_unmap (vaapi_surface->image);
 }
 
 static void
-gst_mfx_surface_vaapi_class_init(GstMfxSurfaceVaapiClass * klass)
+gst_mfx_surface_vaapi_class_init (GstMfxSurfaceVaapiClass * klass)
 {
-  GstMfxSurfaceClass *const surface_class = GST_MFX_SURFACE_CLASS(klass);
+  GstMfxSurfaceClass *const surface_class = GST_MFX_SURFACE_CLASS (klass);
 
   surface_class->allocate = gst_mfx_surface_vaapi_allocate;
   surface_class->release = gst_mfx_surface_vaapi_release;
@@ -174,74 +176,75 @@ gst_mfx_surface_vaapi_class_init(GstMfxSurfaceVaapiClass * klass)
 }
 
 static void
-gst_mfx_surface_vaapi_init(GstMfxSurfaceVaapi * surface)
+gst_mfx_surface_vaapi_init (GstMfxSurfaceVaapi * surface)
 {
 }
 
 GstMfxSurface *
 gst_mfx_surface_vaapi_new (GstMfxContext * context, const GstVideoInfo * info)
 {
-  GstMfxSurfaceVaapi * surface;
+  GstMfxSurfaceVaapi *surface;
 
   g_return_val_if_fail (context != NULL, NULL);
   g_return_val_if_fail (info != NULL, NULL);
 
-  surface = g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL);
+  surface = g_object_new (GST_TYPE_MFX_SURFACE_VAAPI, NULL);
   if (!surface)
     return NULL;
 
   return
-    gst_mfx_surface_new_internal(GST_MFX_SURFACE(surface),
-        context, info, NULL);
+      gst_mfx_surface_new_internal (GST_MFX_SURFACE (surface),
+      context, info, NULL);
 }
 
 GstMfxSurface *
-gst_mfx_surface_vaapi_new_from_task(GstMfxTask * task)
+gst_mfx_surface_vaapi_new_from_task (GstMfxTask * task)
 {
 
-  GstMfxSurfaceVaapi * surface;
+  GstMfxSurfaceVaapi *surface;
 
   g_return_val_if_fail (task != NULL, NULL);
 
-  surface = g_object_new(GST_TYPE_MFX_SURFACE_VAAPI, NULL);
+  surface = g_object_new (GST_TYPE_MFX_SURFACE_VAAPI, NULL);
   if (!surface)
     return NULL;
 
   return
-    gst_mfx_surface_new_internal(GST_MFX_SURFACE(surface),
+      gst_mfx_surface_new_internal (GST_MFX_SURFACE (surface),
       NULL, NULL, task);
 }
 
 VaapiImage *
-gst_mfx_surface_vaapi_derive_image(GstMfxSurface * surface)
+gst_mfx_surface_vaapi_derive_image (GstMfxSurface * surface)
 {
-  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE(surface);
-  GstMfxSurfaceVaapi *const vaapi_surface = GST_MFX_SURFACE_VAAPI_CAST(surface);
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  GstMfxSurfaceVaapi *const vaapi_surface =
+      GST_MFX_SURFACE_VAAPI_CAST (surface);
   VAImage va_image;
   VAStatus status;
 
-  g_return_val_if_fail(surface != NULL, NULL);
+  g_return_val_if_fail (surface != NULL, NULL);
 
   va_image.image_id = VA_INVALID_ID;
   va_image.buf = VA_INVALID_ID;
 
-  GST_MFX_DISPLAY_LOCK(vaapi_surface->display);
-  status = vaDeriveImage(GST_MFX_DISPLAY_VADISPLAY(vaapi_surface->display),
-    priv->surface_id, &va_image);
-  GST_MFX_DISPLAY_UNLOCK(vaapi_surface->display);
-  if (!vaapi_check_status(status, "vaDeriveImage ()"))
+  GST_MFX_DISPLAY_LOCK (vaapi_surface->display);
+  status = vaDeriveImage (GST_MFX_DISPLAY_VADISPLAY (vaapi_surface->display),
+      priv->surface_id, &va_image);
+  GST_MFX_DISPLAY_UNLOCK (vaapi_surface->display);
+  if (!vaapi_check_status (status, "vaDeriveImage ()"))
     return NULL;
 
   if (va_image.image_id == VA_INVALID_ID || va_image.buf == VA_INVALID_ID)
     return NULL;
 
-  return vaapi_image_new_with_image(vaapi_surface->display, &va_image);
+  return vaapi_image_new_with_image (vaapi_surface->display, &va_image);
 }
 
 GstMfxDisplay *
-gst_mfx_surface_vaapi_get_display(GstMfxSurface * surface)
+gst_mfx_surface_vaapi_get_display (GstMfxSurface * surface)
 {
-  g_return_val_if_fail(surface != NULL, NULL);
+  g_return_val_if_fail (surface != NULL, NULL);
 
-  return gst_mfx_display_ref(GST_MFX_SURFACE_VAAPI_CAST(surface)->display);
+  return gst_mfx_display_ref (GST_MFX_SURFACE_VAAPI_CAST (surface)->display);
 }

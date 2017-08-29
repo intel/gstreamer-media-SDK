@@ -24,10 +24,9 @@
 #include "sysdeps.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_D3D11_DEVICE (gst_mfx_d3d11_device_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxD3D11Device, gst_mfx_d3d11_device, GST_MFX, D3D11_DEVICE, GstObject)
-
+G_DECLARE_FINAL_TYPE (GstMfxD3D11Device, gst_mfx_d3d11_device, GST_MFX,
+    D3D11_DEVICE, GstObject)
 #define GST_MFX_DEVICE(obj) ((GstMfxD3D11Device *) (obj))
 
 typedef struct _GstMfxD3D11Device GstMfxD3D11Device;
@@ -36,24 +35,23 @@ GstMfxD3D11Device *
 gst_mfx_d3d11_device_new (mfxSession session);
 
 GstMfxD3D11Device *
-gst_mfx_d3d11_device_ref(GstMfxD3D11Device * device);
+gst_mfx_d3d11_device_ref (GstMfxD3D11Device * device);
 
 void
-gst_mfx_d3d11_device_unref(GstMfxD3D11Device * device);
+gst_mfx_d3d11_device_unref (GstMfxD3D11Device * device);
 
 void
-gst_mfx_d3d11_device_replace(GstMfxD3D11Device ** old_device_ptr,
-  GstMfxD3D11Device * new_device);
+gst_mfx_d3d11_device_replace (GstMfxD3D11Device ** old_device_ptr,
+    GstMfxD3D11Device * new_device);
 
 guintptr
-gst_mfx_d3d11_device_get_handle(GstMfxD3D11Device * device);
+gst_mfx_d3d11_device_get_handle (GstMfxD3D11Device * device);
 
 IDXGIFactory2 *
-gst_mfx_d3d11_device_get_factory(GstMfxD3D11Device * device);
+gst_mfx_d3d11_device_get_factory (GstMfxD3D11Device * device);
 
 ID3D11DeviceContext *
-gst_mfx_d3d11_device_get_d3d11_context(GstMfxD3D11Device * device);
+gst_mfx_d3d11_device_get_d3d11_context (GstMfxD3D11Device * device);
 
 G_END_DECLS
-
 #endif /* GST_MFX_D3D11_DEVICE_H */

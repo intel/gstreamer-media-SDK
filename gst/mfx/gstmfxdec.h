@@ -25,37 +25,35 @@
 #include <gst-libs/mfx/gstmfxdecoder.h>
 
 G_BEGIN_DECLS
-
 #define GST_MFXDEC(obj) ((GstMfxDec *)(obj))
 
 typedef struct _GstMfxDec GstMfxDec;
 typedef struct _GstMfxDecClass GstMfxDecClass;
 
-struct _GstMfxDec {
-  /*< private >*/
-  GstMfxPluginBase     parent_instance;
+struct _GstMfxDec
+{
+  /*< private > */
+  GstMfxPluginBase parent_instance;
 
-  GstCaps             *sinkpad_caps;
-  GstCaps             *srcpad_caps;
-  GstMfxDecoder       *decoder;
-  guint                async_depth;
-  gboolean             live_mode;
-  gboolean             skip_corrupted_frames;
+  GstCaps *sinkpad_caps;
+  GstCaps *srcpad_caps;
+  GstMfxDecoder *decoder;
+  guint async_depth;
+  gboolean live_mode;
+  gboolean skip_corrupted_frames;
 
-  GstVideoCodecState  *input_state;
-  volatile gboolean    do_renego;
+  GstVideoCodecState *input_state;
+  volatile gboolean do_renego;
 };
 
-struct _GstMfxDecClass {
-  /*< private >*/
+struct _GstMfxDecClass
+{
+  /*< private > */
   GstMfxPluginBaseClass parent_class;
 };
 
-gboolean gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform);
-
+gboolean
+gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform);
 
 G_END_DECLS
-
-
 #endif /* __GST_MFX_DEC_H__ */
-

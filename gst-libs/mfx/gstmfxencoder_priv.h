@@ -32,20 +32,14 @@
 #include <mfxplugin.h>
 
 G_BEGIN_DECLS
-
 #define GST_MFX_ENCODER_CAST(encoder) \
   ((GstMfxEncoder *)(encoder))
-
 #define GST_MFX_ENCODER_GET_PRIVATE(encoder) \
   (GST_MFX_ENCODER_CAST (encoder)->priv)
-
 #define GST_MFX_ENCODER_CLASS(klass) \
   ((GstMfxEncoderClass *)(klass))
-
 #define GST_MFX_ENCODER_GET_CLASS(obj) \
   GST_MFX_ENCODER_CLASS(GST_OBJECT_GET_CLASS(obj))
-
-
 /**
  * GST_MFX_ENCODER_VIDEO_INFO:
  * @encoder: a #GstMfxEncoder
@@ -56,7 +50,6 @@ G_BEGIN_DECLS
 #undef  GST_MFX_ENCODER_VIDEO_INFO
 #define GST_MFX_ENCODER_VIDEO_INFO(encoder) \
   (&(encoder)->info)
-
 /**
  * GST_MFX_ENCODER_WIDTH:
  * @encoder: a #GstMfxEncoder
@@ -67,7 +60,6 @@ G_BEGIN_DECLS
 #undef  GST_MFX_ENCODER_WIDTH
 #define GST_MFX_ENCODER_WIDTH(encoder) \
   (GST_MFX_ENCODER_VIDEO_INFO (encoder)->width)
-
 /**
  * GST_MFX_ENCODER_HEIGHT:
  * @encoder: a #GstMfxEncoder
@@ -78,7 +70,6 @@ G_BEGIN_DECLS
 #undef  GST_MFX_ENCODER_HEIGHT
 #define GST_MFX_ENCODER_HEIGHT(encoder) \
   (GST_MFX_ENCODER_VIDEO_INFO (encoder)->height)
-
 /**
  * GST_MFX_ENCODER_FPS_N:
  * @encoder: a #GstMfxEncoder
@@ -89,7 +80,6 @@ G_BEGIN_DECLS
 #undef  GST_MFX_ENCODER_FPS_N
 #define GST_MFX_ENCODER_FPS_N(encoder) \
   (GST_MFX_ENCODER_VIDEO_INFO (encoder)->fps_n)
-
 /**
  * GST_MFX_ENCODER_FPS_D:
  * @encoder: a #GstMfxEncoder
@@ -100,7 +90,6 @@ G_BEGIN_DECLS
 #undef  GST_MFX_ENCODER_FPS_D
 #define GST_MFX_ENCODER_FPS_D(encoder) \
   (GST_MFX_ENCODER_VIDEO_INFO (encoder)->fps_d)
-
 /**
  * GST_MFX_ENCODER_RATE_CONTROL:
  * @encoder: a #GstMfxEncoder
@@ -111,7 +100,6 @@ G_BEGIN_DECLS
 #undef  GST_MFX_ENCODER_RATE_CONTROL
 #define GST_MFX_ENCODER_RATE_CONTROL(encoder) \
   ((encoder)->rc_method)
-
 /**
  * GST_MFX_ENCODER_PRESET
  * @encoder: a #GstMfxEncoder
@@ -122,15 +110,14 @@ G_BEGIN_DECLS
 #undef  GST_MFX_ENCODER_PRESET
 #define GST_MFX_ENCODER_PRESET(encoder) \
   (GST_MFX_ENCODER_CAST (encoder)->preset)
-
 #define GST_MFX_TYPE_ENCODER_PRESET \
   (gst_mfx_encoder_preset_get_type ())
-
 typedef struct _GstMfxEncoderClass GstMfxEncoderClass;
 typedef struct _GstMfxEncoderClassData GstMfxEncoderClassData;
 
 /* Private GstMfxEncoderPropInfo definition */
-typedef struct {
+typedef struct
+{
   gint prop;
   GParamSpec *pspec;
 } GstMfxEncoderPropData;
@@ -141,82 +128,81 @@ typedef struct {
     return NULL;                                                      \
 } while (0)
 
-GPtrArray *
-gst_mfx_encoder_properties_append(GPtrArray * props, gint prop_id,
-  GParamSpec *pspec);
+GPtrArray *gst_mfx_encoder_properties_append (GPtrArray * props, gint prop_id,
+    GParamSpec * pspec);
 
-GPtrArray *
-gst_mfx_encoder_properties_get_default(const GstMfxEncoderClass * klass);
+GPtrArray *gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass *
+    klass);
 
 
-typedef struct _GstMfxEncoderPrivate          GstMfxEncoderPrivate;
+typedef struct _GstMfxEncoderPrivate GstMfxEncoderPrivate;
 
 struct _GstMfxEncoderPrivate
 {
-  GstMfxEncoder          *parent;
-  GPtrArray              *properties;
-  GstMfxProfile           profile;
+  GstMfxEncoder *parent;
+  GPtrArray *properties;
+  GstMfxProfile profile;
 
-  GstMfxTaskAggregator   *aggregator;
-  GstMfxTask             *encode;
-  GstMfxFilter           *filter;
-  GByteArray             *bitstream;
-  gboolean                encoder_memtype_is_system;
-  gboolean                input_memtype_is_system;
-  gboolean                shared;
-  gboolean                inited;
+  GstMfxTaskAggregator *aggregator;
+  GstMfxTask *encode;
+  GstMfxFilter *filter;
+  GByteArray *bitstream;
+  gboolean encoder_memtype_is_system;
+  gboolean input_memtype_is_system;
+  gboolean shared;
+  gboolean inited;
 
-  mfxSession              session;
-  mfxVideoParam           params;
-  mfxFrameInfo            frame_info;
-  mfxBitstream            bs;
-  GList                  *plugin_uids;
-  mfxPluginUID           *plugin_uid;
-  GstVideoInfo            info;
+  mfxSession session;
+  mfxVideoParam params;
+  mfxFrameInfo frame_info;
+  mfxBitstream bs;
+  GList *plugin_uids;
+  mfxPluginUID *plugin_uid;
+  GstVideoInfo info;
 
-  GstClockTime            current_pts;
-  GstClockTime            duration;
+  GstClockTime current_pts;
+  GstClockTime duration;
 
   /* Encoder params */
-  GstMfxEncoderPreset     preset;
-  GstMfxRateControl       rc_method;
-  guint                   global_quality;
-  mfxU16                  bitrate;
-  mfxU16                  brc_multiplier;
-  mfxU16                  max_buffer_size;
-  mfxU16                  vbv_max_bitrate;
-  mfxU16                  async_depth;
-  mfxU16                  la_depth;
-  mfxU16                  gop_size;
-  gint                    gop_refdist;
-  gint                    idr_interval;
-  mfxU16                  num_refs;
-  mfxU16                  num_slices;
-  mfxU16                  qpi_offset;
-  mfxU16                  qpp_offset;
-  mfxU16                  qpb_offset;
-  mfxU16                  avbr_accuracy;
-  mfxU16                  avbr_convergence;
-  mfxU16                  jpeg_quality;
+  GstMfxEncoderPreset preset;
+  GstMfxRateControl rc_method;
+  guint global_quality;
+  mfxU16 bitrate;
+  mfxU16 brc_multiplier;
+  mfxU16 max_buffer_size;
+  mfxU16 vbv_max_bitrate;
+  mfxU16 async_depth;
+  mfxU16 la_depth;
+  mfxU16 gop_size;
+  gint gop_refdist;
+  gint idr_interval;
+  mfxU16 num_refs;
+  mfxU16 num_slices;
+  mfxU16 qpi_offset;
+  mfxU16 qpp_offset;
+  mfxU16 qpb_offset;
+  mfxU16 avbr_accuracy;
+  mfxU16 avbr_convergence;
+  mfxU16 jpeg_quality;
 
-  mfxExtCodingOption      extco;
-  mfxExtCodingOption2     extco2;
-  mfxExtHEVCParam         exthevc;
-  mfxExtBuffer           *extparam_internal[3];
-  int                     nb_extparam_internal;
+  mfxExtCodingOption extco;
+  mfxExtCodingOption2 extco2;
+  mfxExtHEVCParam exthevc;
+  mfxExtBuffer *extparam_internal[3];
+  int nb_extparam_internal;
 
   /* H264 specific coding options */
-  gboolean                use_cabac;
-  gint                    max_slice_size;
+  gboolean use_cabac;
+  gint max_slice_size;
 
-  GstMfxOption            mbbrc;
-  GstMfxOption            extbrc;
-  GstMfxOption            b_strategy;
-  GstMfxOption            adaptive_i;
-  GstMfxOption            adaptive_b;
+  GstMfxOption mbbrc;
+  GstMfxOption extbrc;
+  GstMfxOption b_strategy;
+  GstMfxOption adaptive_i;
+  GstMfxOption adaptive_b;
 
-  mfxU16                  look_ahead_downsampling;
-  mfxU16                  trellis;
+  mfxU16 look_ahead_downsampling;
+  mfxU16 trellis;
 };
 
 /**
@@ -226,17 +212,17 @@ struct _GstMfxEncoderPrivate
 */
 struct _GstMfxEncoder
 {
-	/*< private >*/
-	GstObject				 parent_instance;
+  /*< private > */
+  GstObject parent_instance;
 
-	GstMfxEncoderPrivate	*priv;
+  GstMfxEncoderPrivate *priv;
 };
 
 
 struct _GstMfxEncoderClassData
 {
-  /*< private >*/
-  GType(*rate_control_get_type)(void);
+  /*< private > */
+  GType (*rate_control_get_type) (void);
   GstMfxRateControl default_rate_control;
   guint32 rate_control_mask;
 };
@@ -256,31 +242,32 @@ struct _GstMfxEncoderClassData
 
 struct _GstMfxEncoderClass
 {
-  /*< private >*/
+  /*< private > */
   GstObjectClass parent_class;
 
-  /*< protected >*/
+  /*< protected > */
   const GstMfxEncoderClassData *class_data;
 
-  /*< public >*/
-  gboolean                (*create) (GstMfxEncoder * encoder);
-  void                    (*finalize) (GstMfxEncoder * encoder);
-  GstMfxEncoderStatus     (*reconfigure) (GstMfxEncoder * encoder);
-  GPtrArray *             (*get_default_properties) (void);
-  GstMfxEncoderStatus     (*set_property) (GstMfxEncoder * encoder, gint prop_id, const GValue * value);
+  /*< public > */
+    gboolean (*create) (GstMfxEncoder * encoder);
+  void (*finalize) (GstMfxEncoder * encoder);
+    GstMfxEncoderStatus (*reconfigure) (GstMfxEncoder * encoder);
+  GPtrArray *(*get_default_properties) (void);
+    GstMfxEncoderStatus (*set_property) (GstMfxEncoder * encoder, gint prop_id,
+      const GValue * value);
   /* get_codec_data can be NULL */
-  GstMfxEncoderStatus     (*get_codec_data) (GstMfxEncoder * encoder, GstBuffer ** codec_data);
+    GstMfxEncoderStatus (*get_codec_data) (GstMfxEncoder * encoder,
+      GstBuffer ** codec_data);
 };
 
 
 GstMfxEncoder *
-gst_mfx_encoder_new (GstMfxEncoder *encoder,
-  GstMfxTaskAggregator * aggregator,
-  const GstVideoInfo * info, gboolean mapped);
+gst_mfx_encoder_new (GstMfxEncoder * encoder,
+    GstMfxTaskAggregator * aggregator,
+    const GstVideoInfo * info, gboolean mapped);
 
 void
 gst_mfx_encoder_finalize (GObject * object);
 
 G_END_DECLS
-
 #endif /* GST_MFX_ENCODER_PRIV_H */

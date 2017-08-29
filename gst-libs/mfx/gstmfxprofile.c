@@ -37,7 +37,7 @@ struct _GstMfxProfileMap
 static const GstMfxProfileMap gst_mfx_profiles[] = {
   {MFX_PROFILE_MPEG2_SIMPLE, MFX_CODEC_MPEG2,
       "video/mpeg, mpegversion=2", "simple"},
-  {MFX_PROFILE_MPEG2_MAIN , MFX_CODEC_MPEG2,
+  {MFX_PROFILE_MPEG2_MAIN, MFX_CODEC_MPEG2,
       "video/mpeg, mpegversion=2", "main"},
   {MFX_PROFILE_MPEG2_HIGH, MFX_CODEC_MPEG2,
       "video/mpeg, mpegversion=2", "high"},
@@ -64,8 +64,8 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
       "video/x-vp9", NULL},
 #endif
   /* Order reversed so that main profile has a higher score than main-10 */
-  { MFX_PROFILE_HEVC_MAIN10, MFX_CODEC_HEVC,
-      "video/x-h265", "main-10" },
+  {MFX_PROFILE_HEVC_MAIN10, MFX_CODEC_HEVC,
+      "video/x-h265", "main-10"},
   {MFX_PROFILE_HEVC_MAIN, MFX_CODEC_HEVC,
       "video/x-h265", "main"},
   {MFX_PROFILE_UNKNOWN,}
@@ -86,8 +86,7 @@ gst_mfx_profile_from_codec_data_h264 (GstBuffer * buffer)
   switch (buf[1]) {             /* AVCProfileIndication */
     case 66:
       return ((buf[2] & 0x40) ?
-          MFX_PROFILE_AVC_CONSTRAINED_BASELINE :
-          MFX_PROFILE_AVC_BASELINE);
+          MFX_PROFILE_AVC_CONSTRAINED_BASELINE : MFX_PROFILE_AVC_BASELINE);
     case 77:
       return MFX_PROFILE_AVC_MAIN;
     case 100:
@@ -163,7 +162,8 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
   GstCaps *caps_test;
   GstStructure *structure;
   const gchar *profile_str;
-  GstMfxProfile profile = { 0 }, best_profile = { 0 };
+  GstMfxProfile profile = { 0 }, best_profile = {
+  0};
   GstBuffer *codec_data = NULL;
   const gchar *name;
   gsize namelen;
@@ -198,8 +198,7 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
         profile = best_profile;
     }
     if (!profile.profile) {
-      profile =
-          gst_mfx_profile_from_codec_data (m->codec, codec_data);
+      profile = gst_mfx_profile_from_codec_data (m->codec, codec_data);
     }
     gst_caps_unref (caps_test);
   }

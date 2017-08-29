@@ -27,7 +27,6 @@
 #include <gst-libs/mfx/gstmfxencoder.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFXENC \
   (gst_mfxenc_get_type ())
 #define GST_MFXENC_CAST(obj) \
@@ -42,38 +41,40 @@ G_BEGIN_DECLS
   (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXENC))
 #define GST_IS_MFXENC_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXENC))
-
 typedef struct _GstMfxEnc GstMfxEnc;
 typedef struct _GstMfxEncClass GstMfxEncClass;
 
 struct _GstMfxEnc
 {
-  /*< private >*/
+  /*< private > */
   GstMfxPluginBase parent_instance;
 
-  GstMfxEncoder 			*encoder;
-  GstVideoCodecState 	*input_state;
-  gboolean 						 input_state_changed;
+  GstMfxEncoder *encoder;
+  GstVideoCodecState *input_state;
+  gboolean input_state_changed;
 
   /* needs to be set by the subclass implementation */
-  gboolean 						 need_codec_data;
-  GstVideoCodecState	*output_state;
-  GPtrArray 					*prop_values;
+  gboolean need_codec_data;
+  GstVideoCodecState *output_state;
+  GPtrArray *prop_values;
 };
 
 struct _GstMfxEncClass
 {
-  /*< private >*/
+  /*< private > */
   GstMfxPluginBaseClass parent_class;
 
-  GPtrArray *      	(*get_properties) (void);
-  gboolean      		(*get_property)   (GstMfxEnc * encode, guint prop_id, GValue * value);
-  gboolean      		(*set_property)   (GstMfxEnc * encode, guint prop_id, const GValue * value);
+  GPtrArray *(*get_properties) (void);
+  gboolean (*get_property) (GstMfxEnc * encode, guint prop_id,
+      GValue * value);
+  gboolean (*set_property) (GstMfxEnc * encode, guint prop_id,
+      const GValue * value);
 
-  gboolean      		(*set_config)     (GstMfxEnc * encode);
-  GstCaps *      		(*get_caps)       (GstMfxEnc * encode);
-  GstMfxEncoder *		(*alloc_encoder)  (GstMfxEnc * encode);
-  GstFlowReturn  		(*format_buffer)  (GstMfxEnc * encode, GstBuffer * in_buffer, GstBuffer ** out_buffer_ptr);
+  gboolean (*set_config) (GstMfxEnc * encode);
+  GstCaps *(*get_caps) (GstMfxEnc * encode);
+  GstMfxEncoder *(*alloc_encoder) (GstMfxEnc * encode);
+  GstFlowReturn (*format_buffer) (GstMfxEnc * encode, GstBuffer * in_buffer,
+      GstBuffer ** out_buffer_ptr);
 };
 
 GType
@@ -86,5 +87,4 @@ gboolean
 gst_mfxenc_class_init_properties (GstMfxEncClass * encode_class);
 
 G_END_DECLS
-
 #endif /* GST_MFXENC_H */

@@ -45,12 +45,11 @@ struct _GstMfxPrimeBufferProxy
   guint data_size;
 };
 
-G_DEFINE_TYPE(GstMfxPrimeBufferProxy,
-  gst_mfx_prime_buffer_proxy,
-  GST_TYPE_OBJECT);
+G_DEFINE_TYPE (GstMfxPrimeBufferProxy,
+    gst_mfx_prime_buffer_proxy, GST_TYPE_OBJECT);
 
 typedef VAStatus (*vaExtGetSurfaceHandle) (VADisplay dpy,
-  VASurfaceID * surface, int *prime_fd);
+    VASurfaceID * surface, int *prime_fd);
 
 static vaExtGetSurfaceHandle g_va_get_surface_handle;
 
@@ -91,14 +90,15 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
   proxy->display = gst_mfx_surface_vaapi_get_display (proxy->surface);
   proxy->image = gst_mfx_surface_vaapi_derive_image (proxy->surface);
   if (!proxy->image) {
-    GST_ERROR("Could not derive image.");
+    GST_ERROR ("Could not derive image.");
     return FALSE;
   }
   vaapi_image_get_image (proxy->image, &va_img);
 
   if (vpg_load_symbol ("vpgExtGetSurfaceHandle")) {
     GST_MFX_DISPLAY_LOCK (proxy->display);
-    va_status = g_va_get_surface_handle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
+    va_status =
+        g_va_get_surface_handle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
         &surf, &proxy->fd);
     GST_MFX_DISPLAY_UNLOCK (proxy->display);
     if (!vaapi_check_status (va_status, "vpgExtGetSurfaceHandle ()"))
@@ -106,7 +106,8 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
   } else {
     proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
     GST_MFX_DISPLAY_LOCK (proxy->display);
-    va_status = vaAcquireBufferHandle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
+    va_status =
+        vaAcquireBufferHandle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
         va_img.buf, &proxy->buf_info);
     GST_MFX_DISPLAY_UNLOCK (proxy->display);
     if (!vaapi_check_status (va_status, "vaAcquireBufferHandle ()"))
@@ -121,18 +122,18 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
 static void
 gst_mfx_prime_buffer_proxy_finalize (GObject * object)
 {
-  GstMfxPrimeBufferProxy *proxy = GST_MFX_PRIME_BUFFER_PROXY(object);
+  GstMfxPrimeBufferProxy *proxy = GST_MFX_PRIME_BUFFER_PROXY (object);
 
   if (g_va_get_surface_handle) {
     close (proxy->fd);
-  }
-  else {
+  } else {
     VAImage va_img;
 
     vaapi_image_get_image (proxy->image, &va_img);
 
     GST_MFX_DISPLAY_LOCK (proxy->display);
-    vaReleaseBufferHandle (GST_MFX_DISPLAY_VADISPLAY (proxy->display), va_img.buf);
+    vaReleaseBufferHandle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
+        va_img.buf);
     GST_MFX_DISPLAY_UNLOCK (proxy->display);
   }
 
@@ -142,14 +143,14 @@ gst_mfx_prime_buffer_proxy_finalize (GObject * object)
 }
 
 static void
-gst_mfx_prime_buffer_proxy_class_init(GstMfxPrimeBufferProxyClass * klass)
+gst_mfx_prime_buffer_proxy_class_init (GstMfxPrimeBufferProxyClass * klass)
 {
-  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
   object_class->finalize = gst_mfx_prime_buffer_proxy_finalize;
 }
 
 static void
-gst_mfx_prime_buffer_proxy_init(GstMfxPrimeBufferProxy * proxy)
+gst_mfx_prime_buffer_proxy_init (GstMfxPrimeBufferProxy * proxy)
 {
 }
 
@@ -160,7 +161,7 @@ gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface)
 
   g_return_val_if_fail (surface != NULL, NULL);
 
-  proxy = g_object_new(GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL);
+  proxy = g_object_new (GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL);
   if (!proxy)
     return NULL;
 
@@ -180,13 +181,13 @@ gst_mfx_prime_buffer_proxy_ref (GstMfxPrimeBufferProxy * proxy)
 {
   g_return_val_if_fail (proxy != NULL, NULL);
 
-  return gst_object_ref(GST_OBJECT(proxy));
+  return gst_object_ref (GST_OBJECT (proxy));
 }
 
 void
 gst_mfx_prime_buffer_proxy_unref (GstMfxPrimeBufferProxy * proxy)
 {
-  gst_object_unref(GST_OBJECT(proxy));
+  gst_object_unref (GST_OBJECT (proxy));
 }
 
 void
@@ -195,7 +196,7 @@ gst_mfx_prime_buffer_proxy_replace (GstMfxPrimeBufferProxy ** old_proxy_ptr,
 {
   g_return_if_fail (old_proxy_ptr != NULL);
 
-  gst_object_replace((GstObject **)old_proxy_ptr, GST_OBJECT(new_proxy));
+  gst_object_replace ((GstObject **) old_proxy_ptr, GST_OBJECT (new_proxy));
 }
 
 guintptr

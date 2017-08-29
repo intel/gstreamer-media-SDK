@@ -35,7 +35,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_mfx_jpeg_encode_debug);
 
 static const char gst_mfxenc_jpeg_sink_caps_str[] =
     GST_MFX_MAKE_INPUT_SURFACE_CAPS "; "
-    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
+GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxenc_jpeg_src_caps_str[] = GST_CODEC_CAPS;
 
@@ -116,7 +116,7 @@ gst_mfxenc_jpeg_alloc_encoder (GstMfxEnc * base)
     return base->encoder;
 
   return gst_mfx_encoder_jpeg_new (plugin->aggregator, &plugin->sinkpad_info,
-            plugin->sinkpad_caps_is_raw);
+      plugin->sinkpad_caps_is_raw);
 }
 
 static void

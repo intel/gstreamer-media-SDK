@@ -94,11 +94,9 @@ gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height);
 static void
 gst_mfxsink_set_event_handling (GstMfxSink * sink, gboolean handle_events);
 
-static void
-gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay);
+static void gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay);
 
-static gboolean
-gst_mfxsink_reconfigure_window (GstMfxSink * sink);
+static gboolean gst_mfxsink_reconfigure_window (GstMfxSink * sink);
 
 static inline gboolean
 gst_mfxsink_render_surface (GstMfxSink * sink, GstMfxSurface * surface,
@@ -282,8 +280,7 @@ static gboolean
 configure_notify_event_pending (GstMfxSink * sink, Window window,
     guint width, guint height)
 {
-  GstMfxDisplayX11 *const x11_display =
-      GST_MFX_DISPLAY_X11 (sink->display);
+  GstMfxDisplayX11 *const x11_display = GST_MFX_DISPLAY_X11 (sink->display);
   ConfigureNotifyEventPendingArgs args;
   XEvent xev;
 
@@ -307,15 +304,14 @@ gst_mfxsink_x11_create_window (GstMfxSink * sink, guint width, guint height)
 {
   g_return_val_if_fail (sink->window == NULL, FALSE);
   sink->window = gst_mfx_window_x11_new (sink->display, sink->device_context,
-                    width, height);
+      width, height);
   if (!sink->window)
     return FALSE;
   return TRUE;
 }
 
 static gboolean
-gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
-    guintptr window)
+gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink, guintptr window)
 {
   Window rootwin;
   unsigned int width, height, border_width, depth;
@@ -324,8 +320,8 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
 
   gst_mfx_display_lock (sink->display);
   XGetGeometry (gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11
-          (sink->display)), xid, &rootwin, &x, &y, &width, &height, &border_width,
-      &depth);
+          (sink->display)), xid, &rootwin, &x, &y, &width, &height,
+      &border_width, &depth);
   gst_mfx_display_unlock (sink->display);
 
   if ((width != sink->window_width || height != sink->window_height) &&
@@ -336,7 +332,7 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
     sink->window_height = height;
   }
 
-  if (!sink->window || (Window)(GST_MFX_WINDOW_ID (sink->window)) != xid) {
+  if (!sink->window || (Window) (GST_MFX_WINDOW_ID (sink->window)) != xid) {
     gst_mfx_window_replace (&sink->window, NULL);
     sink->window = gst_mfx_window_x11_new_with_xid (sink->display, xid);
     if (!sink->window)
@@ -398,11 +394,11 @@ gst_mfxsink_backend_wayland (void)
 static gboolean
 gst_mfxsink_d3d11_create_window (GstMfxSink * sink, guint width, guint height)
 {
-  GstVideoInfo *const info = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(sink);
+  GstVideoInfo *const info = GST_MFX_PLUGIN_BASE_SINK_PAD_INFO (sink);
 
   g_return_val_if_fail (sink->window == NULL, FALSE);
   sink->window = gst_mfx_window_d3d11_new (sink->device_context, info,
-    sink->keep_aspect, sink->fullscreen);
+      sink->keep_aspect, sink->fullscreen);
   if (!sink->window)
     return FALSE;
   return TRUE;
@@ -424,19 +420,19 @@ gst_mfxsink_backend_d3d11 (void)
 
 #ifdef WITH_LIBVA_BACKEND
 static void
-gst_mfxsink_video_overlay_set_event_handling(GstVideoOverlay * overlay,
-  gboolean handle_events)
+gst_mfxsink_video_overlay_set_event_handling (GstVideoOverlay * overlay,
+    gboolean handle_events)
 {
-  GstMfxSink *const sink = GST_MFXSINK(overlay);
+  GstMfxSink *const sink = GST_MFXSINK (overlay);
 
-  gst_mfxsink_set_event_handling(sink, handle_events);
+  gst_mfxsink_set_event_handling (sink, handle_events);
 }
 
 static void
-gst_mfxsink_video_overlay_set_render_rectangle(GstVideoOverlay * overlay,
-  gint x, gint y, gint width, gint height)
+gst_mfxsink_video_overlay_set_render_rectangle (GstVideoOverlay * overlay,
+    gint x, gint y, gint width, gint height)
 {
-  GstMfxSink *const sink = GST_MFXSINK(overlay);
+  GstMfxSink *const sink = GST_MFXSINK (overlay);
   GstMfxRectangle *const display_rect = &sink->display_rect;
 
   display_rect->x = x;
@@ -444,38 +440,37 @@ gst_mfxsink_video_overlay_set_render_rectangle(GstVideoOverlay * overlay,
   display_rect->width = width;
   display_rect->height = height;
 
-  GST_DEBUG("render rect (%d,%d):%ux%u",
-    display_rect->x, display_rect->y,
-    display_rect->width, display_rect->height);
+  GST_DEBUG ("render rect (%d,%d):%ux%u",
+      display_rect->x, display_rect->y,
+      display_rect->width, display_rect->height);
 }
 
 static void
-gst_mfxsink_video_overlay_expose(GstVideoOverlay * overlay)
+gst_mfxsink_video_overlay_expose (GstVideoOverlay * overlay)
 {
-  GstMfxSink *const sink = GST_MFXSINK(overlay);
+  GstMfxSink *const sink = GST_MFXSINK (overlay);
 
-  gst_mfxsink_reconfigure_window(sink);
+  gst_mfxsink_reconfigure_window (sink);
 }
 
 static void
-gst_mfxsink_video_overlay_set_window_handle(GstVideoOverlay * overlay,
-  guintptr window)
+gst_mfxsink_video_overlay_set_window_handle (GstVideoOverlay * overlay,
+    guintptr window)
 {
-  GstMfxSink *const sink = GST_MFXSINK(overlay);
+  GstMfxSink *const sink = GST_MFXSINK (overlay);
 
   sink->foreign_window = TRUE;
   if (sink->backend && sink->backend->create_window_from_handle)
-    sink->backend->create_window_from_handle(sink, window);
+    sink->backend->create_window_from_handle (sink, window);
 }
-#endif  // WITH_LIBVA_BACKEND
+#endif // WITH_LIBVA_BACKEND
 
 static void
 gst_mfxsink_video_overlay_iface_init (GstVideoOverlayInterface * iface)
 {
 #if WITH_LIBVA_BACKEND
   iface->set_window_handle = gst_mfxsink_video_overlay_set_window_handle;
-  iface->set_render_rectangle =
-      gst_mfxsink_video_overlay_set_render_rectangle;
+  iface->set_render_rectangle = gst_mfxsink_video_overlay_set_render_rectangle;
   iface->expose = gst_mfxsink_video_overlay_expose;
   iface->handle_events = gst_mfxsink_video_overlay_set_event_handling;
 #endif
@@ -627,7 +622,7 @@ gst_mfxsink_set_display_name (GstMfxSink * sink, const gchar * display_name)
   g_free (sink->display_name);
   sink->display_name = g_strdup (display_name);
 }
-#endif  // WITH_LIBVA_BACKEND
+#endif // WITH_LIBVA_BACKEND
 
 static void
 gst_mfxsink_set_render_backend (GstMfxSink * sink)
@@ -638,8 +633,9 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
   switch (sink->display_type_req) {
 #ifdef USE_DRI3
     case GST_MFX_DISPLAY_TYPE_X11:
-      display = gst_mfx_display_x11_new (
-          g_object_new(GST_TYPE_MFX_DISPLAY_X11, NULL), sink->display_name);
+      display =
+          gst_mfx_display_x11_new (g_object_new (GST_TYPE_MFX_DISPLAY_X11,
+              NULL), sink->display_name);
       if (!display)
         goto display_unsupported;
       sink->backend = gst_mfxsink_backend_x11 ();
@@ -657,7 +653,7 @@ gst_mfxsink_set_render_backend (GstMfxSink * sink)
       sink->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
       break;
 #endif
-display_unsupported:
+    display_unsupported:
     default:
       GST_ERROR ("display type %s not supported",
           get_display_type_name (sink->display_type_req));
@@ -670,7 +666,7 @@ display_unsupported:
     gst_mfx_display_unref (display);
   }
 #else
-  sink->backend = gst_mfxsink_backend_d3d11();
+  sink->backend = gst_mfxsink_backend_d3d11 ();
 #endif
 }
 
@@ -734,7 +730,7 @@ gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height)
   GST_DEBUG ("render rect (%d,%d):%ux%u",
       display_rect->x, display_rect->y,
       display_rect->width, display_rect->height);
-#endif  // WITH_LIBVA_BACKEND
+#endif // WITH_LIBVA_BACKEND
   return TRUE;
 }
 
@@ -753,7 +749,6 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
     *height_ptr = sink->window_height;
     return;
   }
-
 #ifdef WITH_LIBVA_BACKEND
   GstVideoRectangle src_rect, dst_rect, out_rect;
   guint num, den, display_width, display_height, display_par_n, display_par_d;
@@ -792,7 +787,7 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
 #else
   if (sink->window)
     gst_mfx_window_get_size (sink->window, width_ptr, height_ptr);
-#endif  // WITH_LIBVA_BACKEND
+#endif // WITH_LIBVA_BACKEND
 }
 
 static gboolean
@@ -813,10 +808,10 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
   GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
 
   if (!sink->foreign_window)
-    gst_mfx_window_replace(&sink->window, NULL);
+    gst_mfx_window_replace (&sink->window, NULL);
 
   gst_mfx_composite_filter_replace (&sink->composite_filter, NULL);
-  gst_mfx_context_replace(&sink->device_context, NULL);
+  gst_mfx_context_replace (&sink->device_context, NULL);
 
   gst_mfx_plugin_base_close (GST_MFX_PLUGIN_BASE (sink));
   return TRUE;
@@ -827,7 +822,7 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
 {
   GstCaps *out_caps;
 #ifdef WITH_LIBVA_BACKEND
-  GstMfxSink *const sink = GST_MFXSINK_CAST(base_sink);
+  GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
   if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_ANY) {
 #ifdef USE_WAYLAND
     GstMfxDisplay *display = gst_mfx_display_wayland_new (sink->display_name);
@@ -835,9 +830,8 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_WAYLAND;
       gst_mfx_display_replace (&sink->display, display);
       gst_mfx_display_unref (display);
-    }
-    else {
-#endif  // USE_WAYLAND
+    } else {
+#endif // USE_WAYLAND
 #ifdef USE_DRI3
       sink->display_type_req = GST_MFX_DISPLAY_TYPE_X11;
 #endif // USE_DRI3
@@ -847,12 +841,12 @@ gst_mfxsink_get_caps_impl (GstBaseSink * base_sink)
   }
 
   if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_X11)
-    out_caps = gst_mfx_video_format_new_template_caps_with_features(
-      GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
-  else
-#endif  // WITH_LIBVA_BACKEND
     out_caps =
-        gst_static_pad_template_get_caps(&gst_mfxsink_sink_factory);
+        gst_mfx_video_format_new_template_caps_with_features
+        (GST_VIDEO_FORMAT_BGRA, GST_CAPS_FEATURE_MEMORY_MFX_SURFACE);
+  else
+#endif // WITH_LIBVA_BACKEND
+    out_caps = gst_static_pad_template_get_caps (&gst_mfxsink_sink_factory);
 
   return out_caps;
 }
@@ -882,7 +876,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
 
   gst_mfxsink_set_render_backend (sink);
   sink->device_context =
-    gst_mfx_task_aggregator_get_context(plugin->aggregator);
+      gst_mfx_task_aggregator_get_context (plugin->aggregator);
 
   if (!gst_mfx_plugin_base_set_caps (plugin, caps, NULL))
     return FALSE;
@@ -899,8 +893,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
   if (sink->window) {
     if (!sink->foreign_window || sink->fullscreen)
       gst_mfx_window_set_size (sink->window, win_width, win_height);
-  }
-  else {
+  } else {
     gst_video_overlay_prepare_window_handle (GST_VIDEO_OVERLAY (sink));
     if (sink->window)
       return TRUE;
@@ -955,12 +948,12 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
     overlay = cmeta->overlay;
 
     if (!sink->composite_filter)
-      sink->composite_filter = gst_mfx_composite_filter_new(plugin->aggregator,
+      sink->composite_filter = gst_mfx_composite_filter_new (plugin->aggregator,
           !gst_mfx_surface_has_video_memory (surface));
 
     composition = gst_mfx_surface_composition_new (surface, overlay);
     if (!composition) {
-      GST_ERROR("Failed to create new surface composition");
+      GST_ERROR ("Failed to create new surface composition");
       goto error;
     }
 
@@ -969,7 +962,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
   }
   gst_mfx_context_lock (sink->device_context);
   if (!gst_mfxsink_render_surface (sink,
-        composite_surface ? composite_surface : surface, surface_rect))
+          composite_surface ? composite_surface : surface, surface_rect))
     goto error;
 
   ret = GST_FLOW_OK;

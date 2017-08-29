@@ -241,9 +241,7 @@ GST_BIT_WRITER_WRITE_BITS (8)
 GST_BIT_WRITER_WRITE_BITS (16)
 GST_BIT_WRITER_WRITE_BITS (32)
 GST_BIT_WRITER_WRITE_BITS (64)
-
 #undef GST_BIT_WRITER_WRITE_BITS
-
 /**
  * gst_bit_writer_put_bytes:
  * @bitwriter: a #GstBitWriter instance

@@ -57,25 +57,22 @@ plugin_init (GstPlugin * plugin)
   GstPluginFeature *vc1parse = NULL;
   mfxU16 platform = 0;
 
-  GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
-    "mfx", 0, "MFX Plugins loader");
+  GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "mfx", 0, "MFX Plugins loader");
 
   if (!gst_mfx_is_mfx_supported (&platform)) {
     GST_DEBUG ("No Intel MFX platform detected - skipping registration");
     return TRUE;
   }
-
 #if defined(HAVE_GST_GL_LIBS) && defined(WITH_LIBVA_BACKEND)
-  setenv("GST_GL_PLATFORM", "egl", 1);
+  setenv ("GST_GL_PLATFORM", "egl", 1);
 #endif // HAVE_GST_GL_LIBS
 
-  vc1parse = gst_registry_lookup_feature (gst_registry_get(), "vc1parse");
+  vc1parse = gst_registry_lookup_feature (gst_registry_get (), "vc1parse");
   if (vc1parse) {
     gst_plugin_feature_set_rank (vc1parse, GST_RANK_MARGINAL);
     gst_object_unref (vc1parse);
     vc1parse = NULL;
   }
-
 #ifdef MFX_DECODER
   ret |= gst_mfxdec_register (plugin, platform);
 #endif

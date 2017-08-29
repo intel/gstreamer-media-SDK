@@ -29,7 +29,6 @@
 #include <mfxvideo.h>
 
 G_BEGIN_DECLS
-
 /**
  * GstMfxID:
  *
@@ -85,7 +84,8 @@ typedef gsize GstMfxID;
  * A rectangle region within a surface.
  */
 typedef struct _GstMfxRectangle GstMfxRectangle;
-struct _GstMfxRectangle {
+struct _GstMfxRectangle
+{
   guint32 x;
   guint32 y;
   guint32 width;
@@ -93,25 +93,29 @@ struct _GstMfxRectangle {
 };
 
 typedef struct _GstMfxMemoryId GstMfxMemoryId;
-struct _GstMfxMemoryId {
-  mfxMemId                mid;
-  mfxMemId                mid_stage;
-  mfxU16                  rw;
-  mfxFrameInfo           *info;
+struct _GstMfxMemoryId
+{
+  mfxMemId mid;
+  mfxMemId mid_stage;
+  mfxU16 rw;
+  mfxFrameInfo *info;
 };
 
-enum {
+enum
+{
   MFX_SURFACE_READ = (1 << 0),
   MFX_SURFACE_WRITE = (1 << 1),
 };
 
-typedef enum {
+typedef enum
+{
   GST_MFX_OPTION_AUTO = -1,
   GST_MFX_OPTION_OFF,
   GST_MFX_OPTION_ON,
 } GstMfxOption;
 
-typedef enum {
+typedef enum
+{
   GST_MFX_RATECONTROL_NONE = 0,
   GST_MFX_RATECONTROL_CQP = MFX_RATECONTROL_CQP,
   GST_MFX_RATECONTROL_CBR = MFX_RATECONTROL_CBR,
@@ -130,5 +134,4 @@ typedef enum {
   (1U << G_PASTE(GST_MFX_RATECONTROL_,RC))
 
 G_END_DECLS
-
 #endif /* GST_MFX_TYPES_H */

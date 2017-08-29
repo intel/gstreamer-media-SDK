@@ -107,16 +107,14 @@ has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
       else
         is_dmabuf_capable = v == 5;     /* "dmabuf-import" enum value */
       break;
-    }
-    else if (GST_IS_BASE_TRANSFORM (element)) {
+    } else if (GST_IS_BASE_TRANSFORM (element)) {
       if (sscanf (element_name, "capsfilter%d", &v) != 1)
         break;
 
       pad = gst_element_get_static_pad (element, "sink");
       if (!pad)
         break;
-    }
-    else
+    } else
       break;
 
     g_free (element_name);
@@ -143,23 +141,24 @@ clean_dxgl_interop (GstGLContext * context, HANDLE dxgl_handle)
 static void
 ensure_dxgl_interop (GstGLContext * context, gpointer * args)
 {
-  ID3D11Device* d3d11_device = args[0];
-  HANDLE* dxgl_device_out = args[1];
+  ID3D11Device *d3d11_device = args[0];
+  HANDLE *dxgl_device_out = args[1];
 
   wglDXOpenDeviceNV = (PFNWGLDXOPENDEVICENVPROC)
-    gst_gl_context_get_proc_address(context, "wglDXOpenDeviceNV");
+      gst_gl_context_get_proc_address (context, "wglDXOpenDeviceNV");
   wglDXCloseDeviceNV = (PFNWGLDXCLOSEDEVICENVPROC)
-    gst_gl_context_get_proc_address(context, "wglDXCloseDeviceNV");
+      gst_gl_context_get_proc_address (context, "wglDXCloseDeviceNV");
   wglDXRegisterObjectNV = (PFNWGLDXREGISTEROBJECTNVPROC)
-    gst_gl_context_get_proc_address(context, "wglDXRegisterObjectNV");
+      gst_gl_context_get_proc_address (context, "wglDXRegisterObjectNV");
   wglDXUnregisterObjectNV = (PFNWGLDXUNREGISTEROBJECTNVPROC)
-    gst_gl_context_get_proc_address(context, "wglDXUnregisterObjectNV");
+      gst_gl_context_get_proc_address (context, "wglDXUnregisterObjectNV");
   wglDXSetResourceShareHandleNV = (PFNWGLDXSETRESOURCESHAREHANDLENVPROC)
-    gst_gl_context_get_proc_address(context, "wglDXSetResourceShareHandleNV");
+      gst_gl_context_get_proc_address (context,
+      "wglDXSetResourceShareHandleNV");
   wglDXLockObjectsNV = (PFNWGLDXLOCKOBJECTSNVPROC)
-    gst_gl_context_get_proc_address(context, "wglDXLockObjectsNV");
+      gst_gl_context_get_proc_address (context, "wglDXLockObjectsNV");
   wglDXUnlockObjectsNV = (PFNWGLDXUNLOCKOBJECTSNVPROC)
-    gst_gl_context_get_proc_address(context, "wglDXUnlockObjectsNV");
+      gst_gl_context_get_proc_address (context, "wglDXUnlockObjectsNV");
 
   *dxgl_device_out = wglDXOpenDeviceNV (d3d11_device);
 }
@@ -168,9 +167,9 @@ static void
 ensure_egl_dmabuf (GstGLContext * context, gpointer * args)
 {
   egl_create_image_khr = (PFNEGLCREATEIMAGEKHRPROC)
-    gst_gl_context_get_proc_address (context, "eglCreateImageKHR");
+      gst_gl_context_get_proc_address (context, "eglCreateImageKHR");
   egl_destroy_image_khr = (PFNEGLDESTROYIMAGEKHRPROC)
-    gst_gl_context_get_proc_address (context, "eglDestroyImageKHR");
+      gst_gl_context_get_proc_address (context, "eglDestroyImageKHR");
 }
 #endif // WITH_D3D11_BACKEND
 #endif // HAVE_GST_GL_LIBS
@@ -200,7 +199,7 @@ void
 gst_mfx_plugin_base_class_init (GstMfxPluginBaseClass * klass)
 {
   GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
-    "mfxtaskaggregator", 0, "MFX Context");
+      "mfxtaskaggregator", 0, "MFX Context");
 
   plugin_parent_class = g_type_class_peek_parent (klass);
 
@@ -210,12 +209,11 @@ gst_mfx_plugin_base_class_init (GstMfxPluginBaseClass * klass)
 
 void
 gst_mfx_plugin_base_init (GstMfxPluginBase * plugin,
-  GstDebugCategory * debug_category)
+    GstDebugCategory * debug_category)
 {
   plugin->debug_category = debug_category;
 
-  GST_DEBUG_CATEGORY_INIT (debug_category,
-    "mfxpluginbase", 0, "MFX Context");
+  GST_DEBUG_CATEGORY_INIT (debug_category, "mfxpluginbase", 0, "MFX Context");
 
   /* sink pad */
   plugin->sinkpad = gst_element_get_static_pad (GST_ELEMENT (plugin), "sink");
@@ -252,13 +250,13 @@ gst_mfx_plugin_base_close (GstMfxPluginBase * plugin)
 #ifdef WITH_D3D11_BACKEND
     if (plugin->gl_context_dxgl_handle) {
       gst_gl_context_thread_add (plugin->gl_context,
-        (GstGLContextThreadFunc) clean_dxgl_interop,
-        plugin->gl_context_dxgl_handle);
+          (GstGLContextThreadFunc) clean_dxgl_interop,
+          plugin->gl_context_dxgl_handle);
 
       plugin->gl_context_dxgl_handle = NULL;
     }
 #endif
-    gst_object_replace ((GstObject **) &plugin->gl_context, NULL);
+    gst_object_replace ((GstObject **) & plugin->gl_context, NULL);
   }
 #endif
 
@@ -312,7 +310,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
 #endif // WITH_LIBVA_BACKEND
 
   plugin->sinkpad_caps_is_raw = !plugin->sinkpad_has_dmabuf &&
-    !gst_caps_has_mfx_surface (caps);
+      !gst_caps_has_mfx_surface (caps);
 
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
@@ -329,7 +327,7 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
   }
 
   pool = gst_mfx_video_buffer_pool_new (plugin->aggregator,
-    plugin->sinkpad_caps_is_raw);
+      plugin->sinkpad_caps_is_raw);
   if (!pool)
     goto error_create_pool;
 
@@ -339,9 +337,9 @@ ensure_sinkpad_buffer_pool (GstMfxPluginBase * plugin, GstCaps * caps)
 
   config = gst_buffer_pool_get_config (pool);
   gst_buffer_pool_config_set_params (config, caps,
-    plugin->sinkpad_buffer_size, 0, 0);
+      plugin->sinkpad_buffer_size, 0, 0);
   gst_buffer_pool_config_add_option (config,
-    GST_BUFFER_POOL_OPTION_MFX_VIDEO_META);
+      GST_BUFFER_POOL_OPTION_MFX_VIDEO_META);
   gst_buffer_pool_config_add_option (config, GST_BUFFER_POOL_OPTION_VIDEO_META);
   if (!gst_buffer_pool_set_config (pool, config))
     goto error_pool_config;
@@ -376,7 +374,7 @@ error_pool_config:
  */
 gboolean
 gst_mfx_plugin_base_set_caps (GstMfxPluginBase * plugin, GstCaps * incaps,
-  GstCaps * outcaps)
+    GstCaps * outcaps)
 {
   if (outcaps && outcaps != plugin->srcpad_caps) {
     gst_caps_replace (&plugin->srcpad_caps, outcaps);
@@ -411,7 +409,7 @@ gst_mfx_plugin_base_set_caps (GstMfxPluginBase * plugin, GstCaps * incaps,
  */
 gboolean
 gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
-  GstQuery * query)
+    GstQuery * query)
 {
   GstCaps *caps = NULL;
   gboolean need_pool;
@@ -420,22 +418,22 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
 
   if (need_pool) {
     if (!caps) {
-      GST_INFO_OBJECT(plugin, "no caps specified");
+      GST_INFO_OBJECT (plugin, "no caps specified");
       return FALSE;
     }
     if (!ensure_sinkpad_buffer_pool (plugin, caps))
       return FALSE;
     gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
-      plugin->sinkpad_buffer_size, 0, 0);
+        plugin->sinkpad_buffer_size, 0, 0);
 #ifdef WITH_LIBVA_BACKEND
     if (plugin->sinkpad_has_dmabuf) {
       GstStructure *const config =
-        gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
+          gst_buffer_pool_get_config (plugin->sinkpad_buffer_pool);
 
       gst_buffer_pool_config_add_option (config,
-        GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
+          GST_BUFFER_POOL_OPTION_DMABUF_MEMORY);
       if (!gst_buffer_pool_set_config (plugin->sinkpad_buffer_pool, config)) {
-        GST_ERROR_OBJECT(plugin, "failed to reset buffer pool config");
+        GST_ERROR_OBJECT (plugin, "failed to reset buffer pool config");
         return FALSE;
       }
     }
@@ -473,7 +471,7 @@ gst_mfx_plugin_base_set_pool_config (GstBufferPool * pool, const gchar * option)
  */
 gboolean
 gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
-  GstQuery * query)
+    GstQuery * query)
 {
   GstCaps *caps = NULL;
   GstBufferPool *pool;
@@ -494,39 +492,39 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     goto error_no_caps;
 
   has_video_meta = gst_query_find_allocation_meta (query,
-    GST_VIDEO_META_API_TYPE, NULL);
+      GST_VIDEO_META_API_TYPE, NULL);
 
   /* Kept in case the GL context could not be retrieved via
    * gst_gl_query_local_gl_context() which was only introduced since 1.11.2 */
 #if !GST_CHECK_VERSION(1,11,2)
 #ifdef HAVE_GST_GL_LIBS
   if (!plugin->gl_context && gst_query_find_allocation_meta (query,
-        GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
+          GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
     if (params) {
       if (gst_structure_get (params, "gst.gl.GstGLContext", GST_GL_TYPE_CONTEXT,
-            &gl_context, NULL) && gl_context) {
+              &gl_context, NULL) && gl_context) {
 #ifdef WITH_LIBVA_BACKEND
 #if !GST_CHECK_VERSION(1,11,1)
         plugin->can_export_gl_textures =
-          (GST_IS_GL_CONTEXT_EGL (gl_context) &&
+            (GST_IS_GL_CONTEXT_EGL (gl_context) &&
             !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1)
             && gst_gl_check_extension ("EGL_EXT_image_dma_buf_import",
                 GST_GL_CONTEXT_EGL (gl_context)->egl_exts));
 #else
         plugin->can_export_gl_textures =
-          !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1)
-          && gst_gl_context_check_feature (gl_context,
-              "EGL_EXT_image_dma_buf_import");
+            !(gst_gl_context_get_gl_api (gl_context) & GST_GL_API_GLES1)
+            && gst_gl_context_check_feature (gl_context,
+            "EGL_EXT_image_dma_buf_import");
 #endif //GST_CHECK_VERSION
 #else
         plugin->can_export_gl_textures =
-          gst_gl_context_check_feature (gl_context, "GL_INTEL_map_texture");
+            gst_gl_context_check_feature (gl_context, "GL_INTEL_map_texture");
 #endif // WITH_LIBVA_BACKEND
         plugin->can_export_gl_textures &= gst_caps_has_gl_memory (caps);
 
-        gst_object_replace ((GstObject **) &plugin->gl_context,
-          GST_OBJECT (gl_context));
+        gst_object_replace ((GstObject **) & plugin->gl_context,
+            GST_OBJECT (gl_context));
         gst_object_unref (gl_context);
       }
     }
@@ -544,8 +542,7 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     gst_query_parse_nth_allocation_pool (query, 0, &pool, &size, &min, &max);
     update_pool = TRUE;
     size = MAX (size, vi.size);
-  }
-  else {
+  } else {
     pool = NULL;
     size = vi.size;
     min = max = 0;
@@ -555,20 +552,20 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   if (plugin->can_export_gl_textures) {
 #ifdef WITH_LIBVA_BACKEND
     gst_gl_context_thread_add (plugin->gl_context,
-      (GstGLContextThreadFunc) ensure_egl_dmabuf, NULL);
+        (GstGLContextThreadFunc) ensure_egl_dmabuf, NULL);
 #else
     GstMfxContext *context =
-      gst_mfx_task_aggregator_get_context (plugin->aggregator);
+        gst_mfx_task_aggregator_get_context (plugin->aggregator);
     gpointer args[2];
 
-    args[0] = (ID3D11Device*)
-      gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device (context));
+    args[0] = (ID3D11Device *)
+        gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device (context));
     args[1] = &(plugin->gl_context_dxgl_handle);
 
     gst_mfx_context_unref (context);
 
     gst_gl_context_thread_add (plugin->gl_context,
-      (GstGLContextThreadFunc) ensure_dxgl_interop, args);
+        (GstGLContextThreadFunc) ensure_dxgl_interop, args);
 #endif //WITH_LIBVA_BACKEND
     if (pool)
       gst_object_unref (pool);
@@ -579,38 +576,37 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
     config = gst_buffer_pool_get_config (pool);
     gst_buffer_pool_config_set_params (config, caps, size, min, max);
     gst_buffer_pool_config_add_option (config,
-      GST_BUFFER_POOL_OPTION_VIDEO_META);
+        GST_BUFFER_POOL_OPTION_VIDEO_META);
     if (!gst_buffer_pool_set_config (pool, config))
       goto config_failed;
-  }
-  else
+  } else
 #endif
     /* GstMfxVideoMeta is mandatory, and this implies VA surface memory */
-    if (!pool || !gst_buffer_pool_has_option (pool,
-      GST_BUFFER_POOL_OPTION_MFX_VIDEO_META)) {
-      GST_INFO_OBJECT (plugin, "%s. Making a new pool", pool == NULL ? "No pool" :
+  if (!pool || !gst_buffer_pool_has_option (pool,
+          GST_BUFFER_POOL_OPTION_MFX_VIDEO_META)) {
+    GST_INFO_OBJECT (plugin, "%s. Making a new pool", pool == NULL ? "No pool" :
         "Pool not configured with GstMfxVideoMeta option");
-      if (pool)
-        gst_object_unref (pool);
-      pool = gst_mfx_video_buffer_pool_new (plugin->aggregator,
+    if (pool)
+      gst_object_unref (pool);
+    pool = gst_mfx_video_buffer_pool_new (plugin->aggregator,
         plugin->srcpad_caps_is_raw);
-      if (!pool)
-        goto error_create_pool;
+    if (!pool)
+      goto error_create_pool;
 
-      config = gst_buffer_pool_get_config (pool);
-      gst_buffer_pool_config_set_params (config, caps, size, min, max);
-      gst_buffer_pool_config_add_option (config,
+    config = gst_buffer_pool_get_config (pool);
+    gst_buffer_pool_config_set_params (config, caps, size, min, max);
+    gst_buffer_pool_config_add_option (config,
         GST_BUFFER_POOL_OPTION_MFX_VIDEO_META);
-      if (!gst_buffer_pool_set_config (pool, config))
-        goto config_failed;
+    if (!gst_buffer_pool_set_config (pool, config))
+      goto config_failed;
 
-      /* Check whether GstVideoMeta, or GstVideoAlignment, is needed (raw video) */
-      if (has_video_meta) {
-        if (!gst_mfx_plugin_base_set_pool_config (pool,
-          GST_BUFFER_POOL_OPTION_VIDEO_META))
-          goto config_failed;
-      }
+    /* Check whether GstVideoMeta, or GstVideoAlignment, is needed (raw video) */
+    if (has_video_meta) {
+      if (!gst_mfx_plugin_base_set_pool_config (pool,
+              GST_BUFFER_POOL_OPTION_VIDEO_META))
+        goto config_failed;
     }
+  }
 
   if (update_pool)
     gst_query_set_nth_allocation_pool (query, 0, pool, size, min, max);
@@ -642,8 +638,8 @@ config_failed:
     if (pool)
       gst_object_unref (pool);
     GST_ELEMENT_ERROR (plugin, RESOURCE, SETTINGS,
-      ("Failed to configure the buffer pool"),
-      ("Configuration is most likely invalid, please report this issue."));
+        ("Failed to configure the buffer pool"),
+        ("Configuration is most likely invalid, please report this issue."));
     return FALSE;
   }
 }
@@ -663,7 +659,7 @@ config_failed:
  */
 GstFlowReturn
 gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
-  GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
+    GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
 {
   GstMfxVideoMeta *meta;
   GstBuffer *outbuf;
@@ -712,7 +708,7 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
     goto error_copy_buffer;
 
   gst_buffer_copy_into (outbuf, inbuf,
-    GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+      GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
   *outbuf_ptr = outbuf;
   return GST_FLOW_OK;
 
@@ -720,13 +716,13 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
 error_no_pool:
   {
     GST_ELEMENT_ERROR (plugin, STREAM, FAILED,
-      ("no buffer pool was negotiated"), ("no buffer pool was negotiated"));
+        ("no buffer pool was negotiated"), ("no buffer pool was negotiated"));
     return GST_FLOW_ERROR;
   }
 error_active_pool:
   {
     GST_ELEMENT_ERROR (plugin, STREAM, FAILED,
-      ("failed to activate buffer pool"), ("failed to activate buffer pool"));
+        ("failed to activate buffer pool"), ("failed to activate buffer pool"));
     return GST_FLOW_ERROR;
   }
 error_map_dst_buffer:
@@ -745,14 +741,14 @@ error_map_src_buffer:
 error_invalid_buffer:
   {
     GST_ELEMENT_ERROR (plugin, STREAM, FAILED,
-      ("failed to validate source buffer"),
-      ("failed to validate source buffer"));
+        ("failed to validate source buffer"),
+        ("failed to validate source buffer"));
     return GST_FLOW_ERROR;
   }
 error_create_buffer:
   {
     GST_ELEMENT_ERROR (plugin, STREAM, FAILED, ("Allocation failed"),
-      ("failed to create buffer"));
+        ("failed to create buffer"));
     return GST_FLOW_ERROR;
   }
 error_copy_buffer:
@@ -785,7 +781,6 @@ create_egl_objects (GstGLContext * context, gpointer * args)
   if (gst_mfx_surface_has_video_memory (egl_info->surface)) {
     GLint attribs[13], *attrib;
     GstGLFuncs *gl = context->gl_vtable;
-    const GstMfxRectangle *crop_rect;
     GstMfxPrimeBufferProxy *buffer_proxy;
     VaapiImage *image;
 
@@ -813,9 +808,9 @@ create_egl_objects (GstGLContext * context, gpointer * args)
 
 #if GST_CHECK_VERSION(1,11,1)
     GstGLDisplay *display = gst_gl_context_get_display (egl_info->gl_context);
-    egl_info->egl_display = gst_gl_display_egl_get_from_native (
-      gst_gl_display_get_handle_type (display),
-      gst_gl_display_get_handle (display));
+    egl_info->egl_display =
+        gst_gl_display_egl_get_from_native (gst_gl_display_get_handle_type
+        (display), gst_gl_display_get_handle (display));
     gst_object_unref (display);
 #else
     egl_info->egl_display =
@@ -824,7 +819,7 @@ create_egl_objects (GstGLContext * context, gpointer * args)
 
     egl_info->egl_image =
         egl_create_image_khr (egl_info->egl_display, EGL_NO_CONTEXT,
-          EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer) NULL, attribs);
+        EGL_LINUX_DMA_BUF_EXT, (EGLClientBuffer) NULL, attribs);
     if (!egl_info->egl_image) {
       GST_WARNING ("failed to import dmabuf (RGBA) into EGL image");
       goto done;
@@ -839,17 +834,15 @@ create_egl_objects (GstGLContext * context, gpointer * args)
 done:
     vaapi_image_unref (image);
     gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
-  }
-  else {
+  } else {
     gst_gl_memory_read_pixels (gl_mem,
-      (gpointer) gst_mfx_surface_get_plane (egl_info->surface, 0));
+        (gpointer) gst_mfx_surface_get_plane (egl_info->surface, 0));
   }
 }
 
 /* call from GL thread */
 static void
-destroy_egl_objects (GstGLContext * context,
-  gpointer * args)
+destroy_egl_objects (GstGLContext * context, gpointer * args)
 {
   egl_destroy_image_khr (args[0], args[1]);
 }
@@ -863,7 +856,7 @@ egl_dmabuf_info_unref (GstMfxEglDmaBufInfo * egl_info)
 
   if (gst_mfx_surface_has_video_memory (egl_info->surface))
     gst_gl_context_thread_add (egl_info->gl_context,
-      (GstGLContextThreadFunc) destroy_egl_objects, args);
+        (GstGLContextThreadFunc) destroy_egl_objects, args);
 
   gst_object_unref (egl_info->gl_context);
   gst_mfx_surface_unref (egl_info->surface);
@@ -872,18 +865,17 @@ egl_dmabuf_info_unref (GstMfxEglDmaBufInfo * egl_info)
 
 gboolean
 gst_mfx_plugin_base_export_surface_to_gl (GstMfxPluginBase * plugin,
-  GstMfxSurface * surface, GstBuffer * outbuf)
+    GstMfxSurface * surface, GstBuffer * outbuf)
 {
   GstMfxEglDmaBufInfo *egl_dmabuf_info = NULL;
   GstMemory *mem = gst_buffer_peek_memory (outbuf, 0);
   gpointer args[2];
 
   g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf)
-    && plugin->can_export_gl_textures
-    && plugin->gl_context
-    && gst_is_gl_base_memory (mem), FALSE);
+      && plugin->can_export_gl_textures
+      && plugin->gl_context && gst_is_gl_base_memory (mem), FALSE);
 
-  egl_dmabuf_info= g_slice_new (GstMfxEglDmaBufInfo);
+  egl_dmabuf_info = g_slice_new (GstMfxEglDmaBufInfo);
   if (!egl_dmabuf_info) {
     GST_WARNING ("Failed to allocate GstMfxDXGLInteropInfo");
     return FALSE;
@@ -897,11 +889,11 @@ gst_mfx_plugin_base_export_surface_to_gl (GstMfxPluginBase * plugin,
   args[1] = mem;
 
   gst_gl_context_thread_add (egl_dmabuf_info->gl_context,
-    (GstGLContextThreadFunc) create_egl_objects, args);
+      (GstGLContextThreadFunc) create_egl_objects, args);
 
   gst_mini_object_set_qdata (GST_MINI_OBJECT (mem),
-    g_quark_from_static_string ("GstMfxEglDmaBufInfo"), egl_dmabuf_info,
-    (GDestroyNotify) egl_dmabuf_info_unref);
+      g_quark_from_static_string ("GstMfxEglDmaBufInfo"), egl_dmabuf_info,
+      (GDestroyNotify) egl_dmabuf_info_unref);
 
   return TRUE;
 }
@@ -914,49 +906,45 @@ typedef struct _GstMfxDXGLInteropInfo
   ID3D11Texture2D *d3d_texture;
   HANDLE *dxgl_handle;
   GLuint gl_texture_id;
-  HANDLE gl_texture_handle; //from wglDXRegisterObjectNV
+  HANDLE gl_texture_handle;     //from wglDXRegisterObjectNV
 } GstMfxDXGLInteropInfo;
 
 /* call from GL thread */
 static void
 lock_dxgl_interop (GstGLContext * context, gpointer * args)
 {
-  GstMfxDXGLInteropInfo *interop_info = (GstMfxDXGLInteropInfo*) args[0];
+  GstMfxDXGLInteropInfo *interop_info = (GstMfxDXGLInteropInfo *) args[0];
   GstGLMemory *gl_mem = GST_GL_MEMORY_CAST (args[1]);
 
   if (gst_mfx_surface_has_video_memory (interop_info->surface)) {
     interop_info->d3d_texture =
-      (ID3D11Texture2D*) gst_mfx_surface_get_id (interop_info->surface);
+        (ID3D11Texture2D *) gst_mfx_surface_get_id (interop_info->surface);
     interop_info->gl_texture_id = gst_gl_memory_get_texture_id (gl_mem);
 
-    interop_info->gl_texture_handle = wglDXRegisterObjectNV (
-      interop_info->dxgl_handle,
-      interop_info->d3d_texture,
-      interop_info->gl_texture_id,
-      GL_TEXTURE_2D,
-      WGL_ACCESS_READ_ONLY_NV);
+    interop_info->gl_texture_handle =
+        wglDXRegisterObjectNV (interop_info->dxgl_handle,
+        interop_info->d3d_texture, interop_info->gl_texture_id, GL_TEXTURE_2D,
+        WGL_ACCESS_READ_ONLY_NV);
 
     if (!interop_info->gl_texture_handle) {
-      GST_WARNING("couldn't get GL texture handle from DX texture %p",
-        interop_info->d3d_texture);
+      GST_WARNING ("couldn't get GL texture handle from DX texture %p",
+          interop_info->d3d_texture);
     }
 
     if (!wglDXLockObjectsNV (interop_info->dxgl_handle,
             1, &(interop_info->gl_texture_handle))) {
-      GST_WARNING("couldn't lock GL texture %p",
-        interop_info->gl_texture_handle);
+      GST_WARNING ("couldn't lock GL texture %p",
+          interop_info->gl_texture_handle);
     }
-  }
-  else {
+  } else {
     gst_gl_memory_read_pixels (gl_mem,
-      (gpointer) gst_mfx_surface_get_plane (interop_info->surface, 0));
+        (gpointer) gst_mfx_surface_get_plane (interop_info->surface, 0));
   }
 }
 
 /* call from GL thread */
 static void
-unlock_dxgl_interop (GstGLContext * context,
-  gpointer * args)
+unlock_dxgl_interop (GstGLContext * context, gpointer * args)
 {
   if (wglDXUnlockObjectsNV (args[0], 1, &(args[1])))
     GST_DEBUG ("unlocked texture %u", args[2]);
@@ -973,7 +961,7 @@ dxgl_interop_info_unref (GstMfxDXGLInteropInfo * interop_info)
 
   if (gst_mfx_surface_has_video_memory (interop_info->surface))
     gst_gl_context_thread_add (interop_info->gl_context,
-      (GstGLContextThreadFunc) unlock_dxgl_interop, args);
+        (GstGLContextThreadFunc) unlock_dxgl_interop, args);
 
   gst_object_unref (interop_info->gl_context);
   gst_mfx_surface_unref (interop_info->surface);
@@ -982,16 +970,15 @@ dxgl_interop_info_unref (GstMfxDXGLInteropInfo * interop_info)
 
 gboolean
 gst_mfx_plugin_base_export_surface_to_gl (GstMfxPluginBase * plugin,
-  GstMfxSurface * surface, GstBuffer * outbuf)
+    GstMfxSurface * surface, GstBuffer * outbuf)
 {
   GstMfxDXGLInteropInfo *dxgl_interop_info = NULL;
   GstMemory *mem = gst_buffer_peek_memory (outbuf, 0);
   gpointer args[2];
 
   g_return_val_if_fail (outbuf && GST_IS_BUFFER (outbuf)
-    && plugin->can_export_gl_textures
-    && plugin->gl_context
-    && gst_is_gl_base_memory (mem), FALSE);
+      && plugin->can_export_gl_textures
+      && plugin->gl_context && gst_is_gl_base_memory (mem), FALSE);
 
   dxgl_interop_info = g_slice_new (GstMfxDXGLInteropInfo);
   if (!dxgl_interop_info) {
@@ -1008,11 +995,11 @@ gst_mfx_plugin_base_export_surface_to_gl (GstMfxPluginBase * plugin,
   args[1] = mem;
 
   gst_gl_context_thread_add (dxgl_interop_info->gl_context,
-    (GstGLContextThreadFunc) lock_dxgl_interop, args);
+      (GstGLContextThreadFunc) lock_dxgl_interop, args);
 
   gst_mini_object_set_qdata (GST_MINI_OBJECT (mem),
-    g_quark_from_static_string ("GstMfxDXGLInteropInfo"), dxgl_interop_info,
-    (GDestroyNotify) dxgl_interop_info_unref);
+      g_quark_from_static_string ("GstMfxDXGLInteropInfo"), dxgl_interop_info,
+      (GDestroyNotify) dxgl_interop_info_unref);
 
   return TRUE;
 }

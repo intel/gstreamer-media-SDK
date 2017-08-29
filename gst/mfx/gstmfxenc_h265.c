@@ -38,7 +38,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_mfx_h265_enc_debug);
 
 static const char gst_mfxenc_h265_sink_caps_str[] =
     GST_MFX_MAKE_INPUT_SURFACE_CAPS "; "
-    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
+GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxenc_h265_src_caps_str[] =
     GST_CODEC_CAPS ", " "profile = (string) { main, main-10 }";
@@ -101,14 +101,14 @@ gst_mfxenc_h265_get_property (GObject * object,
 }
 
 static gboolean
-gst_mfxenc_h265_set_config(GstMfxEnc * base_encode)
+gst_mfxenc_h265_set_config (GstMfxEnc * base_encode)
 {
   GstCaps *allowed_caps;
   GstMfxProfile profile;
 
   /* Check for the largest profile that is supported */
   allowed_caps =
-    gst_pad_get_allowed_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (base_encode));
+      gst_pad_get_allowed_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (base_encode));
   if (!allowed_caps)
     return TRUE;
 
@@ -163,7 +163,7 @@ gst_mfxenc_h265_alloc_encoder (GstMfxEnc * base)
     return base->encoder;
 
   return gst_mfx_encoder_h265_new (plugin->aggregator, &plugin->sinkpad_info,
-            plugin->sinkpad_caps_is_raw);
+      plugin->sinkpad_caps_is_raw);
 }
 
 /* h265 NAL byte stream operations */
@@ -222,7 +222,7 @@ _h265_convert_byte_stream_to_hvc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
   guint8 *nal_start_code, *nal_body;
   guint8 *hvc1_data = NULL;
   guint8 *frame_end;
-  GByteArray *hvc1_bytes = g_byte_array_new();
+  GByteArray *hvc1_bytes = g_byte_array_new ();
 
   if (!hvc1_bytes)
     return FALSE;
@@ -242,7 +242,7 @@ _h265_convert_byte_stream_to_hvc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
     /* A start code size of 3 indicates the start of an
      * encoded picture in MSDK */
     if (nal_body - nal_start_code == 3) {
-      hvc1_data = g_malloc(nal_size + 4);
+      hvc1_data = g_malloc (nal_size + 4);
       if (!hvc1_data)
         goto error;
 
@@ -250,7 +250,7 @@ _h265_convert_byte_stream_to_hvc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
       GST_WRITE_UINT32_BE (hvc1_data, nal_size);
       memcpy (hvc1_data + 4, nal_body, nal_size);
 
-      g_byte_array_append(hvc1_bytes, hvc1_data, nal_size + 4);
+      g_byte_array_append (hvc1_bytes, hvc1_data, nal_size + 4);
       g_free (hvc1_data);
     }
     nal_start_code = nal_body + nal_size;
@@ -258,13 +258,13 @@ _h265_convert_byte_stream_to_hvc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
   gst_buffer_unmap (inbuf, &info);
 
   if (hvc1_bytes->data)
-    *outbuf_ptr = gst_buffer_new_wrapped(hvc1_bytes->data, hvc1_bytes->len);
+    *outbuf_ptr = gst_buffer_new_wrapped (hvc1_bytes->data, hvc1_bytes->len);
 
-  g_byte_array_free(hvc1_bytes, FALSE);
+  g_byte_array_free (hvc1_bytes, FALSE);
   return TRUE;
 
 error:
-  g_byte_array_free(hvc1_bytes, TRUE);
+  g_byte_array_free (hvc1_bytes, TRUE);
   gst_buffer_unmap (inbuf, &info);
   return FALSE;
 }

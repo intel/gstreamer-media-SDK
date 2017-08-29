@@ -35,7 +35,8 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-G_DEFINE_TYPE(GstMfxDisplayWayland, gst_mfx_display_wayland, GST_TYPE_MFX_DISPLAY);
+G_DEFINE_TYPE (GstMfxDisplayWayland, gst_mfx_display_wayland,
+    GST_TYPE_MFX_DISPLAY);
 
 static inline const gchar *
 get_default_display_name (void)
@@ -334,15 +335,15 @@ gst_mfx_display_wayland_class_init (GstMfxDisplayWaylandClass * klass)
 GstMfxDisplay *
 gst_mfx_display_wayland_new (const gchar * display_name)
 {
-  GstMfxDisplayWayland * display;
+  GstMfxDisplayWayland *display;
 
-  display = g_object_new(GST_TYPE_MFX_DISPLAY_WAYLAND, NULL);
+  display = g_object_new (GST_TYPE_MFX_DISPLAY_WAYLAND, NULL);
   if (!display)
     return NULL;
 
-  GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display)->event_fd = -1;
-  GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display)->is_auth = FALSE;
+  GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display)->event_fd = -1;
+  GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display)->is_auth = FALSE;
 
-  return gst_mfx_display_new_internal (GST_MFX_DISPLAY(display),
-            (gpointer) display_name);
+  return gst_mfx_display_new_internal (GST_MFX_DISPLAY (display),
+      (gpointer) display_name);
 }

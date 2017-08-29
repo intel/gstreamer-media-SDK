@@ -28,9 +28,7 @@
 #include <gst-libs/mfx/gstmfxsurface.h>
 #include <gst-libs/mfx/gstmfxsurfacepool.h>
 
-G_BEGIN_DECLS
-
-typedef struct _GstMfxVideoMeta GstMfxVideoMeta;
+G_BEGIN_DECLS typedef struct _GstMfxVideoMeta GstMfxVideoMeta;
 
 #define GST_MFX_VIDEO_META_API_TYPE \
   gst_mfx_video_meta_api_get_type ()
@@ -54,12 +52,11 @@ void
 gst_mfx_video_meta_replace (GstMfxVideoMeta ** old_meta_ptr,
     GstMfxVideoMeta * new_meta);
 
-GstMfxSurface *
-gst_mfx_video_meta_get_surface (GstMfxVideoMeta * meta);
+GstMfxSurface *gst_mfx_video_meta_get_surface (GstMfxVideoMeta * meta);
 
 void
 gst_mfx_video_meta_set_surface (GstMfxVideoMeta * meta,
-  GstMfxSurface * surface);
+    GstMfxSurface * surface);
 
 GstMfxVideoMeta *
 gst_buffer_get_mfx_video_meta (GstBuffer * buffer);
@@ -68,5 +65,4 @@ void
 gst_buffer_set_mfx_video_meta (GstBuffer * buffer, GstMfxVideoMeta * meta);
 
 G_END_DECLS
-
-#endif  /* GST_MFX_VIDEO_META_H */
+#endif /* GST_MFX_VIDEO_META_H */

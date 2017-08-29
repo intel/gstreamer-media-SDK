@@ -60,11 +60,12 @@
 /* ------------------------------------------------------------------------- */
 
 
-struct _GstMfxEncoderH264 {
+struct _GstMfxEncoderH264
+{
   GstMfxEncoder parent_instance;
 };
 
-G_DEFINE_TYPE(GstMfxEncoderH264, gst_mfx_encoder_h264, GST_TYPE_MFX_ENCODER);
+G_DEFINE_TYPE (GstMfxEncoderH264, gst_mfx_encoder_h264, GST_TYPE_MFX_ENCODER);
 
 #define GST_MFX_ENCODER_H264_CAST(encoder) \
   ((GstMfxEncoderH264 *)(encoder))
@@ -75,7 +76,7 @@ static void
 ensure_bitrate (GstMfxEncoderH264 * encoder)
 {
   GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST (encoder);
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   /* Default compression: 48 bits per macroblock */
   switch (GST_MFX_ENCODER_RATE_CONTROL (priv)) {
@@ -99,8 +100,7 @@ ensure_bitrate (GstMfxEncoderH264 * encoder)
 
         priv->bitrate =
             mb_width * mb_height * bits_per_mb *
-            GST_MFX_ENCODER_FPS_N (priv) /
-            GST_MFX_ENCODER_FPS_D (priv) / 1000;
+            GST_MFX_ENCODER_FPS_N (priv) / GST_MFX_ENCODER_FPS_D (priv) / 1000;
         GST_INFO ("target bitrate computed to %u kbps", priv->bitrate);
       }
       break;
@@ -114,7 +114,7 @@ static GstMfxEncoderStatus
 gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
 {
   GstMfxEncoderH264 *const encoder = GST_MFX_ENCODER_H264_CAST (base_encoder);
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   if (priv->profile.profile == MFX_PROFILE_AVC_BASELINE)
     priv->gop_refdist = 1;
@@ -132,14 +132,14 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
 }
 
 static void
-gst_mfx_encoder_h264_init(GstMfxEncoderH264 * base_encoder)
+gst_mfx_encoder_h264_init (GstMfxEncoderH264 * base_encoder)
 {
 }
 
 static gboolean
-gst_mfx_encoder_h264_create(GstMfxEncoder * base_encoder)
+gst_mfx_encoder_h264_create (GstMfxEncoder * base_encoder)
 {
-  GST_MFX_ENCODER_GET_PRIVATE(base_encoder)->profile.codec = MFX_CODEC_AVC;
+  GST_MFX_ENCODER_GET_PRIVATE (base_encoder)->profile.codec = MFX_CODEC_AVC;
   return TRUE;
 }
 
@@ -153,7 +153,7 @@ static GstMfxEncoderStatus
 gst_mfx_encoder_h264_get_codec_data (GstMfxEncoder * base_encoder,
     GstBuffer ** out_buffer_ptr)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
   GstBuffer *buffer;
   mfxStatus sts;
   guint8 *sps_info, *pps_info;
@@ -179,8 +179,7 @@ gst_mfx_encoder_h264_get_codec_data (GstMfxEncoder * base_encoder,
   priv->params.ExtParam = ext_buffers;
   priv->params.NumExtParam = 1;
 
-  sts = MFXVideoENCODE_GetVideoParam (priv->session,
-      &priv->params);
+  sts = MFXVideoENCODE_GetVideoParam (priv->session, &priv->params);
   if (sts < 0)
     return GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER;
 
@@ -215,8 +214,9 @@ gst_mfx_encoder_h264_get_codec_data (GstMfxEncoder * base_encoder,
   WRITE_UINT32 (&bs, pps_size, 16);
   gst_bit_writer_put_bytes (&bs, pps_info, pps_size);
 
-  buffer = gst_buffer_new_wrapped (
-      GST_BIT_WRITER_DATA (&bs), GST_BIT_WRITER_BIT_SIZE (&bs) / 8);
+  buffer =
+      gst_buffer_new_wrapped (GST_BIT_WRITER_DATA (&bs),
+      GST_BIT_WRITER_BIT_SIZE (&bs) / 8);
   if (!buffer)
     goto error_alloc_buffer;
   *out_buffer_ptr = buffer;
@@ -244,7 +244,7 @@ static GstMfxEncoderStatus
 gst_mfx_encoder_h264_set_property (GstMfxEncoder * base_encoder,
     gint prop_id, const GValue * value)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE(base_encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   switch (prop_id) {
     case GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE:
@@ -270,19 +270,19 @@ gst_mfx_encoder_h264_set_property (GstMfxEncoder * base_encoder,
 
 GstMfxEncoder *
 gst_mfx_encoder_h264_new (GstMfxTaskAggregator * aggregator,
-  const GstVideoInfo * info, gboolean mapped)
+    const GstVideoInfo * info, gboolean mapped)
 {
-  GstMfxEncoderH264 * encoder;
+  GstMfxEncoderH264 *encoder;
 
   g_return_val_if_fail (aggregator != NULL, NULL);
   g_return_val_if_fail (info != NULL, NULL);
 
-  encoder = g_object_new(GST_TYPE_MFX_ENCODER_H264, NULL);
+  encoder = g_object_new (GST_TYPE_MFX_ENCODER_H264, NULL);
   if (!encoder)
     return NULL;
 
-  return gst_mfx_encoder_new (GST_MFX_ENCODER(encoder),
-            aggregator, info, mapped);
+  return gst_mfx_encoder_new (GST_MFX_ENCODER (encoder),
+      aggregator, info, mapped);
 }
 
 /**
@@ -301,9 +301,10 @@ gst_mfx_encoder_h264_get_default_properties (void)
 {
   GPtrArray *props;
   {
-    GstMfxEncoderClass *const klass = g_type_class_ref(GST_TYPE_MFX_ENCODER_H264);
-    props = gst_mfx_encoder_properties_get_default(klass);
-    g_type_class_unref(klass);
+    GstMfxEncoderClass *const klass =
+        g_type_class_ref (GST_TYPE_MFX_ENCODER_H264);
+    props = gst_mfx_encoder_properties_get_default (klass);
+    g_type_class_unref (klass);
   }
   if (!props)
     return NULL;
@@ -375,18 +376,19 @@ gst_mfx_encoder_h264_get_default_properties (void)
   return props;
 }
 
-GST_MFX_ENCODER_DEFINE_CLASS_DATA(H264);
+GST_MFX_ENCODER_DEFINE_CLASS_DATA (H264);
 
 static void
-gst_mfx_encoder_h264_class_init(GstMfxEncoderH264Class * klass)
+gst_mfx_encoder_h264_class_init (GstMfxEncoderH264Class * klass)
 {
-  GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS(klass);
+  GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS (klass);
 
   encoder_class->class_data = &g_class_data;
   encoder_class->create = gst_mfx_encoder_h264_create;
   encoder_class->finalize = gst_mfx_encoder_h264_finalize;
   encoder_class->reconfigure = gst_mfx_encoder_h264_reconfigure;
-  encoder_class->get_default_properties = gst_mfx_encoder_h264_get_default_properties;
+  encoder_class->get_default_properties =
+      gst_mfx_encoder_h264_get_default_properties;
 
   encoder_class->set_property = gst_mfx_encoder_h264_set_property;
   encoder_class->get_codec_data = gst_mfx_encoder_h264_get_codec_data;

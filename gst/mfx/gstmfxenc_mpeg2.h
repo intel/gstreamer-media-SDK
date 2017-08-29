@@ -27,7 +27,6 @@
 #include "gstmfxenc.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFXENC_MPEG2 \
   (gst_mfxenc_mpeg2_get_type ())
 #define GST_MFXENC_MPEG2_CAST(obj) \
@@ -45,25 +44,23 @@ G_BEGIN_DECLS
   (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXENC_MPEG2))
 #define GST_IS_MFXENC_MPEG2_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXENC_MPEG2))
-
 typedef struct _GstMfxEncMpeg2 GstMfxEncMpeg2;
 typedef struct _GstMfxEncMpeg2Class GstMfxEncMpeg2Class;
 
 struct _GstMfxEncMpeg2
 {
-  /*< private >*/
+  /*< private > */
   GstMfxEnc parent_instance;
 };
 
 struct _GstMfxEncMpeg2Class
 {
-  /*< private >*/
+  /*< private > */
   GstMfxEncClass parent_class;
 };
 
 GType
-gst_mfxenc_mpeg2_get_type(void);
+gst_mfxenc_mpeg2_get_type (void);
 
 G_END_DECLS
-
 #endif /* GST_MFXENC_MPEG2_H */

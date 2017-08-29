@@ -168,8 +168,7 @@ gst_mfx_video_meta_get_surface (GstMfxVideoMeta * meta)
 }
 
 void
-gst_mfx_video_meta_set_surface (GstMfxVideoMeta * meta,
-    GstMfxSurface * surface)
+gst_mfx_video_meta_set_surface (GstMfxVideoMeta * meta, GstMfxSurface * surface)
 {
   g_return_if_fail (GST_MFX_IS_VIDEO_META (meta));
 

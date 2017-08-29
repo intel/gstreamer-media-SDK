@@ -34,7 +34,7 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-G_DEFINE_TYPE(GstMfxDisplayX11, gst_mfx_display_x11, GST_TYPE_MFX_DISPLAY);
+G_DEFINE_TYPE (GstMfxDisplayX11, gst_mfx_display_x11, GST_TYPE_MFX_DISPLAY);
 
 static inline const gchar *
 get_default_display_name (void)
@@ -70,8 +70,7 @@ check_extensions (GstMfxDisplay * display)
   int evt_base, err_base;
 
 #ifdef HAVE_XRANDR
-  priv->use_xrandr = XRRQueryExtension (dpy,
-      &evt_base, &err_base);
+  priv->use_xrandr = XRRQueryExtension (dpy, &evt_base, &err_base);
 #endif
 }
 
@@ -194,7 +193,7 @@ gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
 }
 
 static void
-gst_mfx_display_x11_init(GstMfxDisplayX11 * display)
+gst_mfx_display_x11_init (GstMfxDisplayX11 * display)
 {
 }
 
@@ -211,8 +210,8 @@ gst_mfx_display_x11_init(GstMfxDisplayX11 * display)
 GstMfxDisplay *
 gst_mfx_display_x11_new (GstMfxDisplayX11 * display, const gchar * display_name)
 {
-  return gst_mfx_display_new_internal (GST_MFX_DISPLAY(display),
-              (gpointer) display_name);
+  return gst_mfx_display_new_internal (GST_MFX_DISPLAY (display),
+      (gpointer) display_name);
 }
 
 /**

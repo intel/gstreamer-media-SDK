@@ -39,9 +39,10 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
     mfxFrameAllocResponse * response)
 {
   GstMfxTask *task =
-      gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
-  GstMfxDisplay *const display = gst_mfx_context_get_device(priv->context);
+      gst_mfx_task_aggregator_get_current_task (GST_MFX_TASK_AGGREGATOR
+      (pthis));
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
+  GstMfxDisplay *const display = gst_mfx_context_get_device (priv->context);
   mfxFrameInfo *info;
   VASurfaceAttrib attrib;
   VAStatus sts;
@@ -51,7 +52,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
   ResponseData *response_data;
 
   if (priv->saved_responses
-      && gst_mfx_task_has_type(task, GST_MFX_TASK_DECODER)
+      && gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)
       && (request->Type & MFX_MEMTYPE_INTERNAL_FRAME) == 0) {
     GList *l = g_list_last (priv->saved_responses);
     if (l) {
@@ -62,8 +63,8 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
   }
 
   if (!(request->Type
-      & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET
-        | MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
+          & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET
+              | MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
     GST_ERROR ("Unsupported surface type: %d\n", request->Type);
     return MFX_ERR_UNSUPPORTED;
   }
@@ -119,7 +120,7 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
     }
   } else {
     VAContextID context_id = request->reserved[0];
-    int width32 =  32 * ((request->Info.Width + 31) >> 5);
+    int width32 = 32 * ((request->Info.Width + 31) >> 5);
     int height32 = 32 * ((request->Info.Height + 31) >> 5);
     int codedbuf_size = (width32 * height32) * 400LL / (16 * 16);
 
@@ -168,9 +169,10 @@ mfxStatus
 gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * response)
 {
   GstMfxTask *task =
-      gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
-  GstMfxDisplay *const display = gst_mfx_context_get_device(priv->context);
+      gst_mfx_task_aggregator_get_current_task (GST_MFX_TASK_AGGREGATOR
+      (pthis));
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
+  GstMfxDisplay *const display = gst_mfx_context_get_device (priv->context);
   mfxFrameInfo *info;
   mfxU16 i, num_surfaces;
   ResponseData *response_data;
@@ -218,9 +220,10 @@ mfxStatus
 gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
   GstMfxTask *task =
-      gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
-  GstMfxDisplay *const display = gst_mfx_context_get_device(priv->context);
+      gst_mfx_task_aggregator_get_current_task (GST_MFX_TASK_AGGREGATOR
+      (pthis));
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
+  GstMfxDisplay *const display = gst_mfx_context_get_device (priv->context);
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;
   VAStatus sts;
 
@@ -246,9 +249,10 @@ mfxStatus
 gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
 {
   GstMfxTask *task =
-      gst_mfx_task_aggregator_get_current_task(GST_MFX_TASK_AGGREGATOR(pthis));
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
-  GstMfxDisplay *const display = gst_mfx_context_get_device(priv->context);
+      gst_mfx_task_aggregator_get_current_task (GST_MFX_TASK_AGGREGATOR
+      (pthis));
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
+  GstMfxDisplay *const display = gst_mfx_context_get_device (priv->context);
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;
 
   if (mem_id->info->FourCC == MFX_FOURCC_P8) {

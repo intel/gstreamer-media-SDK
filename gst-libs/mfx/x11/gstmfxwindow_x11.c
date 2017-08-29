@@ -352,8 +352,7 @@ gst_mfx_window_x11_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
     end_time = DELAY + ((guint64) now.tv_sec * 1000000 + now.tv_usec);
     while (timed_wait_event (window, ConfigureNotify, end_time, &e)) {
       if (fullscreen) {
-        gst_mfx_display_get_size (priv2->display,
-            &width, &height);
+        gst_mfx_display_get_size (priv2->display, &width, &height);
         if (e.xconfigure.width == width && e.xconfigure.height == height)
           return TRUE;
       } else {
@@ -384,7 +383,7 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
 
 #ifdef HAVE_XRENDER
   if (priv->picture) {
-    XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
+    XRenderColor color_black = {.red = 0,.green = 0,.blue = 0,.alpha = 0xffff };
 
     XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
         0, 0, width, height);
@@ -397,8 +396,8 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
 
 static gboolean
 gst_mfx_window_x11_render (GstMfxWindow * window,
-  GstMfxSurface * surface,
-  const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
+    GstMfxSurface * surface,
+    const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
 #if defined(USE_DRI3) && defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT) && defined(HAVE_XRENDER)
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
@@ -425,32 +424,33 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     if (!priv->mapped_surface) {
       GstVideoInfo info;
 
-      gst_video_info_init(&info);
-      gst_video_info_set_format(&info, GST_MFX_SURFACE_FORMAT (surface),
-        GST_MFX_SURFACE_WIDTH (surface), GST_MFX_SURFACE_HEIGHT (surface));
+      gst_video_info_init (&info);
+      gst_video_info_set_format (&info, GST_MFX_SURFACE_FORMAT (surface),
+          GST_MFX_SURFACE_WIDTH (surface), GST_MFX_SURFACE_HEIGHT (surface));
 
-      priv->mapped_surface = gst_mfx_surface_vaapi_new (
-        GST_MFX_WINDOW_GET_PRIVATE (window)->context, &info);
+      priv->mapped_surface =
+          gst_mfx_surface_vaapi_new (GST_MFX_WINDOW_GET_PRIVATE (window)->
+          context, &info);
     }
 
     if (!gst_mfx_surface_map (priv->mapped_surface))
       return FALSE;
 
-    memcpy(gst_mfx_surface_get_plane (priv->mapped_surface, 0),
-      gst_mfx_surface_get_plane (surface, 0),
-      gst_mfx_surface_get_data_size (surface));
+    memcpy (gst_mfx_surface_get_plane (priv->mapped_surface, 0),
+        gst_mfx_surface_get_plane (surface, 0),
+        gst_mfx_surface_get_data_size (surface));
 
     gst_mfx_surface_unmap (priv->mapped_surface);
   }
 
-  buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (
-    priv->mapped_surface ? priv->mapped_surface : surface);
+  buffer_proxy =
+      gst_mfx_prime_buffer_proxy_new_from_surface (priv->mapped_surface ? priv->
+      mapped_surface : surface);
   if (!buffer_proxy)
     return FALSE;
 
   GST_MFX_DISPLAY_LOCK (priv->display);
-  XGetGeometry (display, win, &root, &x, &y,
-      &width, &height, &border, &depth);
+  XGetGeometry (display, win, &root, &x, &y, &width, &height, &border, &depth);
   GST_MFX_DISPLAY_UNLOCK (priv->display);
 
   /* Ensure Picture for window created */
@@ -480,7 +480,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     case 32:
       fmt = PictStandardARGB32;
       op = PictOpOver;
-get_pic_fmt:
+    get_pic_fmt:
       bpp = 32;
       GST_MFX_DISPLAY_LOCK (priv->display);
       pic_fmt = XRenderFindStandardFormat (display, fmt);
@@ -492,7 +492,7 @@ get_pic_fmt:
   stride = GST_ROUND_UP_16 (src_rect->width) * bpp / 8;
   size = GST_ROUND_UP_N (stride * src_rect->height, 4096);
   if (!pic_fmt) {
-    GST_ERROR("Unable to initialize picture format.\n");
+    GST_ERROR ("Unable to initialize picture format.\n");
     return FALSE;
   }
 
@@ -543,7 +543,7 @@ get_pic_fmt:
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
   return TRUE;
 #else
-  GST_ERROR("Unable to render the video.\n");
+  GST_ERROR ("Unable to render the video.\n");
   return FALSE;
 #endif
 }
@@ -564,7 +564,7 @@ gst_mfx_window_x11_class_init (GstMfxWindowX11Class * klass)
 }
 
 static void
-gst_mfx_window_x11_init(GstMfxWindowX11 * window)
+gst_mfx_window_x11_init (GstMfxWindowX11 * window)
 {
 }
 
@@ -582,9 +582,9 @@ gst_mfx_window_x11_init(GstMfxWindowX11 * window)
  */
 GstMfxWindow *
 gst_mfx_window_x11_new (GstMfxDisplay * display, GstMfxContext * context,
-  guint width, guint height)
+    guint width, guint height)
 {
-  GstMfxWindowX11 * window;
+  GstMfxWindowX11 *window;
 
   g_return_val_if_fail (display != NULL, NULL);
   g_return_val_if_fail (context != NULL, NULL);
@@ -599,8 +599,8 @@ gst_mfx_window_x11_new (GstMfxDisplay * display, GstMfxContext * context,
       gst_mfx_display_ref (display);
 
   return
-      gst_mfx_window_new_internal (GST_MFX_WINDOW(window),
-          context, GST_MFX_ID_INVALID, width, height);
+      gst_mfx_window_new_internal (GST_MFX_WINDOW (window),
+      context, GST_MFX_ID_INVALID, width, height);
 }
 
 /**
@@ -618,7 +618,7 @@ gst_mfx_window_x11_new (GstMfxDisplay * display, GstMfxContext * context,
 GstMfxWindow *
 gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid)
 {
-  GstMfxWindowX11 * window;
+  GstMfxWindowX11 *window;
 
   g_return_val_if_fail (display != NULL, NULL);
   g_return_val_if_fail (xid != None, NULL);
@@ -629,10 +629,10 @@ gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid)
   if (!window)
     return NULL;
 
-  GST_MFX_WINDOW_X11_GET_PRIVATE(window)->display =
+  GST_MFX_WINDOW_X11_GET_PRIVATE (window)->display =
       gst_mfx_display_ref (display);
 
-  return gst_mfx_window_new_internal (GST_MFX_WINDOW(window), NULL, xid, 0, 0);
+  return gst_mfx_window_new_internal (GST_MFX_WINDOW (window), NULL, xid, 0, 0);
 }
 
 void
@@ -644,7 +644,7 @@ gst_mfx_window_x11_clear (GstMfxWindow * window)
   Display *display = gst_mfx_display_x11_get_display (priv2->display);
 
   if (priv2->picture) {
-    XRenderColor color_black = {.red=0, .green=0, .blue=0, .alpha=0xffff};
+    XRenderColor color_black = {.red = 0,.green = 0,.blue = 0,.alpha = 0xffff };
 
     GST_MFX_DISPLAY_LOCK (priv2->display);
     XRenderFillRectangle (display, PictOpClear, priv2->picture, &color_black,

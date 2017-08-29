@@ -26,11 +26,9 @@
 #include <gst/video/gstvideopool.h>
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 
-G_BEGIN_DECLS
-
-typedef struct _GstMfxVideoBufferPool           GstMfxVideoBufferPool;
-typedef struct _GstMfxVideoBufferPoolClass      GstMfxVideoBufferPoolClass;
-typedef struct _GstMfxVideoBufferPoolPrivate    GstMfxVideoBufferPoolPrivate;
+G_BEGIN_DECLS typedef struct _GstMfxVideoBufferPool GstMfxVideoBufferPool;
+typedef struct _GstMfxVideoBufferPoolClass GstMfxVideoBufferPoolClass;
+typedef struct _GstMfxVideoBufferPoolPrivate GstMfxVideoBufferPoolPrivate;
 
 #define GST_MFX_TYPE_VIDEO_BUFFER_POOL \
   (gst_mfx_video_buffer_pool_get_type ())
@@ -68,12 +66,12 @@ struct _GstMfxVideoBufferPoolClass
   GstBufferPoolClass parent_instance;
 };
 
-GType gst_mfx_video_buffer_pool_get_type (void);
+GType
+gst_mfx_video_buffer_pool_get_type (void);
 
 GstBufferPool *
 gst_mfx_video_buffer_pool_new (GstMfxTaskAggregator * aggregator,
-  gboolean memtype_is_system);
+    gboolean memtype_is_system);
 
 G_END_DECLS
-
 #endif /* __GST_MFX_VIDEO_BUFFER_POOL_H__ */

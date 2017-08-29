@@ -42,12 +42,12 @@ struct _GstMfxTaskAggregator
   mfxU16 platform;
 };
 
-G_DEFINE_TYPE(GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_TYPE_OBJECT);
+G_DEFINE_TYPE (GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_TYPE_OBJECT);
 
 static void
 gst_mfx_task_aggregator_finalize (GObject * object)
 {
-  GstMfxTaskAggregator* aggregator = GST_MFX_TASK_AGGREGATOR (object);
+  GstMfxTaskAggregator *aggregator = GST_MFX_TASK_AGGREGATOR (object);
 
   gst_mfx_context_replace (&aggregator->context, NULL);
   MFXClose (aggregator->parent_session);
@@ -80,7 +80,7 @@ gst_mfx_task_aggregator_ref (GstMfxTaskAggregator * aggregator)
 void
 gst_mfx_task_aggregator_unref (GstMfxTaskAggregator * aggregator)
 {
-  gst_object_unref (GST_OBJECT(aggregator));
+  gst_object_unref (GST_OBJECT (aggregator));
 }
 
 void
@@ -90,13 +90,13 @@ gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
   g_return_if_fail (old_aggregator_ptr != NULL);
 
   gst_object_replace ((GstObject **) old_aggregator_ptr,
-	  GST_OBJECT (new_aggregator));
+      GST_OBJECT (new_aggregator));
 }
 
 GstMfxContext *
 gst_mfx_task_aggregator_get_context (GstMfxTaskAggregator * aggregator)
 {
-  g_return_val_if_fail(aggregator != NULL, NULL);
+  g_return_val_if_fail (aggregator != NULL, NULL);
 
   return aggregator->context ? gst_mfx_context_ref (aggregator->context) : NULL;
 }
@@ -125,7 +125,7 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
   MFXQueryVersion (session, &aggregator->version);
 
   GST_INFO ("Using Media SDK API version %d.%d",
-    aggregator->version.Major, aggregator->version.Minor);
+      aggregator->version.Major, aggregator->version.Minor);
 
   MFXQueryIMPL (session, &impl);
 
@@ -148,8 +148,7 @@ gst_mfx_task_aggregator_init_session_context (GstMfxTaskAggregator * aggregator,
   if (!aggregator->parent_session) {
     aggregator->parent_session = session;
     *is_joined = FALSE;
-  }
-  else {
+  } else {
     sts = MFXJoinSession (aggregator->parent_session, session);
     *is_joined = TRUE;
   }
@@ -215,7 +214,7 @@ gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
 
 void
 gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
-  GstMfxTask * task, gboolean memtype_is_system)
+    GstMfxTask * task, gboolean memtype_is_system)
 {
   GstMfxTask *upstream_task;
   guint task_index;
@@ -235,18 +234,16 @@ gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
       if (memtype_is_system) {
         params->IOPattern =
             MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-      }
-      else {
+      } else {
         params->IOPattern &=
             MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_IN_VIDEO_MEMORY;
         params->IOPattern |= MFX_IOPATTERN_OUT_VIDEO_MEMORY;
       }
-    }
-    else if (gst_mfx_task_has_type (upstream_task, GST_MFX_TASK_DECODER)) {
+    } else if (gst_mfx_task_has_type (upstream_task, GST_MFX_TASK_DECODER)) {
       params->IOPattern = memtype_is_system ?
-        MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+          MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
     }
-    memtype_is_system = !!(params->IOPattern & MFX_IOPATTERN_IN_SYSTEM_MEMORY);
+    memtype_is_system = ! !(params->IOPattern & MFX_IOPATTERN_IN_SYSTEM_MEMORY);
   } while (memtype_is_system);
 }
 
@@ -259,7 +256,7 @@ gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator)
   if (!aggregator->platform) {
     mfxPlatform platform = { 0 };
     mfxStatus sts =
-      MFXVideoCORE_QueryPlatform (aggregator->parent_session, &platform);
+        MFXVideoCORE_QueryPlatform (aggregator->parent_session, &platform);
     if (MFX_ERR_NONE == sts)
       aggregator->platform = platform.CodeName;
     else if (MFX_ERR_INVALID_HANDLE == sts)
@@ -277,6 +274,6 @@ gst_mfx_task_aggregator_class_init (GstMfxTaskAggregatorClass * klass)
 {
   GObjectClass *const object_class = G_OBJECT_CLASS (klass);
   GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
-    "mfxtaskaggregator", 0, "MFX Context");
+      "mfxtaskaggregator", 0, "MFX Context");
   object_class->finalize = gst_mfx_task_aggregator_finalize;
 }

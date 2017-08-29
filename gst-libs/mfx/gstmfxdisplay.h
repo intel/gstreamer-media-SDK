@@ -28,10 +28,8 @@
 #include "gstmfxtypes.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_DISPLAY (gst_mfx_display_get_type ())
 #define GST_MFX_DISPLAY(obj) ((GstMfxDisplay *)(obj))
-
 
 /**
  * GST_MFX_DISPLAY_TYPE:
@@ -41,7 +39,6 @@ G_BEGIN_DECLS
  */
 #define GST_MFX_DISPLAY_TYPE(display) \
   gst_mfx_display_get_display_type (GST_MFX_DISPLAY (display))
-
 /**
  * GST_MFX_DISPLAY_VADISPLAY:
  * @display_: a #GstMfxDisplay
@@ -50,7 +47,6 @@ G_BEGIN_DECLS
  */
 #define GST_MFX_DISPLAY_VADISPLAY(display) \
   gst_mfx_display_get_vadisplay (GST_MFX_DISPLAY (display))
-
 /**
  * GST_MFX_DISPLAY_LOCK:
  * @display: a #GstMfxDisplay
@@ -59,7 +55,6 @@ G_BEGIN_DECLS
  */
 #define GST_MFX_DISPLAY_LOCK(display) \
   gst_mfx_display_lock (GST_MFX_DISPLAY (display))
-
 /**
  * GST_MFX_DISPLAY_UNLOCK:
  * @display: a #GstMfxDisplay
@@ -68,8 +63,7 @@ G_BEGIN_DECLS
  */
 #define GST_MFX_DISPLAY_UNLOCK(display) \
   gst_mfx_display_unlock (GST_MFX_DISPLAY (display))
-
-typedef struct _GstMfxDisplay                 GstMfxDisplay;
+typedef struct _GstMfxDisplay GstMfxDisplay;
 
 typedef enum
 {
@@ -86,8 +80,7 @@ gst_mfx_display_get_type (void);
 GstMfxDisplay *
 gst_mfx_display_new (void);
 
-GstMfxDisplay *
-gst_mfx_display_ref (GstMfxDisplay * display);
+GstMfxDisplay *gst_mfx_display_ref (GstMfxDisplay * display);
 
 void
 gst_mfx_display_unref (GstMfxDisplay * display);
@@ -117,5 +110,4 @@ gst_mfx_display_get_pixel_aspect_ratio (GstMfxDisplay * display,
     guint * par_n, guint * par_d);
 
 G_END_DECLS
-
 #endif /* GST_MFX_DISPLAY_H */

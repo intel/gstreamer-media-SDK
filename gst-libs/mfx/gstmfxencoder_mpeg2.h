@@ -27,17 +27,15 @@
 #include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_ENCODER_MPEG2 (gst_mfx_encoder_mpeg2_get_type ())
-G_DECLARE_FINAL_TYPE (GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_MFX, ENCODER_MPEG2, GstMfxEncoder)
-
+G_DECLARE_FINAL_TYPE (GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_MFX,
+    ENCODER_MPEG2, GstMfxEncoder)
 #define GST_MFX_ENCODER_MPEG2(encoder) \
   ((GstMfxEncoderMpeg2 *) (encoder))
-
 #define GST_MFX_ENCODER_MPEG2_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_MPEG2, \
   GstMfxEncoderMpeg2Class))
-
+     
 GstMfxEncoder *
 gst_mfx_encoder_mpeg2_new (GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped);
@@ -47,5 +45,4 @@ gst_mfx_encoder_mpeg2_get_default_properties (void);
 
 
 G_END_DECLS
-
 #endif /* GST_MFX_ENCODER_MPEG2_H */

@@ -28,10 +28,9 @@
 #include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_SURFACE_VAAPI (gst_mfx_surface_vaapi_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxSurfaceVaapi, gst_mfx_surface_vaapi, GST_MFX, SURFACE_VAAPI, GstMfxSurface)
-
+G_DECLARE_FINAL_TYPE (GstMfxSurfaceVaapi, gst_mfx_surface_vaapi, GST_MFX,
+    SURFACE_VAAPI, GstMfxSurface)
 #define GST_MFX_SURFACE_VAAPI_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_SURFACE_VAAPI, \
   GstMfxSurfaceVaapiClass))
@@ -40,15 +39,13 @@ GstMfxSurface *
 gst_mfx_surface_vaapi_new (GstMfxContext * context, const GstVideoInfo * info);
 
 GstMfxSurface *
-gst_mfx_surface_vaapi_new_from_task(GstMfxTask * task);
+gst_mfx_surface_vaapi_new_from_task (GstMfxTask * task);
 
 VaapiImage *
-gst_mfx_surface_vaapi_derive_image(GstMfxSurface * surface);
+gst_mfx_surface_vaapi_derive_image (GstMfxSurface * surface);
 
 GstMfxDisplay *
-gst_mfx_surface_vaapi_get_display(GstMfxSurface * surface);
+gst_mfx_surface_vaapi_get_display (GstMfxSurface * surface);
 
 G_END_DECLS
-
 #endif /* GST_MFX_SURFACE_VAAPI_H */
-

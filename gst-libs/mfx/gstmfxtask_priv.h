@@ -27,15 +27,11 @@
 #endif // WITH_LIBVA_BACKEND
 
 G_BEGIN_DECLS
-
 #define GST_MFX_TASK_CAST(task) \
   ((GstMfxTask *)(task))
-
 #define GST_MFX_TASK_GET_PRIVATE(task) \
   (&GST_MFX_TASK_CAST(task)->priv)
-
-
-typedef struct _GstMfxTaskPrivate   GstMfxTaskPrivate;
+typedef struct _GstMfxTaskPrivate GstMfxTaskPrivate;
 typedef struct _ResponseData ResponseData;
 
 struct _ResponseData
@@ -47,7 +43,7 @@ struct _ResponseData
   VABufferID *coded_buf;
 #else
   GstMfxMemoryId **mids;
-#endif // WITH_LIBVA_BACKEND
+#endif                          // WITH_LIBVA_BACKEND
   mfxU16 num_surfaces;
   mfxFrameAllocResponse response;
   mfxFrameInfo frame_info;
@@ -69,7 +65,7 @@ struct _GstMfxTaskPrivate
 
 struct _GstMfxTask
 {
-  /*< private >*/
+  /*< private > */
   GstObject parent_instance;
 
   GstMfxTaskPrivate priv;
@@ -77,5 +73,4 @@ struct _GstMfxTask
 
 
 G_END_DECLS
-
 #endif /* GST_MFX_TASK_PRIV_H_PRIV_H */

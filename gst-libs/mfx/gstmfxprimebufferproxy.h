@@ -25,10 +25,9 @@
 #include "gstmfxutils_vaapi.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_PRIME_BUFFER_PROXY (gst_mfx_prime_buffer_proxy_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy, GST_MFX, PRIME_BUFFER_PROXY, GstObject)
-
+G_DECLARE_FINAL_TYPE (GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy,
+    GST_MFX, PRIME_BUFFER_PROXY, GstObject)
 #define GST_MFX_PRIME_BUFFER_PROXY(obj) ((GstMfxPrimeBufferProxy *)(obj))
 
 /**
@@ -39,7 +38,6 @@ G_DECLARE_FINAL_TYPE(GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy, GST_MFX
  */
 #define GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buf) \
   gst_mfx_prime_buffer_proxy_get_handle (GST_MFX_PRIME_BUFFER_PROXY (buf))
-
 #define GST_MFX_PRIME_BUFFER_PROXY_SIZE(buf) \
   gst_mfx_prime_buffer_proxy_get_size (GST_MFX_PRIME_BUFFER_PROXY (buf))
 
@@ -65,8 +63,7 @@ guint
 gst_mfx_prime_buffer_proxy_get_size (GstMfxPrimeBufferProxy * proxy);
 
 VaapiImage *
-gst_mfx_prime_buffer_proxy_get_vaapi_image (GstMfxPrimeBufferProxy *proxy);
+gst_mfx_prime_buffer_proxy_get_vaapi_image (GstMfxPrimeBufferProxy * proxy);
 
 G_END_DECLS
-
 #endif /* GST_VAAPI_BUFFER_PROXY_H */

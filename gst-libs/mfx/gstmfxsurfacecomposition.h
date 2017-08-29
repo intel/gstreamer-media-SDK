@@ -27,14 +27,12 @@
 #include <gst/video/video-overlay-composition.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_SURFACE_COMPOSITION (gst_mfx_surface_composition_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxSurfaceComposition, gst_mfx_surface_composition, GST_MFX, SURFACE_COMPOSITION, GstObject)
-
+G_DECLARE_FINAL_TYPE (GstMfxSurfaceComposition, gst_mfx_surface_composition,
+    GST_MFX, SURFACE_COMPOSITION, GstObject)
 #define GST_MFX_SURFACE_COMPOSITION(obj) ((GstMfxSurfaceComposition *)(obj))
-
+     
 typedef struct _GstMfxSubpicture GstMfxSubpicture;
-
 struct _GstMfxSubpicture
 {
   GstMfxSurface *surface;
@@ -43,31 +41,28 @@ struct _GstMfxSubpicture
 };
 
 GstMfxSurfaceComposition *
-gst_mfx_surface_composition_new (GstMfxSurface * base_surface,
-  GstVideoOverlayComposition * overlay);
+gst_mfx_surface_composition_new (GstMfxSurface *
+    base_surface, GstVideoOverlayComposition * overlay);
 
 GstMfxSurfaceComposition *
 gst_mfx_surface_composition_ref (GstMfxSurfaceComposition * composition);
 
 void
-gst_mfx_surface_composition_unref(GstMfxSurfaceComposition * composition);
+gst_mfx_surface_composition_unref (GstMfxSurfaceComposition * composition);
 
 void
-gst_mfx_surface_composition_replace(
-  GstMfxSurfaceComposition ** old_composition_ptr,
-  GstMfxSurfaceComposition * new_composition);
+gst_mfx_surface_composition_replace (GstMfxSurfaceComposition ** old_composition_ptr,
+    GstMfxSurfaceComposition * new_composition);
 
 GstMfxSurface *
 gst_mfx_surface_composition_get_base_surface (GstMfxSurfaceComposition * composition);
 
 guint
-gst_mfx_surface_composition_get_num_subpictures(GstMfxSurfaceComposition * composition);
+gst_mfx_surface_composition_get_num_subpictures (GstMfxSurfaceComposition * composition);
 
 GstMfxSubpicture *
-gst_mfx_surface_composition_get_subpicture(GstMfxSurfaceComposition * composition,
-  guint index);
+gst_mfx_surface_composition_get_subpicture (GstMfxSurfaceComposition * composition,
+    guint index);
 
 G_END_DECLS
-
 #endif /* GST_MFX_SUBPICTURE_COMPOSITION_H */
-
