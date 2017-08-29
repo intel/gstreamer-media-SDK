@@ -259,7 +259,7 @@ gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
   }
   else {
     ID3D11Texture2D *stage = (ID3D11Texture2D *)mem_id->mid_stage;
-
+    g_return_val_if_fail (stage != NULL, MFX_ERR_INVALID_HANDLE);
     /* copy data only when reading from stored surface */
     if (mem_id->rw & MFX_SURFACE_READ)
       ID3D11DeviceContext_CopyResource(d3d11_context, 
