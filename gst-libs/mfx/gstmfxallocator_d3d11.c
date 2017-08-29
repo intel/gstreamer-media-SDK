@@ -246,7 +246,7 @@ gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
   gst_mfx_context_unref (context);
 
   ID3D11Texture2D_GetDesc (texture, &desc);
-  if (desc.Format == DXGI_FORMAT_P8) {
+  if (desc.Format == DXGI_FORMAT_P8 || desc.Format == DXGI_FORMAT_UNKNOWN) {
     hr = ID3D11DeviceContext_Map (d3d11_context, (ID3D11Resource *)texture, 0,
       D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
     if (FAILED(hr))
@@ -326,7 +326,7 @@ gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
   gst_mfx_context_unref (context);
 
   ID3D11Texture2D_GetDesc (texture, &desc);
-  if (desc.Format == DXGI_FORMAT_P8) {
+  if (desc.Format == DXGI_FORMAT_P8 || desc.Format == DXGI_FORMAT_UNKNOWN) {
     ID3D11DeviceContext_Unmap (d3d11_context, (ID3D11Resource *)texture, 0);
   }
   else {
