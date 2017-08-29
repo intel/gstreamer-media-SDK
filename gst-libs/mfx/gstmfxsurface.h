@@ -28,27 +28,21 @@
 #include "gstmfxtypes.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_SURFACE (gst_mfx_surface_get_type ())
 #define GST_MFX_SURFACE(obj) ((GstMfxSurface *) (obj))
-
 #define GST_MFX_SURFACE_FRAME_SURFACE(surface) \
   gst_mfx_surface_get_frame_surface (surface)
-
 #define GST_MFX_SURFACE_ID(surface) \
   gst_mfx_surface_get_id (surface)
-
 #define GST_MFX_SURFACE_FORMAT(surface) \
   gst_mfx_surface_get_format (surface)
-
 #define GST_MFX_SURFACE_WIDTH(surface) \
   gst_mfx_surface_get_width (surface)
-
 #define GST_MFX_SURFACE_HEIGHT(surface) \
   gst_mfx_surface_get_height (surface)
 
-typedef struct _GstMfxSurface       GstMfxSurface;
-typedef struct _GstMfxSurfacePool   GstMfxSurfacePool;
+typedef struct _GstMfxSurface GstMfxSurface;
+typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
 
 GType
 gst_mfx_surface_get_type (void);
@@ -73,7 +67,7 @@ gst_mfx_surface_unref (GstMfxSurface * surface);
 
 void
 gst_mfx_surface_replace (GstMfxSurface ** old_surface_ptr,
-  GstMfxSurface * new_surface);
+    GstMfxSurface * new_surface);
 
 mfxFrameSurface1 *
 gst_mfx_surface_get_frame_surface (GstMfxSurface * surface);
@@ -119,5 +113,4 @@ void
 gst_mfx_surface_unmap (GstMfxSurface * surface);
 
 G_END_DECLS
-
 #endif /* GST_MFX_SURFACE_H */

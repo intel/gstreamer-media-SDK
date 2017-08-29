@@ -31,37 +31,36 @@ extern const struct wl_interface wl_surface_interface;
 extern const struct wl_interface wl_viewport_interface;
 
 static const struct wl_interface *types[] = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	&wl_viewport_interface,
-	&wl_surface_interface,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  &wl_viewport_interface,
+  &wl_surface_interface,
 };
 
 static const struct wl_message wl_scaler_requests[] = {
-	{ "destroy", "", types + 0 },
-	{ "get_viewport", "no", types + 6 },
+  {"destroy", "", types + 0},
+  {"get_viewport", "no", types + 6},
 };
 
 WL_EXPORT const struct wl_interface wl_scaler_interface = {
-	"wl_scaler", 2,
-	2, wl_scaler_requests,
-	0, NULL,
+  "wl_scaler", 2,
+  2, wl_scaler_requests,
+  0, NULL,
 };
 
 static const struct wl_message wl_viewport_requests[] = {
-	{ "destroy", "", types + 0 },
-	{ "set", "ffffii", types + 0 },
-	{ "set_source", "2ffff", types + 0 },
-	{ "set_destination", "2ii", types + 0 },
+  {"destroy", "", types + 0},
+  {"set", "ffffii", types + 0},
+  {"set_source", "2ffff", types + 0},
+  {"set_destination", "2ii", types + 0},
 };
 
 WL_EXPORT const struct wl_interface wl_viewport_interface = {
-	"wl_viewport", 2,
-	4, wl_viewport_requests,
-	0, NULL,
+  "wl_viewport", 2,
+  4, wl_viewport_requests,
+  0, NULL,
 };
-

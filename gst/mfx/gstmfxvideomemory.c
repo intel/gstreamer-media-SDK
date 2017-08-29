@@ -91,8 +91,7 @@ new_surface (GstMfxVideoMemory * mem)
   GstMfxVideoAllocator *const allocator =
       GST_MFX_VIDEO_ALLOCATOR_CAST (GST_MEMORY_CAST (mem)->allocator);
 
-  return
-      gst_mfx_surface_new_from_pool (allocator->surface_pool);
+  return gst_mfx_surface_new_from_pool (allocator->surface_pool);
 }
 
 static gboolean
@@ -108,7 +107,7 @@ ensure_surface (GstMfxVideoMemory * mem)
     if (!mem->surface)
       return FALSE;
     gst_mfx_video_meta_set_surface (mem->meta,
-      gst_mfx_surface_ref (mem->surface));
+        gst_mfx_surface_ref (mem->surface));
   }
 
   return TRUE;
@@ -122,8 +121,8 @@ gst_video_meta_map_mfx_surface (GstVideoMeta * meta, guint plane,
       GST_MFX_VIDEO_MEMORY_CAST (gst_buffer_peek_memory (meta->buffer, 0));
 
   g_return_val_if_fail (mem, FALSE);
-  g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->
-          parent_instance.allocator), FALSE);
+  g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->parent_instance.
+          allocator), FALSE);
   g_return_val_if_fail (mem->meta, FALSE);
 
   /* Map for writing */
@@ -161,8 +160,8 @@ gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
       GST_MFX_VIDEO_MEMORY_CAST (gst_buffer_peek_memory (meta->buffer, 0));
 
   g_return_val_if_fail (mem, FALSE);
-  g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->
-      parent_instance.allocator), FALSE);
+  g_return_val_if_fail (GST_MFX_IS_VIDEO_ALLOCATOR (mem->parent_instance.
+          allocator), FALSE);
   g_return_val_if_fail (mem->meta, FALSE);
   g_return_val_if_fail (mem->surface, FALSE);
 
@@ -236,7 +235,7 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize, guint flags)
       // Only read flag set: return raw pixels
       if (!ensure_surface (mem))
         goto error_no_surface;
-      if (!gst_mfx_surface_map(mem->surface))
+      if (!gst_mfx_surface_map (mem->surface))
         goto error_map_surface;
 
       mem->map_type = GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR;
@@ -249,7 +248,7 @@ gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize, guint flags)
     case GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE:
       if (!mem->surface)
         goto error_no_surface;
-      mem->data = (void*) mem->surface;
+      mem->data = (void *) mem->surface;
       break;
     case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
       if (!get_image_data (mem))
@@ -290,7 +289,7 @@ gst_mfx_video_memory_unmap (GstMfxVideoMemory * mem)
       break;
     case GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR:
       if (mem->data && mem->new_copy)
-        g_slice_free1 (GST_VIDEO_INFO_SIZE(mem->image_info), mem->data);
+        g_slice_free1 (GST_VIDEO_INFO_SIZE (mem->image_info), mem->data);
       gst_mfx_surface_unmap (mem->surface);
       mem->data = NULL;
       break;
@@ -443,7 +442,7 @@ gst_mfx_video_allocator_new (GstMfxContext * context,
   allocator->image_info = *vip;
 
   allocator->surface_pool = gst_mfx_surface_pool_new (context,
-    &allocator->image_info, memtype_is_system);
+      &allocator->image_info, memtype_is_system);
   if (!allocator->surface_pool)
     goto error_create_surface_pool;
 

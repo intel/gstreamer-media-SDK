@@ -23,18 +23,16 @@
 
 #include "gstmfxsurface.h"
 #include "gstmfxtask.h"
-#include <glib.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_SURFACE_POOL (gst_mfx_surface_pool_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxSurfacePool, gst_mfx_surface_pool, GST_MFX, SURFACE_POOL, GstObject)
-
+G_DECLARE_FINAL_TYPE (GstMfxSurfacePool, gst_mfx_surface_pool, GST_MFX,
+    SURFACE_POOL, GstObject)
 #define GST_MFX_SURFACE_POOL(obj) ((GstMfxSurfacePool *)(obj))
 
 GstMfxSurfacePool *
-gst_mfx_surface_pool_new (GstMfxContext * context, const GstVideoInfo * info,
-  gboolean memtype_is_system);
+gst_mfx_surface_pool_new (GstMfxContext * context,
+    const GstVideoInfo * info, gboolean memtype_is_system);
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new_with_task (GstMfxTask * task);
@@ -57,5 +55,4 @@ gst_mfx_surface_pool_find_surface (GstMfxSurfacePool * pool,
     mfxFrameSurface1 * surface);
 
 G_END_DECLS
-
 #endif /* GST_MFX_SURFACE_POOL_H */

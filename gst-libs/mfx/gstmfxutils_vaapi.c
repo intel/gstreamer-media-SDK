@@ -39,7 +39,7 @@ struct _VaapiImage
   VAImage image;
 };
 
-G_DEFINE_TYPE(VaapiImage, vaapi_image, GST_TYPE_OBJECT);
+G_DEFINE_TYPE (VaapiImage, vaapi_image, GST_TYPE_OBJECT);
 
 static gboolean
 _vaapi_image_set_image (VaapiImage * image, const VAImage * va_image);
@@ -95,14 +95,14 @@ vaapi_image_create (VaapiImage * image,
 }
 
 static void
-vaapi_image_class_init(VaapiImageClass * klass)
+vaapi_image_class_init (VaapiImageClass * klass)
 {
-  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
   object_class->finalize = vaapi_image_finalize;
 }
 
 static void
-vaapi_image_init(VaapiImage * image)
+vaapi_image_init (VaapiImage * image)
 {
 }
 
@@ -120,15 +120,15 @@ vaapi_image_init(VaapiImage * image)
  */
 VaapiImage *
 vaapi_image_new (GstMfxDisplay * display,
-  guint width, guint height, GstVideoFormat format)
+    guint width, guint height, GstVideoFormat format)
 {
-  VaapiImage * image;
+  VaapiImage *image;
 
   g_return_val_if_fail (width > 0, NULL);
   g_return_val_if_fail (height > 0, NULL);
   g_return_val_if_fail (display != NULL, NULL);
 
-  image = g_object_new(GST_TYPE_VAAPI_IMAGE, NULL);
+  image = g_object_new (GST_TYPE_VAAPI_IMAGE, NULL);
   if (!image)
     return NULL;
 
@@ -159,13 +159,13 @@ error:
 VaapiImage *
 vaapi_image_new_with_image (GstMfxDisplay * display, VAImage * va_image)
 {
-  VaapiImage * image;
+  VaapiImage *image;
 
   g_return_val_if_fail (va_image, NULL);
   g_return_val_if_fail (va_image->image_id != VA_INVALID_ID, NULL);
   g_return_val_if_fail (va_image->buf != VA_INVALID_ID, NULL);
 
-  image = g_object_new(GST_TYPE_VAAPI_IMAGE, NULL);
+  image = g_object_new (GST_TYPE_VAAPI_IMAGE, NULL);
   if (!image)
     return NULL;
 
@@ -487,7 +487,7 @@ vaapi_image_ref (VaapiImage * image)
 void
 vaapi_image_unref (VaapiImage * image)
 {
-  gst_object_unref (GST_OBJECT(image));
+  gst_object_unref (GST_OBJECT (image));
 }
 
 /**
@@ -504,8 +504,7 @@ vaapi_image_replace (VaapiImage ** old_image_ptr, VaapiImage * new_image)
 {
   g_return_if_fail (old_image_ptr != NULL);
 
-  gst_object_replace ((GstObject **) old_image_ptr,
-	  GST_OBJECT(new_image));
+  gst_object_replace ((GstObject **) old_image_ptr, GST_OBJECT (new_image));
 }
 
 /** Check VA status for success or print out an error */

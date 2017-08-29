@@ -26,7 +26,7 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-G_DEFINE_TYPE(GstMfxTask, gst_mfx_task, GST_TYPE_OBJECT);
+G_DEFINE_TYPE (GstMfxTask, gst_mfx_task, GST_TYPE_OBJECT);
 
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task)
@@ -47,11 +47,11 @@ gst_mfx_task_get_memory_id (GstMfxTask * task)
   l = g_list_first (GST_MFX_TASK_GET_PRIVATE (task)->saved_responses);
   response_data = l->data;
 
-  #ifdef WITH_LIBVA_BACKEND
-    return &response_data->mem_ids[response_data->num_used++];
-  #else
-    return response_data->mids[response_data->num_used++];
-  #endif // WITH_LIBVA_BACKEND
+#ifdef WITH_LIBVA_BACKEND
+  return &response_data->mem_ids[response_data->num_used++];
+#else
+  return response_data->mids[response_data->num_used++];
+#endif // WITH_LIBVA_BACKEND
 }
 
 guint
@@ -119,7 +119,7 @@ gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task)
 GstMfxContext *
 gst_mfx_task_get_context (GstMfxTask * task)
 {
-  g_return_val_if_fail(task != NULL, NULL);
+  g_return_val_if_fail (task != NULL, NULL);
 
   return gst_mfx_context_ref (GST_MFX_TASK_GET_PRIVATE (task)->context);
 }
@@ -127,7 +127,7 @@ gst_mfx_task_get_context (GstMfxTask * task)
 void
 gst_mfx_task_use_video_memory (GstMfxTask * task)
 {
-  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE(task);
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
   mfxFrameAllocator frame_allocator = {
     .pthis = priv->aggregator,
     .Alloc = gst_mfx_task_frame_alloc,
@@ -175,7 +175,7 @@ gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params)
 static void
 gst_mfx_task_finalize (GObject * object)
 {
-  GstMfxTask* task = GST_MFX_TASK(object);
+  GstMfxTask *task = GST_MFX_TASK (object);
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
   if (priv->is_joined) {
     MFXDisjoinSession (priv->session);
@@ -195,7 +195,7 @@ gst_mfx_task_class_init (GstMfxTaskClass * klass)
 }
 
 static void
-gst_mfx_task_init(GstMfxTask * task)
+gst_mfx_task_init (GstMfxTask * task)
 {
 }
 
@@ -221,8 +221,9 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
       GST_MFX_DISPLAY_VADISPLAY (gst_mfx_context_get_device (priv->context));
 #else
   handle_type = MFX_HANDLE_D3D11_DEVICE;
-  device_handle = (ID3D11Device*)
-      gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device(priv->context));
+  device_handle = (ID3D11Device *)
+      gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device (priv->
+          context));
 #endif
 
   sts = MFXVideoCORE_GetHandle (priv->session, handle_type, &device_handle);
@@ -238,7 +239,7 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
 GstMfxTask *
 gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
 {
-  GstMfxTask * task;
+  GstMfxTask *task;
   mfxSession session;
   gboolean is_joined;
 
@@ -258,15 +259,15 @@ gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags)
   return task;
 
 error:
-  gst_mfx_task_unref(task);
+  gst_mfx_task_unref (task);
   return NULL;
 }
 
 GstMfxTask *
 gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
-  mfxSession session, guint type_flags, gboolean is_joined)
+    mfxSession session, guint type_flags, gboolean is_joined)
 {
-  GstMfxTask * task;
+  GstMfxTask *task;
 
   g_return_val_if_fail (aggregator != NULL, NULL);
   g_return_val_if_fail (session != 0, NULL);
@@ -280,7 +281,7 @@ gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
   return task;
 
 error:
-  gst_mfx_task_unref(task);
+  gst_mfx_task_unref (task);
   return NULL;
 }
 
@@ -295,7 +296,7 @@ gst_mfx_task_ref (GstMfxTask * task)
 void
 gst_mfx_task_unref (GstMfxTask * task)
 {
-  gst_object_unref (GST_OBJECT(task));
+  gst_object_unref (GST_OBJECT (task));
 }
 
 void
@@ -305,5 +306,3 @@ gst_mfx_task_replace (GstMfxTask ** old_task_ptr, GstMfxTask * new_task)
 
   gst_object_replace ((GstObject **) old_task_ptr, GST_OBJECT (new_task));
 }
-
-

@@ -48,7 +48,7 @@ gst_mfx_video_context_set_aggregator (GstContext * context,
 
   structure = gst_context_writable_structure (context);
   gst_structure_set (structure, GST_MFX_AGGREGATOR_CONTEXT_TYPE_NAME,
-	  GST_TYPE_MFX_TASK_AGGREGATOR, aggregator, NULL);
+      GST_TYPE_MFX_TASK_AGGREGATOR, aggregator, NULL);
 }
 
 GstContext *
@@ -74,7 +74,7 @@ gst_mfx_video_context_get_aggregator (GstContext * context,
 
   structure = gst_context_get_structure (context);
   return gst_structure_get (structure, GST_MFX_AGGREGATOR_CONTEXT_TYPE_NAME,
-	  GST_TYPE_MFX_TASK_AGGREGATOR, aggregator_ptr, NULL);
+      GST_TYPE_MFX_TASK_AGGREGATOR, aggregator_ptr, NULL);
 }
 
 static gboolean

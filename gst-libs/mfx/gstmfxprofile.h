@@ -29,13 +29,12 @@ G_BEGIN_DECLS
 typedef struct _GstMfxProfile GstMfxProfile;
 struct _GstMfxProfile
 {
-  mfxU32  codec;
-  mfxU16  profile;
+  mfxU32 codec;
+  mfxU16 profile;
 };
 
 GstMfxProfile
-gst_mfx_profile_from_caps (const GstCaps *caps);
+gst_mfx_profile_from_caps (const GstCaps * caps);
 
 G_END_DECLS
-
 #endif /* GST_MFX_PROFILE_H */

@@ -28,10 +28,9 @@
 #endif
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_CONTEXT (gst_mfx_context_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxContext, gst_mfx_context, GST_MFX, CONTEXT, GstObject)
-
+G_DECLARE_FINAL_TYPE (GstMfxContext, gst_mfx_context, GST_MFX, CONTEXT,
+    GstObject)
 #define GST_MFX_CONTEXT(obj) ((GstMfxContext *) (obj))
 
 GstMfxContext *
@@ -51,7 +50,7 @@ gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
 GstMfxDisplay *
 #else
 GstMfxD3D11Device *
-#endif // WITH_LIBVA_BACKEND
+#endif                          // WITH_LIBVA_BACKEND
 gst_mfx_context_get_device (GstMfxContext * context);
 
 void
@@ -61,5 +60,4 @@ void
 gst_mfx_context_unlock (GstMfxContext * context);
 
 G_END_DECLS
-
 #endif /* GST_MFX_CONTEXT_H */

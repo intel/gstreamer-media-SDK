@@ -32,7 +32,6 @@
 #include <gst-libs/mfx/gstmfxvalue.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFXPOSTPROC \
   (gst_mfxpostproc_get_type ())
 #define GST_MFXPOSTPROC(obj) \
@@ -47,7 +46,6 @@ G_BEGIN_DECLS
 #define GST_MFXPOSTPROC_GET_CLASS(obj) \
   (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXPOSTPROC, \
   GstMfxPostprocClass))
-
 typedef struct _GstMfxPostproc GstMfxPostproc;
 typedef struct _GstMfxPostprocClass GstMfxPostprocClass;
 
@@ -101,53 +99,53 @@ typedef enum
 
 struct _GstMfxPostproc
 {
-  /*< private >*/
-  GstMfxPluginBase        parent_instance;
+  /*< private > */
+  GstMfxPluginBase parent_instance;
 
-  GstMfxFilter           *filter;
-  GstVideoFormat          format;        /* output video format */
-  guint                   width;
-  guint                   height;
-  guint                   flags;
-  guint                   async_depth;
+  GstMfxFilter *filter;
+  GstVideoFormat format;        /* output video format */
+  guint width;
+  guint height;
+  guint flags;
+  guint async_depth;
 
-  GstCaps                *allowed_sinkpad_caps;
-  GstVideoInfo            sinkpad_info;
-  GstCaps                *allowed_srcpad_caps;
-  GstVideoInfo            srcpad_info;
+  GstCaps *allowed_sinkpad_caps;
+  GstVideoInfo sinkpad_info;
+  GstCaps *allowed_srcpad_caps;
+  GstVideoInfo srcpad_info;
 
   /* Deinterlacing */
-  GstMfxDeinterlaceMode   deinterlace_mode;
+  GstMfxDeinterlaceMode deinterlace_mode;
   GstMfxDeinterlaceMethod deinterlace_method;
 
   /* Basic filter values */
-  guint                   denoise_level;
-  guint                   detail_level;
+  guint denoise_level;
+  guint detail_level;
 
   /* Color balance filter values */
-  GList                  *channels;
+  GList *channels;
 
-  gfloat                  hue;
-  gfloat                  saturation;
-  gfloat                  brightness;
-  gfloat                  contrast;
-  guint                   cb_changed;
+  gfloat hue;
+  gfloat saturation;
+  gfloat brightness;
+  gfloat contrast;
+  guint cb_changed;
 
-    /* FRC */
-  GstMfxFrcAlgorithm      alg;
-  guint16                 fps_n;
-  guint16                 fps_d;
-  GstClockTime            field_duration;
+  /* FRC */
+  GstMfxFrcAlgorithm alg;
+  guint16 fps_n;
+  guint16 fps_d;
+  GstClockTime field_duration;
 
   /* Rotation angle */
-  GstMfxRotation          angle;
+  GstMfxRotation angle;
 
-  guint                   keep_aspect : 1;
+  guint keep_aspect:1;
 };
 
 struct _GstMfxPostprocClass
 {
-  /*< private >*/
+  /*< private > */
   GstMfxPluginBaseClass parent_class;
 };
 
@@ -155,5 +153,4 @@ GType
 gst_mfxpostproc_get_type (void);
 
 G_END_DECLS
-
 #endif /* GST_MFXPOSTPROC_H */

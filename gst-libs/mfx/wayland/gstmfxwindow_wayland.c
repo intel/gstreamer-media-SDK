@@ -78,7 +78,8 @@ struct _GstMfxWindowWayland
   GstMfxWindowWaylandPrivate priv;
 };
 
-G_DEFINE_TYPE(GstMfxWindowWayland, gst_mfx_window_wayland, GST_TYPE_MFX_WINDOW);
+G_DEFINE_TYPE (GstMfxWindowWayland, gst_mfx_window_wayland,
+    GST_TYPE_MFX_WINDOW);
 
 static void
 frame_done_callback (void *data, struct wl_callback *callback, uint32_t time)
@@ -96,8 +97,7 @@ static const struct wl_callback_listener frame_callback_listener = {
 static void
 frame_release_callback (void *data, struct wl_buffer *wl_buffer)
 {
-  GstMfxWindowWaylandPrivate *priv =
-      GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (data);
+  GstMfxWindowWaylandPrivate *priv = GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (data);
 
   wl_buffer_destroy (wl_buffer);
   if (priv->callback) {
@@ -134,8 +134,7 @@ gst_mfx_window_wayland_thread_run (gpointer window)
 {
   GstMfxWindowWaylandPrivate *const priv =
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window);
-  struct wl_display *const wl_display =
-      GST_MFX_DISPLAY_HANDLE (priv->display);
+  struct wl_display *const wl_display = GST_MFX_DISPLAY_HANDLE (priv->display);
 
   if (priv->sync_failed)
     return NULL;
@@ -188,13 +187,13 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window);
   GstMfxDisplayWaylandPrivate *const display_priv =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (priv->display);
-  struct wl_display *const display =
-      GST_MFX_DISPLAY_HANDLE (priv->display);
+  struct wl_display *const display = GST_MFX_DISPLAY_HANDLE (priv->display);
   GstMfxPrimeBufferProxy *buffer_proxy;
   struct wl_buffer *buffer;
   guintptr fd = 0;
   guint32 drm_format = 0;
-  gint offsets[3] = { 0 }, pitches[3] = { 0 }, num_planes = 0, i = 0;
+  gint offsets[3] = { 0 }, pitches[3] = {
+  0}, num_planes = 0, i = 0;
   VaapiImage *vaapi_image;
 
   buffer_proxy = gst_mfx_prime_buffer_proxy_new_from_surface (surface);
@@ -233,10 +232,8 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   GST_MFX_DISPLAY_LOCK (priv->display);
   buffer =
       wl_drm_create_prime_buffer (display_priv->drm, fd,
-          src_rect->width, src_rect->height, drm_format,
-          offsets[0], pitches[0],
-          offsets[1], pitches[1],
-          offsets[2], pitches[2]);
+      src_rect->width, src_rect->height, drm_format,
+      offsets[0], pitches[0], offsets[1], pitches[1], offsets[2], pitches[2]);
   GST_MFX_DISPLAY_UNLOCK (priv->display);
   if (!buffer) {
     GST_ERROR ("No wl_buffer created\n");
@@ -339,8 +336,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window);
   GstMfxDisplayWaylandPrivate *const priv_display =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (priv->display);
-  struct wl_display *const wl_display =
-      GST_MFX_DISPLAY_HANDLE (priv->display);
+  struct wl_display *const wl_display = GST_MFX_DISPLAY_HANDLE (priv->display);
   GError *err = NULL;
 
   GST_DEBUG ("create window, size %ux%u", *width, *height);
@@ -388,9 +384,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
     gst_mfx_window_wayland_set_fullscreen (window, TRUE);
 
   priv->thread = g_thread_try_new ("wayland-thread",
-      gst_mfx_window_wayland_thread_run,
-      window,
-      &err);
+      gst_mfx_window_wayland_thread_run, window, &err);
   if (err)
     return FALSE;
 
@@ -466,7 +460,7 @@ gst_mfx_window_wayland_class_init (GstMfxWindowWaylandClass * klass)
 }
 
 static void
-gst_mfx_window_wayland_init(GstMfxWindowWayland * window)
+gst_mfx_window_wayland_init (GstMfxWindowWayland * window)
 {
 }
 
@@ -485,19 +479,19 @@ gst_mfx_window_wayland_init(GstMfxWindowWayland * window)
 GstMfxWindow *
 gst_mfx_window_wayland_new (GstMfxDisplay * display, guint width, guint height)
 {
-  GstMfxWindowWayland * window;
+  GstMfxWindowWayland *window;
 
   GST_DEBUG ("new window, size %ux%u", width, height);
 
   g_return_val_if_fail (GST_MFX_IS_DISPLAY_WAYLAND (display), NULL);
 
-  window = g_object_new(GST_TYPE_MFX_WINDOW_WAYLAND, NULL);
+  window = g_object_new (GST_TYPE_MFX_WINDOW_WAYLAND, NULL);
   if (!window)
     return NULL;
 
-  GST_MFX_WINDOW_WAYLAND_GET_PRIVATE(window)->display =
-      gst_mfx_display_ref(display);
+  GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window)->display =
+      gst_mfx_display_ref (display);
 
   return gst_mfx_window_new_internal (GST_MFX_WINDOW (window),
-            NULL, GST_MFX_ID_INVALID, width, height);
+      NULL, GST_MFX_ID_INVALID, width, height);
 }

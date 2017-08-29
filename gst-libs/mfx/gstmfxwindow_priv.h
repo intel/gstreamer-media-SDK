@@ -24,32 +24,27 @@
 #define GST_MFX_WINDOW_PRIV_H
 
 G_BEGIN_DECLS
-
 #define GST_MFX_WINDOW_CLASS(klass) \
   ((GstMfxWindowClass *)(klass))
-
 #define GST_MFX_WINDOW_GET_PRIVATE(window) \
   (GST_MFX_WINDOW (window)->priv)
-
 #define GST_MFX_WINDOW_GET_CLASS(obj) \
   GST_MFX_WINDOW_CLASS(GST_OBJECT_GET_CLASS(obj))
-
 #undef GST_MFX_WINDOW_ID
 #define GST_MFX_WINDOW_ID(window) \
   (GST_MFX_WINDOW_GET_PRIVATE (window)->handle)
-
-typedef struct _GstMfxWindowClass            GstMfxWindowClass;
-typedef struct _GstMfxWindowPrivate          GstMfxWindowPrivate;
+typedef struct _GstMfxWindowClass GstMfxWindowClass;
+typedef struct _GstMfxWindowPrivate GstMfxWindowPrivate;
 
 struct _GstMfxWindowPrivate
 {
-  /*< private >*/
+  /*< private > */
   GstMfxWindow *parent;
 
   GstMfxContext *context;
   guintptr handle;
 
-  /*< protected >*/
+  /*< protected > */
   guint width;
   guint height;
   guint use_foreign_window;
@@ -65,28 +60,28 @@ struct _GstMfxWindowPrivate
  */
 struct _GstMfxWindow
 {
-  /*< private >*/
-  GstObject				 parent_instance;
+  /*< private > */
+  GstObject parent_instance;
 
-  GstMfxWindowPrivate	*priv;
+  GstMfxWindowPrivate *priv;
 };
 
 
 /* GstMfxWindowClass hooks */
-typedef gboolean(*GstMfxWindowCreateFunc) (GstMfxWindow * window,
-  guint * width, guint * height);
-typedef void(*GstMfxWindowDestroyFunc) (GObject * window);
-typedef gboolean(*GstMfxWindowShowFunc) (GstMfxWindow * window);
-typedef gboolean(*GstMfxWindowHideFunc) (GstMfxWindow * window);
-typedef gboolean(*GstMfxWindowGetGeometryFunc) (GstMfxWindow * window,
-  gint * px, gint * py, guint * pwidth, guint * pheight);
-typedef gboolean(*GstMfxWindowSetFullscreenFunc) (GstMfxWindow * window,
-  gboolean fullscreen);
-typedef gboolean(*GstMfxWindowResizeFunc) (GstMfxWindow * window,
-  guint width, guint height);
-typedef gboolean(*GstMfxWindowRenderFunc) (GstMfxWindow * window,
-  GstMfxSurface * surface, const GstMfxRectangle * src_rect,
-  const GstMfxRectangle * dst_rect);
+typedef gboolean (*GstMfxWindowCreateFunc) (GstMfxWindow * window,
+    guint * width, guint * height);
+typedef void (*GstMfxWindowDestroyFunc) (GObject * window);
+typedef gboolean (*GstMfxWindowShowFunc) (GstMfxWindow * window);
+typedef gboolean (*GstMfxWindowHideFunc) (GstMfxWindow * window);
+typedef gboolean (*GstMfxWindowGetGeometryFunc) (GstMfxWindow * window,
+    gint * px, gint * py, guint * pwidth, guint * pheight);
+typedef gboolean (*GstMfxWindowSetFullscreenFunc) (GstMfxWindow * window,
+    gboolean fullscreen);
+typedef gboolean (*GstMfxWindowResizeFunc) (GstMfxWindow * window,
+    guint width, guint height);
+typedef gboolean (*GstMfxWindowRenderFunc) (GstMfxWindow * window,
+    GstMfxSurface * surface, const GstMfxRectangle * src_rect,
+    const GstMfxRectangle * dst_rect);
 
 /**
  * GstMfxWindowClass:
@@ -102,10 +97,10 @@ typedef gboolean(*GstMfxWindowRenderFunc) (GstMfxWindow * window,
  */
 struct _GstMfxWindowClass
 {
-  /*< private >*/
+  /*< private > */
   GstObjectClass parent_class;
 
-  /*< protected >*/
+  /*< protected > */
   GstMfxWindowCreateFunc create;
   GstMfxWindowDestroyFunc destroy;
   GstMfxWindowShowFunc show;
@@ -117,9 +112,8 @@ struct _GstMfxWindowClass
 };
 
 GstMfxWindow *
-gst_mfx_window_new_internal(GstMfxWindow * window, GstMfxContext* context,
-  GstMfxID id, guint width, guint height);
+gst_mfx_window_new_internal (GstMfxWindow * window,
+    GstMfxContext * context, GstMfxID id, guint width, guint height);
 
 G_END_DECLS
-
 #endif /* GST_MFX_WINDOW_PRIV_H */

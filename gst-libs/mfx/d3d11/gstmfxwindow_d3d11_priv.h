@@ -26,27 +26,22 @@
 #include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
-
 #define GST_MFX_IS_WINDOW_D3D11(window) \
   ((window) != NULL && \
   GST_MFX_WINDOW_TYPE (window) == GST_MFX_WINDOW_TYPE_D3D11)
-
 #define GST_MFX_WINDOW_D3D11_CAST(window) \
   ((GstMfxWindowD3D11 *)(window))
-
 #define GST_MFX_WINDOW_D3D11_GET_PRIVATE(window) \
   (&GST_MFX_WINDOW_D3D11_CAST(window)->priv)
 
-
-typedef struct _GstMfxWindowD3D11Private   GstMfxWindowD3D11Private;
-
+typedef struct _GstMfxWindowD3D11Private GstMfxWindowD3D11Private;
 struct _GstMfxWindowD3D11Private
 {
   GstMfxD3D11Device *device;
   GstMfxSurface *mapped_surface;
 
-  IDXGISwapChain1 * dxgi_swapchain;
-  ID3D11Texture2D * backbuffer_texture;
+  IDXGISwapChain1 *dxgi_swapchain;
+  ID3D11Texture2D *backbuffer_texture;
 
   ID3D11VideoDevice *d3d11_video_device;
   ID3D11VideoContext *d3d11_video_context;
@@ -66,13 +61,13 @@ struct _GstMfxWindowD3D11Private
 */
 struct _GstMfxWindowD3D11
 {
-  /*< private >*/
+  /*< private > */
   GstMfxWindow parent_instance;
 
   GstMfxWindowD3D11Private priv;
 };
 
-G_DEFINE_TYPE(GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_TYPE_MFX_WINDOW);
+G_DEFINE_TYPE (GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_TYPE_MFX_WINDOW);
 
 /**
 * GstMfxWindowD3D11Class:
@@ -81,10 +76,9 @@ G_DEFINE_TYPE(GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_TYPE_MFX_WINDOW);
 */
 struct _GstMfxWindowD3d11Class
 {
-  /*< private >*/
+  /*< private > */
   GstMfxWindowClass parent_class;
 };
 
 G_END_DECLS
-
 #endif /* GST_MFX_WINDOW_D3D11_PRIV_H */

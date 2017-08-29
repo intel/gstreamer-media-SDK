@@ -33,19 +33,19 @@ struct _GstMfxContext
   /*< private > */
   GstObject parent_instance;
 #ifdef WITH_LIBVA_BACKEND
-  GstMfxDisplay * device;
+  GstMfxDisplay *device;
 #else
-  GstMfxD3D11Device * device;
+  GstMfxD3D11Device *device;
 #endif
   GRecMutex mutex;
 };
 
-G_DEFINE_TYPE(GstMfxContext, gst_mfx_context, GST_TYPE_OBJECT);
+G_DEFINE_TYPE (GstMfxContext, gst_mfx_context, GST_TYPE_OBJECT);
 
 static void
 gst_mfx_context_finalize (GObject * object)
 {
-  GstMfxContext* context = GST_MFX_CONTEXT (object);
+  GstMfxContext *context = GST_MFX_CONTEXT (object);
 #ifdef WITH_LIBVA_BACKEND
   gst_mfx_display_replace (&context->device, NULL);
 #else
@@ -70,7 +70,7 @@ gst_mfx_context_init (GstMfxContext * context)
 GstMfxContext *
 gst_mfx_context_new (mfxSession session)
 {
-  GstMfxContext * context = g_object_new (GST_TYPE_MFX_CONTEXT, NULL);
+  GstMfxContext *context = g_object_new (GST_TYPE_MFX_CONTEXT, NULL);
   if (!context)
     return NULL;
 
@@ -108,15 +108,14 @@ gst_mfx_context_replace (GstMfxContext ** old_context_ptr,
 {
   g_return_if_fail (old_context_ptr != NULL);
 
-  gst_object_replace ((GstObject **) old_context_ptr,
-	  GST_OBJECT (new_context));
+  gst_object_replace ((GstObject **) old_context_ptr, GST_OBJECT (new_context));
 }
 
 #ifdef WITH_LIBVA_BACKEND
 GstMfxDisplay *
 #else
 GstMfxD3D11Device *
-#endif // WITH_LIBVA_BACKEND
+#endif                          // WITH_LIBVA_BACKEND
 gst_mfx_context_get_device (GstMfxContext * context)
 {
   g_return_val_if_fail (context != NULL, NULL);
@@ -136,4 +135,3 @@ gst_mfx_context_unlock (GstMfxContext * context)
   g_return_if_fail (context != NULL);
   g_rec_mutex_unlock (&context->mutex);
 }
-

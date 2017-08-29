@@ -40,7 +40,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_mfx_h264_enc_debug);
 
 static const char gst_mfxenc_h264_sink_caps_str[] =
     GST_MFX_MAKE_INPUT_SURFACE_CAPS "; "
-    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
+GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxenc_h264_src_caps_str[] =
     GST_CODEC_CAPS ", " "profile = (string) { baseline, main, high }";
@@ -244,7 +244,7 @@ _h264_convert_byte_stream_to_avc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
     /* A start code size of 3 indicates the start of an
      * encoded picture in MSDK */
     if (nal_body - nal_start_code == 3) {
-      avc_data = g_malloc(nal_size + 4);
+      avc_data = g_malloc (nal_size + 4);
       if (!avc_data)
         goto error;
 
@@ -252,7 +252,7 @@ _h264_convert_byte_stream_to_avc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
       GST_WRITE_UINT32_BE (avc_data, nal_size);
       memcpy (avc_data + 4, nal_body, nal_size);
 
-      g_byte_array_append(avc_bytes, avc_data, nal_size + 4);
+      g_byte_array_append (avc_bytes, avc_data, nal_size + 4);
       g_free (avc_data);
     }
     nal_start_code = nal_body + nal_size;
@@ -260,13 +260,13 @@ _h264_convert_byte_stream_to_avc (GstBuffer * inbuf, GstBuffer ** outbuf_ptr)
   gst_buffer_unmap (inbuf, &info);
 
   if (avc_bytes->data)
-    *outbuf_ptr = gst_buffer_new_wrapped(avc_bytes->data, avc_bytes->len);
+    *outbuf_ptr = gst_buffer_new_wrapped (avc_bytes->data, avc_bytes->len);
 
-  g_byte_array_free(avc_bytes, FALSE);
+  g_byte_array_free (avc_bytes, FALSE);
   return TRUE;
 
 error:
-  g_byte_array_free(avc_bytes, TRUE);
+  g_byte_array_free (avc_bytes, TRUE);
   gst_buffer_unmap (inbuf, &info);
   return FALSE;
 }

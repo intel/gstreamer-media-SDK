@@ -44,7 +44,7 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
 
 static const char gst_mfxdecode_sink_caps_str[] =
-    GST_CAPS_CODEC ("video/x-h264, \
+GST_CAPS_CODEC ("video/x-h264, \
         alignment = (string) au, \
         profile = (string) { constrained-baseline, baseline, main, high }, \
         stream-format = (string) byte-stream")
@@ -54,11 +54,11 @@ static const char gst_mfxdecode_sink_caps_str[] =
         stream-format = (string) byte-stream")
     GST_CAPS_CODEC ("video/mpeg, \
         mpegversion = 2")
-    GST_CAPS_CODEC("video/x-wmv, \
+    GST_CAPS_CODEC ("video/x-wmv, \
         format = (string) WMV3, \
         header-format = (string) none, \
         stream-format = (string) sequence-layer-frame-layer")
-    GST_CAPS_CODEC("video/x-wmv, \
+    GST_CAPS_CODEC ("video/x-wmv, \
         format = (string) WVC1, \
         header-format = (string) asf, \
         stream-format = (string) bdu")
@@ -66,68 +66,67 @@ static const char gst_mfxdecode_sink_caps_str[] =
 #if MSDK_CHECK_VERSION(1,19)
     GST_CAPS_CODEC ("video/x-vp9")
 #endif
-    GST_CAPS_CODEC ("image/jpeg")
-  ;
+    GST_CAPS_CODEC ("image/jpeg");
 
-static const char gst_mfxdecode_src_caps_str[] =
-  GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
+     static const char gst_mfxdecode_src_caps_str[] =
+         GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
 #ifdef HAVE_GST_GL_LIBS
-  GST_VIDEO_CAPS_MAKE_WITH_FEATURES (
-      GST_CAPS_FEATURE_MEMORY_GL_MEMORY, "{ RGBA, BGRA }") ";"
+         GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
+    "{ RGBA, BGRA }") ";"
 #endif
-  GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
+    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
-enum
-{
-  PROP_0,
-  PROP_ASYNC_DEPTH,
-  PROP_LIVE_MODE,
-  PROP_SKIP_CORRUPTED_FRAMES
-};
+     enum
+     {
+       PROP_0,
+       PROP_ASYNC_DEPTH,
+       PROP_LIVE_MODE,
+       PROP_SKIP_CORRUPTED_FRAMES
+     };
 
-static GstStaticPadTemplate src_template_factory =
-  GST_STATIC_PAD_TEMPLATE ("src",
-  GST_PAD_SRC,
-  GST_PAD_ALWAYS,
-  GST_STATIC_CAPS (gst_mfxdecode_src_caps_str)
-);
+     static GstStaticPadTemplate src_template_factory =
+         GST_STATIC_PAD_TEMPLATE ("src",
+    GST_PAD_SRC,
+    GST_PAD_ALWAYS,
+    GST_STATIC_CAPS (gst_mfxdecode_src_caps_str)
+    );
 
-typedef struct _GstMfxCodecMap GstMfxCodecMap;
-struct _GstMfxCodecMap
-{
-  const gchar *name;
-  guint rank;
-  const gchar *caps_str;
-};
+     typedef struct _GstMfxCodecMap GstMfxCodecMap;
+     struct _GstMfxCodecMap
+     {
+       const gchar *name;
+       guint rank;
+       const gchar *caps_str;
+     };
 
-static GstMfxCodecMap mfx_codec_map[] = {
-  {"h264", GST_RANK_PRIMARY + 3,
-      "video/x-h264, \
+     static GstMfxCodecMap mfx_codec_map[] = {
+       {"h264", GST_RANK_PRIMARY + 3,
+           "video/x-h264, \
        alignment = (string) au, \
        profile = (string) { constrained-baseline, baseline, main, high }, \
        stream-format = (string) byte-stream"},
-  {"hevc", GST_RANK_NONE, NULL},  // Determine caps later based on platform support
-  {"mpeg2", GST_RANK_PRIMARY + 3,
-      "video/mpeg, \
+       {"hevc", GST_RANK_NONE, NULL},   // Determine caps later based on platform support
+       {"mpeg2", GST_RANK_PRIMARY + 3,
+           "video/mpeg, \
        mpegversion=2, \
        systemstream=(boolean) false"},
-  {"wmv", GST_RANK_PRIMARY + 3,
-      "video/x-wmv, \
+       {"wmv", GST_RANK_PRIMARY + 3,
+           "video/x-wmv, \
        format = (string) WMV3, \
        header-format = (string) none, \
-       stream-format = (string) sequence-layer-frame-layer" },
-  {"vc1", GST_RANK_PRIMARY + 3,
-      "video/x-wmv, \
+       stream-format = (string) sequence-layer-frame-layer"},
+       {"vc1", GST_RANK_PRIMARY + 3,
+           "video/x-wmv, \
        format = (string) WVC1, \
        header-format = (string) asf, \
        stream-format = (string) bdu"},
-  {"vp8", GST_RANK_NONE, "video/x-vp8"},
+       {"vp8", GST_RANK_NONE, "video/x-vp8"},
 #if MSDK_CHECK_VERSION(1,19)
-  {"vp9", GST_RANK_NONE, "video/x-vp9"},
+       {"vp9", GST_RANK_NONE, "video/x-vp9"},
 # endif
-  {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
-  {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
-};
+       {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
+       {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
+     };
 
 static GstElementClass *parent_class = NULL;
 
@@ -150,7 +149,7 @@ copy_video_codec_state (const GstVideoCodecState * in_state)
 
 static gboolean
 gst_mfxdec_input_state_replace (GstMfxDec * mfxdec,
-  const GstVideoCodecState * new_state)
+    const GstVideoCodecState * new_state)
 {
   if (mfxdec->input_state) {
     if (new_state) {
@@ -207,7 +206,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
 
 #ifdef HAVE_GST_GL_LIBS
   has_gl_texture_sharing =
-    gst_mfx_check_gl_texture_sharing (GST_ELEMENT (mfxdec),
+      gst_mfx_check_gl_texture_sharing (GST_ELEMENT (mfxdec),
       GST_VIDEO_DECODER_SRC_PAD (vdec), &plugin->gl_context);
 
   /* No need to defer GL export decison to gst_mfx_plugin_base_decide_allocation()
@@ -218,7 +217,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
-        use_10bpc, has_gl_texture_sharing, &output_format);
+      use_10bpc, has_gl_texture_sharing, &output_format);
 
   if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
     return FALSE;
@@ -228,8 +227,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
         gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
 #ifdef HAVE_GST_GL_LIBS
   else if (GST_MFX_CAPS_FEATURE_GL_MEMORY == feature)
-    features =
-        gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_GL_MEMORY, NULL);
+    features = gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_GL_MEMORY, NULL);
 #endif
 
   state = gst_video_decoder_set_output_state (vdec, output_format,
@@ -276,45 +274,45 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
 
 static void
 gst_mfxdec_set_property (GObject * object, guint prop_id,
-  const GValue * value, GParamSpec * pspec)
+    const GValue * value, GParamSpec * pspec)
 {
   GstMfxDec *dec = GST_MFXDEC (object);
 
   switch (prop_id) {
-  case PROP_ASYNC_DEPTH:
-    dec->async_depth = g_value_get_uint (value);
-    break;
-  case PROP_LIVE_MODE:
-    dec->live_mode = g_value_get_boolean (value);
-    break;
-  case PROP_SKIP_CORRUPTED_FRAMES:
-    dec->skip_corrupted_frames = g_value_get_boolean (value);
-    break;
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    break;
+    case PROP_ASYNC_DEPTH:
+      dec->async_depth = g_value_get_uint (value);
+      break;
+    case PROP_LIVE_MODE:
+      dec->live_mode = g_value_get_boolean (value);
+      break;
+    case PROP_SKIP_CORRUPTED_FRAMES:
+      dec->skip_corrupted_frames = g_value_get_boolean (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
   }
 }
 
 static void
 gst_mfxdec_get_property (GObject * object, guint prop_id, GValue * value,
-  GParamSpec * pspec)
+    GParamSpec * pspec)
 {
   GstMfxDec *dec = GST_MFXDEC (object);
 
   switch (prop_id) {
-  case PROP_ASYNC_DEPTH:
-    g_value_set_uint (value, dec->async_depth);
-    break;
-  case PROP_LIVE_MODE:
-    g_value_set_boolean (value, dec->live_mode);
-    break;
-  case PROP_SKIP_CORRUPTED_FRAMES:
-    g_value_set_boolean (value, dec->skip_corrupted_frames);
-    break;
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    break;
+    case PROP_ASYNC_DEPTH:
+      g_value_set_uint (value, dec->async_depth);
+      break;
+    case PROP_LIVE_MODE:
+      g_value_set_boolean (value, dec->live_mode);
+      break;
+    case PROP_SKIP_CORRUPTED_FRAMES:
+      g_value_set_boolean (value, dec->skip_corrupted_frames);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
   }
 }
 
@@ -355,8 +353,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
       gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (plugin));
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,
-    extradata, mfxdec->async_depth, plugin->srcpad_caps_is_raw,
-    mfxdec->live_mode, is_autoplugged);
+      extradata, mfxdec->async_depth, plugin->srcpad_caps_is_raw,
+      mfxdec->live_mode, is_autoplugged);
 
   if (extradata)
     g_byte_array_free (extradata, FALSE);
@@ -388,14 +386,13 @@ gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
 #ifdef HAVE_GST_GL_LIBS
   if (GST_MFX_PLUGIN_BASE (mfxdec)->can_export_gl_textures) {
     gst_mfx_plugin_base_export_surface_to_gl (GST_MFX_PLUGIN_BASE (mfxdec),
-      surface, frame->output_buffer);
-  }
-  else {
+        surface, frame->output_buffer);
+  } else {
 #endif
-  meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
-  if (!meta)
-    goto error_get_meta;
-  gst_mfx_video_meta_set_surface (meta, surface);
+    meta = gst_buffer_get_mfx_video_meta (frame->output_buffer);
+    if (!meta)
+      goto error_get_meta;
+    gst_mfx_video_meta_set_surface (meta, surface);
 #ifdef HAVE_GST_GL_LIBS
   }
 #endif //HAVE_GST_GL_LIBS
@@ -403,7 +400,7 @@ gst_mfxdec_push_decoded_frame (GstMfxDec * mfxdec, GstVideoCodecFrame * frame)
   crop_rect = gst_mfx_surface_get_crop_rect (surface);
   if (crop_rect) {
     GstVideoCropMeta *const crop_meta =
-      gst_buffer_add_video_crop_meta (frame->output_buffer);
+        gst_buffer_add_video_crop_meta (frame->output_buffer);
     if (crop_meta) {
       crop_meta->x = crop_rect->x;
       crop_meta->y = crop_rect->y;
@@ -534,14 +531,14 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
 }
 
 static gboolean
-gst_mfxdec_decide_allocation(GstVideoDecoder * vdec, GstQuery * query)
+gst_mfxdec_decide_allocation (GstVideoDecoder * vdec, GstQuery * query)
 {
   return gst_mfx_plugin_base_decide_allocation (GST_MFX_PLUGIN_BASE (vdec),
-    query);
+      query);
 }
 
 static GstFlowReturn
-gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
+gst_mfxdec_handle_frame (GstVideoDecoder * vdec, GstVideoCodecFrame * frame)
 {
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
   GstMfxDecoderStatus sts;
@@ -554,8 +551,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       ", dur:%" GST_TIME_FORMAT,
       gst_buffer_get_size (frame->input_buffer),
       GST_TIME_ARGS (frame->dts),
-      GST_TIME_ARGS (frame->pts),
-      GST_TIME_ARGS (frame->duration));
+      GST_TIME_ARGS (frame->pts), GST_TIME_ARGS (frame->duration));
 
   sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
@@ -563,7 +559,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 
   switch (sts) {
     case GST_MFX_DECODER_STATUS_CONFIGURED:
-      if (!gst_mfxdec_negotiate(mfxdec))
+      if (!gst_mfxdec_negotiate (mfxdec))
         goto not_negotiated;
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
       ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
@@ -598,7 +594,7 @@ not_negotiated:
 }
 
 static GstFlowReturn
-gst_mfxdec_finish (GstVideoDecoder *vdec)
+gst_mfxdec_finish (GstVideoDecoder * vdec)
 {
   GstMfxDec *mfxdec = GST_MFXDEC (vdec);
   GstFlowReturn ret;
@@ -665,7 +661,7 @@ gst_mfxdec_src_query (GstVideoDecoder * vdec, GstQuery * query)
 }
 
 static void
-gst_mfxdec_class_init (GstMfxDecClass *klass)
+gst_mfxdec_class_init (GstMfxDecClass * klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
@@ -675,8 +671,7 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
   gchar *name, *longname, *description;
   GstCaps *caps;
 
-  GST_DEBUG_CATEGORY_INIT (mfxdec_debug, GST_PLUGIN_NAME,
-      0, GST_PLUGIN_DESC);
+  GST_DEBUG_CATEGORY_INIT (mfxdec_debug, GST_PLUGIN_NAME, 0, GST_PLUGIN_DESC);
 
   parent_class = g_type_class_peek_parent (klass);
 
@@ -687,22 +682,22 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
   gobject_class->finalize = gst_mfxdec_finalize;
 
   g_object_class_install_property (gobject_class, PROP_ASYNC_DEPTH,
-  g_param_spec_uint ("async-depth", "Asynchronous Depth",
-      "Number of async operations before explicit sync",
-      0, 20, DEFAULT_ASYNC_DEPTH,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+      g_param_spec_uint ("async-depth", "Asynchronous Depth",
+          "Number of async operations before explicit sync",
+          0, 20, DEFAULT_ASYNC_DEPTH,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_property (gobject_class, PROP_LIVE_MODE,
-  g_param_spec_boolean ("live-mode",
-      "Live Streaming Mode",
-      "Live streaming mode (not recommended)",
-      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+      g_param_spec_boolean ("live-mode",
+          "Live Streaming Mode",
+          "Live streaming mode (not recommended)",
+          FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_property (gobject_class, PROP_SKIP_CORRUPTED_FRAMES,
-  g_param_spec_boolean ("skip-corrupted-frames",
-      "Skip corrupted frames",
-      "Skip decoded frames that have major corruption",
-      FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+      g_param_spec_boolean ("skip-corrupted-frames",
+          "Skip corrupted frames",
+          "Skip decoded frames that have major corruption",
+          FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   vdec_class->open = GST_DEBUG_FUNCPTR (gst_mfxdec_open);
   vdec_class->close = GST_DEBUG_FUNCPTR (gst_mfxdec_close);
@@ -723,8 +718,7 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
     longname = g_strdup_printf ("MFX %s decoder", name);
     description = g_strdup_printf ("An MFX-based %s video decoder", name);
     g_free (name);
-  }
-  else {
+  } else {
     longname = g_strdup_printf ("MFX Video Decoder");
     description = g_strdup_printf ("Uses libmfx for decoding video streams");
   }
@@ -749,7 +743,7 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
 }
 
 static void
-gst_mfxdec_init (GstMfxDec *mfxdec)
+gst_mfxdec_init (GstMfxDec * mfxdec)
 {
   gst_mfx_plugin_base_init (GST_MFX_PLUGIN_BASE (mfxdec), GST_CAT_DEFAULT);
 
@@ -807,9 +801,9 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
 #ifdef WITH_D3D11_BACKEND
           if (!g_strcmp0 (name, "hevc")) {
             mfx_codec_map[i].caps_str = "video/x-h265, "
-              "alignment = (string) au, "
-              "profile = (string) { main, main-10 }, "
-              "stream-format = (string) byte-stream";
+                "alignment = (string) au, "
+                "profile = (string) { main, main-10 }, "
+                "stream-format = (string) byte-stream";
             rank = GST_RANK_PRIMARY + 3;
           }
 #endif // WITH_D3D11_BACKEND
@@ -817,9 +811,9 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
         case MFX_PLATFORM_HASWELL:
           if (!g_strcmp0 (name, "hevc")) {
             mfx_codec_map[i].caps_str = "video/x-h265, "
-              "alignment = (string) au, "
-              "profile = (string) main, "
-              "stream-format = (string) byte-stream";
+                "alignment = (string) au, "
+                "profile = (string) main, "
+                "stream-format = (string) byte-stream";
             rank = GST_RANK_PRIMARY + 3;
           }
           break;
@@ -828,8 +822,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
       }
 #endif
       should_register = (rank != GST_RANK_NONE);
-    }
-    else {
+    } else {
       type_name = g_strdup_printf ("GstMfxDec");
       element_name = g_strdup_printf ("mfxdecode");
       /* mfxdecode was only registered for legacy purposes and codec testing */
@@ -855,4 +848,3 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
 
   return ret;
 }
-

@@ -29,15 +29,13 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-G_DEFINE_TYPE_WITH_PRIVATE(GstMfxWindow,
-  gst_mfx_window,
-  GST_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (GstMfxWindow, gst_mfx_window, GST_TYPE_OBJECT);
 
 static void
-gst_mfx_window_init(GstMfxWindow * window)
+gst_mfx_window_init (GstMfxWindow * window)
 {
   GstMfxWindowPrivate *const priv =
-      gst_mfx_window_get_instance_private(window);
+      gst_mfx_window_get_instance_private (window);
 
   window->priv = priv;
 }
@@ -45,7 +43,7 @@ gst_mfx_window_init(GstMfxWindow * window)
 static void
 gst_mfx_window_ensure_size (GstMfxWindow * window)
 {
-  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
   const GstMfxWindowClass *const klass = GST_MFX_WINDOW_GET_CLASS (window);
   guint width = priv->width, height = priv->height;
 
@@ -65,9 +63,10 @@ gst_mfx_window_ensure_size (GstMfxWindow * window)
 }
 
 static gboolean
-gst_mfx_window_create (GstMfxWindow * window, GstMfxID id, guint width, guint height)
+gst_mfx_window_create (GstMfxWindow * window, GstMfxID id, guint width,
+    guint height)
 {
-  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
 
   if (!GST_MFX_WINDOW_GET_CLASS (window)->create (window, &width, &height))
     return FALSE;
@@ -85,8 +84,8 @@ static void
 gst_mfx_window_finalize (GObject * object)
 {
   GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS (object);
-  GstMfxWindow *window = GST_MFX_WINDOW(object);
-  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindow *window = GST_MFX_WINDOW (object);
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
 
   if (klass->destroy)
     klass->destroy (object);
@@ -97,7 +96,7 @@ gst_mfx_window_finalize (GObject * object)
 static void
 gst_mfx_window_class_init (GstMfxWindowClass * klass)
 {
-  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
 
   GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "MFX helper");
 
@@ -105,8 +104,8 @@ gst_mfx_window_class_init (GstMfxWindowClass * klass)
 }
 
 GstMfxWindow *
-gst_mfx_window_new_internal (GstMfxWindow *window, GstMfxContext * context,
-  GstMfxID id, guint width, guint height)
+gst_mfx_window_new_internal (GstMfxWindow * window, GstMfxContext * context,
+    GstMfxID id, guint width, guint height)
 {
   if (id != GST_MFX_ID_INVALID) {
     g_return_val_if_fail (width == 0, NULL);
@@ -116,11 +115,11 @@ gst_mfx_window_new_internal (GstMfxWindow *window, GstMfxContext * context,
     g_return_val_if_fail (height > 0, NULL);
   }
 
-  GST_MFX_WINDOW_GET_PRIVATE(window)->handle = id;
-  GST_MFX_WINDOW_GET_PRIVATE(window)->use_foreign_window =
+  GST_MFX_WINDOW_GET_PRIVATE (window)->handle = id;
+  GST_MFX_WINDOW_GET_PRIVATE (window)->use_foreign_window =
       id != GST_MFX_ID_INVALID;
-  GST_MFX_WINDOW_GET_PRIVATE(window)->context = context ?
-    gst_mfx_context_ref(context) : NULL;
+  GST_MFX_WINDOW_GET_PRIVATE (window)->context = context ?
+      gst_mfx_context_ref (context) : NULL;
   if (!gst_mfx_window_create (window, id, width, height))
     goto error;
   return window;
@@ -143,7 +142,7 @@ gst_mfx_window_ref (GstMfxWindow * window)
 {
   g_return_val_if_fail (window != NULL, NULL);
 
-  return gst_object_ref (GST_OBJECT(window));
+  return gst_object_ref (GST_OBJECT (window));
 }
 
 /**
@@ -156,7 +155,7 @@ gst_mfx_window_ref (GstMfxWindow * window)
 void
 gst_mfx_window_unref (GstMfxWindow * window)
 {
-  gst_object_unref (GST_OBJECT(window));
+  gst_object_unref (GST_OBJECT (window));
 }
 
 /**
@@ -172,10 +171,9 @@ void
 gst_mfx_window_replace (GstMfxWindow ** old_window_ptr,
     GstMfxWindow * new_window)
 {
-  g_return_if_fail(old_window_ptr != NULL);
+  g_return_if_fail (old_window_ptr != NULL);
 
-  gst_object_replace((GstObject **)old_window_ptr,
-    GST_OBJECT(new_window));
+  gst_object_replace ((GstObject **) old_window_ptr, GST_OBJECT (new_window));
 }
 
 GstMfxContext *
@@ -183,7 +181,7 @@ gst_mfx_window_get_context (GstMfxWindow * window)
 {
   g_return_val_if_fail (window != NULL, NULL);
 
-  return GST_MFX_WINDOW_GET_PRIVATE(window)->context;
+  return GST_MFX_WINDOW_GET_PRIVATE (window)->context;
 }
 
 /**
@@ -199,7 +197,7 @@ gst_mfx_window_show (GstMfxWindow * window)
   g_return_if_fail (window != NULL);
 
   GST_MFX_WINDOW_GET_CLASS (window)->show (window);
-  GST_MFX_WINDOW_GET_PRIVATE(window)->check_geometry = TRUE;
+  GST_MFX_WINDOW_GET_PRIVATE (window)->check_geometry = TRUE;
 }
 
 /**
@@ -220,9 +218,9 @@ gst_mfx_window_hide (GstMfxWindow * window)
 guintptr
 gst_mfx_window_get_handle (GstMfxWindow * window)
 {
-  g_return_val_if_fail (window != NULL, (guintptr)NULL);
+  g_return_val_if_fail (window != NULL, (guintptr) NULL);
 
-  return GST_MFX_WINDOW_GET_PRIVATE(window)->handle;
+  return GST_MFX_WINDOW_GET_PRIVATE (window)->handle;
 }
 
 /**
@@ -240,7 +238,7 @@ gst_mfx_window_get_fullscreen (GstMfxWindow * window)
 
   gst_mfx_window_ensure_size (window);
 
-  return GST_MFX_WINDOW_GET_PRIVATE(window)->is_fullscreen;
+  return GST_MFX_WINDOW_GET_PRIVATE (window)->is_fullscreen;
 }
 
 /**
@@ -253,8 +251,8 @@ gst_mfx_window_get_fullscreen (GstMfxWindow * window)
 void
 gst_mfx_window_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
 {
-  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
-  const GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS(window);
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
+  const GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS (window);
 
   g_return_if_fail (window != NULL);
 
@@ -280,7 +278,7 @@ gst_mfx_window_get_width (GstMfxWindow * window)
 
   gst_mfx_window_ensure_size (window);
 
-  return GST_MFX_WINDOW_GET_PRIVATE(window)->width;
+  return GST_MFX_WINDOW_GET_PRIVATE (window)->width;
 }
 
 /**
@@ -298,7 +296,7 @@ gst_mfx_window_get_height (GstMfxWindow * window)
 
   gst_mfx_window_ensure_size (window);
 
-  return GST_MFX_WINDOW_GET_PRIVATE(window)->height;
+  return GST_MFX_WINDOW_GET_PRIVATE (window)->height;
 }
 
 /**
@@ -313,7 +311,7 @@ void
 gst_mfx_window_get_size (GstMfxWindow * window, guint * width_ptr,
     guint * height_ptr)
 {
-  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
 
   g_return_if_fail (window != NULL);
 
@@ -339,7 +337,7 @@ gst_mfx_window_set_width (GstMfxWindow * window, guint width)
   g_return_if_fail (window != NULL);
 
   gst_mfx_window_set_size (window, width,
-    GST_MFX_WINDOW_GET_PRIVATE(window)->height);
+      GST_MFX_WINDOW_GET_PRIVATE (window)->height);
 }
 
 /**
@@ -354,8 +352,8 @@ gst_mfx_window_set_height (GstMfxWindow * window, guint height)
 {
   g_return_if_fail (window != NULL);
 
-  gst_mfx_window_set_size (window, GST_MFX_WINDOW_GET_PRIVATE(window)->width,
-    height);
+  gst_mfx_window_set_size (window, GST_MFX_WINDOW_GET_PRIVATE (window)->width,
+      height);
 }
 
 /**
@@ -369,7 +367,7 @@ gst_mfx_window_set_height (GstMfxWindow * window, guint height)
 void
 gst_mfx_window_set_size (GstMfxWindow * window, guint width, guint height)
 {
-  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE(window);
+  GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
 
   g_return_if_fail (window != NULL);
 
@@ -459,6 +457,6 @@ gst_mfx_window_reconfigure (GstMfxWindow * window)
 {
   g_return_if_fail (window != NULL);
 
-  GST_MFX_WINDOW_GET_PRIVATE(window)->check_geometry = TRUE;
+  GST_MFX_WINDOW_GET_PRIVATE (window)->check_geometry = TRUE;
   gst_mfx_window_ensure_size (window);
 }

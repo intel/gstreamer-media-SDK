@@ -35,7 +35,6 @@
 #include <gst-libs/mfx/gstmfxcompositefilter.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFXSINK \
   (gst_mfxsink_get_type ())
 #define GST_MFXSINK_CAST(obj) \
@@ -50,74 +49,71 @@ G_BEGIN_DECLS
   (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXSINK))
 #define GST_MFXSINK_GET_CLASS(obj) \
   (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXSINK, GstMfxSinkClass))
+typedef struct _GstMfxSink GstMfxSink;
+typedef struct _GstMfxSinkClass GstMfxSinkClass;
+typedef struct _GstMfxSinkBackend GstMfxSinkBackend;
 
-typedef struct _GstMfxSink                    GstMfxSink;
-typedef struct _GstMfxSinkClass               GstMfxSinkClass;
-typedef struct _GstMfxSinkBackend             GstMfxSinkBackend;
-
-typedef gboolean(*GstMfxSinkCreateWindowFunc) (GstMfxSink * sink,
+typedef gboolean (*GstMfxSinkCreateWindowFunc) (GstMfxSink * sink,
     guint width, guint height);
-typedef gboolean(*GstMfxSinkCreateWindowFromHandleFunc) (GstMfxSink * sink,
+typedef gboolean (*GstMfxSinkCreateWindowFromHandleFunc) (GstMfxSink * sink,
     guintptr window);
-typedef gboolean(*GstMfxSinkHandleEventsFunc) (GstMfxSink * sink);
-typedef gboolean(*GstMfxSinkPreStartEventThreadFunc) (GstMfxSink * sink);
-typedef gboolean(*GstMfxSinkPreStopEventThreadFunc) (GstMfxSink * sink);
+typedef gboolean (*GstMfxSinkHandleEventsFunc) (GstMfxSink * sink);
+typedef gboolean (*GstMfxSinkPreStartEventThreadFunc) (GstMfxSink * sink);
+typedef gboolean (*GstMfxSinkPreStopEventThreadFunc) (GstMfxSink * sink);
 
 struct _GstMfxSinkBackend
 {
-  GstMfxSinkCreateWindowFunc              create_window;
-  GstMfxSinkCreateWindowFromHandleFunc    create_window_from_handle;
+  GstMfxSinkCreateWindowFunc create_window;
+  GstMfxSinkCreateWindowFromHandleFunc create_window_from_handle;
 
   /* Event threads handling */
-  GstMfxSinkHandleEventsFunc              handle_events;
-  GstMfxSinkPreStartEventThreadFunc       pre_start_event_thread;
-  GstMfxSinkPreStopEventThreadFunc        pre_stop_event_thread;
+  GstMfxSinkHandleEventsFunc handle_events;
+  GstMfxSinkPreStartEventThreadFunc pre_start_event_thread;
+  GstMfxSinkPreStopEventThreadFunc pre_stop_event_thread;
 };
 struct _GstMfxSink
 {
-  /*< private >*/
-  GstMfxPluginBase           parent_instance;
+  /*< private > */
+  GstMfxPluginBase parent_instance;
 
-  const GstMfxSinkBackend   *backend;
+  const GstMfxSinkBackend *backend;
 
-  GstCaps                   *caps;
-  GstMfxWindow              *window;
-  guint                      window_width;
-  guint                      window_height;
-  guint                      video_width;
-  guint                      video_height;
-  gint                       video_par_n;
-  gint                       video_par_d;
-  GstVideoInfo               video_info;
-  GstMfxRectangle            display_rect;
-  GThread                   *event_thread;
-  volatile                   gboolean event_thread_cancel;
+  GstCaps *caps;
+  GstMfxWindow *window;
+  guint window_width;
+  guint window_height;
+  guint video_width;
+  guint video_height;
+  gint video_par_n;
+  gint video_par_d;
+  GstVideoInfo video_info;
+  GstMfxRectangle display_rect;
+  GThread *event_thread;
+  volatile gboolean event_thread_cancel;
 
-  GstMfxCompositeFilter     *composite_filter;
-  GstMfxContext             *device_context;
+  GstMfxCompositeFilter *composite_filter;
+  GstMfxContext *device_context;
 #ifdef WITH_LIBVA_BACKEND
-  GstMfxDisplay             *display;
-  GstMfxDisplayType          display_type;
-  GstMfxDisplayType          display_type_req;
-  gchar                     *display_name;
+  GstMfxDisplay *display;
+  GstMfxDisplayType display_type;
+  GstMfxDisplayType display_type_req;
+  gchar *display_name;
 #endif
 
-  guint                      handle_events : 1;
-  guint                      foreign_window : 1;
-  guint                      fullscreen : 1;
-  guint                      keep_aspect : 1;
+  guint handle_events:1;
+  guint foreign_window:1;
+  guint fullscreen:1;
+  guint keep_aspect:1;
 };
 
 struct _GstMfxSinkClass
 {
-  /*< private >*/
+  /*< private > */
   GstMfxPluginBaseClass parent_class;
 };
 
 GType
-gst_mfxsink_get_type(void);
+gst_mfxsink_get_type (void);
 
 G_END_DECLS
-
-
 #endif /* GST_MFXSINK_H */

@@ -26,9 +26,6 @@
 
 G_BEGIN_DECLS
 
-const gchar *
-gst_mfx_video_format_to_string (GstVideoFormat format);
-
 GstVideoFormat
 gst_video_format_from_mfx_fourcc (mfxU32 fourcc);
 
@@ -37,27 +34,26 @@ gst_video_format_to_mfx_fourcc (GstVideoFormat format);
 
 #ifdef WITH_LIBVA_BACKEND
 GstVideoFormat
-gst_video_format_from_va_fourcc(guint fourcc);
+gst_video_format_from_va_fourcc (guint fourcc);
 
 guint
-gst_video_format_to_va_fourcc(GstVideoFormat format);
+gst_video_format_to_va_fourcc (GstVideoFormat format);
 
 mfxU32
-gst_mfx_video_format_from_va_fourcc(guint fourcc);
+gst_mfx_video_format_from_va_fourcc (guint fourcc);
 
 guint
-gst_mfx_video_format_to_va_fourcc(mfxU32 fourcc);
+gst_mfx_video_format_to_va_fourcc (mfxU32 fourcc);
 
 guint
-gst_mfx_video_format_to_va_format(mfxU32 fourcc);
+gst_mfx_video_format_to_va_format (mfxU32 fourcc);
 #else
 DXGI_FORMAT
-gst_mfx_fourcc_to_dxgi_format(mfxU32 fourcc);
+gst_mfx_fourcc_to_dxgi_format (mfxU32 fourcc);
 
 DXGI_FORMAT
-gst_video_format_to_dxgi_format(GstVideoFormat format);
+gst_video_format_to_dxgi_format (GstVideoFormat format);
 #endif
 
 G_END_DECLS
-
 #endif /* GST_MFX_VIDEO_FORMAT_H */

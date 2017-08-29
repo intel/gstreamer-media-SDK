@@ -27,26 +27,11 @@
 #include <mfxvideo.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_TASK_AGGREGATOR (gst_mfx_task_aggregator_get_type ())
-G_DECLARE_FINAL_TYPE( GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_MFX, TASK_AGGREGATOR, GstObject)
-
+G_DECLARE_FINAL_TYPE (GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_MFX,
+    TASK_AGGREGATOR, GstObject)
 #define GST_MFX_TASK_AGGREGATOR(obj) \
   ((GstMfxTaskAggregator *) (obj))
-
-GstMfxTask *
-gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator);
-
-void
-gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
-    GstMfxTask * task);
-
-GstMfxTask *
-gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator);
-
-void
-gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
-    GstMfxTask * task);
 
 GstMfxTaskAggregator *
 gst_mfx_task_aggregator_new (void);
@@ -60,6 +45,20 @@ gst_mfx_task_aggregator_unref (GstMfxTaskAggregator * aggregator);
 void
 gst_mfx_task_aggregator_replace (GstMfxTaskAggregator ** old_aggregator_ptr,
     GstMfxTaskAggregator * new_aggregator);
+
+GstMfxTask *
+gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator);
+
+void
+gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
+  GstMfxTask * task);
+
+GstMfxTask *
+gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator);
+
+void
+gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
+  GstMfxTask * task);
 
 GstMfxContext *
 gst_mfx_task_aggregator_get_context (GstMfxTaskAggregator * aggregator);
@@ -82,5 +81,4 @@ gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator);
 #endif
 
 G_END_DECLS
-
 #endif /* GST_MFX_TASK_AGGREGATOR_H */

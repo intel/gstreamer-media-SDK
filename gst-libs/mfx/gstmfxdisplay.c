@@ -33,10 +33,8 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
-G_DEFINE_TYPE_WITH_CODE(GstMfxDisplay,
-  gst_mfx_display,
-  GST_TYPE_OBJECT,
-  G_ADD_PRIVATE(GstMfxDisplay));
+G_DEFINE_TYPE_WITH_CODE (GstMfxDisplay,
+    gst_mfx_display, GST_TYPE_OBJECT, G_ADD_PRIVATE (GstMfxDisplay));
 
 static int
 get_display_fd (GstMfxDisplay * display)
@@ -195,7 +193,7 @@ gst_mfx_display_create (GstMfxDisplay * display, gpointer init_value)
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
   const GstMfxDisplayClass *const klass = GST_MFX_DISPLAY_GET_CLASS (display);
 
-  if (klass->open_display && !klass->open_display(display, init_value))
+  if (klass->open_display && !klass->open_display (display, init_value))
     return FALSE;
   if (klass->get_size)
     klass->get_size (display, &priv->width, &priv->height);
@@ -262,7 +260,7 @@ static void
 gst_mfx_display_init (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *const priv =
-    gst_mfx_display_get_instance_private(display);
+      gst_mfx_display_get_instance_private (display);
   const GstMfxDisplayClass *const dpy_class =
       GST_MFX_DISPLAY_GET_CLASS (display);
 
@@ -281,7 +279,7 @@ gst_mfx_display_init (GstMfxDisplay * display)
 static void
 gst_mfx_display_finalize (GObject * object)
 {
-  GstMfxDisplay* display = GST_MFX_DISPLAY(object);
+  GstMfxDisplay *display = GST_MFX_DISPLAY (object);
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
 
   gst_mfx_display_destroy (display);
@@ -291,7 +289,7 @@ gst_mfx_display_finalize (GObject * object)
 void
 gst_mfx_display_class_init (GstMfxDisplayClass * klass)
 {
-  GObjectClass *const object_class = G_OBJECT_CLASS(klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
 
   GST_DEBUG_CATEGORY_INIT (gst_debug_mfx, "mfx", 0, "MFX helper");
 
@@ -299,7 +297,7 @@ gst_mfx_display_class_init (GstMfxDisplayClass * klass)
 }
 
 GstMfxDisplay *
-gst_mfx_display_new_internal (GstMfxDisplay *display, gpointer init_value)
+gst_mfx_display_new_internal (GstMfxDisplay * display, gpointer init_value)
 {
   if (!gst_mfx_display_create (display, init_value))
     goto error;
@@ -317,11 +315,11 @@ gst_mfx_display_new (void)
 
   GST_DEBUG ("creating VAAPI display");
 
-  display = g_object_new(GST_TYPE_MFX_DISPLAY, NULL);
+  display = g_object_new (GST_TYPE_MFX_DISPLAY, NULL);
   if (!display)
     return NULL;
 
-  if (!gst_mfx_display_init_vaapi(display))
+  if (!gst_mfx_display_init_vaapi (display))
     goto error;
   return display;
 
@@ -333,25 +331,24 @@ error:
 GstMfxDisplay *
 gst_mfx_display_ref (GstMfxDisplay * display)
 {
-  g_return_val_if_fail(display != NULL, NULL);
+  g_return_val_if_fail (display != NULL, NULL);
 
-  return gst_object_ref (GST_OBJECT(display));
+  return gst_object_ref (GST_OBJECT (display));
 }
 
 void
 gst_mfx_display_unref (GstMfxDisplay * display)
 {
-  gst_object_unref (GST_OBJECT(display));
+  gst_object_unref (GST_OBJECT (display));
 }
 
 void
 gst_mfx_display_replace (GstMfxDisplay ** old_display_ptr,
     GstMfxDisplay * new_display)
 {
-  g_return_if_fail(old_display_ptr != NULL);
+  g_return_if_fail (old_display_ptr != NULL);
 
-  gst_object_replace ((GstObject **)old_display_ptr,
-    GST_OBJECT(new_display));
+  gst_object_replace ((GstObject **) old_display_ptr, GST_OBJECT (new_display));
 }
 
 /**

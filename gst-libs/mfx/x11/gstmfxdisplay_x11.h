@@ -28,21 +28,18 @@
 #include <X11/Xlib.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_DISPLAY_X11 (gst_mfx_display_x11_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxDisplayX11, gst_mfx_display_x11, GST_MFX, DISPLAY_X11, GstMfxDisplay)
-
+G_DECLARE_FINAL_TYPE (GstMfxDisplayX11, gst_mfx_display_x11, GST_MFX,
+    DISPLAY_X11, GstMfxDisplay)
 #define GST_MFX_DISPLAY_X11_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_DISPLAY_X11, \
   GstMfxDisplayX11Class))
 
 GstMfxDisplay *
-gst_mfx_display_x11_new (GstMfxDisplayX11 * display, const gchar * display_name);
+gst_mfx_display_x11_new (GstMfxDisplayX11 * display,
+    const gchar * display_name);
 
-Display *
-gst_mfx_display_x11_get_display (GstMfxDisplay * display);
+Display *gst_mfx_display_x11_get_display (GstMfxDisplay * display);
 
 G_END_DECLS
-
-
 #endif /* GST_MFX_DISPLAY_X11_H */

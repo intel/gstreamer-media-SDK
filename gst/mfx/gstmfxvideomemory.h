@@ -39,11 +39,9 @@
 # include <gst-libs/mfx/gstmfxprimebufferproxy.h>
 #endif
 
-G_BEGIN_DECLS
-
-typedef struct _GstMfxVideoMemory           GstMfxVideoMemory;
-typedef struct _GstMfxVideoAllocator        GstMfxVideoAllocator;
-typedef struct _GstMfxVideoAllocatorClass   GstMfxVideoAllocatorClass;
+G_BEGIN_DECLS typedef struct _GstMfxVideoMemory GstMfxVideoMemory;
+typedef struct _GstMfxVideoAllocator GstMfxVideoAllocator;
+typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
 
 /* ------------------------------------------------------------------------ */
 /* --- GstMfxVideoMemory                                              --- */
@@ -77,8 +75,8 @@ typedef struct _GstMfxVideoAllocatorClass   GstMfxVideoAllocatorClass;
  */
 typedef enum
 {
-    GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE = 1,
-    GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR
+  GST_MFX_VIDEO_MEMORY_MAP_TYPE_SURFACE = 1,
+  GST_MFX_SYSTEM_MEMORY_MAP_TYPE_LINEAR
 } GstMfxVideoMemoryMapType;
 
 /**
@@ -89,19 +87,20 @@ typedef enum
 */
 struct _GstMfxVideoMemory
 {
-  GstMemory            parent_instance;
+  GstMemory parent_instance;
 
-  /*< private >*/
-  GstMfxSurface       *surface;
-  const GstVideoInfo  *image_info;
-  GstMfxVideoMeta     *meta;
-  guint                map_type;
-  guint8              *data;
-  gboolean             new_copy;
+  /*< private > */
+  GstMfxSurface *surface;
+  const GstVideoInfo *image_info;
+  GstMfxVideoMeta *meta;
+  guint map_type;
+  guint8 *data;
+  gboolean new_copy;
 };
 
 GstMemory *
-gst_mfx_video_memory_new (GstAllocator * allocator, GstMfxVideoMeta * meta);
+gst_mfx_video_memory_new (GstAllocator * allocator,
+    GstMfxVideoMeta * meta);
 
 gboolean
 gst_video_meta_map_mfx_surface (GstVideoMeta * meta, guint plane,
@@ -139,11 +138,11 @@ gst_mfx_video_memory_reset_surface (GstMfxVideoMemory * mem);
 */
 struct _GstMfxVideoAllocator
 {
-  GstAllocator         parent_instance;
+  GstAllocator parent_instance;
 
-  /*< private >*/
-  GstVideoInfo         image_info;
-  GstMfxSurfacePool   *surface_pool;
+  /*< private > */
+  GstVideoInfo image_info;
+  GstMfxSurfacePool *surface_pool;
 };
 
 /**
@@ -156,11 +155,9 @@ struct _GstMfxVideoAllocatorClass
   GstAllocatorClass parent_class;
 };
 
-GType
-gst_mfx_video_allocator_get_type(void);
+GType gst_mfx_video_allocator_get_type (void);
 
-GstAllocator *
-gst_mfx_video_allocator_new(GstMfxContext * context,
+GstAllocator *gst_mfx_video_allocator_new (GstMfxContext * context,
     const GstVideoInfo * vip, gboolean memtype_is_system);
 
 #ifdef WITH_LIBVA_BACKEND
@@ -169,10 +166,9 @@ gst_mfx_video_allocator_new(GstMfxContext * context,
 /* ------------------------------------------------------------------------ */
 
 GstMemory *
-gst_mfx_dmabuf_memory_new(GstAllocator * allocator, GstMfxContext * context,
-    const GstVideoInfo *vip, GstMfxVideoMeta * meta);
+gst_mfx_dmabuf_memory_new (GstAllocator * allocator,
+    GstMfxContext * context, const GstVideoInfo * vip, GstMfxVideoMeta * meta);
 #endif
 
 G_END_DECLS
-
 #endif /* GST_MFX_VIDEO_MEMORY_H */

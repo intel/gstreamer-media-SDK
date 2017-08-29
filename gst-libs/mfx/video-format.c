@@ -37,42 +37,42 @@ struct _GstMfxFormatMap
 
 #ifdef WITH_LIBVA_BACKEND
 GstMfxFormatMap format_map[] = {
-  { GST_VIDEO_FORMAT_NV12, MFX_FOURCC_NV12,
-    VA_FOURCC_NV12, VA_RT_FORMAT_YUV420 },
-  { GST_VIDEO_FORMAT_I420, MFX_FOURCC_YV12,
-    VA_FOURCC_YV12, VA_RT_FORMAT_YUV420 },
-  { GST_VIDEO_FORMAT_YV12, MFX_FOURCC_YV12,
-    VA_FOURCC_YV12, VA_RT_FORMAT_YUV420 },
-  { GST_VIDEO_FORMAT_YUY2, MFX_FOURCC_YUY2,
-    VA_FOURCC_YUY2, VA_RT_FORMAT_YUV422 },
-  { GST_VIDEO_FORMAT_UYVY, MFX_FOURCC_UYVY,
-    VA_FOURCC_UYVY, VA_RT_FORMAT_YUV422 },
-  { GST_VIDEO_FORMAT_BGRA, MFX_FOURCC_RGB4,
-    VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32 },
+  {GST_VIDEO_FORMAT_NV12, MFX_FOURCC_NV12,
+      VA_FOURCC_NV12, VA_RT_FORMAT_YUV420},
+  {GST_VIDEO_FORMAT_I420, MFX_FOURCC_YV12,
+      VA_FOURCC_YV12, VA_RT_FORMAT_YUV420},
+  {GST_VIDEO_FORMAT_YV12, MFX_FOURCC_YV12,
+      VA_FOURCC_YV12, VA_RT_FORMAT_YUV420},
+  {GST_VIDEO_FORMAT_YUY2, MFX_FOURCC_YUY2,
+      VA_FOURCC_YUY2, VA_RT_FORMAT_YUV422},
+  {GST_VIDEO_FORMAT_UYVY, MFX_FOURCC_UYVY,
+      VA_FOURCC_UYVY, VA_RT_FORMAT_YUV422},
+  {GST_VIDEO_FORMAT_BGRA, MFX_FOURCC_RGB4,
+      VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32},
   /* EGL dmabuf import of VA_FOURCC_ARGB surfaces results in RGBA GL textures */
-  { GST_VIDEO_FORMAT_RGBA, MFX_FOURCC_RGB4,
-    VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32 },
-  { GST_VIDEO_FORMAT_BGRx, MFX_FOURCC_RGB4,
-    VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32 },
-  { 0, }
+  {GST_VIDEO_FORMAT_RGBA, MFX_FOURCC_RGB4,
+      VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32},
+  {GST_VIDEO_FORMAT_BGRx, MFX_FOURCC_RGB4,
+      VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32},
+  {0,}
 };
 #else
 GstMfxFormatMap format_map[] = {
-  { GST_VIDEO_FORMAT_NV12, MFX_FOURCC_NV12, DXGI_FORMAT_NV12 },
-  { GST_VIDEO_FORMAT_YUY2, MFX_FOURCC_YUY2, DXGI_FORMAT_YUY2 },
-  { GST_VIDEO_FORMAT_YV12, MFX_FOURCC_YV12, DXGI_FORMAT_420_OPAQUE },
-  { GST_VIDEO_FORMAT_I420, MFX_FOURCC_YV12, DXGI_FORMAT_420_OPAQUE },
-  { GST_VIDEO_FORMAT_BGRA, MFX_FOURCC_RGB4, DXGI_FORMAT_B8G8R8A8_UNORM },
-  { GST_VIDEO_FORMAT_BGRx, MFX_FOURCC_RGB4, DXGI_FORMAT_B8G8R8A8_UNORM },
+  {GST_VIDEO_FORMAT_NV12, MFX_FOURCC_NV12, DXGI_FORMAT_NV12},
+  {GST_VIDEO_FORMAT_YUY2, MFX_FOURCC_YUY2, DXGI_FORMAT_YUY2},
+  {GST_VIDEO_FORMAT_YV12, MFX_FOURCC_YV12, DXGI_FORMAT_420_OPAQUE},
+  {GST_VIDEO_FORMAT_I420, MFX_FOURCC_YV12, DXGI_FORMAT_420_OPAQUE},
+  {GST_VIDEO_FORMAT_BGRA, MFX_FOURCC_RGB4, DXGI_FORMAT_B8G8R8A8_UNORM},
+  {GST_VIDEO_FORMAT_BGRx, MFX_FOURCC_RGB4, DXGI_FORMAT_B8G8R8A8_UNORM},
 #ifdef HAVE_GST_GL_LIBS
   /* this RGBA is used for OpenGL, and GL RGBA == DX BGRA */
-  { GST_VIDEO_FORMAT_RGBA, MFX_FOURCC_RGB4, DXGI_FORMAT_B8G8R8A8_UNORM },
+  {GST_VIDEO_FORMAT_RGBA, MFX_FOURCC_RGB4, DXGI_FORMAT_B8G8R8A8_UNORM},
 #endif
-  { GST_VIDEO_FORMAT_RGB8P, MFX_FOURCC_P8, DXGI_FORMAT_P8 },
-  { GST_VIDEO_FORMAT_RGB8P, MFX_FOURCC_P8_TEXTURE, DXGI_FORMAT_P8 },
-  { GST_VIDEO_FORMAT_P010_10LE, MFX_FOURCC_P010, DXGI_FORMAT_P010 },
-  { GST_VIDEO_FORMAT_ENCODED, MFX_FOURCC_A2RGB10, DXGI_FORMAT_R10G10B10A2_UNORM }, //TODO: invent GST_VIDEO_FORMAT_RGB10_A2
-  { 0, }
+  {GST_VIDEO_FORMAT_RGB8P, MFX_FOURCC_P8, DXGI_FORMAT_P8},
+  {GST_VIDEO_FORMAT_RGB8P, MFX_FOURCC_P8_TEXTURE, DXGI_FORMAT_P8},
+  {GST_VIDEO_FORMAT_P010_10LE, MFX_FOURCC_P010, DXGI_FORMAT_P010},
+  {GST_VIDEO_FORMAT_ENCODED, MFX_FOURCC_A2RGB10, DXGI_FORMAT_R10G10B10A2_UNORM},        //TODO: invent GST_VIDEO_FORMAT_RGB10_A2
+  {0,}
 };
 #endif
 
@@ -102,7 +102,7 @@ gst_video_format_to_mfx_fourcc (GstVideoFormat format)
 
 #ifdef WITH_LIBVA_BACKEND
 GstVideoFormat
-gst_video_format_from_va_fourcc(guint fourcc)
+gst_video_format_from_va_fourcc (guint fourcc)
 {
   GstMfxFormatMap *m;
 
@@ -114,7 +114,7 @@ gst_video_format_from_va_fourcc(guint fourcc)
 }
 
 guint
-gst_video_format_to_va_fourcc(GstVideoFormat format)
+gst_video_format_to_va_fourcc (GstVideoFormat format)
 {
   GstMfxFormatMap *m;
 
@@ -126,7 +126,7 @@ gst_video_format_to_va_fourcc(GstVideoFormat format)
 }
 
 mfxU32
-gst_mfx_video_format_from_va_fourcc(guint fourcc)
+gst_mfx_video_format_from_va_fourcc (guint fourcc)
 {
   GstMfxFormatMap *m;
 
@@ -138,7 +138,7 @@ gst_mfx_video_format_from_va_fourcc(guint fourcc)
 }
 
 guint
-gst_mfx_video_format_to_va_fourcc(mfxU32 fourcc)
+gst_mfx_video_format_to_va_fourcc (mfxU32 fourcc)
 {
   GstMfxFormatMap *m;
 
@@ -150,7 +150,7 @@ gst_mfx_video_format_to_va_fourcc(mfxU32 fourcc)
 }
 
 guint
-gst_mfx_video_format_to_va_format(mfxU32 fourcc)
+gst_mfx_video_format_to_va_format (mfxU32 fourcc)
 {
   GstMfxFormatMap *m;
 
@@ -162,7 +162,7 @@ gst_mfx_video_format_to_va_format(mfxU32 fourcc)
 }
 #else
 DXGI_FORMAT
-gst_mfx_fourcc_to_dxgi_format(mfxU32 fourcc)
+gst_mfx_fourcc_to_dxgi_format (mfxU32 fourcc)
 {
   GstMfxFormatMap *m;
 
@@ -174,7 +174,7 @@ gst_mfx_fourcc_to_dxgi_format(mfxU32 fourcc)
 }
 
 DXGI_FORMAT
-gst_video_format_to_dxgi_format(GstVideoFormat format)
+gst_video_format_to_dxgi_format (GstVideoFormat format)
 {
   GstMfxFormatMap *m;
 

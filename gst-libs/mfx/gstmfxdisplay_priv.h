@@ -28,30 +28,25 @@
 #include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
-
 #define GST_MFX_DISPLAY_CAST(display) \
   ((GstMfxDisplay *) (display))
-
 #define GST_MFX_DISPLAY_GET_PRIVATE(display) \
   (GST_MFX_DISPLAY (display)->priv)
-
 #define GST_MFX_DISPLAY_CLASS(klass) \
   ((GstMfxDisplayClass *) (klass))
-
 #define GST_MFX_DISPLAY_GET_CLASS(obj) \
   GST_MFX_DISPLAY_CLASS (GST_OBJECT_GET_CLASS (obj))
+typedef struct _GstMfxDisplayPrivate GstMfxDisplayPrivate;
+typedef struct _GstMfxDisplayClass GstMfxDisplayClass;
 
-typedef struct _GstMfxDisplayPrivate          GstMfxDisplayPrivate;
-typedef struct _GstMfxDisplayClass            GstMfxDisplayClass;
-
-typedef void(*GstMfxDisplayInitFunc) (GstMfxDisplay * display);
-typedef gboolean(*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
-  const gchar * name);
-typedef void(*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
-typedef void(*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
-  guint * pwidth, guint * pheight);
-typedef void(*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
-  guint * pwidth, guint * pheight);
+typedef void (*GstMfxDisplayInitFunc) (GstMfxDisplay * display);
+typedef gboolean (*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
+    const gchar * name);
+typedef void (*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
+typedef void (*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
+    guint * pwidth, guint * pheight);
+typedef void (*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
+    guint * pwidth, guint * pheight);
 
 /**
 * GST_MFX_DISPLAY_GET_CLASS_TYPE:
@@ -98,7 +93,7 @@ struct _GstMfxDisplayPrivate
  */
 struct _GstMfxDisplay
 {
-  /*< private >*/
+  /*< private > */
   GstObject parent_instance;
 
   GstMfxDisplayPrivate *priv;
@@ -116,13 +111,13 @@ struct _GstMfxDisplay
  */
 struct _GstMfxDisplayClass
 {
-  /*< private >*/
+  /*< private > */
   GstObjectClass parent_class;
 
-  /*< protected >*/
+  /*< protected > */
   guint display_type;
 
-  /*< public >*/
+  /*< public > */
   GstMfxDisplayInitFunc init;
   GstMfxDisplayOpenFunc open_display;
   GstMfxDisplayCloseFunc close_display;
@@ -134,5 +129,4 @@ GstMfxDisplay *
 gst_mfx_display_new_internal (GstMfxDisplay * display, gpointer init_value);
 
 G_END_DECLS
-
 #endif /* GST_MFX_DISPLAY_PRIV_H */

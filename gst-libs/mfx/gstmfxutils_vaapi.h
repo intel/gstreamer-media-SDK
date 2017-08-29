@@ -26,18 +26,17 @@
 #include <gst/video/video.h>
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_VAAPI_IMAGE (vaapi_image_get_type ())
-G_DECLARE_FINAL_TYPE(VaapiImage, vaapi_image, VAAPI_IMAGE, NULL, GstObject)
-
+G_DECLARE_FINAL_TYPE (VaapiImage, vaapi_image, VAAPI_IMAGE, NULL, GstObject)
 #define VAAPI_IMAGE(obj) ((VaapiImage *) (obj))
 
 VaapiImage *
 vaapi_image_new (GstMfxDisplay * display,
-  guint width, guint height, GstVideoFormat format);
+    guint width, guint height, GstVideoFormat format);
 
 VaapiImage *
-vaapi_image_new_with_image (GstMfxDisplay *display, VAImage *va_image);
+vaapi_image_new_with_image (GstMfxDisplay * display,
+    VAImage * va_image);
 
 VaapiImage *
 vaapi_image_ref (VaapiImage * image);
@@ -46,51 +45,49 @@ void
 vaapi_image_unref (VaapiImage * image);
 
 void
-vaapi_image_replace (VaapiImage ** old_image_ptr,
-        VaapiImage * new_image);
+vaapi_image_replace (VaapiImage ** old_image_ptr, VaapiImage * new_image);
 
 VAImageID
-vaapi_image_get_id (VaapiImage *image);
+vaapi_image_get_id (VaapiImage * image);
 
 gboolean
-vaapi_image_get_image (VaapiImage *image, VAImage *va_image);
+vaapi_image_get_image (VaapiImage * image, VAImage * va_image);
 
 GstVideoFormat
-vaapi_image_get_format (VaapiImage *image);
+vaapi_image_get_format (VaapiImage * image);
 
 guint
-vaapi_image_get_width (VaapiImage *image);
+vaapi_image_get_width (VaapiImage * image);
 
 guint
-vaapi_image_get_height (VaapiImage *image);
+vaapi_image_get_height (VaapiImage * image);
 
-void
-vaapi_image_get_size (VaapiImage *image, guint *pwidth, guint *pheight);
+void vaapi_image_get_size (VaapiImage * image, guint * pwidth,
+    guint * pheight);
 
 gboolean
-vaapi_image_map (VaapiImage *image);
+vaapi_image_map (VaapiImage * image);
 
 gboolean
-vaapi_image_unmap (VaapiImage *image);
+vaapi_image_unmap (VaapiImage * image);
 
 guint
-vaapi_image_get_plane_count (VaapiImage *image);
+vaapi_image_get_plane_count (VaapiImage * image);
 
 guchar *
-vaapi_image_get_plane (VaapiImage *image, guint plane);
+vaapi_image_get_plane (VaapiImage * image, guint plane);
 
 guint
-vaapi_image_get_pitch (VaapiImage *image, guint plane);
+vaapi_image_get_pitch (VaapiImage * image, guint plane);
 
 guint
-vaapi_image_get_offset (VaapiImage *image, guint plane);
+vaapi_image_get_offset (VaapiImage * image, guint plane);
 
 guint
-vaapi_image_get_data_size (VaapiImage *image);
+vaapi_image_get_data_size (VaapiImage * image);
 
 gboolean
-vaapi_check_status (VAStatus status, const gchar *msg);
+vaapi_check_status (VAStatus status, const gchar * msg);
 
 G_END_DECLS
-
 #endif /* GST_MFX_UTILS_VAAPI_H */

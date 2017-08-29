@@ -25,17 +25,14 @@
 #include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_ENCODER_H265 (gst_mfx_encoder_h265_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxEncoderH265, gst_mfx_encoder_h265, GST_MFX, ENCODER_H265, GstMfxEncoder)
-
+G_DECLARE_FINAL_TYPE (GstMfxEncoderH265, gst_mfx_encoder_h265, GST_MFX,
+    ENCODER_H265, GstMfxEncoder)
 #define GST_MFX_ENCODER_H265_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_H265, \
   GstMfxEncoderH265Class))
-
 #define GST_MFX_ENCODER_H265 (encoder) \
   ((GstMfxEncoderH265 *) (encoder))
-
 /**
  * GstMfxEncoderH265Prop:
  * @GST_MFX_ENCODER_H265_PROP_LA_DEPTH:
@@ -43,7 +40,8 @@ G_DECLARE_FINAL_TYPE(GstMfxEncoderH265, gst_mfx_encoder_h265, GST_MFX, ENCODER_H
  *
  * The set of H.265 encoder specific configurable properties.
  */
-typedef enum {
+typedef enum
+{
   GST_MFX_ENCODER_H265_PROP_LA_DEPTH = -1,
   GST_MFX_ENCODER_H265_PROP_LOOKAHEAD_DS = -2,
 } GstMfxEncoderH265Prop;
@@ -56,5 +54,4 @@ GPtrArray *
 gst_mfx_encoder_h265_get_default_properties (void);
 
 G_END_DECLS
-
 #endif /*GST_MFX_ENCODER_H265_H */

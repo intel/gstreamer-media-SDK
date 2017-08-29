@@ -24,18 +24,14 @@
 #include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
-
 #define GST_MFX_SURFACE_CLASS(klass) \
   ((GstMfxSurfaceClass *)(klass))
-
 #define GST_MFX_SURFACE_GET_PRIVATE(surface) \
   (GST_MFX_SURFACE (surface)->priv)
-
 #define GST_MFX_SURFACE_GET_CLASS(obj) \
   GST_MFX_SURFACE_CLASS(GST_OBJECT_GET_CLASS(obj))
-
-typedef struct _GstMfxSurfaceClass            GstMfxSurfaceClass;
-typedef struct _GstMfxSurfacePrivate          GstMfxSurfacePrivate;
+typedef struct _GstMfxSurfaceClass GstMfxSurfaceClass;
+typedef struct _GstMfxSurfacePrivate GstMfxSurfacePrivate;
 
 struct _GstMfxSurfacePrivate
 {
@@ -61,23 +57,24 @@ struct _GstMfxSurfacePrivate
 
 struct _GstMfxSurface
 {
-  /*< private >*/
-  GstObject				 parent_instance;
+  /*< private > */
+  GstObject parent_instance;
 
-  GstMfxSurfacePrivate	*priv;
+  GstMfxSurfacePrivate *priv;
 };
 
-typedef gboolean(*GstMfxSurfaceAllocateFunc) (GstMfxSurface * surface, GstMfxTask * task);
-typedef void(*GstMfxSurfaceReleaseFunc) (GObject * surface);
-typedef gboolean(*GstMfxSurfaceMapFunc) (GstMfxSurface * surface);
-typedef void(*GstMfxSurfaceUnmapFunc) (GstMfxSurface * surface);
+typedef gboolean (*GstMfxSurfaceAllocateFunc) (GstMfxSurface * surface,
+    GstMfxTask * task);
+typedef void (*GstMfxSurfaceReleaseFunc) (GObject * surface);
+typedef gboolean (*GstMfxSurfaceMapFunc) (GstMfxSurface * surface);
+typedef void (*GstMfxSurfaceUnmapFunc) (GstMfxSurface * surface);
 
 struct _GstMfxSurfaceClass
 {
-  /*< private >*/
+  /*< private > */
   GstObjectClass parent_class;
 
-  /*< protected >*/
+  /*< protected > */
   GstMfxSurfaceAllocateFunc allocate;
   GstMfxSurfaceReleaseFunc release;
   GstMfxSurfaceMapFunc map;
@@ -85,9 +82,8 @@ struct _GstMfxSurfaceClass
 };
 
 GstMfxSurface *
-gst_mfx_surface_new_internal (GstMfxSurface * surface, GstMfxContext * context,
-  const GstVideoInfo * info, GstMfxTask * task);
+gst_mfx_surface_new_internal (GstMfxSurface * surface,
+    GstMfxContext * context, const GstVideoInfo * info, GstMfxTask * task);
 
 G_END_DECLS
-
 #endif /* GST_MFX_SURFACE_PRIV_H */

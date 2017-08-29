@@ -35,9 +35,7 @@
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 #include <gst-libs/mfx/gstmfxsurface.h>
 
-G_BEGIN_DECLS
-
-typedef struct _GstMfxPluginBase GstMfxPluginBase;
+G_BEGIN_DECLS typedef struct _GstMfxPluginBase GstMfxPluginBase;
 typedef struct _GstMfxPluginBaseClass GstMfxPluginBaseClass;
 
 #define GST_MFX_PLUGIN_BASE(plugin) \
@@ -93,7 +91,7 @@ typedef struct _GstMfxPluginBaseClass GstMfxPluginBaseClass;
 
 struct _GstMfxPluginBase
 {
-  /*< private >*/
+  /*< private > */
   union
   {
     GstElement element;
@@ -103,32 +101,32 @@ struct _GstMfxPluginBase
     GstVideoSink sink;
   } parent_instance;
 
-  GstDebugCategory     *debug_category;
+  GstDebugCategory *debug_category;
 
-  GstPad               *sinkpad;
-  GstCaps              *sinkpad_caps;
-  gboolean              sinkpad_caps_changed;
-  gboolean              sinkpad_caps_is_raw;
-  GstVideoInfo          sinkpad_info;
-  GstBufferPool        *sinkpad_buffer_pool;
-  guint                 sinkpad_buffer_size;
+  GstPad *sinkpad;
+  GstCaps *sinkpad_caps;
+  gboolean sinkpad_caps_changed;
+  gboolean sinkpad_caps_is_raw;
+  GstVideoInfo sinkpad_info;
+  GstBufferPool *sinkpad_buffer_pool;
+  guint sinkpad_buffer_size;
 
-  GstPad               *srcpad;
-  GstCaps              *srcpad_caps;
-  gboolean              srcpad_caps_changed;
-  gboolean              srcpad_caps_is_raw;
-  GstVideoInfo          srcpad_info;
-  GstBufferPool        *srcpad_buffer_pool;
+  GstPad *srcpad;
+  GstCaps *srcpad_caps;
+  gboolean srcpad_caps_changed;
+  gboolean srcpad_caps_is_raw;
+  GstVideoInfo srcpad_info;
+  GstBufferPool *srcpad_buffer_pool;
 
-  gboolean              sinkpad_has_dmabuf;
-  gboolean              can_export_gl_textures;
+  gboolean sinkpad_has_dmabuf;
+  gboolean can_export_gl_textures;
 
 #ifdef HAVE_GST_GL_LIBS
-  GstGLContext         *gl_context;
+  GstGLContext *gl_context;
 #ifdef WITH_D3D11_BACKEND
-  gboolean              sinkpad_has_dxgl_interop;//TODO
-  HANDLE                gl_context_dxgl_handle;
-#endif // WITH_D3D11_BACKEND
+  gboolean sinkpad_has_dxgl_interop;    //TODO
+  HANDLE gl_context_dxgl_handle;
+#endif                          // WITH_D3D11_BACKEND
 #endif
 
   GstMfxTaskAggregator *aggregator;
@@ -136,7 +134,7 @@ struct _GstMfxPluginBase
 
 struct _GstMfxPluginBaseClass
 {
-  /*< private >*/
+  /*< private > */
   union
   {
     GstElementClass element;
@@ -146,7 +144,7 @@ struct _GstMfxPluginBaseClass
     GstVideoSinkClass sink;
   } parent_class;
 
-  gboolean (*has_interface) (GstMfxPluginBase * plugin, GType type);
+    gboolean (*has_interface) (GstMfxPluginBase * plugin, GType type);
 };
 
 void
@@ -188,7 +186,5 @@ gboolean
 gst_mfx_plugin_base_export_surface_to_gl (GstMfxPluginBase * plugin,
     GstMfxSurface * surface, GstBuffer * outbuf);
 
-
 G_END_DECLS
-
 #endif /* GST_MFX_PLUGIN_BASE_H */

@@ -27,12 +27,10 @@
 #include "gstmfxtaskaggregator.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_ENCODER                  (gst_mfx_encoder_get_type ())
 #define GST_MFX_ENCODER(obj) \
     (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_ENCODER, GstMfxEncoder))
-
-typedef struct _GstMfxEncoder                 GstMfxEncoder;
+typedef struct _GstMfxEncoder GstMfxEncoder;
 
 typedef enum
 {
@@ -47,21 +45,24 @@ typedef enum
   GST_MFX_ENCODER_STATUS_ERROR_INVALID_PARAMETER = -4,
 } GstMfxEncoderStatus;
 
-typedef enum {
+typedef enum
+{
   GST_MFX_ENCODER_LOOKAHEAD_DS_AUTO = MFX_LOOKAHEAD_DS_UNKNOWN,
   GST_MFX_ENCODER_LOOKAHEAD_DS_OFF = MFX_LOOKAHEAD_DS_OFF,
   GST_MFX_ENCODER_LOOKAHEAD_DS_2X = MFX_LOOKAHEAD_DS_2x,
   GST_MFX_ENCODER_LOOKAHEAD_DS_4X = MFX_LOOKAHEAD_DS_4x,
 } GstMfxEncoderLookAheadDS;
 
-typedef enum {
+typedef enum
+{
   GST_MFX_ENCODER_TRELLIS_OFF = MFX_TRELLIS_OFF,
   GST_MFX_ENCODER_TRELLIS_I = MFX_TRELLIS_I,
-  GST_MFX_ENCODER_TRELLIS_IP = MFX_TRELLIS_I|MFX_TRELLIS_P,
-  GST_MFX_ENCODER_TRELLIS_IPB = MFX_TRELLIS_I|MFX_TRELLIS_P|MFX_TRELLIS_B,
+  GST_MFX_ENCODER_TRELLIS_IP = MFX_TRELLIS_I | MFX_TRELLIS_P,
+  GST_MFX_ENCODER_TRELLIS_IPB = MFX_TRELLIS_I | MFX_TRELLIS_P | MFX_TRELLIS_B,
 } GstMfxEncoderTrellis;
 
-typedef enum {
+typedef enum
+{
   GST_MFX_ENCODER_PRESET_VERY_SLOW = MFX_TARGETUSAGE_BEST_QUALITY,
   GST_MFX_ENCODER_PRESET_SLOWER = MFX_TARGETUSAGE_2,
   GST_MFX_ENCODER_PRESET_SLOW = MFX_TARGETUSAGE_3,
@@ -71,7 +72,8 @@ typedef enum {
   GST_MFX_ENCODER_PRESET_VERY_FAST = MFX_TARGETUSAGE_BEST_SPEED,
 } GstMfxEncoderPreset;
 
-typedef enum {
+typedef enum
+{
   GST_MFX_ENCODER_PROP_RATECONTROL = 1,
   GST_MFX_ENCODER_PROP_BITRATE,
   GST_MFX_ENCODER_PROP_PRESET,
@@ -104,29 +106,25 @@ typedef enum {
  *
  * A #GstMfxEncoderProp descriptor.
  */
-typedef struct {
+typedef struct
+{
   const gint prop;
   GParamSpec *const pspec;
 } GstMfxEncoderPropInfo;
 
-GType
-gst_mfx_encoder_preset_get_type (void);
+GType gst_mfx_encoder_preset_get_type (void);
 
-GType
-gst_mfx_encoder_trellis_get_type (void);
+GType gst_mfx_encoder_trellis_get_type (void);
 
-GType
-gst_mfx_encoder_lookahead_ds_get_type (void);
+GType gst_mfx_encoder_lookahead_ds_get_type (void);
 
-GstMfxEncoder *
-gst_mfx_encoder_ref (GstMfxEncoder * encoder);
+GstMfxEncoder *gst_mfx_encoder_ref (GstMfxEncoder * encoder);
 
-void
-gst_mfx_encoder_unref (GstMfxEncoder * encoder);
+void gst_mfx_encoder_unref (GstMfxEncoder * encoder);
 
 void
 gst_mfx_encoder_replace (GstMfxEncoder ** old_encoder_ptr,
-  GstMfxEncoder * new_encoder);
+    GstMfxEncoder * new_encoder);
 
 GstMfxEncoderStatus
 gst_mfx_encoder_get_codec_data (GstMfxEncoder * encoder,
@@ -141,10 +139,9 @@ gst_mfx_encoder_set_property (GstMfxEncoder * encoder, gint prop_id,
     const GValue * value);
 
 gboolean
-gst_mfx_encoder_set_async_depth(GstMfxEncoder * encoder, mfxU16 async_depth);
+gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth);
 
-void
-gst_mfx_encoder_set_profile(GstMfxEncoder * encoder, mfxU16 profile);
+void gst_mfx_encoder_set_profile (GstMfxEncoder * encoder, mfxU16 profile);
 
 gboolean
 gst_mfx_encoder_set_gop_refdist (GstMfxEncoder * encoder, gint gop_refdist);
@@ -164,8 +161,7 @@ gst_mfx_encoder_set_qpp_offset (GstMfxEncoder * encoder, mfxU16 offset);
 gboolean
 gst_mfx_encoder_set_qpb_offset (GstMfxEncoder * encoder, mfxU16 offset);
 
-GstMfxEncoderStatus
-gst_mfx_encoder_prepare (GstMfxEncoder * encoder);
+GstMfxEncoderStatus gst_mfx_encoder_prepare (GstMfxEncoder * encoder);
 
 GstMfxEncoderStatus
 gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame);
@@ -174,8 +170,8 @@ GstMfxEncoderStatus
 gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame);
 
 GType
-gst_mfx_encoder_get_type(void) G_GNUC_CONST;
+gst_mfx_encoder_get_type (void)
+    G_GNUC_CONST;
 
 G_END_DECLS
-
 #endif /* GST_MFX_ENCODER_H */

@@ -26,19 +26,16 @@
 #include "sysdeps.h"
 
 G_BEGIN_DECLS
-
 #define GST_TYPE_MFX_TASK (gst_mfx_task_get_type ())
-G_DECLARE_FINAL_TYPE(GstMfxTask, gst_mfx_task, GST_MFX, TASK, GstObject)
-
+G_DECLARE_FINAL_TYPE (GstMfxTask, gst_mfx_task, GST_MFX, TASK, GstObject)
 #define GST_MFX_TASK(obj) ((GstMfxTask *) (obj))
-
 #define GST_MFX_TASK_SESSION(task) gst_mfx_task_get_session (task)
-
 #define GST_MFX_TASK_CONTEXT(task) gst_mfx_task_get_context (task)
 
-typedef struct _GstMfxTaskAggregator  GstMfxTaskAggregator;
+typedef struct _GstMfxTaskAggregator GstMfxTaskAggregator;
 
-typedef enum {
+typedef enum
+{
   GST_MFX_TASK_INVALID = 0,
   GST_MFX_TASK_DECODER = (1 << 0),
   GST_MFX_TASK_VPP_IN = (1 << 1),
@@ -50,8 +47,8 @@ GstMfxTask *
 gst_mfx_task_new (GstMfxTaskAggregator * aggregator, guint type_flags);
 
 GstMfxTask *
-gst_mfx_task_new_with_session(GstMfxTaskAggregator * aggregator,
-  mfxSession session, guint type_flags, gboolean is_joined);
+gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
+    mfxSession session, guint type_flags, gboolean is_joined);
 
 GstMfxTask *
 gst_mfx_task_ref (GstMfxTask * task);
@@ -60,11 +57,9 @@ void
 gst_mfx_task_unref (GstMfxTask * task);
 
 void
-gst_mfx_task_replace (GstMfxTask ** old_task_ptr,
-    GstMfxTask * new_task);
+gst_mfx_task_replace (GstMfxTask ** old_task_ptr, GstMfxTask * new_task);
 
-mfxFrameAllocRequest *
-gst_mfx_task_get_request (GstMfxTask * task);
+mfxFrameAllocRequest *gst_mfx_task_get_request (GstMfxTask * task);
 
 void
 gst_mfx_task_set_request (GstMfxTask * task, mfxFrameAllocRequest * req);
@@ -109,5 +104,4 @@ mfxSession
 gst_mfx_task_get_session (GstMfxTask * task);
 
 G_END_DECLS
-
 #endif /* GST_MFX_TASK_H */

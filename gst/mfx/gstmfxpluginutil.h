@@ -80,19 +80,19 @@ GstCaps *
 gst_mfx_video_format_new_template_caps (GstVideoFormat format);
 
 GstCaps *
-gst_mfx_video_format_new_template_caps_with_features (GstVideoFormat format,
-  const gchar * features_string);
+gst_mfx_video_format_new_template_caps_with_features (GstVideoFormat
+    format, const gchar * features_string);
 
 #ifdef HAVE_GST_GL_LIBS
 gboolean
 gst_mfx_check_gl_texture_sharing (GstElement * element,
-  GstPad * pad, GstGLContext ** gl_context_ptr);
+    GstPad * pad, GstGLContext ** gl_context_ptr);
 #endif
 
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature (GstPad * pad,
-  gboolean use_10bpc, gboolean has_gl_texture_sharing,
-  GstVideoFormat * out_format_ptr);
+    gboolean use_10bpc, gboolean has_gl_texture_sharing,
+    GstVideoFormat * out_format_ptr);
 
 const gchar *
 gst_mfx_caps_feature_to_string (GstMfxCapsFeature feature);
