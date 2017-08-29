@@ -279,18 +279,10 @@ init_params (GstMfxFilter * filter)
       if (MFX_ERR_NONE != sts)
         filter->params.vpp.Out.Shift = 0;
     }
-  }
-  if (filter->fourcc) {
-    filter->params.vpp.Out.FourCC = filter->fourcc;
-    if (MFX_FOURCC_P010 == filter->fourcc) {
-      filter->params.vpp.Out.BitDepthLuma = 10;
-      filter->params.vpp.Out.BitDepthChroma = 10;
-      filter->params.vpp.Out.Shift = 1;
-
-      mfxStatus sts = MFXVideoVPP_Query(filter->session, &filter->params,
-        &filter->params);
-      if (MFX_ERR_NONE != sts)
-        filter->params.vpp.Out.Shift = 0;
+    else {
+      filter->params.vpp.Out.BitDepthLuma = 8;
+      filter->params.vpp.Out.BitDepthChroma = 8;
+      filter->params.vpp.Out.Shift = 0;
     }
   }
   configure_filters(filter);
