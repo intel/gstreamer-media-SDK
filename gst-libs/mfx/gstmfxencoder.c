@@ -1019,6 +1019,9 @@ gst_mfx_encoder_prepare (GstMfxEncoder *encoder)
   mfxU32 encoder_format, input_format =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT(&priv->info));
 
+  if (GST_VIDEO_INFO_FORMAT (&priv->info) == GST_VIDEO_FORMAT_P010_10LE)
+    gst_mfx_encoder_set_profile (encoder, MFX_PROFILE_HEVC_MAIN10);
+
   gst_mfx_encoder_set_encoding_params (encoder);
 
   encoder_format = priv->params.mfx.FrameInfo.FourCC;
