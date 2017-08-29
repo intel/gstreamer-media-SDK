@@ -120,11 +120,6 @@ Known Issues
  Since then, h264parse has been fixed to autodetect such videos before initializing the decoder.
 
 
-TODO
-----
- - HEVC 10-bit encode support on compatible devices
-
- 
 License
 -------
 GST-MFX libraries and plugins are available under the
