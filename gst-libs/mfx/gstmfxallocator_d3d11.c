@@ -70,8 +70,8 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
       (pthis));
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
   ID3D11Device *d3d11_device = (ID3D11Device *)
-      gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device (priv->
-          context));
+      gst_mfx_d3d11_device_get_handle (gst_mfx_context_get_device
+      (priv->context));
   HRESULT hr = S_OK;
   ResponseData *response_data;
   guint i;
@@ -238,18 +238,19 @@ gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
       gst_mfx_task_aggregator_get_context (GST_MFX_TASK_AGGREGATOR (pthis));
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;
   HRESULT hr = S_OK;
-  D3D11_TEXTURE2D_DESC desc = { 0 };
+  D3D11_RESOURCE_DIMENSION resource_type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
   D3D11_MAPPED_SUBRESOURCE locked_rect = { 0 };
-  ID3D11Texture2D *texture = (ID3D11Texture2D *) mem_id->mid;
+  ID3D11Resource *d3d11_resource = (ID3D11Resource *) mem_id->mid;
   ID3D11DeviceContext *d3d11_context =
       gst_mfx_d3d11_device_get_d3d11_context (gst_mfx_context_get_device
       (context));
 
   gst_mfx_context_unref (context);
 
-  ID3D11Texture2D_GetDesc (texture, &desc);
-  if (desc.Format == DXGI_FORMAT_P8 || desc.Format == DXGI_FORMAT_UNKNOWN) {
-    hr = ID3D11DeviceContext_Map (d3d11_context, (ID3D11Resource *) texture, 0,
+  ID3D11Resource_GetType (d3d11_resource, &resource_type);
+
+  if (resource_type == D3D11_RESOURCE_DIMENSION_BUFFER) {
+    hr = ID3D11DeviceContext_Map (d3d11_context, d3d11_resource, 0,
         D3D11_MAP_READ, D3D11_MAP_FLAG_DO_NOT_WAIT, &locked_rect);
     if (FAILED (hr))
       return MFX_ERR_LOCK_MEMORY;
@@ -259,12 +260,14 @@ gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
     ptr->U = 0;
     ptr->V = 0;
   } else {
+    D3D11_TEXTURE2D_DESC desc = { 0 };
+    ID3D11Texture2D_GetDesc ((ID3D11Texture2D *) d3d11_resource, &desc);
     ID3D11Texture2D *stage = (ID3D11Texture2D *) mem_id->mid_stage;
     g_return_val_if_fail (stage != NULL, MFX_ERR_INVALID_HANDLE);
     /* copy data only when reading from stored surface */
     if (mem_id->rw & MFX_SURFACE_READ)
       ID3D11DeviceContext_CopyResource (d3d11_context,
-          (ID3D11Resource *) stage, (ID3D11Resource *) texture);
+          (ID3D11Resource *) stage, (ID3D11Resource *) d3d11_resource);
     /*ID3D11Resource is a parent of ID3D11Texture2D, casting is safe */
 
     do {
@@ -318,17 +321,19 @@ gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
   GstMfxContext *context =
       gst_mfx_task_aggregator_get_context (GST_MFX_TASK_AGGREGATOR (pthis));
   GstMfxMemoryId *mem_id = (GstMfxMemoryId *) mid;
-  D3D11_TEXTURE2D_DESC desc = { 0 };
-  ID3D11Texture2D *texture = (ID3D11Texture2D *) mem_id->mid;
+  D3D11_RESOURCE_DIMENSION resource_type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
+  ID3D11Resource *d3d11_resource = (ID3D11Resource *) mem_id->mid;
   ID3D11DeviceContext *d3d11_context =
       gst_mfx_d3d11_device_get_d3d11_context (gst_mfx_context_get_device
       (context));
 
   gst_mfx_context_unref (context);
 
-  ID3D11Texture2D_GetDesc (texture, &desc);
-  if (desc.Format == DXGI_FORMAT_P8 || desc.Format == DXGI_FORMAT_UNKNOWN) {
-    ID3D11DeviceContext_Unmap (d3d11_context, (ID3D11Resource *) texture, 0);
+  ID3D11Resource_GetType (d3d11_resource, &resource_type);
+
+  if (resource_type == D3D11_RESOURCE_DIMENSION_BUFFER) {
+    ID3D11DeviceContext_Unmap (d3d11_context, (ID3D11Resource *) d3d11_resource,
+        0);
   } else {
     ID3D11Texture2D *stage = (ID3D11Texture2D *) mem_id->mid_stage;
 
@@ -336,7 +341,7 @@ gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr)
     /* copy data only when writing to stored surface */
     if (mem_id->rw & MFX_SURFACE_WRITE)
       ID3D11DeviceContext_CopyResource (d3d11_context,
-          (ID3D11Resource *) texture, (ID3D11Resource *) stage);
+          (ID3D11Resource *) d3d11_resource, (ID3D11Resource *) stage);
   }
 
   if (ptr) {
