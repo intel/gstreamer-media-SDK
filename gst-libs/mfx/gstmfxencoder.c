@@ -907,9 +907,10 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder * encoder)
   for (i = 0; i < g_list_length (priv->plugin_uids); i++) {
     priv->plugin_uid = g_list_nth_data (priv->plugin_uids, i);
 
+    /* skip hw encoder on platforms older than skylake */
     if (priv->plugin_uid == &MFX_PLUGINID_HEVCE_HW
         && gst_mfx_task_aggregator_get_platform (priv->aggregator)
-        < MFX_PLATFORM_BROADWELL)
+        < MFX_PLATFORM_SKYLAKE)
       continue;
 
     sts = MFXVideoUSER_Load (priv->session, priv->plugin_uid, 1);
