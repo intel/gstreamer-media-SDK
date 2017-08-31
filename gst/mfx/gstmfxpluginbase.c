@@ -947,7 +947,7 @@ static void
 unlock_dxgl_interop (GstGLContext * context, gpointer * args)
 {
   if (wglDXUnlockObjectsNV (args[0], 1, &(args[1])))
-    GST_DEBUG ("unlocked texture %u", args[2]);
+    GST_DEBUG ("unlocked texture %u", GPOINTER_TO_UINT (args[2]));
   wglDXUnregisterObjectNV (args[0], args[1]);
 }
 
@@ -957,7 +957,7 @@ dxgl_interop_info_unref (GstMfxDXGLInteropInfo * interop_info)
   gpointer args[3];
   args[0] = interop_info->dxgl_handle;
   args[1] = interop_info->gl_texture_handle;
-  args[2] = interop_info->gl_texture_id;
+  args[2] = GUINT_TO_POINTER (interop_info->gl_texture_id);
 
   if (gst_mfx_surface_has_video_memory (interop_info->surface))
     gst_gl_context_thread_add (interop_info->gl_context,
