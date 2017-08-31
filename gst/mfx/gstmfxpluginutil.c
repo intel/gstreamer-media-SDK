@@ -403,8 +403,12 @@ gst_mfx_is_mfx_supported (mfxU16 * platform_code)
 
   if ((ver.Major == 1 && ver.Minor >= 19) || ver.Major > 1) {
     sts = MFXVideoCORE_QueryPlatform (session, &platform);
-    if (sts == MFX_ERR_NONE) {
+    if (MFX_ERR_NONE == sts) {
       *platform_code = platform.CodeName;
+      GST_INFO ("Detected MFX platform with device code %d", *platform_code);
+    }
+    else {
+      GST_WARNING ("Platform autodetection failed with MFX status %d", sts);
     }
   }
 #endif

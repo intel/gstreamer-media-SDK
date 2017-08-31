@@ -257,12 +257,14 @@ gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator)
     mfxPlatform platform = { 0 };
     mfxStatus sts =
         MFXVideoCORE_QueryPlatform (aggregator->parent_session, &platform);
-    if (MFX_ERR_NONE == sts)
+    if (MFX_ERR_NONE == sts) {
       aggregator->platform = platform.CodeName;
-    else if (MFX_ERR_INVALID_HANDLE == sts)
-      GST_DEBUG ("Couldn't detect platform without any MFX Session.");
-    else if (MFX_ERR_UNSUPPORTED == sts)
-      GST_DEBUG ("Querying MFX platform isn't supported by current runtime.");
+      GST_INFO ("Detected MFX platform with device code %d",
+          aggregator->platform);
+    }
+    else {
+      GST_WARNING ("Platform autodetection failed with MFX status %d", sts);
+    }
   }
 
   return aggregator->platform;
