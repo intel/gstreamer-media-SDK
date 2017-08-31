@@ -428,7 +428,8 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     priv->params.mfx.FrameInfo.AspectRatioW = priv->info.par_n;
     priv->params.mfx.FrameInfo.AspectRatioH = priv->info.par_d;
 
-    if (priv->plugin_uid == &MFX_PLUGINID_HEVCE_HW) {
+    if (memcmp (priv->plugin_uid, &MFX_PLUGINID_HEVCE_HW,
+            sizeof (mfxPluginUID)) == 0) {
       priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (priv->info.width);
       priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
     } else {
@@ -545,7 +546,8 @@ gst_mfx_encoder_finalize (GObject * object)
 
   if (priv->plugin_uids) {
     MFXVideoUSER_UnLoad (priv->session, priv->plugin_uid);
-    g_list_free (priv->plugin_uids);
+    g_ptr_array_unref (priv->plugin_uids);
+    priv->plugin_uids = NULL;
   }
 
   /* Make sure frame allocator points to the right task
@@ -904,11 +906,12 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder * encoder)
   mfxStatus sts = MFX_ERR_NONE;
   guint i;
 
-  for (i = 0; i < g_list_length (priv->plugin_uids); i++) {
-    priv->plugin_uid = g_list_nth_data (priv->plugin_uids, i);
+  for (i = 0; i < priv->plugin_uids->len; i++) {
+    priv->plugin_uid = g_ptr_array_index (priv->plugin_uids, i);
 
     /* skip hw encoder on platforms older than skylake */
-    if (priv->plugin_uid == &MFX_PLUGINID_HEVCE_HW
+    if (memcmp (priv->plugin_uid, &MFX_PLUGINID_HEVCE_HW,
+            sizeof (mfxPluginUID)) == 0
         && gst_mfx_task_aggregator_get_platform (priv->aggregator)
         < MFX_PLATFORM_SKYLAKE)
       continue;
@@ -1098,10 +1101,12 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
     priv->shared = TRUE;
   }
 
-  if (priv->shared) {
+  /* If encoder task is shared, ensure that the output memtype of the
+   * shared task matches the input memtype of the encoder task */
+  if (priv->shared && !priv->encoder_memtype_is_system) {
     params = gst_mfx_task_get_video_params (priv->encode);
     priv->encoder_memtype_is_system =
-        ! !(params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+        !!(params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   }
 
   if (priv->encoder_memtype_is_system) {

@@ -126,26 +126,22 @@ gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
   priv->profile.codec = MFX_CODEC_HEVC;
-
-  priv->plugin_uids =
-      g_list_prepend (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_SW);
   priv->encoder_memtype_is_system = TRUE;
 
-#ifdef WITH_D3D11_BACKEND
-  priv->plugin_uids =
-      g_list_prepend (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_GACC);
-  priv->encoder_memtype_is_system = FALSE;
-#endif
+  priv->plugin_uids = g_ptr_array_new ();
+  if (!priv->plugin_uids) {
+    GST_ERROR ("Unable to allocate pointer array to hold plugin addresses.");
+    return FALSE;
+  }
 
 #if MSDK_CHECK_VERSION(1,19)
-  mfxU16 platform = gst_mfx_task_aggregator_get_platform (priv->aggregator);
-  /* platform may be unkown if there is no MFX Session running yet. */
-  if (platform == MFX_PLATFORM_UNKNOWN || platform >= MFX_PLATFORM_SKYLAKE) {
-    priv->plugin_uids =
-        g_list_prepend (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_HW);
-    priv->encoder_memtype_is_system = FALSE;
-  }
+  g_ptr_array_add (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_HW);
 #endif
+#ifdef WITH_D3D11_BACKEND
+  g_ptr_array_add (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_GACC);
+#endif
+  g_ptr_array_add (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_SW);
+
   return TRUE;
 }
 
