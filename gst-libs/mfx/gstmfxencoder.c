@@ -917,8 +917,12 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder * encoder)
       continue;
 
     sts = MFXVideoUSER_Load (priv->session, priv->plugin_uid, 1);
-    if (MFX_ERR_NONE == sts)
+    if (MFX_ERR_NONE == sts) {
+      if (memcmp (priv->plugin_uid, &MFX_PLUGINID_HEVCE_SW,
+            sizeof (mfxPluginUID)) == 0)
+        priv->encoder_memtype_is_system = TRUE;
       return TRUE;
+    }
   }
   return FALSE;
 }

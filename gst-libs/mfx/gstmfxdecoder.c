@@ -470,6 +470,7 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
     decoder->memtype_is_system = FALSE;
     gst_mfx_task_use_video_memory (decoder->decode);
   } else {
+    decoder->memtype_is_system = TRUE;
     gst_mfx_task_ensure_memtype_is_system (decoder->decode);
   }
 
