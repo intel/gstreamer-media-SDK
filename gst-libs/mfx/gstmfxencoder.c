@@ -413,12 +413,6 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
 
   if (!priv->shared) {
     priv->params.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-    priv->params.mfx.FrameInfo.PicStruct =
-        GST_VIDEO_INFO_IS_INTERLACED (&priv->info) ?
-        (GST_VIDEO_INFO_FLAG_IS_SET (&priv->info, GST_VIDEO_FRAME_FLAG_TFF) ?
-        MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF) :
-        MFX_PICSTRUCT_PROGRESSIVE;
-
     priv->params.mfx.FrameInfo.CropX = 0;
     priv->params.mfx.FrameInfo.CropY = 0;
     priv->params.mfx.FrameInfo.CropW = priv->info.width;
@@ -441,6 +435,11 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     }
 
     priv->frame_info = priv->params.mfx.FrameInfo;
+    priv->frame_info.PicStruct =
+      GST_VIDEO_INFO_IS_INTERLACED(&priv->info) ?
+      (GST_VIDEO_INFO_FLAG_IS_SET(&priv->info, GST_VIDEO_FRAME_FLAG_TFF) ?
+        MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF) :
+      MFX_PICSTRUCT_PROGRESSIVE;
     priv->frame_info.FourCC =
         gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&priv->info));
     if (MFX_FOURCC_P010 == priv->frame_info.FourCC) {
@@ -453,6 +452,8 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
   } else {
     priv->params.mfx.FrameInfo = priv->frame_info;
   }
+  /* Encoder expects progressive frames as input */
+  priv->params.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
 }
 
 static void
@@ -1180,8 +1181,13 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
     filter_sts =
         gst_mfx_filter_process (priv->filter, surface, &filter_surface);
     if (GST_MFX_FILTER_STATUS_SUCCESS != filter_sts) {
-      GST_ERROR ("MFX pre-processing error during encode.");
-      return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+      if (GST_MFX_FILTER_STATUS_ERROR_MORE_DATA == filter_sts) {
+        return GST_MFX_ENCODER_STATUS_MORE_DATA;
+      }
+      else {
+        GST_ERROR ("MFX pre-processing error during encode.");
+        return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+      }
     }
     surface = filter_surface;
   }
