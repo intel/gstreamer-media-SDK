@@ -375,17 +375,17 @@ gst_mfx_is_mfx_supported (mfxU16 * platform_code)
   mfxStatus sts = MFX_ERR_NONE;
   mfxSession session = NULL;
   mfxIMPL impl = MFX_IMPL_HARDWARE_ANY;
-  mfxVersion ver = { {GST_MFX_MIN_MSDK_VERSION_MINOR,
-      GST_MFX_MIN_MSDK_VERSION_MAJOR}
+  mfxVersion ver = { { GST_MFX_MIN_MSDK_VERSION_MINOR,
+      GST_MFX_MIN_MSDK_VERSION_MAJOR }
   };
 
 #if MSDK_CHECK_VERSION(1,19)
   mfxPlatform platform = { 0 };
-#endif
+#endif // MSDK_CHECK_VERSION
 
-#if WITH_D3D11_BACKEND
+#ifdef WITH_D3D11_BACKEND
   impl |= MFX_IMPL_VIA_D3D11;
-#endif
+#endif // WITH_D3D11_BACKEND
 
   sts = MFXInit (impl, &ver, &session);
   if (sts != MFX_ERR_NONE) {
@@ -397,11 +397,20 @@ gst_mfx_is_mfx_supported (mfxU16 * platform_code)
 
   sts = MFXQueryVersion (session, &ver);
   if (sts != MFX_ERR_NONE) {
-    GST_DEBUG ("Error querying MFX version.");
+    GST_ERROR ("Error querying MFX version.");
     goto cleanup;
   }
 
   if ((ver.Major == 1 && ver.Minor >= 19) || ver.Major > 1) {
+#ifdef WITH_LIBVA_BACKEND
+    GstMfxDisplay *display = gst_mfx_display_new ();
+    if (!display) {
+      GST_ERROR ("Failed to initialize display.");
+      goto cleanup;
+    }
+    MFXVideoCORE_SetHandle (session, MFX_HANDLE_VA_DISPLAY,
+      GST_MFX_DISPLAY_VADISPLAY (display));
+#endif // WITH_LIBVA_BACKEND
     sts = MFXVideoCORE_QueryPlatform (session, &platform);
     if (MFX_ERR_NONE == sts) {
       *platform_code = platform.CodeName;
@@ -410,8 +419,11 @@ gst_mfx_is_mfx_supported (mfxU16 * platform_code)
     else {
       GST_WARNING ("Platform autodetection failed with MFX status %d", sts);
     }
+#ifdef WITH_LIBVA_BACKEND
+    gst_mfx_display_unref (display);
+#endif // WITH_LIBVA_BACKEND
   }
-#endif
+#endif // MSDK_CHECK_VERSION
 
 cleanup:
   MFXClose (session);

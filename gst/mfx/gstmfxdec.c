@@ -785,9 +785,23 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
       element_name = g_strdup_printf ("mfx%sdec", name);
 
 #if MSDK_CHECK_VERSION(1,19)
+#ifdef WITH_D3D11_BACKEND
       /* Assume any platform newer than SKL have the same SKL codec support */
       if (platform > MFX_PLATFORM_SKYLAKE)
         platform = MFX_PLATFORM_SKYLAKE;
+#else
+      if (platform >= MFX_PLATFORM_SKYLAKE) {
+# if MSDK_CHECK_VERSION(1,22)
+        /* Intel Media SDK Embedded Edition Linux 2017 for APL
+         * currently supports HW-accelerated 8-bit VP9 decode */
+        if (platform == MFX_PLATFORM_APOLLOLAKE)
+          platform = MFX_PLATFORM_SKYLAKE;
+        else
+# endif // MSDK_CHECK_VERSION
+          /* ... but not Intel MSS 2017 Linux ... */
+          platform = MFX_PLATFORM_BROADWELL;
+      }
+#endif // WITH_D3D11_BACKEND
 
       switch (platform) {
         case MFX_PLATFORM_SKYLAKE:
@@ -806,8 +820,8 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
                 "stream-format = (string) byte-stream";
             rank = GST_RANK_PRIMARY + 3;
           }
-#endif // WITH_D3D11_BACKEND
           break;
+#endif // WITH_D3D11_BACKEND
         case MFX_PLATFORM_HASWELL:
           if (!g_strcmp0 (name, "hevc")) {
             mfx_codec_map[i].caps_str = "video/x-h265, "
