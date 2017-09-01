@@ -143,6 +143,10 @@ EGL texture transfers using dma-buffer sharing. This dma-buffer sharing optimiza
 since GStreamer version 1.8, and hence only works from this version onwards. For Windows, DirectX 11 / OpenGL
 interoperability with the WGL_NV_DX_interop2 extension is used to enable zero-copy GL texture sharing.
 
+To enable this feature in Linux, run the following command before executing the GStreamer pipeline:
+
+  export GST_GL_PLATFORM=egl
+
 To demonstrate optimized zero-copy rendering with glimagesink,
 
   gst-launch-1.0 filesrc location=input.mp4 ! qtdemux ! h264parse ! mfxdecode ! \
