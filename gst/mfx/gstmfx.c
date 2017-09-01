@@ -63,9 +63,6 @@ plugin_init (GstPlugin * plugin)
     GST_DEBUG ("No Intel MFX platform detected - skipping registration");
     return TRUE;
   }
-#if defined(HAVE_GST_GL_LIBS) && defined(WITH_LIBVA_BACKEND)
-  setenv ("GST_GL_PLATFORM", "egl", 1);
-#endif // HAVE_GST_GL_LIBS
 
   vc1parse = gst_registry_lookup_feature (gst_registry_get (), "vc1parse");
   if (vc1parse) {
