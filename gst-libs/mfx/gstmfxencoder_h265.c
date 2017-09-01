@@ -126,8 +126,7 @@ gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
   priv->profile.codec = MFX_CODEC_HEVC;
-  priv->encoder_memtype_is_system = TRUE;
-
+  
   priv->plugin_uids = g_ptr_array_new ();
   if (!priv->plugin_uids) {
     GST_ERROR ("Unable to allocate pointer array to hold plugin addresses.");

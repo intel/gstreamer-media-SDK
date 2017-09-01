@@ -428,7 +428,7 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     priv->params.mfx.FrameInfo.AspectRatioW = priv->info.par_n;
     priv->params.mfx.FrameInfo.AspectRatioH = priv->info.par_d;
 
-    if (memcmp (priv->plugin_uid, &MFX_PLUGINID_HEVCE_HW,
+    if (priv->plugin_uid && memcmp (priv->plugin_uid, &MFX_PLUGINID_HEVCE_HW,
             sizeof (mfxPluginUID)) == 0) {
       priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (priv->info.width);
       priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
@@ -1037,11 +1037,11 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
   if (encoder_format == input_format && priv->input_memtype_is_system)
     priv->encoder_memtype_is_system = TRUE;
 
-  gst_mfx_encoder_set_frame_info (encoder);
-
   if (priv->plugin_uids)
     if (!gst_mfx_encoder_load_plugin (encoder))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+
+  gst_mfx_encoder_set_frame_info (encoder);
 
   sts = MFXVideoENCODE_Query (priv->session, &priv->params, &priv->params);
   if (MFX_WRN_PARTIAL_ACCELERATION == sts) {
