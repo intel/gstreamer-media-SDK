@@ -373,16 +373,11 @@ gst_mfx_filter_create (GstMfxFilter * filter,
       return FALSE;
   }
 
-  if (filter->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY)
-    gst_mfx_task_ensure_memtype_is_system (filter->vpp[1]);
-
   /* Initialize the array of operation data */
   filter->filter_op_data = g_ptr_array_new_with_free_func (free_filter_op_data);
 
   /* Initialize the filter flag */
   filter->filter_op = GST_MFX_FILTER_NONE;
-
-  gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   return TRUE;
 }
