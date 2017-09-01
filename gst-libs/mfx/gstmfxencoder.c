@@ -1102,7 +1102,9 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
     if (!gst_mfx_filter_prepare (priv->filter))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 
-    priv->shared = TRUE;
+    params = gst_mfx_task_get_video_params (priv->encode);
+    priv->encoder_memtype_is_system =
+      !!(params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   }
 
   /* If encoder task is shared, ensure that the output memtype of the
