@@ -19,6 +19,12 @@
  *  Boston, MA 02110-1301 USA
  */
 
+#include <SdkDdkVer.h>
+#if NTDDI_VERSION >= 0x06030000 // >=Windows 8.1
+#include <ShellScalingApi.h>
+#define HIGH_DPI_OS_SUPPORT
+#endif
+
 #include "gstmfxd3d11device.h"
 #include "gstmfxwindow_d3d11.h"
 #include "gstmfxwindow_d3d11_priv.h"
@@ -427,6 +433,10 @@ d3d11_create_window_internal (GstMfxWindowD3D11 * window)
     return FALSE;
   }
 
+#ifdef HIGH_DPI_OS_SUPPORT
+  /* avoid system DPI scaling. */
+  SetProcessDpiAwareness (PROCESS_PER_MONITOR_DPI_AWARE);
+#endif
   width = GetSystemMetrics (SM_CXSCREEN);
   height = GetSystemMetrics (SM_CYSCREEN);
 
