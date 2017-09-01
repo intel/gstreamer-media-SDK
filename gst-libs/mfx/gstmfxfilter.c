@@ -318,7 +318,6 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
     req1->Type |= MFX_MEMTYPE_FROM_VPPOUT;
   }
 
-  gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
   gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
 
   return TRUE;
