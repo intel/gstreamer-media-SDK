@@ -110,6 +110,7 @@ gst_mfx_deps += mfx_dep
 if host_machine.system() == 'windows'
   gst_mfx_deps += cc.find_library('d3d11')
   gst_mfx_deps += cc.find_library('gdi32')
+  gst_mfx_deps += cc.find_library('shcore', required: false) #for dpi scaling
   gst_mfx_args += ['-DWITH_D3D11_BACKEND']
   if cc.get_id() != 'msvc'
     gst_mfx_deps += cc.find_library('stdc++', required: false)
