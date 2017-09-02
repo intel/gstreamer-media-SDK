@@ -18,8 +18,8 @@
  *  Boston, MA 02110-1301 USA
  */
 
-#ifndef GST_MFX_ALLOCATOR_FORMAT_H
-#define GST_MFX_ALLOCATOR_FORMAT_H
+#ifndef GST_MFX_ALLOCATOR_H
+#define GST_MFX_ALLOCATOR_H
 
 #include <mfxvideo.h>
 
@@ -36,6 +36,7 @@ gst_mfx_task_frame_lock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 mfxStatus
 gst_mfx_task_frame_unlock (mfxHDL pthis, mfxMemId mid, mfxFrameData * ptr);
 
-mfxStatus gst_mfx_task_frame_get_hdl (mfxHDL pthis, mfxMemId mid, mfxHDL * hdl);
+mfxStatus
+gst_mfx_task_frame_get_hdl (mfxHDL pthis, mfxMemId mid, mfxHDL * hdl);
 
-#endif /* GST_MFX_ALLOCATOR_FORMAT_H */
+#endif /* GST_MFX_ALLOCATOR_H */
