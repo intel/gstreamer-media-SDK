@@ -910,12 +910,14 @@ gst_mfx_encoder_load_plugin (GstMfxEncoder * encoder)
   for (i = 0; i < priv->plugin_uids->len; i++) {
     priv->plugin_uid = g_ptr_array_index (priv->plugin_uids, i);
 
+#if MSDK_CHECK_VERSION(1,19)
     /* skip hw encoder on platforms older than skylake */
     if (memcmp (priv->plugin_uid, &MFX_PLUGINID_HEVCE_HW,
             sizeof (mfxPluginUID)) == 0
         && gst_mfx_task_aggregator_get_platform (priv->aggregator)
         < MFX_PLATFORM_SKYLAKE)
       continue;
+#endif // MSDK_CHECK_VERSION
 
     sts = MFXVideoUSER_Load (priv->session, priv->plugin_uid, 1);
     if (MFX_ERR_NONE == sts) {
