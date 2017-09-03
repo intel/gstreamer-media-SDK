@@ -421,23 +421,13 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     priv->params.mfx.FrameInfo.FrameRateExtD = priv->info.fps_d;
     priv->params.mfx.FrameInfo.AspectRatioW = priv->info.par_n;
     priv->params.mfx.FrameInfo.AspectRatioH = priv->info.par_d;
-
-    if (priv->plugin_uid && memcmp (priv->plugin_uid, &MFX_PLUGINID_HEVCE_HW,
-            sizeof (mfxPluginUID)) == 0) {
-      priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (priv->info.width);
-      priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
-    } else {
-      priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_16 (priv->info.width);
-      priv->params.mfx.FrameInfo.Height =
-          MFX_PICSTRUCT_PROGRESSIVE == priv->params.mfx.FrameInfo.PicStruct ?
-          GST_ROUND_UP_16 (priv->info.height) :
-          GST_ROUND_UP_32 (priv->info.height);
-    }
+    priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (priv->info.width);
+    priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
 
     priv->frame_info = priv->params.mfx.FrameInfo;
     priv->frame_info.PicStruct =
-      GST_VIDEO_INFO_IS_INTERLACED(&priv->info) ?
-      (GST_VIDEO_INFO_FLAG_IS_SET(&priv->info, GST_VIDEO_FRAME_FLAG_TFF) ?
+      GST_VIDEO_INFO_IS_INTERLACED (&priv->info) ?
+      (GST_VIDEO_INFO_FLAG_IS_SET (&priv->info, GST_VIDEO_FRAME_FLAG_TFF) ?
         MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF) :
       MFX_PICSTRUCT_PROGRESSIVE;
     priv->frame_info.FourCC =
