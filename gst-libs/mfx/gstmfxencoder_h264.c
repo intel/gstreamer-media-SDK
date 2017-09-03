@@ -73,9 +73,8 @@ G_DEFINE_TYPE (GstMfxEncoderH264, gst_mfx_encoder_h264, GST_TYPE_MFX_ENCODER);
 
 /* Estimates a good enough bitrate if none was supplied */
 static void
-ensure_bitrate (GstMfxEncoderH264 * encoder)
+ensure_bitrate (GstMfxEncoderH264 * base_encoder)
 {
-  GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST (encoder);
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   /* Default compression: 48 bits per macroblock */
@@ -113,7 +112,6 @@ ensure_bitrate (GstMfxEncoderH264 * encoder)
 static GstMfxEncoderStatus
 gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
 {
-  GstMfxEncoderH264 *const encoder = GST_MFX_ENCODER_H264_CAST (base_encoder);
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   if (priv->profile.profile == MFX_PROFILE_AVC_BASELINE)
@@ -123,7 +121,7 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
     priv->b_strategy = GST_MFX_OPTION_OFF;
 
   /* Ensure bitrate if not set */
-  ensure_bitrate (encoder);
+  ensure_bitrate (base_encoder);
 
   GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (priv),
       GST_MFX_ENCODER_HEIGHT (priv));
@@ -132,15 +130,9 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
 }
 
 static void
-gst_mfx_encoder_h264_init (GstMfxEncoderH264 * base_encoder)
+gst_mfx_encoder_h264_init (GstMfxEncoderH264 * encoder)
 {
-}
-
-static gboolean
-gst_mfx_encoder_h264_create (GstMfxEncoder * base_encoder)
-{
-  GST_MFX_ENCODER_GET_PRIVATE (base_encoder)->profile.codec = MFX_CODEC_AVC;
-  return TRUE;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_AVC;
 }
 
 static void
@@ -384,7 +376,6 @@ gst_mfx_encoder_h264_class_init (GstMfxEncoderH264Class * klass)
   GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS (klass);
 
   encoder_class->class_data = &g_class_data;
-  encoder_class->create = gst_mfx_encoder_h264_create;
   encoder_class->finalize = gst_mfx_encoder_h264_finalize;
   encoder_class->reconfigure = gst_mfx_encoder_h264_reconfigure;
   encoder_class->get_default_properties =

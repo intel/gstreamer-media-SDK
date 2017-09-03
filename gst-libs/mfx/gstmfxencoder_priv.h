@@ -156,7 +156,6 @@ struct _GstMfxEncoderPrivate
   mfxVideoParam params;
   mfxFrameInfo frame_info;
   mfxBitstream bs;
-  const mfxPluginUID *plugin_uid;
   GstVideoInfo info;
 
   GstClockTime current_pts;
@@ -248,7 +247,6 @@ struct _GstMfxEncoderClass
   const GstMfxEncoderClassData *class_data;
 
   /*< public > */
-  gboolean (*create) (GstMfxEncoder * encoder);
   void (*finalize) (GstMfxEncoder * encoder);
   GstMfxEncoderStatus (*reconfigure) (GstMfxEncoder * encoder);
   GPtrArray *(*get_default_properties) (void);

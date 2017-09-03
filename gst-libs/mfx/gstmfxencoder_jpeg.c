@@ -53,15 +53,9 @@ gst_mfx_encoder_jpeg_reconfigure (GstMfxEncoder * base_encoder)
 }
 
 static void
-gst_mfx_encoder_jpeg_init (GstMfxEncoderJpeg * base_encoder)
+gst_mfx_encoder_jpeg_init (GstMfxEncoderJpeg * encoder)
 {
-}
-
-static gboolean
-gst_mfx_encoder_jpeg_create (GstMfxEncoder * base_encoder)
-{
-  GST_MFX_ENCODER_GET_PRIVATE (base_encoder)->profile.codec = MFX_CODEC_JPEG;
-  return TRUE;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_JPEG;
 }
 
 static void
@@ -139,7 +133,6 @@ gst_mfx_encoder_jpeg_class_init (GstMfxEncoderJpegClass * klass)
   GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS (klass);
 
   encoder_class->class_data = &g_class_data;
-  encoder_class->create = gst_mfx_encoder_jpeg_create;
   encoder_class->finalize = gst_mfx_encoder_jpeg_finalize;
   encoder_class->reconfigure = gst_mfx_encoder_jpeg_reconfigure;
   encoder_class->get_default_properties =

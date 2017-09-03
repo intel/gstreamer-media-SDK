@@ -54,9 +54,9 @@ struct _GstMfxEncoderMpeg2
 G_DEFINE_TYPE (GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_TYPE_MFX_ENCODER);
 
 static void
-ensure_bitrate (GstMfxEncoderMpeg2 * encoder)
+ensure_bitrate (GstMfxEncoder * base_encoder)
 {
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   /* Default compression: 64 bits per macroblock */
   switch (GST_MFX_ENCODER_RATE_CONTROL (priv)) {
@@ -81,7 +81,7 @@ gst_mfx_encoder_mpeg2_reconfigure (GstMfxEncoder * base_encoder)
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   /* Ensure bitrate if not set */
-  ensure_bitrate (GST_MFX_ENCODER_MPEG2 (base_encoder));
+  ensure_bitrate (base_encoder);
 
   GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (priv),
       GST_MFX_ENCODER_HEIGHT (priv));
@@ -92,13 +92,7 @@ gst_mfx_encoder_mpeg2_reconfigure (GstMfxEncoder * base_encoder)
 static void
 gst_mfx_encoder_mpeg2_init (GstMfxEncoderMpeg2 * encoder)
 {
-}
-
-static gboolean
-gst_mfx_encoder_mpeg2_create (GstMfxEncoder * base_encoder)
-{
-  GST_MFX_ENCODER_GET_PRIVATE (base_encoder)->profile.codec = MFX_CODEC_MPEG2;
-  return TRUE;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_MPEG2;
 }
 
 static void
@@ -158,7 +152,6 @@ gst_mfx_encoder_mpeg2_class_init (GstMfxEncoderMpeg2Class * klass)
   GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS (klass);
 
   encoder_class->class_data = &g_class_data;
-  encoder_class->create = gst_mfx_encoder_mpeg2_create;
   encoder_class->finalize = gst_mfx_encoder_mpeg2_finalize;
   encoder_class->reconfigure = gst_mfx_encoder_mpeg2_reconfigure;
   encoder_class->get_default_properties =
