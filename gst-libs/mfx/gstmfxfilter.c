@@ -132,10 +132,8 @@ gst_mfx_filter_set_frame_info_from_gst_video_info (GstMfxFilter * filter,
   filter->frame_info.BitDepthChroma = filter->frame_info.BitDepthLuma =
       (MFX_FOURCC_P010 == filter->frame_info.FourCC) ? 10 : 8;
 
-  filter->frame_info.Width = GST_ROUND_UP_16 (info->width);
-  filter->frame_info.Height =
-      (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
-      GST_ROUND_UP_16 (info->height) : GST_ROUND_UP_32 (info->height);
+  filter->frame_info.Width = GST_ROUND_UP_32 (info->width);
+  filter->frame_info.Height = GST_ROUND_UP_32 (info->height);
 }
 
 static void
@@ -226,28 +224,15 @@ static void
 init_params (GstMfxFilter * filter)
 {
   filter->params.vpp.In = filter->frame_info;
-
-  /* Aligned frame dimensions may differ between input and output surfaces
-   * so we sanitize the input frame dimensions, since output frame dimensions
-   * could have certain alignment requirements used in HEVC HW encoding */
-  if (gst_mfx_task_get_task_type (filter->vpp[1]) != GST_MFX_TASK_VPP_OUT) {    // shared task
-    filter->params.vpp.In.Width = GST_ROUND_UP_16 (filter->frame_info.CropW);
-    filter->params.vpp.In.Height =
-        (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
-        GST_ROUND_UP_16 (filter->frame_info.CropH) :
-        GST_ROUND_UP_32 (filter->frame_info.CropH);
-  }
   filter->params.vpp.Out = filter->frame_info;
 
   if (filter->width) {
     filter->params.vpp.Out.CropW = filter->width;
-    filter->params.vpp.Out.Width = GST_ROUND_UP_16 (filter->width);
+    filter->params.vpp.Out.Width = GST_ROUND_UP_32 (filter->width);
   }
   if (filter->height) {
     filter->params.vpp.Out.CropH = filter->height;
-    filter->params.vpp.Out.Height =
-        (MFX_PICSTRUCT_PROGRESSIVE == filter->frame_info.PicStruct) ?
-        GST_ROUND_UP_16 (filter->height) : GST_ROUND_UP_32 (filter->height);
+    filter->params.vpp.Out.Height = GST_ROUND_UP_32 (filter->height);
   }
   if (filter->filter_op & GST_MFX_FILTER_FRAMERATE_CONVERSION &&
       (filter->fps_n && filter->fps_d)) {

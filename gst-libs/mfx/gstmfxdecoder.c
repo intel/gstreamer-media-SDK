@@ -229,15 +229,8 @@ gst_mfx_decoder_reconfigure_params (GstMfxDecoder * decoder)
       MFX_PICSTRUCT_FIELD_BFF)
       : MFX_PICSTRUCT_PROGRESSIVE;
 
-  frame_info->Width = GST_ROUND_UP_16 (decoder->info.width);
-  if (decoder->profile.codec == MFX_CODEC_HEVC) {
-    frame_info->Height = GST_ROUND_UP_32 (decoder->info.height);
-  } else {
-    frame_info->Height =
-        (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
-        GST_ROUND_UP_16 (decoder->info.height) :
-        GST_ROUND_UP_32 (decoder->info.height);
-  }
+  frame_info->Width = GST_ROUND_UP_32 (decoder->info.width);
+  frame_info->Height = GST_ROUND_UP_32 (decoder->info.height);
   frame_info->FrameRateExtN = decoder->info.fps_n;
   frame_info->FrameRateExtD = decoder->info.fps_d;
 

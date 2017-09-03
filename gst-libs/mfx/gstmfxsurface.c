@@ -176,10 +176,8 @@ gst_mfx_surface_derive_mfx_frame_info (GstMfxSurface * surface,
   frame_info->BitDepthChroma = 8;
   frame_info->BitDepthLuma = 8;
 
-  frame_info->Width = GST_ROUND_UP_16 (info->width);
-  frame_info->Height =
-      (MFX_PICSTRUCT_PROGRESSIVE == frame_info->PicStruct) ?
-      GST_ROUND_UP_16 (info->height) : GST_ROUND_UP_32 (info->height);
+  frame_info->Width = GST_ROUND_UP_32 (info->width);
+  frame_info->Height = GST_ROUND_UP_32 (info->height);
 }
 
 static void
