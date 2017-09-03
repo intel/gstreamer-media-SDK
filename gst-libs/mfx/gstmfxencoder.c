@@ -497,7 +497,6 @@ gst_mfx_encoder_create (GstMfxEncoder * encoder,
   goto error_invalid_vtable;                \
   } while (0)
 
-  CHECK_VTABLE_HOOK (create);
   CHECK_VTABLE_HOOK (finalize);
   CHECK_VTABLE_HOOK (get_default_properties);
 
@@ -505,8 +504,6 @@ gst_mfx_encoder_create (GstMfxEncoder * encoder,
 
   if (!gst_mfx_encoder_init_properties (encoder, aggregator, info,
           memtype_is_system))
-    return FALSE;
-  if (!klass->create (encoder))
     return FALSE;
 
   return TRUE;
@@ -534,9 +531,6 @@ gst_mfx_encoder_finalize (GObject * object)
     g_ptr_array_unref (priv->properties);
     priv->properties = NULL;
   }
-
-  if (priv->plugin_uid)
-    MFXVideoUSER_UnLoad (priv->session, priv->plugin_uid);
 
   /* Make sure frame allocator points to the right task
    * to free up all internally allocated surfaces */

@@ -64,15 +64,16 @@
 struct _GstMfxEncoderH265
 {
   GstMfxEncoder parent_instance;
+
+  const mfxPluginUID *plugin_uid;
 };
 
 G_DEFINE_TYPE (GstMfxEncoderH265, gst_mfx_encoder_h265, GST_TYPE_MFX_ENCODER);
 
 /* Estimates a good enough bitrate if none was supplied */
 static void
-ensure_bitrate (GstMfxEncoderH265 * encoder)
+ensure_bitrate (GstMfxEncoder * base_encoder)
 {
-  GstMfxEncoder *const base_encoder = GST_MFX_ENCODER_CAST (encoder);
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   switch (GST_MFX_ENCODER_RATE_CONTROL (priv)) {
@@ -104,35 +105,30 @@ ensure_bitrate (GstMfxEncoderH265 * encoder)
 static GstMfxEncoderStatus
 gst_mfx_encoder_h265_reconfigure (GstMfxEncoder * base_encoder)
 {
-  GstMfxEncoderH265 *const encoder = GST_MFX_ENCODER_H265_CAST (base_encoder);
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
   GST_DEBUG ("resolution: %dx%d", GST_MFX_ENCODER_WIDTH (priv),
       GST_MFX_ENCODER_HEIGHT (priv));
 
   /* Ensure bitrate if not set */
-  ensure_bitrate (encoder);
+  ensure_bitrate (base_encoder);
 
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
 static void
-gst_mfx_encoder_h265_init (GstMfxEncoderH265 * base_encoder)
+gst_mfx_encoder_h265_init (GstMfxEncoderH265 * encoder)
 {
-}
-
-static gboolean
-gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
-{
-  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
-  priv->profile.codec = MFX_CODEC_HEVC;
-
-  return TRUE;
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_HEVC;
 }
 
 static void
 gst_mfx_encoder_h265_finalize (GstMfxEncoder * base_encoder)
 {
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
+  GstMfxEncoderH265 *const encoder = GST_MFX_ENCODER_H265_CAST (base_encoder);
+
+  MFXVideoUSER_UnLoad (priv->session, encoder->plugin_uid);
 }
 
 /* Generate "codec-data" buffer */
@@ -303,6 +299,7 @@ static gboolean
 gst_mfx_encoder_h265_load_plugin (GstMfxEncoder * base_encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
+  GstMfxEncoderH265 *const encoder = GST_MFX_ENCODER_H265_CAST (base_encoder);
   mfxStatus sts = MFX_ERR_NONE;
   guint i;
   const mfxPluginUID *uids[] = {
@@ -324,10 +321,10 @@ gst_mfx_encoder_h265_load_plugin (GstMfxEncoder * base_encoder)
       continue;
 #endif // MSDK_CHECK_VERSION
 
-    priv->plugin_uid = uids[i];
-    sts = MFXVideoUSER_Load(priv->session, priv->plugin_uid, 1);
+    encoder->plugin_uid = uids[i];
+    sts = MFXVideoUSER_Load(priv->session, encoder->plugin_uid, 1);
     if (MFX_ERR_NONE == sts) {
-      if (priv->plugin_uid == &MFX_PLUGINID_HEVCE_SW)
+      if (encoder->plugin_uid == &MFX_PLUGINID_HEVCE_SW)
         priv->encoder_memtype_is_system = TRUE;
       return TRUE;
     }
@@ -431,7 +428,6 @@ gst_mfx_encoder_h265_class_init (GstMfxEncoderH265Class * klass)
   GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS (klass);
 
   encoder_class->class_data = &g_class_data;
-  encoder_class->create = gst_mfx_encoder_h265_create;
   encoder_class->finalize = gst_mfx_encoder_h265_finalize;
   encoder_class->reconfigure = gst_mfx_encoder_h265_reconfigure;
   encoder_class->get_default_properties =
