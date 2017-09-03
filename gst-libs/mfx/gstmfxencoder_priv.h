@@ -156,8 +156,7 @@ struct _GstMfxEncoderPrivate
   mfxVideoParam params;
   mfxFrameInfo frame_info;
   mfxBitstream bs;
-  GPtrArray *plugin_uids;
-  mfxPluginUID const* plugin_uid;
+  const mfxPluginUID *plugin_uid;
   GstVideoInfo info;
 
   GstClockTime current_pts;
@@ -249,15 +248,17 @@ struct _GstMfxEncoderClass
   const GstMfxEncoderClassData *class_data;
 
   /*< public > */
-    gboolean (*create) (GstMfxEncoder * encoder);
+  gboolean (*create) (GstMfxEncoder * encoder);
   void (*finalize) (GstMfxEncoder * encoder);
-    GstMfxEncoderStatus (*reconfigure) (GstMfxEncoder * encoder);
+  GstMfxEncoderStatus (*reconfigure) (GstMfxEncoder * encoder);
   GPtrArray *(*get_default_properties) (void);
-    GstMfxEncoderStatus (*set_property) (GstMfxEncoder * encoder, gint prop_id,
+  GstMfxEncoderStatus (*set_property) (GstMfxEncoder * encoder, gint prop_id,
       const GValue * value);
   /* get_codec_data can be NULL */
-    GstMfxEncoderStatus (*get_codec_data) (GstMfxEncoder * encoder,
+  GstMfxEncoderStatus (*get_codec_data) (GstMfxEncoder * encoder,
       GstBuffer ** codec_data);
+  /* load_plugin can also be NULL */
+  gboolean (*load_plugin) (GstMfxEncoder * encoder);
 };
 
 

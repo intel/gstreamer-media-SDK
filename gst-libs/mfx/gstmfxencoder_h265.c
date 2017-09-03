@@ -126,20 +126,6 @@ gst_mfx_encoder_h265_create (GstMfxEncoder * base_encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
   priv->profile.codec = MFX_CODEC_HEVC;
-  
-  priv->plugin_uids = g_ptr_array_new ();
-  if (!priv->plugin_uids) {
-    GST_ERROR ("Unable to allocate pointer array to hold plugin addresses.");
-    return FALSE;
-  }
-
-#if MSDK_CHECK_VERSION(1,19)
-  g_ptr_array_add (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_HW);
-#endif
-#ifdef WITH_D3D11_BACKEND
-  g_ptr_array_add (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_GACC);
-#endif
-  g_ptr_array_add (priv->plugin_uids, (gpointer) & MFX_PLUGINID_HEVCE_SW);
 
   return TRUE;
 }
@@ -198,14 +184,14 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
 
   const guint8 general_profile_space = 0;
   const guint8 general_tier_flag =
-      ! !(priv->params.mfx.CodecLevel & MFX_TIER_HEVC_HIGH);
+      !!(priv->params.mfx.CodecLevel & MFX_TIER_HEVC_HIGH);
   const guint8 general_profile_idc = priv->params.mfx.CodecProfile;
   const guint32 general_profile_compatibility_flags =
       1 << (31 - general_profile_idc);
   const guint8 progressive_source_flag =
-      ! !(frame_info->PicStruct & MFX_PICSTRUCT_PROGRESSIVE);
+      !!(frame_info->PicStruct & MFX_PICSTRUCT_PROGRESSIVE);
   const guint8 interlaced_source_flag =
-      ! !(frame_info->PicStruct &
+      !!(frame_info->PicStruct &
       (MFX_PICSTRUCT_FIELD_TFF | MFX_PICSTRUCT_FIELD_BFF));
   const guint8 non_packed_constraint_flag = 0;
   const guint8 frame_only_constraint_flag = 0;
@@ -313,6 +299,42 @@ error_alloc_buffer:
   }
 }
 
+static gboolean
+gst_mfx_encoder_h265_load_plugin (GstMfxEncoder * base_encoder)
+{
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
+  mfxStatus sts = MFX_ERR_NONE;
+  guint i;
+  const mfxPluginUID *uids[] = {
+#if MSDK_CHECK_VERSION(1,19)
+    &MFX_PLUGINID_HEVCE_HW,
+#endif
+#ifdef WITH_D3D11_BACKEND
+    &MFX_PLUGINID_HEVCE_GACC,
+#endif
+    &MFX_PLUGINID_HEVCE_SW,
+  };
+
+  for (i = 0; i < sizeof (uids) / sizeof (uids[0]); i++) {
+
+#if MSDK_CHECK_VERSION(1,19)
+    /* skip hw encoder on platforms older than skylake */
+    if (gst_mfx_task_aggregator_get_platform (priv->aggregator)
+        < MFX_PLATFORM_SKYLAKE && uids[i] == &MFX_PLUGINID_HEVCE_HW)
+      continue;
+#endif // MSDK_CHECK_VERSION
+
+    priv->plugin_uid = uids[i];
+    sts = MFXVideoUSER_Load(priv->session, priv->plugin_uid, 1);
+    if (MFX_ERR_NONE == sts) {
+      if (priv->plugin_uid == &MFX_PLUGINID_HEVCE_SW)
+        priv->encoder_memtype_is_system = TRUE;
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
 static GstMfxEncoderStatus
 gst_mfx_encoder_h265_set_property (GstMfxEncoder * base_encoder,
     gint prop_id, const GValue * value)
@@ -417,4 +439,5 @@ gst_mfx_encoder_h265_class_init (GstMfxEncoderH265Class * klass)
 
   encoder_class->set_property = gst_mfx_encoder_h265_set_property;
   encoder_class->get_codec_data = gst_mfx_encoder_h265_get_codec_data;
+  encoder_class->load_plugin = gst_mfx_encoder_h265_load_plugin;
 }
