@@ -489,8 +489,8 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     default:
       break;
   }
-  stride = GST_ROUND_UP_16 (src_rect->width) * bpp / 8;
-  size = GST_ROUND_UP_N (stride * src_rect->height, 4096);
+  stride = GST_MFX_SURFACE_WIDTH (surface) * bpp / 8;
+  size = GST_ROUND_UP_N (stride * GST_MFX_SURFACE_HEIGHT (surface), 4096);
   if (!pic_fmt) {
     GST_ERROR ("Unable to initialize picture format.\n");
     return FALSE;
