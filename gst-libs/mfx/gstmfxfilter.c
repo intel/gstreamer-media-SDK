@@ -225,7 +225,7 @@ init_params (GstMfxFilter * filter)
 {
   filter->params.vpp.In = filter->frame_info;
   filter->params.vpp.Out = filter->frame_info;
-  
+
   /* If VPP is shared with encoder task, ensure alignment requirements */
   if (gst_mfx_task_get_task_type (filter->vpp[1]) != GST_MFX_TASK_VPP_OUT) { // shared task
     filter->params.vpp.Out.Width = GST_ROUND_UP_32 (filter->frame_info.CropW);
@@ -282,8 +282,10 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   mfxFrameAllocRequest request[2];
   mfxStatus sts = MFX_ERR_NONE;
 
+  /* Input / output memtypes may have been changed at this point by mfxvpp */
+  gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
   init_params (filter);
-
+  
   sts = MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, request);
   if (sts < 0) {
     GST_ERROR ("Unable to query VPP allocation request %d", sts);
