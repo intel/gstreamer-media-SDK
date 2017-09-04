@@ -344,7 +344,7 @@ gst_mfx_window_d3d11_init_swap_chain (GstMfxWindowD3D11 * window)
   swap_chain_desc.SampleDesc.Count = 1;
   swap_chain_desc.SampleDesc.Quality = 0;
   swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  swap_chain_desc.BufferCount = 2;
+  swap_chain_desc.BufferCount = 3; /* triple-buffering to minimize latency. */
   swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
   //swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
   swap_chain_desc.Scaling = DXGI_SCALING_STRETCH;
