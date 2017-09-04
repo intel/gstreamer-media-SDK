@@ -168,8 +168,12 @@ gst_mfx_task_get_video_params (GstMfxTask * task)
 void
 gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params)
 {
-  params->AsyncDepth = GST_MFX_TASK_GET_PRIVATE (task)->params.AsyncDepth;
-  params->IOPattern = GST_MFX_TASK_GET_PRIVATE (task)->params.IOPattern;
+  GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
+  
+  if (priv->params.AsyncDepth)
+    params->AsyncDepth = priv->params.AsyncDepth;
+  if (priv->params.IOPattern)
+    params->IOPattern = priv->params.IOPattern;
 }
 
 static void

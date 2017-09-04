@@ -497,7 +497,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     gst_mfx_task_unref (task);
     task = gst_mfx_task_aggregator_get_last_task (plugin->aggregator);
     gst_mfx_task_aggregator_update_peer_memtypes (plugin->aggregator,
-        task, TRUE);
+        task, plugin->srcpad_caps_is_raw);
   }
 
 done:
