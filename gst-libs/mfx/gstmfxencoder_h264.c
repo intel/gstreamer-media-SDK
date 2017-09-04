@@ -73,7 +73,7 @@ G_DEFINE_TYPE (GstMfxEncoderH264, gst_mfx_encoder_h264, GST_TYPE_MFX_ENCODER);
 
 /* Estimates a good enough bitrate if none was supplied */
 static void
-ensure_bitrate (GstMfxEncoderH264 * base_encoder)
+ensure_bitrate (GstMfxEncoder * base_encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
