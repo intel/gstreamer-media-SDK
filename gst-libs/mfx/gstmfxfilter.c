@@ -225,6 +225,12 @@ init_params (GstMfxFilter * filter)
 {
   filter->params.vpp.In = filter->frame_info;
   filter->params.vpp.Out = filter->frame_info;
+  
+  /* If VPP is shared with encoder task, ensure alignment requirements */
+  if (gst_mfx_task_get_task_type (filter->vpp[1]) != GST_MFX_TASK_VPP_OUT) { // shared task
+    filter->params.vpp.Out.Width = GST_ROUND_UP_32 (filter->frame_info.CropW);
+    filter->params.vpp.Out.Height = GST_ROUND_UP_32 (filter->frame_info.CropH);
+  }
 
   if (filter->width) {
     filter->params.vpp.Out.CropW = filter->width;
