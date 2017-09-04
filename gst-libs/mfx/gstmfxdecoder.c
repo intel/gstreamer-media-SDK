@@ -138,6 +138,8 @@ close_decoder (GstMfxDecoder * decoder)
   gst_mfx_task_aggregator_set_current_task (decoder->aggregator,
       decoder->decode);
   /* calls gst_mfx_task_frame_free() when configured with video memory */
+  if (decoder->plugin_uid)
+    MFXVideoUSER_UnLoad (decoder->session, decoder->plugin_uid);
   MFXVideoDECODE_Close (decoder->session);
 }
 
@@ -145,7 +147,6 @@ static void
 gst_mfx_decoder_finalize (GObject * object)
 {
   GstMfxDecoder *decoder = GST_MFX_DECODER (object);
-  gst_mfx_filter_replace (&decoder->filter, NULL);
 
   g_byte_array_unref (decoder->bitstream);
   if (decoder->codec_data)
@@ -159,9 +160,7 @@ gst_mfx_decoder_finalize (GObject * object)
   g_queue_clear (&decoder->decoded_frames);
   g_queue_clear (&decoder->discarded_frames);
 
-  if (decoder->plugin_uid)
-    MFXVideoUSER_UnLoad (decoder->session, decoder->plugin_uid);
-
+  gst_mfx_filter_replace (&decoder->filter, NULL);
   close_decoder (decoder);
   gst_mfx_task_aggregator_unref (decoder->aggregator);
   gst_mfx_task_replace (&decoder->decode, NULL);
