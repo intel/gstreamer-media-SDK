@@ -62,7 +62,9 @@ GST_CAPS_CODEC ("video/x-h264, \
         format = (string) WVC1, \
         header-format = (string) asf, \
         stream-format = (string) bdu")
+#ifndef WITH_D3D11_BACKEND /* VP8 hw decode isn't implemented when using D3D11 */
     GST_CAPS_CODEC ("video/x-vp8")
+#endif
 #if MSDK_CHECK_VERSION(1,19)
     GST_CAPS_CODEC ("video/x-vp9")
 #endif
@@ -120,7 +122,9 @@ GST_CAPS_CODEC ("video/x-h264, \
        format = (string) WVC1, \
        header-format = (string) asf, \
        stream-format = (string) bdu"},
+#ifndef WITH_D3D11_BACKEND
        {"vp8", GST_RANK_NONE, "video/x-vp8"},
+#endif
 #if MSDK_CHECK_VERSION(1,19)
        {"vp9", GST_RANK_NONE, "video/x-vp9"},
 # endif
@@ -810,8 +814,10 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
           /* fall-through */
         case MFX_PLATFORM_CHERRYTRAIL:
         case MFX_PLATFORM_BROADWELL:
+#ifndef WITH_D3D11_BACKEND
           if (!g_strcmp0 (name, "vp8"))
             rank = GST_RANK_PRIMARY + 3;
+#endif
 #ifdef WITH_D3D11_BACKEND
           if (!g_strcmp0 (name, "hevc")) {
             mfx_codec_map[i].caps_str = "video/x-h265, "

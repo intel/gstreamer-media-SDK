@@ -57,8 +57,10 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
       "video/x-wmv, wmvversion=3, format=(string)WVC1", "advanced"},
   {MFX_PROFILE_JPEG_BASELINE, MFX_CODEC_JPEG,
       "image/jpeg", NULL},
+#ifndef WITH_D3D11_BACKEND
   {MFX_PROFILE_VP8_0, MFX_CODEC_VP8,
       "video/x-vp8", NULL},
+#endif
 #if MSDK_CHECK_VERSION(1,19)
   {MFX_PROFILE_VP9_0, MFX_CODEC_VP9,
       "video/x-vp9", NULL},
