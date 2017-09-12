@@ -305,12 +305,22 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   GstMfxProfile profile = gst_mfx_profile_from_caps (caps);
   GstVideoInfo info;
   GstObject *parent;
+  gboolean is_in_avc = FALSE;
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
     return FALSE;
 
   if (!gst_video_info_from_caps (&info, mfxdec->srcpad_caps))
     return FALSE;
+
+  if (mfxdec->input_state) {
+    GstStructure *structure = gst_caps_get_structure (mfxdec->input_state->caps, 0);
+    if (structure && gst_structure_has_field_typed(structure, "stream-format",
+          G_TYPE_STRING)) {
+      const gchar *stream_format = gst_structure_get_string (structure, "stream-format");
+      is_in_avc = (stream_format != NULL) & (g_strcmp0(stream_format, "avc") == 0);
+    }
+  }
 
   /* Increase async depth considerably when using decodebin to avoid
    * jerky video playback resulting from threading issues */
