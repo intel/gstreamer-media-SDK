@@ -532,6 +532,9 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 #endif // HAVE_GST_GL_LIBS
 #endif //GST_CHECK_VERSION
 
+  if (!plugin->can_export_gl_textures)
+    plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps);
+
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     goto error_ensure_aggregator;
 
