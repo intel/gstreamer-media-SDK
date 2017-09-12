@@ -109,6 +109,38 @@ gst_mfx_decoder_skip_corrupted_frames (GstMfxDecoder * decoder)
   decoder->skip_corrupted_frames = TRUE;
 }
 
+void
+gst_mfx_decoder_decide_output_memtype (GstMfxDecoder * decoder,
+    gboolean memtype_is_video)
+{
+  mfxVideoParam *params;
+
+  g_return_if_fail (decoder != NULL);
+
+  /* The decoder may be forced to use system memory by a downstream peer
+   * MFX VPP task, or due to decoder limitations for that particular
+   * codec. In that case, return to confirm the use of system memory */
+  params = gst_mfx_task_get_video_params (decoder->decode);
+
+  if (params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY) {
+    decoder->memtype_is_system = TRUE;
+    gst_mfx_task_ensure_memtype_is_system (decoder->decode);
+    return;
+  }
+
+  if (memtype_is_video) {
+    decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+  }
+  else {
+    decoder->memtype_is_system = TRUE;
+    decoder->params.IOPattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
+    gst_mfx_task_ensure_memtype_is_system (decoder->decode);
+  }
+
+  if (gst_mfx_task_get_task_type (decoder->decode) == GST_MFX_TASK_DECODER)
+    params->IOPattern = decoder->params.IOPattern;
+}
+
 static gboolean
 init_decoder (GstMfxDecoder * decoder)
 {
@@ -297,7 +329,7 @@ static gboolean
 gst_mfx_decoder_create (GstMfxDecoder * decoder,
     GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
     const GstVideoInfo * info, GByteArray * codec_data, mfxU16 async_depth,
-    gboolean memtype_is_system, gboolean live_mode, gboolean is_autoplugged)
+    gboolean live_mode, gboolean is_autoplugged)
 {
   decoder->is_autoplugged = is_autoplugged;
   decoder->profile = profile;
@@ -316,8 +348,7 @@ gst_mfx_decoder_create (GstMfxDecoder * decoder,
     if (decoder->params.mfx.CodecId == MFX_CODEC_AVC)
       decoder->params.mfx.DecodedOrder = 1;
   }
-  decoder->params.IOPattern = memtype_is_system ?
-      MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+  decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   decoder->bitstream = g_byte_array_new ();
   if (!decoder->bitstream)
     return FALSE;
@@ -361,9 +392,8 @@ gst_mfx_decoder_class_init (GstMfxDecoderClass * klass)
 }
 
 GstMfxDecoder *
-gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
-    GstMfxProfile profile, const GstVideoInfo * info, GByteArray * codec_data,
-    mfxU16 async_depth, gboolean memtype_is_system,
+gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
+    const GstVideoInfo * info, GByteArray * codec_data, mfxU16 async_depth,
     gboolean live_mode, gboolean is_autoplugged)
 {
   GstMfxDecoder *decoder;
@@ -376,7 +406,7 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
     return NULL;
 
   if (!gst_mfx_decoder_create (decoder, aggregator, profile, info, codec_data,
-          async_depth, memtype_is_system, live_mode, is_autoplugged))
+          async_depth, live_mode, is_autoplugged))
     goto error;
   return decoder;
 
