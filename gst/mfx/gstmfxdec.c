@@ -47,7 +47,7 @@ static const char gst_mfxdecode_sink_caps_str[] =
     GST_CAPS_CODEC ("video/x-h264, \
         alignment = (string) au, \
         profile = (string) { constrained-baseline, baseline, main, high }, \
-        stream-format = (string) byte-stream")
+        stream-format = (string) { avc, byte-stream }")
     GST_CAPS_CODEC ("video/x-h265, \
         alignment = (string) au, \
         profile = (string) { main, main-10 }, \
@@ -95,7 +95,7 @@ static const GstMfxCodecMap mfx_codec_map[] = {
       "video/x-h264, \
        alignment = (string) au, \
        profile = (string) { constrained-baseline, baseline, main, high }, \
-       stream-format = (string) byte-stream"},
+       stream-format = (string) { avc, byte-stream }"},
 #ifdef USE_HEVC_DECODER
   {"hevc", GST_RANK_PRIMARY + 3,
       "video/x-h265, \

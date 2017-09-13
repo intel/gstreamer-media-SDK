@@ -362,6 +362,38 @@ error_query_request:
   }
 }
 
+static void
+gst_mfx_decoder_convert_avc_stream (GstMfxDecoder * decoder, guint8 * cdata,
+    gint size)
+{
+  guint8 startcode[4] = {0, 0, 0, 1};
+
+  if (!decoder || !cdata || !size)
+    return;
+
+  gint32 offset = 0;
+  gint32 packet_size = 0;
+
+  while (offset < size) {
+    packet_size = GST_READ_UINT32_BE(&cdata[offset]);
+
+    offset += 4;
+    if (offset + packet_size > size) break;
+
+    decoder->bitstream = g_byte_array_append (decoder->bitstream,
+        startcode, 4);
+    decoder->bitstream = g_byte_array_append (decoder->bitstream,
+        &cdata[offset], packet_size);
+
+    offset += packet_size;
+  }
+
+  if (offset != size) {
+    GST_ERROR ("AVC stream error, size %d, processed offset %d.",
+        size, offset);
+  }
+}
+
 static gboolean
 gst_mfx_decoder_get_codec_data (GstMfxDecoder * decoder, GstBuffer * codec_data)
 {
@@ -845,13 +877,26 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
   }
 
   if (minfo.size) {
-    decoder->bs.DataLength += minfo.size;
-    if (decoder->bs.MaxLength <
-        decoder->bs.DataLength + decoder->bitstream->len)
-      decoder->bs.MaxLength = decoder->bs.DataLength + decoder->bitstream->len;
-    decoder->bitstream = g_byte_array_append (decoder->bitstream,
-        minfo.data, minfo.size);
-    decoder->bs.Data = decoder->bitstream->data;
+    if ((decoder->params.mfx.CodecId == MFX_CODEC_AVC) && decoder->is_avc) {
+      if (G_UNLIKELY (!decoder->inited)) {
+        decoder->bitstream = g_byte_array_append (decoder->bitstream,
+            decoder->codec_data->data, decoder->codec_data->len);
+        decoder->bs.DataLength = decoder->codec_data->len;
+        decoder->bs.MaxLength = decoder->bitstream->len;
+        decoder->bs.Data = decoder->bitstream->data;
+      }
+
+      gst_mfx_decoder_convert_avc_stream (decoder, minfo.data, minfo.size);
+      decoder->bs.DataLength += minfo.size;
+      decoder->bs.MaxLength = decoder->bitstream->len;
+      decoder->bs.Data = decoder->bitstream->data;
+    } else {
+      decoder->bitstream = g_byte_array_append (decoder->bitstream,
+          minfo.data, minfo.size);
+      decoder->bs.DataLength += minfo.size;
+      decoder->bs.MaxLength = decoder->bitstream->len;
+      decoder->bs.Data = decoder->bitstream->data;
+    }
   }
 
   if (G_UNLIKELY (!decoder->inited)) {
