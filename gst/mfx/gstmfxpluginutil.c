@@ -211,7 +211,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
 #if GST_CHECK_VERSION(1,9,1)
     const char caps_str[] =
         GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE,
-        "{ ENCODED, P010_10LE, NV12, BGRA }") "; "
+        "{ P010_10LE, ENCODED, NV12, BGRA }") "; "
         GST_VIDEO_CAPS_MAKE ("{ P010_10LE, NV12, BGRA }");
 #else
     const char caps_str[] =
