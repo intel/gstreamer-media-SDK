@@ -21,6 +21,17 @@
 #ifndef GST_MFX_WINDOW_D3D11_PRIV_H
 #define GST_MFX_WINDOW_D3D11_PRIV_H
 
+#include <SdkDdkVer.h>
+#if NTDDI_VERSION >= 0x06030000 // >=Windows 8.1
+#define HIGH_DPI_OS_SUPPORT
+#endif
+#if NTDDI_VERSION >= 0x0A000000 // >= Windows 10
+#define COLORSPACE_DXGI_SUPPORT
+#endif
+#if NTDDI_VERSION >= 0x0A000003 // >= Windows 10 RS2
+#define HDR_RENDERING_DXGI_SUPPORT
+#endif
+
 #include "gstmfxd3d11device.h"
 #include "gstmfxwindow_d3d11.h"
 #include "gstmfxwindow_priv.h"
@@ -48,7 +59,9 @@ struct _GstMfxWindowD3D11Private
   ID3D11VideoProcessor *processor;
   ID3D11VideoProcessorEnumerator *processor_enum;
   ID3D11VideoProcessorOutputView *output_view;
-
+#ifdef COLORSPACE_DXGI_SUPPORT
+  DXGI_COLOR_SPACE_TYPE output_color_space;
+#endif
   gboolean keep_aspect;
   GstVideoInfo info;
   WNDCLASS d3d11_window;
