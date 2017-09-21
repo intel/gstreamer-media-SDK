@@ -77,7 +77,9 @@ dxgi_colorspace_from_gst_video_colorimetry (GstVideoColorimetry * colorimetry,
             return DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_LEFT_P2020;      // should be TOPLEFT if UHD BluRay
             /* HLG isn't yet recognized by gstreamer */
             //case GST_VIDEO_TRANSFER_ARIB_STD_B67:
-            //      return DXGI_COLOR_SPACE_YCBCR_STUDIO_GHLG_TOPLEFT_P2020;
+            //        return colorimetry->range == GST_VIDEO_COLOR_RANGE_16_235 ?
+            //                DXGI_COLOR_SPACE_YCBCR_STUDIO_GHLG_TOPLEFT_P2020 :
+            //                DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020;
           default:
             return colorimetry->range == GST_VIDEO_COLOR_RANGE_16_235 ?
                 DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P2020 :
@@ -108,7 +110,7 @@ dxgi_colorspace_from_gst_video_colorimetry (GstVideoColorimetry * colorimetry,
 
 #ifdef COLORSPACE_DXGI_SUPPORT
 static HRESULT
-set_dxgi_colorspace (IDXGISwapChain1 * swap_chain,
+set_dxgi_output_colorspace (IDXGISwapChain1 * swap_chain,
     DXGI_COLOR_SPACE_TYPE color_space)
 {
   IDXGISwapChain3 *sc3;
@@ -125,7 +127,7 @@ set_dxgi_colorspace (IDXGISwapChain1 * swap_chain,
     IDXGISwapChain3_Release (sc3);
   }
 
-  return S_FALSE;
+  return E_FAIL;
 }
 
 static DXGI_COLOR_SPACE_TYPE
@@ -374,6 +376,9 @@ WindowProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 static gboolean
 gst_mfx_window_d3d11_create_output_view (GstMfxWindowD3D11 * window)
 {
+#ifdef COLORSPACE_DXGI_SUPPORT
+  ID3D11VideoContext1 *ctx1 = NULL;
+#endif
   GstMfxWindowD3D11Private *const priv =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE (window);
   D3D11_VIDEO_PROCESSOR_OUTPUT_VIEW_DESC output_view_desc = {
@@ -395,15 +400,35 @@ gst_mfx_window_d3d11_create_output_view (GstMfxWindowD3D11 * window)
       D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE);
 
 #ifdef COLORSPACE_DXGI_SUPPORT
-  if (GST_VIDEO_INFO_N_PLANES (&priv->info) > 1) {
-    ID3D11VideoContext1_VideoProcessorSetStreamColorSpace1 (
-        (ID3D11VideoContext1 *) priv->d3d11_video_context,
-        priv->processor, 0, dxgi_colorspace_from_gst_video_colorimetry
-        (&GST_VIDEO_INFO_COLORIMETRY (&priv->info), FALSE));
+  hr = ID3D11VideoContext_QueryInterface (priv->d3d11_video_context,
+      &IID_ID3D11VideoContext, &ctx1);
+  if (SUCCEEDED (hr)) {
+    DXGI_COLOR_SPACE_TYPE video_color_space =
+        dxgi_colorspace_from_gst_video_colorimetry (&GST_VIDEO_INFO_COLORIMETRY
+        (&priv->info), !GST_VIDEO_INFO_IS_YUV (&priv->info));
 
-    ID3D11VideoContext1_VideoProcessorSetOutputColorSpace1 ((ID3D11VideoContext1
-            *) priv->d3d11_video_context, priv->processor,
-        priv->output_color_space);
+    ID3D11VideoContext1_VideoProcessorSetStreamColorSpace1 (ctx1,
+        priv->processor, 0, video_color_space);
+
+    /* if VideoProcessor's built-in YUV->RGB conversion is used, we specify the stream's color space
+     * to let it convert to current swapchain's color space.
+     * if the stream is already RGB, we change instead the swapchain's color space accordingly if possible.
+     * TODO: implement RGB conversion to swapchain's color space and HDR tone-mapping using shaders.
+     */
+    if (priv->output_color_space != video_color_space
+        && !GST_VIDEO_INFO_IS_YUV (&priv->info)) {
+      hr = set_dxgi_output_colorspace (priv->dxgi_swapchain, video_color_space);
+      if (SUCCEEDED (hr)) {
+        priv->output_color_space = video_color_space;
+        GST_INFO ("DXGI output color space changed to %d",
+            priv->output_color_space);
+      }
+    }
+
+    ID3D11VideoContext1_VideoProcessorSetOutputColorSpace1 (ctx1,
+        priv->processor, priv->output_color_space);
+
+    ID3D11VideoContext1_Release (ctx1);
   }
 #endif
 
@@ -484,9 +509,10 @@ gst_mfx_window_d3d11_init_swap_chain (GstMfxWindowD3D11 * window)
 #ifdef COLORSPACE_DXGI_SUPPORT
   priv2->output_color_space =
       get_preferred_dxgi_colorspace (priv2->dxgi_swapchain);
-  if (FAILED (set_dxgi_colorspace (priv2->dxgi_swapchain,
+  if (FAILED (set_dxgi_output_colorspace (priv2->dxgi_swapchain,
               priv2->output_color_space)))
     priv2->output_color_space = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709;
+  GST_INFO ("DXGI output color space set to %d", priv2->output_color_space);
 #endif
 
   IDXGISwapChain1_GetBuffer (priv2->dxgi_swapchain, 0, &IID_ID3D11Texture2D,

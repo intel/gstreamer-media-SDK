@@ -835,9 +835,6 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   if (!gst_video_info_from_caps (&vi, caps))
     return NULL;
 
-  /* keep colorimetry information. */
-  out_colorimetry = GST_VIDEO_INFO_COLORIMETRY (&vi);
-
   if (vpp->deinterlace_mode != GST_MFX_DEINTERLACE_MODE_DISABLED) {
     GstVideoInterlaceMode di_mode = GST_VIDEO_INFO_INTERLACE_MODE (&vi);
     if (vpp->deinterlace_mode == GST_MFX_DEINTERLACE_MODE_FORCED
@@ -861,6 +858,14 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
 
   gst_video_info_from_caps (&peer_vi, peer_caps);
   out_format = GST_VIDEO_INFO_FORMAT (&peer_vi);
+
+  /* keep colorimetry information. */
+  out_colorimetry = GST_VIDEO_INFO_COLORIMETRY (&vi);
+
+  /* if VPP YUV->RGB conversion is used, set output RGB range to full */
+  if (GST_VIDEO_INFO_IS_YUV (&vi) && !GST_VIDEO_INFO_IS_YUV (&peer_vi)) {
+    out_colorimetry.range = GST_VIDEO_COLOR_RANGE_0_255;
+  }
 
   /* Update width and height from the caps */
   if (GST_VIDEO_INFO_HEIGHT (&peer_vi) != 1 &&
