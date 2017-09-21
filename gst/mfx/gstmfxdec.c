@@ -305,6 +305,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   GstMfxProfile profile = gst_mfx_profile_from_caps (caps);
   GstVideoInfo info;
   GstObject *parent;
+  GstBuffer *codec_data = NULL;
   gboolean is_in_avc = FALSE;
 
   if (!gst_mfxdec_update_src_caps (mfxdec))
@@ -318,8 +319,9 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
     if (structure && gst_structure_has_field_typed(structure, "stream-format",
           G_TYPE_STRING)) {
       const gchar *stream_format = gst_structure_get_string (structure, "stream-format");
-      is_in_avc = (stream_format != NULL) & (g_strcmp0(stream_format, "avc") == 0);
+      is_in_avc = (stream_format != NULL) && (g_strcmp0(stream_format, "avc") == 0);
     }
+    codec_data = mfxdec->input_state->codec_data;
   }
 
   /* Increase async depth considerably when using decodebin to avoid
@@ -329,8 +331,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
     mfxdec->async_depth = 16;
   gst_object_replace (&parent, NULL);
 
-  mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator,
-      profile, &info, mfxdec->async_depth, mfxdec->live_mode);
+  mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,
+      mfxdec->async_depth, mfxdec->live_mode, is_in_avc, codec_data);
   if (!mfxdec->decoder)
     return FALSE;
 
