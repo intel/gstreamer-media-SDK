@@ -462,6 +462,8 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps, gboolean need_reset)
     if (!need_reset)
       return TRUE;
 
+    GST_DEBUG_OBJECT (mfxdec, "Hard resetting decoder.");
+
     gst_mfxdec_drain (mfxdec);
 
     if (!gst_mfx_decoder_reset (mfxdec->decoder)) {
@@ -559,10 +561,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder * vdec, GstVideoCodecFrame * frame)
   gst_mfxdec_flush_discarded_frames (mfxdec);
 
   switch (sts) {
-    case GST_MFX_DECODER_STATUS_REINIT:
-      GST_DEBUG_OBJECT (mfxdec,
-          "Incompatible video parameters found, re-initializing decoder.");
-
+    case GST_MFX_DECODER_STATUS_ERROR_NEED_RESET:
       mfxdec->need_renegotiation = TRUE;
       gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE);
       ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
