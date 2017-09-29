@@ -398,7 +398,15 @@ gst_mfx_window_wayland_destroy (GstMfxWindow * window)
   GstMfxWindowWaylandPrivate *const priv =
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window);
 
+  struct wl_display *const display =
+      GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
+
   gst_poll_set_flushing (priv->poll, TRUE);
+
+  if (priv->event_queue) {
+    wl_display_roundtrip_queue (display, priv->event_queue);
+  }
+
   if (priv->thread) {
     g_thread_join (priv->thread);
     priv->thread = NULL;
