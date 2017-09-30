@@ -30,6 +30,13 @@
 
 #ifdef HAVE_GST_GL_LIBS
 # include <gst/gl/gstglcontext.h>
+
+# if GST_CHECK_VERSION(1,13,0)
+# include <gst/gl/gstglfuncs.h>
+# include <gst/gl/gstglmemory.h>
+# include <gst/gl/gstglbufferpool.h>
+# endif
+
 #endif // HAVE_GST_GL_LIBS
 
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
