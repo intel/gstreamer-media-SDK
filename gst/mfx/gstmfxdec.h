@@ -43,7 +43,7 @@ struct _GstMfxDec
   gboolean skip_corrupted_frames;
 
   GstVideoCodecState *input_state;
-  volatile gboolean do_renego;
+  volatile gboolean need_renegotiation;
 };
 
 struct _GstMfxDecClass

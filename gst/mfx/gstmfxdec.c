@@ -259,7 +259,7 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   GstVideoDecoder *const vdec = GST_VIDEO_DECODER (mfxdec);
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
 
-  if (!mfxdec->do_renego)
+  if (!mfxdec->need_renegotiation)
     return TRUE;
 
   GST_DEBUG_OBJECT (mfxdec, "Input codec state changed, renegotiating");
@@ -271,7 +271,7 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   if (!gst_video_decoder_negotiate (vdec))
     return FALSE;
 
-  mfxdec->do_renego = FALSE;
+  mfxdec->need_renegotiation = FALSE;
   return TRUE;
 }
 
@@ -364,7 +364,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   if (mfxdec->skip_corrupted_frames)
     gst_mfx_decoder_skip_corrupted_frames (mfxdec->decoder);
 
-  mfxdec->do_renego = TRUE;
+  mfxdec->need_renegotiation = TRUE;
   return TRUE;
 }
 
@@ -454,10 +454,12 @@ gst_mfxdec_flush_discarded_frames (GstMfxDec * mfxdec)
 }
 
 static gboolean
-gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps, gboolean reset)
+gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps, gboolean need_reset)
 {
-  if (mfxdec->decoder) {
-    if (!reset)
+  if (mfxdec->decoder && !mfxdec->need_renegotiation) {
+    /* Some videos repeatedly invoke set_format() method thus calling this function.
+     * In such scenarios, just return TRUE to avoid the soft reset */
+    if (!need_reset)
       return TRUE;
 
     gst_mfxdec_drain (mfxdec);
@@ -557,6 +559,14 @@ gst_mfxdec_handle_frame (GstVideoDecoder * vdec, GstVideoCodecFrame * frame)
   gst_mfxdec_flush_discarded_frames (mfxdec);
 
   switch (sts) {
+    case GST_MFX_DECODER_STATUS_REINIT:
+      GST_DEBUG_OBJECT (mfxdec,
+          "Incompatible video parameters found, re-initializing decoder.");
+
+      mfxdec->need_renegotiation = TRUE;
+      gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE);
+      ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
+      break;
     case GST_MFX_DECODER_STATUS_CONFIGURED:
       if (!gst_mfxdec_negotiate (mfxdec))
         goto not_negotiated;

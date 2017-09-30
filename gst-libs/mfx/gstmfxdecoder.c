@@ -561,8 +561,10 @@ gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
 
     sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
         &decoder->params);
-    if (MFX_ERR_NONE == sts)
+    if (MFX_ERR_NONE == sts) {
+      ret = GST_MFX_DECODER_STATUS_CONFIGURED;
       break;
+    }
     else if (MFX_ERR_MORE_DATA == sts) {
       ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
     } else if (sts < 0) {
@@ -794,6 +796,10 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame)
         }
       }
       ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
+      goto end;
+    }
+    else if (MFX_ERR_INCOMPATIBLE_VIDEO_PARAM == sts) {
+      ret = GST_MFX_DECODER_STATUS_REINIT;
       goto end;
     }
 
