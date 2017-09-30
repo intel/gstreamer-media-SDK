@@ -16,11 +16,11 @@ plugins and their usage.
 
 Features
 --------
- - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 videos
+ - Decode H264 AVC, MPEG-2, JPEG, VC-1, HEVC (Main and Main 10), VP8 and VP9 (including Profile 2 10-bit) videos
  - Compatible with GStreamer-based video players such as Totem, Parole and gst-play
    through playbin element.
  - Support for zero-copy rendering with glimagesink using EGL (Linux) or DirectX 11 / OpenGL interop (Windows)
- - Support for Direct3D 11 on Windows with zero-copy and deep color rendering for 10-bit video formats
+ - Support for Direct3D 11 on Windows with zero-copy and HDR support for 10-bit video formats
  - Support native Wayland rendering using Wayland backend
  - Support X11 rendering using DRI3 backend
  - Support VPP acceleration of dynamic procamp control during video playback
@@ -76,7 +76,7 @@ To setup a release build and install to the GStreamer system installation direct
 
 	meson ../gst-mfx-build_release --prefix=${PREFIX} --libdir=${LIBDIR} --buildtype=release
 
-Typically, ${PREFIX} would be `/usr` in Linux or `C:/gstreamer/1.0/x86_64` in Windows,
+Typically, ${PREFIX} would be `/usr` in Linux or `C:\gstreamer\1.0\x86_64` in Windows,
 and ${LIBDIR} would be `lib64` (Fedora and related derivatives), `lib/x86_64-linux-gnu` (Ubuntu and related derivatives),
 or `lib` (Windows).
 	

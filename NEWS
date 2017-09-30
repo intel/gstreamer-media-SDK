@@ -1,14 +1,14 @@
 Version 2.0.0
 * Complete support for Windows 8 / 8.1 / 10 with Direct3D 11 backend.
 * New Meson build system for building and installation on Windows and Linux.
-* New Direct3D 11 renderer added in mfxsink with zero-copy, deep color (10-bit) rendering and dynamic resize.
+* Full HW decode support for HEVC Main 10 and VP9 Profile 2 10-bit codec formats in Windows.
+* Full HEVC Main 10 HW encode support in Windows.
+* Decoder autodetection for codecs such as HEVC, VP8 and VP9 in newer supported Intel platforms.
+* New Direct3D 11 renderer added in mfxsink with HDR 10-bit rendering support.
 * New DirectX-OpenGL interop support for zero-copy rendering with GstGL plugins on Windows using the GstGL API.
 * New optimized EGL support for zero-copy with GstGL plugins on Linux implemented via the GstGL API.
 * Removed EGL renderer in mfxsink since zero-copy feature with GstGL plugins makes it redundant.
-* Decoder autodetection for codecs such as HEVC, VP8 and VP9 in newer supported Intel platforms.
 * Moved all GST-MFX modules to use GstObject for better GStreamer integration, removing custom GstMfxMiniObject.
-* Added support for HEVC Main 10 codec format.
-* HEVC Main10 encode support in Windows using GPU-assisted and Software HEVC encoder plugins.
 * Lots of bug fixes and code cleanups.
 
 Version 1.3.0
