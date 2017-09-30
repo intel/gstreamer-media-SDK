@@ -145,6 +145,7 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
       gst_mfx_display_unlock (sink->display);
       if (!has_events)
         break;
+
       switch (e.type) {
         case MotionNotify:
           pointer_x = e.xmotion.x;
@@ -172,6 +173,7 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
       gst_mfx_display_unlock (sink->display);
       if (!has_events)
         break;
+
       switch (e.type) {
         case ButtonPress:
           gst_navigation_send_mouse_event (GST_NAVIGATION (sink),
@@ -206,6 +208,7 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
       has_events = XCheckWindowEvent (x11_dpy, x11_win,
           StructureNotifyMask | ExposureMask, &e);
       gst_mfx_display_unlock (sink->display);
+
       switch (e.type) {
         case Expose:
         case ConfigureNotify:
@@ -337,9 +340,9 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink, guintptr window)
     sink->window = gst_mfx_window_x11_new_with_xid (sink->display, xid);
     if (!sink->window)
       return FALSE;
+    gst_mfxsink_set_event_handling (sink, TRUE);
   }
   gst_mfx_window_x11_clear (sink->window);
-  gst_mfxsink_set_event_handling (sink, sink->handle_events);
 
   return TRUE;
 }
@@ -425,6 +428,7 @@ gst_mfxsink_video_overlay_set_event_handling (GstVideoOverlay * overlay,
 {
   GstMfxSink *const sink = GST_MFXSINK (overlay);
 
+  sink->handle_events = handle_events;
   gst_mfxsink_set_event_handling (sink, handle_events);
 }
 
@@ -807,8 +811,12 @@ gst_mfxsink_stop (GstBaseSink * base_sink)
 {
   GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
 
-  if (!sink->foreign_window)
+  if (!sink->foreign_window) {
+#ifdef WITH_LIBVA_BACKEND
+    gst_mfxsink_set_event_handling (sink, FALSE);
+#endif
     gst_mfx_window_replace (&sink->window, NULL);
+  }
 
   gst_mfx_composite_filter_replace (&sink->composite_filter, NULL);
   gst_mfx_context_replace (&sink->device_context, NULL);
@@ -903,7 +911,7 @@ gst_mfxsink_set_caps (GstBaseSink * base_sink, GstCaps * caps)
     gst_mfx_window_show (sink->window);
     gst_mfx_window_get_size (sink->window, &win_width, &win_height);
 #ifdef WITH_LIBVA_BACKEND
-    gst_mfxsink_set_event_handling (sink, sink->handle_events);
+    gst_mfxsink_set_event_handling (sink, TRUE);
 #endif
   }
   sink->window_width = win_width;
@@ -1010,7 +1018,6 @@ gst_mfxsink_destroy (GstMfxSink * sink)
   gst_mfx_window_replace (&sink->window, NULL);
   gst_caps_replace (&sink->caps, NULL);
 #ifdef WITH_LIBVA_BACKEND
-  gst_mfxsink_set_event_handling (sink, FALSE);
   gst_mfx_display_replace (&sink->display, NULL);
   g_free (sink->display_name);
 #endif // WITH_LIBVA_BACKEND
