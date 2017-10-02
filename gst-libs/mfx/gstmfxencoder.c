@@ -969,11 +969,11 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
   mfxU32 encoder_format, input_format =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&priv->info));
 
-#if GST_CHECK_VERSION(1,9,1)
+/*#if GST_CHECK_VERSION(1,9,1)
   if (GST_VIDEO_INFO_FORMAT (&priv->info) == GST_VIDEO_FORMAT_P010_10LE
       && MFX_CODEC_HEVC == priv->profile.codec)
     gst_mfx_encoder_set_profile (encoder, MFX_PROFILE_HEVC_MAIN10);
-#endif
+#endif*/
 
   gst_mfx_encoder_set_encoding_params (encoder);
 
