@@ -357,12 +357,6 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
       "Requests window in fullscreen state",
       FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  g_properties[PROP_FORCE_ASPECT_RATIO] =
-      g_param_spec_boolean ("force-aspect-ratio",
-      "Force aspect ratio",
-      "When enabled, scaling will respect original aspect ratio",
-      TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
   g_properties[PROP_NO_FRAME_DROP] =
       g_param_spec_boolean ("no-frame-drop",
       "No frame drop",
