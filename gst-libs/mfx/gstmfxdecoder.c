@@ -607,13 +607,10 @@ done:
   return ret;
 }
 
-static gboolean
-gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
+gboolean
+gst_mfx_decoder_reinit (GstMfxDecoder * decoder)
 {
   close_decoder (decoder);
-
-  if (info != NULL)
-    decoder->params.mfx.FrameInfo = *info;
 
   if (!configure_filter (decoder))
     return FALSE;
@@ -822,16 +819,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame)
       ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
       goto end;
     } else if (MFX_ERR_INCOMPATIBLE_VIDEO_PARAM == sts) {
-      GST_DEBUG ("Video params are incompatible and may have changed"
-          " - reinitializing decoder.");
-      if (gst_mfx_decoder_reinit (decoder, &insurf->Info)) {
-        ret = GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
-        goto end;
-      } else {
-        GST_DEBUG ("Couldn't reinit decoder - hard resetting it now.");
-        ret = GST_MFX_DECODER_STATUS_ERROR_NEED_RESET;
-        goto end;
-      }
+      ret = GST_MFX_DECODER_STATUS_ERROR_INCOMPATIBLE_VIDEO_PARAMS;
+      goto end;
     } else if (MFX_ERR_NONE != sts) {
       GST_ERROR ("Status %d : Error during MFX decoding", sts);
       ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
