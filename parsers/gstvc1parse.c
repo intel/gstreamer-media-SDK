@@ -1368,7 +1368,6 @@ gst_vc1_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
     taglist = gst_tag_list_new_empty ();
 
     /* codec tag */
-    caps = gst_pad_get_current_caps (GST_BASE_PARSE_SRC_PAD (parse));
     gst_pb_utils_add_codec_description_to_tag_list (taglist,
         GST_TAG_VIDEO_CODEC, caps);
     gst_caps_unref (caps);
