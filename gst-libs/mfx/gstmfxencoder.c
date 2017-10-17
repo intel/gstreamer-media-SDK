@@ -957,6 +957,21 @@ error:
   return FALSE;
 }
 
+static
+void
+log_encoder_params_comparison (GstMfxEncoder * encoder, int log_level,
+  mfxVideoParam* param_old, mfxVideoParam* param_new)
+{
+  /* TODO: handle and log more differences. */
+  if (param_old->mfx.FrameInfo.Height != param_new->mfx.FrameInfo.Height
+    || param_old->mfx.FrameInfo.Width != param_new->mfx.FrameInfo.Width) {
+    GST_CAT_LEVEL_LOG (GST_CAT_DEFAULT, log_level, encoder,
+      "resolution has been changed from %dx%d to %dx%d",
+      param_old->mfx.FrameInfo.Width, param_old->mfx.FrameInfo.Height,
+      param_new->mfx.FrameInfo.Width, param_new->mfx.FrameInfo.Height);
+  }
+}
+
 GstMfxEncoderStatus
 gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
 {
@@ -966,6 +981,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
   mfxFrameAllocRequest *request;
   mfxVideoParam *params;
   mfxFrameAllocRequest enc_request = { 0 };
+  mfxVideoParam orig_params;
   mfxU32 encoder_format, input_format =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&priv->info));
 
@@ -1000,13 +1016,20 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 
   gst_mfx_encoder_set_frame_info (encoder);
+  orig_params = priv->params;
 
-  sts = MFXVideoENCODE_Query (priv->session, &priv->params, &priv->params);
+  sts = MFXVideoENCODE_Query (priv->session, &orig_params, &priv->params);
   if (MFX_WRN_PARTIAL_ACCELERATION == sts) {
     GST_WARNING ("Partial acceleration %d", sts);
     priv->encoder_memtype_is_system = TRUE;
   } else if (MFX_WRN_INCOMPATIBLE_VIDEO_PARAM == sts) {
     GST_WARNING ("Incompatible video params detected %d", sts);
+    log_encoder_params_comparison (encoder, GST_LEVEL_INFO,
+      &orig_params, &priv->params);
+  } else if (MFX_ERR_UNSUPPORTED == sts) {
+    GST_ERROR ("Unsupported video params %d", sts);
+    log_encoder_params_comparison (encoder, GST_LEVEL_WARNING,
+      &orig_params, &priv->params);
   }
 
   sts = MFXVideoENCODE_QueryIOSurf (priv->session, &priv->params, &enc_request);
