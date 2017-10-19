@@ -576,7 +576,7 @@ gst_mfxsink_set_event_handling (GstMfxSink * sink, gboolean handle_events)
 {
   GThread *thread = NULL;
 
-  if (!sink->backend)
+  if ((sink->display_type != GST_MFX_DISPLAY_TYPE_X11) || !sink->backend)
     return;
 
   GST_OBJECT_LOCK (sink);
