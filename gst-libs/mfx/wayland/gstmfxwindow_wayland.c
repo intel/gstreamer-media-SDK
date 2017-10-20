@@ -446,16 +446,16 @@ gst_mfx_window_wayland_destroy (GstMfxWindow * window)
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window);
 
   struct wl_display *const display =
-      GST_MFX_DISPLAY_HANDLE (GST_MFX_WINDOW_DISPLAY (window));
+      GST_MFX_DISPLAY_HANDLE (priv->display);
 
   /* Make sure that the last wl_buffer's callback could be called */
-  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+  GST_MFX_DISPLAY_LOCK (priv->display);
   if (priv->surface) {
     wl_surface_attach (priv->surface, NULL, 0, 0);
     wl_surface_commit (priv->surface);
     wl_display_flush (display);
   }
-  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
+  GST_MFX_DISPLAY_UNLOCK (priv->display);
 
   gst_poll_set_flushing (priv->poll, TRUE);
 
