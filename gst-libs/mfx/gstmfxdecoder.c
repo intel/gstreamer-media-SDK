@@ -18,6 +18,7 @@
  *  Boston, MA 02110-1301 USA
  */
 
+#include <stdint.h>
 #include <mfxplugin.h>
 #include <mfxvp8.h>
 
@@ -283,8 +284,23 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   frame_info->CropH = decoder->info.height;
   frame_info->FrameRateExtN = decoder->info.fps_n;
   frame_info->FrameRateExtD = decoder->info.fps_d;
+
   frame_info->AspectRatioW = decoder->info.par_n;
   frame_info->AspectRatioH = decoder->info.par_d;
+
+  if ((decoder->info.par_n > UINT16_MAX) && (decoder->info.par_d > UINT16_MAX)) {
+    gint tmp_ratioW = decoder->info.par_n;
+    gint tmp_ratioH = decoder->info.par_d;
+
+    do {
+      tmp_ratioW = tmp_ratioW >> 4;
+      tmp_ratioH = tmp_ratioH >> 4;
+    } while ((tmp_ratioW > UINT16_MAX) || (tmp_ratioH > UINT16_MAX));
+
+    frame_info->AspectRatioW = tmp_ratioW;
+    frame_info->AspectRatioH = tmp_ratioH;
+  }
+
   frame_info->BitDepthChroma = 8;
   frame_info->BitDepthLuma = 8;
 
