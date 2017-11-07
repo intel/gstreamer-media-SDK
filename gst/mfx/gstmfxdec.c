@@ -44,7 +44,7 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
 
 static const char gst_mfxdecode_sink_caps_str[] =
-GST_CAPS_CODEC ("video/x-h264, \
+    GST_CAPS_CODEC ("video/x-h264, \
         alignment = (string) au, \
         profile = (string) { constrained-baseline, baseline, main, high }, \
         stream-format = (string) byte-stream")
@@ -70,67 +70,66 @@ GST_CAPS_CODEC ("video/x-h264, \
 #endif
     GST_CAPS_CODEC ("image/jpeg");
 
-     static const char gst_mfxdecode_src_caps_str[] =
-         GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
+static const char gst_mfxdecode_src_caps_str[] =
+    GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
 #ifdef HAVE_GST_GL_LIBS
-         GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
-    "{ RGBA, BGRA }") ";"
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
+      "{ RGBA, BGRA }") ";"
 #endif
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
-     enum
-     {
-       PROP_0,
-       PROP_ASYNC_DEPTH,
-       PROP_LIVE_MODE,
-       PROP_SKIP_CORRUPTED_FRAMES
-     };
+enum
+{
+  PROP_0,
+  PROP_ASYNC_DEPTH,
+  PROP_LIVE_MODE,
+  PROP_SKIP_CORRUPTED_FRAMES
+};
 
-     static GstStaticPadTemplate src_template_factory =
-         GST_STATIC_PAD_TEMPLATE ("src",
+static GstStaticPadTemplate src_template_factory =
+    GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS (gst_mfxdecode_src_caps_str)
-    );
+    GST_STATIC_CAPS (gst_mfxdecode_src_caps_str));
 
-     typedef struct _GstMfxCodecMap GstMfxCodecMap;
-     struct _GstMfxCodecMap
-     {
-       const gchar *name;
-       guint rank;
-       const gchar *caps_str;
-     };
+typedef struct _GstMfxCodecMap GstMfxCodecMap;
+struct _GstMfxCodecMap
+{
+  const gchar *name;
+  guint rank;
+  const gchar *caps_str;
+};
 
-     static GstMfxCodecMap mfx_codec_map[] = {
-       {"h264", GST_RANK_PRIMARY + 3,
-           "video/x-h264, \
-       alignment = (string) au, \
-       profile = (string) { constrained-baseline, baseline, main, high }, \
-       stream-format = (string) byte-stream"},
-       {"hevc", GST_RANK_NONE, NULL},   // Determine caps later based on platform support
-       {"mpeg2", GST_RANK_PRIMARY + 3,
-           "video/mpeg, \
-       mpegversion=2, \
-       systemstream=(boolean) false"},
-       {"wmv", GST_RANK_PRIMARY + 3,
-           "video/x-wmv, \
-       format = (string) WMV3, \
-       header-format = (string) none, \
-       stream-format = (string) sequence-layer-frame-layer"},
-       {"vc1", GST_RANK_PRIMARY + 3,
-           "video/x-wmv, \
-       format = (string) WVC1, \
-       header-format = (string) asf, \
-       stream-format = (string) bdu"},
+static GstMfxCodecMap mfx_codec_map[] = {
+    {"h264", GST_RANK_PRIMARY + 3,
+      "video/x-h264, \
+      alignment = (string) au, \
+      profile = (string) { constrained-baseline, baseline, main, high }, \
+      stream-format = (string) byte-stream"},
+    {"hevc", GST_RANK_NONE, NULL},   // Determine caps later based on platform support
+    {"mpeg2", GST_RANK_PRIMARY + 3,
+      "video/mpeg, \
+      mpegversion=2, \
+      systemstream=(boolean) false"},
+    {"wmv", GST_RANK_PRIMARY + 3,
+      "video/x-wmv, \
+      format = (string) WMV3, \
+      header-format = (string) none, \
+      stream-format = (string) sequence-layer-frame-layer"},
+    {"vc1", GST_RANK_PRIMARY + 3,
+      "video/x-wmv, \
+      format = (string) WVC1, \
+      header-format = (string) asf, \
+      stream-format = (string) bdu"},
 #ifndef WITH_D3D11_BACKEND
-       {"vp8", GST_RANK_NONE, "video/x-vp8"},
+    {"vp8", GST_RANK_NONE, "video/x-vp8"},
 #endif
 #if MSDK_CHECK_VERSION(1,19)
-       {"vp9", GST_RANK_NONE, "video/x-vp9"},
+    {"vp9", GST_RANK_NONE, "video/x-vp9"},
 # endif
-       {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
-       {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
-     };
+    {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
+    {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
+};
 
 static GstElementClass *parent_class = NULL;
 
@@ -211,7 +210,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
 #ifdef HAVE_GST_GL_LIBS
   has_gl_texture_sharing =
       gst_mfx_check_gl_texture_sharing (GST_ELEMENT (mfxdec),
-      GST_VIDEO_DECODER_SRC_PAD (vdec), &plugin->gl_context);
+        GST_VIDEO_DECODER_SRC_PAD (vdec), &plugin->gl_context);
 
   /* No need to defer GL export decison to gst_mfx_plugin_base_decide_allocation()
    * if we already have a GL context */
@@ -221,7 +220,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
-      use_10bpc, has_gl_texture_sharing, &output_format);
+        use_10bpc, has_gl_texture_sharing, &output_format);
 
   if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
     return FALSE;

@@ -47,25 +47,25 @@ static const char gst_mfxpostproc_sink_caps_str[] =
       GST_MFX_SUPPORTED_INPUT_FORMATS) ";"
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES
     (GST_CAPS_FEATURE_META_GST_VIDEO_OVERLAY_COMPOSITION,
-    GST_MFX_SUPPORTED_INPUT_FORMATS) ";"
+      GST_MFX_SUPPORTED_INPUT_FORMATS) ";"
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
-     static const char gst_mfxpostproc_src_caps_str[] =
-         GST_MFX_MAKE_OUTPUT_SURFACE_CAPS "; "
+static const char gst_mfxpostproc_src_caps_str[] =
+    GST_MFX_MAKE_OUTPUT_SURFACE_CAPS "; "
 #ifdef HAVE_GST_GL_LIBS
-         GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
-    "{ RGBA, BGRA }") ";"
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
+      "{ RGBA, BGRA }") ";"
 #endif
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
-     static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
-         GST_STATIC_PAD_TEMPLATE ("sink",
+static GstStaticPadTemplate gst_mfxpostproc_sink_factory =
+    GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS (gst_mfxpostproc_sink_caps_str));
 
-     static GstStaticPadTemplate gst_mfxpostproc_src_factory =
-         GST_STATIC_PAD_TEMPLATE ("src",
+static GstStaticPadTemplate gst_mfxpostproc_src_factory =
+    GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS (gst_mfxpostproc_src_caps_str));
@@ -77,27 +77,27 @@ G_DEFINE_TYPE_WITH_CODE (GstMfxPostproc,
     G_IMPLEMENT_INTERFACE (GST_TYPE_COLOR_BALANCE,
         gst_mfxpostproc_color_balance_iface_init));
 
-     enum
-     {
-       PROP_0,
+enum
+{
+  PROP_0,
 
-       PROP_ASYNC_DEPTH,
-       PROP_FORMAT,
-       PROP_WIDTH,
-       PROP_HEIGHT,
-       PROP_FORCE_ASPECT_RATIO,
-       PROP_DEINTERLACE_MODE,
-       PROP_DEINTERLACE_METHOD,
-       PROP_DENOISE,
-       PROP_DETAIL,
-       PROP_HUE,
-       PROP_SATURATION,
-       PROP_BRIGHTNESS,
-       PROP_CONTRAST,
-       PROP_ROTATION,
-       PROP_FRAMERATE,
-       PROP_FRC_ALGORITHM,
-     };
+  PROP_ASYNC_DEPTH,
+  PROP_FORMAT,
+  PROP_WIDTH,
+  PROP_HEIGHT,
+  PROP_FORCE_ASPECT_RATIO,
+  PROP_DEINTERLACE_MODE,
+  PROP_DEINTERLACE_METHOD,
+  PROP_DENOISE,
+  PROP_DETAIL,
+  PROP_HUE,
+  PROP_SATURATION,
+  PROP_BRIGHTNESS,
+  PROP_CONTRAST,
+  PROP_ROTATION,
+  PROP_FRAMERATE,
+  PROP_FRC_ALGORITHM,
+};
 
 #define DEFAULT_ASYNC_DEPTH             0
 #define DEFAULT_FORMAT                  GST_VIDEO_FORMAT_NV12
@@ -113,7 +113,7 @@ G_DEFINE_TYPE_WITH_CODE (GstMfxPostproc,
 #define GST_MFX_TYPE_DEINTERLACE_MODE \
     gst_mfx_deinterlace_mode_get_type()
 
-     static GType gst_mfx_deinterlace_mode_get_type (void)
+static GType gst_mfx_deinterlace_mode_get_type (void)
 {
   static GType deinterlace_mode_type = 0;
 
