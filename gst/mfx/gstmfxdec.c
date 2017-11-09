@@ -45,6 +45,7 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 
 static const char gst_mfxdecode_sink_caps_str[] =
     GST_CAPS_CODEC ("video/x-h264, \
+        parsed = true, \
         alignment = (string) au, \
         profile = (string) { constrained-baseline, baseline, main, high }, \
         stream-format = (string) { avc, byte-stream }")
@@ -93,6 +94,7 @@ struct _GstMfxCodecMap
 static const GstMfxCodecMap mfx_codec_map[] = {
   {"h264", GST_RANK_PRIMARY + 3,
       "video/x-h264, \
+       parsed = true, \
        alignment = (string) au, \
        profile = (string) { constrained-baseline, baseline, main, high }, \
        stream-format = (string) { avc, byte-stream }"},
