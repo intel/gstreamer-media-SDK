@@ -601,11 +601,11 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
 {
   GstMfxDecoderStatus ret = GST_MFX_DECODER_STATUS_SUCCESS;
   mfxStatus sts = MFX_ERR_NONE;
+  mfxVideoParam params = decoder->params;
 
   /* Retrieve sequence header / layer data for MPEG2 and VC1 */
   if (decoder->params.mfx.CodecId == MFX_CODEC_VC1
       || decoder->params.mfx.CodecId == MFX_CODEC_MPEG2) {
-    mfxVideoParam params = decoder->params;
     guint8 sps_data[128];
 
     mfxExtCodingOptionSPSPPS extradata = {
@@ -633,6 +633,14 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       decoder->codec_data = g_byte_array_sized_new (extradata.SPSBufSize);
       decoder->codec_data = g_byte_array_append (decoder->codec_data,
           sps_data, extradata.SPSBufSize);
+    }
+  } else if (decoder->params.mfx.CodecId == MFX_CODEC_AVC) {
+    sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs, &params);
+    if (MFX_ERR_MORE_DATA == sts) {
+      return GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
+    } else if (sts < 0) {
+      GST_ERROR ("Decode header error %d\n", sts);
+      return GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
     }
   }
 
@@ -866,14 +874,27 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
         sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
                 &decoder->params);
+        GST_DEBUG ("MFXVideoDECODE_DecodeHeader status: %d", sts);
         memset (&decoder->bs, 0, sizeof (mfxBitstream));
-        if (MFX_ERR_MORE_DATA == sts) {
-          decoder->bitstream = g_byte_array_append (decoder->bitstream,
-            decoder->codec_data->data, decoder->codec_data->len);
-          decoder->bs.DataLength = decoder->codec_data->len;
-          decoder->bs.MaxLength = decoder->bs.DataLength;
-          decoder->bs.Data = decoder->bitstream->data;
-        }
+      } else if (MFX_CODEC_AVC == decoder->params.mfx.CodecId && decoder->is_avc) {
+        gst_mfx_decoder_convert_avc_stream (decoder, minfo.data, minfo.size);
+        decoder->bs.MaxLength = decoder->bs.DataLength = decoder->bitstream->len;
+        decoder->bs.Data = decoder->bitstream->data;
+
+        sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs,
+                &decoder->params);
+        GST_DEBUG ("MFXVideoDECODE_DecodeHeader status: %d", sts);
+        g_byte_array_remove_range (decoder->bitstream, 0,
+          decoder->bitstream->len);
+        memset (&decoder->bs, 0, sizeof (mfxBitstream));
+      }
+
+      if (MFX_ERR_MORE_DATA == sts) {
+        decoder->bitstream = g_byte_array_append (decoder->bitstream,
+          decoder->codec_data->data, decoder->codec_data->len);
+        decoder->bs.DataLength = decoder->codec_data->len;
+        decoder->bs.MaxLength = decoder->bs.DataLength;
+        decoder->bs.Data = decoder->bitstream->data;
       }
       decoder->was_reset = FALSE;
     }
