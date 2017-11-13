@@ -74,6 +74,9 @@ GstBufferPool *
 gst_mfx_video_buffer_pool_new (GstMfxTaskAggregator * aggregator,
     gboolean memtype_is_system);
 
+void
+gst_mfx_video_buffer_pool_set_untiled (GstBufferPool *pool, gboolean untiled);
+
 G_END_DECLS
 
 #endif /* __GST_MFX_VIDEO_BUFFER_POOL_H__ */

@@ -41,6 +41,7 @@ struct _GstMfxVideoBufferPoolPrivate
   guint has_video_meta:1;
   guint use_dmabuf_memory:1;
   gboolean memtype_is_system;
+  gboolean is_untiled;
 };
 
 #define GST_MFX_VIDEO_BUFFER_POOL_GET_PRIVATE(obj) \
@@ -289,6 +290,16 @@ gst_mfx_video_buffer_pool_new (GstMfxTaskAggregator * aggregator,
 
   priv->display = gst_mfx_task_aggregator_get_display (aggregator);
   priv->memtype_is_system = memtype_is_system;
+  priv->is_untiled = FALSE;
 
   return GST_BUFFER_POOL_CAST (pool);
+}
+
+void
+gst_mfx_video_buffer_pool_set_untiled (GstBufferPool *pool, gboolean untiled)
+{
+  GstMfxVideoBufferPoolPrivate *const priv =
+      GST_MFX_VIDEO_BUFFER_POOL (pool)->priv;
+
+  priv->is_untiled = untiled;
 }
