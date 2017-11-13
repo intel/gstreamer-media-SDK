@@ -35,6 +35,9 @@ struct _GstMfxVideoMeta
   GstBuffer *buffer;
   gint ref_count;
   GstMfxSurface *surface;
+
+  /* check linear buffer */
+  gboolean is_linear;
 };
 
 static void
@@ -49,6 +52,7 @@ gst_mfx_video_meta_init (GstMfxVideoMeta * meta)
   meta->buffer = NULL;
   meta->ref_count = 1;
   meta->surface = NULL;
+  meta->is_linear = FALSE;
 }
 
 static inline GstMfxVideoMeta *
@@ -174,6 +178,23 @@ gst_mfx_video_meta_set_surface (GstMfxVideoMeta * meta,
   g_return_if_fail (GST_MFX_IS_VIDEO_META (meta));
 
   gst_mfx_surface_replace (&meta->surface, surface);
+}
+
+gboolean
+gst_mfx_video_meta_get_linear (GstMfxVideoMeta *meta)
+{
+  g_return_val_if_fail (GST_MFX_IS_VIDEO_META (meta), FALSE);
+
+  return meta->is_linear;
+}
+
+void
+gst_mfx_video_meta_set_linear (GstMfxVideoMeta *meta,
+    gboolean is_linear)
+{
+   g_return_if_fail (GST_MFX_IS_VIDEO_META (meta));
+
+   meta->is_linear = is_linear;
 }
 
 #define GST_MFX_VIDEO_META_HOLDER(meta) \

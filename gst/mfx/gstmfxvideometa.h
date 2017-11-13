@@ -63,6 +63,13 @@ void
 gst_mfx_video_meta_set_surface (GstMfxVideoMeta * meta,
   GstMfxSurface * surface);
 
+gboolean
+gst_mfx_video_meta_get_linear (GstMfxVideoMeta *meta);
+
+void
+gst_mfx_video_meta_set_linear (GstMfxVideoMeta *meta,
+  gboolean is_linear);
+
 GstMfxVideoMeta *
 gst_buffer_get_mfx_video_meta (GstBuffer * buffer);
 
