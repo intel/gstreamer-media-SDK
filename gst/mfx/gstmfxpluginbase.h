@@ -126,6 +126,8 @@ struct _GstMfxPluginBase
   gboolean              srcpad_has_dmabuf;
   GstAllocator         *dmabuf_allocator;
 
+  gboolean              need_linear_dmabuf;
+
   GstMfxTaskAggregator *aggregator;
 };
 

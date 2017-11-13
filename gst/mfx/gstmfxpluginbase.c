@@ -97,6 +97,8 @@ gst_mfx_plugin_base_init (GstMfxPluginBase * plugin,
     plugin->srcpad_query = GST_PAD_QUERYFUNC (plugin->srcpad);
   }
   gst_video_info_init (&plugin->srcpad_info);
+
+  plugin->need_linear_dmabuf = FALSE;
 }
 
 void
@@ -133,6 +135,7 @@ gst_mfx_plugin_base_close (GstMfxPluginBase * plugin)
   gst_caps_replace (&plugin->srcpad_caps, NULL);
   plugin->srcpad_caps_changed = FALSE;
   gst_video_info_init (&plugin->srcpad_info);
+  plugin->need_linear_dmabuf = FALSE;
 }
 
 gboolean
@@ -328,12 +331,30 @@ gst_mfx_plugin_base_propose_allocation (GstMfxPluginBase * plugin,
 {
   GstCaps *caps = NULL;
   gboolean need_pool;
+  gboolean tiled = TRUE;
+  GstStructure *structure = NULL;
+  guint num = 0;
 
   gst_query_parse_allocation (query, &caps, &need_pool);
 
   if (need_pool) {
     if (!caps)
       goto error_no_caps;
+
+    num = gst_caps_get_size (caps);
+    for (guint i=0; i < num; i++) {
+      structure = gst_caps_get_structure (caps, i);
+      if (gst_structure_has_field (structure, "tiled")) {
+        gst_structure_get_boolean (structure, "tiled", &tiled);
+        plugin->need_linear_dmabuf = !(tiled);
+
+        if (plugin->need_linear_dmabuf) {
+          gst_mfx_video_buffer_pool_set_untiled (plugin->sinkpad_buffer_pool,
+          plugin->need_linear_dmabuf);
+        }
+      }
+    }
+
     if (!ensure_sinkpad_buffer_pool (plugin, caps))
       return FALSE;
     gst_query_add_allocation_pool (query, plugin->sinkpad_buffer_pool,
