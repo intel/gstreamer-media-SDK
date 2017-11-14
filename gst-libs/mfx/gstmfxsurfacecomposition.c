@@ -80,7 +80,7 @@ create_subpicture (GstMfxSurfaceComposition * composition,
   if (gst_mfx_surface_has_video_memory (composition->base_surface)) {
     GstMfxDisplay *display =
         gst_mfx_surface_vaapi_get_display (composition->base_surface);
-    subpicture->surface = gst_mfx_surface_vaapi_new (display, &info);
+    subpicture->surface = gst_mfx_surface_vaapi_new (display, &info, NULL);
     gst_mfx_display_unref (display);
   }
   else {

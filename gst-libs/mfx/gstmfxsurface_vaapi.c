@@ -185,10 +185,17 @@ gst_mfx_surface_vaapi_class(void)
 }
 
 GstMfxSurface *
-gst_mfx_surface_vaapi_new(GstMfxDisplay * display, const GstVideoInfo * info)
+gst_mfx_surface_vaapi_new(GstMfxDisplay * display, const GstVideoInfo * info,
+    GstMfxVideoMeta *meta)
 {
   gboolean is_linear = FALSE;
   gint dri_fd = -1;
+
+  if (meta) {
+    is_linear = gst_mfx_video_meta_get_linear(meta);
+    dri_fd = get_display_fd(display);
+  }
+
   return
     gst_mfx_surface_new_internal(gst_mfx_surface_vaapi_class(),
         display, info, NULL, is_linear, dri_fd);

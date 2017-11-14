@@ -40,7 +40,7 @@ GST_DEBUG_CATEGORY (gst_debug_mfx);
 #undef gst_mfx_display_unref
 #undef gst_mfx_display_replace
 
-static int
+int
 get_display_fd (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);

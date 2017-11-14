@@ -232,7 +232,7 @@ gst_mfx_surface_pool_get_surface_unlocked (GstMfxSurfacePool * pool)
     }
     else {
       if (!pool->memtype_is_system)
-        surface = gst_mfx_surface_vaapi_new(pool->display, &pool->info);
+        surface = gst_mfx_surface_vaapi_new(pool->display, &pool->info, NULL);
       else
         surface = gst_mfx_surface_new(&pool->info);
     }

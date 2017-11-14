@@ -271,7 +271,7 @@ gst_mfx_composite_filter_start (GstMfxCompositeFilter * filter,
   if (filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY) {
     GstMfxDisplay *display =
         gst_mfx_surface_vaapi_get_display (base_surface);
-    filter->out_surface = gst_mfx_surface_vaapi_new (display, &info);
+    filter->out_surface = gst_mfx_surface_vaapi_new (display, &info, NULL);
     gst_mfx_display_unref (display);
 
     gst_mfx_task_use_video_memory (filter->vpp);

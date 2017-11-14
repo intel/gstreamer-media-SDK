@@ -502,7 +502,8 @@ gst_mfx_dmabuf_memory_new (GstAllocator * allocator, GstMfxDisplay * display,
   g_return_val_if_fail (allocator != NULL, NULL);
   g_return_val_if_fail (meta != NULL, NULL);
 
-  surface = gst_mfx_surface_vaapi_new (display, vip);
+  surface = gst_mfx_surface_vaapi_new (display, vip, meta);
+
   if (!surface)
     goto error_create_surface;
 

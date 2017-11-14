@@ -127,6 +127,9 @@ gst_mfx_display_has_opengl (GstMfxDisplay * display);
 void
 gst_mfx_display_use_opengl (GstMfxDisplay * display);
 
+int
+get_display_fd (GstMfxDisplay * display);
+
 G_END_DECLS
 
 #endif /* GST_MFX_DISPLAY_H */
