@@ -176,10 +176,13 @@ gst_mfx_video_buffer_pool_alloc_buffer (GstBufferPool * pool,
 
   gst_buffer_set_mfx_video_meta (buffer, meta);
 
-  if (priv->use_dmabuf_memory)
+  if (priv->use_dmabuf_memory) {
+    if (priv->is_untiled)
+      gst_mfx_video_meta_set_linear (meta, priv->is_untiled);
+
     mem = gst_mfx_dmabuf_memory_new (priv->allocator, priv->display,
         &priv->alloc_info, meta);
-  else
+  } else
     mem = gst_mfx_video_memory_new (priv->allocator, meta);
 
   if (!mem)
