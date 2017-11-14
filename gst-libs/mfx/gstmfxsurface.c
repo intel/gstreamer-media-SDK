@@ -288,13 +288,15 @@ gst_mfx_surface_class(void)
 GstMfxSurface *
 gst_mfx_surface_new (const GstVideoInfo * info)
 {
-  return gst_mfx_surface_new_internal(gst_mfx_surface_class(), NULL, info, NULL);
+  return gst_mfx_surface_new_internal(gst_mfx_surface_class(), NULL, info, NULL,
+            FALSE, -1);
 }
 
 GstMfxSurface *
 gst_mfx_surface_new_from_task (GstMfxTask * task)
 {
-  return gst_mfx_surface_new_internal(gst_mfx_surface_class(), NULL, NULL, task);
+  return gst_mfx_surface_new_internal(gst_mfx_surface_class(), NULL, NULL, task,
+            FALSE, -1);
 }
 
 GstMfxSurface *
@@ -307,7 +309,8 @@ gst_mfx_surface_new_from_pool(GstMfxSurfacePool * pool)
 
 GstMfxSurface *
 gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
-    GstMfxDisplay * display, const GstVideoInfo * info, GstMfxTask * task)
+    GstMfxDisplay * display, const GstVideoInfo * info, GstMfxTask * task,
+    gboolean is_linear, gint dri_fd)
 {
   GstMfxSurface *surface;
 
@@ -315,6 +318,10 @@ gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
     gst_mfx_mini_object_new0(GST_MFX_MINI_OBJECT_CLASS(klass));
   if (!surface)
     return NULL;
+
+  surface->gem_bo_handle = -1;
+  surface->is_gem_linear = is_linear;
+  surface->drm_fd = dri_fd;
 
   surface->surface_id = GST_MFX_ID_INVALID;
   if (display)

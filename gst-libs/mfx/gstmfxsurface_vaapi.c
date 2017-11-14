@@ -187,17 +187,21 @@ gst_mfx_surface_vaapi_class(void)
 GstMfxSurface *
 gst_mfx_surface_vaapi_new(GstMfxDisplay * display, const GstVideoInfo * info)
 {
+  gboolean is_linear = FALSE;
+  gint dri_fd = -1;
   return
     gst_mfx_surface_new_internal(gst_mfx_surface_vaapi_class(),
-        display, info, NULL);
+        display, info, NULL, is_linear, dri_fd);
 }
 
 GstMfxSurface *
 gst_mfx_surface_vaapi_new_from_task(GstMfxTask * task)
 {
+  gboolean is_linear = FALSE;
+  gint dri_fd = -1;
   return
     gst_mfx_surface_new_internal(gst_mfx_surface_vaapi_class(),
-        NULL, NULL, task);
+        NULL, NULL, task, is_linear, dri_fd);
 }
 
 GstMfxDisplay *
