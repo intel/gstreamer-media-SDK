@@ -11,6 +11,9 @@ if mfx_decoder
 	if get_option ('USE_HEVC_DECODER') != 'no'
 		mfx_c_args += ['-DUSE_HEVC_DECODER']
 	endif
+	if get_option ('USE_HEVC_10BIT_DECODER') != 'no'
+		mfx_c_args += ['-DUSE_HEVC_10BIT_DECODER']
+	endif
 	if get_option ('USE_VP8_DECODER') != 'no'
 		mfx_c_args += ['-DUSE_VP8_DECODER']
 	endif
@@ -20,6 +23,9 @@ if mfx_decoder
 else
 	if get_option ('USE_HEVC_DECODER') == 'yes'
 		error('USE_HEVC_DECODER required but MFX_DECODER is false')
+	endif
+	if get_option ('USE_HEVC_10BIT_DECODER') == 'yes'
+		error('USE_HEVC_10BIT_DECODER required but MFX_DECODER is false')
 	endif
 	if get_option ('USE_VP8_DECODER') == 'yes'
 		error('USE_VP8_DECODER required but MFX_DECODER is false')

@@ -9,6 +9,7 @@ option (DEBUG "Turn on debug build." OFF)
 
 option (MFX_DECODER "Build MSDK decoder plugins." ON)
 option (USE_HEVC_DECODER "Build MSDK decoder plugin with HEVC support." ON)
+option (USE_HEVC_10BIT_DECODER "Build MSDK decoder plugin with HEVC 10bit support." OFF)
 option (USE_VP8_DECODER "Build MSDK decoder plugin with VP8 support." ON)
 option (USE_VP9_DECODER "Build MSDK decoder plugin with VP9 support." OFF)
 

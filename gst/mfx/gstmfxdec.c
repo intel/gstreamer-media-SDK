@@ -49,10 +49,18 @@ static const char gst_mfxdecode_sink_caps_str[] =
         alignment = (string) au, \
         profile = (string) { constrained-baseline, baseline, main, high }, \
         stream-format = (string) { avc, byte-stream }")
+#ifdef USE_HEVC_10BIT_DECODER
     GST_CAPS_CODEC ("video/x-h265, \
         alignment = (string) au, \
         profile = (string) { main, main-10 }, \
+        profile = (string) { main }, \
         stream-format = (string) byte-stream")
+#else
+    GST_CAPS_CODEC ("video/x-h265, \
+        alignment = (string) au, \
+        profile = (string) { main }, \
+        stream-format = (string) byte-stream")
+#endif
     GST_CAPS_CODEC ("video/mpeg, \
         mpegversion = 2")
     GST_CAPS_CODEC ("video/x-wmv, \
@@ -98,12 +106,20 @@ static const GstMfxCodecMap mfx_codec_map[] = {
        alignment = (string) au, \
        profile = (string) { constrained-baseline, baseline, main, high }, \
        stream-format = (string) { avc, byte-stream }"},
+#ifdef USE_HEVC_10BIT_DECODER
+  {"hevc", GST_RANK_PRIMARY + 3,
+      "video/x-h265, \
+       alignment = (string) au, \
+       profile = (string) { main, main-10 }, \
+       stream-format = (string) byte-stream"},
+#else
 #ifdef USE_HEVC_DECODER
   {"hevc", GST_RANK_PRIMARY + 3,
       "video/x-h265, \
        alignment = (string) au, \
        profile = (string) main, \
        stream-format = (string) byte-stream"},
+#endif
 #endif
   {"mpeg2", GST_RANK_PRIMARY + 3,
       "video/mpeg, \

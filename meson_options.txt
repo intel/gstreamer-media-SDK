@@ -1,6 +1,8 @@
 option('MFX_DECODER', type : 'boolean', value : true, description : 'Build MSDK decoder plugins.')
 option('USE_HEVC_DECODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
 	description : 'Build MSDK decoder plugin with HEVC support.')
+option('USE_HEVC_10BIT_DECODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'no',
+	description : 'Build MSDK decoder plugin with HEVC 10bit support.')
 option('USE_VP8_DECODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
 	description : 'Build MSDK decoder plugin with VP8 support.')
 option('USE_VP9_DECODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'no',
