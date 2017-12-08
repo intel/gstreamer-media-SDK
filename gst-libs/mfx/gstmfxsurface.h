@@ -113,6 +113,15 @@ gst_mfx_surface_map (GstMfxSurface * surface);
 void
 gst_mfx_surface_unmap (GstMfxSurface * surface);
 
+gboolean
+gst_mfx_surface_is_queued(GstMfxSurface * surface);
+
+void
+gst_mfx_surface_queue(GstMfxSurface * surface);
+
+void
+gst_mfx_surface_dequeue(GstMfxSurface * surface);
+
 G_END_DECLS
 
 #endif /* GST_MFX_SURFACE_H */

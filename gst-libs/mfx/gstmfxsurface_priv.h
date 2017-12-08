@@ -60,6 +60,7 @@ struct _GstMfxSurface
   gboolean has_video_memory;
   mfxExtVPPVideoSignalInfo siginfo;
   mfxExtBuffer **ext_buf;
+  guint queued;
 };
 
 struct _GstMfxSurfaceClass

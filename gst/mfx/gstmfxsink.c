@@ -1042,6 +1042,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
         composite_surface ? composite_surface : surface, surface_rect))
     goto error;
 
+  gst_mfx_surface_dequeue(surface);
   ret = GST_FLOW_OK;
 done:
   gst_mfxsink_unlock (sink);

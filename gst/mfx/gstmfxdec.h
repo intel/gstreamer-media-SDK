@@ -41,6 +41,9 @@ struct _GstMfxDec {
   guint                async_depth;
   gboolean             live_mode;
   gboolean             skip_corrupted_frames;
+  GstMfxSurface*       prev_surf;
+  gboolean             dequeuing;
+  gint                 flushing;
 
   GstVideoCodecState  *input_state;
   volatile gboolean    do_renego;

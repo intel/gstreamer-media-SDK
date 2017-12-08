@@ -418,6 +418,7 @@ gst_mfxenc_handle_frame (GstVideoEncoder * venc, GstVideoCodecFrame * frame)
     goto done;
   }
   ret = gst_mfxenc_push_frame (encode, frame);
+  gst_mfx_surface_dequeue(surface);
 
 done:
   return ret;

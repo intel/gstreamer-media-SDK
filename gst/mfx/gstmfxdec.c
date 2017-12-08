@@ -381,6 +381,10 @@ gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps,
 {
   GstMfxProfile profile;
 
+  mfxdec->prev_surf = NULL;
+  mfxdec->dequeuing = FALSE;
+  mfxdec->flushing = 0;
+
   if (mfxdec->decoder && !hard) {
     profile = gst_mfx_profile_from_caps (caps);
     if (profile == gst_mfx_decoder_get_profile (mfxdec->decoder)) {
@@ -494,6 +498,9 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   gst_mfx_plugin_base_export_dma_buffer (GST_MFX_PLUGIN_BASE (mfxdec),
       frame->output_buffer);
 #endif
+  gst_mfx_surface_queue(surface);
+  mfxdec->prev_surf = surface;
+
   return gst_video_decoder_finish_frame (GST_VIDEO_DECODER (mfxdec), frame);
   /* ERRORS */
 error_create_buffer:
@@ -517,6 +524,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
   GstMfxDecoderStatus sts;
   GstFlowReturn ret = GST_FLOW_OK;
   GstVideoCodecFrame *out_frame = NULL;
+  gint cnt = 0;
 
   if (!gst_mfxdec_negotiate (mfxdec))
       goto not_negotiated;
@@ -529,6 +537,14 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       GST_TIME_ARGS (frame->dts),
       GST_TIME_ARGS (frame->pts),
       GST_TIME_ARGS (frame->duration));
+
+  if (mfxdec->prev_surf && mfxdec->dequeuing) {
+    while (!g_atomic_int_get(&mfxdec->flushing) && (cnt < 1000) &&
+        gst_mfx_surface_is_queued(mfxdec->prev_surf)) {
+      g_usleep(100);
+      ++cnt;
+    }
+  }
 
   sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
 
@@ -609,6 +625,28 @@ gst_mfxdec_sink_query (GstVideoDecoder * vdec, GstQuery * query)
     }
   }
   return ret;
+}
+
+static gboolean
+gst_mfxdec_sink_event (GstVideoDecoder * vdec, GstEvent * event)
+{
+  GstMfxDec *mfxdec = GST_MFXDEC (vdec);
+
+  if (GST_EVENT_TYPE(event) == GST_EVENT_FLUSH_START)
+    g_atomic_int_set(&mfxdec->flushing, 1);
+
+  return GST_VIDEO_DECODER_CLASS (parent_class)->sink_event (vdec, event);
+}
+
+static gboolean
+gst_mfxdec_src_event (GstVideoDecoder * vdec, GstEvent * event)
+{
+  GstMfxDec *mfxdec = GST_MFXDEC (vdec);
+
+  if (GST_EVENT_TYPE(event) == GST_EVENT_LATENCY)
+    mfxdec->dequeuing = TRUE;
+
+  return GST_VIDEO_DECODER_CLASS (parent_class)->src_event (vdec, event);
 }
 
 static gboolean
@@ -697,7 +735,9 @@ gst_mfxdec_class_init (GstMfxDecClass *klass)
   vdec_class->decide_allocation =
       GST_DEBUG_FUNCPTR (gst_mfxdec_decide_allocation);
   vdec_class->src_query = GST_DEBUG_FUNCPTR (gst_mfxdec_src_query);
+  vdec_class->src_event = GST_DEBUG_FUNCPTR (gst_mfxdec_src_event);
   vdec_class->sink_query = GST_DEBUG_FUNCPTR (gst_mfxdec_sink_query);
+  vdec_class->sink_event = GST_DEBUG_FUNCPTR (gst_mfxdec_sink_event);
 
   map = (GstMfxCodecMap *) g_type_get_qdata (G_OBJECT_CLASS_TYPE (klass),
       GST_MFXDEC_PARAMS_QDATA);
@@ -738,6 +778,9 @@ gst_mfxdec_init (GstMfxDec *mfxdec)
   mfxdec->async_depth = DEFAULT_ASYNC_DEPTH;
   mfxdec->live_mode = FALSE;
   mfxdec->skip_corrupted_frames = FALSE;
+  mfxdec->prev_surf = NULL;
+  mfxdec->dequeuing = FALSE;
+  mfxdec->flushing = 0;
 
   gst_video_decoder_set_packetized (GST_VIDEO_DECODER (mfxdec), TRUE);
   gst_video_decoder_set_needs_format (GST_VIDEO_DECODER (mfxdec), TRUE);

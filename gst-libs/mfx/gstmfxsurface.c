@@ -217,6 +217,8 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
     }
   }
 #endif
+
+  surface->queued = 0;
 }
 
 static gboolean
@@ -481,4 +483,27 @@ gst_mfx_surface_unmap(GstMfxSurface * surface)
       klass->unmap(surface);
       surface->mapped = FALSE;
     }
+}
+
+gboolean
+gst_mfx_surface_is_queued(GstMfxSurface * surface)
+{
+  if (!surface)
+    return FALSE;
+
+  return g_atomic_int_get(&surface->queued)? TRUE : FALSE;
+}
+
+void
+gst_mfx_surface_queue(GstMfxSurface * surface)
+{
+  if (surface)
+    g_atomic_int_set(&surface->queued, 1);
+}
+
+void
+gst_mfx_surface_dequeue(GstMfxSurface * surface)
+{
+  if (surface)
+    g_atomic_int_set(&surface->queued, 0);
 }
