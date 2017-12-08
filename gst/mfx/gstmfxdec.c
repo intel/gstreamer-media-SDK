@@ -539,10 +539,11 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       GST_TIME_ARGS (frame->duration));
 
   if (mfxdec->prev_surf && mfxdec->dequeuing) {
-    while (!g_atomic_int_get(&mfxdec->flushing) && (cnt < 1000) &&
+    cnt = frame->duration / 100000;
+    while (!g_atomic_int_get(&mfxdec->flushing) && (cnt > 0) &&
         gst_mfx_surface_is_queued(mfxdec->prev_surf)) {
       g_usleep(100);
-      ++cnt;
+      --cnt;
     }
   }
 
