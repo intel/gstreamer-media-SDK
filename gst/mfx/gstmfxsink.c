@@ -1013,7 +1013,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
     goto no_surface;
 
   GST_DEBUG ("render surface %" GST_MFX_ID_FORMAT,
-      GST_MFX_SURFACE_ID (surface));
+      GST_MFX_ID_ARGS(GST_MFX_SURFACE_ID (surface)));
 
   surface_rect = (GstMfxRectangle *)
       gst_mfx_surface_get_crop_rect (surface);
