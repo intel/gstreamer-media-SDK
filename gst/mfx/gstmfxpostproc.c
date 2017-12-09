@@ -667,7 +667,7 @@ ensure_allowed_srcpad_caps (GstMfxPostproc * vpp)
 
   /* Create initial caps from pad template */
   vpp->allowed_srcpad_caps =
-      gst_caps_from_string (gst_mfxpostproc_src_caps_str);
+      gst_static_pad_template_get_caps (&gst_mfxpostproc_src_factory);
   if (!vpp->allowed_srcpad_caps) {
     GST_ERROR_OBJECT (vpp, "failed to create MFX src caps");
     return FALSE;
