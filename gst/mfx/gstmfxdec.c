@@ -455,7 +455,7 @@ gst_mfxdec_flush_discarded_frames (GstMfxDec * mfxdec)
 static gboolean
 gst_mfxdec_reset_full (GstMfxDec * mfxdec, GstCaps * caps, gboolean need_reset)
 {
-  if (mfxdec->decoder && !mfxdec->need_renegotiation) {
+  if (mfxdec->decoder) {
     /* Some videos repeatedly invoke set_format() method thus calling this function.
      * In such scenarios, just return TRUE to avoid the soft reset */
     if (!need_reset)
@@ -563,18 +563,14 @@ gst_mfxdec_handle_frame (GstVideoDecoder * vdec, GstVideoCodecFrame * frame)
     case GST_MFX_DECODER_STATUS_ERROR_INCOMPATIBLE_VIDEO_PARAMS:
       GST_DEBUG ("Video params are incompatible, they may have changed"
         " - reinitializing decoder.");
+      gst_mfxdec_drain (mfxdec);
       if (gst_mfx_decoder_reinit (mfxdec->decoder)) {
         ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
-        break;
       }
-      GST_DEBUG ("decoder reinit failed - fully resetting decoder.");
-      mfxdec->need_renegotiation = TRUE;
-      if (gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE)) {
-        ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
-        break;
+      else {
+        GST_ERROR ("couldn't reinitialize decoder.");
+        ret = GST_FLOW_ERROR;
       }
-      GST_ERROR ("couldn't reinit nor reset decoder.");
-      ret = GST_FLOW_ERROR;
       break;
     case GST_MFX_DECODER_STATUS_CONFIGURED:
       if (!gst_mfxdec_negotiate (mfxdec))

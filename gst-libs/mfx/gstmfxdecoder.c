@@ -166,7 +166,6 @@ static void
 close_decoder (GstMfxDecoder * decoder)
 {
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
-  gst_mfx_filter_replace (&decoder->filter, NULL);
   /* Make sure frame allocator points to the right task to free surfaces */
   gst_mfx_task_aggregator_set_current_task (decoder->aggregator,
       decoder->decode);
@@ -195,6 +194,7 @@ gst_mfx_decoder_finalize (GObject * object)
   g_queue_clear (&decoder->discarded_frames);
 
   close_decoder (decoder);
+  gst_mfx_filter_replace (&decoder->filter, NULL);
   gst_mfx_task_aggregator_unref (decoder->aggregator);
   gst_mfx_task_replace (&decoder->decode, NULL);
 }
@@ -611,19 +611,7 @@ gboolean
 gst_mfx_decoder_reinit (GstMfxDecoder * decoder)
 {
   close_decoder (decoder);
-
-  if (!configure_filter (decoder))
-    return FALSE;
-
-  if (!init_decoder (decoder)) {
-    gst_mfx_surface_pool_replace (&decoder->pool, NULL);
-    gst_mfx_filter_replace (&decoder->filter, NULL);
-    return FALSE;
-  }
-
-  gst_mfx_decoder_flush (decoder);
-
-  return TRUE;
+  return init_decoder (decoder);
 }
 
 gboolean
