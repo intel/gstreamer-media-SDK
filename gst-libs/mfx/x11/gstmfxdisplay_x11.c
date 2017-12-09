@@ -22,7 +22,6 @@
 
 #include "sysdeps.h"
 
-#include "gstmfxdisplay_priv.h"
 #include "gstmfxdisplay_x11.h"
 #include "gstmfxdisplay_x11_priv.h"
 #include "gstmfxwindow_x11.h"
@@ -180,7 +179,7 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
     *pheight = height_mm;
 }
 
-void
+static void
 gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
 {
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
@@ -208,8 +207,14 @@ gst_mfx_display_x11_init (GstMfxDisplayX11 * display)
  * Return value: a newly allocated #GstMfxDisplay object
  */
 GstMfxDisplay *
-gst_mfx_display_x11_new (GstMfxDisplayX11 * display, const gchar * display_name)
+gst_mfx_display_x11_new (const gchar * display_name)
 {
+  GstMfxDisplayX11 *display;
+
+  display = g_object_new (GST_TYPE_MFX_DISPLAY_X11, NULL);
+  if (!display)
+    return NULL;
+
   return gst_mfx_display_new_internal (GST_MFX_DISPLAY (display),
       (gpointer) display_name);
 }
