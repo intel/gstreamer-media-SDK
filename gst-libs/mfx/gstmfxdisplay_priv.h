@@ -24,8 +24,6 @@
 #define GST_MFX_DISPLAY_PRIV_H
 
 #include "gstmfxdisplay.h"
-#include "gstmfxwindow.h"
-#include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
 #define GST_MFX_DISPLAY_CAST(display) \
@@ -33,13 +31,12 @@ G_BEGIN_DECLS
 #define GST_MFX_DISPLAY_GET_PRIVATE(display) \
   (GST_MFX_DISPLAY (display)->priv)
 #define GST_MFX_DISPLAY_CLASS(klass) \
-  ((GstMfxDisplayClass *) (klass))
+  ((GstMfxDisplayClass *)(klass))
 #define GST_MFX_DISPLAY_GET_CLASS(obj) \
-  GST_MFX_DISPLAY_CLASS (GST_OBJECT_GET_CLASS (obj))
+  GST_MFX_DISPLAY_CLASS(GST_OBJECT_GET_CLASS (obj))
 typedef struct _GstMfxDisplayPrivate GstMfxDisplayPrivate;
 typedef struct _GstMfxDisplayClass GstMfxDisplayClass;
 
-typedef void (*GstMfxDisplayInitFunc) (GstMfxDisplay * display);
 typedef gboolean (*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
     const gchar * name);
 typedef void (*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
@@ -118,7 +115,6 @@ struct _GstMfxDisplayClass
   guint display_type;
 
   /*< public > */
-  GstMfxDisplayInitFunc init;
   GstMfxDisplayOpenFunc open_display;
   GstMfxDisplayCloseFunc close_display;
   GstMfxDisplayGetSizeFunc get_size;

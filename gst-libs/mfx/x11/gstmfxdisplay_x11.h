@@ -36,8 +36,7 @@ G_DECLARE_FINAL_TYPE (GstMfxDisplayX11, gst_mfx_display_x11, GST_MFX,
   GstMfxDisplayX11Class))
 
 GstMfxDisplay *
-gst_mfx_display_x11_new (GstMfxDisplayX11 * display,
-    const gchar * display_name);
+gst_mfx_display_x11_new (const gchar * display_name);
 
 Display *gst_mfx_display_x11_get_display (GstMfxDisplay * display);
 

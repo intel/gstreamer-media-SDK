@@ -173,7 +173,7 @@ static void
 gst_mfx_display_destroy (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
-  GstMfxDisplayClass *klass = GST_MFX_DISPLAY_GET_CLASS (display);
+  const GstMfxDisplayClass *const klass = GST_MFX_DISPLAY_GET_CLASS (display);
 
   if (priv->va_display) {
     vaTerminate (priv->va_display);
@@ -183,6 +183,7 @@ gst_mfx_display_destroy (GstMfxDisplay * display)
     close (priv->display_fd);
     priv->display_fd = 0;
   }
+
   if (klass->close_display)
     klass->close_display (display);
 }
@@ -261,8 +262,6 @@ gst_mfx_display_init (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *const priv =
       gst_mfx_display_get_instance_private (display);
-  const GstMfxDisplayClass *const dpy_class =
-      GST_MFX_DISPLAY_GET_CLASS (display);
 
   priv->display_type = GST_MFX_DISPLAY_TYPE_ANY;
   priv->par_n = 1;
@@ -271,9 +270,6 @@ gst_mfx_display_init (GstMfxDisplay * display)
   g_rec_mutex_init (&priv->mutex);
 
   display->priv = priv;
-
-  if (dpy_class->init)
-    dpy_class->init (display);
 }
 
 static void
