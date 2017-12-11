@@ -613,7 +613,8 @@ gst_mfx_encoder_new (const GstMfxEncoderClass * klass,
 
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  encoder = gst_mfx_mini_object_new0 (GST_MFX_MINI_OBJECT_CLASS (klass));
+  encoder = (GstMfxEncoder *)
+              gst_mfx_mini_object_new0 (GST_MFX_MINI_OBJECT_CLASS (klass));
   if (!encoder)
     return NULL;
 
@@ -622,7 +623,7 @@ gst_mfx_encoder_new (const GstMfxEncoderClass * klass,
 
   return encoder;
 error:
-  gst_mfx_mini_object_unref(encoder);
+  gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(encoder));
   return NULL;
 }
 
@@ -631,7 +632,8 @@ gst_mfx_encoder_ref (GstMfxEncoder * encoder)
 {
   g_return_val_if_fail (encoder != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (encoder));
+  return (GstMfxEncoder *)
+           gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (encoder));
 }
 
 void
