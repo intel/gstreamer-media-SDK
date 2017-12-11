@@ -73,6 +73,9 @@ void
 gst_mfx_surface_replace (GstMfxSurface ** old_surface_ptr,
   GstMfxSurface * new_surface);
 
+void
+gst_mfx_surface_class_init (GstMfxSurfaceClass * klass);
+
 mfxFrameSurface1 *
 gst_mfx_surface_get_frame_surface (GstMfxSurface * surface);
 
