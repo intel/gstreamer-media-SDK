@@ -28,6 +28,7 @@
 #include <va/va_drm.h>
 #include "gstmfxdisplay.h"
 #include "gstmfxdisplay_priv.h"
+#include "gstmfxutils_vaapi.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -338,7 +339,7 @@ gst_mfx_display_new (void)
   GstMfxDisplay *display;
 
   display = (GstMfxDisplay *)
-      gst_mfx_mini_object_new0 (gst_mfx_display_class ());
+      gst_mfx_mini_object_new0 (GST_MFX_MINI_OBJECT_CLASS(gst_mfx_display_class ()));
   if (!display)
     return NULL;
   gst_mfx_display_init (display);
