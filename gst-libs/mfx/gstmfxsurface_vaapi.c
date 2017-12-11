@@ -155,7 +155,7 @@ gst_mfx_surface_vaapi_unmap(GstMfxSurface * surface)
 }
 
 void
-gst_mfx_surface_vaapi_class_init(GstMfxSurfaceClass * klass)
+gst_mfx_surface_vaapi_class_init(GstMfxSurfaceVaapiClass * klass)
 {
   GstMfxMiniObjectClass *const object_class = GST_MFX_MINI_OBJECT_CLASS(klass);
   GstMfxSurfaceClass *const surface_class = GST_MFX_SURFACE_CLASS(klass);
