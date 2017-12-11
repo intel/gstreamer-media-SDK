@@ -475,7 +475,7 @@ gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
   return filter;
 
 error:
-  gst_mfx_mini_object_unref (filter);
+  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT(filter));
   return NULL;
 }
 
@@ -505,7 +505,7 @@ gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
   return filter;
 
 error:
-  gst_mfx_mini_object_unref (filter);
+  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT(filter));
   return NULL;
 }
 
