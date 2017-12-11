@@ -21,6 +21,8 @@
 #ifndef GST_MFX_SINK_BIN_H
 #define GST_MFX_SINK_BIN_H
 
+#include <gst/pbutils/missing-plugins.h>
+
 #include <gst-libs/mfx/gstmfxvalue.h>
 #include <gst-libs/mfx/gstmfxfilter.h>
 #include <gst-libs/mfx/gstmfxdisplay.h>
