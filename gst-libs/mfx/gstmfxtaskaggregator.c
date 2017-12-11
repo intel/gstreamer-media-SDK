@@ -81,7 +81,8 @@ gst_mfx_task_aggregator_new (void)
 {
   GstMfxTaskAggregator *aggregator;
 
-  aggregator = gst_mfx_mini_object_new0 (gst_mfx_task_aggregator_class ());
+  aggregator = (GstMfxTaskAggregator *)
+                 gst_mfx_mini_object_new0 (gst_mfx_task_aggregator_class ());
   if (!aggregator)
     return NULL;
 
@@ -99,7 +100,8 @@ gst_mfx_task_aggregator_ref (GstMfxTaskAggregator * aggregator)
 {
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (aggregator));
+  return (GstMfxTaskAggregator *)
+           gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (aggregator));
 }
 
 void

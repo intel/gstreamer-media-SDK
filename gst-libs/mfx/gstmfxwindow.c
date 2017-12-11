@@ -124,7 +124,7 @@ gst_mfx_window_new_internal (const GstMfxWindowClass * window_class,
     g_return_val_if_fail (height > 0, NULL);
   }
 
-  window =
+  window = (GstMfxWindow *)
       gst_mfx_mini_object_new0 (GST_MFX_MINI_OBJECT_CLASS (window_class));
   if (!window)
     return NULL;

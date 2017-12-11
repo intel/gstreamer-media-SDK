@@ -475,7 +475,8 @@ vaapi_image_ref (VaapiImage * image)
 {
   g_return_val_if_fail (image != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (image));
+  return (VaapiImage *)
+           gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (image));
 }
 
 /**

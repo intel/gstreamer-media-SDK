@@ -540,7 +540,7 @@ gst_mfx_task_new_with_session (GstMfxTaskAggregator * aggregator,
   g_return_val_if_fail (aggregator != NULL, NULL);
   g_return_val_if_fail (session != NULL, NULL);
 
-  task = gst_mfx_mini_object_new0 (gst_mfx_task_class ());
+  task = (GstMfxTask *) gst_mfx_mini_object_new0 (gst_mfx_task_class ());
   if (!task)
     return NULL;
 
@@ -554,7 +554,7 @@ gst_mfx_task_ref (GstMfxTask * task)
 {
   g_return_val_if_fail (task != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (task));
+  return (GstMfxTask *) gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (task));
 }
 
 void

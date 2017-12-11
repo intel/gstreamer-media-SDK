@@ -202,7 +202,7 @@ gst_mfx_composite_filter_new (GstMfxTaskAggregator * aggregator,
 
   return filter;
 error:
-  gst_mfx_mini_object_unref(filter);
+  gst_mfx_mini_object_unref(GST_MFX_MINI_OBJECT(filter));
   return NULL;
 }
 
@@ -211,7 +211,8 @@ gst_mfx_composite_filter_ref(GstMfxCompositeFilter * filter)
 {
   g_return_val_if_fail(filter != NULL, NULL);
 
-  return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(filter));
+  return (GstMfxCompositeFilter *)
+           gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(filter));
 }
 
 void

@@ -472,7 +472,7 @@ gst_mfx_decoder_get_codec_data (GstMfxDecoder * decoder, GstBuffer * codec_data)
     }
 
     if (offset != minfo.size) {
-      GST_WARNING ("Codec data mismatch, size %d, processed offset %d.",
+      GST_WARNING ("Codec data mismatch, size %ld, processed offset %d.",
           minfo.size, offset);
     }
 
@@ -558,7 +558,8 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
 
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  decoder = gst_mfx_mini_object_new0 (gst_mfx_decoder_class ());
+  decoder = (GstMfxDecoder *)
+              gst_mfx_mini_object_new0 (gst_mfx_decoder_class ());
   if (!decoder)
     goto error;
 
@@ -568,7 +569,7 @@ gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator,
 
   return decoder;
 error:
-  gst_mfx_mini_object_unref (decoder);
+  gst_mfx_mini_object_unref (GST_MFX_MINI_OBJECT(decoder));
   return NULL;
 }
 
@@ -577,7 +578,8 @@ gst_mfx_decoder_ref (GstMfxDecoder * decoder)
 {
   g_return_val_if_fail (decoder != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (decoder));
+  return (GstMfxDecoder *)
+           gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (decoder));
 }
 
 void
@@ -827,10 +829,10 @@ queue_output_frame (GstMfxDecoder * decoder, GstMfxSurface * surface)
     out_frame = new_frame (decoder);
 
   gst_video_codec_frame_set_user_data(out_frame,
-      gst_mfx_surface_ref (surface), gst_mfx_surface_unref);
+      gst_mfx_surface_ref (surface), (GDestroyNotify) gst_mfx_surface_unref);
   g_queue_push_head(&decoder->decoded_frames, out_frame);
 
-  GST_LOG ("decoded frame : %ld",
+  GST_LOG ("decoded frame : %u",
     GST_MFX_SURFACE_FRAME_SURFACE (surface)->Data.FrameOrder);
 }
 
