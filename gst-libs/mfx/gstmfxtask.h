@@ -21,6 +21,7 @@
 #ifndef GST_MFX_TASK_H
 #define GST_MFX_TASK_H
 
+#include "sysdeps.h"
 #include "gstmfxminiobject.h"
 #include "gstmfxdisplay.h"
 
