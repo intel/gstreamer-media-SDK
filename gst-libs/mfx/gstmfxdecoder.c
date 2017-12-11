@@ -211,7 +211,7 @@ gst_mfx_decoder_finalize (GstMfxDecoder * decoder)
 static mfxStatus
 gst_mfx_decoder_configure_plugins (GstMfxDecoder * decoder)
 {
-  mfxStatus sts;
+  mfxStatus sts = MFX_ERR_NONE;
 
   switch (decoder->params.mfx.CodecId) {
     case MFX_CODEC_HEVC: {
@@ -1103,7 +1103,7 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
   GstMfxSurface *surface, *filter_surface;
   mfxFrameSurface1 *insurf, *outsurf = NULL;
   mfxSyncPoint syncp;
-  mfxStatus sts;
+  mfxStatus sts = MFX_ERR_NONE;
 
   g_return_val_if_fail(decoder != NULL, GST_MFX_DECODER_STATUS_FLUSHED);
 
