@@ -94,7 +94,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
   if (vpg_load_symbol ("vpgExtGetSurfaceHandle")) {
     GST_MFX_DISPLAY_LOCK (proxy->display);
     va_status = g_va_get_surface_handle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
-        &surf, &proxy->fd);
+        &surf, (int *) &proxy->fd);
     GST_MFX_DISPLAY_UNLOCK (proxy->display);
     if (!vaapi_check_status (va_status, "vpgExtGetSurfaceHandle ()"))
       return FALSE;
@@ -175,7 +175,7 @@ gst_mfx_prime_buffer_proxy_ref (GstMfxPrimeBufferProxy * proxy)
 {
   g_return_val_if_fail (proxy != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (proxy));
+  return (GstMfxPrimeBufferProxy *) gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (proxy));
 }
 
 void

@@ -80,7 +80,7 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
     sts = vaCreateSurfaces(GST_MFX_DISPLAY_VADISPLAY(surface->display),
       gst_mfx_video_format_to_va_format(frame_info->FourCC),
       frame_info->Width, frame_info->Height,
-      &surface->surface_id, 1, &attrib, 1);
+      (VASurfaceID *) &surface->surface_id, 1, &attrib, 1);
     GST_MFX_DISPLAY_UNLOCK(surface->display);
     if (!vaapi_check_status(sts, "vaCreateSurfaces ()"))
       return FALSE;
@@ -100,7 +100,7 @@ gst_mfx_surface_vaapi_release(GstMfxSurface * surface)
   if (!surface->task) {
     GST_MFX_DISPLAY_LOCK(surface->display);
     vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(surface->display),
-        &surface->surface_id, 1);
+        (VASurfaceID *) &surface->surface_id, 1);
     GST_MFX_DISPLAY_UNLOCK(surface->display);
   }
 }

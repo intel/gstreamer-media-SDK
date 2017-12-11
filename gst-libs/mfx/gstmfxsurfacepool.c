@@ -171,7 +171,7 @@ gst_mfx_surface_pool_ref (GstMfxSurfacePool * pool)
 {
   g_return_val_if_fail (pool != NULL, NULL);
 
-  return gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (pool));
+  return (GstMfxSurfacePool *) gst_mfx_mini_object_ref (GST_MFX_MINI_OBJECT (pool));
 }
 
 void

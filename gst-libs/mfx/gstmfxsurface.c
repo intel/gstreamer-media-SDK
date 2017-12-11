@@ -335,7 +335,7 @@ gst_mfx_surface_copy(GstMfxSurface * surface)
   g_return_val_if_fail(surface != NULL, NULL);
 
   copy = (GstMfxSurface *)
-    gst_mfx_mini_object_new0(gst_mfx_surface_class());
+    gst_mfx_mini_object_new0(GST_MFX_MINI_OBJECT_CLASS(gst_mfx_surface_class()));
   if (!copy)
     return NULL;
 
@@ -353,7 +353,7 @@ gst_mfx_surface_ref(GstMfxSurface * surface)
 {
   g_return_val_if_fail(surface != NULL, NULL);
 
-  return gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(surface));
+  return (GstMfxSurface *) gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(surface));
 }
 
 void
