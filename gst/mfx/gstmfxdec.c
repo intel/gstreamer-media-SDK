@@ -344,7 +344,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   /* Increase async depth considerably when using decodebin to avoid
    * jerky video playback resulting from threading issues */
-  parent = gst_object_get_parent(mfxdec);
+  parent = gst_object_get_parent(GST_OBJECT(mfxdec));
   if (parent && !GST_IS_PIPELINE (GST_ELEMENT(parent)))
     mfxdec->async_depth = 16;
   gst_object_replace (&parent, NULL);
