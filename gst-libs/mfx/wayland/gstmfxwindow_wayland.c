@@ -438,7 +438,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
     priv->egl_window = wl_egl_window_create (priv->surface, *width, *height);
     if (!priv->egl_window)
       return FALSE;
-    GST_MFX_WINDOW_ID (window) = priv->egl_window;
+    GST_MFX_WINDOW_ID (window) = GPOINTER_TO_INT(priv->egl_window);
   }
 #endif
   priv->thread = g_thread_try_new ("wayland-thread",
