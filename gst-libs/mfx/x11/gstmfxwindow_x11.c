@@ -359,8 +359,7 @@ gst_mfx_window_x11_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
 static gboolean
 gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
 {
-  GstMfxDisplayX11 *const x11_display =
-        GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
+  GstMfxDisplay *const x11_display = GST_MFX_WINDOW_DISPLAY (window);
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
   Display *display = gst_mfx_display_x11_get_display (x11_display);
   gboolean has_errors;
@@ -393,8 +392,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 {
 #if defined(USE_DRI3) && defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT) && defined(HAVE_XRENDER)
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  GstMfxDisplayX11 *const x11_display =
-        GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
+  GstMfxDisplay *const x11_display = GST_MFX_WINDOW_DISPLAY (window);
   GstMfxPrimeBufferProxy *buffer_proxy;
 
   Display *display = gst_mfx_display_x11_get_display (x11_display);
@@ -404,7 +402,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   unsigned int width, height, border, depth, stride, size;
   xcb_pixmap_t pixmap;
   Picture picture;
-  XRenderPictFormat *pic_fmt;
+  XRenderPictFormat *pic_fmt = NULL;
   XWindowAttributes wattr;
   int fmt = 0, op = 0;
 
@@ -603,8 +601,7 @@ gst_mfx_window_x11_clear (GstMfxWindow * window)
 {
 #ifdef HAVE_XRENDER
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
-  GstMfxDisplayX11 *const x11_display =
-        GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
+  GstMfxDisplay *const x11_display = GST_MFX_WINDOW_DISPLAY (window);
   Display *display = gst_mfx_display_x11_get_display (x11_display);
 
   if (priv->picture) {

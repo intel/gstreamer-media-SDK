@@ -186,7 +186,7 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
 #endif
     GstMfxDisplay *const display = GST_MFX_WINDOW_DISPLAY (window);
     Display *const x11_dpy =
-        gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11 (display));
+        gst_mfx_display_x11_get_display (display);
     Window x11_win = GST_MFX_WINDOW_ID (window);
 
     /* Track MousePointer interaction */
@@ -285,8 +285,7 @@ gst_mfxsink_x11_pre_start_event_thread (GstMfxSink * sink)
     if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
       window = gst_mfx_window_egl_get_parent_window (sink->window);
 #endif
-    GstMfxDisplayX11 *const display =
-        GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
+    GstMfxDisplay *const display = GST_MFX_WINDOW_DISPLAY (window);
 
     gst_mfx_display_lock (GST_MFX_DISPLAY (display));
     XSelectInput (gst_mfx_display_x11_get_display (display),
@@ -305,8 +304,7 @@ gst_mfxsink_x11_pre_stop_event_thread (GstMfxSink * sink)
     if (sink->display_type_req == GST_MFX_DISPLAY_TYPE_EGL)
       window = gst_mfx_window_egl_get_parent_window (sink->window);
 #endif
-    GstMfxDisplayX11 *const display =
-        GST_MFX_DISPLAY_X11 (GST_MFX_WINDOW_DISPLAY (window));
+    GstMfxDisplay *const display = GST_MFX_WINDOW_DISPLAY (window);
 
     gst_mfx_display_lock (GST_MFX_DISPLAY (display));
     XSelectInput (gst_mfx_display_x11_get_display (display),
@@ -347,8 +345,7 @@ static gboolean
 configure_notify_event_pending (GstMfxSink * sink, Window window,
     guint width, guint height)
 {
-  GstMfxDisplayX11 *const x11_display =
-      GST_MFX_DISPLAY_X11 (sink->display);
+  GstMfxDisplay *const x11_display = GST_MFX_DISPLAY (sink->display);
   ConfigureNotifyEventPendingArgs args;
   XEvent xev;
 
@@ -387,7 +384,7 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink,
   XID xid = window;
 
   gst_mfx_display_lock (sink->display);
-  XGetGeometry (gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11
+  XGetGeometry (gst_mfx_display_x11_get_display (GST_MFX_DISPLAY
           (sink->display)), xid, &rootwin, &x, &y, &width, &height, &border_width,
       &depth);
   gst_mfx_display_unlock (sink->display);
