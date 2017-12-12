@@ -1866,6 +1866,7 @@ gst_vc1_parse_set_caps (GstBaseParse * parse, GstCaps * caps)
             header_format);
       vc1parse->input_header_format = VC1_HEADER_FORMAT_SEQUENCE_LAYER;
     } else {
+      gint offset;
       guint32 start_code;
       /* ASF, VC1 advanced profile
        * This should be the
@@ -1873,7 +1874,7 @@ gst_vc1_parse_set_caps (GstBaseParse * parse, GstCaps * caps)
        * 2) Sequence Header with startcode
        * 3) EntryPoint Header with startcode
        */
-      if (codec_data_size < 1 + 4 + 4 + 4 + 2) {
+      if (codec_data_size < 4 + 2) {
         GST_ERROR_OBJECT (vc1parse,
             "Too small for VC1 advanced profile ASF header");
         gst_buffer_unmap (codec_data, &minfo);
@@ -1882,22 +1883,21 @@ gst_vc1_parse_set_caps (GstBaseParse * parse, GstCaps * caps)
 
       /* Some sanity checking */
       if ((minfo.data[0] & 0x01) != 0x01) {
-        GST_ERROR_OBJECT (vc1parse,
+        GST_WARNING_OBJECT (vc1parse,
             "Invalid binding byte for VC1 advanced profile ASF header");
-        gst_buffer_unmap (codec_data, &minfo);
-        return FALSE;
+        offset = 0;
+      } else {
+        offset = 1;
       }
 
-      start_code = GST_READ_UINT32_BE (minfo.data + 1);
+      start_code = GST_READ_UINT32_BE (minfo.data + offset);
       if (start_code != 0x000010f) {
-        GST_ERROR_OBJECT (vc1parse,
+        GST_WARNING_OBJECT (vc1parse,
             "VC1 advanced profile ASF header does not start with SequenceHeader startcode");
-        gst_buffer_unmap (codec_data, &minfo);
-        return FALSE;
       }
 
-      if (!gst_vc1_parse_handle_bdus (vc1parse, codec_data, 1,
-              codec_data_size - 1)) {
+      if (!gst_vc1_parse_handle_bdus (vc1parse, codec_data, offset,
+              codec_data_size - offset)) {
         gst_buffer_unmap (codec_data, &minfo);
         return FALSE;
       }
