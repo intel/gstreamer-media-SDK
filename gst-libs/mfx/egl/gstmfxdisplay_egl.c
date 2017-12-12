@@ -207,7 +207,7 @@ gst_mfx_display_egl_class_init(GstMfxDisplayEGLClass * klass)
   GST_DEBUG_CATEGORY_INIT(gst_debug_mfxdisplay_egl, "mfxdisplay_egl", 0,
     "EGL backend");
 
-  gst_mfx_display_class_init(dpy_class);
+  gst_mfx_display_class_init(&klass->parent_class);
 
   object_class->size = sizeof (GstMfxDisplayEGL);
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_EGL;
