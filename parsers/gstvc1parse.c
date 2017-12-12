@@ -1899,12 +1899,23 @@ gst_vc1_parse_set_caps (GstBaseParse * parse, GstCaps * caps)
       if (!gst_vc1_parse_handle_bdus (vc1parse, codec_data, offset,
               codec_data_size - offset)) {
         gst_buffer_unmap (codec_data, &minfo);
+        if (!gst_vc1_parse_handle_bdu (vc1parse, GST_VC1_SEQUENCE, codec_data,
+            0, codec_data_size))
+          return FALSE;
+        gst_buffer_map (codec_data, &minfo, GST_MAP_READ);
+      }
+
+      if (!vc1parse->seq_hdr_buffer) {
+        GST_ERROR_OBJECT (vc1parse,
+            "Need sequence header in the codec_data");
+        gst_buffer_unmap (codec_data, &minfo);
         return FALSE;
       }
 
-      if (!vc1parse->seq_hdr_buffer || !vc1parse->entrypoint_buffer) {
-        GST_ERROR_OBJECT (vc1parse,
-            "Need sequence header and entrypoint header in the codec_data");
+      if (vc1parse->profile == GST_VC1_PROFILE_ADVANCED
+          && !vc1parse->entrypoint_buffer) {
+         GST_ERROR_OBJECT (vc1parse,
+            "Need entrypoint header in the codec_data for advanced profile");
         gst_buffer_unmap (codec_data, &minfo);
         return FALSE;
       }
