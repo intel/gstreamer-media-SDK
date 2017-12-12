@@ -203,9 +203,10 @@ do_create_objects (CreateObjectsArgs * args)
 }
 
 static gboolean
-gst_mfx_window_egl_create (GstMfxWindowEGL * window,
+gst_mfx_window_egl_create (GstMfxWindow * window,
     guint * width, guint * height)
 {
+  GstMfxWindowEGL *mfxEGL_window = GST_MFX_WINDOW_EGL(window);
   GstMfxDisplayEGL *const display =
       GST_MFX_DISPLAY_EGL (GST_MFX_WINDOW_DISPLAY (window));
   const GstMfxDisplayClass *const native_dpy_class =
@@ -214,15 +215,15 @@ gst_mfx_window_egl_create (GstMfxWindowEGL * window,
 
   g_return_val_if_fail (native_dpy_class != NULL, FALSE);
 
-  window->window =
+  mfxEGL_window->window =
       native_dpy_class->create_window (GST_MFX_DISPLAY (display->display),
       GST_MFX_ID_INVALID, *width, *height);
-  if (!window->window)
+  if (!mfxEGL_window->window)
     return FALSE;
 
-  gst_mfx_window_get_size (window->window, width, height);
+  gst_mfx_window_get_size (mfxEGL_window->window, width, height);
 
-  args.window = window;
+  args.window = mfxEGL_window;
   args.width = *width;
   args.height = *height;
   args.egl_context = GST_MFX_DISPLAY_EGL_CONTEXT (display);
@@ -257,55 +258,61 @@ do_destroy_objects (GstMfxWindowEGL * window)
 }
 
 static void
-gst_mfx_window_egl_destroy (GstMfxWindowEGL * window)
+gst_mfx_window_egl_destroy (GstMfxWindow * window)
 {
-  egl_context_run (window->egl_window->context,
-      (EglContextRunFunc) do_destroy_objects, window);
-  gst_mfx_window_replace (&window->window, NULL);
-  gst_mfx_texture_egl_replace (&window->texture, NULL);
+  GstMfxWindowEGL *mfxEGL_window = GST_MFX_WINDOW_EGL(window);
+
+  egl_context_run (mfxEGL_window->egl_window->context,
+      (EglContextRunFunc) do_destroy_objects, mfxEGL_window);
+  gst_mfx_window_replace (&mfxEGL_window->window, NULL);
+  gst_mfx_texture_egl_replace (&mfxEGL_window->texture, NULL);
 }
 
 static gboolean
-gst_mfx_window_egl_show (GstMfxWindowEGL * window)
+gst_mfx_window_egl_show (GstMfxWindow * window)
 {
+  GstMfxWindowEGL *mfxEGL_window = GST_MFX_WINDOW_EGL(window);
   const GstMfxWindowClass *const klass =
-      GST_MFX_WINDOW_GET_CLASS (window->window);
+      GST_MFX_WINDOW_GET_CLASS (mfxEGL_window->window);
 
   g_return_val_if_fail (klass->show, FALSE);
 
-  return klass->show (window->window);
+  return klass->show (mfxEGL_window->window);
 }
 
 static gboolean
-gst_mfx_window_egl_hide (GstMfxWindowEGL * window)
+gst_mfx_window_egl_hide (GstMfxWindow * window)
 {
+  GstMfxWindowEGL *mfxEGL_window = GST_MFX_WINDOW_EGL(window);
   const GstMfxWindowClass *const klass =
-      GST_MFX_WINDOW_GET_CLASS (window->window);
+      GST_MFX_WINDOW_GET_CLASS (mfxEGL_window->window);
 
   g_return_val_if_fail (klass->hide, FALSE);
 
-  return klass->hide (window->window);
+  return klass->hide (mfxEGL_window->window);
 }
 
 static gboolean
-gst_mfx_window_egl_get_geometry (GstMfxWindowEGL * window,
+gst_mfx_window_egl_get_geometry (GstMfxWindow * window,
     gint * x_ptr, gint * y_ptr, guint * width_ptr, guint * height_ptr)
 {
+  GstMfxWindowEGL *mfxEGL_window = GST_MFX_WINDOW_EGL(window);
   const GstMfxWindowClass *const klass =
-      GST_MFX_WINDOW_GET_CLASS (window->window);
+      GST_MFX_WINDOW_GET_CLASS (mfxEGL_window->window);
 
-  return klass->get_geometry ? klass->get_geometry (window->window,
+  return klass->get_geometry ? klass->get_geometry (mfxEGL_window->window,
       x_ptr, y_ptr, width_ptr, height_ptr) : FALSE;
 }
 
 static gboolean
-gst_mfx_window_egl_set_fullscreen (GstMfxWindowEGL * window,
+gst_mfx_window_egl_set_fullscreen (GstMfxWindow * window,
     gboolean fullscreen)
 {
+  GstMfxWindowEGL *mfxEGL_window = GST_MFX_WINDOW_EGL(window);
   const GstMfxWindowClass *const klass =
-      GST_MFX_WINDOW_GET_CLASS (window->window);
+      GST_MFX_WINDOW_GET_CLASS (mfxEGL_window->window);
 
-  return klass->set_fullscreen ? klass->set_fullscreen (window->window,
+  return klass->set_fullscreen ? klass->set_fullscreen (mfxEGL_window->window,
       fullscreen) : FALSE;
 }
 
@@ -336,18 +343,19 @@ do_resize_window (ResizeWindowArgs * args)
 }
 
 static gboolean
-gst_mfx_window_egl_resize (GstMfxWindowEGL * window, guint width, guint height)
+gst_mfx_window_egl_resize (GstMfxWindow * window, guint width, guint height)
 {
+  GstMfxWindowEGL *mfxEGL_window = GST_MFX_WINDOW_EGL(window);
   const GstMfxWindowClass *const klass =
-      GST_MFX_WINDOW_GET_CLASS (window->window);
-  ResizeWindowArgs args = { window, width, height };
+      GST_MFX_WINDOW_GET_CLASS (mfxEGL_window->window);
+  ResizeWindowArgs args = { mfxEGL_window, width, height };
 
   g_return_val_if_fail (klass->resize, FALSE);
 
-  if (!klass->resize (window->window, width, height))
+  if (!klass->resize (mfxEGL_window->window, width, height))
     return FALSE;
 
-  return egl_context_run (window->egl_window->context,
+  return egl_context_run (mfxEGL_window->egl_window->context,
       (EglContextRunFunc) do_resize_window, &args) && args.success;
 }
 
@@ -458,13 +466,14 @@ do_upload_surface (UploadSurfaceArgs * args)
 }
 
 static gboolean
-gst_mfx_window_egl_render (GstMfxWindowEGL * window,
+gst_mfx_window_egl_render (GstMfxWindow * window,
     GstMfxSurface * surface, const GstMfxRectangle * src_rect,
     const GstMfxRectangle * dst_rect)
 {
-  UploadSurfaceArgs args = { window, surface, src_rect, dst_rect };
+  GstMfxWindowEGL *mfxEGL_window = GST_MFX_WINDOW_EGL(window);
+  UploadSurfaceArgs args = { mfxEGL_window, surface, src_rect, dst_rect };
 
-  return egl_context_run (window->egl_window->context,
+  return egl_context_run (mfxEGL_window->egl_window->context,
       (EglContextRunFunc) do_upload_surface, &args) && args.success;
 }
 
