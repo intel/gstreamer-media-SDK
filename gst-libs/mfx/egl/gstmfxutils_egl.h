@@ -28,6 +28,7 @@
 #include <gst/video/video-format.h>
 #include "egl_compat.h"
 #include "gstmfxminiobject.h"
+#include "gstmfxdebug.h"
 
 GST_DEBUG_CATEGORY_EXTERN(gst_debug_mfxdisplay_egl);
 #define GST_CAT_DEFAULT gst_debug_mfxdisplay_egl

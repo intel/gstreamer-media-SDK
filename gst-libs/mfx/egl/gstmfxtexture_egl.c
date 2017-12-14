@@ -32,7 +32,6 @@
 #include "gstmfxutils_vaapi.h"
 
 #define DEBUG 1
-#include "gstmfxdebug.h"
 
 /**
  * GstMfxTextureEGL:
