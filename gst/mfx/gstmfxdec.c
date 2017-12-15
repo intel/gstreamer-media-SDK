@@ -538,7 +538,8 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       GST_TIME_ARGS (frame->pts),
       GST_TIME_ARGS (frame->duration));
 
-  if (mfxdec->prev_surf && mfxdec->dequeuing) {
+  if (mfxdec->prev_surf && mfxdec->dequeuing
+      && gst_mfx_decoder_need_sync_surface_out (mfxdec->decoder)) {
     cnt = frame->duration / 100000;
     while (!g_atomic_int_get(&mfxdec->flushing) && (cnt > 0) &&
         gst_mfx_surface_is_queued(mfxdec->prev_surf)) {

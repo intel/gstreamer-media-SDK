@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <mfxplugin.h>
 #include <mfxvp8.h>
+#include <gst/codecparsers/gsth264parser.h>
 
 #include "gstmfxdecoder.h"
 #include "gstmfxfilter.h"
@@ -64,6 +65,7 @@ struct _GstMfxDecoder
   gboolean skip_corrupted_frames;
   gboolean can_double_deinterlace;
   gboolean is_avc;
+  gboolean sync_out_surf;
   guint num_partial_frames;
 
   /* For special double frame rate deinterlacing case */
@@ -411,7 +413,8 @@ gst_mfx_decoder_convert_avc_stream (GstMfxDecoder * decoder, guint8 * cdata,
 }
 
 static gboolean
-gst_mfx_decoder_get_codec_data (GstMfxDecoder * decoder, GstBuffer * codec_data)
+gst_mfx_decoder_handle_avc_codec_data (GstMfxDecoder * decoder,
+    GstBuffer * codec_data)
 {
   gboolean res = FALSE;
   if (decoder->params.mfx.CodecId != MFX_CODEC_AVC || !decoder->is_avc ||
@@ -466,7 +469,33 @@ gst_mfx_decoder_get_codec_data (GstMfxDecoder * decoder, GstBuffer * codec_data)
               startcode, 4);
           decoder->codec_data = g_byte_array_append (decoder->codec_data,
               &cdata[offset], nal_size);
-	}
+
+          /* Check the number of maximum reference frames in SPS. If it is too
+           * high, will need to sync the output surface to avoid surface
+           * overwrite.
+           */
+          if (!i) {
+            GstH264NalUnit nalu;
+            GstH264SPS sps;
+            GstH264ParserResult res;
+
+            memset(&nalu, 0, sizeof(nalu));
+            nalu.sc_offset = 0;
+            nalu.offset = 4;
+            nalu.data = decoder->codec_data->data;
+            nalu.size = decoder->codec_data->len;
+            nalu.type = (nalu.data[nalu.offset] & 0x1f);
+            nalu.ref_idc = (nalu.data[nalu.offset] & 0x60) >> 5;
+            nalu.idr_pic_flag = 0;
+            nalu.header_bytes = 1;
+            nalu.extension_type = GST_H264_NAL_EXTENSION_NONE;
+
+            res = gst_h264_parse_sps(&nalu, &sps, TRUE);
+            if (res == GST_H264_PARSER_OK && sps.num_ref_frames == 16) {
+              decoder->sync_out_surf = TRUE;
+            }
+          }
+        }
         offset += nal_size;
       }
     }
@@ -509,13 +538,14 @@ gst_mfx_decoder_init (GstMfxDecoder * decoder,
 
   decoder->params.IOPattern = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
   decoder->inited = FALSE;
+  decoder->sync_out_surf = FALSE;
   decoder->bs.MaxLength = 1024 * 16;
   decoder->bitstream = g_byte_array_sized_new (decoder->bs.MaxLength);
   if (!decoder->bitstream)
     return FALSE;
 
   decoder->is_avc = is_avc;
-  if (is_avc && !gst_mfx_decoder_get_codec_data(decoder, codec_data))
+  if (is_avc && !gst_mfx_decoder_handle_avc_codec_data(decoder, codec_data))
     goto error_init;
 
   decoder->pts_offset = GST_CLOCK_TIME_NONE;
@@ -1146,4 +1176,10 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
     ret = GST_MFX_DECODER_STATUS_FLUSHED;
   }
   return ret;
+}
+
+gboolean
+gst_mfx_decoder_need_sync_surface_out (GstMfxDecoder * decoder)
+{
+  return decoder->sync_out_surf;
 }
