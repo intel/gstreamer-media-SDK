@@ -25,6 +25,7 @@
 #include "gstmfxtask.h"
 #include "gstmfxutils_vaapi.h"
 #include "video-format.h"
+#include "gstmfxvideometa.h"
 
 G_BEGIN_DECLS
 
