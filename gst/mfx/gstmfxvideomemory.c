@@ -340,21 +340,6 @@ error_allocate_memory:
   return NULL;
 }
 
-static GstMfxVideoMemory *
-gst_mfx_video_memory_share (GstMfxVideoMemory * mem, gssize offset, gssize size)
-{
-  GST_FIXME ("unimplemented GstMfxVideoAllocator::mem_share () hook");
-  return NULL;
-}
-
-static gboolean
-gst_mfx_video_memory_is_span (GstMfxVideoMemory * mem1,
-    GstMfxVideoMemory * mem2, gsize * offset_ptr)
-{
-  GST_FIXME ("unimplemented GstMfxVideoAllocator::mem_is_span () hook");
-  return FALSE;
-}
-
 /* ------------------------------------------------------------------------ */
 /* --- GstMfxVideoAllocator                                           --- */
 /* ------------------------------------------------------------------------ */
@@ -421,10 +406,6 @@ gst_mfx_video_allocator_init (GstMfxVideoAllocator * allocator)
       gst_mfx_video_memory_unmap;
   base_allocator->mem_copy = (GstMemoryCopyFunction)
       gst_mfx_video_memory_copy;
-  base_allocator->mem_share = (GstMemoryShareFunction)
-      gst_mfx_video_memory_share;
-  base_allocator->mem_is_span = (GstMemoryIsSpanFunction)
-      gst_mfx_video_memory_is_span;
 }
 
 GstAllocator *

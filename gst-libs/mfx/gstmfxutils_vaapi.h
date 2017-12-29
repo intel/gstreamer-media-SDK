@@ -27,7 +27,7 @@
 
 G_BEGIN_DECLS
 #define GST_TYPE_VAAPI_IMAGE (vaapi_image_get_type ())
-G_DECLARE_FINAL_TYPE (VaapiImage, vaapi_image, VAAPI_IMAGE, NULL, GstObject)
+G_DECLARE_FINAL_TYPE (VaapiImage, vaapi_image, VAAPI, IMAGE, GstObject)
 #define VAAPI_IMAGE(obj) ((VaapiImage *) (obj))
 
 VaapiImage *
@@ -35,8 +35,7 @@ vaapi_image_new (GstMfxDisplay * display,
     guint width, guint height, GstVideoFormat format);
 
 VaapiImage *
-vaapi_image_new_with_image (GstMfxDisplay * display,
-    VAImage * va_image);
+vaapi_image_new_with_image (GstMfxDisplay * display, const VAImage * va_image);
 
 VaapiImage *
 vaapi_image_ref (VaapiImage * image);
@@ -46,9 +45,6 @@ vaapi_image_unref (VaapiImage * image);
 
 void
 vaapi_image_replace (VaapiImage ** old_image_ptr, VaapiImage * new_image);
-
-VAImageID
-vaapi_image_get_id (VaapiImage * image);
 
 gboolean
 vaapi_image_get_image (VaapiImage * image, VAImage * va_image);

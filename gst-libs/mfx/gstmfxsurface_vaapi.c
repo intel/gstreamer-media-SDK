@@ -235,9 +235,6 @@ gst_mfx_surface_vaapi_derive_image (GstMfxSurface * surface)
   if (!vaapi_check_status (status, "vaDeriveImage ()"))
     return NULL;
 
-  if (va_image.image_id == VA_INVALID_ID || va_image.buf == VA_INVALID_ID)
-    return NULL;
-
   return vaapi_image_new_with_image (vaapi_surface->display, &va_image);
 }
 
