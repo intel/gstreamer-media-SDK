@@ -48,11 +48,11 @@ _vaapi_image_set_image (VaapiImage * image, const VAImage * va_image);
 static void
 vaapi_image_finalize (VaapiImage * image)
 {
-  VAStatus status;
-
   vaapi_image_unmap (image);
 
   if (image->image.image_id != VA_INVALID_ID) {
+    VAStatus status;
+
     GST_MFX_DISPLAY_LOCK (image->display);
     status =
         vaDestroyImage (GST_MFX_DISPLAY_VADISPLAY (image->display), image->image.image_id);
@@ -155,7 +155,7 @@ error:
  * Return value: the newly allocated #VaapiImage object
  */
 VaapiImage *
-vaapi_image_new_with_image (GstMfxDisplay * display, VAImage * va_image)
+vaapi_image_new_with_image (GstMfxDisplay * display, const VAImage * va_image)
 {
   VaapiImage *image;
 
@@ -170,26 +170,6 @@ vaapi_image_new_with_image (GstMfxDisplay * display, VAImage * va_image)
   image->display = gst_mfx_display_ref (display);
   _vaapi_image_set_image (image, va_image);
   return image;
-}
-
-/**
- * vaapi_image_get_id:
- * @image: a #VaapiImage
- *
- * Returns the underlying VAImageID of the @image.
- *
- * Return value: the underlying VA image id
- */
-VAImageID
-vaapi_image_get_id (VaapiImage * image)
-{
-  VAImage *va_image;
-
-  g_return_val_if_fail (image != NULL, VA_INVALID_ID);
-
-  va_image = &image->image;
-
-  return va_image->image_id;
 }
 
 /**
