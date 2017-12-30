@@ -20,7 +20,6 @@
 
 #include "gstmfxsurface_vaapi.h"
 #include "gstmfxdisplay.h"
-#include "gstmfxutils_vaapi.h"
 #include "video-format.h"
 
 #define DEBUG 1
@@ -101,6 +100,8 @@ gst_mfx_surface_vaapi_release (GstMfxSurface * surface)
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
   GstMfxSurfaceVaapi *const vaapi_surface =
       GST_MFX_SURFACE_VAAPI_CAST (surface);
+
+  vaapi_image_replace (&vaapi_surface->image, NULL);
 
   /* Don't destroy the underlying VASurface if originally from the task allocator */
   if (!priv->task) {
@@ -225,6 +226,9 @@ gst_mfx_surface_vaapi_derive_image (GstMfxSurface * surface)
 
   g_return_val_if_fail (surface != NULL, NULL);
 
+  if (vaapi_surface->image)
+    goto done;
+
   va_image.image_id = VA_INVALID_ID;
   va_image.buf = VA_INVALID_ID;
 
@@ -235,7 +239,12 @@ gst_mfx_surface_vaapi_derive_image (GstMfxSurface * surface)
   if (!vaapi_check_status (status, "vaDeriveImage ()"))
     return NULL;
 
-  return vaapi_image_new_with_image (vaapi_surface->display, &va_image);
+  vaapi_surface->image = vaapi_image_new_with_image (vaapi_surface->display, &va_image);
+  if (!vaapi_surface->image)
+    return NULL;
+
+done:
+  return vaapi_image_ref (vaapi_surface->image);
 }
 
 GstMfxDisplay *
