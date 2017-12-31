@@ -169,7 +169,7 @@ void
 gst_mfx_task_update_video_params (GstMfxTask * task, mfxVideoParam * params)
 {
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
-  
+
   if (priv->params.AsyncDepth)
     params->AsyncDepth = priv->params.AsyncDepth;
   if (priv->params.IOPattern)
@@ -181,6 +181,7 @@ gst_mfx_task_finalize (GObject * object)
 {
   GstMfxTask *task = GST_MFX_TASK (object);
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
+
   if (priv->is_joined) {
     MFXDisjoinSession (priv->session);
     MFXClose (priv->session);

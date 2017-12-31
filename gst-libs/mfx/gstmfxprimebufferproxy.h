@@ -23,6 +23,7 @@
 #define GST_MFX_PRIME_BUFFER_PROXY_H
 
 #include "gstmfxutils_vaapi.h"
+#include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
 #define GST_TYPE_MFX_PRIME_BUFFER_PROXY (gst_mfx_prime_buffer_proxy_get_type ())

@@ -24,7 +24,6 @@
 
 #include "sysdeps.h"
 
-#include "gstmfxutils_vaapi.h"
 #include "gstmfxsurface_vaapi.h"
 #include "gstmfxtaskaggregator.h"
 #include "gstmfxprimebufferproxy.h"

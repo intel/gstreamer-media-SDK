@@ -46,8 +46,10 @@ static gboolean
 _vaapi_image_set_image (VaapiImage * image, const VAImage * va_image);
 
 static void
-vaapi_image_finalize (VaapiImage * image)
+vaapi_image_finalize (GObject * object)
 {
+  VaapiImage *image = VAAPI_IMAGE (object);
+
   vaapi_image_unmap (image);
 
   if (image->image.image_id != VA_INVALID_ID) {
