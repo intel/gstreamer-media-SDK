@@ -67,12 +67,6 @@ G_DEFINE_TYPE_WITH_CODE (GstMfxSink,
 
 enum
 {
-  HANDOFF_SIGNAL,
-  LAST_SIGNAL
-};
-
-enum
-{
   PROP_0,
 #ifdef WITH_LIBVA_BACKEND
   PROP_DISPLAY_TYPE,
@@ -795,13 +789,9 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
 static gboolean
 gst_mfxsink_start (GstBaseSink * base_sink)
 {
-  GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
-  GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (sink);
+  GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (base_sink);
 
-  if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
-    return FALSE;
-
-  return TRUE;
+  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (plugin));
 }
 
 static gboolean
