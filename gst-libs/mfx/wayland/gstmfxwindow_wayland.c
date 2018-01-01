@@ -45,6 +45,42 @@
 
 
 typedef struct _GstMfxWindowWaylandPrivate GstMfxWindowWaylandPrivate;
+typedef struct _FrameState FrameState;
+
+struct _FrameState
+{
+  GstMfxWindow *window;
+  struct wl_callback *callback;
+  gboolean done;
+};
+
+static FrameState *
+frame_state_new (GstMfxWindow * window)
+{
+  FrameState *frame;
+
+  frame = g_slice_new (FrameState);
+  if (!frame)
+    return NULL;
+
+  frame->window = window;
+  frame->callback = NULL;
+  frame->done = FALSE;
+  return frame;
+}
+
+static void
+frame_state_free (FrameState * frame)
+{
+  if (!frame)
+    return;
+
+  if (frame->callback) {
+    wl_callback_destroy (frame->callback);
+    frame->callback = NULL;
+  }
+  g_slice_free (FrameState, frame);
+}
 
 struct _GstMfxWindowWaylandPrivate
 {
@@ -55,7 +91,7 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_region *opaque_region;
   struct wl_viewport *viewport;
   struct wl_event_queue *event_queue;
-  struct wl_callback *callback;
+  FrameState *last_frame;
   GThread *thread;
   GstPoll *poll;
   GstPollFD pollfd;
@@ -81,12 +117,20 @@ struct _GstMfxWindowWayland
 G_DEFINE_TYPE (GstMfxWindowWayland, gst_mfx_window_wayland,
     GST_TYPE_MFX_WINDOW);
 
-static void
-frame_done_callback (void *data, struct wl_callback *callback, uint32_t time)
+static inline gboolean
+frame_done (FrameState * frame)
 {
   GstMfxWindowWaylandPrivate *const priv =
-      GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (data);
-  g_atomic_int_dec_and_test (&priv->num_frames_pending);
+      GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (frame->window);
+  g_atomic_int_set (&frame->done, TRUE);
+  g_atomic_pointer_compare_and_exchange (&priv->last_frame, frame, NULL);
+  return g_atomic_int_dec_and_test (&priv->num_frames_pending);
+}
+
+static void
+frame_done_callback (void * data, struct wl_callback * callback, uint32_t time)
+{
+  frame_done (data);
 }
 
 static const struct wl_callback_listener frame_callback_listener = {
@@ -94,21 +138,19 @@ static const struct wl_callback_listener frame_callback_listener = {
 };
 
 static void
-frame_release_callback (void *data, struct wl_buffer *wl_buffer)
+frame_release_callback (void * data, struct wl_buffer * wl_buffer)
 {
-  GstMfxWindowWaylandPrivate *priv =
-      GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (data);
-
+  FrameState *const frame = data;
+  if (!frame->done)
+    frame_done (frame);
   wl_buffer_destroy (wl_buffer);
-  if (priv->callback) {
-    wl_callback_destroy (priv->callback);
-    priv->callback = NULL;
-  }
+  frame_state_free (frame);
 }
 
 static const struct wl_buffer_listener frame_buffer_listener = {
   frame_release_callback
 };
+
 
 /**
  * GstMfxWindowWaylandClass:
@@ -190,6 +232,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   struct wl_display *const display = GST_MFX_DISPLAY_HANDLE (priv->display);
   GstMfxPrimeBufferProxy *buffer_proxy;
   struct wl_buffer *buffer;
+  FrameState *frame;
   guintptr fd = 0;
   guint32 drm_format = 0;
   gint offsets[3] = { 0 }, pitches[3] = {0}, num_planes = 0, i = 0;
@@ -239,6 +282,11 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     goto error;
   }
 
+  frame = frame_state_new (window);
+  if (!frame)
+    goto error;
+
+  g_atomic_pointer_set (&priv->last_frame, frame);
   g_atomic_int_inc (&priv->num_frames_pending);
 
   GST_MFX_DISPLAY_LOCK (priv->display);
@@ -251,10 +299,10 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     priv->opaque_region = NULL;
   }
   wl_proxy_set_queue ((struct wl_proxy *) buffer, priv->event_queue);
-  wl_buffer_add_listener (buffer, &frame_buffer_listener, window);
+  wl_buffer_add_listener (buffer, &frame_buffer_listener, frame);
 
-  priv->callback = wl_surface_frame (priv->surface);
-  wl_callback_add_listener (priv->callback, &frame_callback_listener, window);
+  frame->callback = wl_surface_frame (priv->surface);
+  wl_callback_add_listener (frame->callback, &frame_callback_listener, frame);
 
   wl_surface_commit (priv->surface);
   wl_display_flush (display);
@@ -282,20 +330,20 @@ gst_mfx_window_wayland_hide (GstMfxWindow * window)
 }
 
 static void
-handle_ping (void *data, struct wl_shell_surface *shell_surface,
+handle_ping (void * data, struct wl_shell_surface * shell_surface,
     uint32_t serial)
 {
   wl_shell_surface_pong (shell_surface, serial);
 }
 
 static void
-handle_configure (void *data, struct wl_shell_surface *shell_surface,
+handle_configure (void * data, struct wl_shell_surface * shell_surface,
     uint32_t edges, int32_t width, int32_t height)
 {
 }
 
 static void
-handle_popup_done (void *data, struct wl_shell_surface *shell_surface)
+handle_popup_done (void * data, struct wl_shell_surface * shell_surface)
 {
 }
 
