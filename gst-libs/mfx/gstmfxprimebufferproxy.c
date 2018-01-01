@@ -134,6 +134,8 @@ gst_mfx_prime_buffer_proxy_finalize (GObject * object)
 
   vaapi_image_unref (proxy->image);
   gst_mfx_display_unref (proxy->display);
+
+  G_OBJECT_CLASS (gst_mfx_prime_buffer_proxy_parent_class)->finalize (object);
 }
 
 static void

@@ -247,7 +247,6 @@ struct _GstMfxEncoderClass
   const GstMfxEncoderClassData *class_data;
 
   /*< public > */
-  void (*finalize) (GstMfxEncoder * encoder);
   GstMfxEncoderStatus (*reconfigure) (GstMfxEncoder * encoder);
   GPtrArray *(*get_default_properties) (void);
   GstMfxEncoderStatus (*set_property) (GstMfxEncoder * encoder, gint prop_id,
@@ -265,8 +264,6 @@ gst_mfx_encoder_new (GstMfxEncoder * encoder,
     GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped);
 
-void
-gst_mfx_encoder_finalize (GObject * object);
 
 G_END_DECLS
 #endif /* GST_MFX_ENCODER_PRIV_H */

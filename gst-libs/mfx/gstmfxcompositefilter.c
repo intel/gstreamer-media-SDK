@@ -62,7 +62,8 @@ struct _GstMfxCompositeFilter
 
 G_DEFINE_TYPE (GstMfxCompositeFilter, gst_mfx_composite_filter, GST_TYPE_OBJECT)
 
-     static void gst_mfx_composite_filter_finalize (GObject * object)
+static void
+gst_mfx_composite_filter_finalize (GObject * object)
 {
   GstMfxCompositeFilter *filter = GST_MFX_COMPOSITE_FILTER (object);
 
@@ -78,6 +79,8 @@ G_DEFINE_TYPE (GstMfxCompositeFilter, gst_mfx_composite_filter, GST_TYPE_OBJECT)
 
   gst_mfx_task_aggregator_unref (filter->aggregator);
   gst_mfx_task_replace (&filter->vpp, NULL);
+
+  G_OBJECT_CLASS (gst_mfx_composite_filter_parent_class)->finalize (object);
 }
 
 static gboolean

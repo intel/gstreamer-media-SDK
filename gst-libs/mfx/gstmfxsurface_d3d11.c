@@ -217,10 +217,19 @@ gst_mfx_surface_d3d11_unmap (GstMfxSurface * surface)
   }
 }
 
-void
+static void
+gst_mfx_surface_d3d11_finalize (GObject * object)
+{
+  G_OBJECT_CLASS (gst_mfx_surface_d3d11_parent_class)->finalize (object);
+}
+
+static void
 gst_mfx_surface_d3d11_class_init (GstMfxSurfaceD3D11Class * klass)
 {
   GstMfxSurfaceClass *const surface_class = GST_MFX_SURFACE_CLASS (klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = gst_mfx_surface_d3d11_finalize;
 
   surface_class->allocate = gst_mfx_surface_d3d11_allocate;
   surface_class->release = gst_mfx_surface_d3d11_release;
