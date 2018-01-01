@@ -129,17 +129,6 @@ gst_mfx_encoder_h264_reconfigure (GstMfxEncoder * base_encoder)
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
-static void
-gst_mfx_encoder_h264_init (GstMfxEncoderH264 * encoder)
-{
-  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_AVC;
-}
-
-static void
-gst_mfx_encoder_h264_finalize (GstMfxEncoder * base_encoder)
-{
-}
-
 /* Generate "codec-data" buffer */
 static GstMfxEncoderStatus
 gst_mfx_encoder_h264_get_codec_data (GstMfxEncoder * base_encoder,
@@ -371,12 +360,26 @@ gst_mfx_encoder_h264_get_default_properties (void)
 GST_MFX_ENCODER_DEFINE_CLASS_DATA (H264);
 
 static void
+gst_mfx_encoder_h264_init (GstMfxEncoderH264 * encoder)
+{
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_AVC;
+}
+
+static void
+gst_mfx_encoder_h264_finalize (GObject * object)
+{
+  G_OBJECT_CLASS (gst_mfx_encoder_h264_parent_class)->finalize (object);
+}
+
+static void
 gst_mfx_encoder_h264_class_init (GstMfxEncoderH264Class * klass)
 {
   GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS (klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = gst_mfx_encoder_h264_finalize;
 
   encoder_class->class_data = &g_class_data;
-  encoder_class->finalize = gst_mfx_encoder_h264_finalize;
   encoder_class->reconfigure = gst_mfx_encoder_h264_reconfigure;
   encoder_class->get_default_properties =
       gst_mfx_encoder_h264_get_default_properties;

@@ -52,17 +52,6 @@ gst_mfx_encoder_jpeg_reconfigure (GstMfxEncoder * base_encoder)
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
-static void
-gst_mfx_encoder_jpeg_init (GstMfxEncoderJpeg * encoder)
-{
-  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_JPEG;
-}
-
-static void
-gst_mfx_encoder_jpeg_finalize (GstMfxEncoder * base_encoder)
-{
-}
-
 static GstMfxEncoderStatus
 gst_mfx_encoder_jpeg_set_property (GstMfxEncoder * base_encoder,
     gint prop_id, const GValue * value)
@@ -128,12 +117,26 @@ gst_mfx_encoder_jpeg_get_default_properties (void)
 GST_MFX_ENCODER_DEFINE_CLASS_DATA (JPEG);
 
 static void
+gst_mfx_encoder_jpeg_init (GstMfxEncoderJpeg * encoder)
+{
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_JPEG;
+}
+
+static void
+gst_mfx_encoder_jpeg_finalize (GObject * object)
+{
+  G_OBJECT_CLASS (gst_mfx_encoder_jpeg_parent_class)->finalize (object);
+}
+
+static void
 gst_mfx_encoder_jpeg_class_init (GstMfxEncoderJpegClass * klass)
 {
   GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS (klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = gst_mfx_encoder_jpeg_finalize;
 
   encoder_class->class_data = &g_class_data;
-  encoder_class->finalize = gst_mfx_encoder_jpeg_finalize;
   encoder_class->reconfigure = gst_mfx_encoder_jpeg_reconfigure;
   encoder_class->get_default_properties =
       gst_mfx_encoder_jpeg_get_default_properties;

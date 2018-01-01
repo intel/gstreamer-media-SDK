@@ -285,7 +285,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   /* Input / output memtypes may have been changed at this point by mfxvpp */
   gst_mfx_task_update_video_params (filter->vpp[1], &filter->params);
   init_params (filter);
-  
+
   sts = MFXVideoVPP_QueryIOSurf (filter->session, &filter->params, request);
   if (sts < 0) {
     GST_ERROR ("Unable to query VPP allocation request %d", sts);
@@ -398,6 +398,8 @@ gst_mfx_filter_finalize (GObject * object)
       filter->ext_buffer);
   g_ptr_array_free (filter->filter_op_data, TRUE);
   gst_mfx_task_aggregator_unref (filter->aggregator);
+
+  G_OBJECT_CLASS (gst_mfx_filter_parent_class)->finalize (object);
 }
 
 static void

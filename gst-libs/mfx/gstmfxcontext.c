@@ -52,6 +52,8 @@ gst_mfx_context_finalize (GObject * object)
   gst_mfx_d3d11_device_replace (&context->device, NULL);
 #endif
   g_rec_mutex_clear (&context->mutex);
+
+  G_OBJECT_CLASS (gst_mfx_context_parent_class)->finalize (object);
 }
 
 static void
