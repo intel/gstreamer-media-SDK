@@ -52,6 +52,8 @@ gst_mfx_task_aggregator_finalize (GObject * object)
   gst_mfx_context_replace (&aggregator->context, NULL);
   MFXClose (aggregator->parent_session);
   g_list_free (aggregator->tasks);
+
+  G_OBJECT_CLASS (gst_mfx_task_aggregator_parent_class)->finalize (object);
 }
 
 static void

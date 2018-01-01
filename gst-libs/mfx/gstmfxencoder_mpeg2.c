@@ -89,17 +89,6 @@ gst_mfx_encoder_mpeg2_reconfigure (GstMfxEncoder * base_encoder)
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
-static void
-gst_mfx_encoder_mpeg2_init (GstMfxEncoderMpeg2 * encoder)
-{
-  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_MPEG2;
-}
-
-static void
-gst_mfx_encoder_mpeg2_finalize (GstMfxEncoder * base_encoder)
-{
-}
-
 GstMfxEncoder *
 gst_mfx_encoder_mpeg2_new (GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped)
@@ -147,12 +136,26 @@ gst_mfx_encoder_mpeg2_get_default_properties (void)
 GST_MFX_ENCODER_DEFINE_CLASS_DATA (MPEG2);
 
 static void
+gst_mfx_encoder_mpeg2_init (GstMfxEncoderMpeg2 * encoder)
+{
+  GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.codec = MFX_CODEC_MPEG2;
+}
+
+static void
+gst_mfx_encoder_mpeg2_finalize (GObject * object)
+{
+  G_OBJECT_CLASS (gst_mfx_encoder_mpeg2_parent_class)->finalize (object);
+}
+
+static void
 gst_mfx_encoder_mpeg2_class_init (GstMfxEncoderMpeg2Class * klass)
 {
   GstMfxEncoderClass *const encoder_class = GST_MFX_ENCODER_CLASS (klass);
+  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = gst_mfx_encoder_mpeg2_finalize;
 
   encoder_class->class_data = &g_class_data;
-  encoder_class->finalize = gst_mfx_encoder_mpeg2_finalize;
   encoder_class->reconfigure = gst_mfx_encoder_mpeg2_reconfigure;
   encoder_class->get_default_properties =
       gst_mfx_encoder_mpeg2_get_default_properties;

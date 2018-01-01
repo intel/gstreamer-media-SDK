@@ -170,6 +170,8 @@ gst_mfx_surface_composition_finalize (GObject * object)
 
   gst_mfx_surface_unref (composition->base_surface);
   g_ptr_array_free (composition->subpictures, TRUE);
+
+  G_OBJECT_CLASS (gst_mfx_surface_composition_parent_class)->finalize (object);
 }
 
 static void

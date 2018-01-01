@@ -66,6 +66,8 @@ gst_mfx_d3d11_device_finalize (GObject * object)
     ID3D11Device_Release (device->d3d11_device);
     device->d3d11_device = NULL;
   }
+
+  G_OBJECT_CLASS (gst_mfx_d3d11_device_parent_class)->finalize (object);
 }
 
 static void
