@@ -181,6 +181,10 @@ gst_mfx_check_gl_texture_sharing (GstElement * element,
 #endif
   }
 
+  /* Don't set a GL context if GL texture sharing is not supported */
+  if (!has_gl_texture_sharing)
+    *gl_context_ptr = NULL;
+
 done:
   gst_caps_replace (&in_caps, NULL);
   gst_caps_replace (&out_caps, NULL);
