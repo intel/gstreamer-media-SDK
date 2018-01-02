@@ -903,7 +903,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
 #ifdef HAVE_GST_GL_LIBS
   has_gl_texture_sharing =
       gst_mfx_check_gl_texture_sharing (GST_ELEMENT (vpp),
-      GST_BASE_TRANSFORM_SRC_PAD (trans), &plugin->gl_context);
+        GST_BASE_TRANSFORM_SRC_PAD (trans), &plugin->gl_context);
 
   /* No need to defer GL export decison to gst_mfx_plugin_base_decide_allocation()
    * if we already have a GL context */
@@ -914,11 +914,11 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   feature =
 #if GST_CHECK_VERSION(1,9,1)
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-      GST_VIDEO_INFO_FORMAT (&vi) == GST_VIDEO_FORMAT_P010_10LE,
-      has_gl_texture_sharing, &out_format);
+        GST_VIDEO_INFO_FORMAT (&vi) == GST_VIDEO_FORMAT_P010_10LE,
+        has_gl_texture_sharing, &out_format);
 #else
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-      FALSE, has_gl_texture_sharing, &out_format);
+        FALSE, has_gl_texture_sharing, &out_format);
 #endif
 
   gst_video_info_change_format (&vi, out_format, width, height);
