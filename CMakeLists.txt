@@ -74,7 +74,7 @@ include_directories(
     parsers)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set (CMAKE_INSTALL_PREFIX "${GSTREAMER_PREFIX}")
+    set (CMAKE_INSTALL_PREFIX "${GSTREAMER_LIBDIR}")
 endif()
 
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -111,7 +111,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in" "${C
 add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake")
 
 install (TARGETS gstmfx
-    LIBRARY DESTINATION lib/gstreamer-1.0
+    LIBRARY DESTINATION gstreamer-1.0
     RUNTIME DESTINATION bin)
 
 message("Build: " ${CMAKE_BUILD_TYPE})
