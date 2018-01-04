@@ -302,18 +302,9 @@ gst_mfx_display_wayland_get_size_mm (GstMfxDisplay * display,
 }
 
 static void
-gst_mfx_display_wayland_finalize (GObject * object)
-{
-  G_OBJECT_CLASS (gst_mfx_display_wayland_parent_class)->finalize (object);
-}
-
-static void
 gst_mfx_display_wayland_class_init (GstMfxDisplayWaylandClass * klass)
 {
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
-  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = gst_mfx_display_wayland_finalize;
 
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
   dpy_class->open_display = gst_mfx_display_wayland_open_display;

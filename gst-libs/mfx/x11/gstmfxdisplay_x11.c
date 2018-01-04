@@ -180,18 +180,9 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
 }
 
 static void
-gst_mfx_display_x11_finalize (GObject * object)
-{
-  G_OBJECT_CLASS (gst_mfx_display_x11_parent_class)->finalize (object);
-}
-
-static void
 gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
 {
   GstMfxDisplayClass *const dpy_class = GST_MFX_DISPLAY_CLASS (klass);
-  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = gst_mfx_display_x11_finalize;
 
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_X11;
   dpy_class->open_display = gst_mfx_display_x11_open_display;

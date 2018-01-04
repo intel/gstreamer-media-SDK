@@ -548,19 +548,10 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 #endif
 }
 
-static void
-gst_mfx_window_x11_finalize (GObject * object)
-{
-  G_OBJECT_CLASS (gst_mfx_window_x11_parent_class)->finalize (object);
-}
-
-static void
+void
 gst_mfx_window_x11_class_init (GstMfxWindowX11Class * klass)
 {
   GstMfxWindowClass *const window_class = GST_MFX_WINDOW_CLASS (klass);
-  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = gst_mfx_window_x11_finalize;
 
   window_class->create = gst_mfx_window_x11_create;
   window_class->destroy = gst_mfx_window_x11_destroy;

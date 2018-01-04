@@ -125,8 +125,6 @@ gst_mfx_surface_pool_finalize (GObject * object)
 
   gst_mfx_task_replace (&pool->task, NULL);
   gst_mfx_context_replace (&pool->context, NULL);
-
-  G_OBJECT_CLASS (gst_mfx_surface_pool_parent_class)->finalize (object);
 }
 
 GstMfxSurfacePool *

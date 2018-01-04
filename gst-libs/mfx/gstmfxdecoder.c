@@ -197,8 +197,6 @@ gst_mfx_decoder_finalize (GObject * object)
   gst_mfx_filter_replace (&decoder->filter, NULL);
   gst_mfx_task_aggregator_unref (decoder->aggregator);
   gst_mfx_task_replace (&decoder->decode, NULL);
-
-  G_OBJECT_CLASS (gst_mfx_decoder_parent_class)->finalize (object);
 }
 
 static mfxStatus

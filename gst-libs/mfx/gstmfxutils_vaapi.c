@@ -64,8 +64,6 @@ vaapi_image_finalize (GObject * object)
           GST_MFX_ID_ARGS (image->image.image_id ));
   }
   gst_mfx_display_unref (image->display);
-
-  G_OBJECT_CLASS (vaapi_image_parent_class)->finalize (object);
 }
 
 static gboolean

@@ -190,8 +190,6 @@ gst_mfx_task_finalize (GObject * object)
   gst_mfx_task_aggregator_unref (priv->aggregator);
   gst_mfx_context_unref (priv->context);
   g_list_free_full (priv->saved_responses, g_free);
-
-  G_OBJECT_CLASS (gst_mfx_task_parent_class)->finalize (object);
 }
 
 static void

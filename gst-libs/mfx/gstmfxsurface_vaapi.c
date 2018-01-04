@@ -166,18 +166,9 @@ gst_mfx_surface_vaapi_unmap (GstMfxSurface * surface)
 }
 
 static void
-gst_mfx_surface_vaapi_finalize (GObject * object)
-{
-  G_OBJECT_CLASS (gst_mfx_surface_vaapi_parent_class)->finalize (object);
-}
-
-static void
 gst_mfx_surface_vaapi_class_init (GstMfxSurfaceVaapiClass * klass)
 {
   GstMfxSurfaceClass *const surface_class = GST_MFX_SURFACE_CLASS (klass);
-  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = gst_mfx_surface_vaapi_finalize;
 
   surface_class->allocate = gst_mfx_surface_vaapi_allocate;
   surface_class->release = gst_mfx_surface_vaapi_release;

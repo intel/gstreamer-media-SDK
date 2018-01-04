@@ -464,18 +464,9 @@ gst_mfx_window_wayland_resize (GstMfxWindow * window, guint width, guint height)
 }
 
 static void
-gst_mfx_window_wayland_finalize (GObject * object)
-{
-  G_OBJECT_CLASS (gst_mfx_window_wayland_parent_class)->finalize (object);
-}
-
-static void
 gst_mfx_window_wayland_class_init (GstMfxWindowWaylandClass * klass)
 {
   GstMfxWindowClass *const window_class = GST_MFX_WINDOW_CLASS (klass);
-  GObjectClass *const object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = gst_mfx_window_wayland_finalize;
 
   window_class->create = gst_mfx_window_wayland_create;
   window_class->destroy = gst_mfx_window_wayland_destroy;

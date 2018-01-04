@@ -91,8 +91,6 @@ gst_mfx_window_finalize (GObject * object)
     klass->destroy (object);
 
   gst_mfx_context_replace (&priv->context, NULL);
-
-  G_OBJECT_CLASS (gst_mfx_window_parent_class)->finalize (object);
 }
 
 static void

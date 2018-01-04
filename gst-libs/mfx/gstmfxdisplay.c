@@ -280,8 +280,6 @@ gst_mfx_display_finalize (GObject * object)
 
   gst_mfx_display_destroy (display);
   g_rec_mutex_clear (&priv->mutex);
-
-  G_OBJECT_CLASS (gst_mfx_display_parent_class)->finalize (object);
 }
 
 void
