@@ -31,7 +31,6 @@ struct _VaapiImage
 {
   /*< private > */
   GstObject parent_instance;
-
   GstMfxDisplay *display;
   GstVideoFormat format;
   guchar *image_data;
@@ -48,18 +47,22 @@ _vaapi_image_set_image (VaapiImage * image, const VAImage * va_image);
 static void
 vaapi_image_finalize (VaapiImage * image)
 {
+  VAImageID image_id;
   VAStatus status;
 
   vaapi_image_unmap (image);
 
-  if (image->image.image_id != VA_INVALID_ID) {
+  image_id = vaapi_image_get_id (image);
+  GST_DEBUG ("image %" GST_MFX_ID_FORMAT, GST_MFX_ID_ARGS (image_id));
+
+  if (image_id != VA_INVALID_ID) {
     GST_MFX_DISPLAY_LOCK (image->display);
     status =
-        vaDestroyImage (GST_MFX_DISPLAY_VADISPLAY (image->display), image->image.image_id);
+        vaDestroyImage (GST_MFX_DISPLAY_VADISPLAY (image->display), image_id);
     GST_MFX_DISPLAY_UNLOCK (image->display);
     if (!vaapi_check_status (status, "vaDestroyImage ()"))
       g_warning ("failed to destroy image %" GST_MFX_ID_FORMAT,
-          GST_MFX_ID_ARGS (image->image.image_id ));
+          GST_MFX_ID_ARGS (image_id));
   }
   gst_mfx_display_unref (image->display);
 }
@@ -101,9 +104,6 @@ vaapi_image_class_init (VaapiImageClass * klass)
 static void
 vaapi_image_init (VaapiImage * image)
 {
-  image->image_data = NULL;
-  image->image.image_id = VA_INVALID_ID;
-  image->image.buf = VA_INVALID_ID;
 }
 
 /**
@@ -133,6 +133,8 @@ vaapi_image_new (GstMfxDisplay * display,
     return NULL;
 
   image->display = gst_mfx_display_ref (display);
+  image->image.image_id = VA_INVALID_ID;
+  image->image.buf = VA_INVALID_ID;
   if (!vaapi_image_create (image, width, height, format))
     goto error;
   return image;

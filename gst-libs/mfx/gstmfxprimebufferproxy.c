@@ -37,6 +37,7 @@ struct _GstMfxPrimeBufferProxy
   /*< private > */
   GstObject parent_instance;
 
+  GstMfxSurface *surface;
   GstMfxDisplay *display;
   VaapiImage *image;
   VABufferInfo buf_info;
@@ -67,27 +68,34 @@ vpg_load_symbol (const gchar * vpg_extension)
 
   g_module_symbol (module, vpg_extension,
       (gpointer *) & g_va_get_surface_handle);
-  g_module_close (module);
+  if (!g_va_get_surface_handle) {
+    g_module_close (module);
+    return FALSE;
+  }
 
   return TRUE;
 }
 
 static gboolean
-gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy,
-    GstMfxSurface * surface)
+gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy)
 {
+  VASurfaceID surf;
   VAStatus va_status;
+  VAImage va_img;
 
-  proxy->display = gst_mfx_surface_vaapi_get_display (surface);
-  proxy->image = gst_mfx_surface_vaapi_derive_image (surface);
+  if (!proxy->surface)
+    return FALSE;
+
+  surf = GST_MFX_SURFACE_ID (proxy->surface);
+  proxy->display = gst_mfx_surface_vaapi_get_display (proxy->surface);
+  proxy->image = gst_mfx_surface_vaapi_derive_image (proxy->surface);
   if (!proxy->image) {
     GST_ERROR ("Could not derive image.");
     return FALSE;
   }
+  vaapi_image_get_image (proxy->image, &va_img);
 
   if (vpg_load_symbol ("vpgExtGetSurfaceHandle")) {
-    VASurfaceID surf = GST_MFX_SURFACE_ID (surface);
-
     GST_MFX_DISPLAY_LOCK (proxy->display);
     va_status =
         g_va_get_surface_handle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
@@ -96,11 +104,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy,
     if (!vaapi_check_status (va_status, "vpgExtGetSurfaceHandle ()"))
       return FALSE;
   } else {
-    VAImage va_img;
-
-    vaapi_image_get_image (proxy->image, &va_img);
     proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
-
     GST_MFX_DISPLAY_LOCK (proxy->display);
     va_status =
         vaAcquireBufferHandle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
@@ -111,7 +115,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy,
     proxy->fd = proxy->buf_info.handle;
   }
 
-  proxy->data_size = vaapi_image_get_data_size (proxy->image);
+  proxy->data_size = va_img.data_size;
   return TRUE;
 }
 
@@ -133,7 +137,8 @@ gst_mfx_prime_buffer_proxy_finalize (GObject * object)
     GST_MFX_DISPLAY_UNLOCK (proxy->display);
   }
 
-  vaapi_image_unref (proxy->image);
+  vaapi_image_replace (&proxy->image, NULL);
+  gst_mfx_surface_replace (&proxy->surface, NULL);
   gst_mfx_display_unref (proxy->display);
 }
 
@@ -160,7 +165,8 @@ gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface)
   if (!proxy)
     return NULL;
 
-  if (!gst_mfx_prime_buffer_proxy_acquire_handle (proxy, surface))
+  proxy->surface = gst_mfx_surface_ref (surface);
+  if (!gst_mfx_prime_buffer_proxy_acquire_handle (proxy))
     goto error_acquire_handle;
   return proxy;
   /* ERRORS */
