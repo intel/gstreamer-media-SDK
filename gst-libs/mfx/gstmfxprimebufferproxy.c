@@ -68,7 +68,7 @@ vpg_load_symbol (const gchar * vpg_extension)
       (gpointer *) & g_va_get_surface_handle);
   g_module_close (module);
 
-  return TRUE;
+  return g_va_get_surface_handle != NULL;
 }
 
 static gboolean
