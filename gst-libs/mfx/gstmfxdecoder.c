@@ -76,10 +76,16 @@ struct _GstMfxDecoder
 G_DEFINE_TYPE (GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
 
 void
-gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder, GstVideoInfo * info)
+gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder,
+    const GstVideoInfo * info)
 {
   g_return_if_fail (decoder != NULL);
+
   decoder->info = *info;
+  if (!decoder->info.fps_n)
+    decoder->info.fps_n = 30;
+  decoder->duration =
+    (decoder->info.fps_d / (gdouble) decoder->info.fps_n) * 1000000000;
 }
 
 const mfxFrameAllocRequest *
@@ -326,17 +332,12 @@ error_load_plugin:
 static gboolean
 gst_mfx_decoder_create (GstMfxDecoder * decoder,
     GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-    const GstVideoInfo * info, GByteArray * codec_data, mfxU16 async_depth,
+    GByteArray * codec_data, mfxU16 async_depth,
     gboolean live_mode, gboolean is_autoplugged)
 {
   decoder->is_autoplugged = is_autoplugged;
   decoder->profile = profile;
-  decoder->info = *info;
-  if (!decoder->info.fps_n)
-    decoder->info.fps_n = 30;
-  decoder->duration =
-      (decoder->info.fps_d / (gdouble) decoder->info.fps_n) * 1000000000;
-
+  
   decoder->params.mfx.CodecId = profile.codec;
   decoder->params.AsyncDepth = is_autoplugged ? 16 : async_depth;
   if (live_mode) {
@@ -391,19 +392,18 @@ gst_mfx_decoder_class_init (GstMfxDecoderClass * klass)
 
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
-    const GstVideoInfo * info, GByteArray * codec_data, mfxU16 async_depth,
+    GByteArray * codec_data, mfxU16 async_depth,
     gboolean live_mode, gboolean is_autoplugged)
 {
   GstMfxDecoder *decoder;
 
   g_return_val_if_fail (aggregator != NULL, NULL);
-  g_return_val_if_fail (info != NULL, NULL);
 
   decoder = g_object_new (GST_TYPE_MFX_DECODER, NULL);
   if (!decoder)
     return NULL;
 
-  if (!gst_mfx_decoder_create (decoder, aggregator, profile, info, codec_data,
+  if (!gst_mfx_decoder_create (decoder, aggregator, profile, codec_data,
           async_depth, live_mode, is_autoplugged))
     goto error;
   return decoder;
@@ -821,9 +821,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame)
       if (!decoder->initial_frame_latency)
         decoder->initial_frame_latency = decoder->num_frame_latency + 1;
 
-      /* Update stream properties if they have interlaced frames. An interlaced H264
-       * can only be detected after decoding the first frame, hence the delayed VPP
-       * initialization */
+#if !GST_CHECK_VERSION(1,11,90)
+      /* Update stream properties if they have interlaced frames. */
       switch (outsurf->Info.PicStruct) {
         case MFX_PICSTRUCT_PROGRESSIVE:
           if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
@@ -832,11 +831,11 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame)
         case MFX_PICSTRUCT_FIELD_TFF:
           GST_VIDEO_INFO_FLAG_SET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
           goto update;
-        case MFX_PICSTRUCT_FIELD_BFF:{
+        case MFX_PICSTRUCT_FIELD_BFF:
           GST_VIDEO_INFO_FLAG_UNSET (&decoder->info, GST_VIDEO_FRAME_FLAG_TFF);
-        update:
-          /* Check if stream has progressive frames first.
-           * If it does then it should be a mixed interlaced stream */
+update:
+        /* Check if stream has progressive frames first.
+         * If it does then it should be a mixed interlaced stream */
           if (decoder->info.interlace_mode ==
               GST_VIDEO_INTERLACE_MODE_PROGRESSIVE && decoder->has_ready_frames)
             decoder->info.interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
@@ -844,12 +843,12 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame)
             if (decoder->info.interlace_mode != GST_VIDEO_INTERLACE_MODE_MIXED)
               decoder->info.interlace_mode =
                   GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
-          }
           break;
         }
         default:
           break;
       }
+#endif
 
       if (!decoder->can_double_deinterlace && decoder->num_partial_frames) {
         GstVideoCodecFrame *cur_frame;

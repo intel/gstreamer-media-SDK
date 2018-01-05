@@ -351,7 +351,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
     is_autoplugged = TRUE;
   gst_object_replace (&parent, NULL);
 
-  mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,
+  mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile,
       extradata, mfxdec->async_depth, mfxdec->live_mode, is_autoplugged);
 
   if (extradata)
@@ -359,6 +359,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   if (!mfxdec->decoder)
     return FALSE;
+
+  gst_mfx_decoder_set_video_info (mfxdec->decoder, &info);
 
   if (mfxdec->skip_corrupted_frames)
     gst_mfx_decoder_skip_corrupted_frames (mfxdec->decoder);
