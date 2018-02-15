@@ -68,11 +68,13 @@ Then open VS x64 native tools command prompt, and add gstreamer pkgconfig path t
 
 	set PKG_CONFIG_PATH=%GSTREAMER_1_0_ROOT_X86_64%lib\pkgconfig
 
-Run the Meson command to configure the out-of-source build.
+When building against the open-source Media SDK stack (https://github.com/Intel-Media-SDK/MediaSDK), please ensure that the MSDK pkgconfig files
+installed in custom build paths are included in the PKG_CONFIG_PATH. For example,
 
-	meson ../gst-mfx-build
+	export PKG_CONFIG_PATH=/opt/intel/mediasdk/lib/pkgconfig/
 
-To setup a release build and install to the GStreamer system installation directory:
+To setup a release build and install to the GStreamer system installation directory,
+run the following Meson command to configure the out-of-source build:
 
 	meson ../gst-mfx-build_release --prefix=${PREFIX} --libdir=${LIBDIR} --buildtype=release
 
@@ -86,11 +88,11 @@ To setup a VS2015 project:
 		
 Newer platforms such as Skylake and Kabylake have added video codec support such as HEVC decode / encode and VP9 decode,
 but are disabled by default to maximize compatibility with older systems such as Baytrail and Haswell.
-To enable these features such as HEVC encode support, from your build dir:
+To enable these features such as HEVC encode and VP9 decode support, you can do the following:
 
-	mesonconf -DMFX_H265_ENCODER=true
+	meson ../gst-mfx-build --prefix=${PREFIX} --libdir=${LIBDIR} -DMFX_H265_ENCODER=true -DMFX_VP9_DECODER=true
 
-For a list of more options when configuring the build, refer to the meson_options.txt file inside the source directory or run mesonconf inside the build directory.
+For a list of more options when configuring the build, refer to the meson_options.txt file inside the source directory.
 
 Next step is to build and install the GST-MFX plugins:
 
