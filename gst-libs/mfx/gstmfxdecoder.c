@@ -764,7 +764,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame)
           decoder->bitstream = g_byte_array_append (decoder->bitstream,
               decoder->codec_data->data, decoder->codec_data->len);
           decoder->bs.DataLength += decoder->codec_data->len;
-          /* Don't ask me why for VC1 this is required after seeking */
+          /* MSDK ignores the first byte indicating the VC1 profile */
           decoder->bs.DataOffset = 1;
         }
         decoder->was_reset = FALSE;
