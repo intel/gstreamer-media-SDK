@@ -796,6 +796,26 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
   };
   gboolean should_register;
 
+#if MSDK_CHECK_VERSION(1,19)
+#ifdef WITH_D3D11_BACKEND
+  /* Assume any platform newer than SKL have the same SKL codec support */
+  if (platform > MFX_PLATFORM_SKYLAKE)
+    platform = MFX_PLATFORM_SKYLAKE;
+#else
+  if (platform >= MFX_PLATFORM_SKYLAKE) {
+# if MSDK_CHECK_VERSION(1,22)
+    /* Intel Media SDK Embedded Edition Linux 2017 for APL
+     * currently supports HW-accelerated 8-bit VP9 decode */
+    if (platform >= MFX_PLATFORM_APOLLOLAKE)
+      platform = MFX_PLATFORM_SKYLAKE;
+    else
+# endif // MSDK_CHECK_VERSION
+      /* ... but not Intel MSS 2017 Linux ... */
+      platform = MFX_PLATFORM_BROADWELL;
+  }
+#endif // WITH_D3D11_BACKEND
+#endif // MSDK_CHECK_VERSION
+
   for (i = 0; i < G_N_ELEMENTS (mfx_codec_map); i++) {
     name = mfx_codec_map[i].name;
     rank = mfx_codec_map[i].rank;
@@ -803,25 +823,6 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
     if (name) {
       type_name = g_strdup_printf ("GstMfxDec_%s", name);
       element_name = g_strdup_printf ("mfx%sdec", name);
-
-#if MSDK_CHECK_VERSION(1,19)
-#ifdef WITH_D3D11_BACKEND
-      /* Assume any platform newer than SKL have the same SKL codec support */
-      if (platform > MFX_PLATFORM_SKYLAKE)
-        platform = MFX_PLATFORM_SKYLAKE;
-#else
-      if (platform >= MFX_PLATFORM_SKYLAKE) {
-# if MSDK_CHECK_VERSION(1,22)
-        /* Intel Media SDK Embedded Edition Linux 2017 for APL
-         * currently supports HW-accelerated 8-bit VP9 decode */
-        if (platform == MFX_PLATFORM_APOLLOLAKE)
-          platform = MFX_PLATFORM_SKYLAKE;
-        else
-# endif // MSDK_CHECK_VERSION
-          /* ... but not Intel MSS 2017 Linux ... */
-          platform = MFX_PLATFORM_BROADWELL;
-      }
-#endif // WITH_D3D11_BACKEND
 
       switch (platform) {
         case MFX_PLATFORM_SKYLAKE:
@@ -856,7 +857,6 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
         default:
           break;
       }
-#endif
       should_register = (rank != GST_RANK_NONE);
     } else {
       type_name = g_strdup_printf ("GstMfxDec");
