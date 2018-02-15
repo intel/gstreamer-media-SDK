@@ -147,6 +147,11 @@ if mfx_decoder
   gst_mfx_args += ['-DMFX_DECODER']
 endif
 
+mfx_vp9_decoder = get_option('MFX_VP9_DECODER')
+if mfx_vp9_decoder
+  gst_mfx_args += ['-DMFX_VP9_DECODER']
+endif
+
 if get_option('MFX_VPP')
   gst_mfx_args += ['-DMFX_VPP']
 endif

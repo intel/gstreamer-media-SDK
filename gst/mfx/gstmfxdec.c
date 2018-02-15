@@ -65,8 +65,10 @@ static const char gst_mfxdecode_sink_caps_str[] =
 #ifndef WITH_D3D11_BACKEND /* VP8 hw decode isn't implemented when using D3D11 */
     GST_CAPS_CODEC ("video/x-vp8")
 #endif
-#if MSDK_CHECK_VERSION(1,19)
+#ifdef MFX_VP9_DECODER
+# if MSDK_CHECK_VERSION(1,19)
     GST_CAPS_CODEC ("video/x-vp9")
+# endif
 #endif
     GST_CAPS_CODEC ("image/jpeg");
 
@@ -124,9 +126,11 @@ static GstMfxCodecMap mfx_codec_map[] = {
 #ifndef WITH_D3D11_BACKEND
     {"vp8", GST_RANK_NONE, "video/x-vp8"},
 #endif
-#if MSDK_CHECK_VERSION(1,19)
+#ifdef MFX_VP9_DECODER
+# if MSDK_CHECK_VERSION(1,19)
     {"vp9", GST_RANK_NONE, "video/x-vp9"},
 # endif
+#endif
     {"jpeg", GST_RANK_PRIMARY + 3, "image/jpeg"},
     {NULL, GST_RANK_NONE, gst_mfxdecode_sink_caps_str},
 };
