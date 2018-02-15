@@ -54,7 +54,6 @@ static gboolean
 plugin_init (GstPlugin * plugin)
 {
   gboolean ret = FALSE;
-  GstPluginFeature *vc1parse = NULL;
   mfxU16 platform = 0;
 
   GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "mfx", 0, "MFX Plugins loader");
@@ -64,13 +63,14 @@ plugin_init (GstPlugin * plugin)
     return TRUE;
   }
 
-  vc1parse = gst_registry_lookup_feature (gst_registry_get (), "vc1parse");
+#ifdef MFX_DECODER
+  GstPluginFeature *vc1parse =
+      gst_registry_lookup_feature (gst_registry_get (), "vc1parse");
   if (vc1parse) {
     gst_plugin_feature_set_rank (vc1parse, GST_RANK_MARGINAL);
     gst_object_unref (vc1parse);
     vc1parse = NULL;
   }
-#ifdef MFX_DECODER
   ret |= gst_mfxdec_register (plugin, platform);
 #endif
 
