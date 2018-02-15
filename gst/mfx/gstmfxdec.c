@@ -832,7 +832,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
     if (name) {
       type_name = g_strdup_printf ("GstMfxDec_%s", name);
       element_name = g_strdup_printf ("mfx%sdec", name);
-
+#if MSDK_CHECK_VERSION(1,19)
       switch (platform) {
         case MFX_PLATFORM_SKYLAKE:
           if (!g_strcmp0 (name, "vp9"))
@@ -870,7 +870,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
           rank = GST_RANK_PRIMARY + 3;
         }
       }
-
+#endif // MSDK_CHECK_VERSION
       should_register = (rank != GST_RANK_NONE);
     } else {
       type_name = g_strdup_printf ("GstMfxDec");
