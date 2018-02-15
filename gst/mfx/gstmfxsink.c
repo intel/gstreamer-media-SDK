@@ -44,12 +44,21 @@
 GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxsink);
 #define GST_CAT_DEFAULT gst_debug_mfxsink
 
+static const char gst_mfxsink_sink_caps_str[] =
+#ifdef WITH_LIBVA_BACKEND
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
+    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
+#else
+    GST_MFX_MAKE_OUTPUT_SURFACE_CAPS
+#endif // WITH_LIBVA_BACKEND
+    ";";
+
 /* Default template */
 static GstStaticPadTemplate gst_mfxsink_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS (GST_MFX_MAKE_OUTPUT_SURFACE_CAPS));
+    GST_STATIC_CAPS (gst_mfxsink_sink_caps_str));
 
 static void
 gst_mfxsink_video_overlay_iface_init (GstVideoOverlayInterface * iface);
