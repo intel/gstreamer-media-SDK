@@ -53,7 +53,6 @@
      (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR > minor) || \
      (MFX_VERSION_MAJOR == major && MFX_VERSION_MINOR == minor))
 
-/* Session APIs used required 1.1 */
 #define GST_MFX_MIN_MSDK_VERSION_MAJOR 1
 #define GST_MFX_MIN_MSDK_VERSION_MINOR 8
 

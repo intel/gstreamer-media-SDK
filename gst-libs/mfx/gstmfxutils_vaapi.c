@@ -42,9 +42,6 @@ struct _VaapiImage
 
 G_DEFINE_TYPE (VaapiImage, vaapi_image, GST_TYPE_OBJECT);
 
-static gboolean
-_vaapi_image_set_image (VaapiImage * image, const VAImage * va_image);
-
 static void
 vaapi_image_finalize (GObject * object)
 {
@@ -66,6 +63,24 @@ vaapi_image_finalize (GObject * object)
   gst_mfx_display_unref (image->display);
 
   G_OBJECT_CLASS (vaapi_image_parent_class)->finalize (object);
+}
+
+/**
+ * _vaapi_image_set_image:
+ * @image: a #VaapiImage
+ * @va_image: a VA image
+ *
+ * Initializes #VaapiImage with a foreign VA image.
+ *
+ * This is an internal function used by vaapi_image_new_with_image ().
+ */
+static void
+_vaapi_image_set_image (VaapiImage * image, const VAImage * va_image)
+{
+  image->format = gst_video_format_from_va_fourcc (va_image->format.fourcc);
+  image->image = *va_image;
+  image->width = va_image->width;
+  image->height = va_image->height;
 }
 
 static gboolean
@@ -192,28 +207,6 @@ vaapi_image_get_image (VaapiImage * image, VAImage * va_image)
 
   if (va_image)
     *va_image = image->image;
-
-  return TRUE;
-}
-
-/**
- * _vaapi_image_set_image:
- * @image: a #VaapiImage
- * @va_image: a VA image
- *
- * Initializes #VaapiImage with a foreign VA image.
- *
- * This is an internal function used by vaapi_image_new_with_image ().
- *
- * Return value: %TRUE on success
- */
-gboolean
-_vaapi_image_set_image (VaapiImage * image, const VAImage * va_image)
-{
-  image->format = gst_video_format_from_va_fourcc (va_image->format.fourcc);
-  image->image = *va_image;
-  image->width = va_image->width;
-  image->height = va_image->height;
 
   return TRUE;
 }
