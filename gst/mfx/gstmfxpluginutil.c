@@ -216,10 +216,18 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     const char caps_str[] =
         GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE,
         "{ P010_10LE, ENCODED, NV12, BGRA }") "; "
+#ifdef HAVE_GST_GL_LIBS
+        GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
+        "{ RGBA, BGRA }") ";"
+#endif
         GST_VIDEO_CAPS_MAKE ("{ P010_10LE, NV12, BGRA }");
 #else
     const char caps_str[] =
         GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
+#ifdef HAVE_GST_GL_LIBS
+        GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
+        "{ RGBA, BGRA }") ";"
+#endif
         GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 #endif
     templ = gst_caps_from_string (caps_str);

@@ -795,6 +795,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
     (GInstanceInitFunc) gst_mfxdec_init,
   };
   gboolean should_register;
+  gboolean has_hevc_main10 = FALSE;
 
 #if MSDK_CHECK_VERSION(1,19)
 #ifdef WITH_D3D11_BACKEND
@@ -806,8 +807,12 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
 # if MSDK_CHECK_VERSION(1,22)
     /* Intel Media SDK Embedded Edition Linux 2017 for APL
      * currently supports HW-accelerated 8-bit VP9 decode */
-    if (platform >= MFX_PLATFORM_APOLLOLAKE)
+    if (platform >= MFX_PLATFORM_APOLLOLAKE) {
+# if MSDK_CHECK_VERSION(1,25)
+      has_hevc_main10 = TRUE;
+# endif
       platform = MFX_PLATFORM_SKYLAKE;
+    }
     else
 # endif // MSDK_CHECK_VERSION
       /* ... but not Intel MSS 2017 Linux ... */
@@ -834,17 +839,11 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
 #ifndef WITH_D3D11_BACKEND
           if (!g_strcmp0 (name, "vp8"))
             rank = GST_RANK_PRIMARY + 3;
-#endif
-#ifdef WITH_D3D11_BACKEND
-          if (!g_strcmp0 (name, "hevc")) {
-            mfx_codec_map[i].caps_str = "video/x-h265, "
-                "alignment = (string) au, "
-                "profile = (string) { main, main-10 }, "
-                "stream-format = (string) byte-stream";
-            rank = GST_RANK_PRIMARY + 3;
-          }
-          break;
+#else
+          has_hevc_main10 = TRUE;
 #endif // WITH_D3D11_BACKEND
+          if (has_hevc_main10)
+            break;
         case MFX_PLATFORM_HASWELL:
           if (!g_strcmp0 (name, "hevc")) {
             mfx_codec_map[i].caps_str = "video/x-h265, "
@@ -857,6 +856,17 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
         default:
           break;
       }
+
+      if (has_hevc_main10) {
+        if (!g_strcmp0 (name, "hevc")) {
+          mfx_codec_map[i].caps_str = "video/x-h265, "
+              "alignment = (string) au, "
+              "profile = (string) { main, main-10 }, "
+              "stream-format = (string) byte-stream";
+          rank = GST_RANK_PRIMARY + 3;
+        }
+      }
+
       should_register = (rank != GST_RANK_NONE);
     } else {
       type_name = g_strdup_printf ("GstMfxDec");

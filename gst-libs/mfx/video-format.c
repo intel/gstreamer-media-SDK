@@ -27,7 +27,7 @@ struct _GstMfxFormatMap
 {
   GstVideoFormat format;
   mfxU32 mfx_fourcc;
-#if WITH_LIBVA_BACKEND
+#ifdef WITH_LIBVA_BACKEND
   guint va_fourcc;
   guint va_format;
 #else
@@ -54,6 +54,15 @@ GstMfxFormatMap format_map[] = {
       VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32},
   {GST_VIDEO_FORMAT_BGRx, MFX_FOURCC_RGB4,
       VA_FOURCC_ARGB, VA_RT_FORMAT_RGB32},
+#if MSDK_CHECK_VERSION(1,25)
+# if !GST_CHECK_VERSION(1,9,1)
+  {GST_VIDEO_FORMAT_ENCODED, MFX_FOURCC_P010,
+      VA_FOURCC_P010, VA_RT_FORMAT_YUV420_10BPP},
+# else
+  {GST_VIDEO_FORMAT_P010_10LE, MFX_FOURCC_P010,
+      VA_FOURCC_P010, VA_RT_FORMAT_YUV420_10BPP},
+# endif // GST_CHECK_VERSION
+#endif // MSDK_CHECK_VERSION
   {0,}
 };
 #else
