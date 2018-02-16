@@ -593,8 +593,6 @@ d3d11_create_window_internal (GstMfxWindowD3D11 * window)
   /* avoid system DPI scaling. */
   SetProcessDpiAwareness (PROCESS_PER_MONITOR_DPI_AWARE);
 #endif
-  width = GetSystemMetrics (SM_CXSCREEN);
-  height = GetSystemMetrics (SM_CYSCREEN);
 
   if (!priv->is_fullscreen) {
     SystemParametersInfo (SPI_GETWORKAREA, 0, &rect, 0);
@@ -602,6 +600,10 @@ d3d11_create_window_internal (GstMfxWindowD3D11 * window)
     screenheight = rect.bottom - rect.top;
     offx = rect.left;
     offy = rect.top;
+    width = priv2->info.width + GetSystemMetrics (SM_CXSIZEFRAME) * 2;
+    height =
+        priv2->info.height + GetSystemMetrics (SM_CYCAPTION) +
+        (GetSystemMetrics (SM_CYSIZEFRAME) * 2);
 
     /* Make it fit into the screen without changing the aspect ratio. */
     if (width > screenwidth) {
@@ -620,6 +622,8 @@ d3d11_create_window_internal (GstMfxWindowD3D11 * window)
   } else {
     offx = 0;
     offy = 0;
+    width = GetSystemMetrics (SM_CXSCREEN);
+    height = GetSystemMetrics (SM_CYSCREEN);
     style = WS_POPUP;
   }
   exstyle = 0;
