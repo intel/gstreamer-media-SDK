@@ -494,15 +494,17 @@ gst_mfxsink_navigation_send_event (GstNavigation * navigation,
   GstMfxSink *const sink = GST_MFXSINK (navigation);
   GstPad *peer;
 
+  if (!sink->window) {
+    gst_structure_free (structure);
+    return;
+  }
+
   if ((peer = gst_pad_get_peer (GST_MFX_PLUGIN_BASE_SINK_PAD (sink)))) {
     GstEvent *event;
     GstMfxRectangle *disp_rect = &sink->display_rect;
     gdouble x, y, xscale = 1.0, yscale = 1.0;
 
     event = gst_event_new_navigation (structure);
-
-    if (!sink->window)
-      return;
 
     /* We calculate scaling using the original video frames geometry to include
        pixel aspect ratio scaling. */
@@ -523,7 +525,13 @@ gst_mfxsink_navigation_send_event (GstNavigation * navigation,
           (gdouble) y * yscale, NULL);
     }
 
-    gst_pad_send_event (peer, event);
+    if (!gst_pad_send_event (peer, gst_event_ref (event))) {
+      /* If upstream didn't handle the event we'll post a message with it
+       * for the application in case it wants to do something with it */
+      gst_element_post_message (GST_ELEMENT_CAST (sink),
+          gst_navigation_message_new_event (GST_OBJECT_CAST (sink), event));
+    }
+    gst_event_unref (event);
     gst_object_unref (peer);
   }
 }
