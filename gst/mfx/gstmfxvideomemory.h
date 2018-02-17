@@ -110,9 +110,6 @@ gboolean
 gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
     GstMapInfo * info);
 
-void
-gst_mfx_video_memory_reset_surface (GstMfxVideoMemory * mem);
-
 
 /* ------------------------------------------------------------------------ */
 /* --- GstMfxVideoAllocator                                           --- */

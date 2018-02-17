@@ -243,20 +243,6 @@ error_create_memory:
 }
 
 static void
-gst_mfx_video_buffer_pool_reset_buffer (GstBufferPool * pool,
-    GstBuffer * buffer)
-{
-  GstMemory *const mem = gst_buffer_peek_memory (buffer, 0);
-
-  /* Release the underlying surface surface */
-  if (GST_MFX_IS_VIDEO_MEMORY (mem))
-    gst_mfx_video_memory_reset_surface (GST_MFX_VIDEO_MEMORY_CAST (mem));
-
-  GST_BUFFER_POOL_CLASS (gst_mfx_video_buffer_pool_parent_class)->reset_buffer
-      (pool, buffer);
-}
-
-static void
 gst_mfx_video_buffer_pool_class_init (GstMfxVideoBufferPoolClass * klass)
 {
   GObjectClass *const object_class = G_OBJECT_CLASS (klass);
@@ -271,7 +257,6 @@ gst_mfx_video_buffer_pool_class_init (GstMfxVideoBufferPoolClass * klass)
   pool_class->get_options = gst_mfx_video_buffer_pool_get_options;
   pool_class->set_config = gst_mfx_video_buffer_pool_set_config;
   pool_class->alloc_buffer = gst_mfx_video_buffer_pool_alloc_buffer;
-  pool_class->reset_buffer = gst_mfx_video_buffer_pool_reset_buffer;
 
 }
 
