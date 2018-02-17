@@ -826,7 +826,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
   GstMfxCapsFeature feature;
   const gchar *feature_str;
   guint width, height;
-  gboolean has_gl_texture_sharing = FALSE;
+  gboolean has_gl_texture_sharing = FALSE, use_10bpp = FALSE;
 
   /* Generate the sink pad caps, that could be fixated afterwards */
   if (direction == GST_PAD_SRC) {
@@ -911,15 +911,17 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     plugin->can_export_gl_textures = has_gl_texture_sharing;
 #endif
 
+  /* VPP for native 10-bit output surfaces only works on Windows,
+   * P010 to NV12 / BGRA CSC needs to be performed for VPP on Linux. */
+#ifdef WITH_D3D11_BACKEND
+# if GST_CHECK_VERSION(1,9,1)
+  use_10bpp = GST_VIDEO_INFO_FORMAT (&vi) == GST_VIDEO_FORMAT_P010_10LE;
+# endif // GST_CHECK_VERSION
+#endif // WITH_D3D11_BACKEND
+
   feature =
-#if GST_CHECK_VERSION(1,9,1)
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-        GST_VIDEO_INFO_FORMAT (&vi) == GST_VIDEO_FORMAT_P010_10LE,
-        has_gl_texture_sharing, &out_format);
-#else
-      gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-        FALSE, has_gl_texture_sharing, &out_format);
-#endif
+        use_10bpp, has_gl_texture_sharing, &out_format);
 
   gst_video_info_change_format (&vi, out_format, width, height);
   GST_VIDEO_INFO_COLORIMETRY (&vi) = out_colorimetry;
