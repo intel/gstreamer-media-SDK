@@ -194,7 +194,7 @@ else
     x11_optional_deps = [
       ['xcb-dri3', '-DHAVE_XCBDRI3'],
       ['xcb-present', '-DHAVE_XCBPRESENT'],
-      ['xkb-common', '-DHAVE_XKBLIB'],
+      ['xkbcommon', '-DHAVE_XKBLIB'],
       ['xrandr', '-DHAVE_XRANDR'],
       ['xrender', '-DHAVE_XRENDER'],
       ['x11-xcb', '-DHAVE_X11XCB'],
