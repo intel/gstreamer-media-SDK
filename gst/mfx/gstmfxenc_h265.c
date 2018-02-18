@@ -38,7 +38,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_mfx_h265_enc_debug);
 
 static const char gst_mfxenc_h265_sink_caps_str[] =
     GST_MFX_MAKE_INPUT_SURFACE_CAPS "; "
-GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
+    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static const char gst_mfxenc_h265_src_caps_str[] =
     GST_CODEC_CAPS ", " "profile = (string) { main, main-10 }";

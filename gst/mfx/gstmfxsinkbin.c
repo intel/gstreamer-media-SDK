@@ -87,7 +87,7 @@ gst_mfx_sink_bin_color_balance_iface_init (GstColorBalanceInterface * iface);
 /* Default templates */
 static const char gst_mfx_sink_bin_sink_caps_str[] =
     GST_MFX_MAKE_INPUT_SURFACE_CAPS "; "
-GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
+    GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_INPUT_FORMATS);
 
 static GstStaticPadTemplate gst_mfx_sink_bin_sink_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",

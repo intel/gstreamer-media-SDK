@@ -257,7 +257,6 @@ gst_mfx_video_buffer_pool_class_init (GstMfxVideoBufferPoolClass * klass)
   pool_class->get_options = gst_mfx_video_buffer_pool_get_options;
   pool_class->set_config = gst_mfx_video_buffer_pool_set_config;
   pool_class->alloc_buffer = gst_mfx_video_buffer_pool_alloc_buffer;
-
 }
 
 static void

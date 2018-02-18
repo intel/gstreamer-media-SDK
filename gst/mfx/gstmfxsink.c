@@ -46,8 +46,8 @@ GST_DEBUG_CATEGORY_STATIC (gst_debug_mfxsink);
 
 static const char gst_mfxsink_sink_caps_str[] =
 #ifdef WITH_LIBVA_BACKEND
-    GST_VIDEO_CAPS_MAKE_WITH_FEATURES(          \
-    GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
+    GST_VIDEO_CAPS_MAKE_WITH_FEATURES             \
+    (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, "{ NV12, BGRA }")
 #else
     GST_MFX_MAKE_OUTPUT_SURFACE_CAPS
 #endif // WITH_LIBVA_BACKEND
