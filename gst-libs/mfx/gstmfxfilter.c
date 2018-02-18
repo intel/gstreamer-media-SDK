@@ -450,7 +450,7 @@ gst_mfx_filter_new_with_task (GstMfxTaskAggregator * aggregator,
     return NULL;
 
   filter->session = gst_mfx_task_get_session (task);
-  filter->vpp[! !(type & GST_MFX_TASK_VPP_OUT)] = gst_mfx_task_ref (task);
+  filter->vpp[!!(type & GST_MFX_TASK_VPP_OUT)] = gst_mfx_task_ref (task);
 
   gst_mfx_task_set_task_type (task, gst_mfx_task_get_task_type (task) | type);
 

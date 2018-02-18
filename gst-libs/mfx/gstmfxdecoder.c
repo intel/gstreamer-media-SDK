@@ -589,7 +589,7 @@ gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
   }
 
   decoder->memtype_is_system =
-      ! !(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+      !!(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   decoder->request.Type = decoder->memtype_is_system ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
 
