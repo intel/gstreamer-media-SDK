@@ -1063,6 +1063,7 @@ gst_mfxpostproc_stop (GstBaseTransform * trans)
 
   gst_video_info_init (&vpp->sinkpad_info);
   gst_video_info_init (&vpp->srcpad_info);
+  vpp->flags = 0;
 
   gst_base_transform_set_passthrough (GST_BASE_TRANSFORM (vpp), FALSE);
   gst_mfxpostproc_destroy (vpp);
