@@ -117,6 +117,8 @@ video-related tasks with the GST-MFX plugins.
 
 Known Issues
 ------------
+ - Threading issues especially with tee and queue elements. Refer to README.USAGE for more details on these issues
+ and the workarounds currently required to resolve them.
  - Resizing the glimagesink window while rendering a video using the DX11 - OpenGL interop feature causes the video to freeze,
  but playback continues normally. This is a GstGL bug that is not observed in GStreamer versions 1.10.5 and 1.12.2.
  - Auto-deinterlacing of H264 mixed interlaced videos during decoding does not work correctly prior to version 1.11.90.
