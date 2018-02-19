@@ -168,4 +168,41 @@ while ensuring all frames are processed in video memory for full performance.
     filesrc location=video1.mp4 ! qtdemux ! h264parse ! mfxdecode ! mfxvpp brightness=-90 ! m.sink_1 \
     filesrc location=video2.mpg ! tsdemux ! mpegvideoparse ! mfxdecode ! m.sink_2 \
     filesrc location=video3.mkv ! matroskademux ! h265parse ! mfxdecode ! mfxvpp contrast=3 ! m.sink_3
+
     
+Dealing with tee and queue elements
+===================================
+
+Since GStreamer and Intel MSDK are heavily threaded frameworks, each with their own internal thread synchronization
+mechanisms to perform concurrent operations, there are some nasty issues that need to be dealt with carefully
+especially with tee and queue elements. This can be illustrated as follows:
+
+  gst-launch-1.0 filesrc location=/path/to/video.mp4 ! qtdemux ! h264parse ! mfxdecode ! tee name=t ! \
+    queue ! mfxvpp contrast=3 ! mfxsink t. ! \
+    queue ! mfxvpp brightness=-90 ! mfxsink
+
+Running this pipeline will cause unpredictable behaviour. This is because there are 2 downstream VPP elements that
+are contending to share the parent MFX session initialized by mfxdecode. For MSDK, a single MFX session can only be
+shared by single instances of MFX decode, encode and VPP tasks. In this case, two VPP tasks are simultaneously contending
+to share the parent MFX session initialized by the single MFX decode task.
+
+To overcome the issues caused by the described pipeline, we can add an extra mfxvpp element and
+configure a few more options as follows:
+
+  gst-launch-1.0 filesrc location=/path/to/video.mp4 ! qtdemux ! h264parse ! mfxdecode async-depth=16 ! mfxvpp rotation=0 ! \
+    tee name=t ! queue ! mfxvpp contrast=3 ! mfxsink t. ! \
+    queue ! mfxvpp brightness=-90 ! mfxsink
+
+The above pipeline works perfectly well since the parent MFX session from mfxdecode is only shared by single VPP task
+instantiated by mfxvpp which pretty much works in pass-through mode. The rotation=0 option is necessary in mfxvpp, otherwise
+mfxvpp will work in true pass-through mode without forcing the instantiation of the shared MFX VPP task required to prevent
+contention of the parent MFX session by the downstream mfxvpp elements. This workaround ensures that the downstream mfxvpp
+elements branched out from the tee element each initialize their own separate MFX sessions and process the identity output
+of the first mfxvpp element. Hence, MSDK rules for sharing the parent MFX session are strictly followed here.
+
+This is still not yet the end of the story. Due to the latency caused by the queue elements, there can be some unexpected
+jitters and stuttering when viewing the mfxsink outputs. To resolve the jitters / stutters, we add the async-depth option
+in mfxdecode and set it to a high enough value, in this case, 16, until we can no longer see the output issues. While this
+last step may seem hack-ish, it is currently the only way to resolve the lack of proper synchronization between the
+heavily threaded GStreamer and MSDK frameworks.
+
