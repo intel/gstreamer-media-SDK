@@ -329,7 +329,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   GstMfxProfile profile = gst_mfx_profile_from_caps (caps);
   GstVideoInfo info;
   GstObject *parent;
-  gboolean is_autoplugged = FALSE;
+  gboolean should_overallocate = FALSE;
   GByteArray *extradata = NULL;
 
   GstStructure *structure = gst_caps_get_structure (caps, 0);
@@ -349,14 +349,20 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
     return FALSE;
 
   /* Increase async depth considerably when using decodebin to avoid
-   * jerky video playback resulting from threading issues */
-  parent = gst_object_get_parent (GST_OBJECT (mfxdec));
-  if (parent && !GST_IS_PIPELINE (GST_ELEMENT (parent)))
-    is_autoplugged = TRUE;
+   * jerky video playback resulting from thread synchronization issues */
+  parent = gst_object_get_parent(GST_ELEMENT_PARENT (mfxdec));
+  if (parent) {
+    gchar *element_name = gst_element_get_name (parent);
+    if (strstr (element_name, "decodebin")) {
+      should_overallocate = TRUE;
+      mfxdec->async_depth = 16;
+    }
+    g_free (element_name);
+  }
   gst_object_replace (&parent, NULL);
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile,
-      extradata, mfxdec->async_depth, mfxdec->live_mode, is_autoplugged);
+      extradata, mfxdec->async_depth, mfxdec->live_mode, should_overallocate);
 
   if (extradata)
     g_byte_array_free (extradata, FALSE);
