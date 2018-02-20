@@ -54,7 +54,7 @@ typedef enum
 GstMfxDecoder *
 gst_mfx_decoder_new (GstMfxTaskAggregator * aggregator, GstMfxProfile profile,
     GByteArray * codec_data, mfxU16 async_depth,
-    gboolean live_mode, gboolean is_autoplugged);
+    gboolean live_mode, gboolean should_overallocate);
 
 GstMfxDecoder *
 gst_mfx_decoder_ref (GstMfxDecoder * decoder);
