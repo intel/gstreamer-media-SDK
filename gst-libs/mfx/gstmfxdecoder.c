@@ -470,6 +470,7 @@ configure_filter (GstMfxDecoder * decoder)
     decoder->request.Type |=
         MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
     decoder->request.NumFrameSuggested += (1 - decoder->params.AsyncDepth);
+    decoder->request.NumFrameMin += (1 - decoder->params.AsyncDepth);
 
     gst_mfx_task_set_request (decoder->decode, &decoder->request);
 
@@ -592,6 +593,9 @@ gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
       !!(decoder->params.IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
   decoder->request.Type = decoder->memtype_is_system ?
       MFX_MEMTYPE_SYSTEM_MEMORY : MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET;
+
+  if (decoder->should_overallocate)
+    decoder->request.NumFrameSuggested += 10; // adjust to avoid stutter
 
   if (decoder->memtype_is_system)
     gst_mfx_task_ensure_memtype_is_system (decoder->decode);
