@@ -34,6 +34,18 @@ find_response (gconstpointer response_data, gconstpointer response)
   return _response_data ? _response->mids != _response_data->mids : -1;
 }
 
+static void
+free_mids (ResponseData * response)
+{
+  g_slice_free1 (response->num_surfaces * sizeof (VABufferID),
+      response->coded_buf);
+  g_slice_free1 (response->num_surfaces * sizeof (GstMfxMemoryId),
+      response->mem_ids);
+  g_slice_free1 (response->num_surfaces * sizeof (mfxMemId), response->mids);
+  g_slice_free1 (response->num_surfaces * sizeof (VASurfaceID),
+      response->surfaces);
+}
+
 mfxStatus
 gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
     mfxFrameAllocResponse * response)
@@ -44,11 +56,13 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
   GstMfxTaskPrivate *const priv = GST_MFX_TASK_GET_PRIVATE (task);
   GstMfxDisplay *const display = gst_mfx_context_get_device (priv->context);
   mfxFrameInfo *info;
+  mfxStatus mfx_sts;
   VASurfaceAttrib attrib;
-  VAStatus sts;
-  guint fourcc, i;
+  VAStatus va_sts;
+  guint fourcc, i, range;
   GstMfxMemoryId *mid;
   mfxU16 num_surfaces;
+  mfxU16 num_surfaces_range[2];
   ResponseData *response_data;
 
   if (priv->saved_responses
@@ -63,8 +77,8 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
   }
 
   if (!(request->Type
-          & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET
-              | MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
+      & (MFX_MEMTYPE_VIDEO_MEMORY_DECODER_TARGET
+          | MFX_MEMTYPE_VIDEO_MEMORY_PROCESSOR_TARGET))) {
     GST_ERROR ("Unsupported surface type: %d\n", request->Type);
     return MFX_ERR_UNSUPPORTED;
   }
@@ -73,96 +87,100 @@ gst_mfx_task_frame_alloc (mfxHDL pthis, mfxFrameAllocRequest * request,
   response_data->frame_info = request->Info;
   info = &response_data->frame_info;
 
-  if (request->Type & MFX_MEMTYPE_INTERNAL_FRAME)
-    response_data->num_surfaces = request->NumFrameSuggested;
-  else
-    response_data->num_surfaces = priv->request.NumFrameSuggested;
+  if (request->Type & MFX_MEMTYPE_INTERNAL_FRAME) {
+    num_surfaces_range[0] = request->NumFrameSuggested;
+    num_surfaces_range[1] = request->NumFrameMin;
+  }
+  else {
+    num_surfaces_range[0] = priv->request.NumFrameSuggested;
+    num_surfaces_range[1] = priv->request.NumFrameMin;
+  }
 
-  num_surfaces = response_data->num_surfaces;
+  for (range = 0; range < 2; range++) {
+    num_surfaces = response_data->num_surfaces = num_surfaces_range[range];
+    response_data->mem_ids =
+        g_slice_alloc (num_surfaces * sizeof (GstMfxMemoryId));
+    response_data->mids = g_slice_alloc (num_surfaces * sizeof (mfxMemId));
 
-  response_data->mem_ids =
-      g_slice_alloc (num_surfaces * sizeof (GstMfxMemoryId));
-  response_data->mids = g_slice_alloc (num_surfaces * sizeof (mfxMemId));
+    if (!response_data->mem_ids || !response_data->mids)
+      goto cleanup;
 
-  if (!response_data->mem_ids || !response_data->mids)
-    goto error_allocate_memory;
+    if (info->FourCC != MFX_FOURCC_P8) {
+      response_data->surfaces =
+          g_slice_alloc0 (num_surfaces * sizeof (VASurfaceID));
+      if (!response_data->surfaces)
+        goto cleanup;
 
-  if (info->FourCC != MFX_FOURCC_P8) {
-    response_data->surfaces =
-        g_slice_alloc0 (num_surfaces * sizeof (VASurfaceID));
+      fourcc = gst_mfx_video_format_to_va_fourcc (info->FourCC);
+      attrib.type = VASurfaceAttribPixelFormat;
+      attrib.flags = VA_SURFACE_ATTRIB_SETTABLE;
+      attrib.value.type = VAGenericValueTypeInteger;
+      attrib.value.value.i = fourcc;
 
-    if (!response_data->surfaces)
-      goto error_allocate_memory;
-
-    fourcc = gst_mfx_video_format_to_va_fourcc (info->FourCC);
-    attrib.type = VASurfaceAttribPixelFormat;
-    attrib.flags = VA_SURFACE_ATTRIB_SETTABLE;
-    attrib.value.type = VAGenericValueTypeInteger;
-    attrib.value.value.i = fourcc;
-
-    GST_MFX_DISPLAY_LOCK (display);
-    sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (display),
-        gst_mfx_video_format_to_va_format (info->FourCC),
-        request->Info.Width, request->Info.Height,
-        response_data->surfaces, num_surfaces, &attrib, 1);
-    GST_MFX_DISPLAY_UNLOCK (display);
-    if (!vaapi_check_status (sts, "vaCreateSurfaces ()")) {
-      GST_ERROR ("Error allocating VA surfaces %d", sts);
-      goto error_allocate_memory;
-    }
-
-    for (i = 0; i < num_surfaces; i++) {
-      mid = &response_data->mem_ids[i];
-      mid->mid = &response_data->surfaces[i];
-      mid->info = &response_data->frame_info;
-
-      response_data->mids[i] = mid;
-    }
-  } else {
-    VAContextID context_id = request->reserved[0];
-    int width32 = 32 * ((request->Info.Width + 31) >> 5);
-    int height32 = 32 * ((request->Info.Height + 31) >> 5);
-    int codedbuf_size = (width32 * height32) * 400LL / (16 * 16);
-
-    response_data->coded_buf =
-        g_slice_alloc (num_surfaces * sizeof (VABufferID));
-
-    for (i = 0; i < num_surfaces; i++) {
-      sts = vaCreateBuffer (GST_MFX_DISPLAY_VADISPLAY (display),
-          context_id, VAEncCodedBufferType, codedbuf_size,
-          1, NULL, &response_data->coded_buf[i]);
-      if (!vaapi_check_status (sts, "vaCreateBuffer ()")) {
-        GST_ERROR ("Error allocating VA buffers %d", sts);
-        goto error_allocate_memory;
+      GST_MFX_DISPLAY_LOCK (display);
+      va_sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (display),
+          gst_mfx_video_format_to_va_format (info->FourCC),
+          request->Info.Width, request->Info.Height,
+          response_data->surfaces, num_surfaces, &attrib, 1);
+      GST_MFX_DISPLAY_UNLOCK (display);
+      if (!vaapi_check_status (va_sts, "vaCreateSurfaces ()")) {
+        GST_ERROR ("Error allocating VA surfaces %d", va_sts);
+        goto cleanup;
       }
-      mid = &response_data->mem_ids[i];
-      mid->mid = &response_data->coded_buf[i];
-      mid->info = &response_data->frame_info;
 
-      response_data->mids[i] = mid;
+      for (i = 0; i < num_surfaces; i++) {
+        mid = &response_data->mem_ids[i];
+        mid->mid = &response_data->surfaces[i];
+        mid->info = &response_data->frame_info;
+
+        response_data->mids[i] = mid;
+      }
+    } else {
+      VAContextID context_id = request->reserved[0];
+      int width32 = 32 * ((request->Info.Width + 31) >> 5);
+      int height32 = 32 * ((request->Info.Height + 31) >> 5);
+      int codedbuf_size = (width32 * height32) * 400LL / (16 * 16);
+
+      response_data->coded_buf =
+          g_slice_alloc (num_surfaces * sizeof (VABufferID));
+      if (!response_data->coded_buf)
+        goto cleanup;
+
+      for (i = 0; i < num_surfaces; i++) {
+        va_sts = vaCreateBuffer (GST_MFX_DISPLAY_VADISPLAY (display),
+            context_id, VAEncCodedBufferType, codedbuf_size,
+            1, NULL, &response_data->coded_buf[i]);
+        if (!vaapi_check_status (va_sts, "vaCreateBuffer ()")) {
+          GST_ERROR ("Error allocating VA buffers %d", va_sts);
+          goto cleanup;
+        }
+        mid = &response_data->mem_ids[i];
+        mid->mid = &response_data->coded_buf[i];
+        mid->info = &response_data->frame_info;
+
+        response_data->mids[i] = mid;
+      }
     }
+    mfx_sts = MFX_ERR_NONE;
+    break;
+cleanup:
+    free_mids (response_data);
+    mfx_sts = MFX_ERR_MEMORY_ALLOC;
   }
 
-  response->mids = response_data->mids;
-  response->NumFrameActual = num_surfaces;
+  if (MFX_ERR_NONE == mfx_sts) {
+    response->mids = response_data->mids;
+    response->NumFrameActual = num_surfaces;
 
-  response_data->response = *response;
-  priv->saved_responses = g_list_prepend (priv->saved_responses, response_data);
-
-  return MFX_ERR_NONE;
-
-error_allocate_memory:
-  {
-    g_slice_free1 (num_surfaces * sizeof (VABufferID),
-        response_data->coded_buf);
-    g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId),
-        response_data->mem_ids);
-    g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
-    g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
-        response_data->surfaces);
-
-    return MFX_ERR_MEMORY_ALLOC;
+    response_data->response = *response;
+    priv->saved_responses =
+        g_list_prepend (priv->saved_responses, response_data);
   }
+  else {
+    GST_ERROR ("Error allocating MFX surfaces %d", mfx_sts);
+  }
+
+  return mfx_sts;
 }
 
 mfxStatus
@@ -192,9 +210,6 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * response)
     vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (display),
         response_data->surfaces, num_surfaces);
     GST_MFX_DISPLAY_UNLOCK (display);
-
-    g_slice_free1 (num_surfaces * sizeof (VASurfaceID),
-        response_data->surfaces);
   } else {
     for (i = 0; i < num_surfaces; i++) {
       GST_MFX_DISPLAY_LOCK (display);
@@ -202,14 +217,8 @@ gst_mfx_task_frame_free (mfxHDL pthis, mfxFrameAllocResponse * response)
           response_data->coded_buf[i]);
       GST_MFX_DISPLAY_UNLOCK (display);
     }
-    g_slice_free1 (num_surfaces * sizeof (VABufferID),
-        response_data->coded_buf);
   }
-
-  g_slice_free1 (num_surfaces * sizeof (GstMfxMemoryId),
-      response_data->mem_ids);
-  g_slice_free1 (num_surfaces * sizeof (mfxMemId), response_data->mids);
-
+  free_mids (response_data);
   priv->saved_responses = g_list_delete_link (priv->saved_responses, l);
   g_free (response_data);
 

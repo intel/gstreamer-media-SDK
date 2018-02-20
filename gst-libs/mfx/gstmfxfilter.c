@@ -298,7 +298,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   if (filter->vpp[0]) {
     mfxFrameAllocRequest *req0 = gst_mfx_task_get_request (filter->vpp[0]);
     req0->NumFrameSuggested += request[0].NumFrameSuggested;
-    req0->NumFrameMin = req0->NumFrameSuggested;
+    req0->NumFrameMin += request[0].NumFrameMin;
     req0->Type |= MFX_MEMTYPE_FROM_VPPIN;
   }
 
@@ -307,7 +307,7 @@ gst_mfx_filter_prepare (GstMfxFilter * filter)
   } else {
     mfxFrameAllocRequest *req1 = gst_mfx_task_get_request (filter->vpp[1]);
     req1->NumFrameSuggested += request[1].NumFrameSuggested;
-    req1->NumFrameMin = req1->NumFrameSuggested;
+    req1->NumFrameMin += request[1].NumFrameMin;
     req1->Type |= MFX_MEMTYPE_FROM_VPPOUT;
   }
 

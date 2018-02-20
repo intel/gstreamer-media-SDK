@@ -910,6 +910,7 @@ configure_encoder_sharing (GstMfxEncoder * encoder)
 
       request->Type |= MFX_MEMTYPE_EXTERNAL_FRAME | MFX_MEMTYPE_FROM_DECODE;
       request->NumFrameSuggested += (1 - params->AsyncDepth);
+      request->NumFrameMin += (1 - params->AsyncDepth);
 
       gst_mfx_filter_set_frame_info (priv->filter, &params->mfx.FrameInfo);
       gst_mfx_filter_set_async_depth (priv->filter, params->AsyncDepth);
@@ -1054,7 +1055,8 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
     }
     request->NumFrameSuggested +=
         (enc_request.NumFrameSuggested - priv->params.AsyncDepth + 1);
-    request->NumFrameMin = request->NumFrameSuggested;
+    request->NumFrameMin +=
+        (enc_request.NumFrameMin - priv->params.AsyncDepth + 1);
   } else {
     request = &enc_request;
     gst_mfx_task_set_request (priv->encode, request);
@@ -1068,6 +1070,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
         priv->input_memtype_is_system, priv->encoder_memtype_is_system);
 
     request->NumFrameSuggested += (1 - priv->params.AsyncDepth);
+    request->NumFrameMin += (1 - priv->params.AsyncDepth);
 
     gst_mfx_task_set_request (priv->encode, request);
 
