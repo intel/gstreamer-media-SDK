@@ -112,7 +112,7 @@ gst_mfxenc_h264_set_config (GstMfxEnc * base_encode)
   allowed_caps =
       gst_pad_get_allowed_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (base_encode));
   if (!allowed_caps)
-    return TRUE;
+    return FALSE;
 
   profile = gst_mfx_profile_from_caps (allowed_caps);
   gst_caps_unref (allowed_caps);
