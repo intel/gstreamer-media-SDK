@@ -110,7 +110,7 @@ gst_mfxenc_h265_set_config (GstMfxEnc * base_encode)
   allowed_caps =
       gst_pad_get_allowed_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (base_encode));
   if (!allowed_caps)
-    return TRUE;
+    return FALSE;
 
   profile = gst_mfx_profile_from_caps (allowed_caps);
   gst_caps_unref (allowed_caps);
@@ -307,9 +307,7 @@ gst_mfxenc_h265_class_init (GstMfxEncH265Class * klass)
   object_class->get_property = gst_mfxenc_h265_get_property;
 
   encode_class->get_properties = gst_mfx_encoder_h265_get_default_properties;
-#ifdef WITH_D3D11_BACKEND
   encode_class->set_config = gst_mfxenc_h265_set_config;
-#endif
   encode_class->get_caps = gst_mfxenc_h265_get_caps;
   encode_class->alloc_encoder = gst_mfxenc_h265_alloc_encoder;
   encode_class->format_buffer = gst_mfxenc_h265_format_buffer;
