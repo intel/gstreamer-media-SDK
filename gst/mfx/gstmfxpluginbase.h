@@ -42,59 +42,61 @@
 #include <gst-libs/mfx/gstmfxtaskaggregator.h>
 #include <gst-libs/mfx/gstmfxsurface.h>
 
-G_BEGIN_DECLS typedef struct _GstMfxPluginBase GstMfxPluginBase;
+G_BEGIN_DECLS
+
+typedef struct _GstMfxPluginBase GstMfxPluginBase;
 typedef struct _GstMfxPluginBaseClass GstMfxPluginBaseClass;
 
 #define GST_MFX_PLUGIN_BASE(plugin) \
-  ((GstMfxPluginBase *)(plugin))
+    ((GstMfxPluginBase *)(plugin))
 #define GST_MFX_PLUGIN_BASE_CLASS(plugin) \
-  ((GstMfxPluginBaseClass *)(plugin))
+    ((GstMfxPluginBaseClass *)(plugin))
 #define GST_MFX_PLUGIN_BASE_GET_CLASS(plugin) \
-  GST_MFX_PLUGIN_BASE_CLASS(GST_ELEMENT_GET_CLASS ( \
-  GST_MFX_PLUGIN_BASE_ELEMENT(plugin)))
+    GST_MFX_PLUGIN_BASE_CLASS(GST_ELEMENT_GET_CLASS ( \
+    GST_MFX_PLUGIN_BASE_ELEMENT(plugin)))
 #define GST_MFX_PLUGIN_BASE_PARENT(plugin) \
-  (&GST_MFX_PLUGIN_BASE(plugin)->parent_instance)
+    (&GST_MFX_PLUGIN_BASE(plugin)->parent_instance)
 #define GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin) \
-  (&GST_MFX_PLUGIN_BASE_CLASS(plugin)->parent_class)
+    (&GST_MFX_PLUGIN_BASE_CLASS(plugin)->parent_class)
 #define GST_MFX_PLUGIN_BASE_ELEMENT(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT(plugin)->element)
+    (&GST_MFX_PLUGIN_BASE_PARENT(plugin)->element)
 #define GST_MFX_PLUGIN_BASE_ELEMENT_CLASS(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->element)
+    (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->element)
 #define GST_MFX_PLUGIN_BASE_DECODER(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT(plugin)->decoder)
+    (&GST_MFX_PLUGIN_BASE_PARENT(plugin)->decoder)
 #define GST_MFX_PLUGIN_BASE_DECODER_CLASS(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->decoder)
+    (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->decoder)
 #define GST_MFX_PLUGIN_BASE_ENCODER(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT (plugin)->encoder)
+    (&GST_MFX_PLUGIN_BASE_PARENT (plugin)->encoder)
 #define GST_MFX_PLUGIN_BASE_ENCODER_CLASS(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->encoder)
+    (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->encoder)
 #define GST_MFX_PLUGIN_BASE_TRANSFORM(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT(plugin)->transform)
+    (&GST_MFX_PLUGIN_BASE_PARENT(plugin)->transform)
 #define GST_MFX_PLUGIN_BASE_TRANSFORM_CLASS(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->transform)
+    (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->transform)
 #define GST_MFX_PLUGIN_BASE_SINK(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT(plugin)->sink)
+    (&GST_MFX_PLUGIN_BASE_PARENT(plugin)->sink)
 #define GST_MFX_PLUGIN_BASE_SINK_CLASS(plugin) \
-  (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->sink)
+    (&GST_MFX_PLUGIN_BASE_PARENT_CLASS(plugin)->sink)
 
 #define GST_MFX_PLUGIN_BASE_INIT_INTERFACES \
-  gst_mfx_plugin_base_init_interfaces (g_define_type_id);
+    gst_mfx_plugin_base_init_interfaces (g_define_type_id);
 
 #define GST_MFX_PLUGIN_BASE_SINK_PAD(plugin) \
-  (GST_MFX_PLUGIN_BASE(plugin)->sinkpad)
+    (GST_MFX_PLUGIN_BASE(plugin)->sinkpad)
 #define GST_MFX_PLUGIN_BASE_SINK_PAD_CAPS (plugin) \
-  (GST_MFX_PLUGIN_BASE(plugin)->sinkpad_caps)
+    (GST_MFX_PLUGIN_BASE(plugin)->sinkpad_caps)
 #define GST_MFX_PLUGIN_BASE_SINK_PAD_INFO(plugin) \
-  (&GST_MFX_PLUGIN_BASE(plugin)->sinkpad_info)
+    (&GST_MFX_PLUGIN_BASE(plugin)->sinkpad_info)
 #define GST_MFX_PLUGIN_BASE_SRC_PAD(plugin) \
-  (GST_MFX_PLUGIN_BASE(plugin)->srcpad)
+    (GST_MFX_PLUGIN_BASE(plugin)->srcpad)
 #define GST_MFX_PLUGIN_BASE_SRC_PAD_CAPS(plugin) \
-  (GST_MFX_PLUGIN_BASE(plugin)->srcpad_caps)
+    (GST_MFX_PLUGIN_BASE(plugin)->srcpad_caps)
 #define GST_MFX_PLUGIN_BASE_SRC_PAD_INFO(plugin) \
-  (&GST_MFX_PLUGIN_BASE(plugin)->srcpad_info)
+    (&GST_MFX_PLUGIN_BASE(plugin)->srcpad_info)
 
 #define GST_MFX_PLUGIN_BASE_AGGREGATOR(plugin) \
-  (GST_MFX_PLUGIN_BASE(plugin)->aggregator)
+    (GST_MFX_PLUGIN_BASE(plugin)->aggregator)
 
 struct _GstMfxPluginBase
 {

@@ -25,6 +25,7 @@
 #include <gst-libs/mfx/gstmfxdecoder.h>
 
 G_BEGIN_DECLS
+
 #define GST_MFXDEC(obj) ((GstMfxDec *)(obj))
 
 typedef struct _GstMfxDec GstMfxDec;

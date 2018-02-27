@@ -25,6 +25,7 @@
 #include <gst-libs/mfx/gstmfxfilter.h>
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_SINK_BIN (gst_mfx_sink_bin_get_type ())
 #define GST_MFX_SINK_BIN(obj) \
     (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_SINK_BIN, GstMfxSinkBin))
@@ -34,7 +35,8 @@ G_BEGIN_DECLS
     (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFX_SINK_BIN))
 #define GST_MFX_SINK_BIN_GET_CLASS(obj) \
     (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFX_SINK_BIN, GstMfxSinkBinClass))
-    typedef struct __GstMfxSinkBin
+
+typedef struct __GstMfxSinkBin
 {
   /* Private */
   GstBin parent;

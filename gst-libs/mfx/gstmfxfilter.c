@@ -79,24 +79,23 @@ struct _GstMfxFilter
 
 G_DEFINE_TYPE (GstMfxFilter, gst_mfx_filter, GST_TYPE_OBJECT)
 
-     static const GstMfxFilterMap filter_map[] = {
-       {GST_MFX_FILTER_DEINTERLACING, MFX_EXTBUFF_VPP_DEINTERLACING,
-           "Deinterlacing filter"},
-       {GST_MFX_FILTER_PROCAMP, MFX_EXTBUFF_VPP_PROCAMP, "ProcAmp filter"},
-       {GST_MFX_FILTER_DETAIL, MFX_EXTBUFF_VPP_DETAIL, "Detail filter"},
-       {GST_MFX_FILTER_DENOISE, MFX_EXTBUFF_VPP_DENOISE, "Denoise filter"},
-       {GST_MFX_FILTER_FRAMERATE_CONVERSION,
-             MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION,
-           "Framerate conversion filter"},
+static const GstMfxFilterMap filter_map[] = {
+    {GST_MFX_FILTER_DEINTERLACING, MFX_EXTBUFF_VPP_DEINTERLACING,
+        "Deinterlacing filter"},
+    {GST_MFX_FILTER_PROCAMP, MFX_EXTBUFF_VPP_PROCAMP, "ProcAmp filter"},
+    {GST_MFX_FILTER_DETAIL, MFX_EXTBUFF_VPP_DETAIL, "Detail filter"},
+    {GST_MFX_FILTER_DENOISE, MFX_EXTBUFF_VPP_DENOISE, "Denoise filter"},
+    {GST_MFX_FILTER_FRAMERATE_CONVERSION,
+        MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION, "Framerate conversion filter"},
 #if 0
-       {GST_MFX_FILTER_FIELD_PROCESSING, MFX_EXTBUFF_VPP_FIELD_PROCESSING,
-           "Field processing filter"},
-       {GST_MFX_FILTER_IMAGE_STABILIZATION, MFX_EXTBUFF_VPP_IMAGE_STABILIZATION,
-           "Image stabilization filter"},
+    {GST_MFX_FILTER_FIELD_PROCESSING, MFX_EXTBUFF_VPP_FIELD_PROCESSING,
+        "Field processing filter"},
+    {GST_MFX_FILTER_IMAGE_STABILIZATION, MFX_EXTBUFF_VPP_IMAGE_STABILIZATION,
+        "Image stabilization filter"},
 #endif
-       {GST_MFX_FILTER_ROTATION, MFX_EXTBUFF_VPP_ROTATION, "Rotation filter"},
-       {0,}
-     };
+    {GST_MFX_FILTER_ROTATION, MFX_EXTBUFF_VPP_ROTATION, "Rotation filter"},
+    {0,}
+};
 
 void
 gst_mfx_filter_set_frame_info (GstMfxFilter * filter, mfxFrameInfo * info)
@@ -762,6 +761,7 @@ gst_mfx_filter_set_detail_level (GstMfxFilter * filter, guint level)
 {
   GstMfxFilterOpData *op;
   mfxExtVPPDetail *ext_detail;
+
   g_return_val_if_fail (filter != NULL, FALSE);
   g_return_val_if_fail (level <= 100, FALSE);
 

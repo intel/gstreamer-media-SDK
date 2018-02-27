@@ -32,29 +32,31 @@
 #include <gst-libs/mfx/gstmfxvalue.h>
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFXPOSTPROC \
-  (gst_mfxpostproc_get_type ())
+    (gst_mfxpostproc_get_type ())
 #define GST_MFXPOSTPROC(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXPOSTPROC, GstMfxPostproc))
+    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXPOSTPROC, GstMfxPostproc))
 #define GST_MFXPOSTPROC_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXPOSTPROC, \
-  GstMfxPostprocClass))
+    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXPOSTPROC, \
+    GstMfxPostprocClass))
 #define GST_IS_MFXPOSTPROC(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXPOSTPROC))
+    (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXPOSTPROC))
 #define GST_IS_MFXPOSTPROC_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXPOSTPROC))
+    (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXPOSTPROC))
 #define GST_MFXPOSTPROC_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXPOSTPROC, \
-  GstMfxPostprocClass))
+    (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXPOSTPROC, \
+    GstMfxPostprocClass))
+
 typedef struct _GstMfxPostproc GstMfxPostproc;
 typedef struct _GstMfxPostprocClass GstMfxPostprocClass;
 
 /**
-* GstMfxDeinterlaceMode:
-* @GST_MFX_DEINTERLACE_MODE_AUTO: Auto detect needs for deinterlacing.
-* @GST_MFX_DEINTERLACE_MODE_INTERLACED: Force deinterlacing.
-* @GST_MFX_DEINTERLACE_MODE_DISABLED: Never perform deinterlacing.
-*/
+ * GstMfxDeinterlaceMode:
+ * @GST_MFX_DEINTERLACE_MODE_AUTO: Auto detect needs for deinterlacing.
+ * @GST_MFX_DEINTERLACE_MODE_INTERLACED: Force deinterlacing.
+ * @GST_MFX_DEINTERLACE_MODE_DISABLED: Never perform deinterlacing.
+ */
 typedef enum
 {
   GST_MFX_DEINTERLACE_MODE_AUTO = 0,
@@ -64,20 +66,20 @@ typedef enum
 
 
 /**
-* GstMfxPostprocFlags:
-* @GST_MFX_POSTPROC_FLAG_FORMAT: Pixel format conversion.
-* @GST_MFX_POSTPROC_FLAG_DENOISE: Noise reduction.
-* @GST_MFX_POSTPROC_FLAG_DETAIL: Sharpening.
-* @GST_MFX_POSTPROC_FLAG_HUE: Change color hue.
-* @GST_MFX_POSTPROC_FLAG_SATURATION: Change saturation.
-* @GST_MFX_POSTPROC_FLAG_BRIGHTNESS: Change brightness.
-* @GST_MFX_POSTPROC_FLAG_CONTRAST: Change contrast.
-* @GST_MFX_POSTPROC_FLAG_DEINTERLACE: Deinterlacing.
-* @GST_MFX_POSTPROC_FLAG_ROTATION: Rotation.
-* @GST_MFX_POSTPROC_FLAG_SIZE: Video scaling.
-*
-* The set of operations that are to be performed for each frame.
-*/
+ * GstMfxPostprocFlags:
+ * @GST_MFX_POSTPROC_FLAG_FORMAT: Pixel format conversion.
+ * @GST_MFX_POSTPROC_FLAG_DENOISE: Noise reduction.
+ * @GST_MFX_POSTPROC_FLAG_DETAIL: Sharpening.
+ * @GST_MFX_POSTPROC_FLAG_HUE: Change color hue.
+ * @GST_MFX_POSTPROC_FLAG_SATURATION: Change saturation.
+ * @GST_MFX_POSTPROC_FLAG_BRIGHTNESS: Change brightness.
+ * @GST_MFX_POSTPROC_FLAG_CONTRAST: Change contrast.
+ * @GST_MFX_POSTPROC_FLAG_DEINTERLACE: Deinterlacing.
+ * @GST_MFX_POSTPROC_FLAG_ROTATION: Rotation.
+ * @GST_MFX_POSTPROC_FLAG_SIZE: Video scaling.
+ *
+ * The set of operations that are to be performed for each frame.
+ */
 typedef enum
 {
   GST_MFX_POSTPROC_FLAG_FORMAT = 1 << GST_MFX_FILTER_OP_FORMAT,
