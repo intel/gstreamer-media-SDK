@@ -214,7 +214,6 @@ gst_mfx_frc_algorithm_get_type (void)
   return alg;
 }
 
-
 /* ------------------------------------------------------------------------ */
 /* --- GstColorBalance implementation                                   --- */
 /* ------------------------------------------------------------------------ */
@@ -453,8 +452,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     vpp->filter = gst_mfx_filter_new_with_task (plugin->aggregator,
         task, GST_MFX_TASK_VPP_IN, plugin->sinkpad_caps_is_raw, FALSE);
     if (!vpp->filter) {
-      goto done;
       success = FALSE;
+      goto done;
     }
 
     vpp->async_depth = gst_mfx_task_get_video_params (task)->AsyncDepth;
@@ -479,8 +478,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     vpp->filter = gst_mfx_filter_new (plugin->aggregator,
         plugin->sinkpad_caps_is_raw, FALSE);
     if (!vpp->filter) {
-      goto done;
       success = FALSE;
+      goto done;
     }
 
     gst_mfx_filter_set_frame_info_from_gst_video_info (vpp->filter,
@@ -998,7 +997,6 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_ROTATION)
     gst_mfx_filter_set_rotation (vpp->filter, vpp->angle);
-
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)
     gst_mfx_filter_set_deinterlace_method (vpp->filter,
         vpp->deinterlace_method);

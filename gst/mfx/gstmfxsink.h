@@ -35,20 +35,22 @@
 #include <gst-libs/mfx/gstmfxcompositefilter.h>
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFXSINK \
-  (gst_mfxsink_get_type ())
+    (gst_mfxsink_get_type ())
 #define GST_MFXSINK_CAST(obj) \
-  ((GstMfxSink *)(obj))
+    ((GstMfxSink *)(obj))
 #define GST_MFXSINK(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXSINK, GstMfxSink))
+    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXSINK, GstMfxSink))
 #define GST_MFXSINK_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXSINK, GstMfxSinkClass))
+    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXSINK, GstMfxSinkClass))
 #define GST_IS_MFXSINK(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXSINK))
+    (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXSINK))
 #define GST_IS_MFXSINK_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXSINK))
+    (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXSINK))
 #define GST_MFXSINK_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXSINK, GstMfxSinkClass))
+    (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXSINK, GstMfxSinkClass))
+
 typedef struct _GstMfxSink GstMfxSink;
 typedef struct _GstMfxSinkClass GstMfxSinkClass;
 typedef struct _GstMfxSinkBackend GstMfxSinkBackend;

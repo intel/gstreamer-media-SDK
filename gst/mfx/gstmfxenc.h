@@ -27,20 +27,22 @@
 #include <gst-libs/mfx/gstmfxencoder.h>
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFXENC \
-  (gst_mfxenc_get_type ())
+    (gst_mfxenc_get_type ())
 #define GST_MFXENC_CAST(obj) \
-  ((GstMfxEnc *)(obj))
+    ((GstMfxEnc *)(obj))
 #define GST_MFXENC(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXENC, GstMfxEnc))
+    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFXENC, GstMfxEnc))
 #define GST_MFXENC_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXENC, GstMfxEncClass))
+    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFXENC, GstMfxEncClass))
 #define GST_MFXENC_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXENC, GstMfxEncClass))
+    (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_MFXENC, GstMfxEncClass))
 #define GST_IS_MFXENC(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXENC))
+    (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_MFXENC))
 #define GST_IS_MFXENC_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXENC))
+    (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_MFXENC))
+
 typedef struct _GstMfxEnc GstMfxEnc;
 typedef struct _GstMfxEncClass GstMfxEncClass;
 

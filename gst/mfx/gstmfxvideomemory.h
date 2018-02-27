@@ -39,7 +39,9 @@
 # include <gst-libs/mfx/gstmfxprimebufferproxy.h>
 #endif
 
-G_BEGIN_DECLS typedef struct _GstMfxVideoMemory GstMfxVideoMemory;
+G_BEGIN_DECLS
+
+typedef struct _GstMfxVideoMemory GstMfxVideoMemory;
 typedef struct _GstMfxVideoAllocator GstMfxVideoAllocator;
 typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
 
@@ -48,21 +50,21 @@ typedef struct _GstMfxVideoAllocatorClass GstMfxVideoAllocatorClass;
 /* ------------------------------------------------------------------------ */
 
 #define GST_MFX_VIDEO_MEMORY_CAST(mem) \
-  ((GstMfxVideoMemory *) (mem))
+    ((GstMfxVideoMemory *) (mem))
 
 #define GST_MFX_IS_VIDEO_MEMORY(mem) \
-  ((mem) && (mem)->allocator && GST_MFX_IS_VIDEO_ALLOCATOR((mem)->allocator))
+    ((mem) && (mem)->allocator && GST_MFX_IS_VIDEO_ALLOCATOR((mem)->allocator))
 
 #define GST_MFX_VIDEO_MEMORY_NAME             "GstMfxVideoMemory"
 
 #define GST_CAPS_FEATURE_MEMORY_MFX_SURFACE   "memory:MFXSurface"
 
 #define GST_MFX_VIDEO_MEMORY_FLAG_IS_SET(mem, flag) \
-  GST_MEMORY_FLAG_IS_SET (mem, flag)
+    GST_MEMORY_FLAG_IS_SET (mem, flag)
 #define GST_MFX_VIDEO_MEMORY_FLAG_SET(mem, flag) \
-  GST_MINI_OBJECT_FLAG_SET (mem, flag)
+    GST_MINI_OBJECT_FLAG_SET (mem, flag)
 #define GST_MFX_VIDEO_MEMORY_FLAG_UNSET(mem, flag) \
-  GST_MEMORY_FLAG_UNSET (mem, flag)
+    GST_MEMORY_FLAG_UNSET (mem, flag)
 
 /**
  * GstMfxVideoMemoryMapType:
@@ -116,15 +118,15 @@ gst_video_meta_unmap_mfx_surface (GstVideoMeta * meta, guint plane,
 /* ------------------------------------------------------------------------ */
 
 #define GST_MFX_VIDEO_ALLOCATOR_CAST(allocator) \
-  ((GstMfxVideoAllocator *) (allocator))
+    ((GstMfxVideoAllocator *) (allocator))
 
 #define GST_MFX_TYPE_VIDEO_ALLOCATOR \
-  (gst_mfx_video_allocator_get_type ())
+    (gst_mfx_video_allocator_get_type ())
 #define GST_MFX_VIDEO_ALLOCATOR(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_MFX_TYPE_VIDEO_ALLOCATOR, \
-  GstMfxVideoAllocator))
+    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_MFX_TYPE_VIDEO_ALLOCATOR, \
+    GstMfxVideoAllocator))
 #define GST_MFX_IS_VIDEO_ALLOCATOR(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_MFX_TYPE_VIDEO_ALLOCATOR))
+    (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_MFX_TYPE_VIDEO_ALLOCATOR))
 
 #define GST_MFX_VIDEO_ALLOCATOR_NAME          "GstMfxVideoAllocator"
 
