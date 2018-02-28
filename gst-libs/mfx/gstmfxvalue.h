@@ -18,6 +18,15 @@ G_BEGIN_DECLS
 #define GST_MFX_TYPE_ROTATION gst_mfx_rotation_get_type ()
 
 /**
+ * GST_MFX_TYPE_MIRRORING:
+ *
+ * A type that represents the MFX mirror mode.
+ *
+ * Return value: the #GType of GstMfxMirroring
+ */
+#define GST_MFX_TYPE_MIRRORING gst_mfx_mirroring_get_type ()
+
+/**
  * GST_MFX_TYPE_RATE_CONTROL:
  *
  * A type that represents the MFX rate control algorithm.
@@ -47,6 +56,8 @@ G_BEGIN_DECLS
 GType gst_mfx_option_get_type (void);
 
 GType gst_mfx_rotation_get_type (void);
+
+GType gst_mfx_mirroring_get_type (void);
 
 GType gst_mfx_rate_control_get_type (void);
 
