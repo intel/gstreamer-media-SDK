@@ -97,6 +97,7 @@ enum
   PROP_ROTATION,
 #if MSDK_CHECK_VERSION(1,19)
   PROP_MIRRORING,
+  PROP_SCALING_MODE,
 #endif // MSDK_CHECK_VERSION
   PROP_FRAMERATE,
   PROP_FRC_ALGORITHM,
@@ -164,11 +165,30 @@ gst_mfx_mirroring_get_type (void)
     {GST_MFX_MIRRORING_DISABLED, "No mirroring", "disabled"},
     {GST_MFX_MIRRORING_HORIZONTAL, "Mirror horizontally", "horizontal"},
     {GST_MFX_MIRRORING_VERTICAL, "Mirror vertically", "vertical"},
-    {0, NULL, NULL },
+    {0, NULL, NULL},
   };
 
   if (g_once_init_enter (&g_type)) {
     GType type = g_enum_register_static ("GstMfxMirroring", mirror_values);
+    g_once_init_leave (&g_type, type);
+  }
+  return g_type;
+}
+
+GType
+gst_mfx_scaling_mode_get_type (void)
+{
+  static volatile gsize g_type = 0;
+
+  static const GEnumValue scaling_values[] = {
+    {GST_MFX_SCALING_DEFAULT, "Default scaling", "default"},
+    {GST_MFX_SCALING_LOWPOWER, "Low power scaling", "lowpower"},
+    {GST_MFX_SCALING_QUALITY, "High performance quality scaling", "quality"},
+    {0, NULL, NULL},
+  };
+
+  if (g_once_init_enter (&g_type)) {
+    GType type = g_enum_register_static ("GstMfxScalingMode", scaling_values);
     g_once_init_leave (&g_type, type);
   }
   return g_type;
@@ -1018,6 +1038,9 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
 #if MSDK_CHECK_VERSION(1,19)
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_MIRRORING)
     gst_mfx_filter_set_mirroring (vpp->filter, vpp->mode);
+
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_SCALING)
+    gst_mfx_filter_set_scaling_mode (vpp->filter, vpp->scaling);
 #endif // MSDK_CHECK_VERSION
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)
@@ -1176,6 +1199,11 @@ gst_mfxpostproc_set_property (GObject * object,
       vpp->mode = g_value_get_enum (value);
       vpp->flags |= GST_MFX_POSTPROC_FLAG_MIRRORING;
       break;
+
+    case PROP_SCALING_MODE:
+      vpp->scaling = g_value_get_enum (value);
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_SCALING;
+      break;
 #endif // MSDK_CHECK_VERSION
     case PROP_FRAMERATE:
       vpp->fps_n = gst_value_get_fraction_numerator (value);
@@ -1242,6 +1270,9 @@ gst_mfxpostproc_get_property (GObject * object,
 #if MSDK_CHECK_VERSION(1,19)
     case PROP_MIRRORING:
       g_value_set_enum (value, vpp->mode);
+      break;
+    case PROP_SCALING_MODE:
+      g_value_set_enum (value, vpp->scaling);
       break;
 #endif // MSDK_CHECK_VERSION
     case PROP_FRAMERATE:
@@ -1498,6 +1529,20 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           "The mirroring mode",
           GST_MFX_TYPE_MIRRORING,
           GST_MFX_MIRRORING_DISABLED,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstMfxPostproc:scaling-mode
+   *
+   * The scaling mode used during VPP scaling, expressed in GstMfxScalingMode.
+   */
+  g_object_class_install_property (object_class,
+      PROP_SCALING_MODE,
+      g_param_spec_enum ("scaling-mode",
+          "Scaling mode",
+          "The scaling mode used during VPP scaling",
+          GST_MFX_TYPE_SCALING_MODE,
+          GST_MFX_SCALING_DEFAULT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 #endif // MSDK_CHECK_VERSION
 

@@ -65,6 +65,7 @@ enum
   PROP_ROTATION,
 #if MSDK_CHECK_VERSION(1,19)
   PROP_MIRRORING,
+  PROP_SCALING_MODE,
 #endif // MSDK_CHECK_VERSION
   N_PROPERTIES
 };
@@ -173,6 +174,7 @@ gst_mfx_sink_bin_set_property (GObject * object,
     case PROP_ROTATION:
 #if MSDK_CHECK_VERSION(1,19)
     case PROP_MIRRORING:
+    case PROP_SCALING_MODE:
 #endif // MSDK_CHECK_VERSION
       g_object_set (G_OBJECT (mfxsinkbin->postproc),
           pspec->name, g_value_get_enum (value), NULL);
@@ -233,6 +235,7 @@ gst_mfx_sink_bin_get_property (GObject * object,
     case PROP_ROTATION:
 #if MSDK_CHECK_VERSION(1,19)
     case PROP_MIRRORING:
+    case PROP_SCALING_MODE:
 #endif // MSDK_CHECK_VERSION
       if (mfxsinkbin->postproc) {
         g_object_get_property (G_OBJECT (mfxsinkbin->postproc),
@@ -429,6 +432,14 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           "The mirroring mode",
           GST_MFX_TYPE_MIRRORING,
           GST_MFX_MIRRORING_DISABLED,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_properties[PROP_SCALING_MODE] =
+      g_param_spec_enum ("scaling-mode",
+          "Scaling mode",
+          "The scaling mode used during VPP scaling",
+          GST_MFX_TYPE_SCALING_MODE,
+          GST_MFX_SCALING_DEFAULT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 #endif // MSDK_CHECK_VERSION
 
