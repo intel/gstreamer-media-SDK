@@ -552,7 +552,7 @@ static gpointer
 init_mirroring_default ()
 {
   mfxExtVPPMirroring *ext_mirroring;
-  
+
   ext_mirroring = g_slice_alloc0 (sizeof (mfxExtVPPMirroring));
   if (!ext_mirroring)
     return NULL;
@@ -561,6 +561,21 @@ init_mirroring_default ()
   ext_mirroring->Type = MFX_MIRRORING_DISABLED;
 
   return ext_mirroring;
+}
+
+static gpointer
+init_scaling_default ()
+{
+  mfxExtVPPScaling *ext_scaling;
+
+  ext_scaling = g_slice_alloc0 (sizeof (mfxExtVPPScaling));
+  if (!ext_scaling)
+    return NULL;
+  ext_scaling->Header.BufferId = MFX_EXTBUFF_VPP_SCALING;
+  ext_scaling->Header.BufferSz = sizeof (mfxExtVPPScaling);
+  ext_scaling->ScalingMode = MFX_SCALING_MODE_DEFAULT;
+
+  return ext_scaling;
 }
 #endif // MSDK_CHECK_VERSION
 
@@ -853,6 +868,42 @@ gst_mfx_filter_set_mirroring (GstMfxFilter * filter, GstMfxMirroring mode)
   }
   ext_mirroring = (mfxExtVPPMirroring *) op->filter;
   ext_mirroring->Type = mode;
+
+  return TRUE;
+}
+
+gboolean
+gst_mfx_filter_set_scaling_mode (GstMfxFilter * filter, GstMfxScalingMode mode)
+{
+  GstMfxFilterOpData *op;
+  mfxExtVPPScaling *ext_scaling;
+
+  g_return_val_if_fail (filter != NULL, FALSE);
+  g_return_val_if_fail (GST_MFX_SCALING_DEFAULT == mode
+      || GST_MFX_SCALING_LOWPOWER == mode
+      || GST_MFX_SCALING_QUALITY == mode, FALSE);
+
+  op = find_filter_op_data (filter, GST_MFX_FILTER_SCALING_MODE);
+  if (NULL == op) {
+    if (!is_filter_supported (filter, MFX_EXTBUFF_VPP_SCALING)) {
+      g_warning ("Scaling mode filter not supported for this platform.");
+      return FALSE;
+    }
+    op = g_slice_alloc0 (sizeof (GstMfxFilterOpData));
+    if (NULL == op)
+      return FALSE;
+    op->type = GST_MFX_FILTER_SCALING_MODE;
+    filter->filter_op |= GST_MFX_FILTER_SCALING_MODE;
+    op->size = sizeof (mfxExtVPPScaling);
+    op->filter = init_scaling_default ();
+    if (NULL == op->filter) {
+      g_slice_free (GstMfxFilterOpData, op);
+      return FALSE;
+    }
+    g_ptr_array_add (filter->filter_op_data, op);
+  }
+  ext_scaling = (mfxExtVPPScaling *) op->filter;
+  ext_scaling->ScalingMode = mode;
 
   return TRUE;
 }

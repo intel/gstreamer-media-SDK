@@ -81,6 +81,7 @@ typedef enum
   GST_MFX_FILTER_OP_IMAGE_STABILIZATION,
   GST_MFX_FILTER_OP_ROTATION,
   GST_MFX_FILTER_OP_MIRRORING,
+  GST_MFX_FILTER_OP_SCALING_MODE,
 } GstMfxFilterOp;
 
 /**
@@ -112,6 +113,7 @@ typedef enum
       (1 << GST_MFX_FILTER_OP_IMAGE_STABILIZATION),
   GST_MFX_FILTER_ROTATION = (1 << GST_MFX_FILTER_OP_ROTATION),
   GST_MFX_FILTER_MIRRORING = (1 << GST_MFX_FILTER_OP_MIRRORING),
+  GST_MFX_FILTER_SCALING_MODE = (1 << GST_MFX_FILTER_OP_SCALING_MODE),
 } GstMfxFilterType;
 
 typedef enum
@@ -161,6 +163,13 @@ typedef enum
   GST_MFX_MIRRORING_HORIZONTAL = MFX_MIRRORING_HORIZONTAL,
   GST_MFX_MIRRORING_VERTICAL = MFX_MIRRORING_VERTICAL,
 } GstMfxMirroring;
+
+typedef enum
+{
+  GST_MFX_SCALING_DEFAULT = MFX_SCALING_MODE_DEFAULT,
+  GST_MFX_SCALING_LOWPOWER = MFX_SCALING_MODE_LOWPOWER,
+  GST_MFX_SCALING_QUALITY = MFX_SCALING_MODE_QUALITY,
+} GstMfxScalingMode;
 #endif
 
 GstMfxFilter *
@@ -231,6 +240,9 @@ gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle);
 #if MSDK_CHECK_VERSION(1,19)
 gboolean
 gst_mfx_filter_set_mirroring (GstMfxFilter * filter, GstMfxMirroring mode);
+
+gboolean
+gst_mfx_filter_set_scaling_mode (GstMfxFilter * filter, GstMfxScalingMode mode);
 #endif // MSDK_CHECK_VERSION
 
 gboolean

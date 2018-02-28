@@ -94,6 +94,7 @@ typedef enum
   GST_MFX_POSTPROC_FLAG_ROTATION = 1 << GST_MFX_FILTER_OP_ROTATION,
 #if MSDK_CHECK_VERSION(1,19)
   GST_MFX_POSTPROC_FLAG_MIRRORING = 1 << GST_MFX_FILTER_OP_MIRRORING,
+  GST_MFX_POSTPROC_FLAG_SCALING = 1 << GST_MFX_FILTER_OP_SCALING_MODE,
 #endif // MSDK_CHECK_VERSION
   GST_MFX_POSTPROC_FLAG_FRC = 1 << GST_MFX_FILTER_OP_FRAMERATE_CONVERSION,
   /* Additional custom flags */
@@ -147,6 +148,9 @@ struct _GstMfxPostproc
 #if MSDK_CHECK_VERSION(1,19)
   /* Mirror mode */
   GstMfxMirroring mode;
+
+  /* Scaling mode */
+  GstMfxScalingMode scaling;
 #endif // MSDK_CHECK_VERSION
 
   guint keep_aspect:1;
