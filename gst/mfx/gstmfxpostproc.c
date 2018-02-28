@@ -95,6 +95,9 @@ enum
   PROP_BRIGHTNESS,
   PROP_CONTRAST,
   PROP_ROTATION,
+#if MSDK_CHECK_VERSION(1,19)
+  PROP_MIRRORING,
+#endif // MSDK_CHECK_VERSION
   PROP_FRAMERATE,
   PROP_FRC_ALGORITHM,
 };
@@ -118,12 +121,9 @@ static GType gst_mfx_deinterlace_mode_get_type (void)
   static GType deinterlace_mode_type = 0;
 
   static const GEnumValue mode_types[] = {
-    {GST_MFX_DEINTERLACE_MODE_AUTO,
-        "Auto detection", "auto"},
-    {GST_MFX_DEINTERLACE_MODE_FORCED,
-        "Force deinterlacing", "forced"},
-    {GST_MFX_DEINTERLACE_MODE_DISABLED,
-        "Never deinterlace", "disabled"},
+    {GST_MFX_DEINTERLACE_MODE_AUTO, "Auto detection", "auto"},
+    {GST_MFX_DEINTERLACE_MODE_FORCED, "Force deinterlacing", "forced"},
+    {GST_MFX_DEINTERLACE_MODE_DISABLED, "Never deinterlace", "disabled"},
     {0, NULL, NULL},
   };
 
@@ -140,14 +140,10 @@ gst_mfx_rotation_get_type (void)
   static volatile gsize g_type = 0;
 
   static const GEnumValue rotation_values[] = {
-    {GST_MFX_ROTATION_0,
-        "Unrotated", "0"},
-    {GST_MFX_ROTATION_90,
-        "Rotate by 90 degrees clockwise", "90"},
-    {GST_MFX_ROTATION_180,
-        "Rotate by 180  degrees clockwise", "180"},
-    {GST_MFX_ROTATION_270,
-        "Rotate by 270  degrees clockwise", "270"},
+    {GST_MFX_ROTATION_0, "Unrotated", "0"},
+    {GST_MFX_ROTATION_90, "Rotate by 90 degrees clockwise", "90"},
+    {GST_MFX_ROTATION_180, "Rotate by 180  degrees clockwise", "180"},
+    {GST_MFX_ROTATION_270, "Rotate by 270  degrees clockwise", "270"},
     {0, NULL, NULL},
   };
 
@@ -157,6 +153,27 @@ gst_mfx_rotation_get_type (void)
   }
   return g_type;
 }
+
+#if MSDK_CHECK_VERSION(1,19)
+GType
+gst_mfx_mirroring_get_type (void)
+{
+  static volatile gsize g_type = 0;
+
+  static const GEnumValue mirror_values[] = {
+    {GST_MFX_MIRRORING_DISABLED, "No mirroring", "disabled"},
+    {GST_MFX_MIRRORING_HORIZONTAL, "Mirror horizontally", "horizontal"},
+    {GST_MFX_MIRRORING_VERTICAL, "Mirror vertically", "vertical"},
+    {0, NULL, NULL },
+  };
+
+  if (g_once_init_enter (&g_type)) {
+    GType type = g_enum_register_static ("GstMfxMirroring", mirror_values);
+    g_once_init_leave (&g_type, type);
+  }
+  return g_type;
+}
+#endif // MSDK_CHECK_VERSION
 
 GType
 gst_mfx_deinterlace_method_get_type (void)
@@ -997,6 +1014,12 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_ROTATION)
     gst_mfx_filter_set_rotation (vpp->filter, vpp->angle);
+
+#if MSDK_CHECK_VERSION(1,19)
+  if (vpp->flags & GST_MFX_POSTPROC_FLAG_MIRRORING)
+    gst_mfx_filter_set_mirroring (vpp->filter, vpp->mode);
+#endif // MSDK_CHECK_VERSION
+
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)
     gst_mfx_filter_set_deinterlace_method (vpp->filter,
         vpp->deinterlace_method);
@@ -1148,6 +1171,12 @@ gst_mfxpostproc_set_property (GObject * object,
       vpp->angle = g_value_get_enum (value);
       vpp->flags |= GST_MFX_POSTPROC_FLAG_ROTATION;
       break;
+#if MSDK_CHECK_VERSION(1,19)
+    case PROP_MIRRORING:
+      vpp->mode = g_value_get_enum (value);
+      vpp->flags |= GST_MFX_POSTPROC_FLAG_MIRRORING;
+      break;
+#endif // MSDK_CHECK_VERSION
     case PROP_FRAMERATE:
       vpp->fps_n = gst_value_get_fraction_numerator (value);
       vpp->fps_d = gst_value_get_fraction_denominator (value);
@@ -1210,6 +1239,11 @@ gst_mfxpostproc_get_property (GObject * object,
     case PROP_ROTATION:
       g_value_set_enum (value, vpp->angle);
       break;
+#if MSDK_CHECK_VERSION(1,19)
+    case PROP_MIRRORING:
+      g_value_set_enum (value, vpp->mode);
+      break;
+#endif // MSDK_CHECK_VERSION
     case PROP_FRAMERATE:
       if (vpp->fps_n && vpp->fps_d)
         gst_value_set_fraction (value, vpp->fps_n, vpp->fps_d);
@@ -1450,6 +1484,22 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
           "The rotation angle",
           GST_MFX_TYPE_ROTATION,
           DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+#if MSDK_CHECK_VERSION(1,19)
+  /**
+   * GstMfxPostproc:mirror
+   *
+   * The mirror mode for the surface, expressed in GstMfxMirroring.
+   */
+  g_object_class_install_property (object_class,
+      PROP_MIRRORING,
+      g_param_spec_enum ("mirror",
+          "Mirror",
+          "The mirroring mode",
+          GST_MFX_TYPE_MIRRORING,
+          GST_MFX_MIRRORING_DISABLED,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+#endif // MSDK_CHECK_VERSION
 
   /**
    * GstMfxPostproc: frc-algorithm

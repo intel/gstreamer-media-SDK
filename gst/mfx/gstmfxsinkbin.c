@@ -63,6 +63,9 @@ enum
   PROP_BRIGHTNESS,
   PROP_CONTRAST,
   PROP_ROTATION,
+#if MSDK_CHECK_VERSION(1,19)
+  PROP_MIRRORING,
+#endif // MSDK_CHECK_VERSION
   N_PROPERTIES
 };
 
@@ -168,6 +171,9 @@ gst_mfx_sink_bin_set_property (GObject * object,
       break;
     case PROP_DEINTERLACE_METHOD:
     case PROP_ROTATION:
+#if MSDK_CHECK_VERSION(1,19)
+    case PROP_MIRRORING:
+#endif // MSDK_CHECK_VERSION
       g_object_set (G_OBJECT (mfxsinkbin->postproc),
           pspec->name, g_value_get_enum (value), NULL);
       break;
@@ -225,6 +231,9 @@ gst_mfx_sink_bin_get_property (GObject * object,
     case PROP_BRIGHTNESS:
     case PROP_CONTRAST:
     case PROP_ROTATION:
+#if MSDK_CHECK_VERSION(1,19)
+    case PROP_MIRRORING:
+#endif // MSDK_CHECK_VERSION
       if (mfxsinkbin->postproc) {
         g_object_get_property (G_OBJECT (mfxsinkbin->postproc),
             pspec->name, value);
@@ -412,6 +421,16 @@ gst_mfx_sink_bin_class_init (GstMfxSinkBinClass * klass)
           "The rotation angle",
           GST_MFX_TYPE_ROTATION,
           DEFAULT_ROTATION, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+#if MSDK_CHECK_VERSION(1,19)
+  g_properties[PROP_MIRRORING] =
+      g_param_spec_enum ("mirror",
+          "Mirror",
+          "The mirroring mode",
+          GST_MFX_TYPE_MIRRORING,
+          GST_MFX_MIRRORING_DISABLED,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+#endif // MSDK_CHECK_VERSION
 
   g_object_class_install_properties (gobject_class, N_PROPERTIES, g_properties);
 

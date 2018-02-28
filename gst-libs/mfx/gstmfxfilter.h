@@ -27,6 +27,7 @@
 #include "video-format.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_FILTER (gst_mfx_filter_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxFilter, gst_mfx_filter, GST_MFX, FILTER, GstObject)
 #define GST_MFX_FILTER(obj) \
@@ -60,6 +61,7 @@ typedef enum
  * GST_MFX_FILTER_OP_FIELD_PROCESSING: Field processing operation.
  * GST_MFX_FILTER_OP_IMAGE_STABILIZATION: Image stabilization operation.
  * GST_MFX_FILTER_OP_ROTATION: Rotation operation.
+ * GST_MFX_FILTER_OP_MIRRORING: Mirroring operation.
  */
 typedef enum
 {
@@ -78,6 +80,7 @@ typedef enum
   GST_MFX_FILTER_OP_FIELD_PROCESSING,
   GST_MFX_FILTER_OP_IMAGE_STABILIZATION,
   GST_MFX_FILTER_OP_ROTATION,
+  GST_MFX_FILTER_OP_MIRRORING,
 } GstMfxFilterOp;
 
 /**
@@ -91,6 +94,7 @@ typedef enum
  * GST_MFX_FILTER_FIELD_PROCESSING: Field processing filter.
  * GST_MFX_FILTER_IMAGE_STABILIZATION: Image stabilization filter.
  * GST_MFX_FILTER_ROTATION: Rotation filter.
+ * GST_MFX_FILTER_MIRRORING: Mirroring filter.
  */
 
 typedef enum
@@ -107,6 +111,7 @@ typedef enum
   GST_MFX_FILTER_IMAGE_STABILIZATION =
       (1 << GST_MFX_FILTER_OP_IMAGE_STABILIZATION),
   GST_MFX_FILTER_ROTATION = (1 << GST_MFX_FILTER_OP_ROTATION),
+  GST_MFX_FILTER_MIRRORING = (1 << GST_MFX_FILTER_OP_MIRRORING),
 } GstMfxFilterType;
 
 typedef enum
@@ -148,6 +153,15 @@ typedef enum
   GST_MFX_ROTATION_180 = 180,
   GST_MFX_ROTATION_270 = 270,
 } GstMfxRotation;
+
+#if MSDK_CHECK_VERSION(1,19)
+typedef enum
+{
+  GST_MFX_MIRRORING_DISABLED = MFX_MIRRORING_DISABLED,
+  GST_MFX_MIRRORING_HORIZONTAL = MFX_MIRRORING_HORIZONTAL,
+  GST_MFX_MIRRORING_VERTICAL = MFX_MIRRORING_VERTICAL,
+} GstMfxMirroring;
+#endif
 
 GstMfxFilter *
 gst_mfx_filter_new (GstMfxTaskAggregator * aggregator,
@@ -213,6 +227,11 @@ gst_mfx_filter_set_contrast (GstMfxFilter * filter, gfloat value);
 
 gboolean
 gst_mfx_filter_set_rotation (GstMfxFilter * filter, GstMfxRotation angle);
+
+#if MSDK_CHECK_VERSION(1,19)
+gboolean
+gst_mfx_filter_set_mirroring (GstMfxFilter * filter, GstMfxMirroring mode);
+#endif // MSDK_CHECK_VERSION
 
 gboolean
 gst_mfx_filter_set_deinterlace_method (GstMfxFilter * filter,

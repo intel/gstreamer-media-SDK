@@ -76,6 +76,7 @@ typedef enum
  * @GST_MFX_POSTPROC_FLAG_CONTRAST: Change contrast.
  * @GST_MFX_POSTPROC_FLAG_DEINTERLACE: Deinterlacing.
  * @GST_MFX_POSTPROC_FLAG_ROTATION: Rotation.
+ * @GST_MFX_POSTPROC_FLAG_MIRRORING: Mirroring.
  * @GST_MFX_POSTPROC_FLAG_SIZE: Video scaling.
  *
  * The set of operations that are to be performed for each frame.
@@ -91,13 +92,14 @@ typedef enum
   GST_MFX_POSTPROC_FLAG_CONTRAST = 1 << GST_MFX_FILTER_OP_CONTRAST,
   GST_MFX_POSTPROC_FLAG_DEINTERLACING = 1 << GST_MFX_FILTER_OP_DEINTERLACING,
   GST_MFX_POSTPROC_FLAG_ROTATION = 1 << GST_MFX_FILTER_OP_ROTATION,
+#if MSDK_CHECK_VERSION(1,19)
+  GST_MFX_POSTPROC_FLAG_MIRRORING = 1 << GST_MFX_FILTER_OP_MIRRORING,
+#endif // MSDK_CHECK_VERSION
   GST_MFX_POSTPROC_FLAG_FRC = 1 << GST_MFX_FILTER_OP_FRAMERATE_CONVERSION,
   /* Additional custom flags */
   GST_MFX_POSTPROC_FLAG_CUSTOM = 1 << 20,
   GST_MFX_POSTPROC_FLAG_SIZE = GST_MFX_POSTPROC_FLAG_CUSTOM,
 } GstMfxPostprocFlags;
-
-
 
 struct _GstMfxPostproc
 {
@@ -141,6 +143,11 @@ struct _GstMfxPostproc
 
   /* Rotation angle */
   GstMfxRotation angle;
+
+#if MSDK_CHECK_VERSION(1,19)
+  /* Mirror mode */
+  GstMfxMirroring mode;
+#endif // MSDK_CHECK_VERSION
 
   guint keep_aspect:1;
 };
