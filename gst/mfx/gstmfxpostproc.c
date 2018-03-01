@@ -1010,46 +1010,55 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
       GST_VIDEO_INFO_WIDTH (&vpp->srcpad_info),
       GST_VIDEO_INFO_HEIGHT (&vpp->srcpad_info));
 
+  /* Force procamp filters to be initialized for dynamic color balance */
+  if (!gst_mfx_filter_set_hue (vpp->filter, vpp->hue))
+    vpp->flags &= ~GST_MFX_POSTPROC_FLAG_HUE;
+
+  if (!gst_mfx_filter_set_saturation (vpp->filter, vpp->saturation))
+    vpp->flags &= ~GST_MFX_POSTPROC_FLAG_SATURATION;
+
+  if (!gst_mfx_filter_set_brightness (vpp->filter, vpp->brightness))
+    vpp->flags &= ~GST_MFX_POSTPROC_FLAG_BRIGHTNESS;
+
+  if (!gst_mfx_filter_set_contrast (vpp->filter, vpp->contrast))
+    vpp->flags &= ~GST_MFX_POSTPROC_FLAG_CONTRAST;
+
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_FORMAT)
     gst_mfx_filter_set_format (vpp->filter,
         gst_video_format_to_mfx_fourcc (vpp->format));
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DENOISE)
-    gst_mfx_filter_set_denoising_level (vpp->filter, vpp->denoise_level);
+    if (!gst_mfx_filter_set_denoising_level (vpp->filter, vpp->denoise_level))
+      vpp->flags &= ~GST_MFX_POSTPROC_FLAG_DENOISE;
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DETAIL)
-    gst_mfx_filter_set_detail_level (vpp->filter, vpp->detail_level);
-
-  if (vpp->flags & GST_MFX_POSTPROC_FLAG_HUE)
-    gst_mfx_filter_set_hue (vpp->filter, vpp->hue);
-
-  if (vpp->flags & GST_MFX_POSTPROC_FLAG_SATURATION)
-    gst_mfx_filter_set_saturation (vpp->filter, vpp->saturation);
-
-  if (vpp->flags & GST_MFX_POSTPROC_FLAG_BRIGHTNESS)
-    gst_mfx_filter_set_brightness (vpp->filter, vpp->brightness);
-
-  if (vpp->flags & GST_MFX_POSTPROC_FLAG_CONTRAST)
-    gst_mfx_filter_set_contrast (vpp->filter, vpp->contrast);
+    if (!gst_mfx_filter_set_detail_level (vpp->filter, vpp->detail_level))
+      vpp->flags &= ~GST_MFX_POSTPROC_FLAG_DETAIL;
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_ROTATION)
-    gst_mfx_filter_set_rotation (vpp->filter, vpp->angle);
+    if (!gst_mfx_filter_set_rotation (vpp->filter, vpp->angle))
+      vpp->flags &= ~GST_MFX_POSTPROC_FLAG_ROTATION;
 
 #if MSDK_CHECK_VERSION(1,19)
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_MIRRORING)
-    gst_mfx_filter_set_mirroring (vpp->filter, vpp->mode);
+    if (!gst_mfx_filter_set_mirroring (vpp->filter, vpp->mode))
+      vpp->flags &= ~GST_MFX_POSTPROC_FLAG_MIRRORING;
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_SCALING)
-    gst_mfx_filter_set_scaling_mode (vpp->filter, vpp->scaling);
+    if (!gst_mfx_filter_set_scaling_mode (vpp->filter, vpp->scaling))
+      vpp->flags &= ~GST_MFX_POSTPROC_FLAG_SCALING;
 #endif // MSDK_CHECK_VERSION
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)
-    gst_mfx_filter_set_deinterlace_method (vpp->filter,
-        vpp->deinterlace_method);
+    if (!gst_mfx_filter_set_deinterlace_method (vpp->filter,
+        vpp->deinterlace_method))
+      vpp->flags &= ~GST_MFX_POSTPROC_FLAG_DEINTERLACING;
 
   if (vpp->fps_n && vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
-    gst_mfx_filter_set_frc_algorithm (vpp->filter, vpp->alg);
-    gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d);
+    if (!gst_mfx_filter_set_frc_algorithm (vpp->filter, vpp->alg))
+      vpp->flags &= ~GST_MFX_POSTPROC_FLAG_FRC;
+    else
+      gst_mfx_filter_set_framerate (vpp->filter, vpp->fps_n, vpp->fps_d);
   }
 
   return gst_mfx_filter_prepare (vpp->filter);
