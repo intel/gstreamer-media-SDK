@@ -173,6 +173,7 @@ configure_filters (GstMfxFilter * filter)
         filter->vpp_use.AlgList);
     g_slice_free1 (filter->params.NumExtParam * sizeof (mfxExtBuffer *),
         filter->ext_buffer);
+    filter->vpp_use.NumAlg = 0;
   }
 
   if (len && (len != filter->vpp_use.NumAlg)) {
@@ -932,6 +933,10 @@ gst_mfx_filter_set_deinterlace_method (GstMfxFilter * filter,
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_DEINTERLACING);
   if (NULL == op) {
+    if (!is_filter_supported (filter, MFX_EXTBUFF_VPP_DEINTERLACING)) {
+      g_warning ("Deinterlacing filter not supported for this platform.");
+      return FALSE;
+    }
     op = g_slice_alloc (sizeof (GstMfxFilterOpData));
     if (NULL == op)
       return FALSE;
@@ -994,6 +999,10 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
 
   op = find_filter_op_data (filter, GST_MFX_FILTER_FRAMERATE_CONVERSION);
   if (NULL == op) {
+    if (!is_filter_supported (filter, MFX_EXTBUFF_VPP_FRAME_RATE_CONVERSION)) {
+      g_warning ("FRC filter not supported for this platform.");
+      return FALSE;
+    }
     op = g_slice_alloc (sizeof (GstMfxFilterOpData));
     if (NULL == op)
       return FALSE;
