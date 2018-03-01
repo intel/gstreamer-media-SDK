@@ -226,16 +226,17 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
         use_10bpc, has_gl_texture_sharing, &output_format);
 
-  if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
-    return FALSE;
-
   if (GST_MFX_CAPS_FEATURE_MFX_SURFACE == feature)
     features =
         gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_MFX_SURFACE, NULL);
 #ifdef HAVE_GST_GL_LIBS
   else if (GST_MFX_CAPS_FEATURE_GL_MEMORY == feature)
     features = gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_GL_MEMORY, NULL);
-#endif
+#endif // HAVE_GST_GL_LIBS
+  else if (GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY == feature)
+    plugin->can_export_gl_textures = FALSE;
+  else
+    return FALSE;
 
   state = gst_video_decoder_set_output_state (vdec, output_format,
       ref_state->info.width, ref_state->info.height, ref_state);
