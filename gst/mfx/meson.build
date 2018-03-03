@@ -28,7 +28,7 @@ if mfx_sink and mfx_vpp and with_pbutils
     gst_mfx_args += '-DMFX_SINK_BIN'
   endif
 elif get_option('MFX_SINK_BIN')
-  error('MFX_SINK_BIN required but MFX_SINK or MFX_VPP is false')
+  message('MFX_SINK_BIN required but MFX_SINK or MFX_VPP is false. mfxsink will not be built.')
 endif
 
 if mfx_encoder
@@ -48,7 +48,7 @@ if mfx_encoder
 else
   foreach opt: ['MFX_H264_ENCODER', 'MFX_H265_ENCODER', 'MFX_MPEG2_ENCODER', 'MFX_JPEG_ENCODER']
     if get_option (opt)
-      error('@0@ required but MFX_ENCODER is false'.format(opt))
+      message('@0@ required but MFX_ENCODER is false'.format(opt))
     endif
   endforeach
 endif

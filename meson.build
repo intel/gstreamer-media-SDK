@@ -148,7 +148,7 @@ if mfx_decoder
 endif
 
 mfx_vp9_decoder = get_option('MFX_VP9_DECODER')
-if mfx_vp9_decoder
+if mfx_decoder and mfx_vp9_decoder
   gst_mfx_args += ['-DMFX_VP9_DECODER']
 endif
 
@@ -156,60 +156,63 @@ if get_option('MFX_VPP')
   gst_mfx_args += ['-DMFX_VPP']
 endif
 
-mfx_sink = false
+mfx_sink = get_option('MFX_SINK')
 with_wayland = false
 with_x11 = false
 with_d3d11 = false
-if host_machine.system() == 'windows'
-  if get_option('USE_D3D11_RENDERER')
-    gst_mfx_args += ['-DMFX_SINK']
-    with_d3d11 = true
-    mfx_sink = true
-  endif
-else
-  if get_option ('USE_WAYLAND_RENDERER')
-    gst_mfx_args += ['-DUSE_WAYLAND']
-    mfx_sink = true
-	
-    wayland_client_dep = dependency('wayland-client', required: true)
-    if wayland_client_dep.found()
-      gst_mfx_deps += wayland_client_dep
-	  with_wayland = true
+if mfx_sink
+  if host_machine.system() == 'windows'
+    if get_option('USE_D3D11_RENDERER')
+      gst_mfx_args += ['-DMFX_SINK']
+      with_d3d11 = true
+    else
+      mfx_sink = false
     endif
-    wayland_cursor_dep = dependency('wayland-cursor', required: false)
-    if wayland_cursor_dep.found()
-	  gst_mfx_deps += wayland_cursor_dep
-    endif
-  endif
-  
-  if get_option ('USE_DRI3_RENDERER')
-    gst_mfx_args += ['-DUSE_DRI3']
-    mfx_sink = true
-	
-    x11_dep = dependency('x11', required: true)
-    if x11_dep.found()
-      gst_mfx_deps += [x11_dep]
-      with_x11 = true
-    endif
-    x11_optional_deps = [
-      ['xcb-dri3', '-DHAVE_XCBDRI3'],
-      ['xcb-present', '-DHAVE_XCBPRESENT'],
-      ['xkbcommon', '-DHAVE_XKBLIB'],
-      ['xrandr', '-DHAVE_XRANDR'],
-      ['xrender', '-DHAVE_XRENDER'],
-      ['x11-xcb', '-DHAVE_X11XCB'],
-    ]
-    foreach d: x11_optional_deps
-      dep = dependency(d.get(0), required: false)
-      if dep.found()
-        gst_mfx_deps += [dep]
-        gst_mfx_args += [d.get(1)]
+  else
+    if get_option ('USE_WAYLAND_RENDERER')
+      gst_mfx_args += ['-DUSE_WAYLAND']
+      
+      wayland_client_dep = dependency('wayland-client', required: true)
+      if wayland_client_dep.found()
+        gst_mfx_deps += wayland_client_dep
+	    with_wayland = true
       endif
-    endforeach
-  endif
+      wayland_cursor_dep = dependency('wayland-cursor', required: false)
+      if wayland_cursor_dep.found()
+	    gst_mfx_deps += wayland_cursor_dep
+      endif
+    endif
   
-  if mfx_sink
-    gst_mfx_args += ['-DMFX_SINK']
+    if get_option ('USE_DRI3_RENDERER')
+      gst_mfx_args += ['-DUSE_DRI3']
+      
+      x11_dep = dependency('x11', required: true)
+      if x11_dep.found()
+        gst_mfx_deps += [x11_dep]
+        with_x11 = true
+      endif
+      x11_optional_deps = [
+        ['xcb-dri3', '-DHAVE_XCBDRI3'],
+        ['xcb-present', '-DHAVE_XCBPRESENT'],
+        ['xkbcommon', '-DHAVE_XKBLIB'],
+        ['xrandr', '-DHAVE_XRANDR'],
+        ['xrender', '-DHAVE_XRENDER'],
+        ['x11-xcb', '-DHAVE_X11XCB'],
+      ]
+      foreach d: x11_optional_deps
+        dep = dependency(d.get(0), required: false)
+        if dep.found()
+          gst_mfx_deps += [dep]
+          gst_mfx_args += [d.get(1)]
+        endif
+      endforeach
+    endif
+  
+    if with_x11 or with_wayland
+      gst_mfx_args += ['-DMFX_SINK']
+    else
+      mfx_sink = false
+    endif
   endif
 endif
 
