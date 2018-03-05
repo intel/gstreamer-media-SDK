@@ -450,7 +450,9 @@ gst_mfx_filter_set_format (GstMfxFilter * filter, mfxU32 fourcc)
   g_return_val_if_fail (filter != NULL, FALSE);
   g_return_val_if_fail (MFX_FOURCC_NV12 == fourcc
       || MFX_FOURCC_RGB4 == fourcc
-      || MFX_FOURCC_A2RGB10 == fourcc || MFX_FOURCC_P010 == fourcc, FALSE);
+      || MFX_FOURCC_YUY2 == fourcc
+      || MFX_FOURCC_A2RGB10 == fourcc
+      || MFX_FOURCC_P010 == fourcc, FALSE);
 
   filter->fourcc = fourcc;
 
