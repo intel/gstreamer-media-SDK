@@ -487,7 +487,8 @@ gst_mfx_window_d3d11_init_swap_chain (GstMfxWindowD3D11 * window)
      we use a (A)RGB one the VideoProcessor can convert to. */
   if (swap_chain_desc.Format == DXGI_FORMAT_P010)
     swap_chain_desc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
-  else if (swap_chain_desc.Format == DXGI_FORMAT_NV12)
+  else if (swap_chain_desc.Format == DXGI_FORMAT_NV12
+      || swap_chain_desc.Format == DXGI_FORMAT_YUY2)
     swap_chain_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
   swap_chain_desc.SampleDesc.Count = 1;
