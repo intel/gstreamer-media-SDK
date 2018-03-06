@@ -173,7 +173,6 @@ static void
 gst_mfx_display_destroy (GstMfxDisplay * display)
 {
   GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
-  const GstMfxDisplayClass *const klass = GST_MFX_DISPLAY_GET_CLASS (display);
 
   if (priv->va_display) {
     vaTerminate (priv->va_display);
@@ -183,9 +182,6 @@ gst_mfx_display_destroy (GstMfxDisplay * display)
     close (priv->display_fd);
     priv->display_fd = 0;
   }
-
-  if (klass->close_display)
-    klass->close_display (display);
 }
 
 static gboolean

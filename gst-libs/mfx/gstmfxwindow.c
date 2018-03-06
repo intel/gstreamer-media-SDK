@@ -83,12 +83,8 @@ gst_mfx_window_create (GstMfxWindow * window, GstMfxID id, guint width,
 static void
 gst_mfx_window_finalize (GObject * object)
 {
-  GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS (object);
   GstMfxWindow *window = GST_MFX_WINDOW (object);
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
-
-  if (klass->destroy)
-    klass->destroy (object);
 
   gst_mfx_context_replace (&priv->context, NULL);
 
