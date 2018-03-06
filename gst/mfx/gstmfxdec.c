@@ -351,7 +351,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
 
   /* Increase async depth considerably when using decodebin to avoid
    * jerky video playback resulting from thread synchronization issues */
-  parent = gst_object_get_parent(GST_ELEMENT_PARENT (mfxdec));
+  parent = gst_object_get_parent (GST_OBJECT_CAST (mfxdec));
   if (parent) {
     gchar *element_name = gst_element_get_name (parent);
     if (strstr (element_name, "decodebin")) {

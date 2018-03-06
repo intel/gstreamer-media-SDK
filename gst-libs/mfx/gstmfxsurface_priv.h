@@ -65,7 +65,7 @@ struct _GstMfxSurface
 
 typedef gboolean (*GstMfxSurfaceAllocateFunc) (GstMfxSurface * surface,
     GstMfxTask * task);
-typedef void (*GstMfxSurfaceReleaseFunc) (GObject * surface);
+typedef void (*GstMfxSurfaceReleaseFunc) (GstMfxSurface * surface);
 typedef gboolean (*GstMfxSurfaceMapFunc) (GstMfxSurface * surface);
 typedef void (*GstMfxSurfaceUnmapFunc) (GstMfxSurface * surface);
 
