@@ -25,18 +25,9 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib-xcb.h>
 
-#ifdef HAVE_XRENDER
 #include <X11/extensions/Xrender.h>
-#endif
-
-#ifdef HAVE_XCBDRI3
 #include <xcb/dri3.h>
-#endif
-
-#ifdef HAVE_XCBPRESENT
 # include <xcb/present.h>
-#endif
-
 #include <X11/Xlib.h>
 
 #include "gstmfxdisplay_x11.h"
@@ -172,7 +163,6 @@ gst_mfx_window_x11_show (GstMfxWindow * window)
     if (priv2->fullscreen_on_map)
       gst_mfx_window_set_fullscreen (window, TRUE);
   }
-
   return !has_errors;
 }
 
@@ -265,14 +255,12 @@ gst_mfx_window_x11_destroy (GstMfxWindow * window)
   Display *const dpy = GST_MFX_DISPLAY_HANDLE (priv2->display);
   const Window xid = GST_MFX_WINDOW_ID (window);
 
-#ifdef HAVE_XRENDER
   if (priv2->picture) {
     GST_MFX_DISPLAY_LOCK (priv2->display);
     XRenderFreePicture (dpy, priv2->picture);
     GST_MFX_DISPLAY_UNLOCK (priv2->display);
     priv2->picture = None;
   }
-#endif
 
   if (xid) {
     if (!priv->use_foreign_window) {
@@ -381,14 +369,12 @@ gst_mfx_window_x11_resize (GstMfxWindow * window, guint width, guint height)
   XResizeWindow (display, GST_MFX_WINDOW_ID (window), width, height);
   has_errors = x11_untrap_errors () != 0;
 
-#ifdef HAVE_XRENDER
   if (priv->picture) {
     XRenderColor color_black = {.red = 0,.green = 0,.blue = 0,.alpha = 0xffff };
 
     XRenderFillRectangle (display, PictOpClear, priv->picture, &color_black,
         0, 0, width, height);
   }
-#endif
   GST_MFX_DISPLAY_UNLOCK (priv->display);
 
   return !has_errors;
@@ -399,7 +385,6 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
     GstMfxSurface * surface,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
-#if defined(USE_DRI3) && defined(HAVE_XCBDRI3) && defined(HAVE_XCBPRESENT) && defined(HAVE_XRENDER)
   GstMfxWindowX11Private *const priv = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
   GstMfxPrimeBufferProxy *buffer_proxy;
 
@@ -542,10 +527,6 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 
   gst_mfx_prime_buffer_proxy_unref (buffer_proxy);
   return TRUE;
-#else
-  GST_ERROR ("Unable to render the video.\n");
-  return FALSE;
-#endif
 }
 
 static void
@@ -647,7 +628,6 @@ gst_mfx_window_x11_new_with_xid (GstMfxDisplay * display, Window xid)
 void
 gst_mfx_window_x11_clear (GstMfxWindow * window)
 {
-#ifdef HAVE_XRENDER
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
   GstMfxWindowX11Private *const priv2 = GST_MFX_WINDOW_X11_GET_PRIVATE (window);
   Display *display = gst_mfx_display_x11_get_display (priv2->display);
@@ -660,5 +640,4 @@ gst_mfx_window_x11_clear (GstMfxWindow * window)
         0, 0, priv->width, priv->height);
     GST_MFX_DISPLAY_UNLOCK (priv2->display);
   }
-#endif
 }

@@ -1,5 +1,5 @@
 project('gst_mfx', 'c', 'cpp',
-  version : '2.0.0',
+  version : '2.0.2',
   meson_version : '>= 0.36.0',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
@@ -83,14 +83,14 @@ gst_mfx_deps += [gst_dep, gstvideo_dep, gstallocators_dep]
 
 with_pbutils = false
 if gstpbutils_dep.found()
-  gst_mfx_deps += [gstpbutils_dep]
+  gst_mfx_deps += gstpbutils_dep
   with_pbutils = true
 endif
 
 mfx_dep = dependency('mfx', required: false) #find libmfx using pkgconfig first
 if mfx_dep.found() == false # otherwise look into Media SDK/Media Server Studio directories
-  python = find_program('python')
-  mfx_home = run_command(python, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", os.environ.get("MFX_HOME", "")))').stdout().strip()
+  python3 = import('python3').find_python()
+  mfx_home = run_command(python3, '-c', 'import os; print(os.environ.get("INTELMEDIASDKROOT", os.environ.get("MFX_HOME", "")))').stdout().strip()
   
   if mfx_home != ''
     mfx_libdir = [mfx_home + '/lib/lin_x64', mfx_home + '/lib/x64']
@@ -111,7 +111,7 @@ if host_machine.system() == 'windows'
   gst_mfx_deps += cc.find_library('d3d11')
   gst_mfx_deps += cc.find_library('gdi32')
   gst_mfx_deps += cc.find_library('shcore', required: false) #for dpi scaling
-  gst_mfx_args += ['-DWITH_D3D11_BACKEND']
+  gst_mfx_args += '-DWITH_D3D11_BACKEND'
   if cc.get_id() != 'msvc'
     gst_mfx_deps += cc.find_library('stdc++', required: false)
   endif
@@ -121,7 +121,7 @@ else
   gst_mfx_deps += driver_deps
   gst_mfx_deps += cc.find_library('stdc++')
   gst_mfx_deps += cc.find_library('dl')
-  gst_mfx_args += ['-DWITH_LIBVA_BACKEND']
+  gst_mfx_args += '-DWITH_LIBVA_BACKEND'
 endif
 
 gstgl_dep = dependency('gstreamer-gl-1.0', version: gst_req,
@@ -144,16 +144,16 @@ config_inc = include_directories('.')
 
 mfx_decoder = get_option('MFX_DECODER')
 if mfx_decoder
-  gst_mfx_args += ['-DMFX_DECODER']
+  gst_mfx_args += '-DMFX_DECODER'
 endif
 
 mfx_vp9_decoder = get_option('MFX_VP9_DECODER')
 if mfx_decoder and mfx_vp9_decoder
-  gst_mfx_args += ['-DMFX_VP9_DECODER']
+  gst_mfx_args += '-DMFX_VP9_DECODER'
 endif
 
 if get_option('MFX_VPP')
-  gst_mfx_args += ['-DMFX_VPP']
+  gst_mfx_args += '-DMFX_VPP'
 endif
 
 mfx_sink = get_option('MFX_SINK')
@@ -163,53 +163,57 @@ with_d3d11 = false
 if mfx_sink
   if host_machine.system() == 'windows'
     if get_option('USE_D3D11_RENDERER')
-      gst_mfx_args += ['-DMFX_SINK']
+      gst_mfx_args += '-DMFX_SINK'
       with_d3d11 = true
     else
       mfx_sink = false
     endif
   else
     if get_option ('USE_WAYLAND_RENDERER')
-      gst_mfx_args += ['-DUSE_WAYLAND']
-      
-      wayland_client_dep = dependency('wayland-client', required: true)
+      wayland_client_dep = dependency('wayland-client', required: false)
       if wayland_client_dep.found()
+        with_wayland = true
+        gst_mfx_args += '-DUSE_WAYLAND'
         gst_mfx_deps += wayland_client_dep
-	    with_wayland = true
-      endif
-      wayland_cursor_dep = dependency('wayland-cursor', required: false)
-      if wayland_cursor_dep.found()
-	    gst_mfx_deps += wayland_cursor_dep
+      else
+        message('Wayland renderer will be disabled due to missing required dependencies.')
       endif
     endif
   
     if get_option ('USE_DRI3_RENDERER')
-      gst_mfx_args += ['-DUSE_DRI3']
-      
-      x11_dep = dependency('x11', required: true)
-      if x11_dep.found()
-        gst_mfx_deps += [x11_dep]
-        with_x11 = true
-      endif
-      x11_optional_deps = [
-        ['xcb-dri3', '-DHAVE_XCBDRI3'],
-        ['xcb-present', '-DHAVE_XCBPRESENT'],
-        ['xkbcommon', '-DHAVE_XKBLIB'],
-        ['xrandr', '-DHAVE_XRANDR'],
-        ['xrender', '-DHAVE_XRENDER'],
-        ['x11-xcb', '-DHAVE_X11XCB'],
-      ]
-      foreach d: x11_optional_deps
-        dep = dependency(d.get(0), required: false)
-        if dep.found()
-          gst_mfx_deps += [dep]
-          gst_mfx_args += [d.get(1)]
+      with_x11 = true
+      x11_deps = []
+      x11_defines = []
+      foreach dep: ['x11', 'x11-xcb', 'xcb-dri3', 'xrender']
+        required_dep = dependency(dep, required: false)
+        if required_dep.found()
+          x11_deps += required_dep
+        else
+          with_x11 = false
         endif
       endforeach
+
+      if with_x11
+        gst_mfx_args += '-DUSE_DRI3'
+        gst_mfx_deps += x11_deps
+        x11_optional_deps = [
+          ['xkbcommon', '-DHAVE_XKBLIB'],
+          ['xrandr', '-DHAVE_XRANDR'],
+        ]
+        foreach d: x11_optional_deps
+          optional_dep = dependency(d.get(0), required: false)
+          if optional_dep.found()
+            gst_mfx_deps += optional_dep
+            gst_mfx_args += d.get(1)
+          endif
+        endforeach
+      else
+        message('DRI3 renderer will be disabled due to missing required dependencies.')
+      endif
     endif
   
     if with_x11 or with_wayland
-      gst_mfx_args += ['-DMFX_SINK']
+      gst_mfx_args += '-DMFX_SINK'
     else
       mfx_sink = false
     endif
