@@ -118,16 +118,16 @@ gst_mfx_surface_d3d11_allocate (GstMfxSurface * surface, GstMfxTask * task)
 }
 
 static void
-gst_mfx_surface_d3d11_release (GObject * surface)
+gst_mfx_surface_d3d11_release (GstMfxSurface * surface)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
 
   if (!priv->task) {
-    ID3D11Texture2D *surface = (ID3D11Texture2D *) priv->mem_id.mid;
+    ID3D11Texture2D *texture = (ID3D11Texture2D *) priv->mem_id.mid;
     ID3D11Texture2D *stage = (ID3D11Texture2D *) priv->mem_id.mid_stage;
 
-    if (surface)
-      ID3D11Texture2D_Release (surface);
+    if (texture)
+      ID3D11Texture2D_Release (texture);
     if (stage)
       ID3D11Texture2D_Release (stage);
   }
