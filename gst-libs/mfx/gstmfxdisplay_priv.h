@@ -39,7 +39,6 @@ typedef struct _GstMfxDisplayClass GstMfxDisplayClass;
 
 typedef gboolean (*GstMfxDisplayOpenFunc) (GstMfxDisplay * display,
     const gchar * name);
-typedef void (*GstMfxDisplayCloseFunc) (GstMfxDisplay * display);
 typedef void (*GstMfxDisplayGetSizeFunc) (GstMfxDisplay * display,
     guint * pwidth, guint * pheight);
 typedef void (*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
@@ -116,7 +115,6 @@ struct _GstMfxDisplayClass
 
   /*< public > */
   GstMfxDisplayOpenFunc open_display;
-  GstMfxDisplayCloseFunc close_display;
   GstMfxDisplayGetSizeFunc get_size;
   GstMfxDisplayGetSizeMFunc get_size_mm;
 };

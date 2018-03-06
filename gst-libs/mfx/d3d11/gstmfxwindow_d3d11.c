@@ -288,7 +288,7 @@ gst_mfx_window_d3d11_hide (GstMfxWindow * window)
 }
 
 static void
-gst_mfx_window_d3d11_destroy (GObject * window)
+gst_mfx_window_d3d11_destroy (GstMfxWindow * window)
 {
   GstMfxWindowD3D11Private *const priv =
       GST_MFX_WINDOW_D3D11_GET_PRIVATE (window);
@@ -362,7 +362,7 @@ WindowProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
       case WM_DESTROY:
         gst_mfx_context_lock (GST_MFX_WINDOW_GET_PRIVATE (window)->context);
-        gst_mfx_window_d3d11_destroy (G_OBJECT (window));
+        gst_mfx_window_d3d11_destroy (window);
         gst_mfx_context_unlock (GST_MFX_WINDOW_GET_PRIVATE (window)->context);
         PostQuitMessage (0);
         break;
@@ -559,7 +559,7 @@ d3d11_create_render_context (GstMfxWindowD3D11 * window)
   return TRUE;
 
 error:
-  gst_mfx_window_d3d11_destroy (G_OBJECT (window));
+  gst_mfx_window_d3d11_destroy (GST_MFX_WINDOW (window));
   return FALSE;
 }
 
@@ -725,6 +725,7 @@ gst_mfx_window_d3d11_create (GstMfxWindow * window,
 static void
 gst_mfx_window_d3d11_finalize (GObject * object)
 {
+  gst_mfx_window_d3d11_destroy (GST_MFX_WINDOW (object));
   G_OBJECT_CLASS (gst_mfx_window_d3d11_parent_class)->finalize (object);
 }
 
@@ -737,7 +738,6 @@ gst_mfx_window_d3d11_class_init (GstMfxWindowD3D11Class * klass)
   object_class->finalize = gst_mfx_window_d3d11_finalize;
 
   window_class->create = gst_mfx_window_d3d11_create;
-  window_class->destroy = gst_mfx_window_d3d11_destroy;
   window_class->show = gst_mfx_window_d3d11_show;
   window_class->render = gst_mfx_window_d3d11_render;
   window_class->hide = gst_mfx_window_d3d11_hide;

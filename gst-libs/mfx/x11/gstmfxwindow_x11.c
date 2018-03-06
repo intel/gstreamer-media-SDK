@@ -532,6 +532,7 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
 static void
 gst_mfx_window_x11_finalize (GObject * object)
 {
+  gst_mfx_window_x11_destroy (GST_MFX_WINDOW (object));
   G_OBJECT_CLASS (gst_mfx_window_x11_parent_class)->finalize (object);
 }
 
@@ -544,7 +545,6 @@ gst_mfx_window_x11_class_init (GstMfxWindowX11Class * klass)
   object_class->finalize = gst_mfx_window_x11_finalize;
 
   window_class->create = gst_mfx_window_x11_create;
-  window_class->destroy = gst_mfx_window_x11_destroy;
   window_class->show = gst_mfx_window_x11_show;
   window_class->hide = gst_mfx_window_x11_hide;
   window_class->get_geometry = gst_mfx_window_x11_get_geometry;
@@ -590,7 +590,7 @@ gst_mfx_window_x11_new (GstMfxDisplay * display, GstMfxContext * context,
 
   return
       gst_mfx_window_new_internal (GST_MFX_WINDOW (window),
-      context, GST_MFX_ID_INVALID, width, height);
+          context, GST_MFX_ID_INVALID, width, height);
 }
 
 /**

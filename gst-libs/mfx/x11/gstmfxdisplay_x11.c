@@ -182,6 +182,7 @@ gst_mfx_display_x11_get_size_mm (GstMfxDisplay * display,
 static void
 gst_mfx_display_x11_finalize (GObject * object)
 {
+  gst_mfx_display_x11_close_display (GST_MFX_DISPLAY (object));
   G_OBJECT_CLASS (gst_mfx_display_x11_parent_class)->finalize (object);
 }
 
@@ -195,7 +196,6 @@ gst_mfx_display_x11_class_init (GstMfxDisplayX11Class * klass)
 
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_X11;
   dpy_class->open_display = gst_mfx_display_x11_open_display;
-  dpy_class->close_display = gst_mfx_display_x11_close_display;
   dpy_class->get_size = gst_mfx_display_x11_get_size;
   dpy_class->get_size_mm = gst_mfx_display_x11_get_size_mm;
 }

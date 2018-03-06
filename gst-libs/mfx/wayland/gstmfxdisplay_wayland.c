@@ -304,6 +304,7 @@ gst_mfx_display_wayland_get_size_mm (GstMfxDisplay * display,
 static void
 gst_mfx_display_wayland_finalize (GObject * object)
 {
+  gst_mfx_display_wayland_close_display (GST_MFX_DISPLAY (object));
   G_OBJECT_CLASS (gst_mfx_display_wayland_parent_class)->finalize (object);
 }
 
@@ -317,7 +318,6 @@ gst_mfx_display_wayland_class_init (GstMfxDisplayWaylandClass * klass)
 
   dpy_class->display_type = GST_MFX_DISPLAY_TYPE_WAYLAND;
   dpy_class->open_display = gst_mfx_display_wayland_open_display;
-  dpy_class->close_display = gst_mfx_display_wayland_close_display;
   dpy_class->get_size = gst_mfx_display_wayland_get_size;
   dpy_class->get_size_mm = gst_mfx_display_wayland_get_size_mm;
 }
