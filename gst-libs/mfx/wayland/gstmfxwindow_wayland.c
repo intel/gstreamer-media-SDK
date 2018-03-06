@@ -259,11 +259,12 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     pitches[i] = vaapi_image_get_pitch (vaapi_image, i);
   }
 
-  if (GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format (vaapi_image)) {
+  if (GST_VIDEO_FORMAT_NV12 == vaapi_image_get_format (vaapi_image))
     drm_format = WL_DRM_FORMAT_NV12;
-  } else if (GST_VIDEO_FORMAT_BGRA == vaapi_image_get_format (vaapi_image)) {
+  else if (GST_VIDEO_FORMAT_BGRA == vaapi_image_get_format (vaapi_image))
     drm_format = WL_DRM_FORMAT_ARGB8888;
-  }
+  else if (GST_VIDEO_FORMAT_YUY2 == vaapi_image_get_format (vaapi_image))
+    drm_format = WL_DRM_FORMAT_YUYV;
 
   if (!drm_format)
     goto error;
