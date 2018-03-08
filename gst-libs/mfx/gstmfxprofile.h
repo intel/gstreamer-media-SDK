@@ -33,6 +33,9 @@ struct _GstMfxProfile
   mfxU16 profile;
 };
 
+const gchar *
+gst_mfx_profile_get_name (GstMfxProfile profile);
+
 GstMfxProfile
 gst_mfx_profile_from_caps (const GstCaps * caps);
 

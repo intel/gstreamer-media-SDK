@@ -25,6 +25,7 @@
 
 #include <gst/video/gstvideoutils.h>
 #include "gstmfxtaskaggregator.h"
+#include "gstmfxprofile.h"
 
 G_BEGIN_DECLS
 #define GST_TYPE_MFX_ENCODER                  (gst_mfx_encoder_get_type ())
@@ -142,6 +143,9 @@ gboolean
 gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth);
 
 void gst_mfx_encoder_set_profile (GstMfxEncoder * encoder, mfxU16 profile);
+
+GstMfxProfile
+gst_mfx_encoder_get_profile (GstMfxEncoder * encoder);
 
 gboolean
 gst_mfx_encoder_set_gop_refdist (GstMfxEncoder * encoder, gint gop_refdist);
