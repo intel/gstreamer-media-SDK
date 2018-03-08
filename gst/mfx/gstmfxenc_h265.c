@@ -146,7 +146,10 @@ gst_mfxenc_h265_get_caps (GstMfxEnc * base_encode)
     encode->is_hvc = stream_format && strcmp (stream_format, "hvc1") == 0;
     gst_caps_unref (allowed_caps);
   }
-  gst_caps_set_simple (caps, "stream-format", G_TYPE_STRING,
+  gst_caps_set_simple (caps, "profile", G_TYPE_STRING,
+      gst_mfx_profile_get_name
+      (gst_mfx_encoder_get_profile (base_encode->encoder)),
+      "stream-format", G_TYPE_STRING,
       encode->is_hvc ? "hvc1" : "byte-stream", NULL);
 
   base_encode->need_codec_data = encode->is_hvc;

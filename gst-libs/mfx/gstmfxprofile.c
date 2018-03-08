@@ -73,6 +73,33 @@ static const GstMfxProfileMap gst_mfx_profiles[] = {
   {MFX_PROFILE_UNKNOWN,}
 };
 
+static const GstMfxProfileMap *
+get_profiles_map (GstMfxProfile profile)
+{
+  const GstMfxProfileMap *m;
+
+  for (m = gst_mfx_profiles; m->profile; m++)
+    if (m->codec == profile.codec && m->profile == profile.profile)
+      return m;
+  return NULL;
+}
+
+/**
+* gst_mfx_profile_get_name:
+* @profile: a #GstMfxProfile
+*
+* Returns a string representation for the supplied @profile.
+*
+* Return value: the statically allocated string representation of @profile
+*/
+const gchar *
+gst_mfx_profile_get_name (GstMfxProfile profile)
+{
+  const GstMfxProfileMap *const m = get_profiles_map (profile);
+
+  return m ? m->profile_str : NULL;
+}
+
 static mfxU16
 gst_mfx_profile_from_codec_data_h264 (GstBuffer * buffer)
 {
@@ -164,8 +191,7 @@ gst_mfx_profile_from_caps (const GstCaps * caps)
   GstCaps *caps_test;
   GstStructure *structure;
   const gchar *profile_str;
-  GstMfxProfile profile = { 0 }, best_profile = {
-  0};
+  GstMfxProfile profile = { 0 }, best_profile = { 0 };
   GstBuffer *codec_data = NULL;
   const gchar *name;
   gsize namelen;

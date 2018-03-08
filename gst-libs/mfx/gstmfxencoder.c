@@ -616,6 +616,16 @@ gst_mfx_encoder_set_profile (GstMfxEncoder * encoder, mfxU16 profile)
   GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile.profile = profile;
 }
 
+GstMfxProfile
+gst_mfx_encoder_get_profile (GstMfxEncoder * encoder)
+{
+  GstMfxProfile profile = { 0 };
+
+  g_return_val_if_fail (encoder != NULL, profile);
+
+  return GST_MFX_ENCODER_GET_PRIVATE (encoder)->profile;
+}
+
 gboolean
 gst_mfx_encoder_set_gop_refdist (GstMfxEncoder * encoder, gint gop_refdist)
 {
