@@ -434,6 +434,9 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (plugin->sinkpad_caps_is_raw != srcpad_has_raw_caps)
     vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
 
+  if (plugin->sinkpad_has_dmabuf && (srcpad_has_raw_caps != sinkpad_has_raw_caps))
+    vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
+
   plugin->srcpad_caps_is_raw = srcpad_has_raw_caps;
 
   vpp->filter = gst_mfx_filter_new (plugin->aggregator,
