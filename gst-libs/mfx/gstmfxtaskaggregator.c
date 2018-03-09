@@ -209,6 +209,17 @@ gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
 }
 
 void
+gst_mfx_task_aggregator_remove_current_task (GstMfxTaskAggregator * aggregator,
+    GstMfxTask * task)
+{
+  g_return_if_fail (aggregator != NULL);
+  g_return_if_fail (task != NULL);
+
+  if (aggregator->current_task == task)
+    aggregator->current_task = NULL;
+}
+
+void
 gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task)
 {
