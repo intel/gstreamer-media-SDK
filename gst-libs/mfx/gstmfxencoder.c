@@ -936,9 +936,9 @@ configure_encoder_sharing (GstMfxEncoder * encoder)
       /* Get new VPP output task */
       gst_mfx_task_unref (task);
       task = gst_mfx_task_aggregator_get_last_task (priv->aggregator);
+      /* Get updated output mfxFrameInfo */
+      request = gst_mfx_task_get_request (task);
     }
-    /* Get updated output mfxFrameInfo */
-    request = gst_mfx_task_get_request (task);
 
     /* Share upstream decoder / VPP session with encoder */
     if (encoder_format == request->Info.FourCC) {
@@ -973,11 +973,11 @@ log_encoder_params_comparison (GstMfxEncoder * encoder, int log_level,
 {
   /* TODO: handle and log more differences. */
   if (param_old->mfx.FrameInfo.Height != param_new->mfx.FrameInfo.Height
-    || param_old->mfx.FrameInfo.Width != param_new->mfx.FrameInfo.Width) {
+      || param_old->mfx.FrameInfo.Width != param_new->mfx.FrameInfo.Width) {
     GST_CAT_LEVEL_LOG (GST_CAT_DEFAULT, log_level, encoder,
-      "resolution has been changed from %dx%d to %dx%d",
-      param_old->mfx.FrameInfo.Width, param_old->mfx.FrameInfo.Height,
-      param_new->mfx.FrameInfo.Width, param_new->mfx.FrameInfo.Height);
+        "resolution has been changed from %dx%d to %dx%d",
+        param_old->mfx.FrameInfo.Width, param_old->mfx.FrameInfo.Height,
+        param_new->mfx.FrameInfo.Width, param_new->mfx.FrameInfo.Height);
   }
 }
 
@@ -1034,11 +1034,11 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
   } else if (MFX_WRN_INCOMPATIBLE_VIDEO_PARAM == sts) {
     GST_WARNING ("Incompatible video params detected %d", sts);
     log_encoder_params_comparison (encoder, GST_LEVEL_INFO,
-      &orig_params, &priv->params);
+        &orig_params, &priv->params);
   } else if (MFX_ERR_UNSUPPORTED == sts) {
     GST_ERROR ("Unsupported video params %d", sts);
     log_encoder_params_comparison (encoder, GST_LEVEL_WARNING,
-      &orig_params, &priv->params);
+        &orig_params, &priv->params);
   }
 
   sts = MFXVideoENCODE_QueryIOSurf (priv->session, &priv->params, &enc_request);

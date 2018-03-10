@@ -25,6 +25,7 @@
 #include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_ENCODER_JPEG (gst_mfx_encoder_jpeg_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxEncoderJpeg, gst_mfx_encoder_jpeg, GST_MFX,
     ENCODER_JPEG, GstMfxEncoder)

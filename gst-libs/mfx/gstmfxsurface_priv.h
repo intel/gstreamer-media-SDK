@@ -24,12 +24,14 @@
 #include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
+
 #define GST_MFX_SURFACE_CLASS(klass) \
   ((GstMfxSurfaceClass *)(klass))
 #define GST_MFX_SURFACE_GET_PRIVATE(surface) \
   (GST_MFX_SURFACE (surface)->priv)
 #define GST_MFX_SURFACE_GET_CLASS(obj) \
   GST_MFX_SURFACE_CLASS(GST_OBJECT_GET_CLASS(obj))
+
 typedef struct _GstMfxSurfaceClass GstMfxSurfaceClass;
 typedef struct _GstMfxSurfacePrivate GstMfxSurfacePrivate;
 
@@ -63,8 +65,7 @@ struct _GstMfxSurface
   GstMfxSurfacePrivate *priv;
 };
 
-typedef gboolean (*GstMfxSurfaceAllocateFunc) (GstMfxSurface * surface,
-    GstMfxTask * task);
+typedef gboolean (*GstMfxSurfaceAllocateFunc) (GstMfxSurface * surface, GstMfxTask * task);
 typedef void (*GstMfxSurfaceReleaseFunc) (GstMfxSurface * surface);
 typedef gboolean (*GstMfxSurfaceMapFunc) (GstMfxSurface * surface);
 typedef void (*GstMfxSurfaceUnmapFunc) (GstMfxSurface * surface);

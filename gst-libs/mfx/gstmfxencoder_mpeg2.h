@@ -27,6 +27,7 @@
 #include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_ENCODER_MPEG2 (gst_mfx_encoder_mpeg2_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxEncoderMpeg2, gst_mfx_encoder_mpeg2, GST_MFX,
     ENCODER_MPEG2, GstMfxEncoder)

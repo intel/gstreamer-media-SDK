@@ -26,6 +26,7 @@
 #include "gstmfxdisplay.h"
 
 G_BEGIN_DECLS
+
 #define GST_MFX_DISPLAY_CAST(display) \
   ((GstMfxDisplay *) (display))
 #define GST_MFX_DISPLAY_GET_PRIVATE(display) \
@@ -34,6 +35,7 @@ G_BEGIN_DECLS
   ((GstMfxDisplayClass *)(klass))
 #define GST_MFX_DISPLAY_GET_CLASS(obj) \
   GST_MFX_DISPLAY_CLASS(GST_OBJECT_GET_CLASS (obj))
+
 typedef struct _GstMfxDisplayPrivate GstMfxDisplayPrivate;
 typedef struct _GstMfxDisplayClass GstMfxDisplayClass;
 

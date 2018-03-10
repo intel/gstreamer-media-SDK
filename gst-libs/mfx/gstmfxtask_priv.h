@@ -27,6 +27,7 @@
 #endif // WITH_LIBVA_BACKEND
 
 G_BEGIN_DECLS
+
 #define GST_MFX_TASK_CAST(task) \
   ((GstMfxTask *)(task))
 #define GST_MFX_TASK_GET_PRIVATE(task) \
@@ -70,7 +71,6 @@ struct _GstMfxTask
 
   GstMfxTaskPrivate priv;
 };
-
 
 G_END_DECLS
 #endif /* GST_MFX_TASK_PRIV_H_PRIV_H */

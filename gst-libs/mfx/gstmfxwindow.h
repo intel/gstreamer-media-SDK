@@ -28,6 +28,7 @@
 #include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_WINDOW (gst_mfx_window_get_type ())
 #define GST_MFX_WINDOW(obj) ((GstMfxWindow *)(obj))
 

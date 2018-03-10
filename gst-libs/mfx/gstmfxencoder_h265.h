@@ -25,6 +25,7 @@
 #include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_ENCODER_H265 (gst_mfx_encoder_h265_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxEncoderH265, gst_mfx_encoder_h265, GST_MFX,
     ENCODER_H265, GstMfxEncoder)

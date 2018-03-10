@@ -25,6 +25,7 @@
 #include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_WINDOW_D3D11 (gst_mfx_window_d3d11_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_MFX,
     WINDOW_D3D11, GstMfxWindow)

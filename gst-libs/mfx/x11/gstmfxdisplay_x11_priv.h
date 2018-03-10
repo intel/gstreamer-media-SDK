@@ -26,6 +26,7 @@
 #include "gstmfxdisplay_x11.h"
 
 G_BEGIN_DECLS
+
 #define GST_MFX_IS_DISPLAY_X11(display) \
   ((display) != NULL && \
   GST_MFX_DISPLAY_TYPE (display) == GST_MFX_DISPLAY_TYPE_X11)

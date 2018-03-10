@@ -28,6 +28,7 @@
 #include "gstmfxtypes.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_SURFACE (gst_mfx_surface_get_type ())
 #define GST_MFX_SURFACE(obj) ((GstMfxSurface *) (obj))
 #define GST_MFX_SURFACE_FRAME_SURFACE(surface) \

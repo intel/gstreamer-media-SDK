@@ -28,6 +28,7 @@
 #include "gstmfxprofile.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_ENCODER                  (gst_mfx_encoder_get_type ())
 #define GST_MFX_ENCODER(obj) \
     (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_ENCODER, GstMfxEncoder))

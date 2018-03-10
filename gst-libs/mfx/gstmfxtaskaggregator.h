@@ -27,6 +27,7 @@
 #include <mfxvideo.h>
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_TASK_AGGREGATOR (gst_mfx_task_aggregator_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_MFX,
     TASK_AGGREGATOR, GstObject)

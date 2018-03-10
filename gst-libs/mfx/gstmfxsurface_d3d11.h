@@ -27,6 +27,7 @@
 #include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_SURFACE_D3D11 (gst_mfx_surface_d3d11_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxSurfaceD3D11, gst_mfx_surface_d3d11, GST_MFX,
     SURFACE_D3D11, GstMfxSurface)

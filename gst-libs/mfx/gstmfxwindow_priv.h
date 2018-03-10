@@ -24,6 +24,7 @@
 #define GST_MFX_WINDOW_PRIV_H
 
 G_BEGIN_DECLS
+
 #define GST_MFX_WINDOW_CLASS(klass) \
   ((GstMfxWindowClass *)(klass))
 #define GST_MFX_WINDOW_GET_PRIVATE(window) \

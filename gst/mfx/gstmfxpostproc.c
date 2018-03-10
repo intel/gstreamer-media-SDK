@@ -479,7 +479,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     return FALSE;
 
   plugin->srcpad_caps_is_raw =
-      gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD_CAPS (vpp));
+      !(gst_caps_has_mfx_surface (plugin->srcpad_caps)
+        || gst_caps_has_gl_memory (plugin->srcpad_caps));
 
   task = gst_mfx_task_aggregator_get_last_task (plugin->aggregator);
 

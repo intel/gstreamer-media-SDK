@@ -27,6 +27,7 @@
 #include "gstmfxprofile.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_DECODER (gst_mfx_decoder_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxDecoder, gst_mfx_decoder, GST_MFX, DECODER,
     GstObject)
