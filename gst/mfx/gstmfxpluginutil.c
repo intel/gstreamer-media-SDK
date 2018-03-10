@@ -340,20 +340,6 @@ gst_caps_has_gl_memory (GstCaps * caps)
 #endif
 }
 
-gboolean
-gst_mfx_query_peer_has_raw_caps (GstCaps * caps)
-{
-  gboolean has_raw_caps = TRUE;
-
-  if (gst_caps_has_mfx_surface (caps)
-#ifdef HAVE_GST_GL_LIBS
-      || gst_caps_has_gl_memory (caps)
-#endif
-      )
-    has_raw_caps = FALSE;
-  return has_raw_caps;
-}
-
 void
 gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,
     guint width, guint height)

@@ -26,6 +26,7 @@
 #include "gstmfxsurface.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_PRIME_BUFFER_PROXY (gst_mfx_prime_buffer_proxy_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy,
     GST_MFX, PRIME_BUFFER_PROXY, GstObject)

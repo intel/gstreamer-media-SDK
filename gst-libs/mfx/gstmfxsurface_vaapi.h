@@ -28,6 +28,7 @@
 #include "gstmfxcontext.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_SURFACE_VAAPI (gst_mfx_surface_vaapi_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxSurfaceVaapi, gst_mfx_surface_vaapi, GST_MFX,
     SURFACE_VAAPI, GstMfxSurface)

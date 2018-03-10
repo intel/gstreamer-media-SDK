@@ -28,6 +28,7 @@
 #include <X11/Xlib.h>
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_DISPLAY_X11 (gst_mfx_display_x11_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxDisplayX11, gst_mfx_display_x11, GST_MFX,
     DISPLAY_X11, GstMfxDisplay)

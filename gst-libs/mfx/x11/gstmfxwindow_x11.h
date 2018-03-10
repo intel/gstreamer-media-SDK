@@ -29,6 +29,7 @@
 #include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_WINDOW_X11 (gst_mfx_window_x11_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxWindowX11, gst_mfx_window_x11, GST_MFX, WINDOW_X11,
     GstMfxWindow)

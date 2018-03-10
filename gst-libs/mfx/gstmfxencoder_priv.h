@@ -32,6 +32,7 @@
 #include <mfxplugin.h>
 
 G_BEGIN_DECLS
+
 #define GST_MFX_ENCODER_CAST(encoder) \
   ((GstMfxEncoder *)(encoder))
 #define GST_MFX_ENCODER_GET_PRIVATE(encoder) \
@@ -258,12 +259,10 @@ struct _GstMfxEncoderClass
   gboolean (*load_plugin) (GstMfxEncoder * encoder);
 };
 
-
 GstMfxEncoder *
 gst_mfx_encoder_new (GstMfxEncoder * encoder,
     GstMfxTaskAggregator * aggregator,
     const GstVideoInfo * info, gboolean mapped);
-
 
 G_END_DECLS
 #endif /* GST_MFX_ENCODER_PRIV_H */

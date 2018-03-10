@@ -27,6 +27,7 @@
 #include "gstmfxencoder_priv.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_ENCODER_H264 (gst_mfx_encoder_h264_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxEncoderH264, gst_mfx_encoder_h264, GST_MFX,
     ENCODER_H264, GstMfxEncoder)
@@ -35,6 +36,7 @@ G_DECLARE_FINAL_TYPE (GstMfxEncoderH264, gst_mfx_encoder_h264, GST_MFX,
   GstMfxEncoderH264Class))
 #define GST_MFX_ENCODER_H264 (encoder) \
   ((GstMfxEncoderH264 *) (encoder))
+
 /**
  * GstMfxEncoderH264Prop:
  * @GST_MFX_ENCODER_H264_PROP_MAX_SLICE_SIZE:

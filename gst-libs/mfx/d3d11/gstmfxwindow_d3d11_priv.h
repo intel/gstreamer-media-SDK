@@ -37,6 +37,7 @@
 #include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
+
 #define GST_MFX_IS_WINDOW_D3D11(window) \
   ((window) != NULL && \
   GST_MFX_WINDOW_TYPE (window) == GST_MFX_WINDOW_TYPE_D3D11)

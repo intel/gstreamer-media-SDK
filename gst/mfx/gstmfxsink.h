@@ -73,6 +73,7 @@ struct _GstMfxSinkBackend
   GstMfxSinkPreStartEventThreadFunc pre_start_event_thread;
   GstMfxSinkPreStopEventThreadFunc pre_stop_event_thread;
 };
+
 struct _GstMfxSink
 {
   /*< private > */
@@ -101,7 +102,6 @@ struct _GstMfxSink
   GstMfxDisplayType display_type_req;
   gchar *display_name;
 #endif
-
   guint handle_events:1;
   guint foreign_window:1;
   guint fullscreen:1;

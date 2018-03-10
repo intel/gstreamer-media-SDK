@@ -1,5 +1,5 @@
 /*
- *  gstmfxsubpicturecomposition.c - MFX subpicture composition abstraction
+ *  gstmfxsurfacecomposition.c - MFX subpicture composition abstraction
  *
  *  Copyright (C) 2017 Intel Corporation
  *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>

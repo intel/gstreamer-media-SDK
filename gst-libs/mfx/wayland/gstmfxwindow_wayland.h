@@ -27,6 +27,7 @@
 #include "gstmfxwindow_priv.h"
 
 G_BEGIN_DECLS
+
 #define GST_TYPE_MFX_WINDOW_WAYLAND (gst_mfx_window_wayland_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxWindowWayland, gst_mfx_window_wayland, GST_MFX,
     WINDOW_WAYLAND, GstMfxWindow)
