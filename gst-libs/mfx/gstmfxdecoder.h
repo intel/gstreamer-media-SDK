@@ -74,7 +74,7 @@ gst_mfx_decoder_get_frame (GstMfxDecoder * decoder,
     GstVideoCodecFrame ** out_frame, gboolean discarded);
 
 void
-gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder,
+gst_mfx_decoder_update_video_info (GstMfxDecoder * decoder,
     const GstVideoInfo * info);
 
 void
