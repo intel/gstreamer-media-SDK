@@ -135,7 +135,7 @@ gboolean
 gst_caps_has_gl_memory (GstCaps * caps);
 
 gboolean
-gst_mfx_query_peer_has_raw_caps (GstPad * pad);
+gst_mfx_query_peer_has_raw_caps (GstCaps * caps);
 
 void
 gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,

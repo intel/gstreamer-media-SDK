@@ -71,10 +71,6 @@ void
 gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
     GstMfxTask * task);
 
-void
-gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
-    GstMfxTask * task, gboolean memtype_is_system);
-
 #if MSDK_CHECK_VERSION(1,19)
 mfxU16
 gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator);

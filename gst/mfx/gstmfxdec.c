@@ -76,7 +76,7 @@ static const char gst_mfxdecode_src_caps_str[] =
     GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
 #ifdef HAVE_GST_GL_LIBS
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
-      "{ RGBA, BGRA }") ";"
+      "{ RGBA }") ";"
 #endif
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 

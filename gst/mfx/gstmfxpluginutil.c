@@ -141,7 +141,7 @@ gst_mfx_check_gl_texture_sharing (GstElement * element,
   const char caps_str[] =
       GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
       GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
-      "{ RGBA, BGRA }") ";";
+      "{ RGBA }") ";";
 
   g_return_val_if_fail (GST_IS_ELEMENT (element), FALSE);
   g_return_val_if_fail (gl_context_ptr != NULL, FALSE);
@@ -218,7 +218,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
         "{ P010_10LE, ENCODED, NV12, BGRA, YUY2 }") "; "
 #ifdef HAVE_GST_GL_LIBS
         GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
-        "{ RGBA, BGRA }") ";"
+        "{ RGBA }") ";"
 #endif
         GST_VIDEO_CAPS_MAKE ("{ P010_10LE, NV12, BGRA, YUY2 }");
 #else
@@ -226,7 +226,7 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
         GST_MFX_MAKE_OUTPUT_SURFACE_CAPS ";"
 #ifdef HAVE_GST_GL_LIBS
         GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
-        "{ RGBA, BGRA }") ";"
+        "{ RGBA }") ";"
 #endif
         GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 #endif
@@ -247,12 +247,9 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
   }
 #ifdef HAVE_GST_GL_LIBS
-  else if (gst_caps_has_gl_memory (out_caps)) {
+  else if (gst_caps_has_gl_memory (out_caps) && has_gl_texture_sharing) {
     feature = GST_MFX_CAPS_FEATURE_GL_MEMORY;
-    if (has_gl_texture_sharing)
-      *out_format_ptr = GST_VIDEO_FORMAT_RGBA;
-    else
-      *out_format_ptr = GST_VIDEO_FORMAT_BGRA;
+    *out_format_ptr = GST_VIDEO_FORMAT_RGBA;
     goto cleanup;
   }
 #endif
@@ -344,14 +341,9 @@ gst_caps_has_gl_memory (GstCaps * caps)
 }
 
 gboolean
-gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
+gst_mfx_query_peer_has_raw_caps (GstCaps * caps)
 {
-  GstCaps *caps = NULL;
   gboolean has_raw_caps = TRUE;
-
-  caps = gst_pad_peer_query_caps (srcpad, NULL);
-  if (!caps)
-    return has_raw_caps;
 
   if (gst_caps_has_mfx_surface (caps)
 #ifdef HAVE_GST_GL_LIBS
@@ -359,8 +351,6 @@ gst_mfx_query_peer_has_raw_caps (GstPad * srcpad)
 #endif
       )
     has_raw_caps = FALSE;
-
-  gst_caps_unref (caps);
   return has_raw_caps;
 }
 

@@ -122,7 +122,7 @@ gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 
       break;
     default:
-    error:
+error:
       GST_ERROR ("Failed to create surface.");
       success = FALSE;
       break;
