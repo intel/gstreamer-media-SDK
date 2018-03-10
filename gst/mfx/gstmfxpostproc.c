@@ -54,7 +54,7 @@ static const char gst_mfxpostproc_src_caps_str[] =
     GST_MFX_MAKE_OUTPUT_SURFACE_CAPS "; "
 #ifdef HAVE_GST_GL_LIBS
     GST_VIDEO_CAPS_MAKE_WITH_FEATURES (GST_CAPS_FEATURE_MEMORY_GL_MEMORY,
-      "{ RGBA, BGRA }") ";"
+      "{ RGBA }") ";"
 #endif
     GST_VIDEO_CAPS_MAKE (GST_MFX_SUPPORTED_OUTPUT_FORMATS);
 
@@ -478,6 +478,9 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
   if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
     return FALSE;
 
+  plugin->srcpad_caps_is_raw =
+      gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD_CAPS (vpp));
+
   task = gst_mfx_task_aggregator_get_last_task (plugin->aggregator);
 
   if (!plugin->sinkpad_caps_is_raw
@@ -487,7 +490,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     plugin->sinkpad_caps_is_raw = !gst_mfx_task_has_video_memory (task);
 
     vpp->filter = gst_mfx_filter_new_with_task (plugin->aggregator,
-        task, GST_MFX_TASK_VPP_IN, plugin->sinkpad_caps_is_raw, FALSE);
+        task, GST_MFX_TASK_VPP_IN, plugin->sinkpad_caps_is_raw,
+        plugin->srcpad_caps_is_raw);
     if (!vpp->filter) {
       success = FALSE;
       goto done;
@@ -513,7 +517,8 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
     }
   } else {
     vpp->filter = gst_mfx_filter_new (plugin->aggregator,
-        plugin->sinkpad_caps_is_raw, FALSE);
+        plugin->sinkpad_caps_is_raw,
+        plugin->srcpad_caps_is_raw);
     if (!vpp->filter) {
       success = FALSE;
       goto done;
@@ -523,19 +528,9 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
         &vpp->sinkpad_info);
   }
 
-  plugin->srcpad_caps_is_raw =
-      gst_mfx_query_peer_has_raw_caps (GST_MFX_PLUGIN_BASE_SRC_PAD (vpp));
-
-  /* Prevent pass-through mode if input / output memory types don't match (sys-in / vid-out) */
-  if (!plugin->srcpad_caps_is_raw && plugin->sinkpad_caps_is_raw)
+  /* Prevent pass-through mode if input / output memory types don't match */
+  if (plugin->srcpad_caps_is_raw != plugin->sinkpad_caps_is_raw)
     vpp->flags |= GST_MFX_POSTPROC_FLAG_CUSTOM;
-
-  if (task && plugin->srcpad_caps_is_raw) {
-    gst_mfx_task_unref (task);
-    task = gst_mfx_task_aggregator_get_last_task (plugin->aggregator);
-    gst_mfx_task_aggregator_update_peer_memtypes (plugin->aggregator,
-        task, plugin->srcpad_caps_is_raw);
-  }
 
 done:
   gst_mfx_task_replace (&task, NULL);
@@ -657,11 +652,11 @@ gst_mfxpostproc_before_transform (GstBaseTransform * trans, GstBuffer * buf)
 {
   GstMfxPostproc *vpp = GST_MFXPOSTPROC (trans);
 
-  if (!vpp->flags &&
-      (vpp->hue == DEFAULT_HUE ||
-          vpp->contrast == DEFAULT_CONTRAST ||
-          vpp->saturation == DEFAULT_SATURATION ||
-          vpp->brightness == DEFAULT_BRIGHTNESS)) {
+  if (!vpp->flags
+      && (vpp->hue == DEFAULT_HUE
+        || vpp->contrast == DEFAULT_CONTRAST
+        || vpp->saturation == DEFAULT_SATURATION
+        || vpp->brightness == DEFAULT_BRIGHTNESS)) {
     gst_base_transform_set_passthrough (trans, TRUE);
   } else {
     gst_base_transform_set_passthrough (trans, FALSE);

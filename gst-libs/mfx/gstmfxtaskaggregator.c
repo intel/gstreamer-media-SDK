@@ -214,41 +214,6 @@ gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
   aggregator->tasks = g_list_delete_link (aggregator->tasks, elem);
 }
 
-void
-gst_mfx_task_aggregator_update_peer_memtypes (GstMfxTaskAggregator * aggregator,
-    GstMfxTask * task, gboolean memtype_is_system)
-{
-  GstMfxTask *upstream_task;
-  guint task_index;
-  mfxVideoParam *params;
-
-  g_return_if_fail (aggregator != NULL);
-  g_return_if_fail (task != NULL);
-
-  task_index = g_list_index (aggregator->tasks, task);
-
-  do {
-    upstream_task = g_list_nth_data (aggregator->tasks, task_index++);
-    if (!upstream_task)
-      break;
-    params = gst_mfx_task_get_video_params (upstream_task);
-    if (gst_mfx_task_has_type (upstream_task, GST_MFX_TASK_VPP_OUT)) {
-      if (memtype_is_system) {
-        params->IOPattern =
-            MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-      } else {
-        params->IOPattern &=
-            MFX_IOPATTERN_IN_SYSTEM_MEMORY | MFX_IOPATTERN_IN_VIDEO_MEMORY;
-        params->IOPattern |= MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-      }
-    } else if (gst_mfx_task_has_type (upstream_task, GST_MFX_TASK_DECODER)) {
-      params->IOPattern = memtype_is_system ?
-          MFX_IOPATTERN_OUT_SYSTEM_MEMORY : MFX_IOPATTERN_OUT_VIDEO_MEMORY;
-    }
-    memtype_is_system = !!(params->IOPattern & MFX_IOPATTERN_IN_SYSTEM_MEMORY);
-  } while (memtype_is_system);
-}
-
 #if MSDK_CHECK_VERSION(1,19)
 mfxU16
 gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator)

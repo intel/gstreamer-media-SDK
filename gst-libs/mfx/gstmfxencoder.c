@@ -494,7 +494,7 @@ gst_mfx_encoder_create (GstMfxEncoder * encoder,
 
 #define CHECK_VTABLE_HOOK(FUNC) do {        \
   if (!klass->FUNC)                         \
-  goto error_invalid_vtable;                \
+    goto error_invalid_vtable;              \
   } while (0)
 
   CHECK_VTABLE_HOOK (get_default_properties);
@@ -520,7 +520,6 @@ gst_mfx_encoder_finalize (GObject * object)
 {
   GstMfxEncoder *encoder = GST_MFX_ENCODER (object);
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
-  GstMfxEncoderClass *const klass = GST_MFX_ENCODER_GET_CLASS (encoder);
 
   g_byte_array_unref (priv->bitstream);
 
@@ -1094,18 +1093,22 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
 
     if (!gst_mfx_filter_prepare (priv->filter))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
-
-    params = gst_mfx_task_get_video_params (priv->encode);
-    priv->encoder_memtype_is_system =
-      !!(params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+    priv->shared = TRUE;
   }
 
   /* If encoder task is shared, ensure that the output memtype of the
    * shared task matches the input memtype of the encoder task */
+  params = gst_mfx_task_get_video_params (priv->encode);
   if (priv->shared && !priv->encoder_memtype_is_system) {
-    params = gst_mfx_task_get_video_params (priv->encode);
     priv->encoder_memtype_is_system =
         !!(params->IOPattern & MFX_IOPATTERN_OUT_SYSTEM_MEMORY);
+  }
+
+  /* Update shared task to use output system memory surfaces if
+   * encoder task uses input system memory surfaces */
+  if (priv->shared && priv->encoder_memtype_is_system) {
+    params->IOPattern &= ~MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+    params->IOPattern |= MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
   }
 
   if (priv->encoder_memtype_is_system) {
@@ -1115,9 +1118,6 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
     priv->params.IOPattern = MFX_IOPATTERN_IN_VIDEO_MEMORY;
     gst_mfx_task_use_video_memory (priv->encode);
   }
-
-  gst_mfx_task_aggregator_update_peer_memtypes (priv->aggregator,
-      priv->encode, priv->encoder_memtype_is_system);
 
   GST_INFO ("Preparing MFX encoder task using input %s memory surfaces",
       priv->encoder_memtype_is_system ? "system" : "video");
