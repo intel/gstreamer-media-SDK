@@ -76,7 +76,7 @@ struct _GstMfxDecoder
 G_DEFINE_TYPE (GstMfxDecoder, gst_mfx_decoder, GST_TYPE_OBJECT);
 
 void
-gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder,
+gst_mfx_decoder_update_video_info (GstMfxDecoder * decoder,
     const GstVideoInfo * info)
 {
   g_return_if_fail (decoder != NULL);
@@ -86,6 +86,22 @@ gst_mfx_decoder_set_video_info (GstMfxDecoder * decoder,
     decoder->info.fps_n = 30;
   decoder->duration =
     (decoder->info.fps_d / (gdouble) decoder->info.fps_n) * 1000000000;
+
+  /* Update mfxFrameInfo for interlaced streams */
+  if (GST_VIDEO_INFO_IS_INTERLACED (&decoder->info)) {
+    mfxFrameAllocRequest *request = gst_mfx_task_get_request (decoder->decode);
+    mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
+
+    frame_info->PicStruct = GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
+        GST_VIDEO_FRAME_FLAG_TFF) ?
+        MFX_PICSTRUCT_FIELD_TFF : MFX_PICSTRUCT_FIELD_BFF;
+    frame_info->FrameRateExtN = decoder->info.fps_n;
+    frame_info->FrameRateExtD = decoder->info.fps_d;
+
+    request->Info.PicStruct = frame_info->PicStruct;
+    request->Info.FrameRateExtN = frame_info->FrameRateExtN;
+    request->Info.FrameRateExtD = frame_info->FrameRateExtD;
+  }
 }
 
 const mfxFrameAllocRequest *
@@ -242,12 +258,6 @@ static void
 gst_mfx_decoder_reconfigure_params (GstMfxDecoder * decoder)
 {
   mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
-
-  frame_info->PicStruct = GST_VIDEO_INFO_IS_INTERLACED (&decoder->info) ?
-      (GST_VIDEO_INFO_FLAG_IS_SET (&decoder->info,
-          GST_VIDEO_FRAME_FLAG_TFF) ? MFX_PICSTRUCT_FIELD_TFF :
-      MFX_PICSTRUCT_FIELD_BFF)
-      : MFX_PICSTRUCT_PROGRESSIVE;
 
   if (decoder->profile.codec == MFX_CODEC_VP8
 #if MSDK_CHECK_VERSION(1,19)
@@ -421,7 +431,8 @@ configure_filter (GstMfxDecoder * decoder)
 {
   mfxU32 output_format =
       gst_video_format_to_mfx_fourcc (GST_VIDEO_INFO_FORMAT (&decoder->info));
-  mfxU32 decode_format = decoder->params.mfx.FrameInfo.FourCC;
+  mfxFrameInfo *frame_info = &decoder->params.mfx.FrameInfo;
+  mfxU32 decode_format = frame_info->FourCC;
   gboolean enable_csc = FALSE, enable_deinterlace = FALSE;
 
   if (output_format != decode_format)
@@ -453,8 +464,7 @@ configure_filter (GstMfxDecoder * decoder)
 
     gst_mfx_task_set_request (decoder->decode, &decoder->request);
 
-    gst_mfx_filter_set_frame_info (decoder->filter,
-        &decoder->params.mfx.FrameInfo);
+    gst_mfx_filter_set_frame_info (decoder->filter, frame_info);
     if (enable_csc)
       gst_mfx_filter_set_format (decoder->filter, output_format);
     if (enable_deinterlace) {
