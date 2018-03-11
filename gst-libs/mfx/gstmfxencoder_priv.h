@@ -187,8 +187,8 @@ struct _GstMfxEncoderPrivate
   mfxExtCodingOption extco;
   mfxExtCodingOption2 extco2;
   mfxExtHEVCParam exthevc;
-  mfxExtBuffer *extparam_internal[3];
-  int nb_extparam_internal;
+  mfxExtVideoSignalInfo extsig;
+  mfxExtBuffer *extparam_internal[4];
 
   /* H264 specific coding options */
   gboolean use_cabac;
