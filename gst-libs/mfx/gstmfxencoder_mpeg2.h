@@ -44,6 +44,5 @@ gst_mfx_encoder_mpeg2_new (GstMfxTaskAggregator * aggregator,
 GPtrArray *
 gst_mfx_encoder_mpeg2_get_default_properties (void);
 
-
 G_END_DECLS
 #endif /* GST_MFX_ENCODER_MPEG2_H */

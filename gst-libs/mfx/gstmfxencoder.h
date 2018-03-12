@@ -175,8 +175,7 @@ GstMfxEncoderStatus
 gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame);
 
 GType
-gst_mfx_encoder_get_type (void)
-    G_GNUC_CONST;
+gst_mfx_encoder_get_type (void) G_GNUC_CONST;
 
 G_END_DECLS
 #endif /* GST_MFX_ENCODER_H */
