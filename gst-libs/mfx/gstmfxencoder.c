@@ -407,100 +407,118 @@ gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass)
 }
 
 static void
-gst_mfx_extsig_from_colorimetry (GstMfxEncoder * encoder,
+gst_mfx_encoder_extsig_from_colorimetry (GstMfxEncoder * encoder,
     GstVideoColorimetry * colorimetry)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
-  
-  priv->extsig.Header.BufferId = MFX_EXTBUFF_VIDEO_SIGNAL_INFO;
-  priv->extsig.Header.BufferSz = sizeof (mfxExtVideoSignalInfo);
-  priv->extsig.VideoFormat = 5; /*  unspecified */
-  priv->extsig.ColourDescriptionPresent = 1; /* Do write this to the bitstream */
-  
-  switch (colorimetry->range) {
-    case GST_VIDEO_COLOR_RANGE_16_235:
-      priv->extsig.VideoFullRange = 0; /* not full range */
-      break;
-    case GST_VIDEO_COLOR_RANGE_0_255:
-      priv->extsig.VideoFullRange = 1; /* full range */
-      break;
-    default:
-      priv->extsig.VideoFullRange = 0;
-      break;
-  }
-  
-  switch (colorimetry->primaries) {
-    case GST_VIDEO_COLOR_PRIMARIES_BT709:
-      priv->extsig.ColourPrimaries = 1; /* BT709 */
-      break;
-    case GST_VIDEO_COLOR_PRIMARIES_BT470M:
-      priv->extsig.ColourPrimaries = 4; /* BT470M */
-      break;
-    case GST_VIDEO_COLOR_PRIMARIES_BT470BG:
-      priv->extsig.ColourPrimaries = 5; /* 470BG */
-      break;
-    case GST_VIDEO_COLOR_PRIMARIES_SMPTE170M:
-      priv->extsig.ColourPrimaries = 6; /* SMPTE170M */
-      break;
-    case GST_VIDEO_COLOR_PRIMARIES_SMPTE240M:
-      priv->extsig.ColourPrimaries = 7; /* SMPTE240M */
-      break;
-    case GST_VIDEO_COLOR_PRIMARIES_FILM:
-      priv->extsig.ColourPrimaries = 8; /* Generic film */
-      break;
-    default:
-      priv->extsig.ColourPrimaries = 2; /* Unspecified */
-      break;
-  }
-  
-  switch (colorimetry->transfer) {
-    case GST_VIDEO_TRANSFER_BT709:
-      priv->extsig.TransferCharacteristics = 1; /* BT709 */
-      break;
-    case GST_VIDEO_TRANSFER_GAMMA22:
-      priv->extsig.TransferCharacteristics = 4; /* BT470M */
-      break;
-    case GST_VIDEO_TRANSFER_GAMMA28:
-      priv->extsig.TransferCharacteristics = 5; /* BT470BG */
-      break;
-    /* We skip #6 (SMPTE170M) as it seems to be the same as BT709 */
-    case GST_VIDEO_TRANSFER_SMPTE240M:
-      priv->extsig.TransferCharacteristics = 7; /* BT709 */
-      break;
-    case GST_VIDEO_TRANSFER_GAMMA10:
-      priv->extsig.TransferCharacteristics = 8; /* Linear */
-      break;
-    case GST_VIDEO_TRANSFER_LOG100:
-      priv->extsig.TransferCharacteristics = 9; /* Log (100:1) */
-      break;
-    case GST_VIDEO_TRANSFER_LOG316:
-      priv->extsig.TransferCharacteristics = 10; /* Log (316.23:1) */
-      break;
-    default:
-      priv->extsig.TransferCharacteristics = 2; /* Unspecified */
-      break;
-  }
 
-  switch (colorimetry->matrix) {
-    case GST_VIDEO_COLOR_MATRIX_BT709:
-      priv->extsig.MatrixCoefficients = 1; /* BT709 */
-      break;
-    case GST_VIDEO_COLOR_MATRIX_FCC:
-      priv->extsig.MatrixCoefficients = 4; /* FCC */
-      break;
-    case GST_VIDEO_COLOR_MATRIX_BT601:
-      priv->extsig.MatrixCoefficients = 5; /* BT470BG (seems to be the same as 601) */
-      break;
-    /* We skip #6 (SMPTE170M) as it seems to be the same as BT601 */
-    case GST_VIDEO_COLOR_MATRIX_SMPTE240M:
-      priv->extsig.MatrixCoefficients = 7; /* SMPTE240M */
-      break;
-    default:
-      priv->extsig.MatrixCoefficients = 2; /* unspecified */
-      break;
+  if (priv->extsig.ColourDescriptionPresent) {
+    gboolean encoder_format = priv->params.mfx.FrameInfo.FourCC;
+
+    priv->extsig.Header.BufferId = MFX_EXTBUFF_VIDEO_SIGNAL_INFO;
+    priv->extsig.Header.BufferSz = sizeof (mfxExtVideoSignalInfo);
+    priv->extsig.VideoFormat = 5; /*  unspecified */
+
+    switch (colorimetry->range) {
+      case GST_VIDEO_COLOR_RANGE_16_235:
+        priv->extsig.VideoFullRange = 0; /* not full range */
+        break;
+      case GST_VIDEO_COLOR_RANGE_0_255:
+        priv->extsig.VideoFullRange = 1; /* full range */
+        break;
+      default:
+        priv->extsig.VideoFullRange = 0;
+        break;
+    }
+
+    switch (colorimetry->primaries) {
+      case GST_VIDEO_COLOR_PRIMARIES_BT709:
+        priv->extsig.ColourPrimaries = 1; /* BT709 */
+        break;
+      case GST_VIDEO_COLOR_PRIMARIES_BT470M:
+        priv->extsig.ColourPrimaries = 4; /* BT470M */
+        break;
+      case GST_VIDEO_COLOR_PRIMARIES_BT470BG:
+        priv->extsig.ColourPrimaries = 5; /* 470BG */
+        break;
+      case GST_VIDEO_COLOR_PRIMARIES_SMPTE170M:
+        priv->extsig.ColourPrimaries = 6; /* SMPTE170M */
+        break;
+      case GST_VIDEO_COLOR_PRIMARIES_SMPTE240M:
+        priv->extsig.ColourPrimaries = 7; /* SMPTE240M */
+        break;
+      case GST_VIDEO_COLOR_PRIMARIES_FILM:
+        priv->extsig.ColourPrimaries = 8; /* Generic film */
+        break;
+      case GST_VIDEO_COLOR_PRIMARIES_BT2020:
+        if (MFX_FOURCC_P010 == encoder_format) {
+          priv->extsig.MatrixCoefficients = 9; /* BT2020 */
+          break;
+        }
+      default:
+        priv->extsig.ColourPrimaries = 2; /* Unspecified */
+        break;
+    }
+
+    switch (colorimetry->transfer) {
+      case GST_VIDEO_TRANSFER_BT709:
+        priv->extsig.TransferCharacteristics = 1; /* BT709 */
+        break;
+      case GST_VIDEO_TRANSFER_GAMMA22:
+        priv->extsig.TransferCharacteristics = 4; /* BT470M */
+        break;
+      case GST_VIDEO_TRANSFER_GAMMA28:
+        priv->extsig.TransferCharacteristics = 5; /* BT470BG */
+        break;
+      /* We skip #6 (SMPTE170M) as it seems to be the same as BT709 */
+      case GST_VIDEO_TRANSFER_SMPTE240M:
+        priv->extsig.TransferCharacteristics = 7; /* BT709 */
+        break;
+      case GST_VIDEO_TRANSFER_GAMMA10:
+        priv->extsig.TransferCharacteristics = 8; /* Linear */
+        break;
+      case GST_VIDEO_TRANSFER_LOG100:
+        priv->extsig.TransferCharacteristics = 9; /* Log (100:1) */
+        break;
+      case GST_VIDEO_TRANSFER_LOG316:
+        priv->extsig.TransferCharacteristics = 10; /* Log (316.23:1) */
+        break;
+      case GST_VIDEO_TRANSFER_BT2020_12:
+        if (MFX_FOURCC_P010 == encoder_format) {
+          priv->extsig.TransferCharacteristics = 16; /* SMPTE ST 2084 PQ */
+          break;
+        }
+      default:
+        priv->extsig.TransferCharacteristics = 2; /* Unspecified */
+        break;
+    }
+
+    switch (colorimetry->matrix) {
+      case GST_VIDEO_COLOR_MATRIX_BT709:
+        priv->extsig.MatrixCoefficients = 1; /* BT709 */
+        break;
+      case GST_VIDEO_COLOR_MATRIX_FCC:
+        priv->extsig.MatrixCoefficients = 4; /* FCC */
+        break;
+      case GST_VIDEO_COLOR_MATRIX_BT601:
+        priv->extsig.MatrixCoefficients = 5; /* BT470BG (seems to be the same as 601) */
+        break;
+      /* We skip #6 (SMPTE170M) as it seems to be the same as BT601 */
+      case GST_VIDEO_COLOR_MATRIX_SMPTE240M:
+        priv->extsig.MatrixCoefficients = 7; /* SMPTE240M */
+        break;
+      case GST_VIDEO_COLOR_MATRIX_BT2020:
+        if (MFX_FOURCC_P010 == encoder_format) {
+          priv->extsig.MatrixCoefficients = 9; /* BT2020 */
+          break;
+        }
+      default:
+        priv->extsig.MatrixCoefficients = 2; /* unspecified */
+        break;
+    }
+    priv->extparam_internal[priv->params.NumExtParam++] =
+        (mfxExtBuffer *) & priv->extsig;
   }
-  priv->extparam_internal[priv->params.NumExtParam++] =
-    (mfxExtBuffer *) & priv->extsig;
 }
 
 static void
@@ -541,6 +559,8 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
   }
   /* Encoder expects progressive frames as input */
   priv->params.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+  if (priv->params.NumExtParam)
+    priv->params.ExtParam = priv->extparam_internal;
 }
 
 static void
@@ -982,13 +1002,10 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
     priv->params.mfx.Quality = priv->jpeg_quality;
     priv->params.mfx.RestartInterval = 0;
   }
-
-  if (priv->profile.codec == MFX_CODEC_AVC)
-    gst_mfx_extsig_from_colorimetry (encoder,
-      &GST_VIDEO_INFO_COLORIMETRY (&priv->info));
-
-  if (priv->params.NumExtParam)
-    priv->params.ExtParam = priv->extparam_internal;
+  /* Write colorimetry information for H264 / HEVC bitstreams */
+  if (MFX_CODEC_AVC == priv->profile.codec
+      || MFX_CODEC_HEVC == priv->profile.codec)
+    priv->extsig.ColourDescriptionPresent = 1;
 }
 
 static gboolean
@@ -1125,6 +1142,10 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
   if (klass->load_plugin)
     if (!klass->load_plugin (encoder))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
+
+  /* Write colorimetry information to bitstream */
+  gst_mfx_encoder_extsig_from_colorimetry (encoder,
+      &GST_VIDEO_INFO_COLORIMETRY (&priv->info));
 
   gst_mfx_encoder_set_frame_info (encoder);
   orig_params = priv->params;
