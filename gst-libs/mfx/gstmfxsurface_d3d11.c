@@ -181,7 +181,7 @@ gst_mfx_surface_d3d11_map (GstMfxSurface * surface)
       break;
     case MFX_FOURCC_YUY2:
       priv->pitches[0] = ptr->Pitch = (mfxU16) locked_rect.RowPitch;
-      ptr->Y = (mfxU8 *) locked_rect.pData;
+      priv->planes[0] = ptr->Y = (mfxU8 *) locked_rect.pData;
       ptr->U = ptr->Y + 1;
       ptr->V = ptr->Y + 3;
       break;
