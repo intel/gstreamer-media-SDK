@@ -34,6 +34,7 @@ G_DECLARE_FINAL_TYPE (GstMfxEncoderH265, gst_mfx_encoder_h265, GST_MFX,
   GstMfxEncoderH265Class))
 #define GST_MFX_ENCODER_H265 (encoder) \
   ((GstMfxEncoderH265 *) (encoder))
+
 /**
  * GstMfxEncoderH265Prop:
  * @GST_MFX_ENCODER_H265_PROP_LA_DEPTH:

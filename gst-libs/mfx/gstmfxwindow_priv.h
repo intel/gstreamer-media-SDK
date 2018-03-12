@@ -34,6 +34,7 @@ G_BEGIN_DECLS
 #undef GST_MFX_WINDOW_ID
 #define GST_MFX_WINDOW_ID(window) \
   (GST_MFX_WINDOW_GET_PRIVATE (window)->handle)
+
 typedef struct _GstMfxWindowClass GstMfxWindowClass;
 typedef struct _GstMfxWindowPrivate GstMfxWindowPrivate;
 
@@ -53,7 +54,6 @@ struct _GstMfxWindowPrivate
   guint check_geometry;
 };
 
-
 /**
  * GstMfxWindow:
  *
@@ -66,7 +66,6 @@ struct _GstMfxWindow
 
   GstMfxWindowPrivate *priv;
 };
-
 
 /* GstMfxWindowClass hooks */
 typedef gboolean (*GstMfxWindowCreateFunc) (GstMfxWindow * window,
