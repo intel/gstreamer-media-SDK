@@ -307,10 +307,13 @@ gst_mfx_encoder_h265_load_plugin (GstMfxEncoder * base_encoder)
 #endif // MSDK_CHECK_VERSION
 
     encoder->plugin_uid = uids[i];
-    sts = MFXVideoUSER_Load(priv->session, encoder->plugin_uid, 1);
+    sts = MFXVideoUSER_Load (priv->session, encoder->plugin_uid, 1);
     if (MFX_ERR_NONE == sts) {
       if (encoder->plugin_uid == &MFX_PLUGINID_HEVCE_SW)
         priv->encoder_memtype_is_system = TRUE;
+      /* Writing colorimetry information is not suppored with non-HW plugin */
+      if (encoder->plugin_uid != &MFX_PLUGINID_HEVCE_HW)
+        priv->extsig.ColourDescriptionPresent = 0;
       return TRUE;
     }
   }
