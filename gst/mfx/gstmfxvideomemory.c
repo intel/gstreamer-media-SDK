@@ -208,6 +208,14 @@ gst_mfx_video_memory_free (GstMfxVideoMemory * mem)
   g_slice_free (GstMfxVideoMemory, mem);
 }
 
+void
+gst_mfx_video_memory_reset_surface (GstMfxVideoMemory * mem)
+{
+  gst_mfx_surface_replace (&mem->surface, NULL);
+  if (mem->meta)
+    gst_mfx_video_meta_set_surface (mem->meta, NULL);
+}
+
 static gpointer
 gst_mfx_video_memory_map (GstMfxVideoMemory * mem, gsize maxsize, guint flags)
 {
