@@ -82,8 +82,8 @@ void
 gst_mfx_decoder_skip_corrupted_frames (GstMfxDecoder * decoder);
 
 void
-gst_mfx_decoder_decide_output_memtype (GstMfxDecoder * decoder,
-    gboolean memtype_is_video);
+gst_mfx_decoder_set_output_memtype (GstMfxDecoder * decoder,
+    gboolean memtype_is_system);
 
 gboolean
 gst_mfx_decoder_reinit (GstMfxDecoder * decoder);

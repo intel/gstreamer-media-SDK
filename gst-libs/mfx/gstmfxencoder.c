@@ -522,7 +522,7 @@ gst_mfx_encoder_extsig_from_colorimetry (GstMfxEncoder * encoder,
 }
 
 static void
-gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
+gst_mfx_encoder_finalize_params (GstMfxEncoder * encoder)
 {
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encoder);
 
@@ -539,6 +539,7 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
     priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (priv->info.width);
     priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
     
+    /* Update input frame info if shared VPP may later be used */
     priv->frame_info = priv->params.mfx.FrameInfo;
     priv->frame_info.PicStruct =
       GST_VIDEO_INFO_IS_INTERLACED (&priv->info) ?
@@ -559,6 +560,10 @@ gst_mfx_encoder_set_frame_info (GstMfxEncoder * encoder)
   }
   /* Encoder expects progressive frames as input */
   priv->params.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
+
+  /* Write colorimetry information to bitstream */
+  gst_mfx_encoder_extsig_from_colorimetry (encoder,
+      &GST_VIDEO_INFO_COLORIMETRY (&priv->info));
   if (priv->params.NumExtParam)
     priv->params.ExtParam = priv->extparam_internal;
 }
@@ -1143,11 +1148,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
     if (!klass->load_plugin (encoder))
       return GST_MFX_ENCODER_STATUS_ERROR_OPERATION_FAILED;
 
-  /* Write colorimetry information to bitstream */
-  gst_mfx_encoder_extsig_from_colorimetry (encoder,
-      &GST_VIDEO_INFO_COLORIMETRY (&priv->info));
-
-  gst_mfx_encoder_set_frame_info (encoder);
+  gst_mfx_encoder_finalize_params (encoder);
   orig_params = priv->params;
 
   sts = MFXVideoENCODE_Query (priv->session, &orig_params, &priv->params);
