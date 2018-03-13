@@ -591,8 +591,8 @@ gst_mfxdec_handle_frame (GstVideoDecoder * vdec, GstVideoCodecFrame * frame)
         goto not_negotiated;
       /* Final check to determine if system or video memory should be used for
        * the output of the decoder */
-      gst_mfx_decoder_decide_output_memtype (mfxdec->decoder,
-          !GST_MFX_PLUGIN_BASE (mfxdec)->srcpad_caps_is_raw);
+      gst_mfx_decoder_set_output_memtype (mfxdec->decoder,
+          GST_MFX_PLUGIN_BASE (mfxdec)->srcpad_caps_is_raw);
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
       ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
       break;
