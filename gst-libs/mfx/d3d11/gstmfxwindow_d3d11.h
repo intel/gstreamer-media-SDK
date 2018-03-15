@@ -30,8 +30,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_MFX,
     WINDOW_D3D11, GstMfxWindow)
 #define GST_MFX_WINDOW_D3D11_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_WINDOW_D3D11, \
-  GstMfxWindowD3D11Class))
+    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_WINDOW_D3D11, \
+    GstMfxWindowD3D11Class))
 
 GstMfxWindow *
 gst_mfx_window_d3d11_new (GstMfxContext * context,

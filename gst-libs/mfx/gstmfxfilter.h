@@ -30,8 +30,6 @@ G_BEGIN_DECLS
 
 #define GST_TYPE_MFX_FILTER (gst_mfx_filter_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxFilter, gst_mfx_filter, GST_MFX, FILTER, GstObject)
-#define GST_MFX_FILTER(obj) \
-    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_FILTER, GstMfxFilter))
 
 typedef enum
 {

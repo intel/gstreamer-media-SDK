@@ -35,6 +35,7 @@
 # include <gst/gl/gstglfuncs.h>
 # include <gst/gl/gstglmemory.h>
 # include <gst/gl/gstglbufferpool.h>
+# include <gst/gl/gstglutils.h>
 # endif
 
 #endif // HAVE_GST_GL_LIBS

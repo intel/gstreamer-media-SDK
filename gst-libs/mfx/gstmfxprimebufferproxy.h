@@ -30,7 +30,6 @@ G_BEGIN_DECLS
 #define GST_TYPE_MFX_PRIME_BUFFER_PROXY (gst_mfx_prime_buffer_proxy_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy,
     GST_MFX, PRIME_BUFFER_PROXY, GstObject)
-#define GST_MFX_PRIME_BUFFER_PROXY(obj) ((GstMfxPrimeBufferProxy *)(obj))
 
 /**
  * GST_MFX_PRIME_BUFFER_PROXY_HANDLE:
@@ -39,9 +38,9 @@ G_DECLARE_FINAL_TYPE (GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy,
  * Macro that evaluates to the handle of the underlying VA buffer @buf
  */
 #define GST_MFX_PRIME_BUFFER_PROXY_HANDLE(buf) \
-  gst_mfx_prime_buffer_proxy_get_handle (GST_MFX_PRIME_BUFFER_PROXY (buf))
+    gst_mfx_prime_buffer_proxy_get_handle (GST_MFX_PRIME_BUFFER_PROXY (buf))
 #define GST_MFX_PRIME_BUFFER_PROXY_SIZE(buf) \
-  gst_mfx_prime_buffer_proxy_get_size (GST_MFX_PRIME_BUFFER_PROXY (buf))
+    gst_mfx_prime_buffer_proxy_get_size (GST_MFX_PRIME_BUFFER_PROXY (buf))
 
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 

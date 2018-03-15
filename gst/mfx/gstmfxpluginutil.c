@@ -367,10 +367,6 @@ gst_mfx_is_mfx_supported (mfxU16 * platform_code)
       GST_MFX_MIN_MSDK_VERSION_MAJOR }
   };
 
-#if MSDK_CHECK_VERSION(1,19)
-  mfxPlatform platform = { 0 };
-#endif // MSDK_CHECK_VERSION
-
 #ifdef WITH_D3D11_BACKEND
   impl |= MFX_IMPL_VIA_D3D11;
 #endif // WITH_D3D11_BACKEND
@@ -390,6 +386,7 @@ gst_mfx_is_mfx_supported (mfxU16 * platform_code)
   }
 
   if ((ver.Major == 1 && ver.Minor >= 19) || ver.Major > 1) {
+    mfxPlatform platform = { 0 };
 #ifdef WITH_LIBVA_BACKEND
     GstMfxDisplay *display = gst_mfx_display_new ();
     if (!display) {
@@ -411,9 +408,8 @@ gst_mfx_is_mfx_supported (mfxU16 * platform_code)
     gst_mfx_display_unref (display);
 #endif // WITH_LIBVA_BACKEND
   }
-#endif // MSDK_CHECK_VERSION
-
 cleanup:
+#endif // MSDK_CHECK_VERSION
   MFXClose (session);
   return TRUE;
 }

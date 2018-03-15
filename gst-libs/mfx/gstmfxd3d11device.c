@@ -21,6 +21,9 @@
 #include "sysdeps.h"
 #include "gstmfxd3d11device.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
+
 struct _GstMfxD3D11Device
 {
   GstObject parent_instance;
@@ -38,11 +41,10 @@ struct
   mfxIMPL impl;                 // actual implementation
   mfxU32 adapter_id;            // device adapter number
 } impl_types[] = {
-  {
-  MFX_IMPL_HARDWARE, 0}, {
-  MFX_IMPL_HARDWARE2, 1}, {
-  MFX_IMPL_HARDWARE3, 2}, {
-  MFX_IMPL_HARDWARE4, 3}
+  {MFX_IMPL_HARDWARE, 0},
+  {MFX_IMPL_HARDWARE2, 1},
+  {MFX_IMPL_HARDWARE3, 2},
+  {MFX_IMPL_HARDWARE4, 3}
 };
 
 static void
@@ -105,12 +107,12 @@ get_intel_device_adapter (GstMfxD3D11Device * device, mfxSession session)
   }
 
   hr = CreateDXGIFactory (&IID_IDXGIFactory2,
-      (void **) (&device->dxgi_factory));
+          (void **) (&device->dxgi_factory));
   if (FAILED (hr))
     return FALSE;
 
   hr = IDXGIFactory2_EnumAdapters (device->dxgi_factory, adapter_idx,
-      (IDXGIAdapter **) & device->dxgi_adapter);
+          (IDXGIAdapter **) & device->dxgi_adapter);
   if (FAILED (hr))
     return FALSE;
 
@@ -129,23 +131,18 @@ gst_mfx_d3d11_device_create (GstMfxD3D11Device * device, mfxSession session)
   };
   D3D_FEATURE_LEVEL feature_level_out;
   HRESULT hr = S_OK;
-#ifdef DEBUG
-  UINT dx_flags = D3D11_CREATE_DEVICE_DEBUG;
-#else
-  UINT dx_flags = 0;
-#endif
 
   if (!get_intel_device_adapter (device, session))
     return FALSE;
 
   hr = D3D11CreateDevice ((IDXGIAdapter *) device->dxgi_adapter,
-      D3D_DRIVER_TYPE_UNKNOWN,
-      NULL,
-      dx_flags,
-      feature_levels,
-      (sizeof (feature_levels) / sizeof (feature_levels[0])),
-      D3D11_SDK_VERSION,
-      &device->d3d11_device, &feature_level_out, &device->d3d11_context);
+          D3D_DRIVER_TYPE_UNKNOWN,
+          NULL,
+          0,
+          feature_levels,
+          (sizeof (feature_levels) / sizeof (feature_levels[0])),
+          D3D11_SDK_VERSION,
+          &device->d3d11_device, &feature_level_out, &device->d3d11_context);
   if (FAILED (hr))
     return FALSE;
 

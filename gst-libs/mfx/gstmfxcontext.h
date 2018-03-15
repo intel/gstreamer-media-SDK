@@ -32,7 +32,6 @@ G_BEGIN_DECLS
 #define GST_TYPE_MFX_CONTEXT (gst_mfx_context_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxContext, gst_mfx_context, GST_MFX, CONTEXT,
     GstObject)
-#define GST_MFX_CONTEXT(obj) ((GstMfxContext *) (obj))
 
 GstMfxContext *
 gst_mfx_context_new (mfxSession session);

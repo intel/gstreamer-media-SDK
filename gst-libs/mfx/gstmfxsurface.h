@@ -34,15 +34,15 @@ G_DECLARE_DERIVABLE_TYPE (GstMfxSurface, gst_mfx_surface, GST_MFX,
     SURFACE, GstObject)
 
 #define GST_MFX_SURFACE_FRAME_SURFACE(surface) \
-  gst_mfx_surface_get_frame_surface (surface)
+    gst_mfx_surface_get_frame_surface (surface)
 #define GST_MFX_SURFACE_ID(surface) \
-  gst_mfx_surface_get_id (surface)
+    gst_mfx_surface_get_id (surface)
 #define GST_MFX_SURFACE_FORMAT(surface) \
-  gst_mfx_surface_get_format (surface)
+    gst_mfx_surface_get_format (surface)
 #define GST_MFX_SURFACE_WIDTH(surface) \
-  gst_mfx_surface_get_width (surface)
+    gst_mfx_surface_get_width (surface)
 #define GST_MFX_SURFACE_HEIGHT(surface) \
-  gst_mfx_surface_get_height (surface)
+    gst_mfx_surface_get_height (surface)
 
 typedef struct _GstMfxSurface GstMfxSurface;
 typedef struct _GstMfxSurfacePool GstMfxSurfacePool;
