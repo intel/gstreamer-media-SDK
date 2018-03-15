@@ -33,7 +33,8 @@
 #define DEFAULT_QUANTIZER           21
 #define DEFAULT_ASYNC_DEPTH         4
 
-G_DEFINE_TYPE_WITH_PRIVATE (GstMfxEncoder, gst_mfx_encoder, GST_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_CODE (GstMfxEncoder, gst_mfx_encoder, GST_TYPE_OBJECT,
+    G_ADD_PRIVATE (GstMfxEncoder));
 
 /* Helper function to create a new encoder property object */
 static GstMfxEncoderPropData *
@@ -538,7 +539,7 @@ gst_mfx_encoder_finalize_params (GstMfxEncoder * encoder)
     priv->params.mfx.FrameInfo.AspectRatioH = priv->info.par_d;
     priv->params.mfx.FrameInfo.Width = GST_ROUND_UP_32 (priv->info.width);
     priv->params.mfx.FrameInfo.Height = GST_ROUND_UP_32 (priv->info.height);
-    
+
     /* Update input frame info if shared VPP may later be used */
     priv->frame_info = priv->params.mfx.FrameInfo;
     priv->frame_info.PicStruct =
@@ -666,10 +667,6 @@ gst_mfx_encoder_finalize (GObject * object)
 static void
 gst_mfx_encoder_init (GstMfxEncoder * encoder)
 {
-  GstMfxEncoderPrivate *const priv =
-      gst_mfx_encoder_get_instance_private (encoder);
-
-  encoder->priv = priv;
 }
 
 static void

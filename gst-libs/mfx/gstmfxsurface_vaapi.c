@@ -81,7 +81,7 @@ gst_mfx_surface_vaapi_allocate (GstMfxSurface * surface, GstMfxTask * task)
     sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY (vaapi_surface->display),
         gst_mfx_video_format_to_va_format (frame_info->FourCC),
         frame_info->Width, frame_info->Height,
-        &priv->surface_id, 1, &attrib, 1);
+        (VASurfaceID *) & priv->surface_id, 1, &attrib, 1);
     GST_MFX_DISPLAY_UNLOCK (vaapi_surface->display);
     if (!vaapi_check_status (sts, "vaCreateSurfaces ()"))
       return FALSE;
@@ -107,7 +107,7 @@ gst_mfx_surface_vaapi_release (GstMfxSurface * surface)
   if (!priv->task) {
     GST_MFX_DISPLAY_LOCK (vaapi_surface->display);
     vaDestroySurfaces (GST_MFX_DISPLAY_VADISPLAY (vaapi_surface->display),
-        &priv->surface_id, 1);
+        (VASurfaceID *) & priv->surface_id, 1);
     GST_MFX_DISPLAY_UNLOCK (vaapi_surface->display);
   }
 }
@@ -121,7 +121,7 @@ gst_mfx_surface_vaapi_map (GstMfxSurface * surface)
   guint i, num_planes;
   gboolean success = TRUE;
 
-  vaapi_surface->image = gst_mfx_surface_vaapi_derive_image (vaapi_surface);
+  vaapi_surface->image = gst_mfx_surface_vaapi_derive_image (surface);
   if (!vaapi_surface->image)
     return FALSE;
 
@@ -204,7 +204,7 @@ gst_mfx_surface_vaapi_new (GstMfxContext * context, const GstVideoInfo * info)
 
   return
       gst_mfx_surface_new_internal (GST_MFX_SURFACE (surface),
-      context, info, NULL);
+          context, info, NULL);
 }
 
 GstMfxSurface *
@@ -221,7 +221,7 @@ gst_mfx_surface_vaapi_new_from_task (GstMfxTask * task)
 
   return
       gst_mfx_surface_new_internal (GST_MFX_SURFACE (surface),
-      NULL, NULL, task);
+          NULL, NULL, task);
 }
 
 VaapiImage *

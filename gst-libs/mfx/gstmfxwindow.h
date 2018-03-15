@@ -30,7 +30,11 @@
 G_BEGIN_DECLS
 
 #define GST_TYPE_MFX_WINDOW (gst_mfx_window_get_type ())
-#define GST_MFX_WINDOW(obj) ((GstMfxWindow *)(obj))
+G_DECLARE_DERIVABLE_TYPE (GstMfxWindow, gst_mfx_window, GST_MFX,
+    WINDOW, GstObject)
+
+#define GST_MFX_WINDOW_ID(window) \
+    gst_mfx_window_get_handle (window)
 
 typedef struct _GstMfxWindow GstMfxWindow;
 

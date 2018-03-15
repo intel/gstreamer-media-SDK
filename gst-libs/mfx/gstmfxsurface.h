@@ -30,7 +30,9 @@
 G_BEGIN_DECLS
 
 #define GST_TYPE_MFX_SURFACE (gst_mfx_surface_get_type ())
-#define GST_MFX_SURFACE(obj) ((GstMfxSurface *) (obj))
+G_DECLARE_DERIVABLE_TYPE (GstMfxSurface, gst_mfx_surface, GST_MFX,
+    SURFACE, GstObject)
+
 #define GST_MFX_SURFACE_FRAME_SURFACE(surface) \
   gst_mfx_surface_get_frame_surface (surface)
 #define GST_MFX_SURFACE_ID(surface) \

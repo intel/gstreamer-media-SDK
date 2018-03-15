@@ -27,14 +27,13 @@
 
 G_BEGIN_DECLS
 
-#define GST_MFX_DISPLAY_CAST(display) \
-  ((GstMfxDisplay *) (display))
-#define GST_MFX_DISPLAY_GET_PRIVATE(display) \
-  (GST_MFX_DISPLAY (display)->priv)
 #define GST_MFX_DISPLAY_CLASS(klass) \
-  ((GstMfxDisplayClass *)(klass))
+    ((GstMfxDisplayClass *)(klass))
 #define GST_MFX_DISPLAY_GET_CLASS(obj) \
-  GST_MFX_DISPLAY_CLASS(GST_OBJECT_GET_CLASS (obj))
+    GST_MFX_DISPLAY_CLASS(GST_OBJECT_GET_CLASS (obj))
+#define GST_MFX_DISPLAY_GET_PRIVATE(obj) \
+    (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GST_TYPE_MFX_DISPLAY, \
+    GstMfxDisplayPrivate))
 
 typedef struct _GstMfxDisplayPrivate GstMfxDisplayPrivate;
 typedef struct _GstMfxDisplayClass GstMfxDisplayClass;
@@ -53,9 +52,8 @@ typedef void (*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
 * Returns the #display class type
 * This is an internal macro that does not do any run-time type check.
 */
-#undef  GST_MFX_DISPLAY_GET_CLASS_TYPE
 #define GST_MFX_DISPLAY_GET_CLASS_TYPE(display) \
-  (GST_MFX_DISPLAY_GET_CLASS (display)->display_type)
+    (GST_MFX_DISPLAY_GET_CLASS (display)->display_type)
 
 /**
 * GST_MFX_DISPLAY_HANDLE:
@@ -64,9 +62,8 @@ typedef void (*GstMfxDisplayGetSizeMFunc) (GstMfxDisplay * display,
 * Macro that evaluates to the native display of @display.
 * This is an internal macro that does not do any run-time type check.
 */
-#undef  GST_MFX_DISPLAY_HANDLE
 #define GST_MFX_DISPLAY_HANDLE(display) \
-  (GST_MFX_DISPLAY_GET_PRIVATE (display)->native_display)
+    (GST_MFX_DISPLAY_GET_PRIVATE (display)->native_display)
 
 
 struct _GstMfxDisplayPrivate
@@ -82,19 +79,6 @@ struct _GstMfxDisplayPrivate
   guint height_mm;
   guint par_n;
   guint par_d;
-};
-
-/**
- * GstMfxDisplay:
- *
- * Base class for VA displays.
- */
-struct _GstMfxDisplay
-{
-  /*< private > */
-  GstObject parent_instance;
-
-  GstMfxDisplayPrivate *priv;
 };
 
 /**

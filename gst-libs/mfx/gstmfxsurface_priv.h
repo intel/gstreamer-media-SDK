@@ -26,19 +26,18 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_SURFACE_CLASS(klass) \
-  ((GstMfxSurfaceClass *)(klass))
-#define GST_MFX_SURFACE_GET_PRIVATE(surface) \
-  (GST_MFX_SURFACE (surface)->priv)
+    ((GstMfxSurfaceClass *)(klass))
 #define GST_MFX_SURFACE_GET_CLASS(obj) \
-  GST_MFX_SURFACE_CLASS(GST_OBJECT_GET_CLASS(obj))
+    GST_MFX_SURFACE_CLASS(GST_OBJECT_GET_CLASS(obj))
+#define GST_MFX_SURFACE_GET_PRIVATE(obj) \
+    (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GST_TYPE_MFX_SURFACE, \
+    GstMfxSurfacePrivate))
 
 typedef struct _GstMfxSurfaceClass GstMfxSurfaceClass;
 typedef struct _GstMfxSurfacePrivate GstMfxSurfacePrivate;
 
 struct _GstMfxSurfacePrivate
 {
-  GstMfxSurface *parent;
-
   GstMfxContext *context;
   GstMfxTask *task;
   GstMfxMemoryId mem_id;
@@ -55,14 +54,6 @@ struct _GstMfxSurfacePrivate
   guint16 pitches[3];
   gboolean mapped;
   gboolean has_video_memory;
-};
-
-struct _GstMfxSurface
-{
-  /*< private > */
-  GstObject parent_instance;
-
-  GstMfxSurfacePrivate *priv;
 };
 
 typedef gboolean (*GstMfxSurfaceAllocateFunc) (GstMfxSurface * surface, GstMfxTask * task);

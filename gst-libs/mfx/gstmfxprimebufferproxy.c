@@ -47,7 +47,7 @@ G_DEFINE_TYPE (GstMfxPrimeBufferProxy,
     gst_mfx_prime_buffer_proxy, GST_TYPE_OBJECT);
 
 typedef VAStatus (*vaExtGetSurfaceHandle) (VADisplay dpy,
-    VASurfaceID * surface, int *prime_fd);
+    VASurfaceID * surface, int * prime_fd);
 
 static vaExtGetSurfaceHandle g_va_get_surface_handle;
 
@@ -90,7 +90,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy,
     GST_MFX_DISPLAY_LOCK (proxy->display);
     va_status =
         g_va_get_surface_handle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
-        &surf, &proxy->fd);
+            &surf, (int *) & proxy->fd);
     GST_MFX_DISPLAY_UNLOCK (proxy->display);
     if (!vaapi_check_status (va_status, "vpgExtGetSurfaceHandle ()"))
       return FALSE;
@@ -103,7 +103,7 @@ gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy,
     GST_MFX_DISPLAY_LOCK (proxy->display);
     va_status =
         vaAcquireBufferHandle (GST_MFX_DISPLAY_VADISPLAY (proxy->display),
-        va_img.buf, &proxy->buf_info);
+            va_img.buf, &proxy->buf_info);
     GST_MFX_DISPLAY_UNLOCK (proxy->display);
     if (!vaapi_check_status (va_status, "vaAcquireBufferHandle ()"))
       return FALSE;

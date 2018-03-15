@@ -29,9 +29,10 @@
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_MFX_ENCODER                  (gst_mfx_encoder_get_type ())
-#define GST_MFX_ENCODER(obj) \
-    (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_MFX_ENCODER, GstMfxEncoder))
+#define GST_TYPE_MFX_ENCODER (gst_mfx_encoder_get_type ())
+G_DECLARE_DERIVABLE_TYPE (GstMfxEncoder, gst_mfx_encoder, GST_MFX,
+    ENCODER, GstObject)
+
 typedef struct _GstMfxEncoder GstMfxEncoder;
 
 typedef enum
@@ -114,15 +115,20 @@ typedef struct
   GParamSpec *const pspec;
 } GstMfxEncoderPropInfo;
 
-GType gst_mfx_encoder_preset_get_type (void);
+GType
+gst_mfx_encoder_preset_get_type (void);
 
-GType gst_mfx_encoder_trellis_get_type (void);
+GType
+gst_mfx_encoder_trellis_get_type (void);
 
-GType gst_mfx_encoder_lookahead_ds_get_type (void);
+GType
+gst_mfx_encoder_lookahead_ds_get_type (void);
 
-GstMfxEncoder *gst_mfx_encoder_ref (GstMfxEncoder * encoder);
+GstMfxEncoder *
+gst_mfx_encoder_ref (GstMfxEncoder * encoder);
 
-void gst_mfx_encoder_unref (GstMfxEncoder * encoder);
+void
+gst_mfx_encoder_unref (GstMfxEncoder * encoder);
 
 void
 gst_mfx_encoder_replace (GstMfxEncoder ** old_encoder_ptr,
@@ -175,7 +181,7 @@ GstMfxEncoderStatus
 gst_mfx_encoder_flush (GstMfxEncoder * encoder, GstVideoCodecFrame ** frame);
 
 GType
-gst_mfx_encoder_get_type (void) G_GNUC_CONST;
+gst_mfx_encoder_get_type (void);
 
 G_END_DECLS
 #endif /* GST_MFX_ENCODER_H */

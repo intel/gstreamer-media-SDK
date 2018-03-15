@@ -729,7 +729,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame)
       goto end;
   }
 
-  while (input_frame = g_queue_pop_head (&decoder->input_frames)) {
+  while (!!(input_frame = g_queue_pop_head (&decoder->input_frames))) {
     if (!gst_buffer_map (input_frame->input_buffer, &minfo, GST_MAP_READ)) {
       GST_ERROR ("Failed to map input buffer");
       ret = GST_MFX_DECODER_STATUS_ERROR_UNKNOWN;
