@@ -26,20 +26,22 @@
 #include "video-format.h"
 
 #ifdef HIGH_DPI_OS_SUPPORT
-#include <ShellScalingApi.h>
+# include <ShellScalingApi.h>
 #endif
 
 #ifdef COLORSPACE_DXGI_SUPPORT
-#include <d3d11_1.h>
+# include <d3d11_1.h>
 #ifdef HDR_RENDERING_DXGI_SUPPORT
-#include <dxgi1_6.h>
+# include <dxgi1_6.h>
 #else
-#include <dxgi1_4.h>
+# include <dxgi1_4.h>
 #endif
 #endif //COLORSPACE_DXGI_SUPPORT
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
+
+G_DEFINE_TYPE (GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_TYPE_MFX_WINDOW);
 
 #ifdef COLORSPACE_DXGI_SUPPORT
 static DXGI_COLOR_SPACE_TYPE

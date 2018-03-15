@@ -29,7 +29,6 @@ G_BEGIN_DECLS
 #define GST_TYPE_MFX_SURFACE_POOL (gst_mfx_surface_pool_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxSurfacePool, gst_mfx_surface_pool, GST_MFX,
     SURFACE_POOL, GstObject)
-#define GST_MFX_SURFACE_POOL(obj) ((GstMfxSurfacePool *)(obj))
 
 GstMfxSurfacePool *
 gst_mfx_surface_pool_new (GstMfxContext * context,

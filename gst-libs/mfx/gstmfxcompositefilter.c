@@ -38,6 +38,8 @@
 #include "gstmfxsurfacepool.h"
 #include "gstmfxallocator.h"
 
+#define DEBUG 1
+#include "gstmfxdebug.h"
 
 struct _GstMfxCompositeFilter
 {

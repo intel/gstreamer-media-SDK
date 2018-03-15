@@ -1,3 +1,27 @@
+/*
+ *  Copyright (C) 2010-2011 Splitted-Desktop Systems
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@splitted-desktop.com>
+ *  Copyright (C) 2012-2014 Intel Corporation
+ *    Author: Gwenole Beauchesne <gwenole.beauchesne@intel.com>
+ *  Copyright (C) 2016 Intel Corporation
+ *    Author: Ishmael Visayana Sameen <ishmael.visayana.sameen@intel.com>
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ *  Boston, MA 02110-1301 USA
+ */
+
 #ifndef GST_MFX_VALUE_H
 #define GST_MFX_VALUE_H
 
@@ -85,17 +109,17 @@ GType gst_mfx_frc_algorithm_get_type (void);
  * Return value: the number of bits set in @x
  */
 #define GST_MFX_POPCOUNT32(x) \
-  GST_MFX_POPCOUNT32_0(x)
+    GST_MFX_POPCOUNT32_0(x)
 #define GST_MFX_POPCOUNT32_0(x) \
-  GST_MFX_POPCOUNT32_1((x) - (((x) >> 1) & 0x55555555))
+    GST_MFX_POPCOUNT32_1((x) - (((x) >> 1) & 0x55555555))
 #define GST_MFX_POPCOUNT32_1(x) \
-  GST_MFX_POPCOUNT32_2(((x) & 0x33333333) + (((x) >> 2) & 0x33333333))
+    GST_MFX_POPCOUNT32_2(((x) & 0x33333333) + (((x) >> 2) & 0x33333333))
 #define GST_MFX_POPCOUNT32_2(x) \
-  GST_MFX_POPCOUNT32_3((x) + ((x) >> 4))
+    GST_MFX_POPCOUNT32_3((x) + ((x) >> 4))
 #define GST_MFX_POPCOUNT32_3(x) \
-  GST_MFX_POPCOUNT32_4((x) & 0x0f0f0f0f)
+    GST_MFX_POPCOUNT32_4((x) & 0x0f0f0f0f)
 #define GST_MFX_POPCOUNT32_4(x) \
-  (((x) * 0x01010101) >> 24)
+    (((x) * 0x01010101) >> 24)
 
 /* --- GstMfxEnumSubset --- */
 
@@ -127,18 +151,18 @@ gst_mfx_type_define_enum_subset_from_mask (GstMfxEnumSubset * subset,
     guint32 mask);
 
 #define GST_MFX_TYPE_DEFINE_ENUM_SUBSET_FROM_MASK(NAME, name, TYPE, MASK) \
-  static GType                                                            \
-  G_PASTE(name,_get_type)(void)                                           \
-{                                                                       	\
-  static GEnumValue enum_values[GST_MFX_POPCOUNT32(MASK) + 1];      			\
-  static GstMfxEnumSubset subset = {                                			\
-  .type_name = G_STRINGIFY(NAME),                                 				\
-  .values = enum_values,                                          				\
-  .num_values = G_N_ELEMENTS(enum_values),                        				\
-};                                                                  			\
-  if (g_once_init_enter(&subset.parent_type))                         		\
-  g_once_init_leave(&subset.parent_type, TYPE);                   				\
-  return gst_mfx_type_define_enum_subset_from_mask(&subset, MASK);  			\
+    static GType                                                          \
+    G_PASTE(name,_get_type)(void)                                         \
+{                                                                         \
+  static GEnumValue enum_values[GST_MFX_POPCOUNT32(MASK) + 1];            \
+  static GstMfxEnumSubset subset = {                                      \
+    .type_name = G_STRINGIFY(NAME),                                       \
+    .values = enum_values,                                                \
+    .num_values = G_N_ELEMENTS(enum_values),                              \
+  };                                                                      \
+  if (g_once_init_enter(&subset.parent_type))                             \
+    g_once_init_leave(&subset.parent_type, TYPE);                         \
+  return gst_mfx_type_define_enum_subset_from_mask(&subset, MASK);        \
 }
 
 G_END_DECLS

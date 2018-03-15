@@ -29,7 +29,7 @@ G_BEGIN_DECLS
 
 #define GST_TYPE_MFX_TASK (gst_mfx_task_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxTask, gst_mfx_task, GST_MFX, TASK, GstObject)
-#define GST_MFX_TASK(obj) ((GstMfxTask *) (obj))
+
 #define GST_MFX_TASK_SESSION(task) gst_mfx_task_get_session (task)
 #define GST_MFX_TASK_CONTEXT(task) gst_mfx_task_get_context (task)
 

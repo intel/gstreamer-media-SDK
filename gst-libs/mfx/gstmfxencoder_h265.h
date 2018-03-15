@@ -30,10 +30,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GstMfxEncoderH265, gst_mfx_encoder_h265, GST_MFX,
     ENCODER_H265, GstMfxEncoder)
 #define GST_MFX_ENCODER_H265_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_H265, \
-  GstMfxEncoderH265Class))
-#define GST_MFX_ENCODER_H265 (encoder) \
-  ((GstMfxEncoderH265 *) (encoder))
+    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_H265, \
+    GstMfxEncoderH265Class))
 
 /**
  * GstMfxEncoderH265Prop:

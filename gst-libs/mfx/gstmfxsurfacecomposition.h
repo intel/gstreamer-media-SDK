@@ -31,7 +31,6 @@ G_BEGIN_DECLS
 #define GST_TYPE_MFX_SURFACE_COMPOSITION (gst_mfx_surface_composition_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxSurfaceComposition, gst_mfx_surface_composition,
     GST_MFX, SURFACE_COMPOSITION, GstObject)
-#define GST_MFX_SURFACE_COMPOSITION(obj) ((GstMfxSurfaceComposition *)(obj))
      
 typedef struct _GstMfxSubpicture GstMfxSubpicture;
 struct _GstMfxSubpicture

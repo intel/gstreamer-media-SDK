@@ -28,7 +28,6 @@ G_BEGIN_DECLS
 #define GST_TYPE_MFX_D3D11_DEVICE (gst_mfx_d3d11_device_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxD3D11Device, gst_mfx_d3d11_device, GST_MFX,
     D3D11_DEVICE, GstObject)
-#define GST_MFX_DEVICE(obj) ((GstMfxD3D11Device *) (obj))
 
 typedef struct _GstMfxD3D11Device GstMfxD3D11Device;
 

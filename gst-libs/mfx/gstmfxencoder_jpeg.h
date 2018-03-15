@@ -29,11 +29,9 @@ G_BEGIN_DECLS
 #define GST_TYPE_MFX_ENCODER_JPEG (gst_mfx_encoder_jpeg_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxEncoderJpeg, gst_mfx_encoder_jpeg, GST_MFX,
     ENCODER_JPEG, GstMfxEncoder)
-#define GST_MFX_ENCODER_JPEG(encoder) \
-  ((GstMfxEncoderJpeg *) (encoder))
 #define GST_MFX_ENCODER_JPEG_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_JPEG, \
-  GstMfxEncoderJpegClass))
+    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_JPEG, \
+    GstMfxEncoderJpegClass))
 
 typedef enum
 {

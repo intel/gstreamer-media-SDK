@@ -39,14 +39,15 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_IS_WINDOW_D3D11(window) \
-  ((window) != NULL && \
-  GST_MFX_WINDOW_TYPE (window) == GST_MFX_WINDOW_TYPE_D3D11)
+    ((window) != NULL && \
+    GST_MFX_WINDOW_TYPE (window) == GST_MFX_WINDOW_TYPE_D3D11)
 #define GST_MFX_WINDOW_D3D11_CAST(window) \
-  ((GstMfxWindowD3D11 *)(window))
+    ((GstMfxWindowD3D11 *)(window))
 #define GST_MFX_WINDOW_D3D11_GET_PRIVATE(window) \
-  (&GST_MFX_WINDOW_D3D11_CAST(window)->priv)
+    (&GST_MFX_WINDOW_D3D11_CAST(window)->priv)
 
 typedef struct _GstMfxWindowD3D11Private GstMfxWindowD3D11Private;
+
 struct _GstMfxWindowD3D11Private
 {
   GstMfxD3D11Device *device;
@@ -80,8 +81,6 @@ struct _GstMfxWindowD3D11
 
   GstMfxWindowD3D11Private priv;
 };
-
-G_DEFINE_TYPE (GstMfxWindowD3D11, gst_mfx_window_d3d11, GST_TYPE_MFX_WINDOW);
 
 /**
 * GstMfxWindowD3D11Class:

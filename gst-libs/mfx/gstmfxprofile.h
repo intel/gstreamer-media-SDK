@@ -27,6 +27,7 @@
 G_BEGIN_DECLS
 
 typedef struct _GstMfxProfile GstMfxProfile;
+
 struct _GstMfxProfile
 {
   mfxU32 codec;

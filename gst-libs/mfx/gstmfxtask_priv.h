@@ -29,9 +29,9 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_TASK_CAST(task) \
-  ((GstMfxTask *)(task))
+    ((GstMfxTask *)(task))
 #define GST_MFX_TASK_GET_PRIVATE(task) \
-  (&GST_MFX_TASK_CAST(task)->priv)
+    (&GST_MFX_TASK_CAST(task)->priv)
 
 typedef struct _GstMfxTaskPrivate GstMfxTaskPrivate;
 typedef struct _ResponseData ResponseData;

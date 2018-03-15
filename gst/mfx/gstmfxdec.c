@@ -807,9 +807,9 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
     (GInstanceInitFunc) gst_mfxdec_init,
   };
   gboolean should_register;
-  gboolean has_hevc_main10 = FALSE;
 
 #if MSDK_CHECK_VERSION(1,19)
+  gboolean has_hevc_main10 = FALSE;
 #ifdef WITH_D3D11_BACKEND
   /* Assume any platform newer than SKL have the same SKL codec support */
   if (platform > MFX_PLATFORM_SKYLAKE)

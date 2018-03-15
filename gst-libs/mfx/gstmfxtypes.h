@@ -29,6 +29,7 @@
 #include <mfxvideo.h>
 
 G_BEGIN_DECLS
+
 /**
  * GstMfxID:
  *
@@ -131,7 +132,7 @@ typedef enum
 
 /* Define a mask for GstVaapiRateControl */
 #define GST_MFX_RATECONTROL_MASK(RC) \
-  (1U << G_PASTE(GST_MFX_RATECONTROL_,RC))
+    (1U << G_PASTE(GST_MFX_RATECONTROL_,RC))
 
 G_END_DECLS
 #endif /* GST_MFX_TYPES_H */

@@ -29,7 +29,6 @@ G_BEGIN_DECLS
 
 #define GST_TYPE_VAAPI_IMAGE (vaapi_image_get_type ())
 G_DECLARE_FINAL_TYPE (VaapiImage, vaapi_image, VAAPI, IMAGE, GstObject)
-#define VAAPI_IMAGE(obj) ((VaapiImage *) (obj))
 
 VaapiImage *
 vaapi_image_new (GstMfxDisplay * display,
