@@ -480,11 +480,6 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
   guint size, min, max;
   gboolean update_pool = FALSE;
   gboolean has_video_meta = FALSE;
-#ifdef HAVE_GST_GL_LIBS
-  guint idx;
-  GstGLContext *gl_context = NULL;
-  GstStructure *params = NULL;
-#endif
 
   gst_query_parse_allocation (query, &caps, NULL);
 
@@ -496,8 +491,12 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
 
   /* Kept in case the GL context could not be retrieved via
    * gst_gl_query_local_gl_context() which was only introduced since 1.11.2 */
-#if !GST_CHECK_VERSION(1,11,2)
 #ifdef HAVE_GST_GL_LIBS
+#if !GST_CHECK_VERSION(1,11,2)
+  GstGLContext *gl_context = NULL;
+  GstStructure *params = NULL;
+  guint idx;
+
   if (!plugin->gl_context && gst_query_find_allocation_meta (query,
           GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, &idx)) {
     gst_query_parse_nth_allocation_meta (query, idx, &params);
@@ -529,8 +528,8 @@ gst_mfx_plugin_base_decide_allocation (GstMfxPluginBase * plugin,
       }
     }
   }
-#endif // HAVE_GST_GL_LIBS
 #endif //GST_CHECK_VERSION
+#endif // HAVE_GST_GL_LIBS
 
   if (!plugin->can_export_gl_textures)
     plugin->srcpad_caps_is_raw = !gst_caps_has_mfx_surface (caps);

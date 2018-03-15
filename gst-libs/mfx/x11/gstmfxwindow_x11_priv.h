@@ -39,7 +39,7 @@ G_BEGIN_DECLS
 typedef struct _GstMfxWindowX11Private GstMfxWindowX11Private;
 struct _GstMfxWindowX11Private
 {
-  GstMfxDisplayX11 *display;
+  GstMfxDisplay *display;
   GstMfxSurface *mapped_surface;
 
   Atom atom_NET_WM_STATE;

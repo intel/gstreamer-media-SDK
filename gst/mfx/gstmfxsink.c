@@ -138,7 +138,7 @@ gst_mfxsink_x11_handle_events (GstMfxSink * sink)
 
   if (sink->window) {
     Display *const x11_dpy =
-        gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11 (sink->display));
+        gst_mfx_display_x11_get_display (sink->display);
     Window x11_win = GST_MFX_WINDOW_ID (sink->window);
 
     /* Track MousePointer interaction */
@@ -286,7 +286,6 @@ static gboolean
 configure_notify_event_pending (GstMfxSink * sink, Window window,
     guint width, guint height)
 {
-  GstMfxDisplayX11 *const x11_display = GST_MFX_DISPLAY_X11 (sink->display);
   ConfigureNotifyEventPendingArgs args;
   XEvent xev;
 
@@ -296,7 +295,7 @@ configure_notify_event_pending (GstMfxSink * sink, Window window,
   args.match = FALSE;
 
   /* XXX: don't use XPeekIfEvent() because it might block */
-  XCheckIfEvent (gst_mfx_display_x11_get_display (x11_display),
+  XCheckIfEvent (gst_mfx_display_x11_get_display (sink->display),
       &xev, configure_notify_event_pending_cb, (XPointer) & args);
   return args.match;
 }
@@ -325,9 +324,8 @@ gst_mfxsink_x11_create_window_from_handle (GstMfxSink * sink, guintptr window)
   XID xid = window;
 
   gst_mfx_display_lock (sink->display);
-  XGetGeometry (gst_mfx_display_x11_get_display (GST_MFX_DISPLAY_X11
-          (sink->display)), xid, &rootwin, &x, &y, &width, &height,
-      &border_width, &depth);
+  XGetGeometry (gst_mfx_display_x11_get_display (sink->display), xid, &rootwin,
+      &x, &y, &width, &height, &border_width, &depth);
   gst_mfx_display_unlock (sink->display);
 
   if ((width != sink->window_width || height != sink->window_height) &&
@@ -949,7 +947,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
     goto no_surface;
 
   GST_DEBUG ("render surface %" GST_MFX_ID_FORMAT,
-      GST_MFX_SURFACE_ID (surface));
+      GST_MFX_ID_ARGS (GST_MFX_SURFACE_ID (surface)));
 
   surface_rect = (GstMfxRectangle *)
       gst_mfx_surface_get_crop_rect (surface);

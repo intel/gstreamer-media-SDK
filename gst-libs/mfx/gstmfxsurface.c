@@ -28,13 +28,13 @@
 
 GST_DEBUG_CATEGORY (gst_debug_mfx);
 
-G_DEFINE_TYPE_WITH_PRIVATE (GstMfxSurface, gst_mfx_surface, GST_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_CODE (GstMfxSurface, gst_mfx_surface, GST_TYPE_OBJECT,
+    G_ADD_PRIVATE (GstMfxSurface));
 
 static gboolean
 gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
-
   mfxFrameData *ptr = &priv->surface.Data;
   mfxFrameInfo *info = &priv->surface.Info;
   guint frame_size;
@@ -153,8 +153,8 @@ static void
 gst_mfx_surface_derive_mfx_frame_info (GstMfxSurface * surface,
     const GstVideoInfo * info)
 {
-  mfxFrameInfo *frame_info =
-      &(GST_MFX_SURFACE_GET_PRIVATE (surface)->surface.Info);
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  mfxFrameInfo *frame_info = &priv->surface.Info;
 
   frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
   frame_info->FourCC =
@@ -184,7 +184,6 @@ static void
 gst_mfx_surface_init_properties (GstMfxSurface * surface)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
-
   mfxFrameInfo *info = &priv->surface.Info;
 
   priv->width = info->Width;
@@ -199,11 +198,9 @@ gst_mfx_surface_init_properties (GstMfxSurface * surface)
 static void
 gst_mfx_surface_init (GstMfxSurface * surface)
 {
-  GstMfxSurfacePrivate *const priv =
-      gst_mfx_surface_get_instance_private (surface);
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
 
   priv->surface_id = GST_MFX_ID_INVALID;
-  surface->priv = priv;
 }
 
 static gboolean
@@ -298,8 +295,8 @@ GstMfxSurface *
 gst_mfx_surface_new_internal (GstMfxSurface * surface, GstMfxContext * context,
     const GstVideoInfo * info, GstMfxTask * task)
 {
-  GST_MFX_SURFACE_GET_PRIVATE (surface)->context = context && !task ?
-      gst_mfx_context_ref (context) : NULL;
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  priv->context = context && !task ? gst_mfx_context_ref (context) : NULL;
   if (!gst_mfx_surface_create (surface, info, task))
     goto error;
   return surface;
@@ -446,6 +443,8 @@ GstMfxContext *
 gst_mfx_surface_get_context (GstMfxSurface * surface)
 {
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+
+  g_return_val_if_fail (surface != NULL, FALSE);
 
   return priv->context ? gst_mfx_context_ref (priv->context) : NULL;
 }

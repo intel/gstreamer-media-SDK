@@ -26,23 +26,18 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_WINDOW_CLASS(klass) \
-  ((GstMfxWindowClass *)(klass))
-#define GST_MFX_WINDOW_GET_PRIVATE(window) \
-  (GST_MFX_WINDOW (window)->priv)
+    ((GstMfxWindowClass *)(klass))
 #define GST_MFX_WINDOW_GET_CLASS(obj) \
-  GST_MFX_WINDOW_CLASS(GST_OBJECT_GET_CLASS(obj))
-#undef GST_MFX_WINDOW_ID
-#define GST_MFX_WINDOW_ID(window) \
-  (GST_MFX_WINDOW_GET_PRIVATE (window)->handle)
+    GST_MFX_WINDOW_CLASS(GST_OBJECT_GET_CLASS(obj))
+#define GST_MFX_WINDOW_GET_PRIVATE(obj) \
+    (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GST_TYPE_MFX_WINDOW, \
+    GstMfxWindowPrivate))
 
 typedef struct _GstMfxWindowClass GstMfxWindowClass;
 typedef struct _GstMfxWindowPrivate GstMfxWindowPrivate;
 
 struct _GstMfxWindowPrivate
 {
-  /*< private > */
-  GstMfxWindow *parent;
-
   GstMfxContext *context;
   guintptr handle;
 
@@ -52,19 +47,6 @@ struct _GstMfxWindowPrivate
   guint use_foreign_window;
   guint is_fullscreen;
   guint check_geometry;
-};
-
-/**
- * GstMfxWindow:
- *
- * Base class for system-dependent windows.
- */
-struct _GstMfxWindow
-{
-  /*< private > */
-  GstObject parent_instance;
-
-  GstMfxWindowPrivate *priv;
 };
 
 /* GstMfxWindowClass hooks */

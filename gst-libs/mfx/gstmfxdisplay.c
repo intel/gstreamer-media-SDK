@@ -264,8 +264,6 @@ gst_mfx_display_init (GstMfxDisplay * display)
   priv->par_d = 1;
 
   g_rec_mutex_init (&priv->mutex);
-
-  display->priv = priv;
 }
 
 static void

@@ -34,13 +34,14 @@
 G_BEGIN_DECLS
 
 #define GST_MFX_ENCODER_CAST(encoder) \
-  ((GstMfxEncoder *)(encoder))
-#define GST_MFX_ENCODER_GET_PRIVATE(encoder) \
-  (GST_MFX_ENCODER_CAST (encoder)->priv)
+    ((GstMfxEncoder *)(encoder))
 #define GST_MFX_ENCODER_CLASS(klass) \
-  ((GstMfxEncoderClass *)(klass))
+    ((GstMfxEncoderClass *)(klass))
 #define GST_MFX_ENCODER_GET_CLASS(obj) \
-  GST_MFX_ENCODER_CLASS(GST_OBJECT_GET_CLASS(obj))
+    GST_MFX_ENCODER_CLASS(GST_OBJECT_GET_CLASS(obj))
+#define GST_MFX_ENCODER_GET_PRIVATE(obj) \
+    (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GST_TYPE_MFX_ENCODER, \
+    GstMfxEncoderPrivate))
 
 /**
  * GST_MFX_ENCODER_VIDEO_INFO:
@@ -138,18 +139,16 @@ typedef struct
     return NULL;                                                      \
 } while (0)
 
-GPtrArray *gst_mfx_encoder_properties_append (GPtrArray * props, gint prop_id,
-    GParamSpec * pspec);
+GPtrArray *
+gst_mfx_encoder_properties_append (GPtrArray * props, gint prop_id, GParamSpec * pspec);
 
-GPtrArray *gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass *
-    klass);
-
+GPtrArray *
+gst_mfx_encoder_properties_get_default (const GstMfxEncoderClass * klass);
 
 typedef struct _GstMfxEncoderPrivate GstMfxEncoderPrivate;
 
 struct _GstMfxEncoderPrivate
 {
-  GstMfxEncoder *parent;
   GPtrArray *properties;
   GstMfxProfile profile;
 
@@ -212,20 +211,6 @@ struct _GstMfxEncoderPrivate
   mfxU16 look_ahead_downsampling;
   mfxU16 trellis;
 };
-
-/**
-* GstMfxEncoder:
-*
-* Base class for MFX encoders.
-*/
-struct _GstMfxEncoder
-{
-  /*< private > */
-  GstObject parent_instance;
-
-  GstMfxEncoderPrivate *priv;
-};
-
 
 struct _GstMfxEncoderClassData
 {

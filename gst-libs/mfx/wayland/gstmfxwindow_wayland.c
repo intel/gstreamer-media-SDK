@@ -84,7 +84,7 @@ frame_state_free (FrameState * frame)
 
 struct _GstMfxWindowWaylandPrivate
 {
-  GstMfxDisplayWayland *display;
+  GstMfxDisplay *display;
 
   struct wl_shell_surface *shell_surface;
   struct wl_surface *surface;

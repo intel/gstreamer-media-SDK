@@ -30,7 +30,8 @@
 G_BEGIN_DECLS
 
 #define GST_TYPE_MFX_DISPLAY (gst_mfx_display_get_type ())
-#define GST_MFX_DISPLAY(obj) ((GstMfxDisplay *)(obj))
+G_DECLARE_DERIVABLE_TYPE (GstMfxDisplay, gst_mfx_display, GST_MFX,
+    DISPLAY, GstObject)
 
 /**
  * GST_MFX_DISPLAY_TYPE:
