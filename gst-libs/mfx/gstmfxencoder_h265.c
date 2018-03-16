@@ -423,6 +423,10 @@ gst_mfx_encoder_h265_finalize (GObject * object)
   GstMfxEncoderH265 *const encoder = GST_MFX_ENCODER_H265_CAST (object);
   GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (base_encoder);
 
+  /* MFXVideoUSER_UnLoad() invokes the external frame allocator, so
+   * make sure frame allocator points to the right task
+   * to free up all internally allocated surfaces */
+  gst_mfx_task_aggregator_set_current_task (priv->aggregator, priv->encode);
   MFXVideoUSER_UnLoad (priv->session, encoder->plugin_uid);
 
   G_OBJECT_CLASS (gst_mfx_encoder_h265_parent_class)->finalize (object);
