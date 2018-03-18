@@ -64,13 +64,5 @@ struct _GstMfxWindowX11
   GstMfxWindowX11Private priv;
 };
 
-G_DEFINE_TYPE (GstMfxWindowX11, gst_mfx_window_x11, GST_TYPE_MFX_WINDOW);
-
-struct _GstMfxWindowX11Class
-{
-  /*< private > */
-  GstMfxWindowClass parent_class;
-};
-
 G_END_DECLS
 #endif /* GST_MFX_WINDOW_X11_PRIV_H */

@@ -46,6 +46,8 @@
 #define _NET_WM_STATE_ADD       1       /* add/set property      */
 #define _NET_WM_STATE_TOGGLE    2       /* toggle property       */
 
+G_DEFINE_TYPE (GstMfxWindowX11, gst_mfx_window_x11, GST_TYPE_MFX_WINDOW);
+
 static void
 send_wmspec_change_state (GstMfxWindow * window, Atom state, gboolean add)
 {
