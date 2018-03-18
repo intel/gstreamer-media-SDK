@@ -29,9 +29,6 @@ G_BEGIN_DECLS
 #define GST_TYPE_MFX_ENCODER_H265 (gst_mfx_encoder_h265_get_type ())
 G_DECLARE_FINAL_TYPE (GstMfxEncoderH265, gst_mfx_encoder_h265, GST_MFX,
     ENCODER_H265, GstMfxEncoder)
-#define GST_MFX_ENCODER_H265_CLASS(klass) \
-    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_MFX_ENCODER_H265, \
-    GstMfxEncoderH265Class))
 
 /**
  * GstMfxEncoderH265Prop:
@@ -48,7 +45,7 @@ typedef enum
 
 GstMfxEncoder *
 gst_mfx_encoder_h265_new (GstMfxTaskAggregator * aggregator,
-    const GstVideoInfo * info, gboolean mapped);
+    const GstVideoInfo * info, gboolean memtype_is_system);
 
 GPtrArray *
 gst_mfx_encoder_h265_get_default_properties (void);

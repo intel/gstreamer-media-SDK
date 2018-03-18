@@ -82,16 +82,5 @@ struct _GstMfxWindowD3D11
   GstMfxWindowD3D11Private priv;
 };
 
-/**
-* GstMfxWindowD3D11Class:
-*
-* MFX/D3D11 window wrapper clas.
-*/
-struct _GstMfxWindowD3d11Class
-{
-  /*< private > */
-  GstMfxWindowClass parent_class;
-};
-
 G_END_DECLS
 #endif /* GST_MFX_WINDOW_D3D11_PRIV_H */

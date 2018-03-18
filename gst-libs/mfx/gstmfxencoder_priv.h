@@ -218,7 +218,7 @@ struct _GstMfxEncoderClassData
   G_PASTE (GstMfxRateControl, CODEC),                                 \
   G_PASTE (gst_mfx_rate_control_, CODEC),                             \
   GST_MFX_TYPE_RATE_CONTROL, SUPPORTED_RATECONTROLS);                 \
-  \
+                                                                      \
   static const GstMfxEncoderClassData g_class_data = {                \
   .rate_control_get_type =                                            \
   G_PASTE (G_PASTE (gst_mfx_rate_control_, CODEC), _get_type),        \
@@ -249,7 +249,7 @@ struct _GstMfxEncoderClass
 GstMfxEncoder *
 gst_mfx_encoder_new (GstMfxEncoder * encoder,
     GstMfxTaskAggregator * aggregator,
-    const GstVideoInfo * info, gboolean mapped);
+    const GstVideoInfo * info, gboolean memtype_is_system);
 
 G_END_DECLS
 #endif /* GST_MFX_ENCODER_PRIV_H */
