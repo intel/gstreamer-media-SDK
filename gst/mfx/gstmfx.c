@@ -91,22 +91,22 @@ plugin_init (GstPlugin * plugin)
 
 #ifdef MFX_H264_ENCODER
   ret |= gst_element_register (plugin, "mfxh264enc",
-      GST_RANK_NONE, GST_TYPE_MFXENC_H264);
+      GST_RANK_SECONDARY, GST_TYPE_MFXENC_H264);
 #endif
 
 #ifdef MFX_H265_ENCODER
   ret |= gst_element_register (plugin, "mfxhevcenc",
-      GST_RANK_NONE, GST_TYPE_MFXENC_H265);
+      GST_RANK_SECONDARY, GST_TYPE_MFXENC_H265);
 #endif
 
 #ifdef MFX_MPEG2_ENCODER
   ret |= gst_element_register (plugin, "mfxmpeg2enc",
-      GST_RANK_NONE, GST_TYPE_MFXENC_MPEG2);
+      GST_RANK_MARGINAL, GST_TYPE_MFXENC_MPEG2);
 #endif
 
 #ifdef MFX_JPEG_ENCODER
   ret |= gst_element_register (plugin, "mfxjpegenc",
-      GST_RANK_NONE, GST_TYPE_MFXENC_JPEG);
+      GST_RANK_SECONDARY, GST_TYPE_MFXENC_JPEG);
 #endif
 
   return ret;
