@@ -775,15 +775,21 @@ gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height)
   GST_DEBUG ("video size %dx%d, calculated ratio %d/%d",
       sink->video_width, sink->video_height, num, den);
 
-  display_rect->width = gst_util_uint64_scale_int (height, num, den);
-  if (display_rect->width <= width) {
-    GST_DEBUG ("keeping window height");
-    display_rect->height = height;
-  } else {
-    GST_DEBUG ("keeping window width");
+  if (sink->fullscreen) {
     display_rect->width = width;
-    display_rect->height = gst_util_uint64_scale_int (width, den, num);
+    display_rect->height= height;
+  } else {
+    display_rect->width = gst_util_uint64_scale_int (height, num, den);
+    if (display_rect->width <= width) {
+      GST_DEBUG ("keeping window height");
+      display_rect->height = height;
+    } else {
+      GST_DEBUG ("keeping window width");
+      display_rect->width = width;
+      display_rect->height = gst_util_uint64_scale_int (width, den, num);
+    }
   }
+
   GST_DEBUG ("scaling video to %ux%u", display_rect->width,
       display_rect->height);
 
