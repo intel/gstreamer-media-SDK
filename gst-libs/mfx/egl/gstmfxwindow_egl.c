@@ -380,6 +380,8 @@ do_render_texture (GstMfxWindowEGL * window, const GstMfxRectangle * src_rect,
   win_height = dst_rect->height + dst_rect->y * 2;
   program = window->render_program;
 
+  if(!tex_width || !tex_height)
+    return FALSE;
   // Source coords in VA surface
   x0 = (GLfloat) src_rect->x / tex_width;
   y0 = (GLfloat) src_rect->y / tex_height;

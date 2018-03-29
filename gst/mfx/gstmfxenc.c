@@ -457,7 +457,7 @@ gst_mfxenc_finish (GstVideoEncoder * venc)
   GstMfxEnc *const encode = GST_MFXENC_CAST (venc);
   GstMfxEncoderStatus status;
   GstVideoCodecFrame *frame;
-  GstFlowReturn ret;
+  GstFlowReturn ret = GST_FLOW_ERROR;
 
   /* Return "not-negotiated" error since this means we did not even reach
    * GstVideoEncoder::set_format () state, where the encoder could have
