@@ -1051,7 +1051,7 @@ gst_mfxpostproc_create (GstMfxPostproc * vpp)
 
   if (vpp->flags & GST_MFX_POSTPROC_FLAG_DEINTERLACING)
     if (!gst_mfx_filter_set_deinterlace_method (vpp->filter,
-        vpp->deinterlace_method))
+            vpp->deinterlace_method))
       vpp->flags &= ~GST_MFX_POSTPROC_FLAG_DEINTERLACING;
 
   if (vpp->fps_n && vpp->flags & GST_MFX_POSTPROC_FLAG_FRC) {
@@ -1117,7 +1117,9 @@ gst_mfxpostproc_stop (GstBaseTransform * trans)
 
   gst_video_info_init (&vpp->sinkpad_info);
   gst_video_info_init (&vpp->srcpad_info);
-  vpp->flags = 0;
+  /* If deinterlacing flag is set, unset it
+   * so that no un-needed deinterlacing takes place */
+  vpp->flags &= ~GST_MFX_POSTPROC_FLAG_DEINTERLACING;
 
   gst_base_transform_set_passthrough (GST_BASE_TRANSFORM (vpp), FALSE);
   gst_mfxpostproc_destroy (vpp);
