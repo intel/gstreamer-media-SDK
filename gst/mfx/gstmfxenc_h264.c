@@ -231,7 +231,7 @@ gst_mfxenc_h264_alloc_encoder (GstMfxEnc * base)
 
 /* h264 NAL byte stream operations */
 static guint8 *
-_h264_byte_stream_next_nal (guint8 * buffer, guint32 len, guint32 * nal_size)
+_h264_byte_stream_next_nal (guint8 * buffer, gint32 len, guint32 * nal_size)
 {
   const guint8 *cur = buffer;
   const guint8 *const end = buffer + len;
