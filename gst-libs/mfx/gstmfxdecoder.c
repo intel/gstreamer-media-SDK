@@ -32,6 +32,8 @@
 #define DEBUG 1
 #include "gstmfxdebug.h"
 
+#define NAL_UNITTYPE_BITS 0X1F
+
 struct _GstMfxDecoder
 {
   /*< private > */
@@ -380,138 +382,152 @@ error_query_request:
   }
 }
 
-static void
+static gboolean
 gst_mfx_decoder_convert_avc_stream (GstMfxDecoder * decoder, guint8 * cdata,
     gint size)
 {
-  guint8 startcode[4] = {0, 0, 0, 1};
+  guint8 startcode[4] = {0, 0, 0, 1}, nal_unit_type = 0;
+  gint32 offset = 0, packet_size = 0;
 
   if (!decoder || !cdata || !size)
-    return;
-
-  gint32 offset = 0;
-  gint32 packet_size = 0;
+    return FALSE;
 
   while (offset < size) {
     packet_size = GST_READ_UINT32_BE(&cdata[offset]);
+    nal_unit_type = (GstH264NalUnitType)(GST_READ_UINT8(&cdata[offset += 4]) &
+                                    NAL_UNITTYPE_BITS);
 
-    offset += 4;
     if (offset + packet_size > size) break;
 
-    decoder->bitstream = g_byte_array_append (decoder->bitstream,
-        startcode, 4);
-    decoder->bitstream = g_byte_array_append (decoder->bitstream,
-        &cdata[offset], packet_size);
+    /* Avoid mutiple SPS/PPS NAL reinsertion when stream-format=avc. Forced
+     * to insert only the first SPS/PPS to fix some video corruption issue.
+     * Issue: Gst-play has all the multiple SPS/PPS inserted but not when
+     * running with gst-launch.
+     */
+    switch (nal_unit_type)
+    {
+      case GST_H264_NAL_SPS:
+      case GST_H264_NAL_PPS: break;
+      default:
+        decoder->bitstream = g_byte_array_append (decoder->bitstream,
+            startcode, 4);
+        decoder->bitstream = g_byte_array_append (decoder->bitstream,
+            &cdata[offset], packet_size);
+
+        decoder->bs.DataLength += (packet_size + 4);
+        break;
+    };
 
     offset += packet_size;
   }
 
   if (offset != size) {
-    GST_ERROR ("AVC stream error, size %d, processed offset %d.",
-        size, offset);
+    GST_ERROR ("AVC stream error, size %d, processed offset %d.", size, offset);
+    return FALSE;
   }
+
+  return TRUE;
 }
 
 static gboolean
 gst_mfx_decoder_handle_avc_codec_data (GstMfxDecoder * decoder,
     GstBuffer * codec_data)
 {
-  gboolean res = FALSE;
+  GstMapInfo minfo;
+
   if (decoder->params.mfx.CodecId != MFX_CODEC_AVC || !decoder->is_avc ||
       !codec_data) {
-    return res;
+    return FALSE;
   }
-
-  GstMapInfo minfo;
 
   gst_buffer_map(codec_data, &minfo, GST_MAP_READ);
 
   if (minfo.size) {
+    guint8 startcode[4] = {0, 0, 0, 1}, nals_cnt = 0, nal_unit_type = 0;
+    guint16 packet_size = 0, offset = 5;
+    gchar *msgs[] = { "SPS", "PPS" };
+
+    guint8 *cdata = minfo.data;
+    guint8 profile = ((decoder->params.mfx.CodecId ^ decoder->profile) & 0xFF);
+
     decoder->codec_data = g_byte_array_sized_new (minfo.size);
 
-    guint8 startcode[4] = {0, 0, 0, 1}, nals_cnt = 0, i = 0, j = 0;
-    guint8 profile = ((decoder->params.mfx.CodecId ^ decoder->profile) & 0xff);
-    guint8 *cdata = minfo.data;
-    guint16 nal_size = 0, offset = 0;
-    gchar *msgs[2] = { "SPS", "PPS" };
-
+    /* Ensure codec header is valid */
     if (minfo.size < 8) {
-      GST_ERROR ("Codec data not enought information.\n");
+      GST_ERROR ("Codec data not enough information.\n");
       goto error;
+    } else {
+      if ((cdata[0] != 1) && (cdata[2] != profile)) {
+        GST_ERROR ("Codec data header error.\n");
+        goto error;
+      }
     }
 
-    if ((cdata[0] != 1) && (cdata[2] != profile)) {
-      GST_ERROR ("Codec data header error.\n");
-      goto error;
-    }
-
-    offset = 5;
-
-    for (i = 0; i < 2; ++i ) {
+    for (gchar **pchar = msgs; *pchar != NULL; pchar++) {
       if (offset >= minfo.size) {
-        GST_ERROR ("Codec data does not contain %s packets.\n", msgs[i]);
+        GST_ERROR ("Codec data does not contain %s packets.\n", *pchar);
         goto error;
       }
 
-      nals_cnt = cdata[offset] & 0x1f;
-      ++offset;
-      for (j = 0; j < nals_cnt; ++j ) {
-        nal_size = GST_READ_UINT16_BE(&cdata[offset]);
-        offset += 2;
-        if (offset + nal_size > minfo.size) {
-          GST_ERROR ("Codec data %s broken.\n", msgs[i]);
-          goto error;
-        }
+      nals_cnt = (cdata[offset++] & NAL_UNITTYPE_BITS);
 
-        // Only need first set of SPS/PPS.
-        if (j < 1) {
-          decoder->codec_data = g_byte_array_append (decoder->codec_data,
-              startcode, 4);
-          decoder->codec_data = g_byte_array_append (decoder->codec_data,
-              &cdata[offset], nal_size);
+      for (guint cnt = 0; cnt < nals_cnt; cnt++) {
 
-          /* Check the number of maximum reference frames in SPS. If it is too
-           * high, will need to sync the output surface to avoid surface
-           * overwrite.
-           */
-          if (!i) {
-            GstH264NalUnit nalu;
-            GstH264SPS sps;
-            GstH264ParserResult res;
+        packet_size = GST_READ_UINT16_BE(&cdata[offset]);
+        nal_unit_type = (GstH264NalUnitType)(GST_READ_UINT8(&cdata[(offset += 2)]) &
+                         NAL_UNITTYPE_BITS);
 
-            memset(&nalu, 0, sizeof(nalu));
-            nalu.sc_offset = 0;
-            nalu.offset = 4;
-            nalu.data = decoder->codec_data->data;
-            nalu.size = decoder->codec_data->len;
-            nalu.type = (nalu.data[nalu.offset] & 0x1f);
-            nalu.ref_idc = (nalu.data[nalu.offset] & 0x60) >> 5;
-            nalu.idr_pic_flag = 0;
-            nalu.header_bytes = 1;
-            nalu.extension_type = GST_H264_NAL_EXTENSION_NONE;
+        if (offset + packet_size > minfo.size) goto error;
 
-            res = gst_h264_parse_sps(&nalu, &sps, TRUE);
-            if (res == GST_H264_PARSER_OK && sps.num_ref_frames == 16) {
-              decoder->sync_out_surf = TRUE;
-            }
-          }
-        }
-        offset += nal_size;
+        /* Only insert first SPS/PPS */
+        switch (nal_unit_type)
+        {
+            case GST_H264_NAL_SPS:
+            case GST_H264_NAL_PPS:
+              if (!cnt) {
+                decoder->codec_data = g_byte_array_append (decoder->codec_data,
+                    startcode, 4);
+                decoder->codec_data = g_byte_array_append (decoder->codec_data,
+                    &cdata[offset], packet_size);
+
+               /* Check the number of max_dec_frame_buffering in SPS. If it is too
+                * high, then will have to sync the output surface to avoid surface
+                * overwritten.
+                */
+                if (GST_H264_NAL_SPS == nal_unit_type) {
+                  GstH264NalUnit nalu;
+                  GstH264SPS sps;
+
+                  memset(&nalu, 0, sizeof(nalu));
+                  nalu.offset = 4;
+                  nalu.header_bytes = 1;
+                  nalu.data = decoder->codec_data->data;
+                  nalu.size = decoder->codec_data->len;
+
+                  if (GST_H264_PARSER_OK == gst_h264_parse_sps(&nalu, &sps, TRUE) &&
+                    sps.vui_parameters_present_flag &&
+                    sps.vui_parameters.max_dec_frame_buffering == 16)
+                        decoder->sync_out_surf = TRUE;
+                }
+              }
+	      break;
+        };
+
+        offset += packet_size;
       }
     }
 
     if (offset != minfo.size) {
-      GST_WARNING ("Codec data mismatch, size %ld, processed offset %d.",
-          minfo.size, offset);
+      GST_WARNING ("Codec data mismatch, size %ld, processed offset %d.", minfo.size, offset);
     }
-
-    res = TRUE;
   }
+
+  gst_buffer_unmap(codec_data, &minfo);
+  return TRUE;
 
 error:
   gst_buffer_unmap(codec_data, &minfo);
-
-  return res;
+  return FALSE;
 }
 
 static gboolean
@@ -959,8 +975,9 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         decoder->bs.Data = decoder->bitstream->data;
       }
 
-      gst_mfx_decoder_convert_avc_stream (decoder, minfo.data, minfo.size);
-      decoder->bs.DataLength += minfo.size;
+      if (!gst_mfx_decoder_convert_avc_stream (decoder, minfo.data, minfo.size))
+        GST_ERROR ("Error in %s !", __func__);
+
       decoder->bs.MaxLength = decoder->bitstream->len;
       decoder->bs.Data = decoder->bitstream->data;
     } else {
