@@ -851,7 +851,7 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
         if (!encoder->gop_size)
           encoder->gop_size = 32;
         encoder->gop_refdist =
-            encoder->gop_refdist < 0 ? 4 : encoder->gop_refdist;
+            encoder->gop_refdist < 0 ? 2 : encoder->gop_refdist;
         break;
       case GST_MFX_RATECONTROL_VCM:
         encoder->gop_refdist = 0;
@@ -888,7 +888,7 @@ gst_mfx_encoder_set_encoding_params (GstMfxEncoder * encoder)
     else {
       encoder->params.mfx.IdrInterval = encoder->idr_interval;
     }
-    encoder->params.mfx.NumRefFrame = encoder->num_refs;
+    encoder->params.mfx.NumRefFrame = CLAMP (encoder->num_refs, 0, 16);
     encoder->params.mfx.GopPicSize = encoder->gop_size;
     encoder->params.mfx.NumSlice = encoder->num_slices;
 
