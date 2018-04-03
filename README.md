@@ -31,6 +31,11 @@ Features
 
 Requirements
 ------------
+**Notes to Windows users**
+
+If you would like to try out the plugins directly without having to build the plugins, you can get pre-compiled binaries
+from the 2.1.0 release onwards in the Release section. You will still have to install the official GStreamer Windows binaries,
+which you can get from here - https://gstreamer.freedesktop.org/data/pkg/windows/
 
 **Software requirements**
 
