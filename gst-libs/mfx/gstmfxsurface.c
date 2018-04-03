@@ -161,7 +161,6 @@ gst_mfx_surface_derive_mfx_frame_info(GstMfxSurface * surface,
 {
   mfxFrameInfo *frame_info = &surface->surface.Info;
 
-  frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
   frame_info->FourCC =
     gst_video_format_to_mfx_fourcc(GST_VIDEO_INFO_FORMAT(info));
   frame_info->PicStruct =
@@ -169,6 +168,24 @@ gst_mfx_surface_derive_mfx_frame_info(GstMfxSurface * surface,
       GST_VIDEO_FRAME_FLAG_TFF) ? MFX_PICSTRUCT_FIELD_TFF :
       MFX_PICSTRUCT_FIELD_BFF)
     : MFX_PICSTRUCT_PROGRESSIVE;
+
+  switch (info->finfo->format) {
+    case GST_VIDEO_FORMAT_NV12:
+    case GST_VIDEO_FORMAT_YV12:
+    case GST_VIDEO_FORMAT_I420:
+      frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+      break;
+    case GST_VIDEO_FORMAT_YUY2:
+    case GST_VIDEO_FORMAT_UYVY:
+      frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV422;
+      break;
+    case GST_VIDEO_FORMAT_BGRA:
+      frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV444;
+      break;
+    default:
+      g_assert_not_reached();
+      break;
+  }
 
   frame_info->CropX = 0;
   frame_info->CropY = 0;
