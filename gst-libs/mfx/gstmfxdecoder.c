@@ -564,7 +564,9 @@ gst_mfx_decoder_prepare (GstMfxDecoder * decoder)
       ret = GST_MFX_DECODER_STATUS_ERROR_BITSTREAM_PARSER;
       goto done;
     }
-    gst_buffer_unmap (cur_frame->input_buffer, &minfo);
+
+    if (cur_frame)
+      gst_buffer_unmap (cur_frame->input_buffer, &minfo);
   } while (cur_frame);
 
   gst_mfx_decoder_reconfigure_params (decoder);
