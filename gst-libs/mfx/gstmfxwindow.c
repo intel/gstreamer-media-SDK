@@ -246,10 +246,10 @@ gst_mfx_window_get_fullscreen (GstMfxWindow * window)
 void
 gst_mfx_window_set_fullscreen (GstMfxWindow * window, gboolean fullscreen)
 {
+  g_return_if_fail (window != NULL);
+
   GstMfxWindowPrivate *const priv = GST_MFX_WINDOW_GET_PRIVATE (window);
   const GstMfxWindowClass *klass = GST_MFX_WINDOW_GET_CLASS (window);
-
-  g_return_if_fail (window != NULL);
 
   if (priv->is_fullscreen != fullscreen &&
       klass->set_fullscreen && klass->set_fullscreen (window, fullscreen)) {

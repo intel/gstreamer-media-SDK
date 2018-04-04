@@ -1198,6 +1198,7 @@ gst_mfx_encoder_prepare (GstMfxEncoder * encoder)
     priv->filter = gst_mfx_filter_new_with_task (priv->aggregator,
         priv->encode, GST_MFX_TASK_VPP_OUT,
         priv->input_memtype_is_system, priv->encoder_memtype_is_system);
+    g_return_val_if_fail(priv->filter != NULL, GST_MFX_ENCODER_STATUS_ERROR_UNKNOWN);
 
     request->NumFrameSuggested += (1 - priv->params.AsyncDepth);
     request->NumFrameMin += (1 - priv->params.AsyncDepth);
