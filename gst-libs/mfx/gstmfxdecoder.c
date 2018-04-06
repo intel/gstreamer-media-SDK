@@ -28,6 +28,7 @@
 #include "gstmfxsurfacepool.h"
 #include "gstmfxsurface.h"
 #include "gstmfxtask.h"
+#include "gstmfxutils_h264.h"
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -380,6 +381,39 @@ error_query_request:
     gst_mfx_task_unref (decoder->decode);
     return FALSE;
   }
+}
+
+static gboolean
+gst_mfx_decoder_is_avc_intra (GstMfxDecoder * decoder, guint8 * cdata,
+    gint size)
+{
+  gboolean have_intra = FALSE;
+
+  if (!decoder || !cdata || !size)
+    return FALSE;
+
+  gint32 offset = 0;
+  gint32 packet_size = 0;
+
+  while (offset < (size - 8)) {
+    packet_size = GST_READ_UINT32_BE(&cdata[offset]);
+
+    offset += 4;
+    switch (cdata[offset] & 0x1f) {
+    case GST_H264_NAL_SLICE:
+      have_intra = gst_mfx_utils_h264_is_slice_intra (
+                       &cdata[offset], size - offset);
+      break;
+    case GST_H264_NAL_SLICE_IDR:
+      have_intra = TRUE;
+      break;
+    }
+    offset += packet_size;
+
+    if (have_intra) break;
+  }
+
+  return have_intra;
 }
 
 static gboolean
@@ -929,6 +963,12 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         GST_DEBUG ("MFXVideoDECODE_DecodeHeader status: %d", sts);
         memset (&decoder->bs, 0, sizeof (mfxBitstream));
       } else if (MFX_CODEC_AVC == decoder->params.mfx.CodecId && decoder->is_avc) {
+        if (!gst_mfx_decoder_is_avc_intra (decoder, minfo.data, minfo.size)) {
+          frame->pts = GST_CLOCK_TIME_NONE;
+          GST_VIDEO_CODEC_FRAME_SET_DECODE_ONLY(frame);
+          g_queue_push_head(&decoder->decoded_frames, frame);
+          goto end;
+        }
         gst_mfx_decoder_convert_avc_stream (decoder, minfo.data, minfo.size);
         decoder->bs.MaxLength = decoder->bs.DataLength = decoder->bitstream->len;
         decoder->bs.Data = decoder->bitstream->data;
