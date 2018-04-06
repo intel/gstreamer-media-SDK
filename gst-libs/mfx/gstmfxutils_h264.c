@@ -21,6 +21,7 @@
  */
 
 #include "sysdeps.h"
+#include <gst/codecparsers/gsth264parser.h>
 #include "gstmfxutils_h264.h"
 
 struct map
@@ -96,4 +97,56 @@ gst_mfx_utils_h264_get_profile_string (mfxU16 profile)
       map_lookup_value (gst_mfx_h264_profile_map, profile);
 
   return m ? m->name : NULL;
+}
+
+static guint16 read_ue(const guint8 *slice_buf, gint *nbits, gint size)
+{
+  if (!slice_buf || !nbits)
+    return 0;
+
+  guint16 res = 0;
+  gint offset = *nbits / 8, c = *nbits, i;
+  guint8 bit = 0x80 >> (*nbits % 8);
+
+  while (!(slice_buf[offset] & bit)) {
+    bit >>= 1;
+    ++(*nbits);
+    if (!(*nbits % 8)) {
+      ++offset;
+      bit = 0x80;
+    }
+  }
+
+  i = c = *nbits - c;
+  while (c) {
+    bit >>= 1;
+    ++(*nbits);
+    if (!(*nbits % 8)) {
+      ++offset;
+      bit = 0x80;
+    }
+    res <<= 1;
+    res |= (slice_buf[offset] & bit) ? 1 : 0;
+    --c;
+  }
+
+  ++(*nbits);
+  res = res + (1 << i) - 1;
+
+  return res;
+}
+
+gboolean
+gst_mfx_utils_h264_is_slice_intra (const guint8 *slice_buf, gint size)
+{
+  gint nbits = 8;
+
+  /* First UE value is fist_mb_in_slice */
+  read_ue(slice_buf, &nbits, size);
+
+  /* Second UE value is slice type */
+  if ((read_ue(slice_buf, &nbits, size) % 5) == GST_H264_I_SLICE)
+    return TRUE;
+
+  return FALSE;
 }

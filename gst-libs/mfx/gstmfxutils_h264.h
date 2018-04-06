@@ -39,6 +39,10 @@ gst_mfx_utils_h264_get_profile_from_string (const gchar * str);
 const gchar *
 gst_mfx_utils_h264_get_profile_string (mfxU16 profile);
 
+/* Check if a H.264 slice contain I picture */
+gboolean
+gst_mfx_utils_h264_is_slice_intra (const guint8 *slice_buf, gint size);
+
 G_END_DECLS
 
 #endif /* GST_MFX_UTILS_H264_H */
