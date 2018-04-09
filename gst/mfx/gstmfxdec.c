@@ -846,7 +846,6 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
           if (!g_strcmp0 (name, "vp9"))
             rank = GST_RANK_PRIMARY + 3;
           /* fall-through */
-        case MFX_PLATFORM_CHERRYTRAIL:
         case MFX_PLATFORM_BROADWELL:
 #ifndef WITH_D3D11_BACKEND
           if (!g_strcmp0 (name, "vp8"))
@@ -856,6 +855,7 @@ gst_mfxdec_register (GstPlugin * plugin, mfxU16 platform)
 #endif // WITH_D3D11_BACKEND
           if (has_hevc_main10)
             break;
+        case MFX_PLATFORM_CHERRYTRAIL:
         case MFX_PLATFORM_HASWELL:
           if (!g_strcmp0 (name, "hevc")) {
             mfx_codec_map[i].caps_str = "video/x-h265, "

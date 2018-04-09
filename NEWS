@@ -1,3 +1,10 @@
+Version 2.1.0
+* Added HEVC Main 10 decode support for Linux
+* Added YUY2 output format support
+* Added new VPP options mirroring and scaling modes
+* Added colorimetry information for H264 / HEVC encoding
+* Many codebase simplifications and bug fixes
+
 Version 2.0.0
 * Complete support for Windows 8 / 8.1 / 10 with Direct3D 11 backend.
 * New Meson build system for building and installation on Windows and Linux.
