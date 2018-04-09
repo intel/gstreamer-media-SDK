@@ -70,6 +70,7 @@ PFNWGLDXUNLOCKOBJECTSNVPROC wglDXUnlockObjectsNV = NULL;
 static gpointer plugin_parent_class = NULL;
 
 #ifdef WITH_LIBVA_BACKEND
+
 /* Checks whether the supplied pad peer element supports DMABUF sharing */
 /* XXX: this is a workaround to the absence of any proposer way to
 specify DMABUF memory capsfeatures or bufferpool option to downstream */
@@ -126,6 +127,62 @@ has_dmabuf_capable_peer (GstMfxPluginBase * plugin, GstPad * pad)
   g_clear_object (&element);
   return is_dmabuf_capable;
 }
+
+static gboolean
+is_dma_buffer (GstBuffer * buf)
+{
+  GstMemory *mem;
+  if (gst_buffer_n_memory (buf) < 1)
+    return FALSE;
+
+  mem = gst_buffer_peek_memory (buf, 0);
+  if (!mem || !gst_is_dmabuf_memory (mem))
+    return FALSE;
+  return TRUE;
+}
+
+static gboolean
+plugin_bind_dma_to_mfx_buffer (GstMfxPluginBase * plugin,
+		    GstBuffer * inbuf, GstBuffer * outbuf)
+{
+  GstVideoInfo *info;
+  GstMfxVideoMeta *meta;
+  GstMfxSurface *surface;
+  GstMfxContext *context;
+  gint fd;
+
+  fd = gst_dmabuf_memory_get_fd (gst_buffer_peek_memory (inbuf, 0));
+  if (fd < 0)
+    return FALSE;
+
+  context = gst_mfx_task_aggregator_get_context(plugin->aggregator);
+
+  meta = gst_buffer_get_mfx_video_meta (outbuf);
+  g_return_val_if_fail (meta != NULL, FALSE);
+
+  info = gst_video_info_copy(&plugin->sinkpad_info);
+
+  /* Check for a VASurface cached in the buffer */
+  surface =
+   gst_mfx_surface_new_with_dma_buf_handle (context, fd, info);
+  if (!surface)
+    goto error_create_surface;
+
+  gst_mfx_video_meta_set_surface(meta, surface);
+  gst_buffer_set_mfx_video_meta (inbuf, meta);
+  gst_video_info_free(info);
+  gst_buffer_add_parent_buffer_meta (outbuf, inbuf);
+  return TRUE;
+
+  /* ERRORS */
+error_create_surface:
+  {
+    GST_ERROR_OBJECT (plugin,
+      "failed to create VA surface from dma_buf handle");
+    return FALSE;
+  }
+}
+
 #endif // WITH_LIBVA_BACKEND
 
 #ifdef HAVE_GST_GL_LIBS
@@ -691,6 +748,13 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
           &outbuf, NULL) != GST_FLOW_OK)
     goto error_create_buffer;
 
+  if (is_dma_buffer (inbuf)) {
+    if (!plugin_bind_dma_to_mfx_buffer (plugin, inbuf, outbuf))
+      goto error_bind_dma_buffer;
+    plugin->has_ext_dmabuf = TRUE;
+    goto done;
+  }
+
   if (!gst_video_frame_map (&src_frame, &plugin->sinkpad_info, inbuf,
           GST_MAP_READ))
     goto error_map_src_buffer;
@@ -709,6 +773,7 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
   if (!success)
     goto error_copy_buffer;
 
+done:
   gst_buffer_copy_into (outbuf, inbuf,
       GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
   *outbuf_ptr = outbuf;
@@ -738,7 +803,12 @@ error_map_src_buffer:
     gst_buffer_unref (outbuf);
     return GST_FLOW_NOT_SUPPORTED;
   }
-
+error_bind_dma_buffer:
+  {
+    GST_WARNING ("failed to bind dma_buf");
+    gst_buffer_unref (outbuf);
+    return GST_FLOW_ERROR;
+  }
   /* ERRORS */
 error_invalid_buffer:
   {

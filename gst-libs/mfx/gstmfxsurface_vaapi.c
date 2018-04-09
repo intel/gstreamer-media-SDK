@@ -21,6 +21,8 @@
 #include "gstmfxsurface_vaapi.h"
 #include "gstmfxdisplay.h"
 #include "video-format.h"
+#include "gstmfxprimebufferproxy.h"
+#include <va/va_drmcommon.h>
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -188,6 +190,115 @@ gst_mfx_surface_vaapi_class_init (GstMfxSurfaceVaapiClass * klass)
 static void
 gst_mfx_surface_vaapi_init (GstMfxSurfaceVaapi * surface)
 {
+}
+
+GstMfxSurface *
+gst_mfx_surface_vaapi_new_external (GstMfxContext * context, const GstVideoInfo * info)
+{
+  GstMfxSurfaceVaapi *surface;
+
+  g_return_val_if_fail (context != NULL, NULL);
+  g_return_val_if_fail (info != NULL, NULL);
+
+  surface = g_object_new (GST_TYPE_MFX_SURFACE_VAAPI, NULL);
+  if (!surface)
+    return NULL;
+
+  return
+      gst_mfx_surface_new_external (GST_MFX_SURFACE (surface),
+          context, info, NULL);
+}
+
+GstMfxSurface *
+gst_mfx_surface_new_from_buffer_proxy (GstMfxContext * context, GstMfxPrimeBufferProxy * proxy, const GstVideoInfo * info)
+{
+  GstMfxSurface *surface;
+  GstMfxSurfaceVaapi *vaapi_surface;
+  GstMfxSurfacePrivate * priv;
+  mfxFrameInfo *frame_info;
+  VAStatus sts;
+  VASurfaceAttrib attribs[2];
+  VASurfaceAttribExternalBuffers external;
+  guint i, fourcc, width, height;
+  unsigned long extbuf_handle;
+
+  g_return_val_if_fail (info != NULL, NULL);
+
+  surface = (GstMfxSurface *)gst_mfx_surface_vaapi_new_external(context, info);
+
+  priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  vaapi_surface = GST_MFX_SURFACE_VAAPI_CAST (surface);
+
+  width = GST_VIDEO_INFO_WIDTH (info);
+  height = GST_VIDEO_INFO_HEIGHT (info);
+  vaapi_surface->display = gst_mfx_context_get_device (priv->context);
+
+  priv->has_video_memory = TRUE;
+  /* Correctly populate frame_info */
+  frame_info = &priv->surface.Info;
+
+  fourcc = gst_mfx_video_format_to_va_fourcc (frame_info->FourCC);
+  if (!fourcc) {
+    GST_ERROR("Unsupported color format\n");
+    return NULL;
+  }
+
+  switch (fourcc) {
+    case VA_FOURCC_ARGB:
+    case VA_FOURCC_ABGR:
+    case VA_FOURCC_BGRA:
+    case VA_FOURCC_RGBA:
+    case VA_FOURCC_BGRX:
+    case VA_FOURCC_RGBX:
+      frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV444;
+      break;
+    case VA_FOURCC_NV12:
+    case VA_FOURCC_YV12:
+      frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV420;
+      break;
+    default:
+      GST_ERROR("Unsupported color format\n");
+      return NULL;
+  }
+
+  extbuf_handle = GST_MFX_PRIME_BUFFER_PROXY_HANDLE(proxy);
+  memset(&external, 0, sizeof(external));
+  external.pixel_format = fourcc;
+  external.width = width;
+  external.height = height;
+  external.num_planes = GST_VIDEO_INFO_N_PLANES(info);
+  external.data_size = GST_MFX_PRIME_BUFFER_PROXY_SIZE(proxy);
+  for (i = 0; i < external.num_planes; i++) {
+    external.pitches[i] = GST_VIDEO_INFO_PLANE_STRIDE (info, i);
+    external.offsets[i] = GST_VIDEO_INFO_PLANE_OFFSET (info, i);
+  }
+  external.num_buffers = 1;
+  external.buffers = (uintptr_t *) &extbuf_handle;
+
+  memset(&attribs, 0, sizeof(attribs));
+  attribs[0].type = VASurfaceAttribMemoryType;
+  attribs[0].flags = VA_SURFACE_ATTRIB_SETTABLE;
+  attribs[0].value.type = VAGenericValueTypeInteger;
+  attribs[0].value.value.i = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
+  attribs[1].type = VASurfaceAttribExternalBufferDescriptor;
+  attribs[1].flags = VA_SURFACE_ATTRIB_SETTABLE;
+  attribs[1].value.type = VAGenericValueTypeInteger;
+  attribs[1].value.value.p = &external;
+
+  GST_MFX_DISPLAY_LOCK (vaapi_surface->display);
+  sts = vaCreateSurfaces (GST_MFX_DISPLAY_VADISPLAY(vaapi_surface->display),
+    gst_mfx_video_format_to_va_format(frame_info->FourCC), width, height, (VASurfaceID *)&priv->surface_id, 1, (VASurfaceAttrib *)&attribs, 2);
+  GST_MFX_DISPLAY_UNLOCK (vaapi_surface->display);
+
+  if (!vaapi_check_status (sts, "vaCreateSurfaces ()")) {
+    return NULL;
+  }
+
+  priv->mem_id.mid = &priv->surface_id;
+  priv->mem_id.info = frame_info;
+  priv->surface.Data.MemId = &priv->mem_id;
+  return surface;
+
 }
 
 GstMfxSurface *
