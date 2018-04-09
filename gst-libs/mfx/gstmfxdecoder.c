@@ -498,10 +498,11 @@ gst_mfx_decoder_handle_avc_codec_data (GstMfxDecoder * decoder,
     }
 
     for (gchar **pchar = msgs; *pchar != NULL; pchar++) {
-      if (offset >= minfo.size) {
+      if (offset > minfo.size) {
         GST_ERROR ("Codec data does not contain %s packets.\n", *pchar);
         goto error;
-      }
+      } else if (offset == minfo.size)
+	break;
 
       nals_cnt = (cdata[offset++] & NAL_UNITTYPE_BITS);
 
@@ -511,7 +512,10 @@ gst_mfx_decoder_handle_avc_codec_data (GstMfxDecoder * decoder,
         nal_unit_type = (GstH264NalUnitType)(GST_READ_UINT8(&cdata[(offset += 2)]) &
                          NAL_UNITTYPE_BITS);
 
-        if (offset + packet_size > minfo.size) goto error;
+        if (offset + packet_size > minfo.size) {
+	  GST_ERROR ("Codec data %s broken.\n", *pchar);
+	  goto error;
+        }
 
         /* Only insert first SPS/PPS */
         switch (nal_unit_type)
