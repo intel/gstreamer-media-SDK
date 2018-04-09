@@ -26,6 +26,8 @@
 #include "gstmfxvideometa.h"
 #include "gstmfxvideomemory.h"
 #include "gstmfxvideobufferpool.h"
+#include "gstmfxencoder.h"
+#include "gstmfxencoder_priv.h"
 
 #define GST_PLUGIN_NAME "mfxencode"
 #define GST_PLUGIN_DESC "A MFX-based video encoder"
@@ -383,6 +385,8 @@ static GstFlowReturn
 gst_mfxenc_handle_frame (GstVideoEncoder * venc, GstVideoCodecFrame * frame)
 {
   GstMfxEnc *const encode = GST_MFXENC_CAST (venc);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (encode);
+  GstMfxEncoderPrivate *const priv = GST_MFX_ENCODER_GET_PRIVATE (encode->encoder);
   GstMfxEncoderStatus status;
   GstMfxVideoMeta *meta;
   GstMfxSurface *surface;
@@ -393,6 +397,10 @@ gst_mfxenc_handle_frame (GstVideoEncoder * venc, GstVideoCodecFrame * frame)
       frame->input_buffer, &buf);
   if (ret != GST_FLOW_OK)
     goto error_buffer_invalid;
+
+  if (plugin->has_ext_dmabuf) {
+    gst_mfx_filter_set_iopattern_commit_to_task(priv->filter, MFX_IOPATTERN_IN_VIDEO_MEMORY | MFX_IOPATTERN_OUT_VIDEO_MEMORY);
+  }
 
   gst_buffer_replace (&frame->input_buffer, buf);
   gst_buffer_unref (buf);

@@ -150,6 +150,19 @@ gst_mfx_prime_buffer_proxy_init (GstMfxPrimeBufferProxy * proxy)
 {
 }
 
+void
+gst_mfx_prime_buffer_proxy_set (GstMfxPrimeBufferProxy * proxy, gint fd,
+    GstVideoInfo * vi, GstMfxContext * context)
+{
+  proxy->buf_info.handle = fd;
+  proxy->fd = fd;
+  proxy->buf_info.type = VAImageBufferType;
+  proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
+  proxy->buf_info.mem_size = GST_VIDEO_INFO_SIZE (vi);
+  proxy->data_size = GST_VIDEO_INFO_SIZE (vi);
+  proxy->display = gst_mfx_context_get_device (context);
+}
+
 GstMfxPrimeBufferProxy *
 gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface)
 {
