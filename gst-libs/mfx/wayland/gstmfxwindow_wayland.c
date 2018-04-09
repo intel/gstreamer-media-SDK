@@ -223,6 +223,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
     GstMfxSurface * surface,
     const GstMfxRectangle * src_rect, const GstMfxRectangle * dst_rect)
 {
+  GstMfxWindowPrivate *const window_priv = GST_MFX_WINDOW_GET_PRIVATE(window);
   GstMfxWindowWaylandPrivate *const priv =
       GST_MFX_WINDOW_WAYLAND_GET_PRIVATE (window);
   GstMfxDisplayWaylandPrivate *const display_priv =
@@ -248,7 +249,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
       || (dst_rect->width != src_rect->width)) {
     if (priv->viewport) {
       wl_viewport_set_destination (priv->viewport,
-          dst_rect->width, dst_rect->height);
+          window_priv->width, window_priv->height);
     }
   }
 
@@ -339,6 +340,8 @@ static void
 handle_configure (void * data, struct wl_shell_surface * shell_surface,
     uint32_t edges, int32_t width, int32_t height)
 {
+  GstMfxWindow *window = data;
+  gst_mfx_window_set_size (window, width, height);
 }
 
 static void
@@ -413,7 +416,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
       priv->event_queue);
 
   wl_shell_surface_add_listener (priv->shell_surface,
-      &shell_surface_listener, priv);
+      &shell_surface_listener, window);
   wl_shell_surface_set_toplevel (priv->shell_surface);
 
   if (priv_display->scaler) {
@@ -499,6 +502,13 @@ gst_mfx_window_wayland_resize (GstMfxWindow * window, guint width, guint height)
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (priv->display);
 
   GST_DEBUG ("resize window, new size %ux%u", width, height);
+
+  if (priv->viewport) {
+    wl_viewport_set_destination (priv->viewport, width, height);
+  }
+
+  wl_surface_damage (priv->surface, 0, 0, width, height);
+  wl_surface_commit (priv->surface);
 
   if (priv->opaque_region)
     wl_region_destroy (priv->opaque_region);
