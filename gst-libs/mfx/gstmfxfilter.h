@@ -258,5 +258,8 @@ gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter,
 gboolean
 gst_mfx_filter_set_async_depth (GstMfxFilter * filter, mfxU16 async_depth);
 
+gboolean
+gst_mfx_filter_set_iopattern_commit_to_task (GstMfxFilter * filter, mfxU16 iopattern);
+
 G_END_DECLS
 #endif /* GST_MFX_FILTER_H */

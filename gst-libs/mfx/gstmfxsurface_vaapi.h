@@ -26,6 +26,7 @@
 #include "gstmfxutils_vaapi.h"
 #include "gstmfxtask.h"
 #include "gstmfxcontext.h"
+#include "gstmfxprimebufferproxy.h"
 
 G_BEGIN_DECLS
 
@@ -44,6 +45,9 @@ gst_mfx_surface_vaapi_derive_image (GstMfxSurface * surface);
 
 GstMfxDisplay *
 gst_mfx_surface_vaapi_get_display (GstMfxSurface * surface);
+
+GstMfxSurface *
+gst_mfx_surface_new_from_buffer_proxy (GstMfxContext * context, GstMfxPrimeBufferProxy * proxy, const GstVideoInfo * info);
 
 G_END_DECLS
 #endif /* GST_MFX_SURFACE_VAAPI_H */

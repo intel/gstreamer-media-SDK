@@ -728,6 +728,10 @@ gst_mfxpostproc_transform (GstBaseTransform * trans, GstBuffer * inbuf,
   if (GST_FLOW_OK != ret)
     return ret;
 
+  if (plugin->has_ext_dmabuf) {
+    gst_mfx_filter_set_iopattern_commit_to_task(vpp->filter, MFX_IOPATTERN_IN_VIDEO_MEMORY | MFX_IOPATTERN_OUT_VIDEO_MEMORY);
+  }
+
   inbuf_meta = gst_buffer_get_mfx_video_meta (buf);
   surface = gst_mfx_video_meta_get_surface (inbuf_meta);
   if (!surface)
@@ -851,7 +855,9 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
     GstPadDirection direction, GstCaps * caps)
 {
   GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+#ifdef HAVE_GST_GL_LIBS
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vpp);
+#endif
   GstVideoInfo vi, peer_vi;
   GstVideoFormat out_format;
   GstVideoColorimetry out_colorimetry;

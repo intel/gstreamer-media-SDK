@@ -44,6 +44,9 @@ G_DECLARE_FINAL_TYPE (GstMfxPrimeBufferProxy, gst_mfx_prime_buffer_proxy,
 
 typedef struct _GstMfxPrimeBufferProxy GstMfxPrimeBufferProxy;
 
+GstMfxSurface *
+gst_mfx_surface_new_with_dma_buf_handle (GstMfxContext * context, gint fd, GstVideoInfo * vi);
+
 GstMfxPrimeBufferProxy *
 gst_mfx_prime_buffer_proxy_new_from_surface (GstMfxSurface * surface);
 

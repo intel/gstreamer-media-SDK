@@ -71,6 +71,27 @@ vpg_load_symbol (const gchar * vpg_extension)
   return g_va_get_surface_handle != NULL;
 }
 
+GstMfxSurface *
+gst_mfx_surface_new_with_dma_buf_handle (GstMfxContext * context, gint fd,
+		    GstVideoInfo * vi)
+{
+  GstMfxPrimeBufferProxy *proxy;
+
+  proxy = g_object_new (GST_TYPE_MFX_PRIME_BUFFER_PROXY, NULL);
+  if (!proxy)
+    return NULL;
+
+  proxy->buf_info.handle = fd;
+  proxy->buf_info.type = VAImageBufferType;
+  proxy->buf_info.mem_type = VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME;
+  proxy->buf_info.mem_size = GST_VIDEO_INFO_SIZE(vi);
+  proxy->display = gst_mfx_context_get_device(context);
+
+  return
+    gst_mfx_surface_new_from_buffer_proxy (context, proxy, vi);
+}
+
+
 static gboolean
 gst_mfx_prime_buffer_proxy_acquire_handle (GstMfxPrimeBufferProxy * proxy,
     GstMfxSurface * surface)
@@ -199,7 +220,7 @@ gst_mfx_prime_buffer_proxy_get_handle (GstMfxPrimeBufferProxy * proxy)
 {
   g_return_val_if_fail (proxy != NULL, 0);
 
-  return proxy->fd;
+  return proxy->buf_info.handle;
 }
 
 guint
@@ -207,7 +228,7 @@ gst_mfx_prime_buffer_proxy_get_size (GstMfxPrimeBufferProxy * proxy)
 {
   g_return_val_if_fail (proxy != NULL, 0);
 
-  return proxy->data_size;
+  return proxy->buf_info.mem_size;
 }
 
 VaapiImage *

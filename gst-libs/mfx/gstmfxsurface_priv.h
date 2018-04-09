@@ -74,6 +74,10 @@ struct _GstMfxSurfaceClass
 };
 
 GstMfxSurface *
+gst_mfx_surface_new_external (GstMfxSurface * surface,
+    GstMfxContext * context, const GstVideoInfo * info, GstMfxTask * task);
+
+GstMfxSurface *
 gst_mfx_surface_new_internal (GstMfxSurface * surface,
     GstMfxContext * context, const GstVideoInfo * info, GstMfxTask * task);
 
