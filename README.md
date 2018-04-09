@@ -112,3 +112,7 @@ Acknowledgements
 This project is heavily based on the well-established GStreamer VAAPI architecture, hence we would
 like to publicly thank the GStreamer VAAPI developers for their hard work and contributions.
 
+Reporting a security issue
+----------------
+Please mail to secure-opensource@intel.com directly for security issue.
+
