@@ -228,6 +228,24 @@ gst_mfx_surface_create (GstMfxSurface * surface, const GstVideoInfo * info,
   return TRUE;
 }
 
+static gboolean
+gst_mfx_surface_create_from_buffer_proxy (GstMfxSurface * surface, const GstVideoInfo * info,
+    GstMfxTask * task)
+{
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+
+  g_return_val_if_fail (task == NULL, FALSE);
+
+  gst_mfx_surface_derive_mfx_frame_info (surface, info);
+  priv->format = GST_VIDEO_INFO_FORMAT (info);
+
+  /* Allocation is already done using external buffer pool.
+   * Calling function will wrap buffer into VASurface */
+
+  gst_mfx_surface_init_properties (surface);
+  return TRUE;
+}
+
 static void
 gst_mfx_surface_finalize (GObject * object)
 {
@@ -298,6 +316,21 @@ gst_mfx_surface_new_internal (GstMfxSurface * surface, GstMfxContext * context,
   GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
   priv->context = context && !task ? gst_mfx_context_ref (context) : NULL;
   if (!gst_mfx_surface_create (surface, info, task))
+    goto error;
+  return surface;
+
+error:
+  gst_mfx_surface_unref (surface);
+  return NULL;
+}
+
+GstMfxSurface *
+gst_mfx_surface_new_external (GstMfxSurface * surface, GstMfxContext * context,
+    const GstVideoInfo * info, GstMfxTask * task)
+{
+  GstMfxSurfacePrivate *const priv = GST_MFX_SURFACE_GET_PRIVATE (surface);
+  priv->context = context && !task ? gst_mfx_context_ref (context) : NULL;
+  if (!gst_mfx_surface_create_from_buffer_proxy (surface, info, task))
     goto error;
   return surface;
 

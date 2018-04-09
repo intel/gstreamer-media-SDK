@@ -130,6 +130,7 @@ struct _GstMfxPluginBase
 
   gboolean sinkpad_has_dmabuf;
   gboolean can_export_gl_textures;
+  gboolean has_ext_dmabuf; //For DMABuf Import
 
 #ifdef HAVE_GST_GL_LIBS
   GstGLContext *gl_context;

@@ -982,6 +982,16 @@ gst_mfx_filter_set_async_depth (GstMfxFilter * filter, mfxU16 async_depth)
 }
 
 gboolean
+gst_mfx_filter_set_iopattern_commit_to_task (GstMfxFilter * filter, mfxU16 iopattern)
+{
+  g_return_val_if_fail (filter != NULL, FALSE);
+
+  filter->params.IOPattern = iopattern;
+  gst_mfx_task_set_video_params (filter->vpp[1], &filter->params);
+  return TRUE;
+}
+
+gboolean
 gst_mfx_filter_set_frc_algorithm (GstMfxFilter * filter, GstMfxFrcAlgorithm alg)
 {
   GstMfxFilterOpData *op;
