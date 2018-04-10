@@ -520,6 +520,8 @@ gst_mfx_window_wayland_resize (GstMfxWindow * window, guint width, guint height)
 
   GST_DEBUG ("resize window, new size %ux%u", width, height);
 
+  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+
   if (priv->viewport) {
     wl_viewport_set_destination (priv->viewport, width, height);
   }
@@ -529,10 +531,11 @@ gst_mfx_window_wayland_resize (GstMfxWindow * window, guint width, guint height)
 
   if (priv->opaque_region)
     wl_region_destroy (priv->opaque_region);
-  GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+
   priv->opaque_region = wl_compositor_create_region (priv_display->compositor);
-  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
   wl_region_add (priv->opaque_region, 0, 0, width, height);
+
+  GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
 
   return TRUE;
 }
