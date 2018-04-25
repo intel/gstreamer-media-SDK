@@ -418,7 +418,7 @@ gst_mfx_decoder_is_avc_intra (GstMfxDecoder * decoder, guint8 * cdata,
 
 static gboolean
 gst_mfx_decoder_convert_avc_stream (GstMfxDecoder * decoder, guint8 * cdata,
-    gint size)
+    gint size, gboolean drop_ps)
 {
   guint8 startcode[4] = {0, 0, 0, 1}, nal_unit_type = 0;
   gint32 offset = 0, packet_size = 0;
@@ -441,7 +441,8 @@ gst_mfx_decoder_convert_avc_stream (GstMfxDecoder * decoder, guint8 * cdata,
     switch (nal_unit_type)
     {
       case GST_H264_NAL_SPS:
-      case GST_H264_NAL_PPS: break;
+      case GST_H264_NAL_PPS:
+       if (drop_ps)  break;
       default:
         decoder->bitstream = g_byte_array_append (decoder->bitstream,
             startcode, 4);
@@ -973,7 +974,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
           g_queue_push_head(&decoder->decoded_frames, frame);
           goto end;
         }
-        gst_mfx_decoder_convert_avc_stream (decoder, minfo.data, minfo.size);
+        gst_mfx_decoder_convert_avc_stream (decoder, minfo.data, minfo.size, FALSE);
         decoder->bs.MaxLength = decoder->bs.DataLength = decoder->bitstream->len;
         decoder->bs.Data = decoder->bitstream->data;
 
@@ -1019,7 +1020,8 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
         decoder->bs.Data = decoder->bitstream->data;
       }
 
-      if (!gst_mfx_decoder_convert_avc_stream (decoder, minfo.data, minfo.size))
+      if (!gst_mfx_decoder_convert_avc_stream (
+            decoder, minfo.data, minfo.size, !decoder->inited))
         GST_ERROR ("Error in %s !", __func__);
 
       decoder->bs.MaxLength = decoder->bitstream->len;
