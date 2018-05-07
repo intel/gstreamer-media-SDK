@@ -1,3 +1,9 @@
+Version 1.3.3-rc10
+* Implemented wayland windown resize
+* Fixed wayland window resize race condition issue.
+* Only drop the NAL parameters set when convert AVC at first time.
+* Set the damage area according to the largest rect on Wayland.
+
 Version 1.3.3
 * Added H264 decoder support input format in NAL packaging format (AVC stream-format).
 
