@@ -748,12 +748,14 @@ gst_mfx_plugin_base_get_input_buffer (GstMfxPluginBase * plugin,
           &outbuf, NULL) != GST_FLOW_OK)
     goto error_create_buffer;
 
+#ifdef WITH_LIBVA_BACKEND
   if (is_dma_buffer (inbuf)) {
     if (!plugin_bind_dma_to_mfx_buffer (plugin, inbuf, outbuf))
       goto error_bind_dma_buffer;
     plugin->has_ext_dmabuf = TRUE;
     goto done;
   }
+#endif
 
   if (!gst_video_frame_map (&src_frame, &plugin->sinkpad_info, inbuf,
           GST_MAP_READ))
