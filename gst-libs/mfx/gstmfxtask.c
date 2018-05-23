@@ -108,6 +108,23 @@ gst_mfx_task_get_task_type (GstMfxTask * task)
   return GST_MFX_TASK_GET_PRIVATE (task)->task_type;
 }
 
+gint
+gst_mfx_task_get_id (GstMfxTask * task)
+{
+  g_return_val_if_fail (task != NULL, -1);
+
+  return GST_MFX_TASK_GET_PRIVATE (task)->id;
+}
+
+void
+gst_mfx_task_set_id (GstMfxTask * task, gint id)
+{
+  g_return_if_fail (task != NULL);
+
+  GST_MFX_TASK_GET_PRIVATE (task)->id = id;
+}
+
+
 void
 gst_mfx_task_ensure_memtype_is_system (GstMfxTask * task)
 {
@@ -239,6 +256,7 @@ gst_mfx_task_create (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
     if (MFX_ERR_NONE != sts)
       return FALSE;
   }
+
   gst_mfx_task_aggregator_add_task (aggregator, task);
   return TRUE;
 }

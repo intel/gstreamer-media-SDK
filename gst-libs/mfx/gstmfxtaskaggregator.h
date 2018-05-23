@@ -50,14 +50,15 @@ gst_mfx_task_aggregator_get_current_task (GstMfxTaskAggregator * aggregator);
 
 void
 gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
-  GstMfxTask * task);
+    GstMfxTask * task);
 
 GstMfxTask *
-gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator);
+gst_mfx_task_aggregator_find_task (GstMfxTaskAggregator * aggregator,
+    gint task_id);
 
 void
 gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
-  GstMfxTask * task);
+    GstMfxTask * task);
 
 GstMfxContext *
 gst_mfx_task_aggregator_get_context (GstMfxTaskAggregator * aggregator);

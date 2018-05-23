@@ -340,6 +340,28 @@ gst_caps_has_gl_memory (GstCaps * caps)
 #endif
 }
 
+gboolean
+gst_mfx_query_peer_task (GstElement * element, gint * task_id)
+{
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (element);
+  GstStructure *structure =
+      gst_structure_new ("task", "id", G_TYPE_INT, -1, NULL);
+  gboolean ret = FALSE;
+
+  if (structure) {
+    GstQuery *custom_query =
+        gst_query_new_custom (GST_QUERY_CUSTOM, structure);
+    if (gst_pad_peer_query (GST_MFX_PLUGIN_BASE_SINK_PAD (plugin),
+          custom_query)) {
+      if (gst_structure_get_int (structure, "id", task_id))
+        ret = TRUE;
+    }
+    gst_query_unref (custom_query);
+  }
+
+  return ret;
+}
+
 void
 gst_video_info_change_format (GstVideoInfo * vip, GstVideoFormat format,
     guint width, guint height)

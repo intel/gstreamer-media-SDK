@@ -146,10 +146,14 @@ GstMfxEncoderStatus
 gst_mfx_encoder_set_property (GstMfxEncoder * encoder, gint prop_id,
     const GValue * value);
 
+void
+gst_mfx_encoder_set_peer_id (GstMfxEncoder * encoder, gint peer_id);
+
 gboolean
 gst_mfx_encoder_set_async_depth (GstMfxEncoder * encoder, mfxU16 async_depth);
 
-void gst_mfx_encoder_set_profile (GstMfxEncoder * encoder, mfxU16 profile);
+void
+gst_mfx_encoder_set_profile (GstMfxEncoder * encoder, mfxU16 profile);
 
 GstMfxProfile
 gst_mfx_encoder_get_profile (GstMfxEncoder * encoder);

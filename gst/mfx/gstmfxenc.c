@@ -275,6 +275,7 @@ ensure_encoder (GstMfxEnc * encode)
   GstMfxEncClass *klass = GST_MFXENC_GET_CLASS (encode);
   GstMfxEncoderStatus status;
   GPtrArray *const prop_values = encode->prop_values;
+  gint peer_id;
   guint i;
 
   g_return_val_if_fail (klass->alloc_encoder, FALSE);
@@ -285,6 +286,9 @@ ensure_encoder (GstMfxEnc * encode)
   encode->encoder = klass->alloc_encoder (encode);
   if (!encode->encoder)
     return FALSE;
+
+  if (gst_mfx_query_peer_task (GST_ELEMENT (encode), &peer_id))
+    gst_mfx_encoder_set_peer_id (encode->encoder, peer_id);
 
   if (prop_values) {
     for (i = 0; i < prop_values->len; i++) {
@@ -340,6 +344,7 @@ gst_mfxenc_finish (GstVideoEncoder * venc)
 
   return ret;
 }
+
 
 static gboolean
 set_codec_state (GstMfxEnc * encode, GstVideoCodecState * state)
@@ -519,8 +524,8 @@ gst_mfxenc_class_init (GstMfxEncClass * klass)
 
   object_class->finalize = gst_mfxenc_finalize;
 
-  venc_class->open = GST_DEBUG_FUNCPTR (gst_mfxenc_open);
   venc_class->stop = GST_DEBUG_FUNCPTR (gst_mfxenc_stop);
+  venc_class->open = GST_DEBUG_FUNCPTR (gst_mfxenc_open);
   venc_class->close = GST_DEBUG_FUNCPTR (gst_mfxenc_close);
   venc_class->set_format = GST_DEBUG_FUNCPTR (gst_mfxenc_set_format);
   venc_class->handle_frame = GST_DEBUG_FUNCPTR (gst_mfxenc_handle_frame);

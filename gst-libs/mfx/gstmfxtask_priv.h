@@ -60,6 +60,7 @@ struct _GstMfxTaskPrivate
   mfxFrameAllocRequest request;
   mfxVideoParam params;
   mfxSession session;
+  gint id;
   guint task_type;
   gboolean memtype_is_system;
   gboolean is_joined;

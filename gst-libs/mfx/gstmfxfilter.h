@@ -199,6 +199,9 @@ gst_mfx_filter_process (GstMfxFilter * filter, GstMfxSurface * surface,
 GstMfxFilterStatus
 gst_mfx_filter_reset (GstMfxFilter * filter);
 
+GstMfxTask *
+gst_mfx_filter_get_task (GstMfxFilter * filter, guint type);
+
 /* Setters */
 void
 gst_mfx_filter_set_frame_info (GstMfxFilter * filter,

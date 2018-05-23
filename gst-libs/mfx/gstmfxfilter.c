@@ -444,6 +444,14 @@ gst_mfx_filter_replace (GstMfxFilter ** old_filter_ptr,
   gst_object_replace ((GstObject **) old_filter_ptr, GST_OBJECT (new_filter));
 }
 
+GstMfxTask *
+gst_mfx_filter_get_task (GstMfxFilter * filter, guint type)
+{
+  g_return_val_if_fail (filter != NULL, NULL);
+
+  return gst_mfx_task_ref (filter->vpp[!!(type & GST_MFX_TASK_VPP_OUT)]);
+}
+
 gboolean
 gst_mfx_filter_set_format (GstMfxFilter * filter, mfxU32 fourcc)
 {
@@ -1074,6 +1082,10 @@ gst_mfx_filter_start (GstMfxFilter * filter)
   memtype_is_system =
       !(filter->params.IOPattern & MFX_IOPATTERN_OUT_VIDEO_MEMORY);
   if (!memtype_is_system) {
+    GstMfxContext *device_context =
+        gst_mfx_task_aggregator_get_context (filter->aggregator);
+    
+    gst_mfx_context_lock (device_context);
     gst_mfx_task_use_video_memory (filter->vpp[1]);
 
     /* Make sure frame allocator points to the right task to allocate surfaces */
@@ -1081,6 +1093,10 @@ gst_mfx_filter_start (GstMfxFilter * filter)
         filter->vpp[1]);
     sts = gst_mfx_task_frame_alloc (filter->aggregator,
         request, &filter->response);
+    
+    gst_mfx_context_unlock (device_context);
+    gst_mfx_context_unref (device_context);
+
     if (MFX_ERR_NONE != sts)
       return GST_MFX_FILTER_STATUS_ERROR_ALLOCATION_FAILED;
   } else {

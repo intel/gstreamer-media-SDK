@@ -426,6 +426,14 @@ gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
   gst_object_replace ((GstObject **) old_decoder_ptr, GST_OBJECT (new_decoder));
 }
 
+GstMfxTask *
+gst_mfx_decoder_get_task (GstMfxDecoder * decoder)
+{
+  g_return_val_if_fail (decoder != NULL, NULL);
+
+  return gst_mfx_task_ref (decoder->decode);
+}
+
 static gboolean
 configure_filter (GstMfxDecoder * decoder)
 {

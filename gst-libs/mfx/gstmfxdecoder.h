@@ -65,6 +65,9 @@ void
 gst_mfx_decoder_replace (GstMfxDecoder ** old_decoder_ptr,
     GstMfxDecoder * new_decoder);
 
+GstMfxTask *
+gst_mfx_decoder_get_task (GstMfxDecoder * decoder);
+
 const mfxFrameAllocRequest *
 gst_mfx_decoder_get_request (GstMfxDecoder * decoder);
 
