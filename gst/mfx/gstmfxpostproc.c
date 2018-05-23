@@ -470,19 +470,18 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
 {
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vpp);
   gboolean success = TRUE;
-  GstMfxTask *task;
+  GstMfxTask *task = NULL;
+  gint peer_id;
 
   if (vpp->filter)
     return TRUE;
-
-  if (!gst_mfx_plugin_base_ensure_aggregator (plugin))
-    return FALSE;
 
   plugin->srcpad_caps_is_raw =
       !(gst_caps_has_mfx_surface (plugin->srcpad_caps)
         || gst_caps_has_gl_memory (plugin->srcpad_caps));
 
-  task = gst_mfx_task_aggregator_get_last_task (plugin->aggregator);
+  if (gst_mfx_query_peer_task (GST_ELEMENT (plugin), &peer_id));
+    task = gst_mfx_task_aggregator_find_task (plugin->aggregator, peer_id);
 
   if (!plugin->sinkpad_caps_is_raw
       && gst_mfx_task_has_type (task, GST_MFX_TASK_DECODER)) {
@@ -1100,20 +1099,45 @@ static gboolean
 gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
     GstQuery * query)
 {
-  GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+  gboolean ret = TRUE;
 
-  if (GST_QUERY_TYPE (query) == GST_QUERY_CONTEXT) {
-    if (gst_mfx_handle_context_query (query,
-            GST_MFX_PLUGIN_BASE_AGGREGATOR (vpp))) {
-      GST_DEBUG_OBJECT (vpp, "sharing tasks %p",
-          GST_MFX_PLUGIN_BASE_AGGREGATOR (vpp));
-      return TRUE;
+  switch (GST_QUERY_TYPE (query)) {
+    case GST_QUERY_CONTEXT: {
+      GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (trans);
+
+      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
+      break;
+    }
+    case GST_QUERY_CUSTOM: {
+      GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
+      GstMfxTask *task =
+          gst_mfx_filter_get_task (vpp->filter, GST_MFX_TASK_VPP_OUT);
+
+      if (task) {
+        GstStructure *structure = gst_query_writable_structure (query);
+        gint task_id;
+
+        if (gst_structure_get_int (structure, "id", &task_id))
+          gst_structure_set (structure,
+              "id", G_TYPE_INT, gst_mfx_task_get_id (task), NULL);
+
+        gst_mfx_task_unref (task);
+      }
+      break;
+    }
+    default: {
+      ret = GST_BASE_TRANSFORM_CLASS
+            (gst_mfxpostproc_parent_class)->query (trans, direction, query);
+      break;
     }
   }
+  return ret;
+}
 
-  return
-      GST_BASE_TRANSFORM_CLASS (gst_mfxpostproc_parent_class)->query (trans,
-      direction, query);
+static gboolean
+gst_mfxpostproc_start (GstBaseTransform * trans)
+{
+  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (trans));
 }
 
 static gboolean
@@ -1324,6 +1348,7 @@ gst_mfxpostproc_class_init (GstMfxPostprocClass * klass)
   trans_class->transform_caps = gst_mfxpostproc_transform_caps;
   trans_class->transform = gst_mfxpostproc_transform;
   trans_class->set_caps = gst_mfxpostproc_set_caps;
+  trans_class->start = gst_mfxpostproc_start;
   trans_class->stop = gst_mfxpostproc_stop;
   trans_class->query = gst_mfxpostproc_query;
   trans_class->propose_allocation = gst_mfxpostproc_propose_allocation;

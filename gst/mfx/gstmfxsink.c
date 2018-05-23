@@ -804,9 +804,9 @@ gst_mfxsink_ensure_window_size (GstMfxSink * sink, guint * width_ptr,
 static gboolean
 gst_mfxsink_start (GstBaseSink * base_sink)
 {
-  GstMfxPluginBase *plugin = GST_MFX_PLUGIN_BASE (base_sink);
+  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (base_sink);
 
-  return gst_mfx_plugin_base_ensure_aggregator (GST_MFX_PLUGIN_BASE (plugin));
+  return gst_mfx_plugin_base_ensure_aggregator (plugin);
 }
 
 static gboolean

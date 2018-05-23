@@ -153,6 +153,7 @@ struct _GstMfxEncoderPrivate
   gboolean input_memtype_is_system;
   gboolean shared;
   gboolean inited;
+  gint peer_id;
 
   mfxSession session;
   mfxVideoParam params;

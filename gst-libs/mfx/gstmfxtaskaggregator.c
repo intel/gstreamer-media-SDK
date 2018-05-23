@@ -179,12 +179,21 @@ gst_mfx_task_aggregator_set_current_task (GstMfxTaskAggregator * aggregator,
 }
 
 GstMfxTask *
-gst_mfx_task_aggregator_get_last_task (GstMfxTaskAggregator * aggregator)
+gst_mfx_task_aggregator_find_task (GstMfxTaskAggregator * aggregator,
+    gint task_id)
 {
   g_return_val_if_fail (aggregator != NULL, NULL);
 
-  GList *l = g_list_first (aggregator->tasks);
-  return l ? gst_mfx_task_ref (GST_MFX_TASK (l->data)) : NULL;
+  GstMfxTask *task = NULL;
+  guint i = 0;
+
+  while ((task = GST_MFX_TASK (g_list_nth_data (aggregator->tasks, i++)))
+      != NULL) {
+    if (gst_mfx_task_get_id (task) == task_id)
+      break;
+  }
+
+  return task ? gst_mfx_task_ref (task) : NULL;
 }
 
 void
@@ -195,6 +204,8 @@ gst_mfx_task_aggregator_add_task (GstMfxTaskAggregator * aggregator,
   g_return_if_fail (task != NULL);
 
   aggregator->tasks = g_list_prepend (aggregator->tasks, task);
+
+  gst_mfx_task_set_id (task, g_list_length (aggregator->tasks));
 }
 
 void

@@ -74,6 +74,12 @@ gst_mfx_task_set_task_type (GstMfxTask * task, guint flags);
 guint
 gst_mfx_task_get_task_type (GstMfxTask * task);
 
+gint
+gst_mfx_task_get_id (GstMfxTask * task);
+
+void
+gst_mfx_task_set_id (GstMfxTask * task, gint id);
+
 GstMfxMemoryId *
 gst_mfx_task_get_memory_id (GstMfxTask * task);
 

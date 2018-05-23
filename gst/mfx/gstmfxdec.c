@@ -684,6 +684,22 @@ gst_mfxdec_src_query (GstVideoDecoder * vdec, GstQuery * query)
       ret = gst_mfx_handle_context_query (query, plugin->aggregator);
       break;
     }
+    case GST_QUERY_CUSTOM: {
+      GstMfxDec *mfxdec = GST_MFXDEC (vdec);
+      GstMfxTask *task = gst_mfx_decoder_get_task (mfxdec->decoder);
+
+      if (task) {
+        GstStructure *structure = gst_query_writable_structure (query);
+        gint task_id;
+
+        if (gst_structure_get_int (structure, "id", &task_id))
+          gst_structure_set (structure,
+              "id", G_TYPE_INT, gst_mfx_task_get_id (task), NULL);
+
+        gst_mfx_task_unref (task);
+      }
+      break;
+    }
     default:{
       ret = GST_VIDEO_DECODER_CLASS (parent_class)->src_query (vdec, query);
       break;
