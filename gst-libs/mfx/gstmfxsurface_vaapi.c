@@ -168,8 +168,8 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
       memset (&external, 0, sizeof(external));
 
       external.pixel_format = fourcc;
-      external.width = frame_info->Width;
-      external.height = frame_info->Height;
+      external.width = frame_info->CropW;
+      external.height = frame_info->CropH;
       external.num_planes = num_planes;
       external.data_size = size;
       external.pitches[0] = pitches;
