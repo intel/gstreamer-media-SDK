@@ -37,6 +37,7 @@
   GST_MFX_RATECONTROL_MASK (CBR)      |             \
   GST_MFX_RATECONTROL_MASK (VBR)      |             \
   GST_MFX_RATECONTROL_MASK (AVBR)     |             \
+  GST_MFX_RATECONTROL_MASK (QVBR)     |             \
   GST_MFX_RATECONTROL_MASK (VCM)      |             \
   GST_MFX_RATECONTROL_MASK (LA_BRC)   |             \
   GST_MFX_RATECONTROL_MASK (LA_HRD)   |             \
@@ -80,6 +81,7 @@ ensure_bitrate (GstMfxEncoder * base_encoder)
     case GST_MFX_RATECONTROL_CBR:
     case GST_MFX_RATECONTROL_VBR:
     case GST_MFX_RATECONTROL_AVBR:
+    case GST_MFX_RATECONTROL_QVBR:
     case GST_MFX_RATECONTROL_VCM:
     case GST_MFX_RATECONTROL_LA_BRC:
     case GST_MFX_RATECONTROL_LA_HRD:
