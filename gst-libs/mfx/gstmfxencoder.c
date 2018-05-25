@@ -891,6 +891,13 @@ set_extended_coding_options (GstMfxEncoder * encoder)
   }
 
   switch (priv->rc_method) {
+    case GST_MFX_RATECONTROL_QVBR:
+      priv->extco3.Header.BufferId = MFX_EXTBUFF_CODING_OPTION3;
+      priv->extco3.Header.BufferSz = sizeof (priv->extco3);
+      priv->extco3.QVBRQuality = CLAMP (priv->global_quality, 1, 51);
+      priv->extparam_internal[priv->params.NumExtParam++] =
+          (mfxExtBuffer *) & priv->extco3;
+      break;
     case GST_MFX_RATECONTROL_LA_BRC:
     case GST_MFX_RATECONTROL_LA_ICQ:
     case GST_MFX_RATECONTROL_LA_HRD:
