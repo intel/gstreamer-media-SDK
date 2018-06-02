@@ -996,26 +996,6 @@ no_surface:
   goto done;
 }
 
-static gboolean
-gst_mfxsink_query (GstBaseSink * base_sink, GstQuery * query)
-{
-  GstMfxSink *const sink = GST_MFXSINK_CAST (base_sink);
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (sink);
-  gboolean ret = FALSE;
-
-  switch (GST_QUERY_TYPE (query)) {
-    case GST_QUERY_CONTEXT:
-      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
-      break;
-    default:
-      ret = GST_BASE_SINK_CLASS (gst_mfxsink_parent_class)->query (base_sink,
-          query);
-      break;
-  }
-
-  return ret;
-}
-
 static void
 gst_mfxsink_destroy (GstMfxSink * sink)
 {
@@ -1114,7 +1094,6 @@ gst_mfxsink_class_init (GstMfxSinkClass * klass)
   basesink_class->stop = gst_mfxsink_stop;
   basesink_class->get_caps = gst_mfxsink_get_caps;
   basesink_class->set_caps = gst_mfxsink_set_caps;
-  basesink_class->query = GST_DEBUG_FUNCPTR (gst_mfxsink_query);
 
   videosink_class->show_frame = GST_DEBUG_FUNCPTR (gst_mfxsink_show_frame);
 

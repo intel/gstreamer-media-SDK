@@ -47,37 +47,6 @@ gst_mfx_ensure_aggregator (GstElement * element)
   return TRUE;
 }
 
-gboolean
-gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * task)
-{
-  const gchar *type = NULL;
-  GstContext *context, *old_context;
-
-  g_return_val_if_fail (query != NULL, FALSE);
-
-  if (!task)
-    return FALSE;
-
-  if (!gst_query_parse_context_type (query, &type))
-    return FALSE;
-
-  if (g_strcmp0 (type, GST_MFX_AGGREGATOR_CONTEXT_TYPE_NAME))
-    return FALSE;
-
-  gst_query_parse_context (query, &old_context);
-  if (old_context) {
-    context = gst_context_copy (old_context);
-    gst_mfx_video_context_set_aggregator (context, task);
-  } else {
-    context = gst_mfx_video_context_new_with_aggregator (task, FALSE);
-  }
-
-  gst_query_set_context (query, context);
-  gst_context_unref (context);
-
-  return TRUE;
-}
-
 static void
 set_video_template_caps (GstCaps * caps)
 {

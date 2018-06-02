@@ -1102,12 +1102,6 @@ gst_mfxpostproc_query (GstBaseTransform * trans, GstPadDirection direction,
   gboolean ret = TRUE;
 
   switch (GST_QUERY_TYPE (query)) {
-    case GST_QUERY_CONTEXT: {
-      GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (trans);
-
-      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
-      break;
-    }
     case GST_QUERY_CUSTOM: {
       GstMfxPostproc *const vpp = GST_MFXPOSTPROC (trans);
       GstMfxTask *task =

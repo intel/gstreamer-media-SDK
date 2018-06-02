@@ -45,44 +45,6 @@ enum
   PROP_BASE,
 };
 
-static gboolean
-gst_mfxenc_sink_query (GstVideoEncoder * encoder, GstQuery * query)
-{
-  gboolean ret = TRUE;
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (encoder);
-
-  switch (GST_QUERY_TYPE (query)) {
-    case GST_QUERY_CONTEXT:
-      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
-      break;
-    default:
-      ret = GST_VIDEO_ENCODER_CLASS (gst_mfxenc_parent_class)->sink_query
-          (encoder, query);
-      break;
-  }
-
-  return ret;
-}
-
-static gboolean
-gst_mfxenc_src_query (GstVideoEncoder * encoder, GstQuery * query)
-{
-  gboolean ret = TRUE;
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (encoder);
-
-  switch (GST_QUERY_TYPE (query)) {
-    case GST_QUERY_CONTEXT:
-      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
-      break;
-    default:
-      ret = GST_VIDEO_ENCODER_CLASS (gst_mfxenc_parent_class)->src_query
-          (encoder, query);
-      break;
-  }
-
-  return ret;
-}
-
 typedef struct
 {
   GstMfxEncoderProp id;
@@ -536,9 +498,6 @@ gst_mfxenc_class_init (GstMfxEncClass * klass)
 
   klass->get_property = gst_mfxenc_default_get_property;
   klass->set_property = gst_mfxenc_default_set_property;
-
-  venc_class->src_query = GST_DEBUG_FUNCPTR (gst_mfxenc_src_query);
-  venc_class->sink_query = GST_DEBUG_FUNCPTR (gst_mfxenc_sink_query);
 }
 
 static inline GPtrArray *

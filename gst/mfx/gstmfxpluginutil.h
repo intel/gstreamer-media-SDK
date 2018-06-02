@@ -104,9 +104,6 @@ typedef enum
 gboolean
 gst_mfx_ensure_aggregator (GstElement * element);
 
-gboolean
-gst_mfx_handle_context_query (GstQuery * query, GstMfxTaskAggregator * context);
-
 GstCaps *
 gst_mfx_video_format_new_template_caps (GstVideoFormat format);
 
