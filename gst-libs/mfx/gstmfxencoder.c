@@ -562,6 +562,18 @@ gst_mfx_encoder_finalize_params (GstMfxEncoder * encoder)
   /* Encoder expects progressive frames as input */
   priv->params.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
 
+  if (MFX_CODEC_AVC == priv->profile.codec) {
+#if MSDK_CHECK_VERSION(1,25)
+    if (GST_MFX_CHECK_RUNTIME_VERSION (priv->aggregator, 1, 25)) {
+      priv->extmfp.Header.BufferId = MFX_EXTBUFF_MULTI_FRAME_PARAM;
+      priv->extmfp.Header.BufferSz = sizeof (priv->extmfp);
+      priv->extmfp.MFMode = MFX_MF_AUTO;
+      priv->extparam_internal[priv->params.NumExtParam++] =
+        (mfxExtBuffer *) & priv->extmfp;
+    }
+#endif
+  }
+
   /* Write colorimetry information to bitstream */
   gst_mfx_encoder_extsig_from_colorimetry (encoder,
       &GST_VIDEO_INFO_COLORIMETRY (&priv->info));
