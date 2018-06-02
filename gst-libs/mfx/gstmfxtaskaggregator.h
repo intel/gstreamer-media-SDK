@@ -32,6 +32,9 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GstMfxTaskAggregator, gst_mfx_task_aggregator, GST_MFX,
     TASK_AGGREGATOR, GstObject)
 
+#define GST_MFX_CHECK_RUNTIME_VERSION(aggregator, major, minor) \
+    gst_mfx_task_aggregator_check_mfx_version(aggregator, major, minor)
+
 GstMfxTaskAggregator *
 gst_mfx_task_aggregator_new (void);
 
@@ -75,6 +78,10 @@ gst_mfx_task_aggregator_remove_task (GstMfxTaskAggregator * aggregator,
 mfxU16
 gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator);
 #endif
+
+gboolean
+gst_mfx_task_aggregator_check_mfx_version (GstMfxTaskAggregator * aggregator,
+    mfxU16 major, mfxU16 minor);
 
 G_END_DECLS
 #endif /* GST_MFX_TASK_AGGREGATOR_H */

@@ -191,7 +191,10 @@ struct _GstMfxEncoderPrivate
   mfxExtCodingOption3 extco3;
   mfxExtHEVCParam exthevc;
   mfxExtVideoSignalInfo extsig;
-  mfxExtBuffer *extparam_internal[5];
+#if MSDK_CHECK_VERSION(1,25)
+  mfxExtMultiFrameParam   extmfp;
+#endif
+  mfxExtBuffer *extparam_internal[6];
 
   /* H264 specific coding options */
   gboolean use_cabac;

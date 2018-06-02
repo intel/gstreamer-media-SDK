@@ -248,6 +248,24 @@ gst_mfx_task_aggregator_get_platform (GstMfxTaskAggregator * aggregator)
 }
 #endif
 
+gboolean
+gst_mfx_task_aggregator_check_mfx_version (GstMfxTaskAggregator * aggregator,
+    mfxU16 major, mfxU16 minor)
+{
+  mfxStatus sts =
+      MFXQueryVersion (aggregator->parent_session, &aggregator->version);
+  if (sts != MFX_ERR_NONE) {
+    GST_ERROR ("Error querying MFX version.");
+    return FALSE;
+  }
+
+  if ((aggregator->version.Major == major && aggregator->version.Minor >= minor)
+      || aggregator->version.Major > major)
+    return TRUE;
+  else
+    return FALSE;
+}
+
 static void
 gst_mfx_task_aggregator_class_init (GstMfxTaskAggregatorClass * klass)
 {
