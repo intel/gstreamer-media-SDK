@@ -20,7 +20,12 @@
 
 #include "sysdeps.h"
 
-#include "common/gstbitwriter.h"
+#if !GST_CHECK_VERSION(1,15,0)
+# include "common/gstbitwriter.h"
+#else
+# include <gst/base/gstbitwriter.h>
+#endif
+
 #include "gstmfxencoder_priv.h"
 #include "gstmfxencoder_h265.h"
 #include <mfxplugin.h>
@@ -189,7 +194,11 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
   vps_size = vps.VPSBufSize - 4;
 
   /* Header */
-  gst_bit_writer_init (&bs, (vps_size + sps_size + pps_size + 64) * 8);
+#if !GST_CHECK_VERSION(1,15,0)
+  gst_bit_writer_init (&bs, (sps_size + pps_size + 64) * 8);
+#else
+  gst_bit_writer_init_with_size (&bs, sps_size + pps_size + 64, FALSE);
+#endif
   WRITE_UINT32 (&bs, configuration_version, 8);
 
   /* profile_space | tier_flag | profile_idc */
@@ -256,28 +265,39 @@ gst_mfx_encoder_h265_get_codec_data (GstMfxEncoder * base_encoder,
   WRITE_UINT32 (&bs, 0x01, 16); /* numNalus, PPS count = 1 */
   WRITE_UINT32 (&bs, pps_size, 16);     /* PPS nalUnitLength */
   gst_bit_writer_put_bytes (&bs, pps_info, pps_size);
-
+#if !GST_CHECK_VERSION(1,15,0)
   buffer =
       gst_buffer_new_wrapped (GST_BIT_WRITER_DATA (&bs),
       GST_BIT_WRITER_BIT_SIZE (&bs) / 8);
+#else
+  buffer = gst_bit_writer_reset_and_get_buffer (&bs);
+#endif
   if (!buffer)
     goto error_alloc_buffer;
   *out_buffer_ptr = buffer;
-
+#if !GST_CHECK_VERSION(1,15,0)
   gst_bit_writer_clear (&bs, FALSE);
-
+#endif
   return GST_MFX_ENCODER_STATUS_SUCCESS;
   /* ERRORS */
 bs_error:
   {
     GST_ERROR ("failed to write codec-data");
+#if !GST_CHECK_VERSION(1,15,0)
     gst_bit_writer_clear (&bs, TRUE);
+#else
+    gst_bit_writer_reset (&bs);
+#endif
     return FALSE;
   }
 error_alloc_buffer:
   {
     GST_ERROR ("failed to allocate codec-data buffer");
+#if !GST_CHECK_VERSION(1,15,0)
     gst_bit_writer_clear (&bs, TRUE);
+#else
+    gst_bit_writer_reset (&bs);
+#endif
     return GST_MFX_ENCODER_STATUS_ERROR_ALLOCATION_FAILED;
   }
 }

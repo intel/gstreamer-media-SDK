@@ -58,10 +58,10 @@ if with_d3d11
 endif
 
 if mfx_encoder
-  sources += [
-    'gstmfxencoder.c',
-    'common/gstbitwriter.c'
-  ]
+  sources += 'gstmfxencoder.c'
+  if not gst_dep.version().version_compare('>=1.15')
+    sources += 'common/gstbitwriter.c'
+  endif
   encoders = [
     ['MFX_H264_ENCODER', '-DMFX_H264_ENCODER', ['gstmfxencoder_h264.c']],
     ['MFX_H265_ENCODER', '-DMFX_H265_ENCODER', ['gstmfxencoder_h265.c']],
