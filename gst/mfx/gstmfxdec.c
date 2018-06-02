@@ -638,29 +638,9 @@ gst_mfxdec_finish (GstVideoDecoder * vdec)
 }
 
 static gboolean
-gst_mfxdec_sink_query (GstVideoDecoder * vdec, GstQuery * query)
-{
-  gboolean ret = TRUE;
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
-
-  switch (GST_QUERY_TYPE (query)) {
-    case GST_QUERY_CONTEXT:{
-      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
-      break;
-    }
-    default:{
-      ret = GST_VIDEO_DECODER_CLASS (parent_class)->sink_query (vdec, query);
-      break;
-    }
-  }
-  return ret;
-}
-
-static gboolean
 gst_mfxdec_src_query (GstVideoDecoder * vdec, GstQuery * query)
 {
   gboolean ret = TRUE;
-  GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
 
   switch (GST_QUERY_TYPE (query)) {
     case GST_QUERY_CAPS:{
@@ -678,10 +658,6 @@ gst_mfxdec_src_query (GstVideoDecoder * vdec, GstQuery * query)
 
       gst_query_set_caps_result (query, caps);
       gst_caps_unref (caps);
-      break;
-    }
-    case GST_QUERY_CONTEXT:{
-      ret = gst_mfx_handle_context_query (query, plugin->aggregator);
       break;
     }
     case GST_QUERY_CUSTOM: {
@@ -756,7 +732,6 @@ gst_mfxdec_class_init (GstMfxDecClass * klass)
   vdec_class->decide_allocation =
       GST_DEBUG_FUNCPTR (gst_mfxdec_decide_allocation);
   vdec_class->src_query = GST_DEBUG_FUNCPTR (gst_mfxdec_src_query);
-  vdec_class->sink_query = GST_DEBUG_FUNCPTR (gst_mfxdec_sink_query);
 
   map = (GstMfxCodecMap *) g_type_get_qdata (G_OBJECT_CLASS_TYPE (klass),
       GST_MFXDEC_PARAMS_QDATA);
