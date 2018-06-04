@@ -24,6 +24,7 @@
 
 #include "sysdeps.h"
 
+#include <gst/gst.h>
 #include <wayland-client.h>
 #include <wayland-egl.h>
 #include "gstmfxwindow_wayland.h"
@@ -294,10 +295,15 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   wl_surface_attach (priv->surface, buffer, 0, 0);
+
+#ifdef USE_WAYLAND_1_13_0
   if (src_rect->width > dst_rect->width || src_rect->height > dst_rect->height)
     wl_surface_damage (priv->surface, 0, 0, src_rect->width, src_rect->height);
   else
     wl_surface_damage (priv->surface, 0, 0, dst_rect->width, dst_rect->height);
+#else
+  wl_surface_damage (priv->surface, 0, 0, dst_rect->width, dst_rect->height);
+#endif
 
   if (priv->opaque_region) {
     wl_surface_set_opaque_region (priv->surface, priv->opaque_region);
