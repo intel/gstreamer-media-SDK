@@ -567,7 +567,7 @@ gst_mfx_encoder_finalize_params (GstMfxEncoder * encoder)
     if (GST_MFX_CHECK_RUNTIME_VERSION (priv->aggregator, 1, 25)) {
       priv->extmfp.Header.BufferId = MFX_EXTBUFF_MULTI_FRAME_PARAM;
       priv->extmfp.Header.BufferSz = sizeof (priv->extmfp);
-      priv->extmfp.MFMode = MFX_MF_AUTO;
+      priv->extmfp.MFMode = priv->multiframe_mode;
       priv->extparam_internal[priv->params.NumExtParam++] =
         (mfxExtBuffer *) & priv->extmfp;
     }
@@ -1712,6 +1712,31 @@ gst_mfx_encoder_preset_get_type (void)
   }
   return g_type;
 }
+
+#if MSDK_CHECK_VERSION(1,25)
+GType
+gst_mfx_encoder_multiframe_get_type (void)
+{
+  static volatile gsize g_type = 0;
+
+  static const GEnumValue multiframe_modes[] = {
+      { GST_MFX_ENCODER_MULTIFRAME_DISABLED,
+            "Disable multi-frame optimization", "disabled" },
+      { GST_MFX_ENCODER_MULTIFRAME_AUTO,
+            "Auto-decide multi-frame optimization mode", "auto" },
+      { GST_MFX_ENCODER_MULTIFRAME_DEFAULT,
+            "Use default multi-frame optimization mode", "default" },
+      { 0, NULL, NULL },
+  };
+
+  if (g_once_init_enter (&g_type)) {
+    GType type = g_enum_register_static ("GstMfxEncoderMultiFrame",
+        multiframe_modes);
+    g_once_init_leave (&g_type, type);
+  }
+  return g_type;
+}
+#endif
 
 GType
 gst_mfx_encoder_trellis_get_type (void)

@@ -166,6 +166,9 @@ struct _GstMfxEncoderPrivate
 
   /* Encoder params */
   GstMfxEncoderPreset preset;
+#if MSDK_CHECK_VERSION(1,25)
+  GstMfxEncoderMultiFrame multiframe_mode;
+#endif
   GstMfxRateControl rc_method;
   guint global_quality;
   mfxU16 bitrate;
