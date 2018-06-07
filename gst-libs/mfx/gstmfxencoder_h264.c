@@ -263,6 +263,11 @@ gst_mfx_encoder_h264_set_property (GstMfxEncoder * base_encoder,
     case GST_MFX_ENCODER_H264_PROP_TRELLIS:
       priv->trellis = g_value_get_enum (value);
       break;
+#if MSDK_CHECK_VERSION(1,25)
+    case GST_MFX_ENCODER_H264_PROP_MULTIFRAME:
+      priv->multiframe_mode = g_value_get_enum (value);
+      break;
+#endif
     case GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS:
       priv->look_ahead_downsampling = g_value_get_enum (value);
       break;
@@ -362,7 +367,6 @@ gst_mfx_encoder_h264_get_default_properties (void)
           gst_mfx_encoder_trellis_get_type (), GST_MFX_ENCODER_TRELLIS_OFF,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-
   /**
    * GstMfxEncoderH264:lookahead-ds
    *
@@ -377,6 +381,21 @@ gst_mfx_encoder_h264_get_default_properties (void)
           GST_MFX_ENCODER_LOOKAHEAD_DS_AUTO,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+#if MSDK_CHECK_VERSION(1,25)
+  /**
+   * GstMfxEncoderH264:multiframe
+   *
+   * Enable multi-frame 1:N encoding optimization
+   */
+  GST_MFX_ENCODER_PROPERTIES_APPEND (props,
+      GST_MFX_ENCODER_H264_PROP_MULTIFRAME,
+      g_param_spec_enum ("multiframe",
+          "Multi-frame optimization",
+          "Enable multi-frame optimization for 1:N encoding",
+          gst_mfx_encoder_multiframe_get_type (),
+          GST_MFX_ENCODER_MULTIFRAME_DISABLED,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+#endif
   return props;
 }
 
