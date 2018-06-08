@@ -35,8 +35,7 @@
   (GST_MFX_RATECONTROL_MASK (CQP)   |        \
   GST_MFX_RATECONTROL_MASK (CBR)    |        \
   GST_MFX_RATECONTROL_MASK (VBR)    |        \
-  GST_MFX_RATECONTROL_MASK (AVBR)   |        \
-  GST_MFX_RATECONTROL_MASK (ICQ))
+  GST_MFX_RATECONTROL_MASK (AVBR))
 
 /* ------------------------------------------------------------------------- */
 /* --- MPEG2 Encoder                                                     --- */
@@ -127,8 +126,6 @@ gst_mfx_encoder_mpeg2_get_default_properties (void)
     props = gst_mfx_encoder_properties_get_default (klass);
     g_type_class_unref (klass);
   }
-  if (!props)
-    return NULL;
 
   return props;
 }

@@ -38,6 +38,7 @@
 #define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_CQP
 
 /* Supported set of rate control methods, within this implementation */
+#ifdef WITH_D3D11_BACKEND
 #define SUPPORTED_RATECONTROLS                      \
   (GST_MFX_RATECONTROL_MASK (CQP)     |             \
   GST_MFX_RATECONTROL_MASK (CBR)      |             \
@@ -49,6 +50,15 @@
   GST_MFX_RATECONTROL_MASK (LA_HRD)   |             \
   GST_MFX_RATECONTROL_MASK (ICQ)      |             \
   GST_MFX_RATECONTROL_MASK (LA_ICQ))
+#else
+#define SUPPORTED_RATECONTROLS                      \
+  (GST_MFX_RATECONTROL_MASK (CQP)     |             \
+  GST_MFX_RATECONTROL_MASK (CBR)      |             \
+  GST_MFX_RATECONTROL_MASK (VBR)      |             \
+  GST_MFX_RATECONTROL_MASK (LA_BRC)   |             \
+  GST_MFX_RATECONTROL_MASK (LA_HRD)   |             \
+  GST_MFX_RATECONTROL_MASK (LA_ICQ))
+#endif
 
 /* ------------------------------------------------------------------------- */
 /* --- H.264 Bitstream Writer                                            --- */
