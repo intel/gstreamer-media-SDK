@@ -1115,19 +1115,33 @@ error:
   return FALSE;
 }
 
-static
-void
+static void
 log_encoder_params_comparison (GstMfxEncoder * encoder, int log_level,
-  mfxVideoParam* param_old, mfxVideoParam* param_new)
+    mfxVideoParam * param_old, mfxVideoParam * param_new)
 {
   /* TODO: handle and log more differences. */
-  if (param_old->mfx.FrameInfo.Height != param_new->mfx.FrameInfo.Height
-      || param_old->mfx.FrameInfo.Width != param_new->mfx.FrameInfo.Width) {
+#define UNMATCH(x) (param_old->mfx.x != param_new->mfx.x)
+  if (UNMATCH (CodecId))
     GST_CAT_LEVEL_LOG (GST_CAT_DEFAULT, log_level, encoder,
-        "resolution has been changed from %dx%d to %dx%d",
+        "Current codec type is unsupported");
+  if (UNMATCH (CodecProfile))
+    GST_CAT_LEVEL_LOG (GST_CAT_DEFAULT, log_level, encoder,
+        "Current profile is unsupported");
+  if (UNMATCH (RateControlMethod))
+    GST_CAT_LEVEL_LOG (GST_CAT_DEFAULT, log_level, encoder,
+        "Specified rate control method is unsupported");
+  if (UNMATCH (FrameInfo.FrameRateExtN) || UNMATCH (FrameInfo.FrameRateExtD))
+    GST_CAT_LEVEL_LOG (GST_CAT_DEFAULT, log_level, encoder,
+        "Frame rate changed from %d/%d to %d/%d",
+        param_old->mfx.FrameInfo.FrameRateExtN,
+        param_old->mfx.FrameInfo.FrameRateExtD,
+        param_new->mfx.FrameInfo.FrameRateExtN,
+        param_new->mfx.FrameInfo.FrameRateExtD);
+  if (UNMATCH (FrameInfo.Width) || UNMATCH (FrameInfo.Height))
+    GST_CAT_LEVEL_LOG (GST_CAT_DEFAULT, log_level, encoder,
+        "Resolution changed from %dx%d to %dx%d",
         param_old->mfx.FrameInfo.Width, param_old->mfx.FrameInfo.Height,
         param_new->mfx.FrameInfo.Width, param_new->mfx.FrameInfo.Height);
-  }
 }
 
 GstMfxEncoderStatus
