@@ -65,7 +65,12 @@ configure_file (
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 
+if (CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.9)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=gnu99 -Wall -fPIE -fstack-protector-strong")
+else()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=gnu99 -Wall -fPIE -fstack-protector")
+endif()
+
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -D_FORTIFY_SOURCE=2 -O2")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -ggdb -O0")
 
