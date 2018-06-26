@@ -480,7 +480,7 @@ gst_mfx_decoder_handle_avc_codec_data (GstMfxDecoder * decoder,
   if (minfo.size) {
     guint8 startcode[4] = {0, 0, 0, 1}, nals_cnt = 0, nal_unit_type = 0;
     guint16 packet_size = 0, offset = 5;
-    gchar *msgs[] = { "SPS", "PPS" };
+    gchar *msgs[] = { "SPS", "PPS", NULL };
 
     guint8 *cdata = minfo.data;
     guint8 profile = ((decoder->params.mfx.CodecId ^ decoder->profile) & 0xFF);
