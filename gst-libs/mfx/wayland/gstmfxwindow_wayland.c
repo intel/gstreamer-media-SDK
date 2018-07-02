@@ -296,7 +296,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   wl_surface_attach (priv->surface, buffer, 0, 0);
 
-#ifdef USE_WAYLAND_1_13_0
+#ifdef USE_WAYLAND_1_13
   if (src_rect->width > dst_rect->width || src_rect->height > dst_rect->height)
     wl_surface_damage (priv->surface, 0, 0, src_rect->width, src_rect->height);
   else
