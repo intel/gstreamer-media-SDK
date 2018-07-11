@@ -77,8 +77,8 @@ typedef struct
 static gboolean
 reset_context(GstMfxDisplayEGL * display, EGLContext gl_context)
 {
-  EglConfig *config;
-  EglContext *ctx;
+  EglConfig *config = NULL;
+  EglContext *ctx = NULL;
 
   egl_object_replace(&display->egl_context, NULL);
 
@@ -87,7 +87,7 @@ reset_context(GstMfxDisplayEGL * display, EGLContext gl_context)
   else {
     config = egl_config_new(display->egl_display, display->gles_version,
       GST_VIDEO_FORMAT_RGB);
-    if (!config)
+    if (config == NULL)
       return FALSE;
 
     ctx = egl_context_new(display->egl_display, config, NULL);
