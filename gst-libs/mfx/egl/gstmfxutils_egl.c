@@ -723,14 +723,18 @@ egl_config_new(EglDisplay * display, guint gles_version, GstVideoFormat format)
 EglConfig *
 egl_config_new_with_attribs(EglDisplay * display, const EGLint * attribs)
 {
-  EglConfig *config;
+  EglConfig *config = NULL;
 
   g_return_val_if_fail(display != NULL, NULL);
   g_return_val_if_fail(attribs != NULL, NULL);
 
   config = egl_object_new0(egl_config_class());
-  if (!config || !egl_config_init(config, display, attribs))
+  if (config == NULL)
     goto error;
+
+  if (!egl_config_init(config, display, attribs))
+    goto error;
+
   return config;
 
 error:
