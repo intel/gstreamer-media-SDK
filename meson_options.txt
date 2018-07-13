@@ -13,7 +13,7 @@ option('MFX_H264_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], valu
 	description : 'Build H.264 encoder plugin.')
 option('MFX_H265_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
 	description : 'Build H.265 encoder plugin.')
-option('MFX_MPEG2_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
+option('MFX_MPEG2_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'no',
 	description : 'Build MPEG2 encoder plugin.')
 option('MFX_JPEG_ENCODER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
 	description : 'Build JPEG encoder plugin.')
