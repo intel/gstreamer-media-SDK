@@ -35,7 +35,7 @@ option('USE_DRI3_RENDERER', type : 'combo', choices : ['yes', 'no', 'auto'], val
 option('MFX_SINK_BIN', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
 	description : 'Build MSDK sink bin plugin.')
 
-option('WITH_MSS_2016', type : 'boolean', value : true, description : 'Build plugins for MSS 2016.')
+option('WITH_MSS_2016', type : 'boolean', value : false, description : 'Build plugins for MSS 2016.')
 
 option('MFX_VC1_PARSER', type : 'combo', choices : ['yes', 'no', 'auto'], value: 'auto',
 	description : 'Build VC1 parser plugin')
