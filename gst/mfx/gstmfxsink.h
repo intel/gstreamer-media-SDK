@@ -111,6 +111,8 @@ struct _GstMfxSink
   guint                      keep_aspect : 1;
   guint                      no_frame_drop : 1;
   guint                      full_color_range : 1;
+
+  guintptr                   app_window_handle;
 };
 
 struct _GstMfxSinkClass
