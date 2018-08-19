@@ -46,7 +46,7 @@
 #ifdef WITH_LIBVA_BACKEND
 # include <EGL/egl.h>
 # include <EGL/eglext.h>
-# include <drm/drm_fourcc.h>
+# include <libdrm/drm_fourcc.h>
 
 # include <gst/gl/egl/gstgldisplay_egl.h>
 
