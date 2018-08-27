@@ -26,7 +26,7 @@
 
 #include <glib.h>
 #include <xf86drm.h>
-#include <i915_drm.h>
+#include <libdrm/i915_drm.h>
 #include <va/va_drmcommon.h>
 #include <fcntl.h>
 
