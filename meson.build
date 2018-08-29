@@ -1,6 +1,6 @@
 # This project use C source code
 project('GstMfx', 'c',
-	version: '1.4.0.4',
+	version: '1.4.0.5',
 	meson_version: '>= 0.35.0',
 	default_options: ['warning_level=1',
 			  'buildtype=debugoptimized'])
