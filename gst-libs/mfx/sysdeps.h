@@ -30,7 +30,7 @@
 #ifdef WITH_LIBVA_BACKEND
 # include <unistd.h>
 # include <va/va.h>
-# include <drm.h>
+# include <libdrm/drm.h>
 #else
 # if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
 # undef _WIN32_WINNT
