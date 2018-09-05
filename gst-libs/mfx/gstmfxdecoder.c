@@ -271,7 +271,8 @@ gst_mfx_decoder_reconfigure_params (GstMfxDecoder * decoder)
     frame_info->Height = GST_ROUND_UP_32 (decoder->info.height);
   }
 
-  if (decoder->profile.codec == MFX_CODEC_JPEG) {
+  if (decoder->profile.codec == MFX_CODEC_JPEG
+      && decoder->params.mfx.JPEGChromaFormat == MFX_CHROMAFORMAT_YUV444) {
     frame_info->FourCC = MFX_FOURCC_RGB4;
     frame_info->ChromaFormat = MFX_CHROMAFORMAT_YUV444;
   }
