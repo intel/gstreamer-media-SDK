@@ -718,20 +718,22 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder, GstVideoCodecFrame * frame)
   mfxSyncPoint syncp;
   mfxStatus sts = MFX_ERR_NONE;
 
-  if (!GST_CLOCK_TIME_IS_VALID (decoder->pts_offset)
-      && GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)
-      && GST_CLOCK_TIME_IS_VALID (frame->pts))
-    decoder->pts_offset = frame->pts;
+  if (frame) {
+    if (!GST_CLOCK_TIME_IS_VALID (decoder->pts_offset)
+        && GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame)
+        && GST_CLOCK_TIME_IS_VALID (frame->pts))
+      decoder->pts_offset = frame->pts;
 
-  if (!decoder->can_double_deinterlace) {
-    /* Save frames for later synchronization with decoded MFX surfaces */
-    g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
-  } else {
-    g_queue_push_head (&decoder->discarded_frames, frame);
+    if (!decoder->can_double_deinterlace) {
+      /* Save frames for later synchronization with decoded MFX surfaces */
+      g_queue_insert_sorted (&decoder->pending_frames, frame, sort_pts, NULL);
+    } else {
+      g_queue_push_head (&decoder->discarded_frames, frame);
+    }
+
+    /* Keep a reference to the incoming frame so that we can read from  it later */
+    g_queue_push_tail (&decoder->input_frames, gst_video_codec_frame_ref (frame));
   }
-
-  /* Keep a reference to the incoming frame so that we can read from  it later */
-  g_queue_push_tail (&decoder->input_frames, gst_video_codec_frame_ref (frame));
 
   if (G_UNLIKELY (!decoder->inited)) {
     if (!decoder->configured)

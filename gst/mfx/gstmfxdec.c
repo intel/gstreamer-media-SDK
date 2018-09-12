@@ -560,6 +560,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder * vdec, GstVideoCodecFrame * frame)
   GstMfxDecoderStatus sts;
   GstFlowReturn ret = GST_FLOW_OK;
   GstVideoCodecFrame *out_frame = NULL;
+  GstVideoCodecFrame *cur_frame = frame;
 
   GST_LOG_OBJECT (mfxdec, "Received new data of size %" G_GSIZE_FORMAT
       ", dts %" GST_TIME_FORMAT
@@ -568,8 +569,8 @@ gst_mfxdec_handle_frame (GstVideoDecoder * vdec, GstVideoCodecFrame * frame)
       gst_buffer_get_size (frame->input_buffer),
       GST_TIME_ARGS (frame->dts),
       GST_TIME_ARGS (frame->pts), GST_TIME_ARGS (frame->duration));
-
-  sts = gst_mfx_decoder_decode (mfxdec->decoder, frame);
+decode:
+  sts = gst_mfx_decoder_decode (mfxdec->decoder, cur_frame);
 
   gst_mfxdec_flush_discarded_frames (mfxdec);
 
@@ -593,6 +594,8 @@ gst_mfxdec_handle_frame (GstVideoDecoder * vdec, GstVideoCodecFrame * frame)
        * the output of the decoder */
       gst_mfx_decoder_set_output_memtype (mfxdec->decoder,
           GST_MFX_PLUGIN_BASE (mfxdec)->srcpad_caps_is_raw);
+      cur_frame = NULL; // don't decode the same frame again
+      goto decode;
     case GST_MFX_DECODER_STATUS_ERROR_MORE_DATA:
       ret = GST_VIDEO_DECODER_FLOW_NEED_DATA;
       break;
