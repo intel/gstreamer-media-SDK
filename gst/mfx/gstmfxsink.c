@@ -785,7 +785,10 @@ gst_mfxsink_ensure_render_rect (GstMfxSink * sink, guint width, guint height)
       sink->video_width, sink->video_height, num, den);
 
   if (sink->fullscreen) {
-    display_rect->width = width;
+    if (sink->video_width > sink->video_height)
+      display_rect->width = width;
+    else
+      display_rect->width = gst_util_uint64_scale_int (height, num, den);
     display_rect->height= height;
   } else {
     display_rect->width = gst_util_uint64_scale_int (height, num, den);
