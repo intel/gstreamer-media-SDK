@@ -252,7 +252,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
       || (dst_rect->width != src_rect->width)) {
     if (priv->viewport) {
       wl_viewport_set_destination (priv->viewport,
-          window->width, window->height);
+          dst_rect->width, dst_rect->height);
     }
   }
 
