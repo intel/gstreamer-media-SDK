@@ -172,6 +172,8 @@ init_decoder (GstMfxDecoder * decoder)
     if (!decoder->pool)
       return FALSE;
   }
+  decoder->inited = TRUE;
+
   return TRUE;
 }
 
@@ -181,6 +183,8 @@ close_decoder (GstMfxDecoder * decoder)
   gst_mfx_surface_pool_replace (&decoder->pool, NULL);
 
   MFXVideoDECODE_Close (decoder->session);
+
+  decoder->inited = FALSE;
 }
 
 static void
@@ -1037,9 +1041,7 @@ gst_mfx_decoder_decode (GstMfxDecoder * decoder,
 
   if (G_UNLIKELY (!decoder->inited)) {
     ret = gst_mfx_decoder_start (decoder);
-    if (GST_MFX_DECODER_STATUS_SUCCESS == ret)
-      decoder->inited = TRUE;
-    else
+    if (GST_MFX_DECODER_STATUS_SUCCESS != ret)
       goto end;
   }
 
@@ -1205,6 +1207,9 @@ gst_mfx_decoder_flush (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
 
   g_return_val_if_fail(decoder != NULL, GST_MFX_DECODER_STATUS_FLUSHED);
+
+  if (G_UNLIKELY(!decoder->inited))
+    return GST_MFX_DECODER_STATUS_FLUSHED;
 
   do {
     surface = gst_mfx_surface_new_from_pool (decoder->pool);
