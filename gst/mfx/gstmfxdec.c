@@ -574,13 +574,15 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 error_decode:
   {
     GST_ERROR_OBJECT (mfxdec, "MFX decode error %d", sts);
-    gst_video_decoder_drop_frame (vdec, frame);
+    if (mfxdec->prev_surf)
+      gst_video_decoder_drop_frame (vdec, frame);
     return GST_FLOW_NOT_SUPPORTED;
   }
 not_negotiated:
   {
     GST_ERROR_OBJECT (mfxdec, "not negotiated");
-    gst_video_decoder_drop_frame (vdec, frame);
+    if (mfxdec->prev_surf)
+      gst_video_decoder_drop_frame (vdec, frame);
     return GST_FLOW_NOT_NEGOTIATED;
   }
 }
