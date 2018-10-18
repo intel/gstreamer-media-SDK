@@ -401,6 +401,8 @@ gst_mfx_window_x11_render (GstMfxWindow * window,
   int x = 0, y = 0, bpp = 0;
   unsigned int width, height, border, depth, stride, size;
   xcb_pixmap_t pixmap;
+  xcb_void_cookie_t cookie_pixmap;
+  xcb_generic_error_t *error;
   Picture picture;
   XRenderPictFormat *pic_fmt = NULL;
   XWindowAttributes wattr;
@@ -466,11 +468,20 @@ get_pic_fmt:
 
   GST_MFX_DISPLAY_LOCK (x11_display);
   pixmap = xcb_generate_id (priv->xcbconn);
-  xcb_dri3_pixmap_from_buffer (priv->xcbconn, pixmap, win, size,
-      src_rect->width, src_rect->height, stride, depth, bpp,
-      GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
+
   if (!pixmap) {
     GST_MFX_DISPLAY_UNLOCK (x11_display);
+    GST_ERROR("Unable to get XID.\n");
+    return FALSE;
+  }
+  cookie_pixmap = xcb_dri3_pixmap_from_buffer_checked (priv->xcbconn, pixmap, win, size,
+      src_rect->width, src_rect->height, stride, depth, bpp,
+      GST_MFX_PRIME_BUFFER_PROXY_HANDLE (buffer_proxy));
+  error = xcb_request_check (priv->xcbconn, cookie_pixmap);
+  if (error) {
+    GST_MFX_DISPLAY_UNLOCK (x11_display);
+    GST_ERROR("Unable to delivers a request to Xserver.\n");
+    xcb_free_pixmap (priv->xcbconn, pixmap);
     return FALSE;
   }
 
