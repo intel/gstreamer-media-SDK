@@ -807,6 +807,9 @@ error:
 static gboolean
 gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
 {
+  mfxFrameInfo tmp_frameinfo;
+  if (info)
+    tmp_frameinfo = *info;
   /*
    * Only CSC and deinterlacing didn't involve, it will be re-use back
    * VASurfaces when restart back MSDK decoder.
@@ -818,7 +821,7 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
   close_decoder(decoder);
 
   if (info)
-    decoder->params.mfx.FrameInfo = *info;
+    decoder->params.mfx.FrameInfo = tmp_frameinfo;
 
   /* Only initialize filter when need to use CSC or deinterlacing. */
   if ((decoder->enable_csc || decoder->enable_deinterlace) && !decoder->filter)
