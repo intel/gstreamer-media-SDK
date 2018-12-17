@@ -30,6 +30,10 @@
 
 G_BEGIN_DECLS
 
+#ifndef BATCH_SIZE
+#define BATCH_SIZE 0x80000
+#endif
+
 #define GST_MFX_DISPLAY_CAST(display) \
   ((GstMfxDisplay *) (display))
 
@@ -100,6 +104,7 @@ struct _GstMfxDisplayPrivate
   guint par_d;
   gchar *vendor_string;
   gboolean is_opengl;
+  drm_intel_bufmgr *bufmgr;
 };
 
 /**

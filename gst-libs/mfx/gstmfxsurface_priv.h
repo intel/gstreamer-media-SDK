@@ -64,7 +64,9 @@ struct _GstMfxSurface
 
   gint gem_bo_handle;
   gboolean is_gem_linear;
-  gint drm_fd;
+
+  drm_intel_bufmgr *bufmgr;
+  drm_intel_bo *bo;
 };
 
 struct _GstMfxSurfaceClass
@@ -82,7 +84,7 @@ struct _GstMfxSurfaceClass
 GstMfxSurface *
 gst_mfx_surface_new_internal(const GstMfxSurfaceClass * klass,
     GstMfxDisplay * display, const GstVideoInfo * info, GstMfxTask * task,
-    gboolean is_linear, gint dri_fd);
+    gboolean is_linear);
 
 #define gst_mfx_surface_ref_internal(surface) \
   ((gpointer)gst_mfx_mini_object_ref(GST_MFX_MINI_OBJECT(surface)))

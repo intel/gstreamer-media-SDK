@@ -197,7 +197,7 @@ gst_mfx_prime_buffer_proxy_replace (GstMfxPrimeBufferProxy ** old_proxy_ptr,
 guintptr
 gst_mfx_prime_buffer_proxy_get_handle (GstMfxPrimeBufferProxy * proxy)
 {
-  g_return_val_if_fail (proxy != NULL, 0);
+  g_return_val_if_fail (proxy != NULL, -1);
 
   return proxy->fd;
 }

@@ -27,6 +27,7 @@
 #include <glib.h>
 #include <xf86drm.h>
 #include <libdrm/i915_drm.h>
+#include <libdrm/intel_bufmgr.h>
 #include <va/va_drmcommon.h>
 #include <fcntl.h>
 
@@ -75,17 +76,14 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
     mfxFrameInfo *frame_info = &surface->surface.Info;
     guint fourcc = gst_mfx_video_format_to_va_fourcc(frame_info->FourCC);
     VAStatus sts;
-
-    struct drm_i915_gem_create *drm_info = NULL;
-    struct drm_i915_gem_set_tiling *tile_info = NULL;
-    struct drm_i915_gem_set_domain *set_domain = NULL;
-    struct drm_prime_handle *preq = NULL;
-    struct drm_gem_close *close = NULL;
+    int status_drm = 0;
 
     if (surface->is_gem_linear && fourcc == VA_FOURCC_NV12) {
       VASurfaceAttrib attribs[2];
       VASurfaceAttribExternalBuffers external;
+      int prime_fd = -1;
       unsigned long gem_handle = 0;
+
       int size = 0;
       int num_planes = 0;
       int pitches = 0;
@@ -101,71 +99,27 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
             GST_DEBUG("Unsupported color format");
             return FALSE;
       }
-      close = g_new0(struct drm_gem_close, 1);
-      if (close == NULL) {
-        GST_ERROR ("Failed alloc drm_gem_close.");
-        goto done;
-      }
 
-      drm_info = g_new0(struct drm_i915_gem_create, 1);
-      if (drm_info == NULL) {
-        GST_ERROR ("Failed alloc drm_info.");
-        goto done;
-      }
-
-      drm_info->size = size;
-      if (drmIoctl (surface->drm_fd, DRM_IOCTL_I915_GEM_CREATE, drm_info)) {
-        GST_ERROR ("Failed drmIoctl(DRM_IOCTL_I915_GEM_CREATE)");
-        g_free(drm_info);
+      surface->bo = drm_intel_bo_alloc(get_display_bufmgr(surface->display),
+                                       "Media External Buffer", size, 0);
+      if (!surface->bo) {
+        GST_ERROR("Failed drm_intel_bo_alloc\n");
         return FALSE;
       }
+      status_drm = drm_intel_bo_gem_export_to_prime(surface->bo, &prime_fd);
+      if (status_drm != 0) {
+        GST_ERROR("Failed drm_intel_bo_gem_export_to_prime\n");
+        goto done;
+      }
 
-      tile_info = g_new0(struct drm_i915_gem_set_tiling, 1);
-      if (tile_info == NULL) {
-        GST_ERROR ("Failed alloc drm_info.");
+      if (prime_fd < 0) {
+	GST_ERROR("Prime FD less than 0\n");
 	goto done;
       }
 
-      tile_info->handle = drm_info->handle;
-      tile_info->tiling_mode = I915_TILING_NONE;
-      tile_info->stride = 0;
-
-      if (drmIoctl (surface->drm_fd, DRM_IOCTL_I915_GEM_SET_TILING, tile_info)) {
-        GST_ERROR ("Failed drmIoctl(DRM_IOCTL_I915_GEM_SET_TILING)");
-        goto done;
-      }
-
-      set_domain = g_new0(struct drm_i915_gem_set_domain, 1);
-      if (set_domain == NULL) {
-        GST_ERROR ("Failed alloc set_domain.");
-        goto done;
-      }
-
-      set_domain->handle = drm_info->handle;
-      set_domain->read_domains = I915_GEM_DOMAIN_GTT;
-      set_domain->write_domain = I915_GEM_DOMAIN_GTT;
-
-      if (drmIoctl (surface->drm_fd, DRM_IOCTL_I915_GEM_SET_DOMAIN, set_domain)) {
-        GST_ERROR ("Failed drmIoctl(DRM_IOCTL_I915_GEM_SET_DOMAIN)");
-        goto done;
-      }
-
-      preq = g_new0(struct drm_prime_handle, 1);
-      if (preq == NULL) {
-        GST_ERROR ("Failed alloc prime_handle.");
-        goto done;
-      }
-
-      preq->handle = drm_info->handle;
-      preq->flags = O_CLOEXEC|O_RDWR;
-
-      if (drmIoctl (surface->drm_fd, DRM_IOCTL_PRIME_HANDLE_TO_FD, preq)) {
-        GST_ERROR ("Failed drmIoctl(DRM_IOCTL_PRIME_HANDLE)");
-        goto done;
-      }
-
-      gem_handle = (unsigned long) preq->fd;
+      gem_handle = (unsigned long) prime_fd;
       memset (&external, 0, sizeof(external));
+      surface->gem_bo_handle = gem_handle;
 
       external.pixel_format = fourcc;
       external.width = frame_info->CropW;
@@ -199,13 +153,6 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
       surface->mem_id.mid = &surface->surface_id;
       surface->mem_id.info = frame_info;
       surface->surface.Data.MemId = &surface->mem_id;
-      surface->gem_bo_handle = drm_info->handle;
-
-      g_free(preq);
-      g_free(set_domain);
-      g_free(tile_info);
-      g_free(drm_info);
-      g_free(close);
 
       return TRUE;
 
@@ -233,53 +180,14 @@ gst_mfx_surface_vaapi_allocate(GstMfxSurface * surface, GstMfxTask * task)
     }
 
 done:
-    if (preq)
-      g_free(preq);
-
-    if (set_domain)
-      g_free(set_domain);
-
-    if (tile_info)
-      g_free(tile_info);
-
-    if (drm_info) {
-      if (drm_info->handle) {
-        if (close) {
-          close->handle = drm_info->handle;
-          if (drmIoctl(surface->drm_fd, DRM_IOCTL_GEM_CLOSE, close))
-            GST_ERROR("Failed to close drm gem handle %d", drm_info->handle);
-	  g_free(close);
-	  close = NULL;
-        }
-      }
-      g_free(drm_info);
+    if (surface->bo) {
+      drm_intel_bo_unreference(surface->bo);
+      if (surface->gem_bo_handle > -1)
+        close(surface->gem_bo_handle);
     }
-
-    if (close)
-      g_free(close);
 
     return FALSE;
   }
-}
-
-static void
-gst_mfx_surface_vaapi_close_gem_handle (GstMfxSurface * surface)
-{
-   if (surface->gem_bo_handle != -1) {
-     struct drm_gem_close *close = NULL;
-     close = g_new0(struct drm_gem_close, 1);
-     if (close == NULL) {
-       GST_ERROR("Failed to alloc drm_gem_close memory\n");
-       return;
-     }
-
-     close->handle = surface->gem_bo_handle;
-     if (drmIoctl(surface->drm_fd, DRM_IOCTL_GEM_CLOSE, close)) {
-       GST_ERROR("Failed to close gem handle %d", surface->gem_bo_handle);
-       return;
-     }
-     g_free(close);
-   }
 }
 
 static void
@@ -288,13 +196,19 @@ gst_mfx_surface_vaapi_release(GstMfxSurface * surface)
   VAStatus status;
   /* Don't destroy the underlying VASurface if originally from the task allocator*/
   if (!surface->task) {
-    gst_mfx_surface_vaapi_close_gem_handle (surface);
-
     GST_MFX_DISPLAY_LOCK(surface->display);
     status = vaDestroySurfaces(GST_MFX_DISPLAY_VADISPLAY(surface->display),
         (VASurfaceID *) &surface->surface_id, 1);
-    if (!vaapi_check_status(status, "vaDestroySurfaces ()"))
+    if (!vaapi_check_status(status, "vaDestroySurfaces ()")) {
+      GST_MFX_DISPLAY_UNLOCK(surface->display);
       return;
+    }
+
+    if (surface->bo) {
+      drm_intel_bo_unreference(surface->bo);
+      if (surface->gem_bo_handle > -1)
+        close(surface->gem_bo_handle);
+    }
     GST_MFX_DISPLAY_UNLOCK(surface->display);
   }
 }
@@ -383,26 +297,23 @@ gst_mfx_surface_vaapi_new(GstMfxDisplay * display, const GstVideoInfo * info,
     GstMfxVideoMeta *meta)
 {
   gboolean is_linear = FALSE;
-  gint dri_fd = -1;
 
   if (meta) {
     is_linear = gst_mfx_video_meta_get_linear(meta);
-    dri_fd = get_display_fd(display);
   }
 
   return
     gst_mfx_surface_new_internal(gst_mfx_surface_vaapi_class(),
-        display, info, NULL, is_linear, dri_fd);
+        display, info, NULL, is_linear);
 }
 
 GstMfxSurface *
 gst_mfx_surface_vaapi_new_from_task(GstMfxTask * task)
 {
   gboolean is_linear = FALSE;
-  gint dri_fd = -1;
   return
     gst_mfx_surface_new_internal(gst_mfx_surface_vaapi_class(),
-        NULL, NULL, task, is_linear, dri_fd);
+        NULL, NULL, task, is_linear);
 }
 
 GstMfxDisplay *

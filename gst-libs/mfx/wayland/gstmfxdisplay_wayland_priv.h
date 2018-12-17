@@ -47,10 +47,6 @@ G_BEGIN_DECLS
 #define GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE(display) \
   (&GST_MFX_DISPLAY_WAYLAND_CAST(display)->priv)
 
-#ifndef BATCH_SIZE
-#define BATCH_SIZE 0x80000
-#endif
-
 typedef struct _GstMfxDisplayWaylandPrivate   GstMfxDisplayWaylandPrivate;
 typedef struct _GstMfxDisplayWaylandClass     GstMfxDisplayWaylandClass;
 
