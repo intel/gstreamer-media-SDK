@@ -29,6 +29,7 @@
 #include "gstmfxdisplay.h"
 #include "gstmfxdisplay_priv.h"
 #include "gstmfxutils_vaapi.h"
+#include <libdrm/intel_bufmgr.h>
 
 #define DEBUG 1
 #include "gstmfxdebug.h"
@@ -39,6 +40,13 @@ GST_DEBUG_CATEGORY (gst_debug_mfx);
 #undef gst_mfx_display_ref
 #undef gst_mfx_display_unref
 #undef gst_mfx_display_replace
+
+drm_intel_bufmgr *
+get_display_bufmgr (GstMfxDisplay * display)
+{
+  GstMfxDisplayPrivate *const priv = GST_MFX_DISPLAY_GET_PRIVATE (display);
+  return priv->bufmgr;
+}
 
 int
 get_display_fd (GstMfxDisplay * display)
@@ -188,6 +196,11 @@ gst_mfx_display_destroy (GstMfxDisplay * display)
     priv->va_display = NULL;
   }
 
+  if (priv->bufmgr) {
+    drm_intel_bufmgr_destroy (priv->bufmgr);
+    priv->bufmgr = NULL;
+  }
+
   if (priv->display_fd) {
     close (priv->display_fd);
     priv->display_fd = 0;
@@ -277,6 +290,8 @@ gst_mfx_display_init (GstMfxDisplay * display)
 
   if (dpy_class->init)
     dpy_class->init (display);
+
+  priv->bufmgr = intel_bufmgr_gem_init(get_display_fd(display), BATCH_SIZE);
 }
 
 static void

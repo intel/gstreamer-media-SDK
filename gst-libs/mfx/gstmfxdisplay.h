@@ -25,6 +25,7 @@
 
 #include <va/va.h>
 #include <gst/gst.h>
+#include <libdrm/intel_bufmgr.h>
 #include "gstmfxtypes.h"
 
 G_BEGIN_DECLS
@@ -129,6 +130,9 @@ gst_mfx_display_use_opengl (GstMfxDisplay * display);
 
 int
 get_display_fd (GstMfxDisplay * display);
+
+drm_intel_bufmgr *
+get_display_bufmgr (GstMfxDisplay * display);
 
 G_END_DECLS
 
