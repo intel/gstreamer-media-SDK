@@ -24,6 +24,7 @@ if with_wayland
 	sources += ['mfx/wayland/gstmfxdisplay_wayland.c',
 			'mfx/wayland/gstmfxwindow_wayland.c',
 			'mfx/wayland/wayland-drm-protocol.c',
+			'mfx/wayland/viewporter-protocol.c',
 			'mfx/wayland/scaler-protocol.c']
 endif
 

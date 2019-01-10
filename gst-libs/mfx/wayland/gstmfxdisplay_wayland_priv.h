@@ -24,11 +24,16 @@
 #ifndef GST_MFX_DISPLAY_WAYLAND_PRIV_H
 #define GST_MFX_DISPLAY_WAYLAND_PRIV_H
 
-#include <intel_bufmgr.h>
+#include <libdrm/intel_bufmgr.h>
 #include "gstmfxdisplay_wayland.h"
 #include "gstmfxdisplay_priv.h"
 #include "wayland-drm-client-protocol.h"
+
+#ifdef USE_WAYLAND_1_13
+#include "viewporter-client-protocol.h"
+#else
 #include "scaler-client-protocol.h"
+#endif
 
 G_BEGIN_DECLS
 
@@ -57,7 +62,11 @@ struct _GstMfxDisplayWaylandPrivate
   struct wl_output      *output;
   struct wl_registry    *registry;
   struct wl_drm         *drm;
+#ifdef USE_WAYLAND_1_13
+  struct wp_viewporter	*viewporter;
+#else
   struct wl_scaler      *scaler;
+#endif
   guint                  width;
   guint                  height;
   guint                  phys_width;
