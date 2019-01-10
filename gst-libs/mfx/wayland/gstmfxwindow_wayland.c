@@ -89,7 +89,11 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_shell_surface *shell_surface;
   struct wl_surface *surface;
   struct wl_region *opaque_region;
+#ifdef USE_WAYLAND_1_13
+  struct wp_viewport *wp_viewport;
+#else
   struct wl_viewport *viewport;
+#endif
   struct wl_event_queue *event_queue;
   FrameState *last_frame;
   GThread *thread;
@@ -250,10 +254,17 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   if ((dst_rect->height != src_rect->height)
       || (dst_rect->width != src_rect->width)) {
+#ifdef USE_WAYLAND_1_13
+    if (priv->wp_viewport) {
+      wp_viewport_set_destination (priv->wp_viewport,
+          dst_rect->width, dst_rect->height);
+    }
+#else
     if (priv->viewport) {
       wl_viewport_set_destination (priv->viewport,
           dst_rect->width, dst_rect->height);
     }
+#endif
   }
 
   for (i = 0; i < num_planes; i++) {
@@ -382,8 +393,14 @@ gst_mfx_window_wayland_set_fullscreen (GstMfxWindow * window,
   if (!fullscreen)
     wl_shell_surface_set_toplevel (priv->shell_surface);
   else {
+#ifdef USE_WAYLAND_1_13
+    if (priv->wp_viewport)
+      wp_viewport_set_destination (priv->wp_viewport,
+	window->width, window->height);
+#else
     wl_shell_surface_set_fullscreen (priv->shell_surface,
         WL_SHELL_SURFACE_FULLSCREEN_METHOD_SCALE, 0, NULL);
+#endif
   }
 
   return TRUE;
@@ -432,12 +449,21 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
       &shell_surface_listener, window);
   wl_shell_surface_set_toplevel (priv->shell_surface);
 
+#ifdef USE_WAYLAND_1_13
+  if (priv_display->viewporter) {
+    GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
+    priv->wp_viewport =
+        wp_viewporter_get_viewport (priv_display->viewporter, priv->surface);
+    GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
+  }
+#else
   if (priv_display->scaler) {
     GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
     priv->viewport =
         wl_scaler_get_viewport (priv_display->scaler, priv->surface);
     GST_MFX_DISPLAY_UNLOCK (GST_MFX_WINDOW_DISPLAY (window));
   }
+#endif
 
   priv->poll = gst_poll_new (TRUE);
   gst_poll_fd_init (&priv->pollfd);
@@ -492,10 +518,17 @@ gst_mfx_window_wayland_destroy (GstMfxWindow * window)
     priv->thread = NULL;
   }
 
+#ifdef USE_WAYLAND_1_13
+  if (priv->wp_viewport) {
+    wp_viewport_destroy (priv->wp_viewport);
+    priv->wp_viewport = NULL;
+  }
+#else
   if (priv->viewport) {
     wl_viewport_destroy (priv->viewport);
     priv->viewport = NULL;
   }
+#endif
 
   if (priv->shell_surface) {
     wl_shell_surface_destroy (priv->shell_surface);
@@ -531,9 +564,13 @@ gst_mfx_window_wayland_resize (GstMfxWindow * window, guint width, guint height)
 
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
 
-  if (priv->viewport) {
+#ifdef USE_WAYLAND_1_13
+  if (priv->wp_viewport)
+    wp_viewport_set_destination (priv->wp_viewport, width, height);
+#else
+  if (priv->viewport)
     wl_viewport_set_destination (priv->viewport, width, height);
-  }
+#endif
 
   wl_surface_damage (priv->surface, 0, 0, width, height);
   wl_surface_commit (priv->surface);
