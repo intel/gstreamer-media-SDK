@@ -234,7 +234,7 @@ gst_mfx_window_hide (GstMfxWindow * window)
 guintptr
 gst_mfx_window_get_handle (GstMfxWindow * window)
 {
-  g_return_val_if_fail (window != NULL, NULL);
+  g_return_val_if_fail (window != NULL, -1);
 
   return window->handle;
 }
