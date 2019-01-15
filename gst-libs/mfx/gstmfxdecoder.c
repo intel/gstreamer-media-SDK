@@ -694,9 +694,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
   mfxStatus sts = MFX_ERR_NONE;
   mfxVideoParam params = decoder->params;
 
-  /* Retrieve sequence header / layer data for MPEG2 and VC1 */
-  if (decoder->params.mfx.CodecId == MFX_CODEC_VC1
-      || decoder->params.mfx.CodecId == MFX_CODEC_MPEG2) {
+  /* Retrieve sequence header / layer data for VC1 */
+  if (decoder->params.mfx.CodecId == MFX_CODEC_VC1)
     guint8 sps_data[128];
 
     mfxExtCodingOptionSPSPPS extradata = {
@@ -725,7 +724,8 @@ gst_mfx_decoder_start (GstMfxDecoder * decoder)
       decoder->codec_data = g_byte_array_append (decoder->codec_data,
           sps_data, extradata.SPSBufSize);
     }
-  } else if (decoder->params.mfx.CodecId == MFX_CODEC_AVC) {
+  } else if (decoder->params.mfx.CodecId == MFX_CODEC_AVC
+          || decoder->params.mfx.CodecId == MFX_CODEC_MPEG2) {
     sts = MFXVideoDECODE_DecodeHeader (decoder->session, &decoder->bs, &params);
     if (MFX_ERR_MORE_DATA == sts) {
       return GST_MFX_DECODER_STATUS_ERROR_MORE_DATA;
