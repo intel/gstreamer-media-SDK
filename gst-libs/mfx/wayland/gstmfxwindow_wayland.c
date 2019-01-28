@@ -89,7 +89,7 @@ struct _GstMfxWindowWaylandPrivate
   struct wl_shell_surface *shell_surface;
   struct wl_surface *surface;
   struct wl_region *opaque_region;
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
   struct wp_viewport *wp_viewport;
 #else
   struct wl_viewport *viewport;
@@ -254,7 +254,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
 
   if ((dst_rect->height != src_rect->height)
       || (dst_rect->width != src_rect->width)) {
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
     if (priv->wp_viewport) {
       wp_viewport_set_destination (priv->wp_viewport,
           dst_rect->width, dst_rect->height);
@@ -307,7 +307,7 @@ gst_mfx_window_wayland_render (GstMfxWindow * window,
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
   wl_surface_attach (priv->surface, buffer, 0, 0);
 
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
   if (src_rect->width > dst_rect->width || src_rect->height > dst_rect->height)
     wl_surface_damage (priv->surface, 0, 0, src_rect->width, src_rect->height);
   else
@@ -393,7 +393,7 @@ gst_mfx_window_wayland_set_fullscreen (GstMfxWindow * window,
   if (!fullscreen)
     wl_shell_surface_set_toplevel (priv->shell_surface);
   else {
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
     if (priv->wp_viewport)
       wp_viewport_set_destination (priv->wp_viewport,
 	window->width, window->height);
@@ -449,7 +449,7 @@ gst_mfx_window_wayland_create (GstMfxWindow * window,
       &shell_surface_listener, window);
   wl_shell_surface_set_toplevel (priv->shell_surface);
 
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
   if (priv_display->viewporter) {
     GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
     priv->wp_viewport =
@@ -518,7 +518,7 @@ gst_mfx_window_wayland_destroy (GstMfxWindow * window)
     priv->thread = NULL;
   }
 
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
   if (priv->wp_viewport) {
     wp_viewport_destroy (priv->wp_viewport);
     priv->wp_viewport = NULL;
@@ -564,7 +564,7 @@ gst_mfx_window_wayland_resize (GstMfxWindow * window, guint width, guint height)
 
   GST_MFX_DISPLAY_LOCK (GST_MFX_WINDOW_DISPLAY (window));
 
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
   if (priv->wp_viewport)
     wp_viewport_set_destination (priv->wp_viewport, width, height);
 #else
