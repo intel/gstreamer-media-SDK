@@ -144,9 +144,9 @@ registry_handle_global (void *data, struct wl_registry *registry,
   GstMfxDisplayWaylandPrivate *const priv = data;
 
   if (strcmp (interface, "wl_compositor") == 0)
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WAYLAND_4_0
     priv->compositor =
-        wl_registry_bind (registry, id, &wl_compositor_interface, 4);
+        wl_registry_bind (registry, id, &wl_compositor_interface, 3);
 #else
     priv->compositor =
         wl_registry_bind (registry, id, &wl_compositor_interface, 1);
@@ -160,12 +160,12 @@ registry_handle_global (void *data, struct wl_registry *registry,
     priv->drm = wl_registry_bind (registry, id, &wl_drm_interface, 2);
     wl_drm_add_listener (priv->drm, &drm_listener, priv);
   } else {
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
     if (strcmp (interface, "wp_viewporter") == 0)
       priv->viewporter = wl_registry_bind (registry, id, &wp_viewporter_interface, 1);
 #else
     if (strcmp (interface, "wl_scaler") == 0)
-      priv->scaler = wl_registry_bind (registry, id, &wl_scaler_interface, 1);
+      priv->scaler = wl_registry_bind (registry, id, &wl_scaler_interface, 2);
 #endif
   }
 }
@@ -230,7 +230,7 @@ gst_mfx_display_wayland_close_display (GstMfxDisplay * display)
   GstMfxDisplayWaylandPrivate *const priv =
       GST_MFX_DISPLAY_WAYLAND_GET_PRIVATE (display);
 
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
   if (priv->viewporter) {
     wp_viewporter_destroy (priv->viewporter);
     priv->viewporter = NULL;

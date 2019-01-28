@@ -29,7 +29,7 @@
 #include "gstmfxdisplay_priv.h"
 #include "wayland-drm-client-protocol.h"
 
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
 #include "viewporter-client-protocol.h"
 #else
 #include "scaler-client-protocol.h"
@@ -58,7 +58,7 @@ struct _GstMfxDisplayWaylandPrivate
   struct wl_output      *output;
   struct wl_registry    *registry;
   struct wl_drm         *drm;
-#ifdef USE_WAYLAND_1_13
+#ifdef USE_WESTON_4_0
   struct wp_viewporter	*viewporter;
 #else
   struct wl_scaler      *scaler;
