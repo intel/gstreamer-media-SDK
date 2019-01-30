@@ -144,7 +144,7 @@ registry_handle_global (void *data, struct wl_registry *registry,
   GstMfxDisplayWaylandPrivate *const priv = data;
 
   if (strcmp (interface, "wl_compositor") == 0)
-#ifdef USE_WAYLAND_4_0
+#ifdef USE_WESTON_4_0
     priv->compositor =
         wl_registry_bind (registry, id, &wl_compositor_interface, 3);
 #else
