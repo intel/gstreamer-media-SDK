@@ -551,6 +551,7 @@ error_create_dmabuf_handle:
 error_create_dmabuf_memory:
   {
     GST_ERROR ("failed to create DMABUF memory");
+    close (dmabuf_fd);
     gst_mfx_prime_buffer_proxy_unref (dmabuf_surface);
     return NULL;
   }
