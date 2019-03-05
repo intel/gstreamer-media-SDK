@@ -389,7 +389,7 @@ static GstMemory *
 gst_mfx_video_allocator_alloc (GstAllocator * allocator, gsize size,
     GstAllocationParams * params)
 {
-  g_warning ("use gst_mfx_video_memory_new () to allocate from "
+  GST_WARNING ("use gst_mfx_video_memory_new () to allocate from "
       "GstMfxVideoMemory allocator");
 
   return NULL;

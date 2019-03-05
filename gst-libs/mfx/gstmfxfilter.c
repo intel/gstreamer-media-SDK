@@ -176,7 +176,7 @@ check_supported_filters (GstMfxFilter * filter)
     if (MFX_ERR_NONE == sts)
       filter->supported_filters |= m->type;
     else
-      g_warning ("%s is not supported in this platform!\n", m->desc);
+      GST_WARNING ("%s is not supported in this platform!\n", m->desc);
   }
 
   /* Release the resource */
