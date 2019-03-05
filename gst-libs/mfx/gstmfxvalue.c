@@ -90,7 +90,7 @@ build_enum_subset_values_from_mask (GstMfxEnumSubset * subset, guint32 mask)
   /* ERRORS */
 error_invalid_num_values:
   {
-    g_error ("invalid number of static values for `%s'", subset->type_name);
+    GST_ERROR ("invalid number of static values for `%s'", subset->type_name);
     return FALSE;
   }
 }
