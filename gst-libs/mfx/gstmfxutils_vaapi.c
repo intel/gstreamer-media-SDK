@@ -60,7 +60,7 @@ vaapi_image_finalize (VaapiImage * image)
         vaDestroyImage (GST_MFX_DISPLAY_VADISPLAY (image->display), image_id);
     GST_MFX_DISPLAY_UNLOCK (image->display);
     if (!vaapi_check_status (status, "vaDestroyImage ()"))
-      g_warning ("failed to destroy image %" GST_MFX_ID_FORMAT,
+      GST_WARNING ("failed to destroy image %" GST_MFX_ID_FORMAT,
           GST_MFX_ID_ARGS (image_id));
   }
   gst_mfx_display_unref (image->display);

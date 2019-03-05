@@ -296,7 +296,7 @@ gst_mfxpostproc_color_balance_set_value (GstColorBalance * cb,
       vpp->cb_changed |= GST_MFX_POSTPROC_FLAG_CONTRAST;
     }
   } else {
-    g_warning ("got an unknown channel %s", channel->label);
+    GST_WARNING ("got an unknown channel %s", channel->label);
   }
 }
 
@@ -328,7 +328,7 @@ gst_mfxpostproc_color_balance_get_value (GstColorBalance *cb,
     else
       value = vpp->contrast;
   } else {
-    g_warning ("got an unknown channel %s", channel->label);
+    GST_WARNING ("got an unknown channel %s", channel->label);
   }
   return value;
 }
