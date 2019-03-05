@@ -105,7 +105,7 @@ if mfx_sink
 		if wayland_client_dep.found()
 			with_wayland = true
 			mfx_deps += wayland_client_dep
-			weston_4_0_dep = dependency('weston', version: '>1.11.1')
+			weston_4_0_dep = dependency('weston', version: '>=3.0.0')
 			if weston_4_0_dep.found()
 				mfx_c_args += ['-DUSE_WESTON_4_0']
 			endif
