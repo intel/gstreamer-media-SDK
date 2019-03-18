@@ -1114,6 +1114,8 @@ gst_mfx_encoder_encode (GstMfxEncoder * encoder, GstVideoCodecFrame * frame)
   else
     GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (frame);
 
+  GST_LOG ("encoded frame : %u", frame->presentation_frame_number);
+
   return GST_MFX_ENCODER_STATUS_SUCCESS;
 }
 
