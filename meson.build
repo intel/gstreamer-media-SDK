@@ -25,19 +25,15 @@ configure_file (input: 'version.h.in',
 
 mfx_sources = []
 mfx_c_args = []
-mfx_deps = []
 
 mfx_c_args += ['-std=gnu99', '-fPIE', '-fPIC']
 
 # Check the Media SDK
-mfx_home = get_option ('MFX_HOME')
+mfx_deps = [dependency('mfx')]
 
-mfx_inc = include_directories(['.', 'gst/mfx', 'gst-libs/mfx', 'parsers', '@0@/include'.format(mfx_home)])
+mfx_inc = include_directories(['.', 'gst/mfx', 'gst-libs/mfx', 'parsers'])
 
 compiler = meson.get_compiler('c')
-libmfx = compiler.find_library('mfx', dirs: '@0@/lib/lin_x64/'.format(mfx_home))
-mfx_deps += [libmfx]
-
 libstdcc = compiler.find_library('stdc++')
 mfx_deps += [libstdcc]
 
