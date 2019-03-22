@@ -204,5 +204,6 @@ gstvideo = shared_library('gstmfx',
   version: libversion,
   soversion: soversion,
   install: true,
+  install_dir: 'lib/gstreamer-1.0',
   dependencies: mfx_deps,
 )
