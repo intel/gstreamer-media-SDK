@@ -480,7 +480,7 @@ gst_mfxpostproc_ensure_filter (GstMfxPostproc * vpp)
       !(gst_caps_has_mfx_surface (plugin->srcpad_caps)
         || gst_caps_has_gl_memory (plugin->srcpad_caps));
 
-  if (gst_mfx_query_peer_task (GST_ELEMENT (plugin), &peer_id));
+  if (gst_mfx_query_peer_task (GST_ELEMENT (plugin), &peer_id))
     task = gst_mfx_task_aggregator_find_task (plugin->aggregator, peer_id);
 
   if (!plugin->sinkpad_caps_is_raw
