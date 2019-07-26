@@ -37,18 +37,15 @@
 #define DEFAULT_RATECONTROL GST_MFX_RATECONTROL_CQP
 
 /* Supported set of rate control methods, within this implementation */
-#ifdef WITH_D3D11_BACKEND
 #define SUPPORTED_RATECONTROLS                      \
   (GST_MFX_RATECONTROL_MASK (CQP)     |             \
   GST_MFX_RATECONTROL_MASK (CBR)      |             \
   GST_MFX_RATECONTROL_MASK (VBR)      |             \
-  GST_MFX_RATECONTROL_MASK (AVBR))
-#else
-#define SUPPORTED_RATECONTROLS                      \
-  (GST_MFX_RATECONTROL_MASK (CQP)     |             \
-  GST_MFX_RATECONTROL_MASK (CBR)      |             \
-  GST_MFX_RATECONTROL_MASK (VBR))
-#endif
+  GST_MFX_RATECONTROL_MASK (QVBR)     |             \
+  GST_MFX_RATECONTROL_MASK (AVBR)     |             \
+  GST_MFX_RATECONTROL_MASK (VCM)      |             \
+  GST_MFX_RATECONTROL_MASK (ICQ))
+
 /* ------------------------------------------------------------------------- */
 /* --- H.265 Bitstream Writer                                            --- */
 /* ------------------------------------------------------------------------- */
@@ -85,7 +82,9 @@ ensure_bitrate (GstMfxEncoder * base_encoder)
   switch (GST_MFX_ENCODER_RATE_CONTROL (priv)) {
     case GST_MFX_RATECONTROL_CBR:
     case GST_MFX_RATECONTROL_VBR:
+    case GST_MFX_RATECONTROL_QVBR:
     case GST_MFX_RATECONTROL_AVBR:
+    case GST_MFX_RATECONTROL_VCM:
       if (!priv->bitrate) {
         guint luma_width = GST_ROUND_UP_32 (GST_MFX_ENCODER_WIDTH (priv));
         guint luma_height = GST_ROUND_UP_32 (GST_MFX_ENCODER_HEIGHT (priv));
