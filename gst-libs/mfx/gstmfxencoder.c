@@ -562,8 +562,9 @@ gst_mfx_encoder_finalize_params (GstMfxEncoder * encoder)
   /* Encoder expects progressive frames as input */
   priv->params.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
 
-  if (MFX_CODEC_AVC == priv->profile.codec) {
+#ifdef WITH_LIBVA_BACKEND
 #if MSDK_CHECK_VERSION(1,25)
+  if (MFX_CODEC_AVC == priv->profile.codec) {
     if (GST_MFX_CHECK_RUNTIME_VERSION (priv->aggregator, 1, 25)) {
       priv->extmfp.Header.BufferId = MFX_EXTBUFF_MULTI_FRAME_PARAM;
       priv->extmfp.Header.BufferSz = sizeof (priv->extmfp);
@@ -571,8 +572,9 @@ gst_mfx_encoder_finalize_params (GstMfxEncoder * encoder)
       priv->extparam_internal[priv->params.NumExtParam++] =
         (mfxExtBuffer *) & priv->extmfp;
     }
-#endif
   }
+#endif
+#endif
 
   /* Write colorimetry information to bitstream */
   gst_mfx_encoder_extsig_from_colorimetry (encoder,
@@ -1727,6 +1729,7 @@ gst_mfx_encoder_preset_get_type (void)
   return g_type;
 }
 
+#ifdef WITH_LIBVA_BACKEND
 #if MSDK_CHECK_VERSION(1,25)
 GType
 gst_mfx_encoder_multiframe_get_type (void)
@@ -1750,6 +1753,7 @@ gst_mfx_encoder_multiframe_get_type (void)
   }
   return g_type;
 }
+#endif
 #endif
 
 GType
