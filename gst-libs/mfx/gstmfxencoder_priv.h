@@ -166,8 +166,10 @@ struct _GstMfxEncoderPrivate
 
   /* Encoder params */
   GstMfxEncoderPreset preset;
+#ifdef WITH_LIBVA_BACKEND
 #if MSDK_CHECK_VERSION(1,25)
   GstMfxEncoderMultiFrame multiframe_mode;
+#endif
 #endif
   GstMfxRateControl rc_method;
   guint global_quality;
@@ -194,8 +196,10 @@ struct _GstMfxEncoderPrivate
   mfxExtCodingOption3 extco3;
   mfxExtHEVCParam exthevc;
   mfxExtVideoSignalInfo extsig;
+#ifdef WITH_LIBVA_BACKEND
 #if MSDK_CHECK_VERSION(1,25)
   mfxExtMultiFrameParam   extmfp;
+#endif
 #endif
   mfxExtBuffer *extparam_internal[6];
 

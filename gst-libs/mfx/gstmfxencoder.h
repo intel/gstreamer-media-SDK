@@ -64,6 +64,7 @@ typedef enum
   GST_MFX_ENCODER_TRELLIS_IPB = MFX_TRELLIS_I | MFX_TRELLIS_P | MFX_TRELLIS_B,
 } GstMfxEncoderTrellis;
 
+#ifdef WITH_LIBVA_BACKEND
 #if MSDK_CHECK_VERSION(1,25)
 typedef enum
 {
@@ -72,7 +73,7 @@ typedef enum
   GST_MFX_ENCODER_MULTIFRAME_AUTO = MFX_MF_AUTO,
 } GstMfxEncoderMultiFrame;
 #endif
-
+#endif
 typedef enum
 {
   GST_MFX_ENCODER_PRESET_VERY_SLOW = MFX_TARGETUSAGE_BEST_QUALITY,
@@ -127,8 +128,10 @@ typedef struct
 GType
 gst_mfx_encoder_preset_get_type (void);
 
+#ifdef WITH_LIBVA_BACKEND
 GType
 gst_mfx_encoder_multiframe_get_type (void);
+#endif
 
 GType
 gst_mfx_encoder_trellis_get_type (void);

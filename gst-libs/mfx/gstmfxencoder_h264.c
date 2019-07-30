@@ -263,10 +263,12 @@ gst_mfx_encoder_h264_set_property (GstMfxEncoder * base_encoder,
     case GST_MFX_ENCODER_H264_PROP_TRELLIS:
       priv->trellis = g_value_get_enum (value);
       break;
+#ifdef WITH_LIBVA_BACKEND
 #if MSDK_CHECK_VERSION(1,25)
     case GST_MFX_ENCODER_H264_PROP_MULTIFRAME:
       priv->multiframe_mode = g_value_get_enum (value);
       break;
+#endif
 #endif
     case GST_MFX_ENCODER_H264_PROP_LOOKAHEAD_DS:
       priv->look_ahead_downsampling = g_value_get_enum (value);
@@ -381,6 +383,7 @@ gst_mfx_encoder_h264_get_default_properties (void)
           GST_MFX_ENCODER_LOOKAHEAD_DS_AUTO,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+#ifdef WITH_LIBVA_BACKEND
 #if MSDK_CHECK_VERSION(1,25)
   /**
    * GstMfxEncoderH264:multiframe
@@ -395,6 +398,7 @@ gst_mfx_encoder_h264_get_default_properties (void)
           gst_mfx_encoder_multiframe_get_type (),
           GST_MFX_ENCODER_MULTIFRAME_DISABLED,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+#endif
 #endif
   return props;
 }
