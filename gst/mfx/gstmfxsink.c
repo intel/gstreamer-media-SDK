@@ -1037,6 +1037,7 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
       surface_rect->x, surface_rect->y,
       surface_rect->width, surface_rect->height);
 
+  gst_mfxsink_lock (sink);
   if (cmeta) {
     overlay = cmeta->overlay;
 
@@ -1055,7 +1056,6 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
         composition, &composite_surface);
   }
 
-  gst_mfxsink_lock (sink);
   if (!gst_mfxsink_render_surface (sink,
         composite_surface ? composite_surface : surface, surface_rect))
     goto error;
@@ -1063,14 +1063,15 @@ gst_mfxsink_show_frame (GstVideoSink * video_sink, GstBuffer * src_buffer)
   gst_mfx_surface_dequeue(surface);
   ret = GST_FLOW_OK;
 done:
-  gst_mfxsink_unlock (sink);
   gst_mfx_surface_composition_replace (&composition, NULL);
+  gst_mfxsink_unlock (sink);
   return ret;
 
 error:
   GST_ELEMENT_ERROR (sink, RESOURCE, WRITE,
       ("Internal error: could not render surface"), (NULL));
   ret = GST_FLOW_ERROR;
+  gst_mfxsink_unlock (sink);
   goto done;
 
 no_surface:

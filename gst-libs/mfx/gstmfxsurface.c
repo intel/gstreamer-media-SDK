@@ -32,7 +32,6 @@
 #undef gst_mfx_surface_unref
 #undef gst_mfx_surface_replace
 
-
 static gboolean
 gst_mfx_surface_allocate_default (GstMfxSurface * surface, GstMfxTask * task)
 {
@@ -221,17 +220,21 @@ gst_mfx_surface_init_properties(GstMfxSurface * surface)
 
 #if MSDK_CHECK_VERSION(1,19)
   /* Full color range */
+  memset(&surface->siginfo, 0, (sizeof(mfxExtVPPVideoSignalInfo)));
   surface->siginfo.Header.BufferId = MFX_EXTBUFF_VPP_VIDEO_SIGNAL_INFO;
   surface->siginfo.Header.BufferSz = sizeof (mfxExtVPPVideoSignalInfo);
-  surface->siginfo.TransferMatrix = MFX_TRANSFERMATRIX_UNKNOWN;
-  surface->siginfo.NominalRange = MFX_NOMINALRANGE_0_255;
 
-  if (NULL == surface->ext_buf) {
-    surface->ext_buf = g_slice_alloc (sizeof (mfxExtBuffer *));
-    if (NULL != surface->ext_buf) {
-      surface->ext_buf[0] = (mfxExtBuffer *) &surface->siginfo;
-      ptr->NumExtParam = 1;
-      ptr->ExtParam = &surface->ext_buf[0];
+  if (info->FourCC == MFX_FOURCC_RGB4) {
+    surface->siginfo.TransferMatrix = MFX_TRANSFERMATRIX_UNKNOWN;
+    surface->siginfo.NominalRange = MFX_NOMINALRANGE_0_255;
+
+    if (NULL == surface->ext_buf) {
+      surface->ext_buf = g_slice_alloc (sizeof (mfxExtBuffer *));
+      if (NULL != surface->ext_buf) {
+        surface->ext_buf[0] = (mfxExtBuffer *) &surface->siginfo;
+        ptr->NumExtParam = 1;
+        ptr->ExtParam = &surface->ext_buf[0];
+      }
     }
   }
 #endif

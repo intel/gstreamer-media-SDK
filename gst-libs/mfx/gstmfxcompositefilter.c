@@ -53,7 +53,9 @@ static void
 gst_mfx_composite_filter_finalize (GstMfxCompositeFilter * filter)
 {
   /* Free allocated memory for filters */
-  g_slice_free1 ((sizeof (mfxExtBuffer *)), filter->ext_buffer);
+  if (filter->composite.InputStream)
+    g_slice_free1 ((sizeof (mfxVPPCompInputStream) * filter->composite.NumInputStream), filter->composite.InputStream);
+
   gst_mfx_surface_replace (&filter->out_surface, NULL);
   gst_mfx_task_aggregator_unref (filter->aggregator);
 
