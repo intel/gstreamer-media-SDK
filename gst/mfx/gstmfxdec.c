@@ -457,6 +457,23 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
     return FALSE;
   if (!gst_mfx_plugin_base_set_caps (plugin, mfxdec->sinkpad_caps, NULL))
     return FALSE;
+
+  if (mfxdec->srcpad_caps != NULL && mfxdec->sinkpad_caps != NULL) {
+	  if (!gst_caps_is_equal(mfxdec->srcpad_caps, mfxdec->sinkpad_caps)) {
+	    if (!gst_mfxdec_update_src_caps(mfxdec))
+	      return FALSE;
+	    if (!gst_video_decoder_negotiate(vdec))
+	      return FALSE;
+	    if (!gst_mfx_plugin_base_set_caps(GST_MFX_PLUGIN_BASE(vdec), NULL, mfxdec->srcpad_caps))
+	      return FALSE;
+            if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, TRUE))
+              return FALSE;
+	    else
+	      return TRUE;
+
+	  }
+  }
+
   if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, FALSE))
     return FALSE;
 

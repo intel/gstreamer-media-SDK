@@ -808,13 +808,24 @@ static gboolean
 gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
 {
   mfxFrameInfo tmp_frameinfo;
+  mfxFrameInfo *dec_frameinfo = NULL;
+  gboolean info_changed = FALSE;
+  memset(&tmp_frameinfo, 0, sizeof(mfxFrameInfo));
+
+  dec_frameinfo = &decoder->params.mfx.FrameInfo;
+
+
   if (info)
     tmp_frameinfo = *info;
+
+  if (tmp_frameinfo.Width != dec_frameinfo->Width || tmp_frameinfo.Height != dec_frameinfo->Height)
+    info_changed = TRUE;
+
   /*
    * Only CSC and deinterlacing didn't involve, it will be re-use back
    * VASurfaces when restart back MSDK decoder.
    */
-  if (!(decoder->enable_csc || decoder->enable_deinterlace) && decoder->decode) {
+  if (!(decoder->enable_csc || decoder->enable_deinterlace) && decoder->decode && !info_changed) {
     gst_mfx_task_set_soft_reinit(decoder->decode, TRUE);
   }
 
@@ -822,6 +833,9 @@ gst_mfx_decoder_reinit (GstMfxDecoder * decoder, mfxFrameInfo * info)
 
   if (info)
     decoder->params.mfx.FrameInfo = tmp_frameinfo;
+
+  gst_mfx_decoder_set_video_properties(decoder);
+  gst_mfx_task_set_video_params(decoder->decode, &decoder->params);
 
   /* Only initialize filter when need to use CSC or deinterlacing. */
   if ((decoder->enable_csc || decoder->enable_deinterlace) && !decoder->filter)
