@@ -1,3 +1,24 @@
+Version 1.4.0-rc10
+* Fixed dynamic video resolution playback in adaptive streaming.
+* Fixed meson build set install_dir
+* Fixed meson build linking to libmfx to be for the shared library.
+* Fixed meson build weston version check required issue.
+
+Version 1.4.0-rc9
+* Fixed libs debug message replace g_error to GST_ERROR.
+* Fixed libs warning message replace g_warning to GST_WARNING.
+* Fixed close dmabuf_fd.
+* Change wayland damage area to fix partial screen freeze on cerntain resolutuin.
+* Fixed wrong weston version checking.
+* Fixed wayland display wrong macro naming checking.
+* Fixed fail to fullscreen issue on weston 1.11.1 version.
+
+Version 1.4.0-rc8
+* Fixed MPEG2 decoder crashed issue.
+* Refactor on handle allocation PRIME buffer in NV12 linear dmabuf sharing.
+* Fixed mfxwindow compiler warning message.
+* Update from scaler to viewporter protocol on wayland 1.14
+
 Version 1.4.0-rc0
 * Enable NV12 linear dmabuf sharing support using by camera sensor.
 
