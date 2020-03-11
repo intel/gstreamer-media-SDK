@@ -206,9 +206,12 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
 
   ref_state = mfxdec->input_state;
 
+  if (!mfxdec->mfxsurface_incompatibility)
+    mfxdec->mfxsurface_incompatibility = gst_mfx_search_incompatibility(GST_ELEMENT_CAST (mfxdec));
+
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
-      &format);
+      &format, !mfxdec->mfxsurface_incompatibility);
 
   if (GST_MFX_CAPS_FEATURE_NOT_NEGOTIATED == feature)
     return FALSE;
@@ -241,9 +244,10 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   GstVideoDecoder *const vdec = GST_VIDEO_DECODER (mfxdec);
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
 
-  if (!mfxdec->do_renego)
+  if (!mfxdec->do_renego && !mfxdec->do_reconfigure)
     return TRUE;
 
+redo:
   GST_DEBUG_OBJECT (mfxdec, "Input codec state changed, doing renegotiation");
 
   if (!gst_mfx_plugin_base_set_caps (plugin, mfxdec->sinkpad_caps, NULL))
@@ -260,7 +264,17 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
   gst_mfx_decoder_should_use_video_memory (mfxdec->decoder,
     !plugin->srcpad_caps_is_raw);
 
-  mfxdec->do_renego = FALSE;
+  if (mfxdec->do_renego && mfxdec->do_reconfigure)
+  {
+    mfxdec->do_renego = FALSE;
+    mfxdec->do_reconfigure = FALSE;
+    goto redo;
+  }
+  else
+  {
+    mfxdec->do_renego = FALSE;
+    mfxdec->do_reconfigure = FALSE;
+  }
 
   return TRUE;
 }
@@ -358,6 +372,8 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
     gst_mfx_decoder_skip_corrupted_frames (mfxdec->decoder);
 
   mfxdec->do_renego = TRUE;
+  mfxdec->do_reconfigure = FALSE;
+  mfxdec->mfxsurface_incompatibility = FALSE;
 
   return TRUE;
 }
@@ -666,6 +682,8 @@ gst_mfxdec_src_event (GstVideoDecoder * vdec, GstEvent * event)
 
   if (GST_EVENT_TYPE(event) == GST_EVENT_LATENCY)
     mfxdec->dequeuing = TRUE;
+  else if (GST_EVENT_TYPE(event) == GST_EVENT_RECONFIGURE)
+    mfxdec->do_reconfigure = TRUE;
 
   return GST_VIDEO_DECODER_CLASS (parent_class)->src_event (vdec, event);
 }

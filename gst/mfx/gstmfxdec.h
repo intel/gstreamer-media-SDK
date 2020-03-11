@@ -47,6 +47,9 @@ struct _GstMfxDec {
 
   GstVideoCodecState  *input_state;
   volatile gboolean    do_renego;
+  volatile gboolean    do_reconfigure;
+  volatile gboolean    mfxsurface_incompatibility;
+
 };
 
 struct _GstMfxDecClass {

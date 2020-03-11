@@ -59,9 +59,12 @@ GstCaps *
 gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
   const gchar * features_string);
 
+gboolean
+gst_mfx_search_incompatibility (GstElement * element);
+
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature(GstPad * pad,
-    GstVideoFormat * out_format_ptr);
+    GstVideoFormat * out_format_ptr, gboolean insist_prefer);
 
 const gchar *
 gst_mfx_caps_feature_to_string(GstMfxCapsFeature feature);

@@ -733,7 +733,7 @@ ensure_allowed_sinkpad_caps (GstMfxPostproc * vpp)
     return TRUE;
 
   vpp->allowed_sinkpad_caps =
-      gst_static_pad_template_get_caps (&gst_mfxpostproc_sink_factory);
+      gst_static_pad_template_get_caps (&gst_mfxpostproc_src_factory);
   if (!vpp->allowed_sinkpad_caps) {
     GST_ERROR_OBJECT (vpp, "failed to create MFX sink caps");
     return FALSE;
@@ -749,7 +749,7 @@ ensure_allowed_srcpad_caps (GstMfxPostproc * vpp)
 
   /* Create initial caps from pad template */
   vpp->allowed_srcpad_caps =
-      gst_static_pad_template_get_caps (&gst_mfxpostproc_src_factory);
+      gst_static_pad_template_get_caps (&gst_mfxpostproc_sink_factory);
   if (!vpp->allowed_srcpad_caps) {
     GST_ERROR_OBJECT (vpp, "failed to create MFX src caps");
     return FALSE;
@@ -829,7 +829,7 @@ gst_mfxpostproc_transform_caps_impl (GstBaseTransform * trans,
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_BASE_TRANSFORM_SRC_PAD (trans),
-        &out_format);
+        &out_format, TRUE);
   gst_video_info_change_format (&vi, out_format, width, height);
 
   out_caps = gst_video_info_to_caps (&vi);

@@ -27,6 +27,8 @@
 #include "gstmfxpluginutil.h"
 #include "gstmfxpluginbase.h"
 
+#define SUBTITLE_OVERLAY   "subtitleoverlay"
+
 gboolean
 gst_mfx_ensure_aggregator (GstElement * element)
 {
@@ -170,9 +172,116 @@ gst_mfx_video_format_new_template_caps_with_features (GstVideoFormat format,
   return caps;
 }
 
+static GstPipeline *
+gst_mfx_get_pipeline(const GstElement *element)
+{
+  GstObject *parent, *grandparent;
+  GstPipeline *pipeline = NULL;
+
+  if (element)
+  {
+     parent = gst_object_ref((GstObject *) element);
+
+     while (parent)
+     {
+        grandparent = gst_object_get_parent (parent);
+        if (!grandparent)
+           break;
+        gst_object_replace (&parent, grandparent);
+        gst_object_unref(grandparent);
+     }
+     pipeline = GST_PIPELINE (GST_BIN_CAST(parent));
+   }
+   return pipeline;
+}
+
+static gboolean
+strv_contains (GStrv strv, const gchar * str)
+{
+  guint i;
+
+  for (i = 0; strv[i] != NULL; i++)
+    if (g_strcmp0 (strv[i], str) == 0)
+      return TRUE;
+
+  return FALSE;
+}
+
+static gboolean
+gst_validate_element_has_klass (GstElement * element, const gchar * klass)
+{
+  const gchar *tmp;
+  gchar **a, **b;
+  gboolean result = FALSE;
+  guint i;
+
+  tmp = gst_element_class_get_metadata (GST_ELEMENT_GET_CLASS (element),
+      GST_ELEMENT_METADATA_KLASS);
+
+  a = g_strsplit (klass, "/", -1);
+  b = g_strsplit (tmp, "/", -1);
+
+  /* All the elements in 'a' have to be in 'b' */
+  for (i = 0; a[i] != NULL; i++)
+    if (!strv_contains (b, a[i]))
+      goto done;
+  result = TRUE;
+
+done:
+  g_strfreev (a);
+  g_strfreev (b);
+  return result;
+}
+
+static gint
+compare_element (const GValue * velement, const gchar * name)
+{
+  gint eq=1;
+  GstElement *element = g_value_get_object (velement);
+  GstElementFactory *factory1, *factory2;
+  const gchar *klass;
+
+  GST_OBJECT_LOCK (element);
+  factory1 = gst_element_get_factory (element);
+  factory2 = gst_element_factory_find (name);
+  if (factory1 && factory2)
+  {
+    klass = gst_element_factory_get_metadata (factory2, GST_ELEMENT_METADATA_KLASS);
+    if (klass && gst_validate_element_has_klass (element, klass))
+      eq = 0;
+  }
+  gst_object_unref (factory2);
+  GST_OBJECT_UNLOCK (element);
+  return eq;
+}
+
+gboolean
+gst_mfx_search_incompatibility (GstElement * element)
+{
+  GstPipeline *pipeline;
+  GstIterator *children;
+  GValue result = { 0, };
+  gboolean found=FALSE;
+
+  if (element)
+  {
+    pipeline = gst_mfx_get_pipeline(element);
+    if (pipeline)
+    {
+       children = gst_bin_iterate_recurse (GST_BIN_CAST (pipeline));
+       found = gst_iterator_find_custom (children,
+            (GCompareFunc) compare_element, &result, (gpointer) SUBTITLE_OVERLAY);
+       gst_iterator_free (children);
+       gst_object_unref (pipeline);
+    }
+  }
+
+  return (found);
+}
+
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature (GstPad * pad,
-    GstVideoFormat * out_format_ptr)
+    GstVideoFormat * out_format_ptr, gboolean insist_prefer)
 {
   GstMfxCapsFeature feature = GST_MFX_CAPS_FEATURE_SYSTEM_MEMORY;
   guint num_structures;
@@ -192,8 +301,26 @@ gst_mfx_find_preferred_caps_feature (GstPad * pad,
     goto cleanup;
   }
 
-  if (gst_caps_has_mfx_surface (out_caps))
-    feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
+  if (insist_prefer)
+  {
+     if (gst_caps_has_mfx_surface (out_caps))
+       feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
+  }
+  else
+  {
+    GstPad *peer = gst_pad_get_peer (pad);
+    GstCaps *peer_templ = NULL;
+
+    if (peer)
+    {
+      peer_templ = gst_pad_get_pad_template_caps (peer);
+      if ( (in_caps!=out_caps) && !gst_caps_is_any(peer_templ)
+          && gst_caps_has_mfx_surface (out_caps))
+        feature = GST_MFX_CAPS_FEATURE_MFX_SURFACE;
+      gst_caps_unref (peer_templ);
+    }
+    gst_object_unref (peer);
+  }
 
   num_structures = gst_caps_get_size (out_caps);
   structure =
