@@ -70,7 +70,7 @@ plugin_init (GstPlugin * plugin)
 
 #ifdef MFX_SINK_BIN
   ret |= gst_element_register (plugin, "mfxsink",
-      GST_RANK_NONE, GST_TYPE_MFX_SINK_BIN);
+      GST_RANK_PRIMARY + 2, GST_TYPE_MFX_SINK_BIN);
 #endif
 
 #ifdef MFX_H264_ENCODER
