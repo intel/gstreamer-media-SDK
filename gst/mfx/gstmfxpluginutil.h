@@ -60,7 +60,7 @@ gst_mfx_video_format_new_template_caps_with_features(GstVideoFormat format,
   const gchar * features_string);
 
 gboolean
-gst_mfx_search_incompatibility (GstElement * element);
+gst_mfx_search_plugin (GstElement * element, const char *name);
 
 GstMfxCapsFeature
 gst_mfx_find_preferred_caps_feature(GstPad * pad,

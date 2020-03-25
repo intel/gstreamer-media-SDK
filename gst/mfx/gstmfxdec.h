@@ -49,6 +49,7 @@ struct _GstMfxDec {
   volatile gboolean    do_renego;
   volatile gboolean    do_reconfigure;
   volatile gboolean    mfxsurface_incompatibility;
+  volatile gboolean    mfxsink;
 
 };
 

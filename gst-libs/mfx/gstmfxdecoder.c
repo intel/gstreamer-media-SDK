@@ -293,7 +293,6 @@ gst_mfx_decoder_set_video_properties (GstMfxDecoder * decoder)
   frame_info->CropH = decoder->info.height;
   frame_info->FrameRateExtN = decoder->info.fps_n;
   frame_info->FrameRateExtD = decoder->info.fps_d;
-
   frame_info->AspectRatioW = decoder->info.par_n;
   frame_info->AspectRatioH = decoder->info.par_d;
 
@@ -1272,3 +1271,10 @@ gst_mfx_decoder_need_sync_surface_out (GstMfxDecoder * decoder)
 {
   return decoder->sync_out_surf;
 }
+
+void
+gst_mfx_decoder_set_sync_surface_out (GstMfxDecoder * decoder)
+{
+  decoder->sync_out_surf = TRUE;
+}
+

@@ -27,8 +27,6 @@
 #include "gstmfxpluginutil.h"
 #include "gstmfxpluginbase.h"
 
-#define SUBTITLE_OVERLAY   "subtitleoverlay"
-
 gboolean
 gst_mfx_ensure_aggregator (GstElement * element)
 {
@@ -208,7 +206,7 @@ strv_contains (GStrv strv, const gchar * str)
 }
 
 static gboolean
-gst_validate_element_has_klass (GstElement * element, const gchar * klass)
+gst_validate_element_has_longname (GstElement * element, const gchar * longname)
 {
   const gchar *tmp;
   gchar **a, **b;
@@ -216,9 +214,9 @@ gst_validate_element_has_klass (GstElement * element, const gchar * klass)
   guint i;
 
   tmp = gst_element_class_get_metadata (GST_ELEMENT_GET_CLASS (element),
-      GST_ELEMENT_METADATA_KLASS);
+      GST_ELEMENT_METADATA_LONGNAME);
 
-  a = g_strsplit (klass, "/", -1);
+  a = g_strsplit (longname, "/", -1);
   b = g_strsplit (tmp, "/", -1);
 
   /* All the elements in 'a' have to be in 'b' */
@@ -239,15 +237,15 @@ compare_element (const GValue * velement, const gchar * name)
   gint eq=1;
   GstElement *element = g_value_get_object (velement);
   GstElementFactory *factory1, *factory2;
-  const gchar *klass;
+  const gchar *longname;
 
   GST_OBJECT_LOCK (element);
   factory1 = gst_element_get_factory (element);
   factory2 = gst_element_factory_find (name);
   if (factory1 && factory2)
   {
-    klass = gst_element_factory_get_metadata (factory2, GST_ELEMENT_METADATA_KLASS);
-    if (klass && gst_validate_element_has_klass (element, klass))
+    longname = gst_element_factory_get_metadata (factory2, GST_ELEMENT_METADATA_LONGNAME);
+    if (longname && gst_validate_element_has_longname (element, longname))
       eq = 0;
   }
   gst_object_unref (factory2);
@@ -256,7 +254,7 @@ compare_element (const GValue * velement, const gchar * name)
 }
 
 gboolean
-gst_mfx_search_incompatibility (GstElement * element)
+gst_mfx_search_plugin (GstElement * element, const char *name)
 {
   GstPipeline *pipeline;
   GstIterator *children;
@@ -270,7 +268,7 @@ gst_mfx_search_incompatibility (GstElement * element)
     {
        children = gst_bin_iterate_recurse (GST_BIN_CAST (pipeline));
        found = gst_iterator_find_custom (children,
-            (GCompareFunc) compare_element, &result, (gpointer) SUBTITLE_OVERLAY);
+            (GCompareFunc) compare_element, &result, (gpointer) name);
        gst_iterator_free (children);
        gst_object_unref (pipeline);
     }

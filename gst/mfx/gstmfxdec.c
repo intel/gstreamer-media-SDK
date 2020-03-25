@@ -32,6 +32,9 @@
 #define GST_PLUGIN_NAME "mfxdecode"
 #define GST_PLUGIN_DESC "MFX Video Decoder"
 
+#define SUBTITLE_OVERLAY   "subtitleoverlay"
+#define MFXSINK            "mfxsink"
+
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
 #define GST_CAT_DEFAULT mfxdec_debug
 
@@ -207,7 +210,19 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   ref_state = mfxdec->input_state;
 
   if (!mfxdec->mfxsurface_incompatibility)
-    mfxdec->mfxsurface_incompatibility = gst_mfx_search_incompatibility(GST_ELEMENT_CAST (mfxdec));
+  {
+    mfxdec->mfxsurface_incompatibility = 
+      gst_mfx_search_plugin(GST_ELEMENT_CAST (mfxdec), SUBTITLE_OVERLAY);
+    GST_LOG_OBJECT (mfxdec, "Subtitle overlay plugin is %s the pipeline",
+      mfxdec->mfxsurface_incompatibility?"in":"not in");
+  }
+  if (mfxdec->mfxsurface_incompatibility)
+  {
+    mfxdec->mfxsink =
+      gst_mfx_search_plugin(GST_ELEMENT_CAST (mfxdec), MFXSINK);
+    GST_LOG_OBJECT (mfxdec, "MFX SINK is %s the pipeline", 
+      mfxdec->mfxsink?"in":"not in");
+  }
 
   feature =
       gst_mfx_find_preferred_caps_feature (GST_VIDEO_DECODER_SRC_PAD (vdec),
@@ -374,6 +389,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
   mfxdec->do_renego = TRUE;
   mfxdec->do_reconfigure = FALSE;
   mfxdec->mfxsurface_incompatibility = FALSE;
+  mfxdec->mfxsink = FALSE;
 
   return TRUE;
 }
@@ -461,6 +477,34 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
 }
 
+static void
+gst_mfxdec_set_latency (GstVideoDecoder * vdec)
+{
+  GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
+  GstVideoInfo *info = &mfxdec->input_state->info;
+  gint min_delayed_frames;
+  GstClockTime latency;
+
+  min_delayed_frames = mfxdec->async_depth;
+
+  if (info->fps_n) {
+    latency = gst_util_uint64_scale_ceil (GST_SECOND * info->fps_d,
+        min_delayed_frames, info->fps_n);
+  } else {
+    /* FIXME: Assume 25fps. This is better than reporting no latency at
+     * all and then later failing in live pipelines
+     */
+    latency = gst_util_uint64_scale_ceil (GST_SECOND * 1,
+        min_delayed_frames, 25);
+  }
+
+  GST_INFO_OBJECT (mfxdec,
+      "Updating latency to %" GST_TIME_FORMAT " (%d frames)",
+      GST_TIME_ARGS (latency), min_delayed_frames);
+
+  gst_video_decoder_set_latency (GST_VIDEO_DECODER (mfxdec), latency, latency);
+}
+
 static gboolean
 gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
 {
@@ -493,6 +537,7 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
   if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, FALSE))
     return FALSE;
 
+  gst_mfxdec_set_latency (vdec);
   return TRUE;
 }
 
@@ -550,6 +595,18 @@ error_get_meta:
   }
 }
 
+static void
+gst_mfxdec_need_sync_out(GstVideoDecoder *vdec)
+{
+  GstMfxDec *mfxdec = GST_MFXDEC (vdec);
+  
+  if (!mfxdec)
+	return;
+
+  if (mfxdec->mfxsurface_incompatibility && mfxdec->mfxsink)
+    gst_mfx_decoder_set_sync_surface_out(mfxdec->decoder);
+}
+
 static GstFlowReturn
 gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
 {
@@ -570,6 +627,8 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
       GST_TIME_ARGS (frame->dts),
       GST_TIME_ARGS (frame->pts),
       GST_TIME_ARGS (frame->duration));
+
+  gst_mfxdec_need_sync_out(vdec);
 
   if (mfxdec->prev_surf && mfxdec->dequeuing
       && gst_mfx_decoder_need_sync_surface_out (mfxdec->decoder)) {
