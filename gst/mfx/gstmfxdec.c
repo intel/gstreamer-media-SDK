@@ -603,7 +603,7 @@ gst_mfxdec_need_sync_out(GstVideoDecoder *vdec)
   if (!mfxdec)
 	return;
 
-  if (mfxdec->mfxsurface_incompatibility && mfxdec->mfxsink)
+//  if (mfxdec->mfxsurface_incompatibility && mfxdec->mfxsink)
     gst_mfx_decoder_set_sync_surface_out(mfxdec->decoder);
 }
 
