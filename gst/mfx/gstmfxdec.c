@@ -477,34 +477,6 @@ gst_mfxdec_flush (GstVideoDecoder * vdec)
   return gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, hard);
 }
 
-static void
-gst_mfxdec_set_latency (GstVideoDecoder * vdec)
-{
-  GstMfxDec *const mfxdec = GST_MFXDEC (vdec);
-  GstVideoInfo *info = &mfxdec->input_state->info;
-  gint min_delayed_frames;
-  GstClockTime latency;
-
-  min_delayed_frames = mfxdec->async_depth;
-
-  if (info->fps_n) {
-    latency = gst_util_uint64_scale_ceil (GST_SECOND * info->fps_d,
-        min_delayed_frames, info->fps_n);
-  } else {
-    /* FIXME: Assume 25fps. This is better than reporting no latency at
-     * all and then later failing in live pipelines
-     */
-    latency = gst_util_uint64_scale_ceil (GST_SECOND * 1,
-        min_delayed_frames, 25);
-  }
-
-  GST_INFO_OBJECT (mfxdec,
-      "Updating latency to %" GST_TIME_FORMAT " (%d frames)",
-      GST_TIME_ARGS (latency), min_delayed_frames);
-
-  gst_video_decoder_set_latency (GST_VIDEO_DECODER (mfxdec), latency, latency);
-}
-
 static gboolean
 gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
 {
@@ -537,7 +509,6 @@ gst_mfxdec_set_format (GstVideoDecoder * vdec, GstVideoCodecState * state)
   if (!gst_mfxdec_reset_full (mfxdec, mfxdec->sinkpad_caps, FALSE))
     return FALSE;
 
-  gst_mfxdec_set_latency (vdec);
   return TRUE;
 }
 
@@ -550,6 +521,10 @@ gst_mfxdec_push_decoded_frame (GstMfxDec *mfxdec, GstVideoCodecFrame * frame)
   GstMfxSurface *surface;
 
   surface = gst_video_codec_frame_get_user_data(frame);
+  if (surface == NULL) {
+    gst_video_decoder_release_frame(GST_VIDEO_DECODER(mfxdec), frame);
+    return GST_FLOW_OK;
+  }
 
   frame->output_buffer =
       gst_video_decoder_allocate_output_buffer (GST_VIDEO_DECODER (mfxdec));
@@ -635,7 +610,7 @@ gst_mfxdec_handle_frame (GstVideoDecoder *vdec, GstVideoCodecFrame * frame)
     cnt = frame->duration / 100000;
     while (!g_atomic_int_get(&mfxdec->flushing) && (cnt > 0) &&
         gst_mfx_surface_is_queued(mfxdec->prev_surf)) {
-      g_usleep(100);
+      g_usleep(35);
       --cnt;
     }
   }
