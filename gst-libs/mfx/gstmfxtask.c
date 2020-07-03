@@ -58,6 +58,9 @@ struct _GstMfxTask
   gboolean soft_reinit;
   mfxU16 backup_num_surfaces;
   VASurfaceID *backup_surfaces;
+
+  /* using for system memory */
+  mfxU16 num_surfaces;
 };
 
 static gint
@@ -369,10 +372,23 @@ gst_mfx_task_get_num_surfaces (GstMfxTask * task)
 
   g_return_val_if_fail (task != NULL, 0);
 
-  l = g_list_first (task->saved_responses);
-  response_data = l->data;
+  if (!task->memtype_is_system) {
+    l = g_list_first (task->saved_responses);
+    response_data = l->data;
 
-  return response_data->num_surfaces;
+    return response_data->num_surfaces;
+  } else {
+    return task->num_surfaces;
+  }
+}
+
+void
+gst_mfx_task_set_num_surfaces(GstMfxTask *task, mfxU16 num_surf)
+{
+   /* Only system memory can be set using this function
+    * this function using to do pre-allocation surfaces
+    * */
+    task->num_surfaces = num_surf;
 }
 
 mfxFrameAllocRequest *
@@ -513,6 +529,7 @@ gst_mfx_task_init (GstMfxTask * task, GstMfxTaskAggregator * aggregator,
   task->soft_reinit = FALSE;
   task->backup_num_surfaces = 0;
   task->backup_surfaces = NULL;
+  task->num_surfaces = 0;
 }
 
 GstMfxTask *

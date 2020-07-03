@@ -112,6 +112,9 @@ gst_mfx_task_get_memory_id (GstMfxTask * task);
 guint
 gst_mfx_task_get_num_surfaces (GstMfxTask * task);
 
+void
+gst_mfx_task_set_num_surfaces (GstMfxTask *task, mfxU16 num_surf);
+
 mfxSession
 gst_mfx_task_get_session (GstMfxTask * task);
 
