@@ -117,6 +117,12 @@ gst_mfx_decoder_need_sync_surface_out (GstMfxDecoder * decoder);
 void
 gst_mfx_decoder_set_sync_surface_out (GstMfxDecoder * decoder);
 
+gboolean
+gst_mfx_decoder_check_system_memory (GstMfxDecoder * decoder);
+
+void
+gst_mfx_decoder_reset_async_depth (GstMfxDecoder *decoder, mfxU16 async_depth);
+
 G_END_DECLS
 
 #endif /* GST_MFX_DECODER_H */

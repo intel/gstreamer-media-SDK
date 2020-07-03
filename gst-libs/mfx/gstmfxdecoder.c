@@ -1278,3 +1278,14 @@ gst_mfx_decoder_set_sync_surface_out (GstMfxDecoder * decoder)
   decoder->sync_out_surf = TRUE;
 }
 
+gboolean
+gst_mfx_decoder_check_system_memory (GstMfxDecoder * decoder)
+{
+   return decoder->memtype_is_system;
+}
+
+void
+gst_mfx_decoder_reset_async_depth (GstMfxDecoder *decoder, mfxU16 async_depth)
+{
+   decoder->params.AsyncDepth = async_depth;
+}
