@@ -70,11 +70,17 @@ release_surfaces (gpointer surface, gpointer pool)
 static void
 gst_mfx_surface_pool_add_surfaces(GstMfxSurfacePool * pool)
 {
-  guint i, num_surfaces = gst_mfx_task_get_num_surfaces(pool->task);
+  guint i, num_surfaces;
   GstMfxSurface *surface;
 
+  num_surfaces = gst_mfx_task_get_num_surfaces(pool->task);
+
   for (i = 0; i < num_surfaces; i++) {
-    surface = gst_mfx_surface_vaapi_new_from_task (pool->task);
+    if ( gst_mfx_task_has_video_memory (pool->task) )
+      surface = gst_mfx_surface_vaapi_new_from_task (pool->task);
+    else
+      surface = gst_mfx_surface_new_from_task(pool->task);
+
     if (!surface)
       return;
 
@@ -91,7 +97,7 @@ gst_mfx_surface_pool_init (GstMfxSurfacePool * pool)
   g_queue_init (&pool->free_surfaces);
   g_mutex_init (&pool->mutex);
 
-  if (pool->task && gst_mfx_task_has_video_memory (pool->task))
+  if (pool->task)
     gst_mfx_surface_pool_add_surfaces(pool);
 }
 
