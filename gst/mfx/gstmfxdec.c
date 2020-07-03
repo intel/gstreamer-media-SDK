@@ -258,9 +258,12 @@ gst_mfxdec_negotiate (GstMfxDec * mfxdec)
 {
   GstVideoDecoder *const vdec = GST_VIDEO_DECODER (mfxdec);
   GstMfxPluginBase *const plugin = GST_MFX_PLUGIN_BASE (vdec);
+  gboolean mem_is_system = FALSE;
 
   if (!mfxdec->do_renego && !mfxdec->do_reconfigure)
     return TRUE;
+
+  mem_is_system = gst_mfx_decoder_check_system_memory(mfxdec->decoder);
 
 redo:
   GST_DEBUG_OBJECT (mfxdec, "Input codec state changed, doing renegotiation");
@@ -290,6 +293,10 @@ redo:
     mfxdec->do_renego = FALSE;
     mfxdec->do_reconfigure = FALSE;
   }
+
+  if ( (mem_is_system != gst_mfx_decoder_check_system_memory(mfxdec->decoder)) &&
+       (mem_is_system = TRUE))
+    gst_mfx_decoder_reset_async_depth (mfxdec->decoder, DEFAULT_ASYNC_DEPTH);
 
   return TRUE;
 }

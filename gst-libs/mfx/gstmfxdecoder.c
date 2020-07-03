@@ -168,6 +168,11 @@ init_decoder (GstMfxDecoder * decoder)
   }
 
   if (!decoder->pool) {
+    if ( decoder->memtype_is_system == TRUE && decoder->decode ) {
+      mfxU16 num_surfaces = decoder->params.AsyncDepth + 5;
+      gst_mfx_task_set_num_surfaces (decoder->decode, num_surfaces);
+    }
+
     decoder->pool = gst_mfx_surface_pool_new_with_task (decoder->decode);
     if (!decoder->pool)
       return FALSE;
