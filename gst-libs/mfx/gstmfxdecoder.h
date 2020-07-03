@@ -112,12 +112,6 @@ GstMfxDecoderStatus
 gst_mfx_decoder_flush (GstMfxDecoder * decoder);
 
 gboolean
-gst_mfx_decoder_need_sync_surface_out (GstMfxDecoder * decoder);
-
-void
-gst_mfx_decoder_set_sync_surface_out (GstMfxDecoder * decoder);
-
-gboolean
 gst_mfx_decoder_check_system_memory (GstMfxDecoder * decoder);
 
 void
