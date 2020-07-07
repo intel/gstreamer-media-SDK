@@ -42,6 +42,7 @@ GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
   g_quark_from_static_string("mfxdec-params")
 
 #define DEFAULT_ASYNC_DEPTH 4
+#define ASYNC_DEPTH_VIDEO_MEM 16;
 
 /* Default templates */
 #define GST_CAPS_CODEC(CODEC) CODEC "; "
@@ -295,7 +296,7 @@ redo:
   }
 
   if ( (mem_is_system != gst_mfx_decoder_check_system_memory(mfxdec->decoder)) &&
-       (mem_is_system = TRUE))
+       (mem_is_system == TRUE))
     gst_mfx_decoder_reset_async_depth (mfxdec->decoder, DEFAULT_ASYNC_DEPTH);
 
   return TRUE;
@@ -382,7 +383,7 @@ gst_mfxdec_create (GstMfxDec * mfxdec, GstCaps * caps)
    * jerky video playback resulting from threading issues */
   parent = gst_object_get_parent(GST_OBJECT(mfxdec));
   if (parent && !GST_IS_PIPELINE (GST_ELEMENT(parent)))
-    mfxdec->async_depth = 16;
+    mfxdec->async_depth = ASYNC_DEPTH_VIDEO_MEM;
   gst_object_replace (&parent, NULL);
 
   mfxdec->decoder = gst_mfx_decoder_new (plugin->aggregator, profile, &info,

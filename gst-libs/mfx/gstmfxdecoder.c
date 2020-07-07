@@ -34,6 +34,7 @@
 #include "gstmfxdebug.h"
 
 #define NAL_UNITTYPE_BITS 0X1F
+#define DEFAULT_EXTRA_SURFACE 5;
 
 struct _GstMfxDecoder
 {
@@ -169,7 +170,7 @@ init_decoder (GstMfxDecoder * decoder)
 
   if (!decoder->pool) {
     if ( decoder->memtype_is_system == TRUE && decoder->decode ) {
-      mfxU16 num_surfaces = decoder->params.AsyncDepth + 5;
+      mfxU16 num_surfaces = decoder->params.AsyncDepth + DEFAULT_EXTRA_SURFACE;
       gst_mfx_task_set_num_surfaces (decoder->decode, num_surfaces);
     }
 
