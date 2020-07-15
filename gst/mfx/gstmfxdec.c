@@ -32,7 +32,7 @@
 #define GST_PLUGIN_NAME "mfxdecode"
 #define GST_PLUGIN_DESC "MFX Video Decoder"
 
-#define SUBTITLE_OVERLAY   "subtitleoverlay"
+#define DVDSPU             "dvdspu"
 #define MFXSINK            "mfxsink"
 
 GST_DEBUG_CATEGORY_STATIC (mfxdec_debug);
@@ -213,7 +213,7 @@ gst_mfxdec_update_src_caps (GstMfxDec * mfxdec)
   if (!mfxdec->mfxsurface_incompatibility)
   {
     mfxdec->mfxsurface_incompatibility = 
-      gst_mfx_search_plugin(GST_ELEMENT_CAST (mfxdec), SUBTITLE_OVERLAY);
+      gst_mfx_search_plugin(GST_ELEMENT_CAST (mfxdec), DVDSPU);
     GST_LOG_OBJECT (mfxdec, "Subtitle overlay plugin is %s the pipeline",
       mfxdec->mfxsurface_incompatibility?"in":"not in");
   }
