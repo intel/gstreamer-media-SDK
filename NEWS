@@ -1,3 +1,7 @@
+Version 1.4.0-rc11
+* Enable gst-play-1.0 playback with dvdspu subtitle support fallback
+  system memory. We only support it up to 720p on system memory.
+
 Version 1.4.0-rc10
 * Fixed dynamic video resolution playback in adaptive streaming.
 * Fixed meson build set install_dir
