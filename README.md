@@ -109,6 +109,14 @@ add GL/glext.h and GL/wglext.h to the build, add `#if GST_GL_HAVE_PLATFORM_EGL .
 comment out `and cc.has_header('GL/glext.h')` in meson.build. A more system-specific workaround would be to put the headers to
 `C:\Program Files (x86)\Windows Kits\8.1\Include\um\gl` to avoid having to modify meson.build.
 
+cmake build tips
+----
+
+1. download `pkg-config` and set environments as mentioned above.
+2. add `#if GST_GL_HAVE_PLATFORM_EGL ... #endif` to `gstreamer-1.0\gst\gl\glprototypes\eglimage.h`
+3. set `prefix` `lib` `DMFX_H265_ENCODER` and other variables which is similar to meson build.
+4. compile in 64 mode.
+> only support msvc in windows.
 
 Usage
 -----
