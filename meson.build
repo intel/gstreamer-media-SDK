@@ -30,13 +30,18 @@ mfx_deps = []
 mfx_c_args += ['-std=gnu99', '-fPIE', '-fPIC']
 
 # Check the Media SDK
-mfx_home = get_option ('MFX_HOME')
-
-mfx_inc = include_directories(['.', 'gst/mfx', 'gst-libs/mfx', 'parsers', '@0@/include'.format(mfx_home)])
-
 compiler = meson.get_compiler('c')
-libmfx = compiler.find_library('mfx', dirs: '@0@/lib/lin_x64/'.format(mfx_home))
-mfx_deps += [libmfx]
+mfx_dep = dependency('mfx', required: false)
+mfx_inc = include_directories(['.', 'gst/mfx', 'gst-libs/mfx', 'parsers'])
+
+if mfx_dep.found()
+    mfx_deps += [mfx_dep]
+else
+    mfx_home = get_option ('MFX_HOME')
+    mfx_inc += [include_directories('@0@/include'.format(mfx_home))]
+    libmfx = compiler.find_library('mfx', dirs: '@0@/lib/lin_x64/'.format(mfx_home))
+    mfx_deps += [libmfx]
+endif
 
 libstdcc = compiler.find_library('stdc++')
 mfx_deps += [libstdcc]
